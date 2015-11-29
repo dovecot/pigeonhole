@@ -66,11 +66,11 @@ int sieve_interpreter_loop_start
 struct sieve_interpreter_loop *sieve_interpreter_loop_get
 	(struct sieve_interpreter *interp, sieve_size_t loop_end,
 		const struct sieve_extension_def *ext_def);
-void sieve_interpreter_loop_next
+int sieve_interpreter_loop_next
 	(struct sieve_interpreter *interp,
 		struct sieve_interpreter_loop *loop,
 		sieve_size_t loop_begin);
-void sieve_interpreter_loop_break
+int sieve_interpreter_loop_break
 	(struct sieve_interpreter *interp,
 		struct sieve_interpreter_loop *loop);
 

@@ -362,11 +362,9 @@ static int cmd_foreverypart_end_operation_execute
 	i_assert(fploop->part != NULL);
 	fploop->part = sieve_message_part_iter_next(&fploop->part_iter);
 	if ( fploop->part == NULL )
-		sieve_interpreter_loop_break(renv->interp, loop);
-	else
-		sieve_interpreter_loop_next(renv->interp, loop, loop_begin);
-	
-	return SIEVE_EXEC_OK;
+		return sieve_interpreter_loop_break(renv->interp, loop);
+
+	return sieve_interpreter_loop_next(renv->interp, loop, loop_begin);
 }
 
 

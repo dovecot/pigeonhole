@@ -512,12 +512,14 @@ int sieve_interpreter_loop_start
 
 	i_assert( loop_end > interp->runenv.pc );
 
+	/* Check supplied end offset */
 	if ( loop_end > sieve_binary_block_get_size(renv->sblock) ) {
 		sieve_runtime_trace_error(renv,
 			"loop end offset out of range");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
+	/* Trace */
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
 		unsigned int line =
 			sieve_runtime_get_source_location(renv, loop_end);
@@ -530,6 +532,7 @@ int sieve_interpreter_loop_start
 		}
 	}
 
+	/* Check loop nesting limit */
 	if ( !array_is_created(&interp->loop_stack) )
 		p_array_init(&interp->loop_stack, interp->pool, 8);
 	if ( (interp->parent_loop_level + array_count(&interp->loop_stack))
@@ -542,12 +545,16 @@ int sieve_interpreter_loop_start
 		return SIEVE_EXEC_FAILURE;
 	}
 
+	/* Create new loop */
 	loop = array_append_space(&interp->loop_stack);
 	loop->level = array_count(&interp->loop_stack)-1;
 	loop->ext_def = ext_def;
 	loop->begin = interp->runenv.pc;
 	loop->end = loop_end;
 	loop->pool =  pool_alloconly_create("sieve_interpreter", 128);
+
+	/* Set new loop limit */
+	interp->loop_limit = loop_end;
 	
 	*loop_r = loop;
 	return SIEVE_EXEC_OK;
@@ -573,7 +580,7 @@ struct sieve_interpreter_loop *sieve_interpreter_loop_get
 	return NULL;
 }
 
-void sieve_interpreter_loop_next(struct sieve_interpreter *interp,
+int sieve_interpreter_loop_next(struct sieve_interpreter *interp,
 	struct sieve_interpreter_loop *loop,
 	sieve_size_t loop_begin)
 {
@@ -581,6 +588,7 @@ void sieve_interpreter_loop_next(struct sieve_interpreter *interp,
 	struct sieve_interpreter_loop *loops;
 	unsigned int count;
 
+	/* Trace */
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
 		unsigned int line =
 			sieve_runtime_get_source_location(renv, loop_begin);
@@ -593,16 +601,24 @@ void sieve_interpreter_loop_next(struct sieve_interpreter *interp,
 		}
 	}
 
-	i_assert( loop->begin == loop_begin );
+	/* Check the code for corruption */
+	if ( loop->begin != loop_begin ) {
+		sieve_runtime_trace_error(renv,
+			"loop begin offset invalid");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
+	/* Check invariants */
 	i_assert( array_is_created(&interp->loop_stack) );
 	loops = array_get_modifiable(&interp->loop_stack, &count);
 	i_assert( &loops[count-1] == loop );
 
+	/* Return to beginning */
 	interp->runenv.pc = loop_begin;
+	return SIEVE_EXEC_OK;
 }
 
-void sieve_interpreter_loop_break(struct sieve_interpreter *interp,
+int sieve_interpreter_loop_break(struct sieve_interpreter *interp,
 	struct sieve_interpreter_loop *loop)
 {
 	const struct sieve_runtime_env *renv = &interp->runenv;
@@ -610,27 +626,38 @@ void sieve_interpreter_loop_break(struct sieve_interpreter *interp,
 	sieve_size_t loop_end = loop->end;
 	unsigned int count, i;
 
+	/* Find the loop */
 	i_assert( array_is_created(&interp->loop_stack) );
 	loops = array_get_modifiable(&interp->loop_stack, &count);
 	for ( i = count; i > 0 && &loops[i-1] != loop; i-- )
 		pool_unref(&loops[i-1].pool);
 	i_assert( i > 0 && &loops[i-1] == loop );
 
+	/* Delete it and all deeper loops */
 	array_delete(&interp->loop_stack, i-1, count - (i-1));
 
+	/* Set new loop limit */
+	if ( --i > 0 )
+		interp->loop_limit = loops[i-1].end;
+	else
+		interp->loop_limit =- 0;
+
+	/* Trace */
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
 		unsigned int jmp_line =
 			sieve_runtime_get_source_location(renv, loop_end);
 
 		if ( sieve_runtime_trace_hasflag(renv, SIEVE_TRFLG_ADDRESSES) ) {
-			sieve_runtime_trace(renv, 0, "ending loop at line %d [%08llx]",
+			sieve_runtime_trace(renv, 0, "exiting loops at line %d [%08llx]",
 				jmp_line, (long long unsigned int) loop_end);
 		} else {
-			sieve_runtime_trace(renv, 0, "ending loop at line %d", jmp_line);
+			sieve_runtime_trace(renv, 0, "exiting loops at line %d", jmp_line);
 		}
 	}
 
+	/* Exit loop */
 	interp->runenv.pc = loop->end;
+	return SIEVE_EXEC_OK;
 }
 
 struct sieve_interpreter_loop *sieve_interpreter_loop_get_surrounding
@@ -700,6 +727,8 @@ int sieve_interpreter_program_jump
 	const struct sieve_runtime_env *renv = &interp->runenv;
 	sieve_size_t *address = &(interp->runenv.pc);
 	sieve_size_t jmp_start = *address;
+	sieve_size_t jmp_limit = ( interp->loop_limit == 0 ?
+		sieve_binary_block_get_size(renv->sblock) : interp->loop_limit );
 	sieve_offset_t jmp_offset;
 
 	if ( !sieve_binary_read_offset(renv->sblock, address, &jmp_offset) )
@@ -708,7 +737,7 @@ int sieve_interpreter_program_jump
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	if ( jmp_start + jmp_offset <= sieve_binary_block_get_size(renv->sblock) &&
+	if ( (jmp_start + jmp_offset) <= jmp_limit &&
 		jmp_start + jmp_offset > 0 )
 	{
 		if ( jump ) {
@@ -734,7 +763,13 @@ int sieve_interpreter_program_jump
 		return SIEVE_EXEC_OK;
 	}
 
-	sieve_runtime_trace_error(renv, "jump offset out of range");
+	if ( interp->loop_limit != 0 ) {
+		sieve_runtime_trace_error(renv,
+			"jump offset crosses loop boundary");
+	} else {
+		sieve_runtime_trace_error(renv,
+			"jump offset out of range");
+	}
 	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
@@ -796,24 +831,31 @@ static int sieve_interpreter_operation_execute
 int sieve_interpreter_continue
 (struct sieve_interpreter *interp, bool *interrupted)
 {
+	const struct sieve_runtime_env *renv = &interp->runenv;
 	sieve_size_t *address = &(interp->runenv.pc);
 	int ret = SIEVE_EXEC_OK;
 
-	sieve_result_ref(interp->runenv.result);
+	sieve_result_ref(renv->result);
 	interp->interrupted = FALSE;
 
 	if ( interrupted != NULL )
 		*interrupted = FALSE;
 
 	while ( ret == SIEVE_EXEC_OK && !interp->interrupted &&
-		*address < sieve_binary_block_get_size(interp->runenv.sblock) ) {
+		*address < sieve_binary_block_get_size(renv->sblock) ) {
+		if ( interp->loop_limit != 0 && *address > interp->loop_limit ) {
+			sieve_runtime_trace_error(renv,
+				"program crossed loop boundary");
+			ret = SIEVE_EXEC_BIN_CORRUPT;
+			break;
+		}
 
 		ret = sieve_interpreter_operation_execute(interp);
+	}
 
-		if ( ret != SIEVE_EXEC_OK ) {
-			sieve_runtime_trace(&interp->runenv, SIEVE_TRLVL_NONE,
-				"[[EXECUTION ABORTED]]");
-		}
+	if ( ret != SIEVE_EXEC_OK ) {
+		sieve_runtime_trace(&interp->runenv, SIEVE_TRLVL_NONE,
+			"[[EXECUTION ABORTED]]");
 	}
 
 	if ( interrupted != NULL )
