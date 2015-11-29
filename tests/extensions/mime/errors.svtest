@@ -52,3 +52,13 @@ test "Exists test with :mime tag" {
 		test_fail "incorrect number of compile errors reported";
 	}
 }
+
+test "Limits" {
+	if test_script_compile "errors/limits.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if test_error :count "ne" :comparator "i;ascii-numeric" "2" {
+		test_fail "incorrect number of compile errors reported";
+	}
+}

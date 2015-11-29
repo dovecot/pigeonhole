@@ -51,9 +51,10 @@ void sieve_interpreter_set_result
 
 struct sieve_interpreter_loop;
 
-struct sieve_interpreter_loop *sieve_interpreter_loop_start
+int sieve_interpreter_loop_start
 	(struct sieve_interpreter *interp, sieve_size_t loop_end,
-		const struct sieve_extension_def *ext_def);
+		const struct sieve_extension_def *ext_def,
+		struct sieve_interpreter_loop **loop_r);
 struct sieve_interpreter_loop *sieve_interpreter_loop_get
 	(struct sieve_interpreter *interp, sieve_size_t loop_end,
 		const struct sieve_extension_def *ext_def);

@@ -9,6 +9,7 @@
 #include "mail-storage.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-script.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
@@ -482,9 +483,10 @@ void *sieve_interpreter_extension_get_context
  * Loop handling
  */
 
-struct sieve_interpreter_loop *sieve_interpreter_loop_start
+int sieve_interpreter_loop_start
 (struct sieve_interpreter *interp, sieve_size_t loop_end,
-	const struct sieve_extension_def *ext_def)
+	const struct sieve_extension_def *ext_def,
+	struct sieve_interpreter_loop **loop_r)
 {
 	const struct sieve_runtime_env *renv = &interp->runenv;
 	struct sieve_interpreter_loop *loop;
@@ -494,7 +496,7 @@ struct sieve_interpreter_loop *sieve_interpreter_loop_start
 	if ( loop_end > sieve_binary_block_get_size(renv->sblock) ) {
 		sieve_runtime_trace_error(renv,
 			"loop end offset out of range");
-		return NULL;
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
@@ -511,6 +513,15 @@ struct sieve_interpreter_loop *sieve_interpreter_loop_start
 
 	if ( !array_is_created(&interp->loop_stack) )
 		p_array_init(&interp->loop_stack, interp->pool, 8);
+	else if ( array_count(&interp->loop_stack)
+		>= SIEVE_MAX_LOOP_DEPTH ) {
+		/* Should normally be caught at compile time */
+		sieve_runtime_error(renv, NULL,
+			"new program loop exceeds "
+			"the nesting limit (<= %u levels)",
+			SIEVE_MAX_LOOP_DEPTH);
+		return SIEVE_EXEC_FAILURE;
+	}
 
 	loop = array_append_space(&interp->loop_stack);
 	loop->level = array_count(&interp->loop_stack)-1;
@@ -519,7 +530,8 @@ struct sieve_interpreter_loop *sieve_interpreter_loop_start
 	loop->end = loop_end;
 	loop->pool =  pool_alloconly_create("sieve_interpreter", 128);
 	
-	return loop;
+	*loop_r = loop;
+	return SIEVE_EXEC_OK;
 }
 
 struct sieve_interpreter_loop *sieve_interpreter_loop_get

@@ -12,6 +12,8 @@
 
 #define SIEVE_DEFAULT_MAX_SCRIPT_SIZE  (1 << 20)
 
+#define SIEVE_MAX_LOOP_DEPTH           4
+
 /*
  * Lexer
  */

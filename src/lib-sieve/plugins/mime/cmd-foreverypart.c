@@ -2,6 +2,7 @@
  */
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -28,6 +29,8 @@ static bool cmd_foreverypart_registered
 		struct sieve_command_registration *cmd_reg);
 static bool cmd_foreverypart_pre_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
+static bool cmd_foreverypart_validate
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_foreverypart_generate
 	(const struct sieve_codegen_env *cgenv,
 		struct sieve_command *ctx);
@@ -38,7 +41,8 @@ const struct sieve_command_def cmd_foreverypart = {
 	0, 0, TRUE, TRUE,
 	cmd_foreverypart_registered,
 	cmd_foreverypart_pre_validate,
-	NULL, NULL,
+	cmd_foreverypart_validate,
+	NULL,
 	cmd_foreverypart_generate,
 	NULL,
 };
@@ -145,6 +149,36 @@ static bool cmd_foreverypart_pre_validate
 	
 	loop = p_new(pool, struct ext_foreverypart_loop, 1);
 	cmd->data = loop;		
+
+	return TRUE;
+}
+
+static bool cmd_foreverypart_validate
+(struct sieve_validator *valdtr, struct sieve_command *cmd)
+{
+	struct sieve_ast_node *node = cmd->ast_node;
+	unsigned int nesting = 0;
+
+	/* Determine nesting depth of foreverypart commands at this point. */
+	i_assert(node != NULL);
+	node = sieve_ast_node_parent(node);
+	while ( node != NULL && node->command != NULL ) {
+		if ( sieve_command_is(node->command, cmd_foreverypart) )
+			nesting++;
+		node = sieve_ast_node_parent(node);
+	}
+
+	/* Enforce nesting limit
+	   NOTE: this only recognizes the foreverypart command as a loop; if
+	   new loop commands are introduced in the future, these must be 
+	   recognized somehow. */
+	if ( nesting + 1 > SIEVE_MAX_LOOP_DEPTH ) {
+		sieve_command_validate_error(valdtr, cmd,
+			"the nested foreverypart loop exceeds "
+			"the nesting limit (<= %u levels)",
+			SIEVE_MAX_LOOP_DEPTH);
+		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -262,10 +296,9 @@ static int cmd_foreverypart_begin_operation_execute
 
 	sfploop = ext_foreverypart_runtime_loop_get_current(renv);
 
-	loop = sieve_interpreter_loop_start
-		(renv->interp, loop_end, &foreverypart_extension);
-	if ( loop == NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_interpreter_loop_start(renv->interp,
+		loop_end, &foreverypart_extension, &loop)) <= 0 )
+		return ret;
 
 	pool = sieve_interpreter_loop_get_pool(loop);
 	fploop = p_new(pool, struct ext_foreverypart_runtime_loop, 1);
