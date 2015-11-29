@@ -142,7 +142,7 @@ static int cmd_test_fail_operation_execute
 
 	testsuite_test_fail(reason);
 
-	return sieve_interpreter_program_jump(renv->interp, TRUE);
+	return sieve_interpreter_program_jump(renv->interp, TRUE, TRUE);
 }
 
 
