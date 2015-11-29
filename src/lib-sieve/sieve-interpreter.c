@@ -665,6 +665,28 @@ int sieve_interpreter_loop_break(struct sieve_interpreter *interp,
 	return SIEVE_EXEC_OK;
 }
 
+static int
+sieve_interpreter_loop_break_out(struct sieve_interpreter *interp,
+	sieve_size_t target)
+{
+	struct sieve_interpreter_loop *loops;
+	unsigned int count, i;
+
+	if ( !array_is_created(&interp->loop_stack) )
+		return SIEVE_EXEC_OK;
+
+	loops = array_get_modifiable(&interp->loop_stack, &count);
+	for ( i = count; i > 0; i-- ) {
+		/* We're really making sure our loop matches */
+		if ( loops[i-1].end > target )
+			break;
+	}
+	if ( i == count )
+		return SIEVE_EXEC_OK;
+
+	return sieve_interpreter_loop_break(interp, &loops[i]);
+}
+
 struct sieve_interpreter_loop *sieve_interpreter_loop_get_surrounding
 (struct sieve_interpreter *interp,
 	struct sieve_interpreter_loop *loop,
@@ -727,14 +749,14 @@ sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interp)
 }
 
 int sieve_interpreter_program_jump
-(struct sieve_interpreter *interp, bool jump)
+(struct sieve_interpreter *interp, bool jump, bool break_loops)
 {
 	const struct sieve_runtime_env *renv = &interp->runenv;
 	sieve_size_t *address = &(interp->runenv.pc);
-	sieve_size_t jmp_start = *address;
-	sieve_size_t jmp_limit = ( interp->loop_limit == 0 ?
-		sieve_binary_block_get_size(renv->sblock) : interp->loop_limit );
+	sieve_size_t jmp_start = *address, jmp_target;
+	sieve_size_t loop_limit = ( break_loops ? 0 : interp->loop_limit );
 	sieve_offset_t jmp_offset;
+	int ret;
 
 	if ( !sieve_binary_read_offset(renv->sblock, address, &jmp_offset) )
 	{
@@ -742,25 +764,28 @@ int sieve_interpreter_program_jump
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	if ( (jmp_start + jmp_offset) <= jmp_limit &&
+	jmp_target = jmp_start + jmp_offset;
+	if ( jmp_target <= sieve_binary_block_get_size(renv->sblock) &&
+		(loop_limit == 0 || jmp_target < loop_limit) &&
 		jmp_start + jmp_offset > 0 )
 	{
 		if ( jump ) {
-			sieve_size_t jmp_addr = jmp_start + jmp_offset;
-
 			if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
 				unsigned int jmp_line =
-					sieve_runtime_get_source_location(renv, jmp_addr);
+					sieve_runtime_get_source_location(renv, jmp_target);
 
 				if ( sieve_runtime_trace_hasflag(renv, SIEVE_TRFLG_ADDRESSES) ) {
 					sieve_runtime_trace(renv, 0, "jumping to line %d [%08llx]",
-						jmp_line, (long long unsigned int) jmp_addr);
+						jmp_line, (long long unsigned int) jmp_target);
 				} else {
 					sieve_runtime_trace(renv, 0, "jumping to line %d", jmp_line);
 				}
 			}
 
-			*address = jmp_addr;
+			if ( break_loops && 
+				(ret=sieve_interpreter_loop_break_out(interp, jmp_target)) <= 0 )
+				return ret;
+			*address = jmp_target;
 		} else {
 			sieve_runtime_trace(renv, 0, "not jumping");
 		}

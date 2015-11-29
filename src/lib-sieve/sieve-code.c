@@ -1145,7 +1145,7 @@ static bool opc_jmp_dump
 static int opc_jmp_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
-	return sieve_interpreter_program_jump(renv->interp, TRUE);
+	return sieve_interpreter_program_jump(renv->interp, TRUE, FALSE);
 }
 
 static int opc_jmptrue_execute
@@ -1156,7 +1156,7 @@ static int opc_jmptrue_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "jump if result is true");
 	sieve_runtime_trace_descend(renv);
 
-	return sieve_interpreter_program_jump(renv->interp, result);
+	return sieve_interpreter_program_jump(renv->interp, result, FALSE);
 }
 
 static int opc_jmpfalse_execute
@@ -1167,5 +1167,5 @@ static int opc_jmpfalse_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "jump if result is false");
 	sieve_runtime_trace_descend(renv);
 
-	return sieve_interpreter_program_jump(renv->interp, !result);
+	return sieve_interpreter_program_jump(renv->interp, !result, FALSE);
 }
