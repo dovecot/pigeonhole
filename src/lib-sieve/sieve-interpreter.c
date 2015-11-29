@@ -629,18 +629,23 @@ int sieve_interpreter_loop_break(struct sieve_interpreter *interp,
 	/* Find the loop */
 	i_assert( array_is_created(&interp->loop_stack) );
 	loops = array_get_modifiable(&interp->loop_stack, &count);
-	for ( i = count; i > 0 && &loops[i-1] != loop; i-- )
-		pool_unref(&loops[i-1].pool);
-	i_assert( i > 0 && &loops[i-1] == loop );
+	i_assert( count > 0 );
 
-	/* Delete it and all deeper loops */
-	array_delete(&interp->loop_stack, i-1, count - (i-1));
+	i = count;
+	do {
+		pool_unref(&loops[i-1].pool);
+		i--;
+	} while ( i > 0 && &loops[i] != loop );
+	i_assert( &loops[i] == loop );
 
 	/* Set new loop limit */
-	if ( --i > 0 )
-		interp->loop_limit = loops[i-1].end;
+	if ( i > 0 )
+		interp->loop_limit = loops[i].end;
 	else
-		interp->loop_limit =- 0;
+		interp->loop_limit = 0;
+
+	/* Delete it and all deeper loops */
+	array_delete(&interp->loop_stack, i, count - i);
 
 	/* Trace */
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
