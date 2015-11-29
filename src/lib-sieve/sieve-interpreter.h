@@ -46,6 +46,38 @@ void sieve_interpreter_set_result
 	(struct sieve_interpreter *interp, struct sieve_result *result);
 
 /*
+ * Loop handling
+ */
+
+struct sieve_interpreter_loop;
+
+struct sieve_interpreter_loop *sieve_interpreter_loop_start
+	(struct sieve_interpreter *interp, sieve_size_t loop_end,
+		const struct sieve_extension_def *ext_def);
+struct sieve_interpreter_loop *sieve_interpreter_loop_get
+	(struct sieve_interpreter *interp, sieve_size_t loop_end,
+		const struct sieve_extension_def *ext_def);
+void sieve_interpreter_loop_next
+	(struct sieve_interpreter *interp,
+		struct sieve_interpreter_loop *loop,
+		sieve_size_t loop_begin);
+void sieve_interpreter_loop_break
+	(struct sieve_interpreter *interp,
+		struct sieve_interpreter_loop *loop);
+
+struct sieve_interpreter_loop *sieve_interpreter_loop_get_surrounding
+(struct sieve_interpreter *interp,
+	struct sieve_interpreter_loop *loop,
+	const struct sieve_extension_def *ext_def) ATTR_NULL(2, 3);
+
+pool_t sieve_interpreter_loop_get_pool
+	(struct sieve_interpreter_loop *loop) ATTR_PURE;
+void *sieve_interpreter_loop_get_context
+	(struct sieve_interpreter_loop *loop) ATTR_PURE;
+void sieve_interpreter_loop_set_context
+	(struct sieve_interpreter_loop *loop, void *context);
+
+/*
  * Program flow
  */
 

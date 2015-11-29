@@ -38,6 +38,18 @@ struct sieve_interpreter_extension_reg {
 };
 
 /*
+ * Code loop
+ */
+
+struct sieve_interpreter_loop {
+	unsigned int level;
+	sieve_size_t begin, end;
+	const struct sieve_extension_def *ext_def;
+	pool_t pool;
+	void *context;
+};
+
+/*
  * Interpreter
  */
 
@@ -54,6 +66,10 @@ struct sieve_interpreter {
 	sieve_size_t pc;          /* Program counter */
 	bool interrupted;         /* Interpreter interrupt requested */
 	bool test_result;         /* Result of previous test command */
+
+	/* Loop stack */
+	ARRAY(struct sieve_interpreter_loop) loop_stack;
+	sieve_size_t loop_limit;
 
 	/* Runtime environment */
 	struct sieve_runtime_env runenv;
@@ -225,14 +241,21 @@ void sieve_interpreter_free(struct sieve_interpreter **_interp)
 	struct sieve_interpreter *interp = *_interp;
 	struct sieve_runtime_env *renv = &interp->runenv;
 	const struct sieve_interpreter_extension_reg *eregs;
-	unsigned int ext_count, i;
+	struct sieve_interpreter_loop *loops;
+	unsigned int count, i;
+
+	if ( array_is_created(&interp->loop_stack) ) {
+		loops = array_get_modifiable(&interp->loop_stack, &count);
+		for ( i = 0; i < count; i++ )
+			pool_unref(&loops[i].pool);
+	}
 
 	interp->trace.indent = 0;
 	sieve_runtime_trace_end(renv);
 
 	/* Signal registered extensions that the interpreter is being destroyed */
-	eregs = array_get(&interp->extensions, &ext_count);
-	for ( i = 0; i < ext_count; i++ ) {
+	eregs = array_get(&interp->extensions, &count);
+	for ( i = 0; i < count; i++ ) {
 		if ( eregs[i].intext != NULL && eregs[i].intext->free != NULL )
 			eregs[i].intext->free(eregs[i].ext, interp, eregs[i].context);
 	}
@@ -453,6 +476,169 @@ void *sieve_interpreter_extension_get_context
 	reg = array_idx(&interp->extensions, (unsigned int) ext->id);
 
 	return reg->context;
+}
+
+/*
+ * Loop handling
+ */
+
+struct sieve_interpreter_loop *sieve_interpreter_loop_start
+(struct sieve_interpreter *interp, sieve_size_t loop_end,
+	const struct sieve_extension_def *ext_def)
+{
+	const struct sieve_runtime_env *renv = &interp->runenv;
+	struct sieve_interpreter_loop *loop;
+
+	i_assert( loop_end > interp->runenv.pc );
+
+	if ( loop_end > sieve_binary_block_get_size(renv->sblock) ) {
+		sieve_runtime_trace_error(renv,
+			"loop end offset out of range");
+		return NULL;
+	}
+
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+		unsigned int line =
+			sieve_runtime_get_source_location(renv, loop_end);
+
+		if ( sieve_runtime_trace_hasflag(renv, SIEVE_TRFLG_ADDRESSES) ) {
+			sieve_runtime_trace(renv, 0, "loop ends at line %d [%08llx]",
+				line, (long long unsigned int) loop_end);
+		} else {
+			sieve_runtime_trace(renv, 0, "loop ends at line %d", line);
+		}
+	}
+
+	if ( !array_is_created(&interp->loop_stack) )
+		p_array_init(&interp->loop_stack, interp->pool, 8);
+
+	loop = array_append_space(&interp->loop_stack);
+	loop->level = array_count(&interp->loop_stack)-1;
+	loop->ext_def = ext_def;
+	loop->begin = interp->runenv.pc;
+	loop->end = loop_end;
+	loop->pool =  pool_alloconly_create("sieve_interpreter", 128);
+	
+	return loop;
+}
+
+struct sieve_interpreter_loop *sieve_interpreter_loop_get
+(struct sieve_interpreter *interp, sieve_size_t loop_end,
+	const struct sieve_extension_def *ext_def)
+{
+	struct sieve_interpreter_loop *loops;
+	unsigned int count, i;
+
+	if ( !array_is_created(&interp->loop_stack) )
+		return NULL;
+
+	loops = array_get_modifiable(&interp->loop_stack, &count);
+	for ( i = count; i > 0; i-- ) {
+		/* We're really making sure our loop matches */
+		if ( loops[i-1].end == loop_end &&
+			loops[i-1].ext_def == ext_def )
+			return &loops[i-1];
+	}
+	return NULL;
+}
+
+void sieve_interpreter_loop_next(struct sieve_interpreter *interp,
+	struct sieve_interpreter_loop *loop,
+	sieve_size_t loop_begin)
+{
+	const struct sieve_runtime_env *renv = &interp->runenv;
+	struct sieve_interpreter_loop *loops;
+	unsigned int count;
+
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+		unsigned int line =
+			sieve_runtime_get_source_location(renv, loop_begin);
+
+		if ( sieve_runtime_trace_hasflag(renv, SIEVE_TRFLG_ADDRESSES) ) {
+			sieve_runtime_trace(renv, 0, "looping back to line %d [%08llx]",
+				line, (long long unsigned int) loop_begin);
+		} else {
+			sieve_runtime_trace(renv, 0, "looping back to line %d", line);
+		}
+	}
+
+	i_assert( loop->begin == loop_begin );
+
+	i_assert( array_is_created(&interp->loop_stack) );
+	loops = array_get_modifiable(&interp->loop_stack, &count);
+	i_assert( &loops[count-1] == loop );
+
+	interp->runenv.pc = loop_begin;
+}
+
+void sieve_interpreter_loop_break(struct sieve_interpreter *interp,
+	struct sieve_interpreter_loop *loop)
+{
+	const struct sieve_runtime_env *renv = &interp->runenv;
+	struct sieve_interpreter_loop *loops;
+	sieve_size_t loop_end = loop->end;
+	unsigned int count, i;
+
+	i_assert( array_is_created(&interp->loop_stack) );
+	loops = array_get_modifiable(&interp->loop_stack, &count);
+	for ( i = count; i > 0 && &loops[i-1] != loop; i-- )
+		pool_unref(&loops[i-1].pool);
+	i_assert( i > 0 && &loops[i-1] == loop );
+
+	array_delete(&interp->loop_stack, i-1, count - (i-1));
+
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+		unsigned int jmp_line =
+			sieve_runtime_get_source_location(renv, loop_end);
+
+		if ( sieve_runtime_trace_hasflag(renv, SIEVE_TRFLG_ADDRESSES) ) {
+			sieve_runtime_trace(renv, 0, "ending loop at line %d [%08llx]",
+				jmp_line, (long long unsigned int) loop_end);
+		} else {
+			sieve_runtime_trace(renv, 0, "ending loop at line %d", jmp_line);
+		}
+	}
+
+	interp->runenv.pc = loop->end;
+}
+
+struct sieve_interpreter_loop *sieve_interpreter_loop_get_surrounding
+(struct sieve_interpreter *interp,
+	struct sieve_interpreter_loop *loop,
+	const struct sieve_extension_def *ext_def)
+{
+	struct sieve_interpreter_loop *loops;
+	unsigned int count, i;
+
+	if ( !array_is_created(&interp->loop_stack) )
+		return NULL;
+
+	loops = array_get_modifiable(&interp->loop_stack, &count);
+	i_assert(loop == NULL || loop->level < count);
+
+	for ( i = (loop == NULL ? count : loop->level); i > 0; i-- ) {
+		if ( ext_def == NULL || loops[i-1].ext_def == ext_def )
+			return &loops[i-1];
+	}
+	return NULL;
+}
+
+pool_t sieve_interpreter_loop_get_pool
+(struct sieve_interpreter_loop *loop)
+{
+	return loop->pool;
+}
+
+void *sieve_interpreter_loop_get_context
+(struct sieve_interpreter_loop *loop)
+{
+	return loop->context;
+}
+
+void sieve_interpreter_loop_set_context
+(struct sieve_interpreter_loop *loop, void *context)
+{
+	loop->context = context;
 }
 
 /*
