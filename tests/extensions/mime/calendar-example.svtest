@@ -1,0 +1,129 @@
+require "vnd.dovecot.testsuite";
+require "mime";
+require "foreverypart";
+require "editheader";
+require "relational";
+require "variables";
+
+# Example from RFC 6047, Section 2.5:
+test_set "message" text:
+From: user1@example.com
+To: user2@example.com
+Subject: Phone Conference
+Mime-Version: 1.0
+Date: Wed, 07 May 2008 21:30:25 +0400
+Message-ID: <4821E731.5040506@laptop1.example.com>
+Content-Type: text/calendar; method=REQUEST; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+BEGIN:VCALENDAR
+PRODID:-//Example/ExampleCalendarClient//EN
+METHOD:REQUEST
+VERSION:2.0
+BEGIN:VEVENT
+ORGANIZER:mailto:user1@example.com
+ATTENDEE;ROLE=CHAIR;PARTSTAT=ACCEPTED:mailto:user1@example.com
+ATTENDEE;RSVP=YES;CUTYPE=INDIVIDUAL:mailto:user2@example.com
+DTSTAMP:20080507T170000Z
+DTSTART:20080701T160000Z
+DTEND:20080701T163000Z
+SUMMARY:Phone call to discuss your last visit
+DESCRIPTION:=D1=82=D1=8B =D0=BA=D0=B0=D0=BA - =D0=B4=D0=BE=D0=
+ =B2=D0=BE=D0=BB=D0=B5=D0=BD =D0=BF=D0=BE=D0=B5=D0=B7=D0=B4=D0=BA=D0
+ =BE=D0=B9?
+UID:calsvr.example.com-8739701987387998
+SEQUENCE:0
+STATUS:TENTATIVE
+END:VEVENT
+END:VCALENDAR
+.
+;
+
+test "Calendar only" {
+	foreverypart {
+		if allof(
+			header :mime :count "eq" "Content-Type" "1",
+			header :mime :contenttype "Content-Type" "text/calendar",
+			header :mime :param "method" :matches "Content-Type" "*",
+			header :mime :param "charset" :is "Content-Type" "UTF-8" ) {
+			addheader "X-ICAL" "${1}";
+			break;
+		}
+	}
+
+	if not header "x-ical" "request" {
+		test_fail "Failed to parse message correctly";
+	}
+}
+
+# Modified example
+test_set "message" text:
+From: user1@example.com
+To: user2@example.com
+Subject: Phone Conference
+Mime-Version: 1.0
+Date: Wed, 07 May 2008 21:30:25 +0400
+Message-ID: <4821E731.5040506@laptop1.example.com>
+Content-Type: multipart/mixed; boundary=AA
+
+This is a multi-part message in MIME format.
+
+--AA
+Content-Type: text/plain
+
+Hello,
+
+I'd like to discuss your last visit. A tentative meeting schedule is
+attached.
+
+Regards,
+
+User1
+
+--AA
+Content-Type: text/calendar; method=REQUEST; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+BEGIN:VCALENDAR
+PRODID:-//Example/ExampleCalendarClient//EN
+METHOD:REQUEST
+VERSION:2.0
+BEGIN:VEVENT
+ORGANIZER:mailto:user1@example.com
+ATTENDEE;ROLE=CHAIR;PARTSTAT=ACCEPTED:mailto:user1@example.com
+ATTENDEE;RSVP=YES;CUTYPE=INDIVIDUAL:mailto:user2@example.com
+DTSTAMP:20080507T170000Z
+DTSTART:20080701T160000Z
+DTEND:20080701T163000Z
+SUMMARY:Phone call to discuss your last visit
+DESCRIPTION:=D1=82=D1=8B =D0=BA=D0=B0=D0=BA - =D0=B4=D0=BE=D0=
+ =B2=D0=BE=D0=BB=D0=B5=D0=BD =D0=BF=D0=BE=D0=B5=D0=B7=D0=B4=D0=BA=D0
+ =BE=D0=B9?
+UID:calsvr.example.com-8739701987387998
+SEQUENCE:0
+STATUS:TENTATIVE
+END:VEVENT
+END:VCALENDAR
+
+--AA--
+.
+;
+
+test "Multipart message" {
+	foreverypart {
+		if allof(
+			header :mime :count "eq" "Content-Type" "1",
+			header :mime :contenttype "Content-Type" "text/calendar",
+			header :mime :param "method" :matches "Content-Type" "*",
+			header :mime :param "charset" :is "Content-Type" "UTF-8" ) {
+			addheader "X-ICAL" "${1}";
+			break;
+		}
+	}
+
+	if not header "x-ical" "request" {
+		test_fail "Failed to parse message correctly";
+	}
+}
+
+
