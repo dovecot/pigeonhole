@@ -10,29 +10,6 @@
 
 #include <ctype.h>
 
-// FIXME: add to dovecot
-static const char *t_str_trim(const char *str)
-{
-	const char *p, *pend, *begin;
-
-	p = str;
-	pend = str + strlen(str);
-	if (p == pend)
-		return "";
-
-	while (p < pend && (*p == ' ' || *p == '\t'))
-		p++;
-	begin = p;
-
-	p = pend - 1;
-	while (p > begin && (*p == ' ' || *p == '\t'))
-		p--;
-
-	if (p <= begin)
-		return "";
-	return t_strdup_until(begin, p+1);
-}
-
 /*
  * Access to settings
  */
@@ -143,7 +120,7 @@ bool sieve_setting_get_bool_value
 	if ( str_value == NULL )
 		return FALSE;
 
-	str_value = t_str_trim(str_value);
+	str_value = t_str_trim(str_value, "\t ");
 	if ( *str_value == '\0' )
 		return FALSE;
 
@@ -175,7 +152,7 @@ bool sieve_setting_get_duration_value
 	if ( str_value == NULL )
 		return FALSE;
 
-	str_value = t_str_trim(str_value);
+	str_value = t_str_trim(str_value, "\t ");
 	if ( *str_value == '\0' )
 		return FALSE;
 
@@ -228,7 +205,7 @@ bool sieve_setting_get_mail_sender_value
 	if ( str_value == NULL )
 		return FALSE;
 
-	str_value = t_str_trim(str_value);
+	str_value = t_str_trim(str_value, "\t ");
 	str_value = t_str_lcase(str_value);
 	set_len = strlen(str_value);
 	if ( set_len > 0 ) {
@@ -245,7 +222,7 @@ bool sieve_setting_get_mail_sender_value
 		} else if ( str_value[0] == '<' &&	str_value[set_len-1] == '>') {
 			sender->source = SIEVE_MAIL_SENDER_SOURCE_EXPLICIT;
 
-			str_value = t_str_trim(t_strndup(str_value+1, set_len-2));
+			str_value = t_str_trim(t_strndup(str_value+1, set_len-2), "\t ");
 			sender->address = NULL;
 			if ( *str_value != '\0' )
 				sender->address = p_strdup(pool, str_value);
