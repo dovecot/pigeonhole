@@ -357,16 +357,20 @@ content_type_param_decode(const char *value)
 
 static string_t *
 content_type_param_next(struct content_header_stringlist *strlist)
-{
+{	
+	const struct sieve_runtime_env *renv = strlist->strlist.runenv;
 	const char *const *values = strlist->param_values;
+	bool trace = strlist->strlist.trace;
 
 	i_assert( strlist->params != NULL );
 
+	/* Iterate over all parsed parameter values */
 	for ( ; *values != NULL; values += 2 ) {
 		const char *const *params = strlist->params;
 		const char *name = values[0], *value = values[1];
 		size_t nlen = strlen(name);
 
+		/* Iterate over all interesting parameter names */
 		for ( ; *params != NULL; params++ ) {
 			size_t plen = strlen(*params);
 
@@ -376,15 +380,29 @@ content_type_param_next(struct content_header_stringlist *strlist)
 
 			if ( plen == nlen ) {
 				if ( strcasecmp(name, *params) == 0 ) {
+					/* Return raw value */
+					if ( trace ) {
+						sieve_runtime_trace(renv, 0,
+							"found mime parameter `%s' in mime header",
+							*params);
+					}
+
 					strlist->param_values = values + 2;
 					return t_str_new_const(value, strlen(value));
 				}
 			} else {
+				if ( trace ) {
+					sieve_runtime_trace(renv, 0,
+						"found encoded parameter `%s' in mime header",
+						*params);
+				}
+
 				if ( strncasecmp(name, *params, plen) == 0 ) {
 					string_t *result = NULL;
 
 					strlist->param_values = values + 2;
 
+					/* Decode value first */
 					// FIXME: transcode charset
 					value = strchr(value, '\'');
 					if (value != NULL)
@@ -409,6 +427,8 @@ static string_t *
 content_header_parse(struct content_header_stringlist *strlist,
 	const char *hdr_name, string_t *str)
 {
+	const struct sieve_runtime_env *renv = strlist->strlist.runenv;
+	bool trace = strlist->strlist.trace;
 	struct rfc822_parser_context parser;
 	const char *type, *p;
 	bool is_ctype = FALSE;
@@ -419,8 +439,13 @@ content_header_parse(struct content_header_stringlist *strlist,
 
 	if ( strcasecmp(hdr_name, "content-type") == 0 )
 		is_ctype = TRUE;
-	else if ( strcasecmp(hdr_name, "content-disposition") != 0 )
+	else if ( strcasecmp(hdr_name, "content-disposition") != 0 ) {
+		if ( trace ) {
+			sieve_runtime_trace(renv, 0,
+				"non-mime header yields empty string");
+		}
 		return t_str_new(0);
+	}
 
 	/* Initialize parsing */
 	rfc822_parser_init(&parser, str_data(str), str_len(str), NULL);
@@ -450,6 +475,7 @@ content_header_parse(struct content_header_stringlist *strlist,
 	if ( strlist->option == EXT_MIME_OPTION_PARAM ) {
 		string_t *param_val;
 
+		/* MIME parameter */
 		i_assert( strlist->params != NULL );
 
 		// FIXME: not very nice when multiple parameters in the same header
@@ -461,17 +487,44 @@ content_header_parse(struct content_header_stringlist *strlist,
 		if ( param_val != NULL )
 			content = param_val;
 	} else {
+		/* Get :type/:subtype:/:contenttype value */
 		type = str_c(content);
-		if ( (p=strchr(type, '/')) == NULL ) {
-			i_assert( !is_ctype );
-			if ( strlist->option == EXT_MIME_OPTION_SUBTYPE )
-				str_truncate(content, 0);
-		} else {
-			i_assert( is_ctype );
-			if ( strlist->option == EXT_MIME_OPTION_TYPE )
+		p = strchr(type, '/');
+		switch ( strlist->option ) {
+		case EXT_MIME_OPTION_TYPE:
+			if ( trace ) {
+				sieve_runtime_trace(renv, 0,
+					"extracted MIME type");
+			}
+			if ( p != NULL ) {
+				i_assert( is_ctype );
 				str_truncate(content, (p - type));
-			else if ( strlist->option == EXT_MIME_OPTION_SUBTYPE )
-				str_delete(content, 0, (p - type) + 1);
+			}
+			break;	
+		case EXT_MIME_OPTION_SUBTYPE:
+			if ( p == NULL ) {
+				i_assert( !is_ctype );
+				if ( trace ) {
+					sieve_runtime_trace(renv, 0,
+						"no MIME sub-type for content-disposition");
+				}
+				str_truncate(content, 0);
+				break;
+			}
+
+			i_assert( is_ctype );
+			if ( trace ) {
+				sieve_runtime_trace(renv, 0,
+					"extracted MIME sub-type");
+			}
+			str_delete(content, 0, (p - type) + 1);
+			break;	
+		case EXT_MIME_OPTION_CONTENTTYPE:
+			sieve_runtime_trace(renv, 0,
+				"extracted full MIME contenttype");
+			break;
+		default:
+			break;
 		}
 	}
 

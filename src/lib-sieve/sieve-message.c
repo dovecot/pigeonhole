@@ -1722,8 +1722,13 @@ static int sieve_mime_header_list_next_item
 						(&mpart->headers, &hdrlist->headers_count);
 					hdrlist->headers_index = 0;
 				}
-				if ( hdrlist->headers_count > 0 )
+				if ( hdrlist->headers_count > 0 ) {
+					if ( _hdrlist->strlist.trace ) {
+						sieve_runtime_trace(renv, 0,
+							"moving to next message part");
+					}
 					break;
+				}
 			}
 
 			/* Read next header name from source list */
@@ -1735,7 +1740,7 @@ static int sieve_mime_header_list_next_item
 
 			if ( _hdrlist->strlist.trace ) {
 				sieve_runtime_trace(renv, 0,
-					"extracting `%s' headers from message",
+					"extracting `%s' headers from message part",
 					str_sanitize(str_c(hdr_item), 80));
 			}
 

@@ -291,7 +291,8 @@ static int cmd_foreverypart_begin_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "foreverypart loop begin");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+		"foreverypart loop begin");
 	sieve_runtime_trace_descend(renv);
 
 	sfploop = ext_foreverypart_runtime_loop_get_current(renv);
@@ -347,7 +348,7 @@ static int cmd_foreverypart_end_operation_execute
 	 */
 
 	sieve_runtime_trace(renv,
-		SIEVE_TRLVL_ACTIONS, "foreverypart loop end");
+		SIEVE_TRLVL_COMMANDS, "foreverypart loop end");
 	sieve_runtime_trace_descend(renv);
 
 	loop = sieve_interpreter_loop_get
@@ -361,9 +362,14 @@ static int cmd_foreverypart_end_operation_execute
 		sieve_interpreter_loop_get_context(loop);
 	i_assert(fploop->part != NULL);
 	fploop->part = sieve_message_part_iter_next(&fploop->part_iter);
-	if ( fploop->part == NULL )
+	if ( fploop->part == NULL ) {
+		sieve_runtime_trace(renv,
+			SIEVE_TRLVL_COMMANDS, "no more message parts");
 		return sieve_interpreter_loop_break(renv->interp, loop);
+	}
 
+	sieve_runtime_trace(renv,
+		SIEVE_TRLVL_COMMANDS, "switched to next message part");
 	return sieve_interpreter_loop_next(renv->interp, loop, loop_begin);
 }
 
