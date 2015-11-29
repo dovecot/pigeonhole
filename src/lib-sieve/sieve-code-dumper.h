@@ -11,7 +11,7 @@ struct sieve_code_dumper;
 struct sieve_code_dumper *sieve_code_dumper_create
 	(struct sieve_dumptime_env *denv);
 void sieve_code_dumper_free
-	(struct sieve_code_dumper **dumper);
+	(struct sieve_code_dumper **_dumper);
 pool_t sieve_code_dumper_pool
 	(struct sieve_code_dumper *dumper);
 

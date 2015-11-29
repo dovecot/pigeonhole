@@ -19,7 +19,8 @@
 static void ext_variables_code_dumper_free
 	(struct sieve_code_dumper *dumper, void *context);
 
-const struct sieve_code_dumper_extension variables_dump_extension = {
+static const struct sieve_code_dumper_extension
+variables_dump_extension = {
 	&variables_extension,
 	ext_variables_code_dumper_free
 };
@@ -62,7 +63,8 @@ static struct ext_variables_dump_context *ext_variables_dump_get_context
 		p_array_init(&dctx->ext_scopes, pool,
 			sieve_extensions_get_count(this_ext->svinst));
 
-		sieve_dump_extension_set_context(dumper, this_ext, dctx);
+		sieve_dump_extension_register
+			(dumper, this_ext, &variables_dump_extension, dctx);
 	}
 
 	return dctx;

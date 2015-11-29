@@ -67,12 +67,23 @@ struct sieve_code_dumper *sieve_code_dumper_create
 	return cdumper;
 }
 
-void sieve_code_dumper_free(struct sieve_code_dumper **cdumper)
+void sieve_code_dumper_free(struct sieve_code_dumper **_cdumper)
 {
-	sieve_binary_debug_reader_deinit(&(*cdumper)->dreader);
+	struct sieve_code_dumper *cdumper = *_cdumper;
+	const struct sieve_code_dumper_extension_reg *eregs;
+	unsigned int count, i;
 
-	pool_unref(&((*cdumper)->pool));
-	*cdumper = NULL;
+	sieve_binary_debug_reader_deinit(&cdumper->dreader);
+
+	/* Signal registered extensions that the dumper is being destroyed */
+	eregs = array_get(&cdumper->extensions, &count);
+	for ( i = 0; i < count; i++ ) {
+		if ( eregs[i].cdmpext != NULL && eregs[i].cdmpext->free != NULL )
+			eregs[i].cdmpext->free(cdumper, eregs[i].context);
+	}
+
+	pool_unref(&cdumper->pool);
+	*_cdumper = NULL;
 }
 
 pool_t sieve_code_dumper_pool(struct sieve_code_dumper *cdumper)
