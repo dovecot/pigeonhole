@@ -581,6 +581,7 @@ static bool svmo_mime_dump_context
 		if ( !sieve_opr_stringlist_dump(denv, address, "param-list") )
 			return FALSE;
 		sieve_code_ascend(denv);
+		break;
 	default:
 		return FALSE;
 	}
