@@ -12,6 +12,7 @@
 #include "message-date.h"
 #include "message-parser.h"
 #include "message-decoder.h"
+#include "message-header-decode.h"
 #include "mail-html2text.h"
 #include "mail-storage.h"
 #include "mail-user.h"
@@ -52,15 +53,17 @@ const char *sieve_message_get_new_id(const struct sieve_instance *svinst)
  * Message context
  */
 
-struct sieve_message_version {
-	struct mail *mail;
-	struct mailbox *box;
-	struct mailbox_transaction_context *trans;
-	struct edit_mail *edit_mail;
+struct sieve_message_header {
+	const char *name;
+
+	const unsigned char *value, *utf8_value;
+	size_t value_len, utf8_value_len;
 };
 
 struct sieve_message_part {
 	struct sieve_message_part *parent, *next, *children;
+
+	ARRAY(struct sieve_message_header) headers;
 
 	const char *content_type;
 	const char *content_disposition;
@@ -72,6 +75,13 @@ struct sieve_message_part {
 
 	unsigned int have_body:1; /* there's the empty end-of-headers line */
 	unsigned int epilogue:1;  /* this is a multipart epilogue */
+};
+
+struct sieve_message_version {
+	struct mail *mail;
+	struct mailbox *box;
+	struct mailbox_transaction_context *trans;
+	struct edit_mail *edit_mail;
 };
 
 struct sieve_message_context {
@@ -841,12 +851,28 @@ int sieve_message_get_header_fields
  * Message body
  */
 
+static void str_replace_nuls(string_t *str)
+{
+	char *data = str_c_modifiable(str);
+	unsigned int i, len = str_len(str);
+
+	for (i = 0; i < len; i++) {
+		if (data[i] == '\0')
+			data[i] = ' ';
+	}
+}
+
 static bool _is_wanted_content_type
 (const char * const *wanted_types, const char *content_type)
+ATTR_NULL(1)
 {
-	const char *subtype = strchr(content_type, '/');
+	const char *subtype;
 	size_t type_len;
 
+	if ( wanted_types == NULL )
+		return TRUE;
+
+	subtype = strchr(content_type, '/');
 	type_len = ( subtype == NULL ? strlen(content_type) :
 		(size_t)(subtype - content_type) );
 
@@ -1039,13 +1065,15 @@ _parse_content_disposition(const struct message_header_line *hdr)
 static int sieve_message_parts_add_missing
 (const struct sieve_runtime_env *renv,
 	const char *const *content_types,
-	bool extract_text)
+	bool extract_text, bool iter_all)
+	ATTR_NULL(2)
 {
 	struct sieve_message_context *msgctx = renv->msgctx;
 	pool_t pool = msgctx->context_pool;
 	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 	enum message_parser_flags mparser_flags =
 		MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS;
+	ARRAY(struct sieve_message_header) headers;
 	struct sieve_message_part *body_part, *header_part, *last_part;
 	struct message_parser_ctx *parser;
 	struct message_decoder_context *decoder;
@@ -1055,11 +1083,12 @@ static int sieve_message_parts_add_missing
 	struct istream *input;
 	unsigned int idx = 0;
 	bool save_body = FALSE, have_all;
+	string_t *hdr_content = NULL;
 	int ret;
 
 	/* First check whether any are missing */
-	if (sieve_message_body_get_return_parts
-		(renv, content_types, extract_text)) {
+	if ( !iter_all && sieve_message_body_get_return_parts
+		(renv, content_types, extract_text) ) {
 		/* Cache hit; all are present */
 		return SIEVE_EXEC_OK;
 	}
@@ -1077,6 +1106,13 @@ static int sieve_message_parts_add_missing
 	buf = buffer_create_dynamic(default_pool, 4096);
 	body_part = header_part = last_part = NULL;
 
+	if (iter_all) {
+		t_array_init(&headers, 64);
+		hdr_content = t_str_new(512);
+	} else {
+		memset(&headers, 0, sizeof(headers));
+	}
+
 	/* Initialize body decoder */
 	decoder = message_decoder_init(NULL, 0);
 
@@ -1088,6 +1124,9 @@ static int sieve_message_parts_add_missing
 	while ( (ret=message_parser_parse_next_block
 		(parser, &block)) > 0 ) {
 		struct sieve_message_part **body_part_idx;
+		struct message_header_line *hdr = block.hdr;
+		struct sieve_message_header *header;
+		unsigned char *data;
 
 		if ( block.part != prev_mpart ) {
 			bool message_rfc822 = FALSE;
@@ -1104,15 +1143,23 @@ static int sieve_message_parts_add_missing
 							(renv, buf, body_part, extract_text);
 					}
 				}
+				if ( iter_all && !array_is_created(&body_part->headers) &&
+					array_count(&headers) > 0 ) {
+					p_array_init(&body_part->headers, pool, array_count(&headers));
+					array_copy(&body_part->headers.arr, 0,
+						&headers.arr, 0, array_count(&headers));
+				}
 			}
 
 			/* Start processing next part */
 			body_part_idx = array_idx_modifiable
 				(&msgctx->cached_body_parts, idx);
-			if (*body_part_idx == NULL)
+			if ( *body_part_idx == NULL )
 				*body_part_idx = p_new(pool, struct sieve_message_part, 1);
 			body_part = *body_part_idx;
 			body_part->content_type = "text/plain";
+			if ( iter_all )
+				array_clear(&headers);
 
 			/* Copy tree structure */
 			if ( block.part->context != NULL ) {
@@ -1124,7 +1171,7 @@ static int sieve_message_parts_add_missing
 				body_part->content_type = epipart->content_type;
 				body_part->have_body = TRUE;
 				body_part->epilogue = TRUE;
-				save_body = _is_wanted_content_type
+				save_body = iter_all || _is_wanted_content_type
 					(content_types, body_part->content_type);
 
 			} else {
@@ -1171,8 +1218,12 @@ static int sieve_message_parts_add_missing
 			idx++;
 		}
 
-		if ( block.hdr != NULL || block.size == 0 ) {
-			bool is_ctype = FALSE;
+		if ( hdr != NULL || block.size == 0 ) {
+			enum {
+				_HDR_CONTENT_TYPE,
+				_HDR_CONTENT_DISPOSITION,
+				_HDR_OTHER
+			} hdr_field;
 
 			/* Reading headers */
 
@@ -1181,7 +1232,7 @@ static int sieve_message_parts_add_missing
 				(decoder, &block, &decoded);
 
 			/* Check for end of headers */
-			if ( block.hdr == NULL ) {
+			if ( hdr == NULL ) {
 				/* Save headers for message/rfc822 part */
 				if ( header_part != NULL ) {
 					sieve_message_part_save
@@ -1191,7 +1242,7 @@ static int sieve_message_parts_add_missing
 
 				/* Save bodies only if we have a wanted content-type */
 				i_assert( body_part != NULL );
-				save_body = _is_wanted_content_type
+				save_body = iter_all || _is_wanted_content_type
 					(content_types, body_part->content_type);
 				continue;
 			}
@@ -1199,47 +1250,101 @@ static int sieve_message_parts_add_missing
 			/* Encountered the empty line that indicates the end of the headers and
 			 * the start of the body
 			 */
-			if ( block.hdr->eoh ) {
+			if ( hdr->eoh ) {
 				i_assert( body_part != NULL );
 				body_part->have_body = TRUE;
+				continue;
 			} else if ( header_part != NULL ) {
 				/* Save message/rfc822 header as part content */
-				if ( block.hdr->continued ) {
-					buffer_append(buf, block.hdr->value, block.hdr->value_len);
+				if ( hdr->continued ) {
+					buffer_append(buf, hdr->value, hdr->value_len);
 				} else {
-					buffer_append(buf, block.hdr->name, block.hdr->name_len);
-					buffer_append(buf, block.hdr->middle, block.hdr->middle_len);
-					buffer_append(buf, block.hdr->value, block.hdr->value_len);
+					buffer_append(buf, hdr->name, hdr->name_len);
+					buffer_append(buf, hdr->middle, hdr->middle_len);
+					buffer_append(buf, hdr->value, hdr->value_len);
 				}
-				if ( !block.hdr->no_newline ) {
+				if ( !hdr->no_newline ) {
 					buffer_append(buf, "\r\n", 2);
 				}
 			}
 
-			/* We're interested in only the Content-Type: header */
-			if ( strcasecmp(block.hdr->name, "Content-Type" ) == 0 )
-				is_ctype = TRUE;
-			else if ( strcasecmp(block.hdr->name, "Content-Disposition" ) != 0 )
+			if ( strcasecmp(hdr->name, "Content-Type" ) == 0 )
+				hdr_field = _HDR_CONTENT_TYPE;
+			else if ( strcasecmp(hdr->name, "Content-Disposition" ) != 0 )
+				hdr_field = _HDR_CONTENT_DISPOSITION;
+			else if ( iter_all && !array_is_created(&body_part->headers) )
+				hdr_field = _HDR_OTHER;
+			else {
+				/* Not interested in this header */
 				continue;
+			}
 
 			/* Header can have folding whitespace. Acquire the full value before
 			 * continuing
 			 */
-			if ( block.hdr->continues ) {
-				block.hdr->use_full_value = TRUE;
+			if ( hdr->continues ) {
+				hdr->use_full_value = TRUE;
 				continue;
+			}
+
+			if ( iter_all && !array_is_created(&body_part->headers) ) {
+				/* Add header */
+				header = array_append_space(&headers);
+				header->name = p_strdup(pool, hdr->name);
+
+				// FIXME: trim header values
+	
+				/* Decode MIME encoded-words. */
+				str_truncate(hdr_content, 0);
+				message_header_decode_utf8
+					(hdr->full_value, hdr->full_value_len, hdr_content, NULL);
+				if ( hdr->full_value_len != str_len(hdr_content) ||
+					strncmp(str_c(hdr_content), (const char *)hdr->full_value,
+						hdr->full_value_len) != 0 ) {
+					if ( strlen(str_c(hdr_content)) != str_len(hdr_content) ) {
+						/* replace NULs with spaces */
+						str_replace_nuls(hdr_content);
+					}
+					/* store raw */
+					data = p_malloc(pool, hdr->full_value_len + 1);
+					data[hdr->full_value_len] = '\0';
+					header->value = memcpy(data,
+						hdr->full_value, hdr->full_value_len);
+					header->value_len = hdr->full_value_len;
+					/* store decoded */
+					data = p_malloc(pool, str_len(hdr_content) + 1);
+					data[str_len(hdr_content)] = '\0';
+					header->utf8_value = memcpy(data,
+						str_data(hdr_content), str_len(hdr_content));
+					header->utf8_value_len = str_len(hdr_content);
+				} else {
+					/* raw == decoded */
+					data = p_malloc(pool, hdr->full_value_len + 1);
+					data[hdr->full_value_len] = '\0';
+					header->value = header->utf8_value =
+						memcpy(data, hdr->full_value, hdr->full_value_len);
+					header->value_len = header->utf8_value_len =
+						hdr->full_value_len;
+				}
+
+				if ( hdr_field == _HDR_OTHER )
+					continue;
 			}
 
 			i_assert( body_part != NULL );
 
 			/* Parse the content type from the Content-type header */
 			T_BEGIN {
-				if ( is_ctype ) {
+				switch ( hdr_field ) {
+				case _HDR_CONTENT_TYPE:
 					body_part->content_type =
 						p_strdup(pool, _parse_content_type(block.hdr));
-				} else {
+				case _HDR_CONTENT_DISPOSITION:
 					body_part->content_disposition =
 						p_strdup(pool, _parse_content_disposition(block.hdr));
+					break;
+				default:
+					i_unreached();
 				}
 			} T_END;
 
@@ -1262,9 +1367,15 @@ static int sieve_message_parts_add_missing
 		sieve_message_part_save
 			(renv, buf, body_part, extract_text);
 	}
+	if ( iter_all && !array_is_created(&body_part->headers) &&
+		array_count(&headers) > 0 ) {
+		p_array_init(&body_part->headers, pool, array_count(&headers));
+		array_copy(&body_part->headers.arr, 0,
+			&headers.arr, 0, array_count(&headers));
+	}
 
 	/* Try to fill the return_body_parts array once more */
-	have_all = sieve_message_body_get_return_parts
+	have_all = iter_all || sieve_message_body_get_return_parts
 		(renv, content_types, extract_text);
 
 	/* This time, failure is a bug */
@@ -1297,7 +1408,7 @@ int sieve_message_body_get_content
 	T_BEGIN {
 		/* Fill the return_body_parts array */
 		status = sieve_message_parts_add_missing
-			(renv, content_types, FALSE);
+			(renv, content_types, FALSE, FALSE);
 	} T_END;
 
 	/* Check status */
@@ -1331,7 +1442,7 @@ int sieve_message_body_get_text
 	T_BEGIN {
 		/* Fill the return_body_parts array */
 		status = sieve_message_parts_add_missing
-			(renv, _text_content_types, TRUE);
+			(renv, _text_content_types, TRUE, FALSE);
 	} T_END;
 
 	/* Check status */
@@ -1411,3 +1522,267 @@ int sieve_message_body_get_raw
 	return SIEVE_EXEC_OK;
 }
 
+/*
+ * Message part iterator
+ */
+
+int sieve_message_part_iter_init
+(struct sieve_message_part_iter *iter,
+	const struct sieve_runtime_env *renv)
+{
+	struct sieve_message_context *msgctx = renv->msgctx;
+	struct sieve_message_part *const *parts;
+	unsigned int count;
+	int status;
+
+	T_BEGIN {
+		/* Fill the return_body_parts array */
+		status = sieve_message_parts_add_missing
+			(renv, NULL, TRUE, TRUE);
+	} T_END;
+
+	/* Check status */
+	if ( status <= 0 )
+		return status;
+
+	memset(iter, 0, sizeof(*iter));
+	iter->renv = renv;
+	iter->index = 0;
+
+	parts = array_get(&msgctx->cached_body_parts, &count);
+	if (count == 0)
+		iter->root = NULL;
+	else
+		iter->root = parts[0];
+
+	return SIEVE_EXEC_OK;
+}
+
+void sieve_message_part_iter_children(struct sieve_message_part_iter *iter,
+	struct sieve_message_part_iter *child)
+{
+	const struct sieve_runtime_env *renv = iter->renv;
+	struct sieve_message_context *msgctx = renv->msgctx;
+	struct sieve_message_part *const *parts;
+	unsigned int count;
+
+	*child = *iter;
+
+	parts = array_get(&msgctx->cached_body_parts, &count);	
+	if ( child->index >= count || parts[child->index]->children == NULL)
+		child->root = NULL;
+	else	
+		child->root = parts[child->index++];
+}
+
+struct sieve_message_part *sieve_message_part_iter_current
+(struct sieve_message_part_iter *iter)
+{
+	const struct sieve_runtime_env *renv = iter->renv;
+	struct sieve_message_context *msgctx = renv->msgctx;
+	struct sieve_message_part *const *parts;
+	unsigned int count;
+
+	if ( iter->root == NULL )
+		return NULL;
+
+	parts = array_get(&msgctx->cached_body_parts, &count);
+	if ( iter->index >= count )
+		return NULL;
+	do {
+		if ( parts[iter->index] == iter->root->next ||
+			parts[iter->index] == iter->root->parent ) {
+			return NULL;
+		}
+	} while ( parts[iter->index]->epilogue && ++iter->index < count );
+	if ( iter->index >= count )
+		return NULL;
+	return parts[iter->index];
+}
+
+struct sieve_message_part *sieve_message_part_iter_next
+(struct sieve_message_part_iter *iter)
+{
+	const struct sieve_runtime_env *renv = iter->renv;
+	struct sieve_message_context *msgctx = renv->msgctx;
+
+	if ( iter->index >= array_count(&msgctx->cached_body_parts) )
+		return NULL;
+	iter->index++;
+
+	return sieve_message_part_iter_current(iter);
+}
+
+/*
+ * MIME header list
+ */
+
+/* Forward declarations */
+
+static int sieve_mime_header_list_next_item
+	(struct sieve_header_list *_hdrlist, const char **name_r,
+		string_t **value_r);
+static int sieve_mime_header_list_next_value
+	(struct sieve_stringlist *_strlist, string_t **value_r);
+static void sieve_mime_header_list_reset
+	(struct sieve_stringlist *_strlist);
+
+/* Header list object */
+
+struct sieve_mime_header_list {
+	struct sieve_header_list hdrlist;
+
+	struct sieve_stringlist *field_names;
+
+	struct sieve_message_part_iter *part_iter, child_iter;
+
+	const char *header_name;
+	const struct sieve_message_header *headers;
+	unsigned int headers_index, headers_count;
+
+	unsigned int mime_decode:1;
+	unsigned int children;
+};
+
+struct sieve_header_list *sieve_mime_header_list_create
+(const struct sieve_runtime_env *renv,
+	struct sieve_stringlist *field_names,
+	struct sieve_message_part_iter *part_iter,
+	bool mime_decode, bool children)
+{
+	struct sieve_mime_header_list *hdrlist;
+
+	hdrlist = t_new(struct sieve_mime_header_list, 1);
+	hdrlist->hdrlist.strlist.runenv = renv;
+	hdrlist->hdrlist.strlist.exec_status = SIEVE_EXEC_OK;
+	hdrlist->hdrlist.strlist.next_item = sieve_mime_header_list_next_value;
+	hdrlist->hdrlist.strlist.reset = sieve_mime_header_list_reset;
+	hdrlist->hdrlist.next_item = sieve_mime_header_list_next_item;
+	hdrlist->field_names = field_names;
+	hdrlist->part_iter = part_iter;
+	hdrlist->mime_decode = mime_decode;
+	hdrlist->children = children;
+
+	return &hdrlist->hdrlist;
+}
+
+/* MIME list implementation */
+
+static void sieve_mime_header_list_next_name
+(struct sieve_mime_header_list *hdrlist)
+{
+	struct sieve_message_part *mpart;
+
+	if ( hdrlist->children ) {
+		sieve_message_part_iter_children
+			(hdrlist->part_iter, &hdrlist->child_iter);
+	}
+
+	mpart = sieve_message_part_iter_current(hdrlist->part_iter);
+
+	if ( mpart != NULL && array_is_created(&mpart->headers) ) {
+		hdrlist->headers = array_get
+			(&mpart->headers, &hdrlist->headers_count);
+		hdrlist->headers_index = 0;
+	}
+}
+
+static int sieve_mime_header_list_next_item
+(struct sieve_header_list *_hdrlist, const char **name_r,
+	string_t **value_r)
+{
+	struct sieve_mime_header_list *hdrlist =
+		(struct sieve_mime_header_list *) _hdrlist;
+	const struct sieve_runtime_env *renv = _hdrlist->strlist.runenv;
+
+	if ( name_r != NULL )
+		*name_r = NULL;
+	*value_r = NULL;
+
+	for (;;) {
+		/* Check for end of current header list */
+		if ( hdrlist->headers_count == 0 ||
+			hdrlist->headers_index >= hdrlist->headers_count ) {
+			hdrlist->headers_count = 0;
+			hdrlist->headers_index = 0;
+			hdrlist->headers = NULL;
+		}
+
+		/* Fetch more headers */
+		while ( hdrlist->headers_count == 0 ) {
+			string_t *hdr_item = NULL;
+			int ret;
+
+			if ( hdrlist->header_name != NULL && hdrlist->children ) {
+				struct sieve_message_part *mpart;
+
+				mpart = sieve_message_part_iter_next(&hdrlist->child_iter);
+				if ( mpart != NULL && array_is_created(&mpart->headers) ) {
+					hdrlist->headers = array_get
+						(&mpart->headers, &hdrlist->headers_count);
+					hdrlist->headers_index = 0;
+				}
+				if ( hdrlist->headers_count > 0 )
+					break;
+			}
+
+			/* Read next header name from source list */
+			if ( (ret=sieve_stringlist_next_item
+				(hdrlist->field_names, &hdr_item)) <= 0 )
+				return ret;
+
+			hdrlist->header_name = str_c(hdr_item);
+
+			if ( _hdrlist->strlist.trace ) {
+				sieve_runtime_trace(renv, 0,
+					"extracting `%s' headers from message",
+					str_sanitize(str_c(hdr_item), 80));
+			}
+
+			sieve_mime_header_list_next_name(hdrlist);
+		}
+
+		for ( ; hdrlist->headers_index < hdrlist->headers_count;
+			hdrlist->headers_index++ ) {
+			const struct sieve_message_header *header =
+				&hdrlist->headers[hdrlist->headers_index];
+
+			if ( strcasecmp(header->name, hdrlist->header_name) == 0 ) {
+				if ( name_r != NULL )
+					*name_r = hdrlist->header_name;
+				if ( hdrlist->mime_decode ) {
+					*value_r = t_str_new_const
+						((const char *)header->utf8_value, header->utf8_value_len);
+				} else {
+					*value_r = t_str_new_const
+						((const char *)header->value, header->value_len);
+				}
+				hdrlist->headers_index++;
+				return 1;
+			}
+		}
+	}
+	
+	i_unreached();	
+	return -1;
+}
+
+static int sieve_mime_header_list_next_value
+(struct sieve_stringlist *_strlist, string_t **value_r)
+{
+	struct sieve_header_list *hdrlist =
+		(struct sieve_header_list *) _strlist;
+
+	return sieve_mime_header_list_next_item
+		(hdrlist, NULL, value_r);
+}
+
+static void sieve_mime_header_list_reset
+(struct sieve_stringlist *strlist)
+{
+	struct sieve_mime_header_list *hdrlist =
+		(struct sieve_mime_header_list *) strlist;
+
+	sieve_stringlist_reset(hdrlist->field_names);
+	hdrlist->header_name = NULL;
+}

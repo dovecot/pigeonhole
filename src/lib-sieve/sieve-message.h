@@ -226,5 +226,35 @@ int sieve_message_body_get_raw
 	(const struct sieve_runtime_env *renv,
 		struct sieve_message_part_data **parts_r);
 
+/*
+ * Message part iterator
+ */
+
+struct sieve_message_part_iter {
+	const struct sieve_runtime_env *renv;
+	struct sieve_message_part *root;
+	unsigned int index;
+};
+
+int sieve_message_part_iter_init
+(struct sieve_message_part_iter *iter,
+	const struct sieve_runtime_env *renv);
+void sieve_message_part_iter_children(struct sieve_message_part_iter *iter,
+	struct sieve_message_part_iter *child);
+
+struct sieve_message_part *sieve_message_part_iter_current
+(struct sieve_message_part_iter *iter);
+struct sieve_message_part *sieve_message_part_iter_next
+(struct sieve_message_part_iter *iter);
+
+/*
+ * MIME header list
+ */
+
+struct sieve_header_list *sieve_mime_header_list_create
+(const struct sieve_runtime_env *renv,
+	struct sieve_stringlist *field_names,
+	struct sieve_message_part_iter *part_iter,
+	bool mime_decode, bool children);
 
 #endif /* __SIEVE_MESSAGE_H */
