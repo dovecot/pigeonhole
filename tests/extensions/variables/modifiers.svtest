@@ -70,7 +70,15 @@ test "Modifiers :lowerfirst :upper" {
 	}
 }
 
-test "Modifier :length" {
+test "Modifier :length (empty)" {
+	set :length "test" "";
+
+	if not string :is "${test}" "0" {
+		test_fail "modified variable assignment failed";
+	}
+}
+
+test "Modifier :length (simple)" {
 	set :length "test" "VaLuE";
 
 	if not string :is "${test}" "5" {

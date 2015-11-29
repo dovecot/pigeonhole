@@ -326,26 +326,24 @@ static int cmd_set_operation_execute
 			break;
 		}
 
-		if ( str_len(value) > 0 ) {
-			if ( modf.def != NULL && modf.def->modify != NULL ) {
-				if ( !modf.def->modify(value, &new_value) ) {
-					value = NULL;
-					ret = SIEVE_EXEC_FAILURE;
-					break;
-				}
-
-				sieve_runtime_trace_here
-					(renv, SIEVE_TRLVL_COMMANDS, "modify :%s \"%s\" => \"%s\"",
-						sieve_variables_modifier_name(&modf), str_c(value), str_c(new_value));
-
-				value = new_value;
-				if ( value == NULL )
-					break;
-
-				/* Hold value within limits */
-				if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
-					str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+		if ( modf.def != NULL && modf.def->modify != NULL ) {
+			if ( !modf.def->modify(value, &new_value) ) {
+				value = NULL;
+				ret = SIEVE_EXEC_FAILURE;
+				break;
 			}
+
+			sieve_runtime_trace_here
+				(renv, SIEVE_TRLVL_COMMANDS, "modify :%s \"%s\" => \"%s\"",
+					sieve_variables_modifier_name(&modf), str_c(value), str_c(new_value));
+
+			value = new_value;
+			if ( value == NULL )
+				break;
+
+			/* Hold value within limits */
+			if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
+				str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
 		}
 	}
 

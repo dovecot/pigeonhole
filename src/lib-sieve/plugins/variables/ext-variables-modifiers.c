@@ -190,6 +190,11 @@ bool mod_upperfirst_modify(string_t *in, string_t **result)
 {
 	char *content;
 
+	if ( str_len(in) == 0 ) {
+		*result = in;
+		return TRUE;
+	}
+
 	*result = t_str_new(str_len(in));
 	str_append_str(*result, in);
 
@@ -202,6 +207,11 @@ bool mod_upperfirst_modify(string_t *in, string_t **result)
 bool mod_lowerfirst_modify(string_t *in, string_t **result)
 {
 	char *content;
+
+	if ( str_len(in) == 0 ) {
+		*result = in;
+		return TRUE;
+	}
 
 	*result = t_str_new(str_len(in));
 	str_append_str(*result, in);
@@ -216,6 +226,11 @@ bool mod_upper_modify(string_t *in, string_t **result)
 {
 	char *content;
 
+	if ( str_len(in) == 0 ) {
+		*result = in;
+		return TRUE;
+	}
+
 	*result = t_str_new(str_len(in));
 	str_append_str(*result, in);
 
@@ -228,6 +243,11 @@ bool mod_upper_modify(string_t *in, string_t **result)
 bool mod_lower_modify(string_t *in, string_t **result)
 {
 	char *content;
+
+	if ( str_len(in) == 0 ) {
+		*result = in;
+		return TRUE;
+	}
 
 	*result = t_str_new(str_len(in));
 	str_append_str(*result, in);
@@ -250,6 +270,11 @@ bool mod_quotewildcard_modify(string_t *in, string_t **result)
 {
 	unsigned int i;
 	const char *content;
+
+	if ( str_len(in) == 0 ) {
+		*result = in;
+		return TRUE;
+	}
 
 	*result = t_str_new(str_len(in) * 2);
 	content = (const char *) str_data(in);

@@ -67,6 +67,11 @@ bool mod_encodeurl_modify(string_t *in, string_t **result)
 	unsigned int i;
 	const unsigned char *c;
 
+	if ( str_len(in) == 0 ) {
+		*result = in;
+		return TRUE;
+	}
+
 	*result = t_str_new(2*str_len(in));
 	c = str_data(in);
 
