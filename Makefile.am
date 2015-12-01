@@ -33,7 +33,7 @@ ChangeLog: .hg/dirstate
 	hg log --style=changelog > ChangeLog
 endif
 
-aclocal_DATA = pigeonhole.m4
+dist_aclocal_DATA = pigeonhole.m4
 
 pigeonhole-version.h: noop
 	$(SHELL) $(top_srcdir)/update-version.sh $(top_srcdir) $(top_builddir)
