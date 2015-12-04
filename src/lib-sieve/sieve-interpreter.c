@@ -56,6 +56,7 @@ struct sieve_interpreter_loop {
 
 struct sieve_interpreter {
 	pool_t pool;
+	struct sieve_interpreter *parent;
 
 	/* Runtime data for extensions */
 	ARRAY(struct sieve_interpreter_extension_reg) extensions;
@@ -107,6 +108,7 @@ static struct sieve_interpreter *_sieve_interpreter_create
 
 	pool = pool_alloconly_create("sieve_interpreter", 4096);
 	interp = p_new(pool, struct sieve_interpreter, 1);
+	interp->parent = parent;
 	interp->pool = pool;
 
 	interp->runenv.ehandler = ehandler;
@@ -295,6 +297,12 @@ void sieve_interpreter_free(struct sieve_interpreter **_interp)
 pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
 {
 	return interp->pool;
+}
+
+struct sieve_interpreter *
+sieve_interpreter_get_parent(struct sieve_interpreter *interp)
+{
+	return interp->parent;
 }
 
 struct sieve_script *sieve_interpreter_script
@@ -687,7 +695,7 @@ sieve_interpreter_loop_break_out(struct sieve_interpreter *interp,
 	return sieve_interpreter_loop_break(interp, &loops[i]);
 }
 
-struct sieve_interpreter_loop *sieve_interpreter_loop_get_surrounding
+struct sieve_interpreter_loop *sieve_interpreter_loop_get_local
 (struct sieve_interpreter *interp,
 	struct sieve_interpreter_loop *loop,
 	const struct sieve_extension_def *ext_def)
@@ -704,6 +712,23 @@ struct sieve_interpreter_loop *sieve_interpreter_loop_get_surrounding
 	for ( i = (loop == NULL ? count : loop->level); i > 0; i-- ) {
 		if ( ext_def == NULL || loops[i-1].ext_def == ext_def )
 			return &loops[i-1];
+	}
+	return NULL;
+}
+
+struct sieve_interpreter_loop *sieve_interpreter_loop_get_global
+(struct sieve_interpreter *interp,
+	struct sieve_interpreter_loop *loop,
+	const struct sieve_extension_def *ext_def)
+{
+	struct sieve_interpreter_loop *result;
+
+	while (interp != NULL) {
+		result = sieve_interpreter_loop_get_local
+			(interp, loop, ext_def);
+		if (result != NULL)
+			return result;
+		interp = interp->parent;
 	}
 	return NULL;
 }

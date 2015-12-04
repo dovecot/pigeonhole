@@ -63,6 +63,62 @@ test "Limits" {
 	}
 }
 
+test_set "message" text:
+From: Whomever <whoever@example.com>
+To: Someone <someone@example.com>
+Date: Sat, 10 Oct 2009 00:30:04 +0200
+Subject: whatever
+Content-Type: multipart/mixed; boundary=AA
+
+This is a multi-part message in MIME format.
+
+--AA
+Content-Type: multipart/alternative; boundary=BB
+
+This is a multi-part message in MIME format.
+
+--BB
+Content-Type: multipart/alternative; boundary=CC
+
+This is a multi-part message in MIME format.
+
+--CC
+Content-Type: multipart/alternative; boundary=DD
+
+This is a multi-part message in MIME format.
+
+--DD
+Content-Type: multipart/alternative; boundary=EE
+
+This is a nested multi-part message in MIME format.
+
+--EE
+Content-Type: text/plain; charset="us-ascii"
+
+Hello
+
+--EE--
+
+This is the end of the inner MIME multipart.
+
+--DD--
+
+This is the end of the MIME multipart.
+
+--CC--
+
+This is the end of the MIME multipart.
+
+--BB--
+
+This is the end of the MIME multipart.
+
+--AA--
+
+This is the end of the MIME multipart.
+.
+;
+
 test "Limits - include" {
 	if not test_script_compile "errors/limits-include.sieve" {
 		test_fail "script compile failed";

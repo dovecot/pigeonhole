@@ -13,7 +13,7 @@ ext_foreverypart_runtime_loop_get_current
 	struct sieve_interpreter_loop *loop;
 	struct ext_foreverypart_runtime_loop *fploop;
 
-	loop = sieve_interpreter_loop_get_surrounding
+	loop = sieve_interpreter_loop_get_global
 		(renv->interp, NULL, &foreverypart_extension);
 	if ( loop == NULL ) {
 		fploop = NULL;

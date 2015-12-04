@@ -40,6 +40,8 @@ void sieve_interpreter_free(struct sieve_interpreter **_interp);
 
 pool_t sieve_interpreter_pool
 	(struct sieve_interpreter *interp);
+struct sieve_interpreter *
+sieve_interpreter_get_parent(struct sieve_interpreter *interp);
 struct sieve_script *sieve_interpreter_script
 	(struct sieve_interpreter *interp);
 struct sieve_error_handler *sieve_interpreter_get_error_handler
@@ -74,7 +76,11 @@ int sieve_interpreter_loop_break
 	(struct sieve_interpreter *interp,
 		struct sieve_interpreter_loop *loop);
 
-struct sieve_interpreter_loop *sieve_interpreter_loop_get_surrounding
+struct sieve_interpreter_loop *sieve_interpreter_loop_get_local
+(struct sieve_interpreter *interp,
+	struct sieve_interpreter_loop *loop,
+	const struct sieve_extension_def *ext_def) ATTR_NULL(2, 3);
+struct sieve_interpreter_loop *sieve_interpreter_loop_get_global
 (struct sieve_interpreter *interp,
 	struct sieve_interpreter_loop *loop,
 	const struct sieve_extension_def *ext_def) ATTR_NULL(2, 3);

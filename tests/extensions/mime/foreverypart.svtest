@@ -3,6 +3,7 @@ require "relational";
 require "foreverypart";
 require "mime";
 require "variables";
+require "include";
 
 test_set "message" text:
 From: Hendrik <hendrik@example.com>
@@ -135,6 +136,48 @@ test "Double loop" {
 		}
 	}
 }
+
+test "Double loop - include" {
+	global "in";
+	global "error";
+	set "in" "a";
+	foreverypart {
+		set :length "la" "${in}";
+
+		if string "${in}" "in" {
+			if not header :mime "X-Test" "AA" {
+				test_fail "wrong header extracted (${la})";
+			}
+		} elsif string "${in}" "aaaaaa" {
+			if not header :mime "X-Test" "BB" {
+				test_fail "wrong header extracted (${la})";
+			}
+		} elsif string "${in}" "aaaaaaaaa" {
+			if not header :mime "X-Test" "CC" {
+				test_fail "wrong header extracted (${la})";
+			}
+		} elsif string "${in}" "aaaaaaaaaa" {
+			if not header :mime "X-Test" "DD" {
+				test_fail "wrong header extracted (${la})";
+			}
+		} elsif string "${in}" "aaaaaaaaaaa" {
+			if not header :mime "X-Test" "EE" {
+				test_fail "wrong header extracted (${la})";
+			}
+		}
+
+		set "in" "a${in}";
+
+		include "include-foreverypart";
+
+		if not string "${error}" "" {
+			test_fail "INCLUDED: ${error}";
+		}
+	}
+}
+
+
+
 
 
 
