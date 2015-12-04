@@ -317,6 +317,8 @@ static int cmd_foreverypart_begin_operation_execute
 		sieve_interpreter_loop_set_context(loop, (void*)fploop);
 	} else {
 		/* No children parts to iterate */
+		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+			"no children at this level");
 		sieve_interpreter_loop_break(renv->interp, loop);
 	} 
 	return SIEVE_EXEC_OK;
