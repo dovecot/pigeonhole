@@ -1,3 +1,30 @@
+v0.4.10 xx-12-2015 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Implemented the Sieve mime and foreverypart extensions (RFC 5703). These
+	  are fully implemented. The interaction with the editheader extension needs
+	  some work, but this should not influence most uses; i.e., changes by the
+	  editheader extension are not always visible using foreverypart/mime.
+	+ Sieve body extension: Properly implemented the `:text' body transform. It
+	  now extracts text for HTML message parts.
+	+ Sieve enotify extension: mailto method: Implemented the
+	  sieve_notify_mailto_envelope_from setting. This allows configuring the
+	  source of the notification sender address for e-mail notifications. This is
+	  similar to what already can be configured for redirect.
+	+ Added a sieve_enabled (defaults to 'yes') setting that allows explicitly
+	  disabling Sieve processing for particular users. This used to be possible by
+	  setting `sieve=', but ever since the sieve_before, sieve_after and
+	  sieve_default settings were added, this method was not reliable anymore.
+	- variables extension: Fixed handling of empty string by the `:length' set
+	  modifier. An empty string yielded an empty string rather than "0".
+	- Fixed memory leak in the Sieve script byte code dumping facility. Extension
+	  contexts were never actually freed.
+	- Fixed handling of implicit keep when the last Sieve script is a global one.
+	  In that case the implicit keep action was executed in global context, which
+	  could mean that trivial (quota) errors ended up in the system log file,
+	  rather than the user log file.
+	- doveadm sieve plugin: Fixed crashes caused by incorrect context allocation
+	  in the sieve command implementations.
+
 v0.4.9 04-10-2015 Stephan Bosch <stephan@rename-it.nl>
 
 	* Properly implemented checking of ABI version for Sieve interpreter plugins,
