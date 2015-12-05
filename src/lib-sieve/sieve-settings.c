@@ -10,6 +10,29 @@
 
 #include <ctype.h>
 
+// FIXME: move to Dovecot
+static const char *pg_t_str_trim(const char *str, const char *chars)
+{
+	const char *p, *pend, *begin;
+
+	pend = str + strlen(str);
+	if (pend == str)
+		return "";
+
+	p = str;
+	while (p < pend && strchr(chars, *p) != NULL)
+		p++;
+	begin = p;
+
+	p = pend - 1;
+	while (p > begin && strchr(chars, *p) != NULL)
+			p--;
+
+	if (p <= begin)
+		return "";
+	return t_strdup_until(begin, p+1);
+}
+
 /*
  * Access to settings
  */
@@ -120,7 +143,7 @@ bool sieve_setting_get_bool_value
 	if ( str_value == NULL )
 		return FALSE;
 
-	str_value = t_str_trim(str_value, "\t ");
+	str_value = pg_t_str_trim(str_value, "\t ");
 	if ( *str_value == '\0' )
 		return FALSE;
 
@@ -152,7 +175,7 @@ bool sieve_setting_get_duration_value
 	if ( str_value == NULL )
 		return FALSE;
 
-	str_value = t_str_trim(str_value, "\t ");
+	str_value = pg_t_str_trim(str_value, "\t ");
 	if ( *str_value == '\0' )
 		return FALSE;
 
@@ -205,7 +228,7 @@ bool sieve_setting_get_mail_sender_value
 	if ( str_value == NULL )
 		return FALSE;
 
-	str_value = t_str_trim(str_value, "\t ");
+	str_value = pg_t_str_trim(str_value, "\t ");
 	str_value = t_str_lcase(str_value);
 	set_len = strlen(str_value);
 	if ( set_len > 0 ) {
@@ -222,7 +245,7 @@ bool sieve_setting_get_mail_sender_value
 		} else if ( str_value[0] == '<' &&	str_value[set_len-1] == '>') {
 			sender->source = SIEVE_MAIL_SENDER_SOURCE_EXPLICIT;
 
-			str_value = t_str_trim(t_strndup(str_value+1, set_len-2), "\t ");
+			str_value = pg_t_str_trim(t_strndup(str_value+1, set_len-2), "\t ");
 			sender->address = NULL;
 			if ( *str_value != '\0' )
 				sender->address = p_strdup(pool, str_value);
