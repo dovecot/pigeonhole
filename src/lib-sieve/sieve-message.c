@@ -1208,8 +1208,9 @@ static int sieve_message_parts_add_missing
 			 */
 			if ( message_rfc822 ) {
 				i_assert(idx > 0);
-				header_part = *array_idx
+				body_part_idx = array_idx_modifiable
 					(&msgctx->cached_body_parts, idx-1);
+				header_part = *body_part_idx;
 			} else {
 				header_part = NULL;
 			}
