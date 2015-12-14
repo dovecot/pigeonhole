@@ -174,13 +174,11 @@ struct lda_sieve_run_context {
 
 static int lda_sieve_get_personal_storage
 (struct sieve_instance *svinst, struct mail_user *user,
-	struct sieve_storage **storage_r)
+	struct sieve_storage **storage_r, enum sieve_error *error_r)
 {
-	enum sieve_error error;
-
-	*storage_r = sieve_storage_create_main(svinst, user, 0, &error);
+	*storage_r = sieve_storage_create_main(svinst, user, 0, error_r);
 	if (*storage_r == NULL) {
-		switch (error) {
+		switch (*error_r) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
 		case SIEVE_ERROR_NOT_FOUND:
 			break;
@@ -639,7 +637,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	/* Find the personal script to execute */
 
 	ret = lda_sieve_get_personal_storage
-		(svinst, mdctx->dest_user, &main_storage);
+		(svinst, mdctx->dest_user, &main_storage, &error);
 	if ( ret == 0 && error == SIEVE_ERROR_NOT_POSSIBLE )
 		return 0;
 	if ( ret > 0 ) {
