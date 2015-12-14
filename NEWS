@@ -1,4 +1,4 @@
-v0.4.10 xx-12-2015 Stephan Bosch <stephan@rename-it.nl>
+v0.4.10 13-12-2015 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Implemented the Sieve mime and foreverypart extensions (RFC 5703). These
 	  are fully implemented. The interaction with the editheader extension needs
