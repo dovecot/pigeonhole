@@ -566,7 +566,6 @@ static int lda_sieve_multiscript_execute
 		sieve_error_handler_unref(&action_ehandler);
 
 		if ( !more ) {
-			sieve_error_handler_unref(&action_ehandler);
 			if ( sieve_multiscript_status(mscript) == SIEVE_EXEC_BIN_CORRUPT &&
 				sieve_is_loaded(sbin) ) {
 				/* Close corrupt script */
