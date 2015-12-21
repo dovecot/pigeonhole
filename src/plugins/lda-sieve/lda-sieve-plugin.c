@@ -601,8 +601,10 @@ static int lda_sieve_multiscript_execute
 	}
 
 	/* Finish execution */
+	exec_ehandler = (srctx->user_ehandler != NULL ?
+		srctx->user_ehandler : srctx->master_ehandler);
 	action_ehandler = lda_sieve_log_ehandler_create
-		(srctx->user_ehandler, mdctx);
+		(exec_ehandler, mdctx);
 	if ( compile_error && error == SIEVE_ERROR_TEMP_FAILURE )
 		ret = sieve_multiscript_tempfail(&mscript, action_ehandler);
 	else
