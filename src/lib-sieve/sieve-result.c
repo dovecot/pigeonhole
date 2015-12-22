@@ -1371,6 +1371,8 @@ int sieve_result_execute
 			switch ((ret=_sieve_result_implicit_keep
 				(result, ( status != SIEVE_EXEC_OK ))) ) {
 			case SIEVE_EXEC_OK:
+				if ( result_status == SIEVE_EXEC_TEMP_FAILURE )
+					result_status = SIEVE_EXEC_FAILURE;
 				break;
 			case SIEVE_EXEC_TEMP_FAILURE:
 				if (!result->executed) {
