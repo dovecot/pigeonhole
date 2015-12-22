@@ -636,13 +636,20 @@ static void act_store_log_status
 		errstr = trans->error;
 		error_code = trans->error_code;
 
-		if ( error_code == MAIL_ERROR_NOTFOUND ||
+		if ( error_code == MAIL_ERROR_NOQUOTA ) {
+			/* Never log quota problems as error in global log */
+			sieve_result_global_log_error(aenv,
+				"failed to store into mailbox %s: %s",
+				mailbox_name, errstr);
+		} else if ( error_code == MAIL_ERROR_NOTFOUND ||
 			error_code == MAIL_ERROR_PARAMS ||
-			error_code == MAIL_ERROR_NOQUOTA ) {
-			sieve_result_error(aenv, "failed to store into mailbox %s: %s",
+			error_code == MAIL_ERROR_PERM ) {
+			sieve_result_error(aenv,
+				"failed to store into mailbox %s: %s",
 				mailbox_name, errstr);
 		} else {
-			sieve_result_global_error(aenv, "failed to store into mailbox %s: %s",
+			sieve_result_global_error(aenv,
+				"failed to store into mailbox %s: %s",
 				mailbox_name, errstr);
 		}
 
