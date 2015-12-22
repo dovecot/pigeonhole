@@ -96,9 +96,9 @@ void sieve_direct_verror
 				}
 			}
 			va_end(args_copy);
+			if (svinst->system_ehandler == ehandler)
+				return;
 		}
-		if (svinst->system_ehandler == ehandler)
-			return;
 	}
 
 	if ( ehandler == NULL )
@@ -138,9 +138,9 @@ void sieve_direct_vwarning
 				}
 			}
 			va_end(args_copy);
+			if (svinst->system_ehandler == ehandler)
+				return;
 		}
-		if (svinst->system_ehandler == ehandler)
-			return;
 	}
 
 	if ( ehandler == NULL )
