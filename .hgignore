@@ -6,6 +6,7 @@ config.guess
 dummy-config.h
 dummy-config.h.in
 pigeonhole-config.h
+compile
 config.log
 config.status
 config.sub
