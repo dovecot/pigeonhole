@@ -1499,6 +1499,10 @@ int sieve_message_body_get_raw
 				i_stream_get_error(input));
 			return SIEVE_EXEC_TEMP_FAILURE;
 		}
+
+		/* Add terminating NUL to the body part buffer */
+		buffer_append_c(buf, '\0');
+
 	} else {
 		buf = msgctx->raw_body;
 	}
@@ -1506,14 +1510,16 @@ int sieve_message_body_get_raw
 	/* Clear result array */
 	array_clear(&msgctx->return_body_parts);
 
-	if ( buf->used > 0  ) {
-		/* Add terminating NUL to the body part buffer */
-		buffer_append_c(buf, '\0');
+	if ( buf->used > 1  ) {
+		const char *data = (const char *)buf->data;
+		size_t size = buf->used - 1;
+
+		i_assert( data[size] == '\0' );
 
 		/* Add single item to the result */
 		return_part = array_append_space(&msgctx->return_body_parts);
-		return_part->content = buf->data;
-		return_part->size = buf->used - 1;
+		return_part->content = data;
+		return_part->size = size;
 	}
 
 	/* Return the array of body items */
