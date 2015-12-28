@@ -1078,15 +1078,16 @@ sieve_size_t sieve_operation_emit
 	sieve_size_t address;
 
   if ( ext != NULL ) {
+		i_assert( op_def->ext_def != NULL );
 		address = sieve_binary_emit_extension
 			(sblock, ext, sieve_operation_count);
 
 		sieve_binary_emit_extension_object
 			(sblock, &op_def->ext_def->operations, op_def->code);
-
 		return address;
   }
 
+	i_assert( op_def->ext_def == NULL );
   return sieve_binary_emit_byte(sblock, op_def->code);
 }
 
