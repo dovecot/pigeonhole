@@ -969,10 +969,8 @@ static void sieve_message_part_save
 	char *part_data;
 	size_t part_size;
 
-	/* Add terminating NUL to the body part buffer */
-	buffer_append_c(buf, '\0');
+	/* Extract text if requested */
 	result_buf = buf;
-
 	if ( extract_text ) {
 		if ( mail_html2text_content_type_match
 			(body_part->content_type) ) {
@@ -984,15 +982,20 @@ static void sieve_message_part_save
 			html2text = mail_html2text_init(0);
 			mail_html2text_more(html2text, buf->data, buf->used, text_buf);
 			mail_html2text_deinit(&html2text);
-	
+
 			result_buf = text_buf;
 		}
 	}
 
+	/* Add terminating NUL to the body part buffer */
+	buffer_append_c(result_buf, '\0');
+
+	/* Make copy of the buffer */
 	part_data = p_malloc(pool, result_buf->used);
 	memcpy(part_data, result_buf->data, result_buf->used);
 	part_size = result_buf->used - 1;
 
+	/* Free text buffer if used */
 	if ( text_buf != NULL)
 		buffer_free(&text_buf);
 
