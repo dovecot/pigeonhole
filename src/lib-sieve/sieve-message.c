@@ -971,7 +971,9 @@ static void sieve_message_part_save
 
 	/* Extract text if requested */
 	result_buf = buf;
-	if ( extract_text ) {
+	if ( extract_text && body_part->children == NULL &&
+		!body_part->epilogue ) {
+
 		if ( mail_html2text_content_type_match
 			(body_part->content_type) ) {
 			struct mail_html2text *html2text;
@@ -1240,7 +1242,7 @@ static int sieve_message_parts_add_missing
 				/* Save headers for message/rfc822 part */
 				if ( header_part != NULL ) {
 					sieve_message_part_save
-						(renv, buf, header_part, extract_text);
+						(renv, buf, header_part, FALSE);
 					header_part = NULL;
 				}
 
