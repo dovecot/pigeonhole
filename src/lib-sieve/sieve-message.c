@@ -1345,6 +1345,7 @@ static int sieve_message_parts_add_missing
 				case _HDR_CONTENT_TYPE:
 					body_part->content_type =
 						p_strdup(pool, _parse_content_type(block.hdr));
+					break;
 				case _HDR_CONTENT_DISPOSITION:
 					body_part->content_disposition =
 						p_strdup(pool, _parse_content_disposition(block.hdr));
