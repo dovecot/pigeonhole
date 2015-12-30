@@ -974,7 +974,7 @@ static void sieve_message_part_save
 	if ( extract_text && body_part->children == NULL &&
 		!body_part->epilogue ) {
 
-		if ( mail_html2text_content_type_match
+		if ( buf->used > 0 && mail_html2text_content_type_match
 			(body_part->content_type) ) {
 			struct mail_html2text *html2text;
 

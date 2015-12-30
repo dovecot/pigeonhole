@@ -182,3 +182,44 @@ test "Nested Search" {
 	}
 }
 
+/*
+ * Broken/Empty parts
+ */
+
+test_set "message" text:
+From: Whomever <whoever@example.com>
+To: Someone <someone@example.com>
+Date: Sat, 10 Oct 2009 00:30:04 +0200
+Subject: whatever
+Content-Type: multipart/mixed; boundary=outer
+
+This is a multi-part message in MIME format.
+
+--outer
+Content-Type: text/html
+
+--outer
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: multipart/related
+Content-Disposition: inline
+
+<html><body>Please say Hello</body></html>
+
+--outer--
+
+This is the end of the outer MIME multipart.
+.
+;
+
+test "Nested Search" {
+	if body :text :contains "Hello" {
+		test_fail "Cannot match empty/broken part";
+	}
+	if body :text :contains ["<html>", "body"] {
+		test_fail "erroneously matched text/html markup";
+	}
+	if body :text :contains "MIME" {
+		test_fail "erroneously matched multipart prologue/epilogue text";
+	}
+}
+
