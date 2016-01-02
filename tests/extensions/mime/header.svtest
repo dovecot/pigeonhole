@@ -1,5 +1,6 @@
 require "vnd.dovecot.testsuite";
 require "variables";
+require "foreverypart";
 require "mime";
 
 /*
@@ -70,6 +71,63 @@ test "Basic functionality" {
 }
 
 /*
+ * Basic functionality - foreverypart
+ */
+
+test "Basic functionality - foreverypart" {
+	foreverypart {
+		/* Must match */
+		if not header :mime :anychild :contains ["Subject", "Comments"] "Frobnitzm" {
+			test_fail "failed to match header (1)";
+		}
+
+		if not header :mime :anychild :contains ["Subject", "Comments"] "nonsense" {
+			test_fail "failed to match header(2)";
+		}
+
+		if not header :mime :anychild :matches "Keywords" "*, strange, *" {
+			test_fail "failed to match header (3)";
+		}
+
+		if not header :mime :anychild :is "Comments" "This is nonsense." {
+			test_fail "failed to match header (4)";
+		}
+
+		/* Must not match */
+		if header :mime :anychild ["subject", "comments", "keywords"] "idiotic" {
+			test_fail "matched nonsense";
+		}
+
+		/* Match first key */
+		if not header :mime :anychild :contains ["keywords"] ["strange", "snot", "vreemd"] {
+			test_fail "failed to match first key";
+		}
+
+		/* Match second key */
+		if not header :mime :anychild :contains ["keywords"] ["raar", "strange", "vreemd"] {
+			test_fail "failed to match second key";
+		}
+
+		/* Match last key */
+		if not header :mime :anychild :contains ["keywords"] ["raar", "snot", "strange"] {
+			test_fail "failed to match last key";
+		}
+
+		/* First header */
+		if not header :mime :anychild :contains ["keywords", "subject"]
+			["raar", "strange", "vreemd"] {
+			test_fail "failed to match first header";
+		}
+
+		/* Second header */
+		if not header :mime :anychild :contains ["subject", "keywords"]
+			["raar", "strange", "vreemd"] {
+			test_fail "failed to match second header";
+		}
+	}
+}
+
+/*
  * Matching empty key
  */
 
@@ -99,6 +157,30 @@ test "Matching empty key" {
 
 	if header :mime :anychild :contains "X-Nonsense" "" {
 		test_fail ":contains-matched non-existent header with empty string";
+	}
+}
+
+/*
+ * Matching empty key - foreverypart
+ */
+
+test "Matching empty key - foreverypart" {
+	foreverypart {
+		if header :mime :anychild :is "X-Caffeine" "" {
+			test_fail ":is-matched non-empty header with empty string";
+		}
+
+		if not header :mime :anychild :contains "X-Caffeine" "" {
+			test_fail "failed to match existing header with empty string";
+		}
+
+		if not header :mime :anychild :is "comments" "" {
+			test_fail "failed to match empty header :mime :anychild with empty string";
+		}
+
+		if header :mime :anychild :contains "X-Nonsense" "" {
+			test_fail ":contains-matched non-existent header with empty string";
+		}
 	}
 }
 
@@ -141,6 +223,35 @@ test "Ignoring whitespace" {
 }
 
 /*
+ * Ignoring whitespace - foreverypart
+ */
+
+test "Ignoring whitespace - foreverypart" {
+	foreverypart {
+		if not header :mime :anychild :is "x-a" "Text" {
+			if header :mime :anychild :matches "x-a" "*" {
+				set "header" "${1}"; 
+			}
+			test_fail "header :mime :anychild test does not strip leading whitespace (header=`${header}`)";
+		}
+
+		if not header :mime :anychild :is "x-b" "Text" {
+			if header :mime :anychild :matches "x-b" "*" {
+				set "header" "${1}"; 
+			}
+			test_fail "header :mime :anychild test does not strip trailing whitespace (header=`${header}`)";
+		}
+
+		if not header :mime :anychild :is "subject" "Help" {
+			if header :mime :anychild :matches "subject" "*" {
+				set "header" "${1}"; 
+			}
+			test_fail "header :mime :anychild test does not strip both leading and trailing whitespace (header=`${header}`)";
+		}
+	}
+}
+
+/*
  * Absent or empty header
  */
 
@@ -170,6 +281,27 @@ test "Absent or empty header" {
 }
 
 /*
+ * Absent or empty header - foreverypart
+ */
+
+test "Absent or empty header - foreverypart" {
+	foreverypart {
+		if not header :mime :anychild :matches "Cc" "?*" {
+			test_fail "CC header is not absent or empty";
+		}
+
+		if header :mime :anychild :matches "Subject" "?*" {
+			test_fail "Subject header is empty, but matched otherwise";
+		}
+
+		if header :mime :anychild :matches "Comment" "?*" {
+			test_fail "Comment header is empty, but matched otherwise";
+		}
+	}
+}
+
+
+/*
  * Invalid header name
  */
 
@@ -196,12 +328,23 @@ test "Invalid header name" {
 }
 
 /*
- * Folded headers
+ * Invalid header name - foreverypart
  */
 
-/* "Header lines are unfolded as described in [RFC 2822] section 2.2.3.
- *  ...
- * "
+test "Invalid header name - foreverypart" {
+	foreverypart {
+		if header :mime :anychild :contains "subject:" "" {
+			test_fail "matched invalid header name";
+		}
+
+		if header :mime :anychild :contains "to!" "" {
+			test_fail "matched invalid header name";
+		}
+	}
+}
+
+/*
+ * Folded headers
  */
 
 test_set "message" text:
@@ -216,9 +359,24 @@ Text
 .
 ;
 
-test "Folded header" {
+test "Folded headers" {
 	if not header :mime :anychild :is "x-multiline"
 		"This is a multi-line header body, which should be unfolded correctly." {
 		test_fail "failed to properly unfold folded header.";
 	}
 }
+
+/*
+ * Folded headers - foreverypart
+ */
+
+test "Folded headers - foreverypart" {
+	foreverypart {
+		if not header :mime :anychild :is "x-multiline"
+			"This is a multi-line header body, which should be unfolded correctly." {
+			test_fail "failed to properly unfold folded header.";
+		}
+	}
+}
+
+
