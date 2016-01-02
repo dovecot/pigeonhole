@@ -547,6 +547,7 @@ struct sieve_header_list *sieve_message_header_list_create
 	return &hdrlist->hdrlist;
 }
 
+// NOTE: get rid of this once we have a proper Sieve string type
 static inline string_t *_header_right_trim(const char *raw)
 {
 	string_t *result;
@@ -1078,7 +1079,8 @@ static int sieve_message_parts_add_missing
 	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 	enum message_parser_flags mparser_flags =
 		MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS;
-	enum message_header_parser_flags hparser_flags = 0;
+	enum message_header_parser_flags hparser_flags =
+		MESSAGE_HEADER_PARSER_FLAG_SKIP_INITIAL_LWSP;
 	ARRAY(struct sieve_message_header) headers;
 	struct sieve_message_part *body_part, *header_part, *last_part;
 	struct message_parser_ctx *parser;
@@ -1296,29 +1298,37 @@ static int sieve_message_parts_add_missing
 			}
 
 			if ( iter_all && !array_is_created(&body_part->headers) ) {
+				const unsigned char *value, *vp;
+				size_t vlen;
+
 				/* Add header */
 				header = array_append_space(&headers);
 				header->name = p_strdup(pool, hdr->name);
 
-				// FIXME: trim header values
+				/* Trim end of field value (not done by parser) */
+				value = hdr->full_value;
+				vp = value + hdr->full_value_len;
+				while ( vp > value &&
+					(vp[-1] == '\t' || vp[-1] == ' ') )
+					vp--;
+				vlen = (size_t)(vp - value);
 	
 				/* Decode MIME encoded-words. */
 				str_truncate(hdr_content, 0);
 				message_header_decode_utf8
-					(hdr->full_value, hdr->full_value_len, hdr_content, NULL);
-				if ( hdr->full_value_len != str_len(hdr_content) ||
-					strncmp(str_c(hdr_content), (const char *)hdr->full_value,
-						hdr->full_value_len) != 0 ) {
+					(value, vlen, hdr_content, NULL);
+				if ( vlen != str_len(hdr_content) ||
+					strncmp(str_c(hdr_content), (const char *)value,
+						vlen) != 0 ) {
 					if ( strlen(str_c(hdr_content)) != str_len(hdr_content) ) {
 						/* replace NULs with spaces */
 						str_replace_nuls(hdr_content);
 					}
 					/* store raw */
-					data = p_malloc(pool, hdr->full_value_len + 1);
-					data[hdr->full_value_len] = '\0';
-					header->value = memcpy(data,
-						hdr->full_value, hdr->full_value_len);
-					header->value_len = hdr->full_value_len;
+					data = p_malloc(pool, vlen + 1);
+					data[vlen] = '\0';
+					header->value = memcpy(data, value, vlen);
+					header->value_len = vlen;
 					/* store decoded */
 					data = p_malloc(pool, str_len(hdr_content) + 1);
 					data[str_len(hdr_content)] = '\0';
@@ -1327,12 +1337,11 @@ static int sieve_message_parts_add_missing
 					header->utf8_value_len = str_len(hdr_content);
 				} else {
 					/* raw == decoded */
-					data = p_malloc(pool, hdr->full_value_len + 1);
-					data[hdr->full_value_len] = '\0';
+					data = p_malloc(pool, vlen + 1);
+					data[vlen] = '\0';
 					header->value = header->utf8_value =
-						memcpy(data, hdr->full_value, hdr->full_value_len);
-					header->value_len = header->utf8_value_len =
-						hdr->full_value_len;
+						memcpy(data, value, vlen);
+					header->value_len = header->utf8_value_len = vlen;
 				}
 
 				if ( hdr_field == _HDR_OTHER )
