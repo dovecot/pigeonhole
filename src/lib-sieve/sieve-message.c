@@ -1078,6 +1078,7 @@ static int sieve_message_parts_add_missing
 	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 	enum message_parser_flags mparser_flags =
 		MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS;
+	enum message_header_parser_flags hparser_flags = 0;
 	ARRAY(struct sieve_message_header) headers;
 	struct sieve_message_part *body_part, *header_part, *last_part;
 	struct message_parser_ctx *parser;
@@ -1114,6 +1115,7 @@ static int sieve_message_parts_add_missing
 	if (iter_all) {
 		t_array_init(&headers, 64);
 		hdr_content = t_str_new(512);
+		hparser_flags |= MESSAGE_HEADER_PARSER_FLAG_CLEAN_ONELINE;
 	} else {
 		memset(&headers, 0, sizeof(headers));
 	}
@@ -1122,10 +1124,10 @@ static int sieve_message_parts_add_missing
 	decoder = message_decoder_init(NULL, 0);
 
 	// FIXME: currently not tested with edit-mail.
-		//parser = message_parser_init_from_parts(parts, input, 0,
-		//mparser_flags);
-	parser = message_parser_init
-		(pool_datastack_create(), input, 0, mparser_flags);
+		//parser = message_parser_init_from_parts(parts, input,
+		// hparser_flags, mparser_flags);
+	parser = message_parser_init(pool_datastack_create(),
+		input, hparser_flags, mparser_flags);
 	while ( (ret=message_parser_parse_next_block
 		(parser, &block)) > 0 ) {
 		struct sieve_message_part **body_part_idx;
