@@ -24,17 +24,19 @@ static void ph_str_trim_parse(const char *str,
 	if ((sides & STR_TRIM_LEFT) != 0) {
 		while (p < pend && strchr(chars, *p) != NULL)
 			p++;
+		if (p == pend)
+			return;
 	}
 	begin = p;
 
-	p = pend - 1;
+	p = pend;
 	if ((sides & STR_TRIM_RIGHT) != 0) {
-		while (p > begin && strchr(chars, *p) != NULL)
+		while (p > begin && strchr(chars, *(p-1)) != NULL)
 			p--;
+		if (p == begin)
+			return;
 	}
-	if (p <= begin)
-		return;
-	end = p + 1;
+	end = p;
 
 	*begin_r = begin;
 	*end_r = end;
