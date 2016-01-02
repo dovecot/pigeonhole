@@ -13,14 +13,16 @@ libsieve_util_la_SOURCES = \
 	program-client-local.c \
 	program-client-remote.c \
 	program-client.c \
-	realpath.c
+	realpath.c \
+	strtrim.c
 
 headers = \
 	edit-mail.h \
 	rfc2822.h \
 	program-client-private.h \
 	program-client.h \
-	realpath.h
+	realpath.h \
+	strtrim.h
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 pkginc_lib_HEADERS = $(headers)
