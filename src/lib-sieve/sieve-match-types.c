@@ -481,14 +481,16 @@ bool sieve_match_type_validate
 
 	/* Verify the default match type if none is specified explicitly */
 	if ( mt_arg == NULL || mt_arg->argument == NULL ||
-		mt_arg->argument->data == NULL ) {
-		mtctx = NULL;
+		mt_arg->argument->data == NULL ) {		
 		mcht = sieve_match_type_copy(sieve_command_pool(cmd), mcht_default);
+		mtctx = t_new(struct sieve_match_type_context, 1);
+		mtctx->command = cmd;
+		mtctx->match_type = mcht;
 	} else {
 		mtctx = (struct sieve_match_type_context *) mt_arg->argument->data;
 		mcht = mtctx->match_type;
-		mtctx->comparator = cmp;
 	}
+	mtctx->comparator = cmp;
 
 	/* Check whether this match type requires additional validation.
 	 * Additional validation can override the match type recorded in the context
