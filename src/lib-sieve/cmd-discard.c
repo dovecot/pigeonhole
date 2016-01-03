@@ -55,6 +55,13 @@ const struct sieve_operation_def cmd_discard_operation = {
  * Discard actions
  */
 
+static bool act_discard_equals
+	(const struct sieve_script_env *senv, const struct sieve_action *act1,
+		const struct sieve_action *act2);
+static int act_discard_check_duplicate
+	(const struct sieve_runtime_env *renv,
+		const struct sieve_action *act,
+		const struct sieve_action *act_other);
 static void act_discard_print
 	(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
@@ -64,6 +71,8 @@ static int act_discard_commit
 
 const struct sieve_action_def act_discard = {
 	.name = "discard",
+	.equals = act_discard_equals,
+	.check_duplicate = act_discard_check_duplicate,
 	.print = act_discard_print,
 	.commit = act_discard_commit,
 };
@@ -114,6 +123,22 @@ static int cmd_discard_operation_execute
 /*
  * Action implementation
  */
+
+static bool act_discard_equals
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	const struct sieve_action *act1 ATTR_UNUSED,
+	const struct sieve_action *act2 ATTR_UNUSED)
+{
+	return TRUE;
+}
+
+static int act_discard_check_duplicate
+(const struct sieve_runtime_env *renv ATTR_UNUSED,
+	const struct sieve_action *act ATTR_UNUSED,
+	const struct sieve_action *act_other ATTR_UNUSED)
+{
+	return 1;
+}
 
 static void act_discard_print
 (const struct sieve_action *action ATTR_UNUSED,
