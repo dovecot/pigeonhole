@@ -1,0 +1,237 @@
+require "vnd.dovecot.testsuite";
+require "mime";
+require "foreverypart";
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@vestingbar.bl
+Subject: Test message
+Date: Wed, 29 Jul 2009 18:21:44 +0300
+X-Spam-Status: Not Spam
+Resent-To: nico@frop.example.com
+
+Test!
+.
+;
+
+/*
+ * One header
+ */
+
+test "One header" {
+	if not exists :mime :anychild "from" {
+		test_fail "exists test missed from header";
+	}
+
+	if exists :mime :anychild "x-nonsense" {
+		test_fail "exists test found non-existent header";
+	}
+}
+
+/*
+ * One header - foreverypart
+ */
+
+test "One header - foreverypart" {
+	foreverypart {
+		if not exists :mime :anychild "from" {
+			test_fail "exists test missed from header";
+		}
+
+		if exists :mime :anychild "x-nonsense" {
+			test_fail "exists test found non-existent header";
+		}
+	}
+}
+
+/*
+ * Two headers
+ */
+
+test "Two headers" {
+	if not exists :mime :anychild ["from","to"] {
+		test_fail "exists test missed from or to header";
+	}
+
+	if exists :mime :anychild ["from","x-nonsense"] {
+		test_fail "exists test found non-existent header (1)";
+	}
+
+	if exists :mime :anychild ["x-nonsense","to"] {
+		test_fail "exists test found non-existent header (2)";
+	}
+
+	if exists :mime :anychild ["x-nonsense","x-nonsense2"] {
+		test_fail "exists test found non-existent header (3)";
+	}
+}
+
+/*
+ * Two headers - foreverypart
+ */
+
+test "Two headers - foreverypart" {
+	foreverypart {
+		if not exists :mime :anychild ["from","to"] {
+			test_fail "exists test missed from or to header";
+		}
+
+		if exists :mime :anychild ["from","x-nonsense"] {
+			test_fail "exists test found non-existent header (1)";
+		}
+
+		if exists :mime :anychild ["x-nonsense","to"] {
+			test_fail "exists test found non-existent header (2)";
+		}
+
+		if exists :mime :anychild ["x-nonsense","x-nonsense2"] {
+			test_fail "exists test found non-existent header (3)";
+		}
+	}
+}
+
+/*
+ * Three headers
+ */
+
+test "Three headers" {
+	if not exists :mime :anychild ["Subject","date","resent-to"] {
+		test_fail "exists test missed subject, date or resent-to header";
+	}
+
+	if exists :mime :anychild ["x-nonsense","date","resent-to"] {
+		test_fail "exists test found non-existent header (1)";
+	}
+
+	if exists :mime :anychild ["subject", "x-nonsense","resent-to"] {
+		test_fail "exists test found non-existent header (2)";
+	}
+
+	if exists :mime :anychild ["subject","date","x-nonsense"] {
+		test_fail "exists test found non-existent header (3)";
+	}
+
+	if exists :mime :anychild ["subject", "x-nonsense","x-nonsense2"] {
+		test_fail "exists test found non-existent header (4)";
+	}
+
+	if exists :mime :anychild ["x-nonsense","date","x-nonsense2"] {
+		test_fail "exists test found non-existent header (5)";
+	}
+
+	if exists :mime :anychild ["x-nonsense","x-nonsense2","resent-to"] {
+		test_fail "exists test found non-existent header (6)";
+	}
+
+	if exists :mime :anychild ["x-nonsense","x-nonsense2","x-nonsense3"] {
+		test_fail "exists test found non-existent header (7)";
+	}
+}
+
+/*
+ * Three headers - foreverypart
+ */
+
+test "Three headers - foreverypart " {
+	foreverypart {
+		if not exists :mime :anychild ["Subject","date","resent-to"] {
+			test_fail "exists test missed subject, date or resent-to header";
+		}
+
+		if exists :mime :anychild ["x-nonsense","date","resent-to"] {
+			test_fail "exists test found non-existent header (1)";
+		}
+
+		if exists :mime :anychild ["subject", "x-nonsense","resent-to"] {
+			test_fail "exists test found non-existent header (2)";
+		}
+
+		if exists :mime :anychild ["subject","date","x-nonsense"] {
+			test_fail "exists test found non-existent header (3)";
+		}
+
+		if exists :mime :anychild ["subject", "x-nonsense","x-nonsense2"] {
+			test_fail "exists test found non-existent header (4)";
+		}
+
+		if exists :mime :anychild ["x-nonsense","date","x-nonsense2"] {
+			test_fail "exists test found non-existent header (5)";
+		}
+
+		if exists :mime :anychild ["x-nonsense","x-nonsense2","resent-to"] {
+			test_fail "exists test found non-existent header (6)";
+		}
+
+		if exists :mime :anychild ["x-nonsense","x-nonsense2","x-nonsense3"] {
+			test_fail "exists test found non-existent header (7)";
+		}
+	}
+}
+
+/*
+ * Multipart anychild
+ */
+
+test_set "message" text:
+From: Hendrik <hendrik@example.com>
+To: Harrie <harrie@example.com>
+Date: Sat, 11 Oct 2010 00:31:44 +0200
+Subject: Harrie is een prutser
+Content-Type: multipart/mixed; boundary=AA
+X-Test1: AA
+
+This is a multi-part message in MIME format.
+--AA
+Content-Type: multipart/mixed; boundary=BB
+X-Test2: BB
+
+This is a multi-part message in MIME format.
+--BB
+Content-Type: text/plain; charset="us-ascii"
+X-Test3: CC
+
+Hello
+
+--BB
+Content-Type: text/plain; charset="us-ascii"
+X-Test4: DD
+
+Hello again
+
+--BB--
+This is the end of MIME multipart.
+
+--AA
+Content-Type: text/plain; charset="us-ascii"
+X-Test5: EE
+
+And again
+
+--AA--
+This is the end of  MIME multipart.
+.
+;
+
+test "Multipart anychild" {
+	if not exists :mime :anychild "X-Test1" {
+		test_fail "X-Test1 header does exist";
+	}
+	if not exists :mime :anychild "X-Test2" {
+		test_fail "X-Test2 header does exist";
+	}
+	if not exists :mime :anychild "X-Test3" {
+		test_fail "X-Test3 header does exist";
+	}
+	if not exists :mime :anychild "X-Test4" {
+		test_fail "X-Test4 header does exist";
+	}
+	if not exists :mime :anychild "X-Test5" {
+		test_fail "X-Test5 header does exist";
+	}
+	if not exists :mime :anychild
+			["X-Test1", "X-Test2", "X-Test3", "X-Test4", "X-Test5"] {
+		test_fail "Not all headers exist";
+	}
+}
+
+

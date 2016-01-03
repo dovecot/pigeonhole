@@ -1,0 +1,281 @@
+require "vnd.dovecot.testsuite";
+require "mime";
+require "foreverypart";
+
+/*
+ * Basic functionionality
+ */
+
+test_set "message" text:
+From: stephan@example.com
+To: nico@nl.example.com, harry@de.example.com
+cc: Timo <tss(no spam)@fi.iki>
+Subject: Frobnitzm
+
+Test.
+.
+;
+
+test "Basic functionality" {
+	/* Must match */
+	if not address :mime :anychild :contains ["to", "from"] "harry" {
+		test_fail "failed to match address (1)";
+	}
+
+	if not address :mime :anychild :contains ["to", "from"] "de.example" {
+		test_fail "failed to match address (2)";
+	}
+
+	if not address :mime :anychild :matches "to" "*@*.example.com" {
+		test_fail "failed to match address (3)";
+	}
+
+	if not address :mime :anychild :is "to" "harry@de.example.com" {
+		test_fail "failed to match address (4)";
+	}
+
+	/* Must not match */
+	if address :mime :anychild :is ["to", "from"] "nonsense@example.com" {
+		test_fail "matches erroneous address";
+	}
+
+	/* Match first key */
+	if not address :mime :anychild :contains ["to"] ["nico", "fred", "henk"] {
+		test_fail "failed to match first key";
+	}
+
+	/* Match second key */
+	if not address :mime :anychild :contains ["to"] ["fred", "nico", "henk"] {
+		test_fail "failed to match second key";
+	}
+
+	/* Match last key */
+	if not address :mime :anychild :contains ["to"] ["fred", "henk", "nico"] {
+		test_fail "failed to match last key";
+	}
+
+	/* First header */
+	if not address :mime :anychild :contains
+		["to", "from"] ["fred", "nico", "henk"] {
+		test_fail "failed to match first header";
+	}
+
+	/* Second header */
+	if not address :mime :anychild :contains
+		["from", "to"] ["fred", "nico", "henk"] {
+		test_fail "failed to match second header";
+	}
+
+	/* Comment */
+	if not address :mime :anychild :is "cc" "tss@fi.iki" {
+		test_fail "failed to ignore comment in address";
+	}
+}
+
+/*
+ * Basic functionionality - foreverypart
+ */
+
+test "Basic functionality - foreverypart" {
+	foreverypart {
+		/* Must match */
+		if not address :mime :anychild :contains ["to", "from"] "harry" {
+			test_fail "failed to match address (1)";
+		}
+
+		if not address :mime :anychild :contains ["to", "from"] "de.example" {
+			test_fail "failed to match address (2)";
+		}
+
+		if not address :mime :anychild :matches "to" "*@*.example.com" {
+			test_fail "failed to match address (3)";
+		}
+
+		if not address :mime :anychild :is "to" "harry@de.example.com" {
+			test_fail "failed to match address (4)";
+		}
+
+		/* Must not match */
+		if address :mime :anychild :is ["to", "from"] "nonsense@example.com" {
+			test_fail "matches erroneous address";
+		}
+
+		/* Match first key */
+		if not address :mime :anychild :contains ["to"] ["nico", "fred", "henk"] {
+			test_fail "failed to match first key";
+		}
+
+		/* Match second key */
+		if not address :mime :anychild :contains ["to"] ["fred", "nico", "henk"] {
+			test_fail "failed to match second key";
+		}
+
+		/* Match last key */
+		if not address :mime :anychild :contains ["to"] ["fred", "henk", "nico"] {
+			test_fail "failed to match last key";
+		}
+
+		/* First header */
+		if not address :mime :anychild :contains
+			["to", "from"] ["fred", "nico", "henk"] {
+			test_fail "failed to match first header";
+		}
+
+		/* Second header */
+		if not address :mime :anychild :contains
+			["from", "to"] ["fred", "nico", "henk"] {
+			test_fail "failed to match second header";
+		}
+
+		/* Comment */
+		if not address :mime :anychild :is "cc" "tss@fi.iki" {
+			test_fail "failed to ignore comment in address";
+		}
+	}
+}
+
+/*
+ * Address headers
+ */
+
+test_set "message" text:
+From: stephan@friep.frop
+To: henk@tukkerland.ex
+CC: ivo@boer.ex
+Bcc: joop@hooibaal.ex
+Sender: s.bosch@friep.frop
+Resent-From: ivo@boer.ex
+Resent-To: idioot@dombo.ex
+Subject: Berichtje
+
+Test.
+.
+;
+
+test "Address headers" {
+	if not address :mime :anychild "from" "stephan@friep.frop" {
+		test_fail "from header not recognized";
+	}
+
+	if not address :mime :anychild "to" "henk@tukkerland.ex" {
+		test_fail "to header not recognized";
+	}
+
+	if not address :mime :anychild "cc" "ivo@boer.ex" {
+		test_fail "cc header not recognized";
+	}
+
+	if not address :mime :anychild "bcc" "joop@hooibaal.ex" {
+		test_fail "bcc header not recognized";
+	}
+
+	if not address :mime :anychild "sender" "s.bosch@friep.frop" {
+		test_fail "sender header not recognized";
+	}
+
+	if not address :mime :anychild "resent-from" "ivo@boer.ex" {
+		test_fail "resent-from header not recognized";
+	}
+
+	if not address :mime :anychild "resent-to" "idioot@dombo.ex" {
+		test_fail "resent-to header not recognized";
+	}
+}
+
+/*
+ * Address headers - foreverypart
+ */
+
+test "Address headers - foreverypart" {
+	foreverypart {
+		if not address :mime :anychild "from" "stephan@friep.frop" {
+			test_fail "from header not recognized";
+		}
+
+		if not address :mime :anychild "to" "henk@tukkerland.ex" {
+			test_fail "to header not recognized";
+		}
+
+		if not address :mime :anychild "cc" "ivo@boer.ex" {
+			test_fail "cc header not recognized";
+		}
+
+		if not address :mime :anychild "bcc" "joop@hooibaal.ex" {
+			test_fail "bcc header not recognized";
+		}
+
+		if not address :mime :anychild "sender" "s.bosch@friep.frop" {
+			test_fail "sender header not recognized";
+		}
+
+		if not address :mime :anychild "resent-from" "ivo@boer.ex" {
+			test_fail "resent-from header not recognized";
+		}
+
+		if not address :mime :anychild "resent-to" "idioot@dombo.ex" {
+			test_fail "resent-to header not recognized";
+		}
+	}
+}
+
+/*
+ * Multipart anychild
+ */
+
+test_set "message" text:
+From: Hendrik <hendrik@example.com>
+To: Harrie <harrie@example.com>
+Date: Sat, 11 Oct 2010 00:31:44 +0200
+Subject: Harrie is een prutser
+Content-Type: multipart/mixed; boundary=AA
+CC: AA@example.com
+
+This is a multi-part message in MIME format.
+--AA
+Content-Type: multipart/mixed; boundary=BB
+CC: BB@example.com
+
+This is a multi-part message in MIME format.
+--BB
+Content-Type: text/plain; charset="us-ascii"
+CC: CC@example.com
+
+Hello
+
+--BB
+Content-Type: text/plain; charset="us-ascii"
+CC: DD@example.com
+
+Hello again
+
+--BB--
+This is the end of MIME multipart.
+
+--AA
+Content-Type: text/plain; charset="us-ascii"
+CC: EE@example.com
+
+And again
+
+--AA--
+This is the end of  MIME multipart.
+.
+;
+
+test "Multipart anychild" {
+	if not address :mime :anychild :localpart "Cc" "AA" {
+		test_fail "AA Cc repient does not exist";
+	}
+	if not address :mime :anychild :localpart "Cc" "BB" {
+		test_fail "BB Cc repient does not exist";
+	}
+	if not address :mime :anychild :localpart "Cc" "CC" {
+		test_fail "CC Cc repient does not exist";
+	}
+	if not address :mime :anychild :localpart "Cc" "DD" {
+		test_fail "DD Cc repient does not exist";
+	}
+	if not address :mime :anychild :localpart "Cc" "EE" {
+		test_fail "EE Cc repient does not exist";
+	}
+}

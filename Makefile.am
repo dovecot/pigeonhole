@@ -168,6 +168,8 @@ test_cases = \
 	tests/extensions/metadata/errors.svtest \
 	tests/extensions/mime/errors.svtest \
 	tests/extensions/mime/header.svtest \
+	tests/extensions/mime/exists.svtest \
+	tests/extensions/mime/address.svtest \
 	tests/extensions/mime/execute.svtest \
 	tests/extensions/mime/content-header.svtest \
 	tests/extensions/mime/foreverypart.svtest \
