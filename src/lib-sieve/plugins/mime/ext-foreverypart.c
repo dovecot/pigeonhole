@@ -5,9 +5,9 @@
  * ----------------------
  *
  * Authors: Stephan Bosch
- * Specification: RFC 5703,Section 3
- * Implementation: skeleton
- * Status: development
+ * Specification: RFC 5703, Section 3
+ * Implementation: full
+ * Status: experimental
  *
  */
 
