@@ -1205,12 +1205,12 @@ static int sieve_message_parts_add_missing
 						struct sieve_message_part *child = parent->children;
 						while (child->next != NULL && child != body_part)
 							child = child->next;
-						if (child->next == NULL)
+						if (child != body_part)
 							child->next = body_part;
 					}
 				}
-				last_part = body_part;
 			}
+			last_part = body_part;
 
 			/* If this is message/rfc822 content, retain the enveloping part for
 			 * storing headers as content.
