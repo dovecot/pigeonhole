@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2015 Pigeonhole authors, see the included COPYING file
+/* Copyright (c) 2002-2016 Pigeonhole authors, see the included COPYING file
  */
 
 /* Extension subaddress
