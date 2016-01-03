@@ -1280,7 +1280,7 @@ static int sieve_message_parts_add_missing
 
 			if ( strcasecmp(hdr->name, "Content-Type" ) == 0 )
 				hdr_field = _HDR_CONTENT_TYPE;
-			else if ( strcasecmp(hdr->name, "Content-Disposition" ) != 0 )
+			else if ( strcasecmp(hdr->name, "Content-Disposition" ) == 0 )
 				hdr_field = _HDR_CONTENT_DISPOSITION;
 			else if ( iter_all && !array_is_created(&body_part->headers) )
 				hdr_field = _HDR_OTHER;
