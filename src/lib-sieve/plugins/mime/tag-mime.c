@@ -699,6 +699,7 @@ static int svmo_mime_header_override
 	struct ext_foreverypart_runtime_loop *sfploop;
 	struct sieve_header_list *headers;
 	struct sieve_stringlist *values;
+	int ret;
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
 		"header mime override:");
@@ -713,13 +714,22 @@ static int svmo_mime_header_override
 	}
 
 	sfploop = ext_foreverypart_runtime_loop_get_current(renv);
-	if ( sfploop == NULL ) {
-		headers = sieve_message_header_list_create
-			(renv, *headers_r, mime_decode);
-	} else {
+	if ( sfploop != NULL ) {
 		headers = sieve_mime_header_list_create
 			(renv, *headers_r, &sfploop->part_iter,
 				mime_decode, ctx->anychild);
+	} else if ( ctx->anychild ) {
+		struct sieve_message_part_iter part_iter;
+
+		if ( (ret=sieve_message_part_iter_init
+			(&part_iter, renv)) <= 0 )
+			return ret;
+
+		headers = sieve_mime_header_list_create
+			(renv, *headers_r, &part_iter, mime_decode, TRUE);
+	} else {
+		headers = sieve_message_header_list_create
+			(renv, *headers_r, mime_decode);
 	}
 	values = &headers->strlist;
 

@@ -379,4 +379,66 @@ test "Folded headers - foreverypart" {
 	}
 }
 
+/*
+ * Multipart anychild
+ */
+
+test_set "message" text:
+From: Hendrik <hendrik@example.com>
+To: Harrie <harrie@example.com>
+Date: Sat, 11 Oct 2010 00:31:44 +0200
+Subject: Harrie is een prutser
+Content-Type: multipart/mixed; boundary=AA
+X-Test: AA
+
+This is a multi-part message in MIME format.
+--AA
+Content-Type: multipart/mixed; boundary=BB
+X-Test: BB
+
+This is a multi-part message in MIME format.
+--BB
+Content-Type: text/plain; charset="us-ascii"
+X-Test: CC
+
+Hello
+
+--BB
+Content-Type: text/plain; charset="us-ascii"
+X-Test: DD
+
+Hello again
+
+--BB--
+This is the end of MIME multipart.
+
+--AA
+Content-Type: text/plain; charset="us-ascii"
+X-Test: EE
+
+And again
+
+--AA--
+This is the end of  MIME multipart.
+.
+;
+
+test "Multipart anychild" {
+	if not header :mime :anychild "X-Test" "AA" {
+		test_fail "No AA";
+	}
+	if not header :mime :anychild "X-Test" "BB" {
+		test_fail "No BB";
+	}
+	if not header :mime :anychild "X-Test" "CC" {
+		test_fail "No CC";
+	}
+	if not header :mime :anychild "X-Test" "DD" {
+		test_fail "No DD";
+	}
+	if not header :mime :anychild "X-Test" "EE" {
+		test_fail "No EE";
+	}
+}
+
 

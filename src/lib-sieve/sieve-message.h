@@ -233,18 +233,23 @@ int sieve_message_body_get_raw
 struct sieve_message_part_iter {
 	const struct sieve_runtime_env *renv;
 	struct sieve_message_part *root;
-	unsigned int index;
+	unsigned int index, offset;
 };
 
 int sieve_message_part_iter_init
 (struct sieve_message_part_iter *iter,
 	const struct sieve_runtime_env *renv);
+void sieve_message_part_iter_subtree(struct sieve_message_part_iter *iter,
+	struct sieve_message_part_iter *subtree);
 void sieve_message_part_iter_children(struct sieve_message_part_iter *iter,
 	struct sieve_message_part_iter *child);
 
 struct sieve_message_part *sieve_message_part_iter_current
 (struct sieve_message_part_iter *iter);
 struct sieve_message_part *sieve_message_part_iter_next
+(struct sieve_message_part_iter *iter);
+
+void sieve_message_part_iter_reset
 (struct sieve_message_part_iter *iter);
 
 /*

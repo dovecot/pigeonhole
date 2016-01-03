@@ -1572,6 +1572,7 @@ int sieve_message_part_iter_init
 	memset(iter, 0, sizeof(*iter));
 	iter->renv = renv;
 	iter->index = 0;
+	iter->offset = 0;
 
 	parts = array_get(&msgctx->cached_body_parts, &count);
 	if (count == 0)
@@ -1580,6 +1581,24 @@ int sieve_message_part_iter_init
 		iter->root = parts[0];
 
 	return SIEVE_EXEC_OK;
+}
+
+void sieve_message_part_iter_subtree(struct sieve_message_part_iter *iter,
+	struct sieve_message_part_iter *subtree)
+{
+	const struct sieve_runtime_env *renv = iter->renv;
+	struct sieve_message_context *msgctx = renv->msgctx;
+	struct sieve_message_part *const *parts;
+	unsigned int count;
+
+	*subtree = *iter;
+
+	parts = array_get(&msgctx->cached_body_parts, &count);
+	if ( subtree->index >= count)
+		subtree->root = NULL;
+	else
+		subtree->root = parts[subtree->index];
+	subtree->offset = subtree->index;
 }
 
 void sieve_message_part_iter_children(struct sieve_message_part_iter *iter,
@@ -1593,10 +1612,11 @@ void sieve_message_part_iter_children(struct sieve_message_part_iter *iter,
 	*child = *iter;
 
 	parts = array_get(&msgctx->cached_body_parts, &count);	
-	if ( child->index >= count || parts[child->index]->children == NULL)
+	if ( (child->index+1) >= count || parts[child->index]->children == NULL)
 		child->root = NULL;
-	else	
+	else
 		child->root = parts[child->index++];
+	child->offset = child->index;
 }
 
 struct sieve_message_part *sieve_message_part_iter_current
@@ -1614,10 +1634,10 @@ struct sieve_message_part *sieve_message_part_iter_current
 	if ( iter->index >= count )
 		return NULL;
 	do {
-		if ( parts[iter->index] == iter->root->next ||
-			parts[iter->index] == iter->root->parent ) {
+		if ( parts[iter->index] == iter->root->next )
 			return NULL;
-		}
+		if ( parts[iter->index] == iter->root->parent )
+			return NULL;
 	} while ( parts[iter->index]->epilogue && ++iter->index < count );
 	if ( iter->index >= count )
 		return NULL;
@@ -1635,6 +1655,12 @@ struct sieve_message_part *sieve_message_part_iter_next
 	iter->index++;
 
 	return sieve_message_part_iter_current(iter);
+}
+
+void sieve_message_part_iter_reset
+(struct sieve_message_part_iter *iter)
+{
+	iter->index = iter->offset;
 }
 
 /*
@@ -1658,14 +1684,14 @@ struct sieve_mime_header_list {
 
 	struct sieve_stringlist *field_names;
 
-	struct sieve_message_part_iter *part_iter, child_iter;
+	struct sieve_message_part_iter part_iter;
 
 	const char *header_name;
 	const struct sieve_message_header *headers;
 	unsigned int headers_index, headers_count;
 
 	unsigned int mime_decode:1;
-	unsigned int children;
+	unsigned int children:1;
 };
 
 struct sieve_header_list *sieve_mime_header_list_create
@@ -1683,9 +1709,10 @@ struct sieve_header_list *sieve_mime_header_list_create
 	hdrlist->hdrlist.strlist.reset = sieve_mime_header_list_reset;
 	hdrlist->hdrlist.next_item = sieve_mime_header_list_next_item;
 	hdrlist->field_names = field_names;
-	hdrlist->part_iter = part_iter;
 	hdrlist->mime_decode = mime_decode;
 	hdrlist->children = children;
+
+	sieve_message_part_iter_subtree(part_iter, &hdrlist->part_iter);
 
 	return &hdrlist->hdrlist;
 }
@@ -1697,12 +1724,8 @@ static void sieve_mime_header_list_next_name
 {
 	struct sieve_message_part *mpart;
 
-	if ( hdrlist->children ) {
-		sieve_message_part_iter_children
-			(hdrlist->part_iter, &hdrlist->child_iter);
-	}
-
-	mpart = sieve_message_part_iter_current(hdrlist->part_iter);
+	sieve_message_part_iter_reset(&hdrlist->part_iter);
+	mpart = sieve_message_part_iter_current(&hdrlist->part_iter);
 
 	if ( mpart != NULL && array_is_created(&mpart->headers) ) {
 		hdrlist->headers = array_get
@@ -1740,7 +1763,7 @@ static int sieve_mime_header_list_next_item
 			if ( hdrlist->header_name != NULL && hdrlist->children ) {
 				struct sieve_message_part *mpart;
 
-				mpart = sieve_message_part_iter_next(&hdrlist->child_iter);
+				mpart = sieve_message_part_iter_next(&hdrlist->part_iter);
 				if ( mpart != NULL && array_is_created(&mpart->headers) ) {
 					hdrlist->headers = array_get
 						(&mpart->headers, &hdrlist->headers_count);
