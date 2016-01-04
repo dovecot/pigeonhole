@@ -1,3 +1,31 @@
+v0.4.11 xx-01-2016 Stephan Bosch <stephan@rename-it.nl>
+
+	- Sieve mime extension: Fixed the header :mime :anychild test to work properly
+	  outside a foreverypart loop.
+	- Several fixes in message body part handling:
+	  - Fixed assert failure occurring when text extraction is attempted on a
+	    empty or broken text part.
+	  - Fixed assert failure in handling of body parts that are converted to text.
+	  - Fixed header unfolding for (mime) headers parsed from any mime part.
+	  - Fixed trimming for (mime) headers parsed from any mime part.
+	  - Fixed erroneous changes to the message part tree structure performed when
+	    re-parsing the message.
+	- LDA Sieve plugin: Fixed logging of actions; sometimes the configured log
+	  format was not followed.
+	- LDA Sieve plugin: Fixed bug in error handling of script storage
+	  initialization.
+	- Sieve Extprograms plugin: Ignored ENOTCONN error in shutdown(fd, SHUT_WR)
+	  call.
+	- Fixed duplication of discard actions in the script result. Each discard was
+	  counted as a separate action, which means that action limit would be crossed
+	  too early.
+	- Made sure that quota errors never get logged as errors in syslog.
+	- Fixed handling of implicit keep for a partially executed transaction that
+	  yielded a temporary failure.
+	- Fixed handling of global errors. If master and user error handler were
+	  identical, in some cases the log message could be lost.
+	- Fixed AIX compile issue in message body parser.
+
 v0.4.10 13-12-2015 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Implemented the Sieve mime and foreverypart extensions (RFC 5703). These
