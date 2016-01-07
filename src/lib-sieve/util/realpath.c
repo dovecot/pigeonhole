@@ -144,8 +144,11 @@ static int path_normalize(const char *path, bool resolve_links,
 					/* attempt to read the link */
 					if ((ret=readlink(npath, npath_link, lsize)) < 0)
 						return -1;
-					if ((size_t)ret < lsize)
+					if ((size_t)ret < lsize) {
+						/* make static analyzers happy */
+						npath_link[ret] = '\0';
 						break;
+					}
 
 					/* sum of new symlink content length and path tail length may not
 					   exeed maximum */
