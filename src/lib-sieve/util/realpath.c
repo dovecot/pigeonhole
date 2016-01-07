@@ -67,7 +67,7 @@ static int path_normalize(const char *path, bool resolve_links,
 
 		/* find end of path segment */
 		for (segend = p; *segend != '\0' && *segend != '/'; segend++);
-	
+
 		if (segend == p)
 			break; /* '\0' */
 		seglen = segend - p;
@@ -87,11 +87,11 @@ static int path_normalize(const char *path, bool resolve_links,
 
 			/* allocate space if necessary */
 			if ((npath_pos + seglen + 1) >= (npath + asize)) {
-			  ptrdiff_t npath_offset = npath_pos - npath;
+				ptrdiff_t npath_offset = npath_pos - npath;
 				asize = nearest_power(npath_offset + seglen + 2);
 				npath = t_buffer_reget(npath, asize);
-		    npath_pos = npath + npath_offset;
-		  }
+				npath_pos = npath + npath_offset;
+			}
 
 			/* copy segment to normalized path */
 			(void)memmove(npath_pos, p, seglen);
@@ -102,7 +102,7 @@ static int path_normalize(const char *path, bool resolve_links,
 			/* stat path up to here (segend points to tail) */
 			*npath_pos = '\0';
 			if (lstat(npath, &st) < 0)
-			  return -1;
+				return -1;
 
 			if (S_ISLNK (st.st_mode)) {
 				/* symlink */
@@ -112,7 +112,7 @@ static int path_normalize(const char *path, bool resolve_links,
 				ssize_t ret;
 
 				/* limit link dereferences */
-			  if (++link_count > REALPATH_MAX_SYMLINKS) {
+				if (++link_count > REALPATH_MAX_SYMLINKS) {
 					errno = ELOOP;
 					return -1;
 				}
@@ -129,7 +129,7 @@ static int path_normalize(const char *path, bool resolve_links,
 					asize = nearest_power((npath_offset + espace + lsize) + 1);
 					lsize = asize - (npath_offset + espace);
 					npath = t_buffer_reget(npath, asize);
-				  npath_pos = npath + npath_offset;
+					npath_pos = npath + npath_offset;
 				}
 
 				if (ltlen > 0) {
@@ -146,10 +146,10 @@ static int path_normalize(const char *path, bool resolve_links,
 						return -1;
 					if ((size_t)ret < lsize)
 						break;
-				
+
 					/* sum of new symlink content length and path tail length may not
-						 exeed maximum */
-				  if ((size_t)(ret + tlen) >= REALPATH_MAX_PATH) {
+					   exeed maximum */
+					if ((size_t)(ret + tlen) >= REALPATH_MAX_PATH) {
 						errno = ENAMETOOLONG;
 						return -1;
 					}
