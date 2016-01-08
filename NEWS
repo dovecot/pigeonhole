@@ -1,4 +1,4 @@
-v0.4.11 xx-01-2016 Stephan Bosch <stephan@rename-it.nl>
+v0.4.11 08-01-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	- Sieve mime extension: Fixed the header :mime :anychild test to work properly
 	  outside a foreverypart loop.
