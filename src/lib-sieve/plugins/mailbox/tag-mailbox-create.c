@@ -46,11 +46,9 @@ static int seff_mailbox_create_pre_execute
 
 const struct sieve_side_effect_def mailbox_create_side_effect = {
 	SIEVE_OBJECT("create", &mailbox_create_operand, 0),
-	&act_store,
-	NULL, NULL, NULL,
-	seff_mailbox_create_print,
-	seff_mailbox_create_pre_execute,
-	NULL, NULL, NULL
+	.to_action = &act_store,
+	.print = seff_mailbox_create_print,
+	.pre_execute = seff_mailbox_create_pre_execute
 };
 
 /*

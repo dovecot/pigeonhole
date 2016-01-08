@@ -14,8 +14,12 @@ struct sieve_object_def {
 	unsigned int code;
 };
 
-#define SIEVE_OBJECT(identifier, operand, code) \
-	{ identifier, operand, code }
+#define SIEVE_OBJECT(_identifier, _operand, _code) \
+	.obj_def = { \
+		.identifier = (_identifier), \
+		.operand = (_operand), \
+		.code = (_code) \
+	}
 
 /*
  * Object instance

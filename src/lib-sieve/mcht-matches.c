@@ -27,12 +27,10 @@ static int mcht_matches_match_key
  */
 
 const struct sieve_match_type_def matches_match_type = {
-	SIEVE_OBJECT("matches", &match_type_operand, SIEVE_MATCH_TYPE_MATCHES),
-	NULL,
-	sieve_match_substring_validate_context,
-	NULL, NULL, NULL,
-	mcht_matches_match_key,
-	NULL
+	SIEVE_OBJECT("matches",
+		&match_type_operand, SIEVE_MATCH_TYPE_MATCHES),
+	.validate_context = sieve_match_substring_validate_context,
+	.match_key = mcht_matches_match_key
 };
 
 /*

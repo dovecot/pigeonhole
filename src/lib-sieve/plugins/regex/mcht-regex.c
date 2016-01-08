@@ -50,13 +50,10 @@ static void mcht_regex_match_deinit(struct sieve_match_context *mctx);
 
 const struct sieve_match_type_def regex_match_type = {
 	SIEVE_OBJECT("regex", &regex_match_type_operand, 0),
-	NULL,
-	mcht_regex_validate_context,
-	NULL,
-	mcht_regex_match_init,
-	mcht_regex_match_keys,
-	NULL,
-	mcht_regex_match_deinit
+	.validate_context = mcht_regex_validate_context,
+	.match_init = mcht_regex_match_init,
+	.match_keys = mcht_regex_match_keys,
+	.match_deinit = mcht_regex_match_deinit
 };
 
 /*

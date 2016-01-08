@@ -37,19 +37,17 @@ static int mcht_count_match
  */
 
 const struct sieve_match_type_def count_match_type = {
-	SIEVE_OBJECT("count", &rel_match_type_operand, RELATIONAL_COUNT),
-	mcht_relational_validate,
-	NULL, NULL, NULL, NULL, NULL, NULL
+	SIEVE_OBJECT("count",
+		&rel_match_type_operand, RELATIONAL_COUNT),
+	.validate = mcht_relational_validate
 };
 
 #define COUNT_MATCH_TYPE(name, rel_match)                      \
 const struct sieve_match_type_def rel_match_count_ ## name = { \
-	SIEVE_OBJECT(                                                \
-		"count-" #name, &rel_match_type_operand,                   \
+	SIEVE_OBJECT("count-" #name,                                 \
+    &rel_match_type_operand,                                   \
 		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match)),             \
-	NULL, NULL,                                                  \
-	mcht_count_match,                                            \
-	NULL, NULL, NULL, NULL                                       \
+	.match = mcht_count_match,                                   \
 }
 
 COUNT_MATCH_TYPE(gt, REL_MATCH_GREATER);

@@ -42,10 +42,10 @@ static int vnspc_vnd_environment_read_variable
 static const struct sieve_variables_namespace_def
 environment_namespace = {
 	SIEVE_OBJECT("env", &environment_namespace_operand, 0),
-	vnspc_vnd_environment_validate,
-	vnspc_vnd_environment_generate,
-	vnspc_vnd_environment_dump_variable,
-	vnspc_vnd_environment_read_variable
+	.validate = vnspc_vnd_environment_validate,
+	.generate = vnspc_vnd_environment_generate,
+	.dump_variable = vnspc_vnd_environment_dump_variable,
+	.read_variable = vnspc_vnd_environment_read_variable
 };
 
 static bool vnspc_vnd_environment_validate

@@ -124,13 +124,15 @@ static const char *subaddress_detail_extract_from
 /* Address part objects */
 
 const struct sieve_address_part_def user_address_part = {
-	SIEVE_OBJECT("user", &subaddress_operand, SUBADDRESS_USER),
+	SIEVE_OBJECT("user",
+		&subaddress_operand, SUBADDRESS_USER),
 	subaddress_user_extract_from
 };
 
 const struct sieve_address_part_def detail_address_part = {
-	SIEVE_OBJECT("detail", &subaddress_operand, SUBADDRESS_DETAIL),
-	subaddress_detail_extract_from
+	SIEVE_OBJECT("detail",
+		&subaddress_operand, SUBADDRESS_DETAIL),
+	.extract_from = subaddress_detail_extract_from
 };
 
 /* Address part implementation */

@@ -287,18 +287,17 @@ static bool tsto_envelope_set_member
 	(const struct sieve_runtime_env *renv, int id, string_t *value);
 
 const struct testsuite_object_def message_testsuite_object = {
-	SIEVE_OBJECT("message",	&testsuite_object_operand, TESTSUITE_OBJECT_MESSAGE),
-	NULL, NULL,
-	tsto_message_set_member,
-	NULL
+	SIEVE_OBJECT("message",
+		&testsuite_object_operand, TESTSUITE_OBJECT_MESSAGE),
+	.set_member = tsto_message_set_member
 };
 
 const struct testsuite_object_def envelope_testsuite_object = {
-	SIEVE_OBJECT("envelope", &testsuite_object_operand, TESTSUITE_OBJECT_ENVELOPE),
-	tsto_envelope_get_member_id,
-	tsto_envelope_get_member_name,
-	tsto_envelope_set_member,
-	NULL
+	SIEVE_OBJECT("envelope",
+		&testsuite_object_operand, TESTSUITE_OBJECT_ENVELOPE),
+	.get_member_id = tsto_envelope_get_member_id,
+	.get_member_name = tsto_envelope_get_member_name,
+	.set_member = tsto_envelope_set_member
 };
 
 enum testsuite_object_envelope_field {

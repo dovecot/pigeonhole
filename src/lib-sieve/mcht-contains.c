@@ -26,12 +26,10 @@ static int mcht_contains_match_key
  */
 
 const struct sieve_match_type_def contains_match_type = {
-	SIEVE_OBJECT("contains", &match_type_operand,	SIEVE_MATCH_TYPE_CONTAINS),
-	NULL,
-	sieve_match_substring_validate_context,
-	NULL, NULL, NULL,
-	mcht_contains_match_key,
-	NULL
+	SIEVE_OBJECT("contains",
+		&match_type_operand, SIEVE_MATCH_TYPE_CONTAINS),
+	.validate_context = sieve_match_substring_validate_context,
+	.match_key = mcht_contains_match_key
 };
 
 /*

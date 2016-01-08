@@ -485,17 +485,20 @@ static const char *addrp_localpart_extract_from
 }
 
 const struct sieve_address_part_def all_address_part = {
-	SIEVE_OBJECT("all", &address_part_operand, SIEVE_ADDRESS_PART_ALL),
-	addrp_all_extract_from
+	SIEVE_OBJECT("all",
+		&address_part_operand, SIEVE_ADDRESS_PART_ALL),
+	.extract_from = addrp_all_extract_from
 };
 
 const struct sieve_address_part_def local_address_part = {
-	SIEVE_OBJECT("localpart", &address_part_operand, SIEVE_ADDRESS_PART_LOCAL),
-	addrp_localpart_extract_from
+	SIEVE_OBJECT("localpart",
+		&address_part_operand, SIEVE_ADDRESS_PART_LOCAL),
+	.extract_from = addrp_localpart_extract_from
 };
 
 const struct sieve_address_part_def domain_address_part = {
-	SIEVE_OBJECT("domain", &address_part_operand,	SIEVE_ADDRESS_PART_DOMAIN),
-	addrp_domain_extract_from
+	SIEVE_OBJECT("domain",
+		&address_part_operand,	SIEVE_ADDRESS_PART_DOMAIN),
+	.extract_from = addrp_domain_extract_from
 };
 

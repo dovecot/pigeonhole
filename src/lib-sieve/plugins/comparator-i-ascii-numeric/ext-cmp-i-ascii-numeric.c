@@ -77,11 +77,12 @@ static int cmp_i_ascii_numeric_compare
 /* Comparator object */
 
 const struct sieve_comparator_def i_ascii_numeric_comparator = {
-	SIEVE_OBJECT("i;ascii-numeric", &my_comparator_operand, 0),
-	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY,
-	cmp_i_ascii_numeric_compare,
-	NULL,
-	NULL
+	SIEVE_OBJECT("i;ascii-numeric",
+		&my_comparator_operand, 0),
+	.flags =
+		SIEVE_COMPARATOR_FLAG_ORDERING |
+		SIEVE_COMPARATOR_FLAG_EQUALITY,
+	.compare = cmp_i_ascii_numeric_compare
 };
 
 /* Comparator implementation */

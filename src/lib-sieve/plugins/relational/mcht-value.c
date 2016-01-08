@@ -24,19 +24,17 @@
  */
 
 const struct sieve_match_type_def value_match_type = {
-	SIEVE_OBJECT("value", &rel_match_type_operand, RELATIONAL_VALUE),
-	mcht_relational_validate,
-	NULL, NULL, NULL, NULL, NULL, NULL
+	SIEVE_OBJECT("value",
+		&rel_match_type_operand, RELATIONAL_VALUE),
+	.validate = mcht_relational_validate
 };
 
 #define VALUE_MATCH_TYPE(name, rel_match)                       \
 const struct sieve_match_type_def rel_match_value_ ## name = {  \
-	SIEVE_OBJECT(                                                 \
-		"value-" #name, &rel_match_type_operand,                    \
+	SIEVE_OBJECT("value-" #name,                                  \
+		&rel_match_type_operand,                                    \
 		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match)),              \
-	NULL, NULL, NULL, NULL, NULL,                                 \
-	mcht_value_match_key,                                         \
-	NULL                                                          \
+	.match_key = mcht_value_match_key,                            \
 }
 
 VALUE_MATCH_TYPE(gt, REL_MATCH_GREATER);

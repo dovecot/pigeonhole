@@ -26,10 +26,9 @@ static int mcht_is_match_key
  */
 
 const struct sieve_match_type_def is_match_type = {
-	SIEVE_OBJECT("is", &match_type_operand, SIEVE_MATCH_TYPE_IS),
-	NULL, NULL, NULL, NULL, NULL,
-	mcht_is_match_key,
-	NULL
+	SIEVE_OBJECT("is",
+		&match_type_operand, SIEVE_MATCH_TYPE_IS),
+	.match_key = mcht_is_match_key
 };
 
 /*

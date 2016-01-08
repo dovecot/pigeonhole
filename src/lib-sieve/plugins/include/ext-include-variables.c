@@ -160,13 +160,12 @@ bool vnspc_global_variables_generate
 		const struct sieve_variables_namespace *nspc,
 		struct sieve_ast_argument *arg, struct sieve_command *cmd, void *var_data);
 
-static const struct sieve_variables_namespace_def global_variables_namespace = {
+static const struct sieve_variables_namespace_def
+global_variables_namespace = {
 	SIEVE_OBJECT("global", NULL, 0),
-	vnspc_global_variables_validate,
-	vnspc_global_variables_generate,
-	NULL, NULL
+	.validate = vnspc_global_variables_validate,
+	.generate = vnspc_global_variables_generate
 };
-
 
 bool vnspc_global_variables_validate
 (struct sieve_validator *valdtr,

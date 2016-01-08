@@ -234,17 +234,16 @@ static int opr_substitution_read_value
 static bool testsuite_file_substitution_get_value
 	(const char *param, string_t **result);
 
-static const struct testsuite_substitution_def testsuite_file_substitution = {
-	SIEVE_OBJECT(
-		"file",
+static const struct testsuite_substitution_def
+testsuite_file_substitution = {
+	SIEVE_OBJECT("file",
 		&testsuite_substitution_operand,
-		TESTSUITE_SUBSTITUTION_FILE
-	),
-	testsuite_file_substitution_get_value
+		TESTSUITE_SUBSTITUTION_FILE),
+	.get_value = testsuite_file_substitution_get_value
 };
 
 static bool testsuite_file_substitution_get_value
-	(const char *param, string_t **result)
+(const char *param, string_t **result)
 {
 	*result = t_str_new(256);
 
