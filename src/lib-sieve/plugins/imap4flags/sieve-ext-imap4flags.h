@@ -23,6 +23,12 @@ sieve_ext_imap4flags_require_extension
 }
 
 /*
+ * Flag syntax
+ */
+
+bool sieve_ext_imap4flags_flag_is_valid(const char *flag);
+
+/*
  * Flag manipulation
  */
 

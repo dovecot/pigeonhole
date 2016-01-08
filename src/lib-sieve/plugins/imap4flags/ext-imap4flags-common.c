@@ -5,6 +5,7 @@
 #include "str.h"
 #include "str-sanitize.h"
 #include "mail-storage.h"
+#include "imap-arg.h"
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
@@ -20,12 +21,6 @@
 #include "sieve-ext-variables.h"
 
 #include "ext-imap4flags-common.h"
-
-/*
- * Forward declarations
- */
-
-static bool flag_is_valid(const char *flag);
 
 /*
  * Tagged arguments
@@ -132,9 +127,9 @@ bool ext_imap4flags_command_validate
 		ext_imap4flags_iter_init(&fiter, sieve_ast_argument_str(arg));
 
 		while ( (flag=ext_imap4flags_iter_get_flag(&fiter)) != NULL ) {
-			if ( !flag_is_valid(flag) ) {
+			if ( !sieve_ext_imap4flags_flag_is_valid(flag) ) {
 				sieve_argument_validate_warning(valdtr, arg,
-                	"IMAP flag '%s' specified for the %s command is invalid "
+					"IMAP flag '%s' specified for the %s command is invalid "
 					"and will be ignored (only first invalid is reported)",
 					str_sanitize(flag, 64), sieve_command_identifier(cmd));
 				break;
@@ -265,7 +260,7 @@ const struct sieve_interpreter_extension imap4flags_interpreter_extension = {
  * flags, making the internal or variable flag list indefinitely long
  */
 
-static bool flag_is_valid(const char *flag)
+bool sieve_ext_imap4flags_flag_is_valid(const char *flag)
 {
 	if (*flag == '\\') {
 		/* System flag */
@@ -288,20 +283,10 @@ static bool flag_is_valid(const char *flag)
 		 * Syntax (IMAP4rev1, RFC 3501, Section 9. Formal Syntax) :
 		 *  flag-keyword    = atom
 		 *  atom            = 1*ATOM-CHAR
-		 *  ATOM-CHAR       = <any CHAR except atom-specials>
-		 *  atom-specials   = "(" / ")" / "{" / SP / CTL / list-wildcards /
-		 *                    quoted-specials / resp-specials
-		 *  CTL             =  %x00-1F / %x7F
-		 *  list-wildcards  = "%" / "*"
-		 *  quoted-specials = DQUOTE / "\"
-		 *  resp-specials   = "]"
 		 */
-
 		p = flag;
 		while ( *p != '\0' ) {
-			if ( *p == '(' || *p == ')' || *p == '{' || *p == ' ' ||
-				*p <= 0x1F || *p == 0x7F || *p == '%' || *p ==  '*' ||
-				*p == '"' || *p == '\\' || *p == ']' )
+			if ( !IS_ATOM_CHAR(*p) )
 				return FALSE;
 			p++;
 		}
@@ -449,7 +434,8 @@ static void flags_list_add_flags
 	ext_imap4flags_iter_init(&flit, flags);
 
 	while ( (flg=ext_imap4flags_iter_get_flag(&flit)) != NULL ) {
-		if ( flag_is_valid(flg) && !flags_list_flag_exists(flags_list, flg) ) {
+		if ( sieve_ext_imap4flags_flag_is_valid(flg) &&
+			!flags_list_flag_exists(flags_list, flg) ) {
 			if ( str_len(flags_list) != 0 )
 				str_append_c(flags_list, ' ');
 			str_append(flags_list, flg);
