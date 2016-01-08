@@ -65,11 +65,10 @@ static int cmd_test_result_reset_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_result_reset_operation = {
-	"TEST_RESULT_RESET",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_RESULT_RESET,
-	NULL,
-	cmd_test_result_reset_operation_execute
+	.mnemonic = "TEST_RESULT_RESET",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_RESULT_RESET,
+	.execute = cmd_test_result_reset_operation_execute
 };
 
 /* test_result_print */
@@ -78,11 +77,10 @@ static int cmd_test_result_print_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_result_print_operation = {
-	"TEST_RESULT_PRINT",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_RESULT_PRINT,
-	NULL,
-	cmd_test_result_print_operation_execute
+	.mnemonic = "TEST_RESULT_PRINT",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_RESULT_PRINT,
+	.execute = cmd_test_result_print_operation_execute
 };
 
 /*

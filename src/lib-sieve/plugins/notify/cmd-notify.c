@@ -109,11 +109,11 @@ static int cmd_notify_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def notify_old_operation = {
-	"NOTIFY",
-	&notify_extension,
-	EXT_NOTIFY_OPERATION_NOTIFY,
-	cmd_notify_operation_dump,
-	cmd_notify_operation_execute
+	.mnemonic = "NOTIFY",
+	.ext_def = &notify_extension,
+	.code = EXT_NOTIFY_OPERATION_NOTIFY,
+	.dump = cmd_notify_operation_dump,
+	.execute = cmd_notify_operation_execute
 };
 
 /* Codes for optional operands */

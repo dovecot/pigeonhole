@@ -264,9 +264,9 @@ const struct sieve_operand_class omitted_class =
 	{ "OMITTED" };
 
 const struct sieve_operand_def omitted_operand = {
-	"@OMITTED",
-	NULL, SIEVE_OPERAND_OPTIONAL,
-	&omitted_class, NULL
+	.name = "@OMITTED",
+	.code = SIEVE_OPERAND_OPTIONAL,
+	.class = &omitted_class
 };
 
 /* Number */
@@ -287,10 +287,10 @@ const struct sieve_operand_class number_class =
 	{ "number" };
 
 const struct sieve_operand_def number_operand = {
-	"@number",
-	NULL, SIEVE_OPERAND_NUMBER,
-	&number_class,
-	&number_interface
+	.name = "@number",
+	.code = SIEVE_OPERAND_NUMBER,
+	.class = &number_class,
+	.interface = &number_interface
 };
 
 /* String */
@@ -311,10 +311,10 @@ const struct sieve_operand_class string_class =
 	{ "string" };
 
 const struct sieve_operand_def string_operand = {
-	"@string",
-	NULL, SIEVE_OPERAND_STRING,
-	&string_class,
-	&string_interface
+	.name = "@string",
+	.code = SIEVE_OPERAND_STRING,
+	.class = &string_class,
+	.interface = &string_interface
 };
 
 /* String List */
@@ -335,10 +335,10 @@ const struct sieve_operand_class stringlist_class =
 	{ "string-list" };
 
 const struct sieve_operand_def stringlist_operand =	{
-	"@string-list",
-	NULL, SIEVE_OPERAND_STRING_LIST,
-	&stringlist_class,
-	&stringlist_interface
+	.name = "@string-list",
+	.code = SIEVE_OPERAND_STRING_LIST,
+	.class = &stringlist_class,
+	.interface = &stringlist_interface
 };
 
 /* Catenated String */
@@ -356,10 +356,10 @@ const struct sieve_opr_string_interface catenated_string_interface = {
 };
 
 const struct sieve_operand_def catenated_string_operand = {
-	"@catenated-string",
-	NULL, SIEVE_OPERAND_CATENATED_STRING,
-	&string_class,
-	&catenated_string_interface
+	.name = "@catenated-string",
+	.code = SIEVE_OPERAND_CATENATED_STRING,
+	.class = &string_class,
+	.interface = &catenated_string_interface
 };
 
 /*
@@ -1009,27 +1009,24 @@ static int opc_jmpfalse_execute
 /* Operation objects defined in this file */
 
 const struct sieve_operation_def sieve_jmp_operation = {
-	"JMP",
-	NULL,
-	SIEVE_OPERATION_JMP,
-	opc_jmp_dump,
-	opc_jmp_execute
+	.mnemonic = "JMP",
+	.code = SIEVE_OPERATION_JMP,
+	.dump = opc_jmp_dump,
+	.execute = opc_jmp_execute
 };
 
 const struct sieve_operation_def sieve_jmptrue_operation = {
-	"JMPTRUE",
-	NULL,
-	SIEVE_OPERATION_JMPTRUE,
-	opc_jmp_dump,
-	opc_jmptrue_execute
+	.mnemonic = "JMPTRUE",
+	.code = SIEVE_OPERATION_JMPTRUE,
+	.dump = opc_jmp_dump,
+	.execute = opc_jmptrue_execute
 };
 
 const struct sieve_operation_def sieve_jmpfalse_operation = {
-	"JMPFALSE",
-	NULL,
-	SIEVE_OPERATION_JMPFALSE,
-	opc_jmp_dump,
-	opc_jmpfalse_execute
+	.mnemonic = "JMPFALSE",
+	.code = SIEVE_OPERATION_JMPFALSE,
+	.dump = opc_jmp_dump,
+	.execute = opc_jmpfalse_execute
 };
 
 /* Operation objects defined in other files */

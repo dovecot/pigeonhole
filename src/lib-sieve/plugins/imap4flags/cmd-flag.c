@@ -88,31 +88,31 @@ static int cmd_flag_operation_execute
 /* Setflag operation */
 
 const struct sieve_operation_def setflag_operation = {
-	"SETFLAG",
-	&imap4flags_extension,
-	ext_imap4flags_OPERATION_SETFLAG,
-	cmd_flag_operation_dump,
-	cmd_flag_operation_execute
+	.mnemonic = "SETFLAG",
+	.ext_def = &imap4flags_extension,
+	.code = EXT_IMAP4FLAGS_OPERATION_SETFLAG,
+	.dump = cmd_flag_operation_dump,
+	.execute = cmd_flag_operation_execute
 };
 
 /* Addflag operation */
 
 const struct sieve_operation_def addflag_operation = {
-	"ADDFLAG",
-	&imap4flags_extension,
-	ext_imap4flags_OPERATION_ADDFLAG,
-	cmd_flag_operation_dump,
-	cmd_flag_operation_execute
+	.mnemonic = "ADDFLAG",
+	.ext_def = &imap4flags_extension,
+	.code = EXT_IMAP4FLAGS_OPERATION_ADDFLAG,
+	.dump = cmd_flag_operation_dump,
+	.execute = cmd_flag_operation_execute
 };
 
 /* Removeflag operation */
 
 const struct sieve_operation_def removeflag_operation = {
-	"REMOVEFLAG",
-	&imap4flags_extension,
-	ext_imap4flags_OPERATION_REMOVEFLAG,
-	cmd_flag_operation_dump,
-	cmd_flag_operation_execute
+	.mnemonic = "REMOVEFLAG",
+	.ext_def = &imap4flags_extension,
+	.code = EXT_IMAP4FLAGS_OPERATION_REMOVEFLAG,
+	.dump = cmd_flag_operation_dump,
+	.execute = cmd_flag_operation_execute
 };
 
 /*

@@ -83,21 +83,21 @@ static int tst_metadataexists_operation_execute
 /* Metadata operation */
 
 const struct sieve_operation_def metadataexists_operation = {
-	"METADATAEXISTS",
-	&mboxmetadata_extension,
-	EXT_METADATA_OPERATION_METADATAEXISTS,
-	tst_metadataexists_operation_dump,
-	tst_metadataexists_operation_execute
+	.mnemonic = "METADATAEXISTS",
+	.ext_def = &mboxmetadata_extension,
+	.code = EXT_METADATA_OPERATION_METADATAEXISTS,
+	.dump = tst_metadataexists_operation_dump,
+	.execute = tst_metadataexists_operation_execute
 };
 
 /* Mailboxexists operation */
 
 const struct sieve_operation_def servermetadataexists_operation = {
-	"SERVERMETADATAEXISTS",
-	&servermetadata_extension,
-	EXT_METADATA_OPERATION_METADATAEXISTS,
-	tst_metadataexists_operation_dump,
-	tst_metadataexists_operation_execute
+	.mnemonic = "SERVERMETADATAEXISTS",
+	.ext_def = &servermetadata_extension,
+	.code = EXT_METADATA_OPERATION_METADATAEXISTS,
+	.dump = tst_metadataexists_operation_dump,
+	.execute = tst_metadataexists_operation_execute
 };
 
 /*

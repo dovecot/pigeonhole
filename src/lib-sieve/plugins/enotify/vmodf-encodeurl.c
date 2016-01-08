@@ -31,11 +31,10 @@ static const struct sieve_extension_objects ext_enotify_modifiers =
 	SIEVE_VARIABLES_DEFINE_MODIFIER(encodeurl_modifier);
 
 const struct sieve_operand_def encodeurl_operand = {
-	"modifier",
-	&enotify_extension,
-	0,
-	&sieve_variables_modifier_operand_class,
-	&ext_enotify_modifiers
+	.name = "modifier",
+	.ext_def = &enotify_extension,
+	.class = &sieve_variables_modifier_operand_class,
+	.interface = &ext_enotify_modifiers
 };
 
 /*

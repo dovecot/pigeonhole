@@ -73,11 +73,11 @@ static int cmd_break_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def break_operation = {
-	"break",
-	&foreverypart_extension,
-	EXT_FOREVERYPART_OPERATION_BREAK,
-	cmd_break_operation_dump,
-	cmd_break_operation_execute
+	.mnemonic = "BREAK",
+	.ext_def = &foreverypart_extension,
+	.code = EXT_FOREVERYPART_OPERATION_BREAK,
+	.dump = cmd_break_operation_dump,
+	.execute = cmd_break_operation_execute
 };
 
 /*

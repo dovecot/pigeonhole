@@ -97,11 +97,10 @@ static const struct sieve_extension_objects ext_header_overrides =
 	SIEVE_EXT_DEFINE_MESSAGE_OVERRIDE(mime_header_override);
 
 const struct sieve_operand_def mime_operand = {
-	"mime operand",
-	&mime_extension,
-	0,
-	&sieve_message_override_operand_class,
-	&ext_header_overrides
+	.name = "mime operand",
+	.ext_def = &mime_extension,
+	.class = &sieve_message_override_operand_class,
+	.interface = &ext_header_overrides
 };
 
 /*

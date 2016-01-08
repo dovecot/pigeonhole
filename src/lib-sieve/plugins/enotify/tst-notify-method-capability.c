@@ -55,11 +55,11 @@ static int tst_notifymc_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def notify_method_capability_operation = {
-	"NOTIFY_METHOD_CAPABILITY",
-	&enotify_extension,
-	EXT_ENOTIFY_OPERATION_NOTIFY_METHOD_CAPABILITY,
-	tst_notifymc_operation_dump,
-	tst_notifymc_operation_execute
+	.mnemonic = "NOTIFY_METHOD_CAPABILITY",
+	.ext_def = &enotify_extension,
+	.code = EXT_ENOTIFY_OPERATION_NOTIFY_METHOD_CAPABILITY,
+	.dump = tst_notifymc_operation_dump,
+	.execute = tst_notifymc_operation_execute
 };
 
 /*

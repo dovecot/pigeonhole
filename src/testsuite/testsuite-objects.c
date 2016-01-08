@@ -102,11 +102,11 @@ static const struct sieve_extension_objects core_testsuite_objects =
 	SIEVE_EXT_DEFINE_OBJECTS(testsuite_core_objects);
 
 const struct sieve_operand_def testsuite_object_operand = {
-	"testsuite-object",
-	&testsuite_extension,
-	TESTSUITE_OPERAND_OBJECT,
-	&sieve_testsuite_object_operand_class,
-	&core_testsuite_objects
+	.name = "testsuite-object",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERAND_OBJECT,
+	.class = &sieve_testsuite_object_operand_class,
+	.interface = &core_testsuite_objects
 };
 
 static void testsuite_object_emit

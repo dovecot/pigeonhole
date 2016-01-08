@@ -49,11 +49,10 @@ static int cmd_error_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def error_operation = {
-	"ERROR",
-	&ihave_extension,
-	0,
-	cmd_error_operation_dump,
-	cmd_error_operation_execute
+	.mnemonic = "ERROR",
+	.ext_def = &ihave_extension,
+	.dump = cmd_error_operation_dump,
+	.execute = cmd_error_operation_execute
 };
 
 /*

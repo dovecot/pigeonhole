@@ -61,11 +61,10 @@ static const struct sieve_extension_objects ext_side_effects =
 	SIEVE_EXT_DEFINE_SIDE_EFFECT(mailbox_create_side_effect);
 
 const struct sieve_operand_def mailbox_create_operand = {
-	"create operand",
-	&mailbox_extension,
-	0,
-	&sieve_side_effect_operand_class,
-	&ext_side_effects
+	.name = "create operand",
+	.ext_def = &mailbox_extension,
+	.class = &sieve_side_effect_operand_class,
+	.interface = &ext_side_effects
 };
 
 /*

@@ -47,11 +47,10 @@ static int tst_exists_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def tst_exists_operation = {
-	"EXISTS",
-	NULL,
-	SIEVE_OPERATION_EXISTS,
-	tst_exists_operation_dump,
-	tst_exists_operation_execute
+	.mnemonic = "EXISTS",
+	.code = SIEVE_OPERATION_EXISTS,
+	.dump = tst_exists_operation_dump,
+	.execute = tst_exists_operation_execute
 };
 
 /*

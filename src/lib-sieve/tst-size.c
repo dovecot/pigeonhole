@@ -53,19 +53,17 @@ static int tst_size_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def tst_size_over_operation = {
-	"SIZE-OVER",
-	NULL,
-	SIEVE_OPERATION_SIZE_OVER,
-	tst_size_operation_dump,
-	tst_size_operation_execute
+	.mnemonic = "SIZE-OVER",
+	.code = SIEVE_OPERATION_SIZE_OVER,
+	.dump = tst_size_operation_dump,
+	.execute = tst_size_operation_execute
 };
 
 const struct sieve_operation_def tst_size_under_operation = {
-	"SIZE-UNDER",
-	NULL,
-	SIEVE_OPERATION_SIZE_UNDER,
-	tst_size_operation_dump,
-	tst_size_operation_execute
+	.mnemonic = "SIZE-UNDER",
+	.code = SIEVE_OPERATION_SIZE_UNDER,
+	.dump = tst_size_operation_dump,
+	.execute = tst_size_operation_execute
 };
 
 /*

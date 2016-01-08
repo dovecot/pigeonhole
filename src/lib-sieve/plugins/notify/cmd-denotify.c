@@ -91,11 +91,11 @@ static int cmd_denotify_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def denotify_operation = {
-	"DENOTIFY",
-	&notify_extension,
-	EXT_NOTIFY_OPERATION_DENOTIFY,
-	cmd_denotify_operation_dump,
-	cmd_denotify_operation_execute
+	.mnemonic = "DENOTIFY",
+	.ext_def = &notify_extension,
+	.code = EXT_NOTIFY_OPERATION_DENOTIFY,
+	.dump = cmd_denotify_operation_dump,
+	.execute = cmd_denotify_operation_execute
 };
 
 /*

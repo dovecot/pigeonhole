@@ -49,11 +49,10 @@ static int cmd_debug_log_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def debug_log_operation = {
-	"debug_log",
-	&vnd_debug_extension,
-	0,
-	cmd_debug_log_operation_dump,
-	cmd_debug_log_operation_execute
+	.mnemonic = "DEBUG_LOG",
+	.ext_def = &vnd_debug_extension,
+	.dump = cmd_debug_log_operation_dump,
+	.execute = cmd_debug_log_operation_execute
 };
 
 /*

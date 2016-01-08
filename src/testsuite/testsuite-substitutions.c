@@ -147,11 +147,11 @@ const struct sieve_opr_string_interface testsuite_substitution_interface = {
 };
 
 const struct sieve_operand_def testsuite_substitution_operand = {
-	"test-substitution",
-	&testsuite_extension,
-	TESTSUITE_OPERAND_SUBSTITUTION,
-	&string_class,
-	&testsuite_substitution_interface
+	.name = "test-substitution",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERAND_SUBSTITUTION,
+	.class = &string_class,
+	.interface = &testsuite_substitution_interface
 };
 
 void testsuite_opr_substitution_emit

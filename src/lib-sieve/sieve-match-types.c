@@ -536,11 +536,10 @@ static const struct sieve_extension_objects core_match_types =
 	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_match_types);
 
 const struct sieve_operand_def match_type_operand = {
-	"match-type",
-	NULL,
-	SIEVE_OPERAND_MATCH_TYPE,
-	&sieve_match_type_operand_class,
-	&core_match_types
+	.name = "match-type",
+	.code = SIEVE_OPERAND_MATCH_TYPE,
+	.class = &sieve_match_type_operand_class,
+	.interface = &core_match_types
 };
 
 /*

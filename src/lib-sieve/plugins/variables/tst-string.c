@@ -53,11 +53,11 @@ static int tst_string_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def tst_string_operation = {
-	"STRING",
-	&variables_extension,
-	EXT_VARIABLES_OPERATION_STRING,
-	tst_string_operation_dump,
-	tst_string_operation_execute
+	.mnemonic = "STRING",
+	.ext_def = &variables_extension,
+	.code = EXT_VARIABLES_OPERATION_STRING,
+	.dump = tst_string_operation_dump,
+	.execute = tst_string_operation_execute
 };
 
 /*

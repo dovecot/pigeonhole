@@ -123,11 +123,11 @@ static const struct sieve_extension_objects core_modifiers =
 	SIEVE_VARIABLES_DEFINE_MODIFIERS(ext_variables_core_modifiers);
 
 const struct sieve_operand_def modifier_operand = {
-	"modifier",
-	&variables_extension,
-	EXT_VARIABLES_OPERAND_MODIFIER,
-	&sieve_variables_modifier_operand_class,
-	&core_modifiers
+	.name = "modifier",
+	.ext_def = &variables_extension,
+	.code = EXT_VARIABLES_OPERAND_MODIFIER,
+	.class = &sieve_variables_modifier_operand_class,
+	.interface = &core_modifiers
 };
 
 /*

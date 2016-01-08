@@ -90,21 +90,21 @@ static int tst_metadata_operation_execute
 /* Metadata operation */
 
 const struct sieve_operation_def metadata_operation = {
-	"METADATA",
-	&mboxmetadata_extension,
-	EXT_METADATA_OPERATION_METADATA,
-	tst_metadata_operation_dump,
-	tst_metadata_operation_execute
+	.mnemonic = "METADATA",
+	.ext_def = &mboxmetadata_extension,
+	.code = EXT_METADATA_OPERATION_METADATA,
+	.dump = tst_metadata_operation_dump,
+	.execute = tst_metadata_operation_execute
 };
 
 /* Servermetadata operation */
 
 const struct sieve_operation_def servermetadata_operation = {
-	"SERVERMETADATA",
-	&servermetadata_extension,
-	EXT_METADATA_OPERATION_METADATA,
-	tst_metadata_operation_dump,
-	tst_metadata_operation_execute
+	.mnemonic = "SERVERMETADATA",
+	.ext_def = &servermetadata_extension,
+	.code = EXT_METADATA_OPERATION_METADATA,
+	.dump = tst_metadata_operation_dump,
+	.execute = tst_metadata_operation_execute
 };
 
 /*

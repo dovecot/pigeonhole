@@ -48,11 +48,11 @@ static int tst_test_script_compile_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_script_compile_operation = {
-	"TEST_SCRIPT_COMPILE",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_SCRIPT_COMPILE,
-	tst_test_script_compile_operation_dump,
-	tst_test_script_compile_operation_execute
+	.mnemonic = "TEST_SCRIPT_COMPILE",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_SCRIPT_COMPILE,
+	.dump = tst_test_script_compile_operation_dump,
+	.execute = tst_test_script_compile_operation_execute
 };
 
 /*

@@ -47,11 +47,11 @@ static int cmd_test_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_operation = {
-	"TEST",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST,
-	cmd_test_operation_dump,
-	cmd_test_operation_execute
+	.mnemonic = "TEST",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST,
+	.dump = cmd_test_operation_dump,
+	.execute = cmd_test_operation_execute
 };
 
 /* Test_finish operation */
@@ -60,11 +60,10 @@ static int cmd_test_finish_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_finish_operation = {
-	"TEST-FINISH",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_FINISH,
-	NULL,
-	cmd_test_finish_operation_execute
+	.mnemonic = "TEST-FINISH",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_FINISH,
+	.execute = cmd_test_finish_operation_execute
 };
 
 /*

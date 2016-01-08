@@ -85,11 +85,11 @@ static int opc_global_execute
 /* Global operation */
 
 const struct sieve_operation_def global_operation = {
-	"global",
-	&include_extension,
-	EXT_INCLUDE_OPERATION_GLOBAL,
-	opc_global_dump,
-	opc_global_execute
+	.mnemonic = "GLOBAL",
+	.ext_def = &include_extension,
+	.code = EXT_INCLUDE_OPERATION_GLOBAL,
+	.dump = opc_global_dump,
+	.execute = opc_global_execute
 };
 
 /*

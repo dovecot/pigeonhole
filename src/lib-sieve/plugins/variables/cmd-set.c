@@ -62,11 +62,11 @@ static int cmd_set_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def cmd_set_operation = {
-	"SET",
-	&variables_extension,
-	EXT_VARIABLES_OPERATION_SET,
-	cmd_set_operation_dump,
-	cmd_set_operation_execute
+	.mnemonic = "SET",
+	.ext_def = &variables_extension,
+	.code = EXT_VARIABLES_OPERATION_SET,
+	.dump = cmd_set_operation_dump,
+	.execute = cmd_set_operation_execute
 };
 
 /*

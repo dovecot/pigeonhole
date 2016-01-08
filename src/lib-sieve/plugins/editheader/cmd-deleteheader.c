@@ -94,11 +94,11 @@ static int cmd_deleteheader_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def deleteheader_operation = {
-	"DELETEHEADER",
-	&editheader_extension,
-	EXT_EDITHEADER_OPERATION_DELETEHEADER,
-	cmd_deleteheader_operation_dump,
-	cmd_deleteheader_operation_execute
+	.mnemonic = "DELETEHEADER",
+	.ext_def = &editheader_extension,
+	.code = EXT_EDITHEADER_OPERATION_DELETEHEADER,
+	.dump = cmd_deleteheader_operation_dump,
+	.execute = cmd_deleteheader_operation_execute
 };
 
 /*

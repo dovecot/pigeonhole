@@ -154,11 +154,10 @@ static int ext_vacation_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def vacation_operation = {
-	"VACATION",
-	&vacation_extension,
-	0,
-	ext_vacation_operation_dump,
-	ext_vacation_operation_execute
+	.mnemonic = "VACATION",
+	.ext_def = &vacation_extension,
+	.dump = ext_vacation_operation_dump,
+	.execute = ext_vacation_operation_execute
 };
 
 /*

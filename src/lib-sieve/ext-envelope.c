@@ -100,11 +100,10 @@ static int ext_envelope_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def envelope_operation = {
-	"ENVELOPE",
-	&envelope_extension,
-	0,
-	ext_envelope_operation_dump,
-	ext_envelope_operation_execute
+	.mnemonic = "ENVELOPE",
+	.ext_def = &envelope_extension,
+	.dump = ext_envelope_operation_dump,
+	.execute = ext_envelope_operation_execute
 };
 
 /*

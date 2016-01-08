@@ -119,11 +119,11 @@ static int cmd_test_config_set_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_config_set_operation = {
-	"TEST_CONFIG_SET",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_CONFIG_SET,
-	cmd_test_config_set_operation_dump,
-	cmd_test_config_set_operation_execute
+	.mnemonic = "TEST_CONFIG_SET",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_CONFIG_SET,
+	.dump = cmd_test_config_set_operation_dump,
+	.execute = cmd_test_config_set_operation_execute
 };
 
 /* Test_config_unset operation */
@@ -134,11 +134,11 @@ static int cmd_test_config_unset_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_config_unset_operation = {
-	"TEST_CONFIG_UNSET",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_CONFIG_UNSET,
-	cmd_test_config_unset_operation_dump,
-	cmd_test_config_unset_operation_execute
+	.mnemonic = "TEST_CONFIG_UNSET",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_CONFIG_UNSET,
+	.dump = cmd_test_config_unset_operation_dump,
+	.execute = cmd_test_config_unset_operation_execute
 };
 
 /* Test_config_read operation */
@@ -149,11 +149,11 @@ static int cmd_test_config_reload_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_config_reload_operation = {
-	"TEST_CONFIG_RELOAD",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_CONFIG_RELOAD,
-	cmd_test_config_reload_operation_dump,
-	cmd_test_config_reload_operation_execute
+	.mnemonic = "TEST_CONFIG_RELOAD",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_CONFIG_RELOAD,
+	.dump = cmd_test_config_reload_operation_dump,
+	.execute = cmd_test_config_reload_operation_execute
 };
 
 /*

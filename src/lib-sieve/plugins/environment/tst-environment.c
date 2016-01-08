@@ -53,11 +53,10 @@ static int tst_environment_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def tst_environment_operation = {
-	"ENVIRONMENT",
-	&environment_extension,
-	0,
-	tst_environment_operation_dump,
-	tst_environment_operation_execute
+	.mnemonic = "ENVIRONMENT",
+	.ext_def = &environment_extension,
+	.dump = tst_environment_operation_dump,
+	.execute = tst_environment_operation_execute
 };
 
 /*

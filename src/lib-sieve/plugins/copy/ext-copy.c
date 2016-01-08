@@ -105,11 +105,10 @@ static const struct sieve_extension_objects ext_side_effects =
 	SIEVE_EXT_DEFINE_SIDE_EFFECT(copy_side_effect);
 
 static const struct sieve_operand_def copy_side_effect_operand = {
-	"copy operand",
-	&copy_extension,
-	0,
-	&sieve_side_effect_operand_class,
-	&ext_side_effects
+	.name = "copy operand",
+	.ext_def = &copy_extension,
+	.class = &sieve_side_effect_operand_class,
+	.interface = &ext_side_effects
 };
 
 /*

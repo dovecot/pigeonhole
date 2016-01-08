@@ -11,13 +11,12 @@
  */
 
 static const struct sieve_extension_objects ext_match_types =
-    SIEVE_EXT_DEFINE_MATCH_TYPE(regex_match_type);
+	SIEVE_EXT_DEFINE_MATCH_TYPE(regex_match_type);
 
 const struct sieve_operand_def regex_match_type_operand = {
-    "regex match",
-    &regex_extension,
-    0,
-    &sieve_match_type_operand_class,
-    &ext_match_types
+	.name = "regex match",
+	.ext_def = &regex_extension,
+	.class = &sieve_match_type_operand_class,
+	.interface = &ext_match_types
 };
 

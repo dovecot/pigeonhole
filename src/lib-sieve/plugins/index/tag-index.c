@@ -76,11 +76,10 @@ static const struct sieve_extension_objects ext_header_overrides =
 	SIEVE_EXT_DEFINE_MESSAGE_OVERRIDE(index_header_override);
 
 const struct sieve_operand_def index_operand = {
-	"index operand",
-	&index_extension,
-	0,
-	&sieve_message_override_operand_class,
-	&ext_header_overrides
+	.name = "index operand",
+	.ext_def = &index_extension,
+	.class = &sieve_message_override_operand_class,
+	.interface = &ext_header_overrides
 };
 
 /*

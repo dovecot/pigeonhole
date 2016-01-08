@@ -68,21 +68,21 @@ static int cmd_test_mailbox_operation_execute
 /* Test_mailbox_create operation */
 
 const struct sieve_operation_def test_mailbox_create_operation = {
-	"TEST_MAILBOX_CREATE",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_MAILBOX_CREATE,
-	cmd_test_mailbox_operation_dump,
-	cmd_test_mailbox_operation_execute
+	.mnemonic = "TEST_MAILBOX_CREATE",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_MAILBOX_CREATE,
+	.dump = cmd_test_mailbox_operation_dump,
+	.execute = cmd_test_mailbox_operation_execute
 };
 
 /* Test_mailbox_delete operation */
 
 const struct sieve_operation_def test_mailbox_delete_operation = {
-	"TEST_MAILBOX_DELETE",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_MAILBOX_DELETE,
-	cmd_test_mailbox_operation_dump,
-	cmd_test_mailbox_operation_execute
+	.mnemonic = "TEST_MAILBOX_DELETE",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_MAILBOX_DELETE,
+	.dump = cmd_test_mailbox_operation_dump,
+	.execute = cmd_test_mailbox_operation_execute
 };
 
 /*

@@ -189,11 +189,10 @@ static const struct sieve_extension_objects environment_namespaces =
 	SIEVE_VARIABLES_DEFINE_NAMESPACE(environment_namespace);
 
 const struct sieve_operand_def environment_namespace_operand = {
-	"env-namespace",
-	&vnd_environment_extension,
-	0,
-	&sieve_variables_namespace_operand_class,
-	&environment_namespaces
+	.name = "env-namespace",
+	.ext_def = &vnd_environment_extension,
+	.class = &sieve_variables_namespace_operand_class,
+	.interface = &environment_namespaces
 };
 
 void ext_environment_variables_init

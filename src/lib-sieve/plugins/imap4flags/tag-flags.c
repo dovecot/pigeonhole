@@ -91,11 +91,10 @@ static const struct sieve_extension_objects ext_side_effects =
 	SIEVE_EXT_DEFINE_SIDE_EFFECT(flags_side_effect);
 
 const struct sieve_operand_def flags_side_effect_operand = {
-	"flags operand",
-	&imap4flags_extension,
-	0,
-	&sieve_side_effect_operand_class,
-	&ext_side_effects
+	.name = "flags operand",
+	.ext_def = &imap4flags_extension,
+	.class = &sieve_side_effect_operand_class,
+	.interface = &ext_side_effects
 };
 
 /*

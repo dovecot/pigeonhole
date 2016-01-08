@@ -55,11 +55,11 @@ static int cmd_test_set_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_set_operation = {
-	"TEST_SET",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_SET,
-	cmd_test_set_operation_dump,
-	cmd_test_set_operation_execute
+	.mnemonic = "TEST_SET",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_SET,
+	.dump = cmd_test_set_operation_dump,
+	.execute = cmd_test_set_operation_execute
 };
 
 /*

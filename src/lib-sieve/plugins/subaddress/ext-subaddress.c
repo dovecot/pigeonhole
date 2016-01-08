@@ -180,9 +180,9 @@ static const struct sieve_extension_objects ext_address_parts =
 	SIEVE_EXT_DEFINE_ADDRESS_PARTS(ext_subaddress_parts);
 
 static struct sieve_operand_def subaddress_operand = {
-	"address-part",
-	&subaddress_extension, 0,
-	&sieve_address_part_operand_class,
-	&ext_address_parts
+	.name = "address-part",
+	.ext_def = &subaddress_extension,
+	.class = &sieve_address_part_operand_class,
+	.interface = &ext_address_parts
 };
 

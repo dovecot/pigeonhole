@@ -59,11 +59,10 @@ static int tst_address_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def tst_address_operation = {
-	"ADDRESS",
-	NULL,
-	SIEVE_OPERATION_ADDRESS,
-	tst_address_operation_dump,
-	tst_address_operation_execute
+	.mnemonic = "ADDRESS",
+	.code = SIEVE_OPERATION_ADDRESS,
+	.dump = tst_address_operation_dump,
+	.execute = tst_address_operation_execute
 };
 
 /*

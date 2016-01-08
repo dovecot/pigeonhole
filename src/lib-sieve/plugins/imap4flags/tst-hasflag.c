@@ -54,11 +54,11 @@ static int tst_hasflag_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def hasflag_operation = {
-	"HASFLAG",
-	&imap4flags_extension,
-	ext_imap4flags_OPERATION_HASFLAG,
-	tst_hasflag_operation_dump,
-	tst_hasflag_operation_execute
+	.mnemonic = "HASFLAG",
+	.ext_def = &imap4flags_extension,
+	.code = EXT_IMAP4FLAGS_OPERATION_HASFLAG,
+	.dump = tst_hasflag_operation_dump,
+	.execute = tst_hasflag_operation_execute
 };
 
 /*

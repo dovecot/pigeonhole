@@ -102,10 +102,10 @@ static int tst_duplicate_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def tst_duplicate_operation = {
-	"DUPLICATE", &duplicate_extension,
-	0,
-	tst_duplicate_operation_dump,
-	tst_duplicate_operation_execute
+	.mnemonic = "DUPLICATE",
+	.ext_def = &duplicate_extension,
+	.dump = tst_duplicate_operation_dump,
+	.execute = tst_duplicate_operation_execute
 };
 
 /*

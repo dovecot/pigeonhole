@@ -215,10 +215,10 @@ static const struct sieve_extension_objects core_address_parts =
 	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_address_parts);
 
 const struct sieve_operand_def address_part_operand = {
-	"address-part",
-	NULL, SIEVE_OPERAND_ADDRESS_PART,
-	&sieve_address_part_operand_class,
-	&core_address_parts
+	.name = "address-part",
+	.code = SIEVE_OPERAND_ADDRESS_PART,
+	.class = &sieve_address_part_operand_class,
+	.interface = &core_address_parts
 };
 
 /*

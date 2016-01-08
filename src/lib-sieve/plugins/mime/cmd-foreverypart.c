@@ -75,11 +75,11 @@ static int cmd_foreverypart_begin_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def foreverypart_begin_operation = {
-	"FOREVERYPART_BEGIN",
-	&foreverypart_extension,
-	EXT_FOREVERYPART_OPERATION_FOREVERYPART_BEGIN,
-	cmd_foreverypart_begin_operation_dump,
-	cmd_foreverypart_begin_operation_execute
+	.mnemonic = "FOREVERYPART_BEGIN",
+	.ext_def = &foreverypart_extension,
+	.code = EXT_FOREVERYPART_OPERATION_FOREVERYPART_BEGIN,
+	.dump = cmd_foreverypart_begin_operation_dump,
+	.execute = cmd_foreverypart_begin_operation_execute
 };
 
 static bool cmd_foreverypart_end_operation_dump
@@ -88,11 +88,11 @@ static int cmd_foreverypart_end_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def foreverypart_end_operation = {
-	"FOREVERYPART_END",
-	&foreverypart_extension,
-	EXT_FOREVERYPART_OPERATION_FOREVERYPART_END,
-	cmd_foreverypart_end_operation_dump,
-	cmd_foreverypart_end_operation_execute
+	.mnemonic = "FOREVERYPART_END",
+	.ext_def = &foreverypart_extension,
+	.code = EXT_FOREVERYPART_OPERATION_FOREVERYPART_END,
+	.dump = cmd_foreverypart_end_operation_dump,
+	.execute = cmd_foreverypart_end_operation_execute
 };
 
 /*

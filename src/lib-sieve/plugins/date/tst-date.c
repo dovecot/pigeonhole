@@ -115,19 +115,19 @@ static int tst_date_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def date_operation = {
-	"DATE",
-	&date_extension,
-	EXT_DATE_OPERATION_DATE,
-	tst_date_operation_dump,
-	tst_date_operation_execute
+	.mnemonic = "DATE",
+	.ext_def = &date_extension,
+	.code = EXT_DATE_OPERATION_DATE,
+	.dump = tst_date_operation_dump,
+	.execute = tst_date_operation_execute
 };
 
 const struct sieve_operation_def currentdate_operation = {
-	"CURRENTDATE",
-	&date_extension,
-	EXT_DATE_OPERATION_CURRENTDATE,
-	tst_date_operation_dump,
-	tst_date_operation_execute
+	.mnemonic = "CURRENTDATE",
+	.ext_def = &date_extension,
+	.code = EXT_DATE_OPERATION_CURRENTDATE,
+	.dump = tst_date_operation_dump,
+	.execute = tst_date_operation_execute
 };
 
 /*

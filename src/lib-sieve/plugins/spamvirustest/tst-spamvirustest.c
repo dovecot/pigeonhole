@@ -90,21 +90,18 @@ static int tst_spamvirustest_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def spamtest_operation = {
-	"SPAMTEST",
-	&spamtest_extension,
-	0,
-	tst_spamvirustest_operation_dump,
-	tst_spamvirustest_operation_execute
+	.mnemonic = "SPAMTEST",
+	.ext_def = &spamtest_extension,
+	.dump = tst_spamvirustest_operation_dump,
+	.execute = tst_spamvirustest_operation_execute
 };
 
 const struct sieve_operation_def virustest_operation = {
-	"VIRUSTEST",
-	&virustest_extension,
-	0,
-	tst_spamvirustest_operation_dump,
-	tst_spamvirustest_operation_execute
+	.mnemonic = "VIRUSTEST",
+	.ext_def = &virustest_extension,
+	.dump = tst_spamvirustest_operation_dump,
+	.execute = tst_spamvirustest_operation_execute
 };
-
 
 /*
  * Optional operands

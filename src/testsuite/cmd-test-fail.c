@@ -45,11 +45,11 @@ static int cmd_test_fail_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_fail_operation = {
-	"TEST_FAIL",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_FAIL,
-	cmd_test_fail_operation_dump,
-	cmd_test_fail_operation_execute
+	.mnemonic = "TEST_FAIL",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_FAIL,
+	.dump = cmd_test_fail_operation_dump,
+	.execute = cmd_test_fail_operation_execute
 };
 
 /*

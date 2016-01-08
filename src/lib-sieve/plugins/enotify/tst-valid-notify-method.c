@@ -48,11 +48,11 @@ static int tst_vnotifym_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def valid_notify_method_operation = {
-	"VALID_NOTIFY_METHOD",
-	&enotify_extension,
-	EXT_ENOTIFY_OPERATION_VALID_NOTIFY_METHOD,
-	tst_vnotifym_operation_dump,
-	tst_vnotifym_operation_execute
+	.mnemonic = "VALID_NOTIFY_METHOD",
+	.ext_def = &enotify_extension,
+	.code = EXT_ENOTIFY_OPERATION_VALID_NOTIFY_METHOD,
+	.dump = tst_vnotifym_operation_dump,
+	.execute = tst_vnotifym_operation_execute
 };
 
 /*

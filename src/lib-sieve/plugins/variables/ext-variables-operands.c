@@ -41,11 +41,11 @@ const struct sieve_opr_string_interface variable_interface = {
 };
 
 const struct sieve_operand_def variable_operand = {
-	"variable",
-	&variables_extension,
-	EXT_VARIABLES_OPERAND_VARIABLE,
-	&string_class,
-	&variable_interface
+	.name = "variable",
+	.ext_def = &variables_extension,
+	.code = EXT_VARIABLES_OPERAND_VARIABLE,
+	.class = &string_class,
+	.interface = &variable_interface
 };
 
 void sieve_variables_opr_variable_emit
@@ -213,11 +213,11 @@ const struct sieve_opr_string_interface match_value_interface = {
 };
 
 const struct sieve_operand_def match_value_operand = {
-	"match-value",
-	&variables_extension,
-	EXT_VARIABLES_OPERAND_MATCH_VALUE,
-	&string_class,
-	&match_value_interface
+	.name = "match-value",
+	.ext_def = &variables_extension,
+	.code = EXT_VARIABLES_OPERAND_MATCH_VALUE,
+	.class = &string_class,
+	.interface = &match_value_interface
 };
 
 void sieve_variables_opr_match_value_emit

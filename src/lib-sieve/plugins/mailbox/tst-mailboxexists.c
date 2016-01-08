@@ -52,11 +52,10 @@ static int tst_mailboxexists_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def mailboxexists_operation = {
-	"MAILBOXEXISTS",
-	&mailbox_extension,
-	0,
-	tst_mailboxexists_operation_dump,
-	tst_mailboxexists_operation_execute
+	.mnemonic = "MAILBOXEXISTS",
+	.ext_def = &mailbox_extension,
+	.dump = tst_mailboxexists_operation_dump,
+	.execute = tst_mailboxexists_operation_execute
 };
 
 /*

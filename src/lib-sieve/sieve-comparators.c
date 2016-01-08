@@ -237,11 +237,10 @@ static const struct sieve_extension_objects core_comparators =
 	SIEVE_EXT_DEFINE_COMPARATORS(sieve_core_comparators);
 
 const struct sieve_operand_def comparator_operand = {
-	"comparator",
-	NULL,
-	SIEVE_OPERAND_COMPARATOR,
-	&sieve_comparator_operand_class,
-	&core_comparators
+	.name = "comparator",
+	.code = SIEVE_OPERAND_COMPARATOR,
+	.class = &sieve_comparator_operand_class,
+	.interface = &core_comparators
 };
 
 /*

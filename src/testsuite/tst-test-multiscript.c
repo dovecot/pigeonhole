@@ -49,11 +49,11 @@ static int tst_test_multiscript_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_multiscript_operation = {
-	"TEST_MULTISCRIPT",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_MULTISCRIPT,
-	tst_test_multiscript_operation_dump,
-	tst_test_multiscript_operation_execute
+	.mnemonic = "TEST_MULTISCRIPT",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_MULTISCRIPT,
+	.dump = tst_test_multiscript_operation_dump,
+	.execute = tst_test_multiscript_operation_execute
 };
 
 /*

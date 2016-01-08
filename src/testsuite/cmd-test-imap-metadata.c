@@ -69,11 +69,11 @@ static int cmd_test_imap_metadata_operation_execute
 /* Test_mailbox_create operation */
 
 const struct sieve_operation_def test_imap_metadata_set_operation = {
-	"TEST_IMAP_METADATA_SET",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_IMAP_METADATA_SET,
-	cmd_test_imap_metadata_operation_dump,
-	cmd_test_imap_metadata_operation_execute
+	.mnemonic = "TEST_IMAP_METADATA_SET",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_IMAP_METADATA_SET,
+	.dump = cmd_test_imap_metadata_operation_dump,
+	.execute = cmd_test_imap_metadata_operation_execute
 };
 
 /* Codes for optional arguments */

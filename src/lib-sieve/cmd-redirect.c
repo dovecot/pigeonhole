@@ -68,11 +68,10 @@ static int cmd_redirect_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def cmd_redirect_operation = {
-	"REDIRECT",
-	NULL,
-	SIEVE_OPERATION_REDIRECT,
-	cmd_redirect_operation_dump,
-	cmd_redirect_operation_execute
+	.mnemonic = "REDIRECT",
+	.code = SIEVE_OPERATION_REDIRECT,
+	.dump = cmd_redirect_operation_dump,
+	.execute = cmd_redirect_operation_execute
 };
 
 /*

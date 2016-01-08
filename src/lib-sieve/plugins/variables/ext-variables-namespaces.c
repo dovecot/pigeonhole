@@ -169,11 +169,11 @@ static const struct sieve_opr_string_interface namespace_variable_interface = {
 };
 
 const struct sieve_operand_def namespace_variable_operand = {
-	"namespace",
-	&variables_extension,
-	EXT_VARIABLES_OPERAND_NAMESPACE_VARIABLE,
-	&string_class,
-	&namespace_variable_interface
+	.name = "namespace",
+	.ext_def = &variables_extension,
+	.code = EXT_VARIABLES_OPERAND_NAMESPACE_VARIABLE,
+	.class = &string_class,
+	.interface = &namespace_variable_interface
 };
 
 void sieve_variables_opr_namespace_variable_emit

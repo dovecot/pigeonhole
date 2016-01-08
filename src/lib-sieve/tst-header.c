@@ -54,11 +54,10 @@ static int tst_header_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def tst_header_operation = {
-	"HEADER",
-	NULL,
-	SIEVE_OPERATION_HEADER,
-	tst_header_operation_dump,
-	tst_header_operation_execute
+	.mnemonic = "HEADER",
+	.code = SIEVE_OPERATION_HEADER,
+	.dump = tst_header_operation_dump,
+	.execute = tst_header_operation_execute
 };
 
 /*

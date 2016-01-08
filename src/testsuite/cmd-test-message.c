@@ -80,11 +80,11 @@ static int cmd_test_message_smtp_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_message_smtp_operation = {
-	"TEST_MESSAGE_SMTP",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_MESSAGE_SMTP,
-	cmd_test_message_smtp_operation_dump,
-	cmd_test_message_smtp_operation_execute
+	.mnemonic = "TEST_MESSAGE_SMTP",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_MESSAGE_SMTP,
+	.dump = cmd_test_message_smtp_operation_dump,
+	.execute = cmd_test_message_smtp_operation_execute
 };
 
 /* Test_message_mailbox operation */
@@ -95,11 +95,11 @@ static int cmd_test_message_mailbox_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_message_mailbox_operation = {
-	"TEST_MESSAGE_MAILBOX",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_MESSAGE_MAILBOX,
-	cmd_test_message_mailbox_operation_dump,
-	cmd_test_message_mailbox_operation_execute
+	.mnemonic = "TEST_MESSAGE_MAILBOX",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_MESSAGE_MAILBOX,
+	.dump = cmd_test_message_mailbox_operation_dump,
+	.execute = cmd_test_message_mailbox_operation_execute
 };
 
 /* Test_message_print operation */
@@ -110,11 +110,11 @@ static int cmd_test_message_print_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def test_message_print_operation = {
-	"TEST_MESSAGE_PRINT",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_MESSAGE_PRINT,
-	cmd_test_message_print_operation_dump,
-	cmd_test_message_print_operation_execute
+	.mnemonic = "TEST_MESSAGE_PRINT",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_MESSAGE_PRINT,
+	.dump = cmd_test_message_print_operation_dump,
+	.execute = cmd_test_message_print_operation_execute
 };
 
 /*

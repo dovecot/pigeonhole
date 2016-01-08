@@ -91,11 +91,10 @@ static int ext_fileinto_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def fileinto_operation = {
-	"FILEINTO",
-	&fileinto_extension,
-	0,
-	ext_fileinto_operation_dump,
-	ext_fileinto_operation_execute
+	.mnemonic = "FILEINTO",
+	.ext_def = &fileinto_extension,
+	.dump = ext_fileinto_operation_dump,
+	.execute = ext_fileinto_operation_execute
 };
 
 /*

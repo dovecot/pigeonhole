@@ -58,11 +58,10 @@ static const struct sieve_extension_objects ext_comparators =
 	SIEVE_EXT_DEFINE_COMPARATOR(i_ascii_numeric_comparator);
 
 static const struct sieve_operand_def my_comparator_operand = {
-	"comparator-i;ascii-numeric",
-	&comparator_i_ascii_numeric_extension,
-	0,
-	&sieve_comparator_operand_class,
-	&ext_comparators
+	.name = "comparator-i;ascii-numeric",
+	.ext_def = &comparator_i_ascii_numeric_extension,
+	.class = &sieve_comparator_operand_class,
+	.interface = &ext_comparators
 };
 
 /*

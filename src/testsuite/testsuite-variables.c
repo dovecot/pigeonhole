@@ -166,11 +166,11 @@ static const struct sieve_extension_objects testsuite_namespaces =
 	SIEVE_VARIABLES_DEFINE_NAMESPACE(testsuite_namespace);
 
 const struct sieve_operand_def testsuite_namespace_operand = {
-	"testsuite-namespace",
-	&testsuite_extension,
-	TESTSUITE_OPERAND_NAMESPACE,
-	&sieve_variables_namespace_operand_class,
-	&testsuite_namespaces
+	.name = "testsuite-namespace",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERAND_NAMESPACE,
+	.class =  &sieve_variables_namespace_operand_class,
+	.interface = &testsuite_namespaces
 };
 
 void testsuite_variables_init

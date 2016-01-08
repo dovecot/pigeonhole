@@ -149,21 +149,19 @@ static int ext_reject_operation_execute
 /* Reject operation */
 
 static const struct sieve_operation_def reject_operation = {
-	"REJECT",
-	&reject_extension,
-	0,
-	ext_reject_operation_dump,
-	ext_reject_operation_execute
+	.mnemonic = "REJECT",
+	.ext_def = &reject_extension,
+	.dump = ext_reject_operation_dump,
+	.execute = ext_reject_operation_execute
 };
 
 /* EReject operation */
 
 static const struct sieve_operation_def ereject_operation = {
-	"EREJECT",
-	&ereject_extension,
-	0,
-	ext_reject_operation_dump,
-	ext_reject_operation_execute
+	.mnemonic = "EREJECT",
+	.ext_def = &ereject_extension,
+	.dump = ext_reject_operation_dump,
+	.execute = ext_reject_operation_execute
 };
 
 /*

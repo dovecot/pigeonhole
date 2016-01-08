@@ -39,11 +39,9 @@ static int opc_stop_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def cmd_stop_operation = {
-	"STOP",
-	NULL,
-	SIEVE_OPERATION_STOP,
-	NULL,
-	opc_stop_execute
+	.mnemonic = "STOP",
+	.code = SIEVE_OPERATION_STOP,
+	.execute = opc_stop_execute
 };
 
 /*

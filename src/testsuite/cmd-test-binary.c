@@ -69,21 +69,21 @@ static int cmd_test_binary_operation_execute
 /* test_binary_create operation */
 
 const struct sieve_operation_def test_binary_load_operation = {
-	"TEST_BINARY_LOAD",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_BINARY_LOAD,
-	cmd_test_binary_operation_dump,
-	cmd_test_binary_operation_execute
+	.mnemonic = "TEST_BINARY_LOAD",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_BINARY_LOAD,
+	.dump = cmd_test_binary_operation_dump,
+	.execute = cmd_test_binary_operation_execute
 };
 
 /* test_binary_delete operation */
 
 const struct sieve_operation_def test_binary_save_operation = {
-	"TEST_BINARY_SAVE",
-	&testsuite_extension,
-	TESTSUITE_OPERATION_TEST_BINARY_SAVE,
-	cmd_test_binary_operation_dump,
-	cmd_test_binary_operation_execute
+	.mnemonic = "TEST_BINARY_SAVE",
+	.ext_def = &testsuite_extension,
+	.code = TESTSUITE_OPERATION_TEST_BINARY_SAVE,
+	.dump = cmd_test_binary_operation_dump,
+	.execute = cmd_test_binary_operation_execute
 };
 
 /*

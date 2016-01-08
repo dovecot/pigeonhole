@@ -63,11 +63,11 @@ static int opc_include_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def include_operation = {
-	"include",
-	&include_extension,
-	EXT_INCLUDE_OPERATION_INCLUDE,
-	opc_include_dump,
-	opc_include_execute
+	.mnemonic = "include",
+	.ext_def = &include_extension,
+	.code = EXT_INCLUDE_OPERATION_INCLUDE,
+	.dump = opc_include_dump,
+	.execute = opc_include_execute
 };
 
 /*

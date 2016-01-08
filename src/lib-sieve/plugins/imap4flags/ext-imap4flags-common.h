@@ -36,10 +36,10 @@ extern const struct sieve_operand_def flags_side_effect_operand;
  */
 
 enum ext_imap4flags_opcode {
-	ext_imap4flags_OPERATION_SETFLAG,
-	ext_imap4flags_OPERATION_ADDFLAG,
-	ext_imap4flags_OPERATION_REMOVEFLAG,
-	ext_imap4flags_OPERATION_HASFLAG
+	EXT_IMAP4FLAGS_OPERATION_SETFLAG,
+	EXT_IMAP4FLAGS_OPERATION_ADDFLAG,
+	EXT_IMAP4FLAGS_OPERATION_REMOVEFLAG,
+	EXT_IMAP4FLAGS_OPERATION_HASFLAG
 };
 
 extern const struct sieve_operation_def setflag_operation;
