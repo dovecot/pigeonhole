@@ -274,8 +274,13 @@ static bool _cmd_unknown_validate
 }
 
 static const struct sieve_command_def unknown_command = {
-	"", SCT_NONE, 0, 0, FALSE, FALSE ,
-	NULL, NULL, _cmd_unknown_validate, NULL, NULL, NULL
+	.identifier = "",
+	.type = SCT_NONE,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = _cmd_unknown_validate
 };
 
 /* Registration of the core commands of the language */
@@ -883,7 +888,7 @@ bool sieve_validate_tag_parameter
 static bool sieve_validate_command_arguments
 (struct sieve_validator *valdtr, struct sieve_command *cmd)
 {
-	int arg_count = cmd->def->positional_arguments;
+	int arg_count = cmd->def->positional_args;
 	int real_count = 0;
 	struct sieve_ast_argument *arg;
 	struct sieve_command_registration *cmd_reg = cmd->reg;

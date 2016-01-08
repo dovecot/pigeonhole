@@ -36,15 +36,16 @@ static bool cmd_foreverypart_generate
 		struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_foreverypart = {
-	"foreverypart",
-	SCT_COMMAND,
-	0, 0, TRUE, TRUE,
-	cmd_foreverypart_registered,
-	cmd_foreverypart_pre_validate,
-	cmd_foreverypart_validate,
-	NULL,
-	cmd_foreverypart_generate,
-	NULL,
+	.identifier = "foreverypart",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = TRUE,
+	.block_required = TRUE,
+	.registered = cmd_foreverypart_registered,
+	.pre_validate = cmd_foreverypart_pre_validate,
+	.validate = cmd_foreverypart_validate,
+	.generate = cmd_foreverypart_generate
 };
 
 /*

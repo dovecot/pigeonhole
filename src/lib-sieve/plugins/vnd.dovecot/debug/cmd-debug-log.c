@@ -29,14 +29,14 @@ static bool cmd_debug_log_generate
 	(const struct sieve_codegen_env *cgenv,	struct sieve_command *ctx);
 
 const struct sieve_command_def debug_log_command = {
-	"debug_log",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_debug_log_validate,
-	NULL,
-	cmd_debug_log_generate,
-	NULL
+	.identifier = "debug_log",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_debug_log_validate,
+	.generate = cmd_debug_log_generate
 };
 
 /*

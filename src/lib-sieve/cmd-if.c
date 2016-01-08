@@ -31,14 +31,15 @@ static bool cmd_else_generate
  */
 
 const struct sieve_command_def cmd_if = {
-	"if",
-	SCT_COMMAND,
-	0, 1, TRUE, TRUE,
-	NULL, NULL,
-	cmd_if_validate,
-	cmd_if_validate_const,
-	cmd_if_generate,
-	NULL
+	.identifier = "if",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 1,
+	.block_allowed = TRUE,
+	.block_required = TRUE,
+	.validate = cmd_if_validate,
+	.validate_const = cmd_if_validate_const,
+	.generate = cmd_if_generate
 };
 
 /* ElsIf command
@@ -48,14 +49,15 @@ const struct sieve_command_def cmd_if = {
  */
 
 const struct sieve_command_def cmd_elsif = {
-    "elsif",
-	SCT_COMMAND,
-	0, 1, TRUE, TRUE,
-	NULL, NULL,
-	cmd_elsif_validate,
-	cmd_if_validate_const,
-	cmd_if_generate,
-	NULL
+	.identifier = "elsif",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 1,
+	.block_allowed = TRUE,
+	.block_required = TRUE,
+	.validate = cmd_elsif_validate,
+	.validate_const = cmd_if_validate_const,
+	.generate = cmd_if_generate
 };
 
 /* Else command
@@ -64,16 +66,16 @@ const struct sieve_command_def cmd_elsif = {
  *   else <block>
  */
 
-
 const struct sieve_command_def cmd_else = {
-    "else",
-	SCT_COMMAND,
-	0, 0, TRUE, TRUE,
-	NULL, NULL,
-	cmd_elsif_validate,
-	cmd_if_validate_const,
-	cmd_else_generate,
-	NULL
+	.identifier = "else",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = TRUE,
+	.block_required = TRUE,
+	.validate = cmd_elsif_validate,
+	.validate_const = cmd_if_validate_const,
+	.generate = cmd_else_generate
 };
 
 /*

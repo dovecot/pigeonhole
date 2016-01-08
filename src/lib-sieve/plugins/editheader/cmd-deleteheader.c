@@ -41,16 +41,15 @@ static bool cmd_deleteheader_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def deleteheader_command = {
-	"deleteheader",
-	SCT_COMMAND,
-	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE,
-	cmd_deleteheader_registered,
-	NULL,
-	cmd_deleteheader_validate,
-	NULL,
-	cmd_deleteheader_generate,
-	NULL
+	.identifier = "deleteheader",
+	.type = SCT_COMMAND,
+	.positional_args = -1, /* We check positional arguments ourselves */
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_deleteheader_registered,
+	.validate = cmd_deleteheader_validate,
+	.generate = cmd_deleteheader_generate
 };
 
 /*

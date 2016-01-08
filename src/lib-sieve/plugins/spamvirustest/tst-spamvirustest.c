@@ -38,15 +38,15 @@ static bool tst_spamvirustest_registered
  */
 
 const struct sieve_command_def spamtest_test = {
-	"spamtest",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	tst_spamvirustest_registered,
-	NULL,
-	tst_spamvirustest_validate,
-	NULL,
-	tst_spamvirustest_generate,
-	NULL
+	.identifier = "spamtest",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_spamvirustest_registered,
+	.validate = tst_spamvirustest_validate,
+	.generate = tst_spamvirustest_generate
 };
 
 /* Virustest test
@@ -56,15 +56,15 @@ const struct sieve_command_def spamtest_test = {
  */
 
 const struct sieve_command_def virustest_test = {
-	"virustest",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	tst_spamvirustest_registered,
-	NULL,
-	tst_spamvirustest_validate,
-	NULL,
-	tst_spamvirustest_generate,
-	NULL
+	.identifier = "virustest",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_spamvirustest_registered,
+	.validate = tst_spamvirustest_validate,
+	.generate = tst_spamvirustest_generate
 };
 
 /*

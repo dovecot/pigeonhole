@@ -34,15 +34,15 @@ static bool tst_test_error_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def tst_test_error = {
-	"test_error",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	tst_test_error_registered,
-	NULL,
-	tst_test_error_validate,
-	NULL,
-	tst_test_error_generate,
-	NULL
+	.identifier = "test_error",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_test_error_registered,
+	.validate = tst_test_error_validate,
+	.generate = tst_test_error_generate
 };
 
 /*

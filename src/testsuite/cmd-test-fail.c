@@ -25,14 +25,14 @@ static bool cmd_test_fail_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_test_fail = {
-	"test_fail",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_test_fail_validate,
-	NULL,
-	cmd_test_fail_generate,
-	NULL
+	.identifier = "test_fail",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_test_fail_validate,
+	.generate = cmd_test_fail_generate
 };
 
 /*

@@ -40,15 +40,16 @@ static bool cmd_set_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_set = {
-	"set",
-	SCT_COMMAND,
-	2, 0, FALSE, FALSE,
-	cmd_set_registered,
-	cmd_set_pre_validate,
-	cmd_set_validate,
-	NULL,
-	cmd_set_generate,
-	NULL
+	.identifier = "set",
+	.type = SCT_COMMAND,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_set_registered,
+	.pre_validate = cmd_set_pre_validate,
+	.validate = cmd_set_validate,
+	.generate = cmd_set_generate,
 };
 
 /*

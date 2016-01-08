@@ -41,15 +41,14 @@ static bool cmd_filter_generate
 		struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_filter = {
-	"filter",
-	SCT_HYBRID,
-	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE,
-	NULL, NULL,
-	sieve_extprogram_command_validate,
-	NULL,
-	cmd_filter_generate,
-	NULL,
+	.identifier = "filter",
+	.type = SCT_HYBRID,
+	.positional_args = -1, /* We check positional arguments ourselves */
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = sieve_extprogram_command_validate,
+	.generate = cmd_filter_generate
 };
 
 /* 

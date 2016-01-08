@@ -24,13 +24,14 @@ static bool tst_allof_validate_const
 		int *const_current, int const_new);
 
 const struct sieve_command_def tst_allof = {
-	"allof",
-	SCT_TEST,
-	0, 2, FALSE, FALSE,
-	NULL, NULL, NULL,
-	tst_allof_validate_const,
-	NULL,
-	tst_allof_generate
+	.identifier = "allof",
+	.type = SCT_TEST,
+	.positional_args = 0,
+	.subtests = 2,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate_const = tst_allof_validate_const,
+	.control_generate = tst_allof_generate
 };
 
 /*

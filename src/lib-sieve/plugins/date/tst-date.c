@@ -43,15 +43,15 @@ static bool tst_date_registered
 		struct sieve_command_registration *cmd_reg);
 
 const struct sieve_command_def date_test = {
-	"date",
-	SCT_TEST,
-	3, 0, FALSE, FALSE,
-	tst_date_registered,
-	NULL,
-	tst_date_validate,
-	NULL,
-	tst_date_generate,
-	NULL
+	.identifier = "date",
+	.type = SCT_TEST,
+	.positional_args = 3,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_date_registered,
+	.validate = tst_date_validate,
+	.generate = tst_date_generate
 };
 
 /* Currentdate test
@@ -67,15 +67,15 @@ static bool tst_currentdate_registered
 		struct sieve_command_registration *cmd_reg);
 
 const struct sieve_command_def currentdate_test = {
-	"currentdate",
-	SCT_TEST,
-	2, 0, FALSE, FALSE,
-	tst_currentdate_registered,
-	NULL,
-	tst_date_validate,
-	NULL,
-	tst_date_generate,
-	NULL
+	.identifier = "currentdate",
+	.type = SCT_TEST,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_currentdate_registered,
+	.validate = tst_date_validate,
+	.generate = tst_date_generate
 };
 
 /*

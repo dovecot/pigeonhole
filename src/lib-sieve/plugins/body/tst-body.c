@@ -35,15 +35,15 @@ static bool tst_body_generate
 	(const struct sieve_codegen_env *cgenv,	struct sieve_command *ctx);
 
 const struct sieve_command_def body_test = {
-	"body",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	tst_body_registered,
-	NULL,
-	tst_body_validate,
-	NULL,
-	tst_body_generate,
-	NULL
+	.identifier = "body",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_body_registered,
+	.validate = tst_body_validate,
+	.generate = tst_body_generate
 };
 
 /*

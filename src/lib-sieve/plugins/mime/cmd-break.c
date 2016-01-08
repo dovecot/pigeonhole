@@ -34,15 +34,16 @@ static bool cmd_break_generate
 		struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_break = {
-	"break",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	cmd_break_registered,
-	cmd_break_pre_validate,
-	cmd_break_validate,
-	NULL,
-	cmd_break_generate,
-	NULL,
+	.identifier = "break",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_break_registered,
+	.pre_validate = cmd_break_pre_validate,
+	.validate = cmd_break_validate,
+	.generate = cmd_break_generate,
 };
 
 /*

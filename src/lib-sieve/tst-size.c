@@ -31,15 +31,16 @@ static bool tst_size_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def tst_size = {
-	"size",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	tst_size_registered,
-	tst_size_pre_validate,
-	tst_size_validate,
-	NULL,
-	tst_size_generate,
-	NULL
+	.identifier = "size",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_size_registered,
+	.pre_validate = tst_size_pre_validate,
+	.validate = tst_size_validate,
+	.generate = tst_size_generate
 };
 
 /*

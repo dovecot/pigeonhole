@@ -30,12 +30,13 @@ static bool cmd_test_result_generate
  */
 
 const struct sieve_command_def cmd_test_result_reset = {
-	"test_result_reset",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL, NULL,
-	cmd_test_result_generate,
-	NULL
+	.identifier = "test_result_reset",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.generate = cmd_test_result_generate
 };
 
 /* Test_result_print command
@@ -45,12 +46,13 @@ const struct sieve_command_def cmd_test_result_reset = {
  */
 
 const struct sieve_command_def cmd_test_result_print = {
-	"test_result_print",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL, NULL,
-	cmd_test_result_generate,
-	NULL
+	.identifier = "test_result_print",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.generate = cmd_test_result_generate
 };
 
 /*

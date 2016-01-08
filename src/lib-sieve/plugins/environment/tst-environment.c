@@ -32,15 +32,15 @@ static bool tst_environment_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def tst_environment = {
-	"environment",
-	SCT_TEST,
-	2, 0, FALSE, FALSE,
-	tst_environment_registered,
-	NULL,
-	tst_environment_validate,
-	NULL,
-	tst_environment_generate,
-	NULL
+	.identifier = "environment",
+	.type = SCT_TEST,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_environment_registered,
+	.validate = tst_environment_validate,
+	.generate = tst_environment_generate
 };
 
 /*

@@ -44,16 +44,15 @@ static bool cmd_execute_generate
 		struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_execute = {
-	"execute",
-	SCT_HYBRID,
-	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE,
-	cmd_execute_registered,
-	NULL,
-	sieve_extprogram_command_validate,
-	NULL,
-	cmd_execute_generate,
-	NULL,
+	.identifier = "execute",
+	.type = SCT_HYBRID,
+	.positional_args = -1, /* We check positional arguments ourselves */
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_execute_registered,
+	.validate = sieve_extprogram_command_validate,
+	.generate = cmd_execute_generate,
 };
 
 /*

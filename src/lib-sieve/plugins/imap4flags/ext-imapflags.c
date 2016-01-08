@@ -42,12 +42,13 @@ static bool cmd_mark_validate
  */
 
 static const struct sieve_command_def cmd_mark = {
-    "mark",
-    SCT_COMMAND,
-    0, 0, FALSE, FALSE,
-    NULL, NULL,
-    cmd_mark_validate,
-    NULL, NULL, NULL
+	.identifier = "mark",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_mark_validate
 };
 
 /* Unmark command
@@ -56,12 +57,13 @@ static const struct sieve_command_def cmd_mark = {
  *   unmark
  */
 static const struct sieve_command_def cmd_unmark = {
-    "unmark",
-    SCT_COMMAND,
-    0, 0, FALSE, FALSE,
-    NULL, NULL,
-    cmd_mark_validate,
-    NULL, NULL, NULL
+	.identifier = "unmark",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_mark_validate
 };
 
 /*

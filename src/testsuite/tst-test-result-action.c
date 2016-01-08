@@ -37,15 +37,15 @@ static bool tst_test_result_action_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def tst_test_result_action = {
-	"test_result_action",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	tst_test_result_action_registered,
-	NULL,
-	tst_test_result_action_validate,
-	NULL,
-	tst_test_result_action_generate,
-	NULL
+	.identifier = "test_result_action",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_test_result_action_registered,
+	.validate = tst_test_result_action_validate,
+	.generate = tst_test_result_action_generate
 };
 
 /*

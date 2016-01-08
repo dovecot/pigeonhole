@@ -29,14 +29,14 @@ static bool tst_test_multiscript_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *tst);
 
 const struct sieve_command_def tst_test_multiscript = {
-	"test_multiscript",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	tst_test_multiscript_validate,
-	NULL,
-	tst_test_multiscript_generate,
-	NULL
+	.identifier = "test_multiscript",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = tst_test_multiscript_validate,
+	.generate = tst_test_multiscript_generate,
 };
 
 /*

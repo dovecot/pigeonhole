@@ -22,13 +22,14 @@ static bool tst_false_generate
 		struct sieve_jumplist *jumps, bool jump_true);
 
 const struct sieve_command_def tst_false = {
-	"false",
-	SCT_TEST,
-	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL,
-	tst_false_validate_const,
-	NULL,
-	tst_false_generate
+	.identifier = "false",
+	.type = SCT_TEST,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate_const = tst_false_validate_const,
+	.control_generate = tst_false_generate
 };
 
 static bool tst_true_validate_const
@@ -39,13 +40,14 @@ static bool tst_true_generate
 		struct sieve_jumplist *jumps, bool jump_true);
 
 const struct sieve_command_def tst_true = {
-	"true",
-	SCT_TEST,
-	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL,
-	tst_true_validate_const,
-	NULL,
-	tst_true_generate
+	.identifier = "true",
+	.type = SCT_TEST,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate_const = tst_true_validate_const,
+	.control_generate = tst_true_generate
 };
 
 /*

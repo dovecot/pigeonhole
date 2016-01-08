@@ -32,14 +32,14 @@ static bool tst_mailboxexists_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def mailboxexists_test = {
-	"mailboxexists",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	tst_mailboxexists_validate,
-	NULL,
-	tst_mailboxexists_generate,
-	NULL
+	.identifier = "mailboxexists",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = tst_mailboxexists_validate,
+	.generate = tst_mailboxexists_generate
 };
 
 /*

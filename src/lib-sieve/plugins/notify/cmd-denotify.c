@@ -39,15 +39,16 @@ static bool cmd_denotify_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_denotify = {
-	"denotify",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	cmd_denotify_registered,
-	cmd_denotify_pre_validate,
-	cmd_denotify_validate,
-	NULL,
-	cmd_denotify_generate,
-	NULL
+	.identifier = "denotify",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_denotify_registered,
+	.pre_validate = cmd_denotify_pre_validate,
+	.validate = cmd_denotify_validate,
+	.generate = cmd_denotify_generate
 };
 
 /*

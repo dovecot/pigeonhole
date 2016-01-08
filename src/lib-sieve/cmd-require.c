@@ -20,12 +20,13 @@ static bool cmd_require_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_require = {
-	"require",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_require_validate,
-	NULL, NULL, NULL
+	.identifier = "require",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_require_validate
 };
 
 /*

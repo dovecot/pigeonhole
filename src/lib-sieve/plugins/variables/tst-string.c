@@ -32,15 +32,15 @@ static bool tst_string_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def tst_string = {
-	"string",
-	SCT_TEST,
-	2, 0, FALSE, FALSE,
-	tst_string_registered,
-	NULL,
-	tst_string_validate,
-	NULL,
-	tst_string_generate,
-	NULL
+	.identifier = "string",
+	.type = SCT_TEST,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_string_registered,
+	.validate = tst_string_validate,
+	.generate = tst_string_generate
 };
 
 /*

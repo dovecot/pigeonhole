@@ -26,13 +26,14 @@ static bool tst_ihave_validate_const
 		int *const_current, int const_next);
 
 const struct sieve_command_def ihave_test = {
-	"ihave",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	tst_ihave_validate,
-	tst_ihave_validate_const,
-	NULL, NULL
+	.identifier = "ihave",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = tst_ihave_validate,
+	.validate_const = tst_ihave_validate_const
 };
 
 /*

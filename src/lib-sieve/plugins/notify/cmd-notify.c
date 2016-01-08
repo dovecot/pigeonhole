@@ -52,15 +52,16 @@ static bool cmd_notify_generate
 		struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_notify_old = {
-	"notify",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	cmd_notify_registered,
-	cmd_notify_pre_validate,
-	cmd_notify_validate,
-	NULL,
-	cmd_notify_generate,
-	NULL,
+	.identifier = "notify",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_notify_registered,
+	.pre_validate = cmd_notify_pre_validate,
+	.validate = cmd_notify_validate,
+	.generate = cmd_notify_generate
 };
 
 /*

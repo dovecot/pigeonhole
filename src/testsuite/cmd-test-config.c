@@ -32,14 +32,14 @@ static bool cmd_test_config_set_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_test_config_set = {
-	"test_config_set",
-	SCT_COMMAND,
-	2, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_test_config_set_validate,
-	NULL,
-	cmd_test_config_generate,
-	NULL
+	.identifier = "test_config_set",
+	.type = SCT_COMMAND,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_test_config_set_validate,
+	.generate = cmd_test_config_generate
 };
 
 /* Test_config_unset command
@@ -52,14 +52,14 @@ static bool cmd_test_config_unset_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_test_config_unset = {
-	"test_config_unset",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_test_config_unset_validate,
-	NULL,
-	cmd_test_config_generate,
-	NULL
+	.identifier = "test_config_unset",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_test_config_unset_validate,
+	.generate = cmd_test_config_generate,
 };
 
 /* Test_config_reload command
@@ -73,13 +73,14 @@ static bool cmd_test_config_reload_registered
 	struct sieve_command_registration *cmd_reg);
 
 const struct sieve_command_def cmd_test_config_reload = {
-	"test_config_reload",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	cmd_test_config_reload_registered,
-	NULL, NULL, NULL,
-	cmd_test_config_generate,
-	NULL
+	.identifier = "test_config_reload",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_test_config_reload_registered,
+	.generate = cmd_test_config_generate
 };
 
 /*

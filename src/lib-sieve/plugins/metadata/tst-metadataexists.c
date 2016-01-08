@@ -44,14 +44,14 @@ static bool tst_metadataexists_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def metadataexists_test = {
-	"metadataexists",
-	SCT_TEST,
-	2, 0, FALSE, FALSE,
-	NULL, NULL,
-	tst_metadataexists_validate,
-	NULL,
-	tst_metadataexists_generate,
-	NULL
+	.identifier = "metadataexists",
+	.type = SCT_TEST,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = tst_metadataexists_validate,
+	.generate = tst_metadataexists_generate,
 };
 
 /* Servermetadataexists command
@@ -61,16 +61,15 @@ const struct sieve_command_def metadataexists_test = {
  */
 
 const struct sieve_command_def servermetadataexists_test = {
-	"servermetadataexists",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	tst_metadataexists_validate,
-	NULL,
-	tst_metadataexists_generate,
-	NULL
+	.identifier = "servermetadataexists",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = tst_metadataexists_validate,
+	.generate = tst_metadataexists_generate,
 };
-
 
 /*
  * Opcode definitions

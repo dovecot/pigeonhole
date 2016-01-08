@@ -26,12 +26,13 @@ static bool tst_test_result_execute_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def tst_test_result_execute = {
-	"test_result_execute",
-	SCT_TEST,
-	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL, NULL,
-	tst_test_result_execute_generate,
-	NULL
+	.identifier = "test_result_execute",
+	.type = SCT_TEST,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.generate = tst_test_result_execute_generate
 };
 
 /*

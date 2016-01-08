@@ -79,15 +79,15 @@ static bool tst_envelope_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 static const struct sieve_command_def envelope_test = {
-	"envelope",
-	SCT_TEST,
-	2, 0, FALSE, FALSE,
-	tst_envelope_registered,
-	NULL,
-	tst_envelope_validate,
-	NULL,
-	tst_envelope_generate,
-	NULL
+	.identifier = "envelope",
+	.type = SCT_TEST,
+	.positional_args= 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_envelope_registered,
+	.validate = tst_envelope_validate,
+	.generate = tst_envelope_generate
 };
 
 /*

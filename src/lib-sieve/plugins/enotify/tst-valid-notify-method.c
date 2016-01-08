@@ -28,14 +28,14 @@ static bool tst_vnotifym_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def valid_notify_method_test = {
-	"valid_notify_method",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	tst_vnotifym_validate,
-	NULL,
-	tst_vnotifym_generate,
-	NULL
+	.identifier = "valid_notify_method",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = tst_vnotifym_validate,
+	.generate = tst_vnotifym_generate
 };
 
 /*

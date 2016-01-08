@@ -30,15 +30,14 @@ static bool cmd_test_binary_generate
  */
 
 const struct sieve_command_def cmd_test_binary_load = {
-	"test_binary_load",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL,
-	NULL,
-	cmd_test_binary_validate,
-	NULL,
-	cmd_test_binary_generate,
-	NULL
+	.identifier = "test_binary_load",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_test_binary_validate,
+	.generate = cmd_test_binary_generate
 };
 
 /* Test_binary_save command
@@ -48,15 +47,14 @@ const struct sieve_command_def cmd_test_binary_load = {
  */
 
 const struct sieve_command_def cmd_test_binary_save = {
-	"test_binary_save",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL,
-	NULL,
-	cmd_test_binary_validate,
-	NULL,
-	cmd_test_binary_generate,
-	NULL
+	.identifier = "test_binary_save",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_test_binary_validate,
+	.generate = cmd_test_binary_generate,
 };
 
 /*

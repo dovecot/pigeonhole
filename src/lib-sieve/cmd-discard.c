@@ -26,12 +26,13 @@ static bool cmd_discard_generate
 		struct sieve_command *ctx ATTR_UNUSED);
 
 const struct sieve_command_def cmd_discard = {
-	"discard",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL, NULL,
-	cmd_discard_generate,
-	NULL
+	.identifier = "discard",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.generate = cmd_discard_generate
 };
 
 /*

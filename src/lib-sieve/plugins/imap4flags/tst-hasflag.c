@@ -33,16 +33,15 @@ static bool tst_hasflag_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def tst_hasflag = {
-	"hasflag",
-	SCT_TEST,
-	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE,
-	tst_hasflag_registered,
-	NULL,
-	tst_hasflag_validate,
-	NULL,
-	tst_hasflag_generate,
-	NULL
+	.identifier = "hasflag",
+	.type = SCT_TEST,
+	.positional_args = -1, /* We check positional arguments ourselves */
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_hasflag_registered,
+	.validate = tst_hasflag_validate,
+	.generate = tst_hasflag_generate
 };
 
 /*

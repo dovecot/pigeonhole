@@ -22,12 +22,13 @@ static bool cmd_return_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_return = {
-	"return",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL, NULL,
-	cmd_return_generate,
-	NULL
+	.identifier = "return",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.generate = cmd_return_generate
 };
 
 /*

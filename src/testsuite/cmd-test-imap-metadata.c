@@ -33,15 +33,15 @@ static bool cmd_test_imap_metadata_generate
  */
 
 const struct sieve_command_def cmd_test_imap_metadata_set = {
-	"test_imap_metadata_set",
-	SCT_COMMAND,
-	2, 0, FALSE, FALSE,
-	cmd_test_imap_metadata_registered,
-	NULL,
-	cmd_test_imap_metadata_validate,
-	NULL,
-	cmd_test_imap_metadata_generate,
-	NULL
+	.identifier = "test_imap_metadata_set",
+	.type = SCT_COMMAND,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_test_imap_metadata_registered,
+	.validate = cmd_test_imap_metadata_validate,
+	.generate = cmd_test_imap_metadata_generate,
 };
 
 /*

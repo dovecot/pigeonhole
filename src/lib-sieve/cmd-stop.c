@@ -21,14 +21,14 @@ static bool cmd_stop_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_stop = {
-	"stop",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_stop_validate,
-	NULL,
-	cmd_stop_generate,
-	NULL
+	.identifier = "stop",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_stop_validate,
+	.generate = cmd_stop_generate
 };
 
 /*

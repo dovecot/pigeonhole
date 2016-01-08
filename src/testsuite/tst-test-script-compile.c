@@ -28,14 +28,14 @@ static bool tst_test_script_compile_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def tst_test_script_compile = {
-	"test_script_compile",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	tst_test_script_compile_validate,
-	NULL,
-	tst_test_script_compile_generate,
-	NULL
+	.identifier = "test_script_compile",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = tst_test_script_compile_validate,
+	.generate = tst_test_script_compile_generate
 };
 
 /*

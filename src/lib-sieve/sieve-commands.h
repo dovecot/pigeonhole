@@ -114,7 +114,7 @@ struct sieve_command_def {
 	enum sieve_command_type type;
 
 	/* High-level command syntax */
-	int positional_arguments;
+	int positional_args;
 	int subtests;
 	bool block_allowed;
 	bool block_required;

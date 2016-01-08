@@ -36,16 +36,15 @@ static bool cmd_pipe_generate
 		struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_pipe = {
-	"pipe",
-	SCT_COMMAND,
-	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE,
-	cmd_pipe_registered,
-	NULL,
-	sieve_extprogram_command_validate,
-	NULL,
-	cmd_pipe_generate,
-	NULL,
+	.identifier = "pipe",
+	.type = SCT_COMMAND,
+	.positional_args = -1, /* We check positional arguments ourselves */
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_pipe_registered,
+	.validate = sieve_extprogram_command_validate,
+	.generate = cmd_pipe_generate
 };
 
 /*

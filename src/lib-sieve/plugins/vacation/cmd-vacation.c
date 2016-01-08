@@ -65,15 +65,16 @@ static bool cmd_vacation_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def vacation_command = {
-	"vacation",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	cmd_vacation_registered,
-	cmd_vacation_pre_validate,
-	cmd_vacation_validate,
-	NULL,
-	cmd_vacation_generate,
-	NULL
+	.identifier = "vacation",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_vacation_registered,
+	.pre_validate = cmd_vacation_pre_validate,
+	.validate = cmd_vacation_validate,
+	.generate = cmd_vacation_generate,
 };
 
 /*

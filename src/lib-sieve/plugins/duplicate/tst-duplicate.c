@@ -31,13 +31,14 @@ static bool tst_duplicate_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def tst_duplicate = {
-	"duplicate",
-	SCT_TEST,
-	0, 0, FALSE, FALSE,
-	tst_duplicate_registered,
-	NULL, NULL, NULL,
-	tst_duplicate_generate,
-	NULL,
+	.identifier = "duplicate",
+	.type = SCT_TEST,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_duplicate_registered,
+	.generate = tst_duplicate_generate
 };
 
 /*

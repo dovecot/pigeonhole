@@ -29,14 +29,14 @@ static bool cmd_error_generate
 	(const struct sieve_codegen_env *cgenv,	struct sieve_command *ctx);
 
 const struct sieve_command_def error_command = {
-	"error",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_error_validate,
-	NULL,
-	cmd_error_generate,
-	NULL
+	.identifier = "error",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_error_validate,
+	.generate = cmd_error_generate
 };
 
 /*

@@ -21,13 +21,14 @@ static bool tst_not_validate_const
 		int *const_current, int const_next);
 
 const struct sieve_command_def tst_not = {
-	"not",
-	SCT_TEST,
-	0, 1, FALSE, FALSE,
-	NULL, NULL, NULL,
-	tst_not_validate_const,
-	NULL,
-	tst_not_generate
+	.identifier = "not",
+	.type = SCT_TEST,
+	.positional_args = 0,
+	.subtests = 1,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate_const = tst_not_validate_const,
+	.control_generate = tst_not_generate
 };
 
 /*

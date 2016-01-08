@@ -48,15 +48,15 @@ static bool tst_metadata_generate
  */
 
 const struct sieve_command_def metadata_test = {
-	"metadata",
-	SCT_TEST,
-	3, 0, FALSE, FALSE,
-	tst_metadata_registered,
-	NULL,
-	tst_metadata_validate,
-	NULL,
-	tst_metadata_generate,
-	NULL
+	.identifier = "metadata",
+	.type = SCT_TEST,
+	.positional_args = 3,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_metadata_registered,
+	.validate = tst_metadata_validate,
+	.generate = tst_metadata_generate,
 };
 
 /* Servermetadata test
@@ -67,15 +67,15 @@ const struct sieve_command_def metadata_test = {
  */
 
 const struct sieve_command_def servermetadata_test = {
-	"servermetadata",
-	SCT_TEST,
-	2, 0, FALSE, FALSE,
-	tst_metadata_registered,
-	NULL,
-	tst_metadata_validate,
-	NULL,
-	tst_metadata_generate,
-	NULL
+	.identifier = "servermetadata",
+	.type = SCT_TEST,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_metadata_registered,
+	.validate = tst_metadata_validate,
+	.generate = tst_metadata_generate
 };
 
 /*

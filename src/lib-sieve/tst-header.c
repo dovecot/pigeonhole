@@ -33,15 +33,15 @@ static bool tst_header_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *tst);
 
 const struct sieve_command_def tst_header = {
-	"header",
-	SCT_TEST,
-	2, 0, FALSE, FALSE,
-	tst_header_registered,
-	NULL,
-	tst_header_validate,
-	NULL,
-	tst_header_generate,
-	NULL
+	.identifier = "header",
+	.type = SCT_TEST,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_header_registered,
+	.validate = tst_header_validate,
+	.generate = tst_header_generate
 };
 
 /*

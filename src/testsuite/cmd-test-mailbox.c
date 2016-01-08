@@ -29,14 +29,14 @@ static bool cmd_test_mailbox_generate
  */
 
 const struct sieve_command_def cmd_test_mailbox_create = {
-	"test_mailbox_create",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_test_mailbox_validate,
-	NULL,
-	cmd_test_mailbox_generate,
-	NULL
+	.identifier = "test_mailbox_create",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_test_mailbox_validate,
+	.generate = cmd_test_mailbox_generate
 };
 
 /* Test_mailbox_delete command
@@ -46,14 +46,14 @@ const struct sieve_command_def cmd_test_mailbox_create = {
  */
 
 const struct sieve_command_def cmd_test_mailbox_delete = {
-	"test_mailbox_delete",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_test_mailbox_validate,
-	NULL,
-	cmd_test_mailbox_generate,
-	NULL
+	.identifier = "test_mailbox_delete",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_test_mailbox_validate,
+	.generate = cmd_test_mailbox_generate
 };
 
 /*

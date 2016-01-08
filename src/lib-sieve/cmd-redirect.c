@@ -48,14 +48,14 @@ static bool cmd_redirect_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_redirect = {
-	"redirect",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_redirect_validate,
-	NULL,
-	cmd_redirect_generate,
-	NULL
+	.identifier = "redirect",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_redirect_validate,
+	.generate = cmd_redirect_generate
 };
 
 /*

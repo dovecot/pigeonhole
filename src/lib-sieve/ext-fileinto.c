@@ -71,14 +71,14 @@ static bool cmd_fileinto_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 static const struct sieve_command_def fileinto_command = {
-	"fileinto",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_fileinto_validate,
-	NULL,
-	cmd_fileinto_generate,
-	NULL
+	.identifier = "fileinto",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_fileinto_validate,
+	.generate = cmd_fileinto_generate
 };
 
 /*

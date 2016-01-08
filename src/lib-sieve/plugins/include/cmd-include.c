@@ -41,15 +41,16 @@ static bool cmd_include_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_include = {
-	"include",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	cmd_include_registered,
-	cmd_include_pre_validate,
-	cmd_include_validate,
-	NULL,
-	cmd_include_generate,
-	NULL
+	.identifier = "include",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_include_registered,
+	.pre_validate = cmd_include_pre_validate,
+	.validate = cmd_include_validate,
+	.generate = cmd_include_generate
 };
 
 /*

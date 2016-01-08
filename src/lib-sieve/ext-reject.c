@@ -108,14 +108,14 @@ static bool cmd_reject_generate
  */
 
 static const struct sieve_command_def reject_command = {
-	"reject",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_reject_validate,
-	NULL,
-	cmd_reject_generate,
-	NULL
+	.identifier = "reject",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_reject_validate,
+	.generate = cmd_reject_generate
 };
 
 /* EReject command
@@ -125,14 +125,14 @@ static const struct sieve_command_def reject_command = {
  */
 
 static const struct sieve_command_def ereject_command = {
-	"ereject",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_reject_validate,
-	NULL,
-	cmd_reject_generate,
-	NULL
+	.identifier = "ereject",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_reject_validate,
+	.generate = cmd_reject_generate,
 };
 
 /*

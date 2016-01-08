@@ -28,14 +28,14 @@ static bool cmd_global_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_global = {
-  "global",
-  SCT_COMMAND,
-  1, 0, FALSE, FALSE,
-  NULL, NULL,
-  cmd_global_validate,
-	NULL,
-  cmd_global_generate,
-  NULL
+  .identifier = "global",
+  .type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+  .validate = cmd_global_validate,
+  .generate = cmd_global_generate,
 };
 
 /* DEPRICATED:
@@ -47,14 +47,14 @@ const struct sieve_command_def cmd_global = {
  *   import
  */
 const struct sieve_command_def cmd_import = {
-	"import",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_global_validate,
-	NULL,
-	cmd_global_generate,
-	NULL
+	.identifier = "import",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_global_validate,
+	.generate = cmd_global_generate,
 };
 
 /* Export command
@@ -63,14 +63,14 @@ const struct sieve_command_def cmd_import = {
  *   export
  */
 const struct sieve_command_def cmd_export = {
-	"export",
-	SCT_COMMAND,
-	1, 0, FALSE, FALSE,
-	NULL, NULL,
-	cmd_global_validate,
-	NULL,
-	cmd_global_generate,
-	NULL
+	.identifier = "export",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = cmd_global_validate,
+	.generate = cmd_global_generate,
 };
 
 /*

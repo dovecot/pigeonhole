@@ -38,15 +38,15 @@ static bool tst_address_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def tst_address = {
-	"address",
-	SCT_TEST,
-	2, 0, FALSE, FALSE,
-	tst_address_registered,
-	NULL,
-	tst_address_validate,
-	NULL,
-	tst_address_generate,
-	NULL
+	.identifier = "address",
+	.type = SCT_TEST,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_address_registered,
+	.validate = tst_address_validate,
+	.generate = tst_address_generate
 };
 
 /*

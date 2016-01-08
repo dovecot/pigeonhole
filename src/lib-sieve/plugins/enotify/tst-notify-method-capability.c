@@ -34,15 +34,15 @@ static bool tst_notifymc_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def notify_method_capability_test = {
-	"notify_method_capability",
-	SCT_TEST,
-	3, 0, FALSE, FALSE,
-	tst_notifymc_registered,
-	NULL,
-	tst_notifymc_validate,
-	NULL,
-	tst_notifymc_generate,
-	NULL
+	.identifier = "notify_method_capability",
+	.type = SCT_TEST,
+	.positional_args = 3,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = tst_notifymc_registered,
+	.validate = tst_notifymc_validate,
+	.generate = tst_notifymc_generate
 };
 
 /*

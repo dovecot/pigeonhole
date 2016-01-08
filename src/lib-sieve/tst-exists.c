@@ -27,15 +27,14 @@ static bool tst_exists_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *tst);
 
 const struct sieve_command_def tst_exists = {
-	"exists",
-	SCT_TEST,
-	1, 0, FALSE, FALSE,
-	NULL,
-	NULL,
-	tst_exists_validate,
-	NULL,
-	tst_exists_generate,
-	NULL
+	.identifier = "exists",
+	.type = SCT_TEST,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = tst_exists_validate,
+	.generate = tst_exists_generate
 };
 
 /*

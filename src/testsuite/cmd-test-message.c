@@ -38,15 +38,15 @@ static bool cmd_test_message_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_test_message = {
-	"test_message",
-	SCT_HYBRID,
-	1, 0, FALSE, FALSE,
-	cmd_test_message_registered,
-	NULL,
-	cmd_test_message_validate,
-	NULL,
-	cmd_test_message_generate,
-	NULL
+	.identifier = "test_message",
+	.type = SCT_HYBRID,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_test_message_registered,
+	.validate = cmd_test_message_validate,
+	.generate = cmd_test_message_generate
 };
 
 /* Test_message_print command
@@ -59,14 +59,14 @@ static bool cmd_test_message_print_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_test_message_print = {
-	"test_message_print",
-	SCT_COMMAND,
-	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL, NULL,
-	cmd_test_message_print_generate
-	, NULL
+	.identifier = "test_message_print",
+	.type = SCT_COMMAND,
+	.positional_args = 0,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.generate = cmd_test_message_print_generate
 };
-
 
 /*
  * Operations

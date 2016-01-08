@@ -25,14 +25,14 @@ static bool cmd_test_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *md);
 
 const struct sieve_command_def cmd_test = {
-	"test",
-	SCT_COMMAND,
-	1, 0, TRUE, TRUE,
-	NULL, NULL,
-	cmd_test_validate,
-	NULL,
-	cmd_test_generate,
-	NULL
+	.identifier = "test",
+	.type = SCT_COMMAND,
+	.positional_args = 1,
+	.subtests = 0,
+	.block_allowed = TRUE,
+	.block_required = TRUE,
+	.validate = cmd_test_validate,
+	.generate = cmd_test_generate,
 };
 
 /*

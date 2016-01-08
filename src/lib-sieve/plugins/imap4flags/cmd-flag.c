@@ -29,15 +29,14 @@ static bool cmd_flag_generate
  */
 
 const struct sieve_command_def cmd_setflag = {
-	"setflag",
-	SCT_COMMAND,
-	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE,
-	NULL, NULL,
-	ext_imap4flags_command_validate,
-	NULL,
-	cmd_flag_generate,
-	NULL
+	.identifier = "setflag",
+	.type = SCT_COMMAND,
+	.positional_args = -1, /* We check positional arguments ourselves */
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = ext_imap4flags_command_validate,
+	.generate = cmd_flag_generate
 };
 
 /* Addflag command
@@ -47,15 +46,14 @@ const struct sieve_command_def cmd_setflag = {
  */
 
 const struct sieve_command_def cmd_addflag = {
-	"addflag",
-	SCT_COMMAND,
-	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE,
-	NULL, NULL,
-	ext_imap4flags_command_validate,
-	NULL,
-	cmd_flag_generate,
-	NULL
+	.identifier = "addflag",
+	.type = SCT_COMMAND,
+	.positional_args = -1, /* We check positional arguments ourselves */
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = ext_imap4flags_command_validate,
+	.generate = cmd_flag_generate
 };
 
 
@@ -66,15 +64,14 @@ const struct sieve_command_def cmd_addflag = {
  */
 
 const struct sieve_command_def cmd_removeflag = {
-	"removeflag",
-	SCT_COMMAND,
-	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE,
-	NULL, NULL,
-	ext_imap4flags_command_validate,
-	NULL,
-	cmd_flag_generate,
-	NULL
+	.identifier = "removeflag",
+	.type = SCT_COMMAND,
+	.positional_args = -1, /* We check positional arguments ourselves */
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.validate = ext_imap4flags_command_validate,
+	.generate = cmd_flag_generate
 };
 
 /*

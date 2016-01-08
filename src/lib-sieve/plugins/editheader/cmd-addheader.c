@@ -37,15 +37,15 @@ static bool cmd_addheader_generate
 	(const struct sieve_codegen_env *cgenv,	struct sieve_command *ctx);
 
 const struct sieve_command_def addheader_command = {
-	"addheader",
-	SCT_COMMAND,
-	2, 0, FALSE, FALSE,
-	cmd_addheader_registered,
-	NULL,
-	cmd_addheader_validate,
-	NULL,
-	cmd_addheader_generate,
-	NULL
+	.identifier = "addheader",
+	.type = SCT_COMMAND,
+	.positional_args = 2,
+	.subtests = 0,
+	.block_allowed = FALSE,
+	.block_required = FALSE,
+	.registered = cmd_addheader_registered,
+	.validate = cmd_addheader_validate,
+	.generate = cmd_addheader_generate
 };
 
 /*
