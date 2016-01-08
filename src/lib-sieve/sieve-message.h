@@ -204,8 +204,10 @@ int sieve_message_get_header_fields
 		bool mime_decode, struct sieve_stringlist **fields_r);
 
 /*
- * Message body
+ * Message part
  */
+
+struct sieve_message_part;
 
 struct sieve_message_part_data {
 	const char *content_type;
@@ -214,6 +216,30 @@ struct sieve_message_part_data {
 	const char *content;
 	unsigned long size;
 };
+
+struct sieve_message_part *sieve_message_part_parent
+	(struct sieve_message_part *mpart) ATTR_PURE;
+struct sieve_message_part *sieve_message_part_next
+	(struct sieve_message_part *mpart) ATTR_PURE;
+struct sieve_message_part *sieve_message_part_children
+	(struct sieve_message_part *mpart) ATTR_PURE;
+
+const char *sieve_message_part_content_type
+	(struct sieve_message_part *mpart) ATTR_PURE;
+const char *sieve_message_part_content_disposition
+	(struct sieve_message_part *mpart) ATTR_PURE;
+
+int sieve_message_part_get_first_header
+	(struct sieve_message_part *mpart, const char *field,
+		const char **value_r);
+
+void sieve_message_part_get_data
+	(struct sieve_message_part *mpart,
+		struct sieve_message_part_data *data, bool text);
+
+/*
+ * Message body
+ */
 
 int sieve_message_body_get_content
 	(const struct sieve_runtime_env *renv,

@@ -849,6 +849,80 @@ int sieve_message_get_header_fields
 }
 
 /*
+ * Message part
+ */
+
+struct sieve_message_part *sieve_message_part_parent
+(struct sieve_message_part *mpart)
+{
+	return mpart->parent;
+}
+
+struct sieve_message_part *sieve_message_part_next
+(struct sieve_message_part *mpart)
+{
+	return mpart->next;
+}
+
+struct sieve_message_part *sieve_message_part_children
+(struct sieve_message_part *mpart)
+{
+	return mpart->children;
+}
+
+const char *sieve_message_part_content_type
+(struct sieve_message_part *mpart)
+{
+	return mpart->content_type;
+}
+
+const char *sieve_message_part_content_disposition
+(struct sieve_message_part *mpart)
+{
+	return mpart->content_disposition;
+}
+
+int sieve_message_part_get_first_header
+(struct sieve_message_part *mpart, const char *field,
+	const char **value_r)
+{
+	const struct sieve_message_header *headers;
+	unsigned int i, count;
+
+	headers = array_get(&mpart->headers, &count);
+	for ( i = 0; i < count; i++ ) {
+		if ( strcasecmp( headers[i].name, field) == 0 ) {
+			i_assert( headers[i].value[headers[i].value_len] == '\0' );
+			*value_r = (const char *)headers[i].value;
+			return 1;
+		}
+	}
+
+	*value_r = NULL;
+	return 0;
+}
+
+void sieve_message_part_get_data
+(struct sieve_message_part *mpart,
+	struct sieve_message_part_data *data, bool text)
+{
+	memset(data, 0, sizeof(*data));
+	data->content_type = mpart->content_type;
+	data->content_disposition = mpart->content_disposition;
+
+	if ( !text ) {
+		data->content = mpart->decoded_body;
+		data->size = mpart->decoded_body_size;
+	} else if ( mpart->children != NULL ) {
+		data->content = "";
+		data->size = 0;
+	} else {
+		data->content = mpart->text_body;
+		data->size = mpart->text_body_size;
+	}
+}
+
+/*
  * Message body
  */
 
