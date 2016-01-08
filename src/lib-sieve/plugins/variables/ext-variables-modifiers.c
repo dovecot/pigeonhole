@@ -3,13 +3,18 @@
 
 #include "lib.h"
 #include "unichar.h"
+#include "str-sanitize.h"
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-binary.h"
+#include "sieve-validator.h"
+#include "sieve-generator.h"
+#include "sieve-runtime.h"
 
 #include "ext-variables-common.h"
+#include "ext-variables-limits.h"
 #include "ext-variables-modifiers.h"
 
 #include <ctype.h>
@@ -111,24 +116,6 @@ void ext_variables_register_core_modifiers
 			(ctx->modifiers, ext, &(ext_variables_core_modifiers[i]->obj_def));
 	}
 }
-
-/*
- * Modifier coding
- */
-
-const struct sieve_operand_class sieve_variables_modifier_operand_class =
-	{ "modifier" };
-
-static const struct sieve_extension_objects core_modifiers =
-	SIEVE_VARIABLES_DEFINE_MODIFIERS(ext_variables_core_modifiers);
-
-const struct sieve_operand_def modifier_operand = {
-	.name = "modifier",
-	.ext_def = &variables_extension,
-	.code = EXT_VARIABLES_OPERAND_MODIFIER,
-	.class = &sieve_variables_modifier_operand_class,
-	.interface = &core_modifiers
-};
 
 /*
  * Core modifiers
@@ -289,10 +276,242 @@ bool mod_quotewildcard_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
+/*
+ * Modifier argument
+ */
 
+/* [MODIFIER]:
+ *   ":lower" / ":upper" / ":lowerfirst" / ":upperfirst" /
+ *             ":quotewildcard" / ":length"
+ */
 
+/* Forward declarations */
 
+static bool tag_modifier_is_instance_of
+	(struct sieve_validator *valdtr, struct sieve_command *cmd,
+		const struct sieve_extension *ext, const char *identifier, void **context);
 
+/* Modifier tag object */
 
+static const struct sieve_argument_def modifier_tag = {
+	.identifier = "MODIFIER",
+	.flags = SIEVE_ARGUMENT_FLAG_MULTIPLE,
+	.is_instance_of = tag_modifier_is_instance_of
+};
 
+/* Modifier tag implementation */
 
+static bool tag_modifier_is_instance_of
+(struct sieve_validator *valdtr, struct sieve_command *cmd,
+	const struct sieve_extension *ext, const char *identifier, void **data)
+{
+	const struct sieve_variables_modifier *modf;
+
+	if ( data == NULL ) {
+		return ext_variables_modifier_exists(ext, valdtr, identifier);
+	}
+
+	if ( (modf=ext_variables_modifier_create_instance
+		(ext, valdtr, cmd, identifier)) == NULL )
+		return FALSE;
+
+	*data = (void *) modf;
+
+	return TRUE;
+}
+
+/* Registration */
+
+void sieve_variables_modifiers_link_tag
+(struct sieve_validator *valdtr, const struct sieve_extension *var_ext,
+	struct sieve_command_registration *cmd_reg)
+{
+	sieve_validator_register_tag(valdtr, cmd_reg, var_ext, &modifier_tag, 0);
+}
+
+/* Validation */
+
+bool sieve_variables_modifiers_validate
+(struct sieve_validator *valdtr, struct sieve_command *cmd,
+	ARRAY_TYPE(sieve_variables_modifier) *modifiers)
+{
+	struct sieve_ast_argument *arg;
+
+	arg = sieve_command_first_argument(cmd);
+	while ( arg != NULL && arg != cmd->first_positional ) {
+		const struct sieve_variables_modifier *modfs;
+		const struct sieve_variables_modifier *modf;
+		unsigned int i, modf_count;
+		bool inserted;
+
+		if ( !sieve_argument_is(arg, modifier_tag) ) {
+			arg = sieve_ast_argument_next(arg);
+			continue;
+		}
+		modf = (const struct sieve_variables_modifier *)
+			arg->argument->data;
+
+		inserted = FALSE;
+		modfs = array_get(modifiers, &modf_count);
+		for ( i = 0; i < modf_count && !inserted; i++ ) {
+
+			if ( modfs[i].def->precedence == modf->def->precedence ) {
+				sieve_argument_validate_error(valdtr, arg,
+					"modifiers :%s and :%s specified for the set command conflict "
+					"having equal precedence",
+					modfs[i].def->obj_def.identifier, modf->def->obj_def.identifier);
+				return FALSE;
+			}
+
+			if ( modfs[i].def->precedence < modf->def->precedence ) {
+				array_insert(modifiers, i, modf, 1);
+				inserted = TRUE;
+			}
+		}
+
+		if ( !inserted )
+			array_append(modifiers, modf, 1);
+
+		/* Added to modifier list;
+		   self-destruct to prevent implicit code generation */
+		arg = sieve_ast_arguments_detach(arg, 1);
+	}
+	return TRUE;
+}
+
+bool sieve_variables_modifiers_generate
+(const struct sieve_codegen_env *cgenv,
+	ARRAY_TYPE(sieve_variables_modifier) *modifiers)
+{
+	struct sieve_binary_block *sblock = cgenv->sblock;
+	const struct sieve_variables_modifier *modfs;
+	unsigned int i, modf_count;
+
+	sieve_binary_emit_byte(sblock, array_count(modifiers));
+
+	modfs = array_get(modifiers, &modf_count);
+	for ( i = 0; i < modf_count; i++ ) {
+		ext_variables_opr_modifier_emit(sblock,
+			modfs[i].object.ext, modfs[i].def);
+	}
+	return TRUE;
+}
+
+/*
+ * Modifier coding
+ */
+
+const struct sieve_operand_class sieve_variables_modifier_operand_class =
+	{ "modifier" };
+
+static const struct sieve_extension_objects core_modifiers =
+	SIEVE_VARIABLES_DEFINE_MODIFIERS(ext_variables_core_modifiers);
+
+const struct sieve_operand_def modifier_operand = {
+	.name = "modifier",
+	.ext_def = &variables_extension,
+	.code = EXT_VARIABLES_OPERAND_MODIFIER,
+	.class = &sieve_variables_modifier_operand_class,
+	.interface = &core_modifiers
+};
+
+bool sieve_variables_modifiers_code_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	unsigned int mdfs, i;
+
+	/* Read the number of applied modifiers we need to read */
+	if ( !sieve_binary_read_byte(denv->sblock, address, &mdfs) )
+		return FALSE;
+
+	/* Print all modifiers (sorted during code generation already) */
+	for ( i = 0; i < mdfs; i++ ) {
+		if ( !ext_variables_opr_modifier_dump(denv, address) )
+			return FALSE;
+	}
+	return TRUE;
+}
+
+int sieve_variables_modifiers_code_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	ARRAY_TYPE(sieve_variables_modifier) *modifiers)
+{
+	unsigned int lprec, mdfs, i;
+
+	if ( !sieve_binary_read_byte(renv->sblock, address, &mdfs) ) {
+		sieve_runtime_trace_error(renv, "invalid modifier count");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	t_array_init(modifiers, mdfs);
+
+	lprec = (unsigned int)-1;
+	for ( i = 0; i < mdfs; i++ ) {
+		struct sieve_variables_modifier modf;
+
+		if ( !ext_variables_opr_modifier_read(renv, address, &modf) )
+			return SIEVE_EXEC_BIN_CORRUPT;
+		if ( modf.def != NULL ) {
+			if ( modf.def->precedence >= lprec ) {
+				sieve_runtime_trace_error(renv,
+					"unsorted modifier precedence");
+				return SIEVE_EXEC_BIN_CORRUPT;
+			}
+			lprec = modf.def->precedence;
+		}
+
+		array_append(modifiers, &modf, 1);
+	}
+
+	return SIEVE_EXEC_OK;
+}
+
+/*
+ * Modifier application
+ */
+
+int sieve_variables_modifiers_apply
+(const struct sieve_runtime_env *renv,
+	ARRAY_TYPE(sieve_variables_modifier) *modifiers,
+	string_t **value)
+{	
+	const struct sieve_variables_modifier *modfs;
+	unsigned int i, modf_count;
+
+	/* Hold value within limits */
+	if ( str_len(*value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
+		str_truncate(*value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+	
+	if ( !array_is_created(modifiers) )
+		return SIEVE_EXEC_OK;
+
+	modfs = array_get(modifiers, &modf_count);
+	if ( modf_count == 0 )
+		return SIEVE_EXEC_OK;
+
+	for ( i = 0; i < modf_count; i++ ) {
+		string_t *new_value;
+		const struct sieve_variables_modifier *modf = &modfs[i];
+
+		if ( modf->def != NULL && modf->def->modify != NULL ) {
+			if ( !modf->def->modify(*value, &new_value) )
+				return SIEVE_EXEC_FAILURE;
+
+			*value = new_value;
+			if ( *value == NULL )
+				return SIEVE_EXEC_FAILURE;
+
+			sieve_runtime_trace_here
+				(renv, SIEVE_TRLVL_COMMANDS,
+					"modify :%s \"%s\" => \"%s\"",
+					sieve_variables_modifier_name(modf),
+					str_sanitize(str_c(*value), 256),
+					str_sanitize(str_c(new_value), 256));
+
+			/* Hold value within limits */
+			if ( str_len(*value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
+				str_truncate(*value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+		}
+	}
+	return SIEVE_EXEC_OK;
+}

@@ -1,0 +1,143 @@
+require "vnd.dovecot.testsuite";
+require "foreverypart";
+require "variables";
+require "extracttext";
+
+test_set "message" text:
+From: Hendrik <hendrik@example.com>
+To: Harrie <harrie@example.com>
+Date: Sat, 11 Oct 2010 00:31:44 +0200
+Subject: Harrie is een prutser
+Content-Type: multipart/mixed; boundary=AA
+
+This is a multi-part message in MIME format.
+--AA
+Content-Type: multipart/mixed; boundary=BB
+
+This is a multi-part message in MIME format.
+--BB
+Content-Type: text/plain; charset="us-ascii"
+
+This is the first message part containing
+plain text. 
+
+--BB
+Content-Type: text/plain; charset="us-ascii"
+
+This is another plain text message part.
+
+--BB--
+This is the end of MIME multipart.
+
+--AA
+Content-Type: text/html; charset="us-ascii"
+
+<html>
+<body>This is a piece of HTML text.</body>
+</html>
+
+--AA--
+This is the end of  MIME multipart.
+.
+;
+
+test "Basic" {
+	set "a" "a";
+	foreverypart {
+		extracttext "b";
+		if string "${a}" "aaa" {
+			if not string :contains "${b}" "first" {
+				test_fail "bad content extracted: ${b}";
+			}
+		} elsif string "${a}" "aaaa" {
+			if not string :contains "${b}" "another" {
+				test_fail "bad content extracted: ${b}";
+			}
+		} elsif string "${a}" "aaaaa" {
+			if not string :contains "${b}" "HTML text" {
+				test_fail "bad content extracted: ${b}";
+			}
+			if string :contains "${b}" "<html>" {
+				test_fail "content extracted html: ${b}";
+			}
+		}
+		set "a" "a${a}";
+	}
+	if not string "${a}" "aaaaaa" {
+		set :length "parts" "${a}";
+		test_fail "bad number of parts parsed: ${parts}"; 
+	}
+}
+
+test_set "message" text:
+From: <stephan@example.com>
+To: <frop@example.com>
+Subject: Frop!
+
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP! FROP!
+.
+;
+
+test "First - less" {
+	foreverypart {
+		extracttext :first 20 "data";
+		if not string "${data}" "FROP! FROP! FROP! FR" {
+			test_fail "Bad data extracted";
+		}
+
+		extracttext :length :first 100 "data_len";
+		if not string "${data_len}" "100" {
+			test_fail "Bad number of bytes extracted";
+		}
+	}
+}
+
+test_set "message" text:
+From: <stephan@example.com>
+To: <frop@example.com>
+Subject: Frop!
+
+FROP! FROP! FROP! FROP!
+.
+;
+
+test "First - more" {
+	foreverypart {
+		extracttext :first 100 "data";
+		if not string :matches "${data}" "FROP! FROP! FROP! FROP!*" {
+			test_fail "Bad data extracted";
+		}
+	}
+}
+
+test_set "message" text:
+From: <stephan@example.com>
+To: <frop@example.com>
+Subject: Frop!
+
+FROP! FROP! FROP! FROP!
+.
+;
+
+test "Modifier" {
+	foreverypart {
+		extracttext :lower :upperfirst "data";
+		if not string :matches "${data}" "Frop! frop! frop! frop!*" {
+			test_fail "Bad data extracted";
+		}
+	}
+}
+
+
+

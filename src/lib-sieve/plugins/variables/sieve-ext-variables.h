@@ -276,6 +276,8 @@ static inline bool sieve_operand_is_variable
  * Modifiers
  */
 
+/* Definition */
+
 struct sieve_variables_modifier_def {
 	struct sieve_object_def obj_def;
 
@@ -290,18 +292,53 @@ struct sieve_variables_modifier {
 	const struct sieve_variables_modifier_def *def;
 };
 
-extern const struct sieve_operand_class sieve_variables_modifier_operand_class;
-
 #define SIEVE_VARIABLES_DEFINE_MODIFIER(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_VARIABLES_DEFINE_MODIFIERS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 #define sieve_variables_modifier_name(smodf) \
 	( (smodf)->object.def->identifier )
 
+ARRAY_DEFINE_TYPE(sieve_variables_modifier,
+	const struct sieve_variables_modifier);
+
+/* Registry */
+
 void sieve_variables_modifier_register
 	(const struct sieve_extension *var_ext, struct sieve_validator *valdtr,
 		const struct sieve_extension *ext,
 		const struct sieve_variables_modifier_def *smodf);
+
+/* Tagged argument */
+
+void sieve_variables_modifiers_link_tag
+	(struct sieve_validator *valdtr, const struct sieve_extension *var_ext,
+		struct sieve_command_registration *cmd_reg);
+
+bool sieve_variables_modifiers_validate
+	(struct sieve_validator *valdtr, struct sieve_command *cmd,
+		ARRAY_TYPE(sieve_variables_modifier) *modifiers);
+
+bool sieve_variables_modifiers_generate
+	(const struct sieve_codegen_env *cgenv,
+		ARRAY_TYPE(sieve_variables_modifier) *modifiers);
+
+/* Coding */
+
+extern const struct sieve_operand_class
+	sieve_variables_modifier_operand_class;
+
+bool sieve_variables_modifiers_code_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+int sieve_variables_modifiers_code_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
+		ARRAY_TYPE(sieve_variables_modifier) *modifiers);
+
+/* Application */
+
+int sieve_variables_modifiers_apply
+(const struct sieve_runtime_env *renv,
+	ARRAY_TYPE(sieve_variables_modifier) *modifiers,
+	string_t **value);
 
 /*
  * Code dumping

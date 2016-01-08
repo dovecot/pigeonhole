@@ -108,6 +108,7 @@ extern const struct sieve_extension_def ihave_extension;
 extern const struct sieve_extension_def duplicate_extension;
 extern const struct sieve_extension_def mime_extension;
 extern const struct sieve_extension_def foreverypart_extension;
+extern const struct sieve_extension_def extracttext_extension;
 extern const struct sieve_extension_def mboxmetadata_extension;
 extern const struct sieve_extension_def servermetadata_extension;
 
@@ -123,7 +124,8 @@ const struct sieve_extension_def *sieve_core_extensions[] = {
 	&copy_extension, &include_extension, &body_extension,
 	&variables_extension, &enotify_extension, &environment_extension,
 	&mailbox_extension, &date_extension, &index_extension, &ihave_extension,
-	&duplicate_extension, &mime_extension, &foreverypart_extension
+	&duplicate_extension, &mime_extension, &foreverypart_extension,
+	&extracttext_extension
 };
 
 const unsigned int sieve_core_extensions_count =

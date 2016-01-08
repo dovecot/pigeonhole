@@ -19,8 +19,6 @@
 #include "sieve-dump.h"
 
 #include "ext-variables-common.h"
-#include "ext-variables-limits.h"
-#include "ext-variables-modifiers.h"
 
 /*
  * Set command
@@ -32,8 +30,6 @@
 static bool cmd_set_registered
 	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 		struct sieve_command_registration *cmd_reg);
-static bool cmd_set_pre_validate
-	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_set_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_set_generate
@@ -47,7 +43,6 @@ const struct sieve_command_def cmd_set = {
 	.block_allowed = FALSE,
 	.block_required = FALSE,
 	.registered = cmd_set_registered,
-	.pre_validate = cmd_set_pre_validate,
 	.validate = cmd_set_validate,
 	.generate = cmd_set_generate,
 };
@@ -74,92 +69,8 @@ const struct sieve_operation_def cmd_set_operation = {
  */
 
 struct cmd_set_context {
-	ARRAY(const struct sieve_variables_modifier *) modifiers;
+	ARRAY_TYPE(sieve_variables_modifier) modifiers;
 };
-
-/*
- * Set modifier tag
- *
- * [MODIFIER]:
- *   ":lower" / ":upper" / ":lowerfirst" / ":upperfirst" /
- *             ":quotewildcard" / ":length"
- */
-
-/* Forward declarations */
-
-static bool tag_modifier_is_instance_of
-	(struct sieve_validator *valdtr, struct sieve_command *cmd,
-		const struct sieve_extension *ext, const char *identifier, void **context);
-static bool tag_modifier_validate
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command *cmd);
-
-/* Modifier tag object */
-
-const struct sieve_argument_def modifier_tag = {
-	.identifier = "MODIFIER",
-	.is_instance_of = tag_modifier_is_instance_of,
-	.validate = tag_modifier_validate
-};
-
-/* Modifier tag implementation */
-
-static bool tag_modifier_is_instance_of
-(struct sieve_validator *valdtr, struct sieve_command *cmd,
-	const struct sieve_extension *ext, const char *identifier, void **data)
-{
-	const struct sieve_variables_modifier *modf;
-
-	if ( data == NULL ) {
-		return ext_variables_modifier_exists(ext, valdtr, identifier);
-	}
-
-	if ( (modf=ext_variables_modifier_create_instance
-		(ext, valdtr, cmd, identifier)) == NULL )
-		return FALSE;
-
-	*data = (void *) modf;
-
-	return TRUE;
-}
-
-static bool tag_modifier_validate
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-	struct sieve_command *cmd)
-{
-	unsigned int i, modf_count;
-	bool inserted;
-	const struct sieve_variables_modifier *modf =
-		(const struct sieve_variables_modifier *) (*arg)->argument->data;
-	const struct sieve_variables_modifier *const *modfs;
-	struct cmd_set_context *sctx = (struct cmd_set_context *) cmd->data;
-
-	inserted = FALSE;
-	modfs = array_get(&sctx->modifiers, &modf_count);
-	for ( i = 0; i < modf_count && !inserted; i++ ) {
-
-		if ( modfs[i]->def->precedence == modf->def->precedence ) {
-			sieve_argument_validate_error(valdtr, *arg,
-				"modifiers :%s and :%s specified for the set command conflict "
-				"having equal precedence",
-				modfs[i]->def->obj_def.identifier, modf->def->obj_def.identifier);
-			return FALSE;
-		}
-
-		if ( modfs[i]->def->precedence < modf->def->precedence ) {
-			array_insert(&sctx->modifiers, i, &modf, 1);
-			inserted = TRUE;
-		}
-	}
-
-	if ( !inserted )
-		array_append(&sctx->modifiers, &modf, 1);
-
-	/* Added to modifier list; self-destruct to prevent duplicate generation */
-	*arg = sieve_ast_arguments_detach(*arg, 1);
-
-	return TRUE;
-}
 
 /* Command registration */
 
@@ -167,7 +78,7 @@ static bool cmd_set_registered
 (struct sieve_validator *valdtr, const struct sieve_extension *ext,
 	struct sieve_command_registration *cmd_reg)
 {
-	sieve_validator_register_tag(valdtr, cmd_reg, ext, &modifier_tag, 0);
+	sieve_variables_modifiers_link_tag(valdtr, ext, cmd_reg);
 
 	return TRUE;
 }
@@ -176,44 +87,42 @@ static bool cmd_set_registered
  * Command validation
  */
 
-static bool cmd_set_pre_validate
-(struct sieve_validator *valdtr ATTR_UNUSED,
-	struct sieve_command *cmd)
-{
-	pool_t pool = sieve_command_pool(cmd);
-	struct cmd_set_context *sctx = p_new(pool, struct cmd_set_context, 1);
-
-	/* Create an array for the sorted list of modifiers */
-	p_array_init(&sctx->modifiers, pool, 2);
-
-	cmd->data = (void *) sctx;
-
-	return TRUE;
-}
-
 static bool cmd_set_validate(struct sieve_validator *valdtr,
 	struct sieve_command *cmd)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
 	struct sieve_ast_argument *arg = cmd->first_positional;
+	pool_t pool = sieve_command_pool(cmd);
+	struct cmd_set_context *sctx;
 
+	/* Create command context */
+	sctx = p_new(pool, struct cmd_set_context, 1);
+	p_array_init(&sctx->modifiers, pool, 4);
+	cmd->data = (void *) sctx;
+
+	/* Validate modifiers */
+	if ( !sieve_variables_modifiers_validate
+		(valdtr, cmd, &sctx->modifiers) )
+		return FALSE;
+
+	/* Validate name argument */
 	if ( !sieve_validate_positional_argument
 		(valdtr, cmd, arg, "name", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-
-	if ( !sieve_variable_argument_activate(this_ext, valdtr, cmd, arg, TRUE) ) {
+	if ( !sieve_variable_argument_activate
+		(this_ext, valdtr, cmd, arg, TRUE) ) {
 		return FALSE;
 	}
-
 	arg = sieve_ast_argument_next(arg);
 
+	/* Validate value argument */
 	if ( !sieve_validate_positional_argument
 		(valdtr, cmd, arg, "value", 2, SAAT_STRING) ) {
 		return FALSE;
 	}
-
-	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
+	return sieve_validator_argument_activate
+		(valdtr, cmd, arg, FALSE);
 }
 
 /*
@@ -226,8 +135,6 @@ static bool cmd_set_generate
 	const struct sieve_extension *this_ext = cmd->ext;
 	struct sieve_binary_block *sblock = cgenv->sblock;
 	struct cmd_set_context *sctx = (struct cmd_set_context *) cmd->data;
-	const struct sieve_variables_modifier *const *modfs;
-	unsigned int i, modf_count;
 
 	sieve_operation_emit(sblock, this_ext, &cmd_set_operation);
 
@@ -235,13 +142,10 @@ static bool cmd_set_generate
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;
 
-	/* Generate modifiers (already sorted during validation) */
-	sieve_binary_emit_byte(sblock, array_count(&sctx->modifiers));
-
-	modfs = array_get(&sctx->modifiers, &modf_count);
-	for ( i = 0; i < modf_count; i++ ) {
-		ext_variables_opr_modifier_emit(sblock, modfs[i]->object.ext, modfs[i]->def);
-	}
+	/* Generate modifiers */
+	if ( !sieve_variables_modifiers_generate
+		(cgenv, &sctx->modifiers) )
+		return FALSE;
 
 	return TRUE;
 }
@@ -253,8 +157,6 @@ static bool cmd_set_generate
 static bool cmd_set_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	unsigned int mdfs, i;
-
 	sieve_code_dumpf(denv, "SET");
 	sieve_code_descend(denv);
 
@@ -263,17 +165,7 @@ static bool cmd_set_operation_dump
 		!sieve_opr_string_dump(denv, address, "value") )
 		return FALSE;
 
-	/* Read the number of applied modifiers we need to read */
-	if ( !sieve_binary_read_byte(denv->sblock, address, &mdfs) )
-		return FALSE;
-
-	/* Print all modifiers (sorted during code generation already) */
-	for ( i = 0; i < mdfs; i++ ) {
-		if ( !ext_variables_opr_modifier_dump(denv, address) )
-			return FALSE;
-	}
-
-	return TRUE;
+	return sieve_variables_modifiers_code_dump(denv, address);
 }
 
 /*
@@ -284,7 +176,8 @@ static int cmd_set_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_variable_storage *storage;
-	unsigned int var_index, mdfs, i;
+	ARRAY_TYPE(sieve_variables_modifier) modifiers;
+	unsigned int var_index;
 	string_t *value;
 	int ret = SIEVE_EXEC_OK;
 
@@ -299,10 +192,9 @@ static int cmd_set_operation_execute
 	if ( (ret=sieve_opr_string_read(renv, address, "string", &value)) <= 0 )
 		return ret;
 
-	if ( !sieve_binary_read_byte(renv->sblock, address, &mdfs) ) {
-		sieve_runtime_trace_error(renv, "invalid modifier count");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
+	if ( (ret=sieve_variables_modifiers_code_read
+		(renv, address, &modifiers)) <= 0 )
+		return ret;
 
 	/*
 	 * Determine and assign the value
@@ -311,61 +203,26 @@ static int cmd_set_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "set command");
 	sieve_runtime_trace_descend(renv);
 
-	/* Hold value within limits */
-	if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
-		str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
-
-	/* Apply modifiers if necessary (sorted during code generation already) */
-	for ( i = 0; i < mdfs; i++ ) {
-		string_t *new_value;
-		struct sieve_variables_modifier modf;
-
-		if ( !ext_variables_opr_modifier_read(renv, address, &modf) ) {
-			value = NULL;
-			ret = SIEVE_EXEC_BIN_CORRUPT;
-			break;
-		}
-
-		if ( modf.def != NULL && modf.def->modify != NULL ) {
-			if ( !modf.def->modify(value, &new_value) ) {
-				value = NULL;
-				ret = SIEVE_EXEC_FAILURE;
-				break;
-			}
-
-			sieve_runtime_trace_here
-				(renv, SIEVE_TRLVL_COMMANDS, "modify :%s \"%s\" => \"%s\"",
-					sieve_variables_modifier_name(&modf), str_c(value), str_c(new_value));
-
-			value = new_value;
-			if ( value == NULL )
-				break;
-
-			/* Hold value within limits */
-			if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
-				str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
-		}
-	}
+	/* Apply modifiers */
+	if ( (ret=sieve_variables_modifiers_apply
+		(renv, &modifiers, &value)) <= 0 )
+		return ret;
 
 	/* Actually assign the value if all is well */
-	if ( value != NULL ) {
-		if ( !sieve_variable_assign(storage, var_index, value) )
-			ret = SIEVE_EXEC_BIN_CORRUPT;
-		else {
-			if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-				const char *var_name, *var_id;
+	i_assert ( value != NULL );
+	if ( !sieve_variable_assign(storage, var_index, value) )
+		return SIEVE_EXEC_BIN_CORRUPT;
 
-				(void)sieve_variable_get_identifier(storage, var_index, &var_name);
-				var_id = sieve_variable_get_varid(storage, var_index);
+	/* Trace */
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+		const char *var_name, *var_id;
 
-				sieve_runtime_trace_here(renv, 0, "assign `%s' [%s] = \"%s\"",
-					var_name, var_id, str_c(value));
-			}
-		}
+		(void)sieve_variable_get_identifier(storage, var_index, &var_name);
+		var_id = sieve_variable_get_varid(storage, var_index);
+
+		sieve_runtime_trace_here(renv, 0, "assign `%s' [%s] = \"%s\"",
+			var_name, var_id, str_c(value));
 	}
-
-	if ( ret <= 0 ) return ret;
-	if ( value == NULL ) return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;
 }

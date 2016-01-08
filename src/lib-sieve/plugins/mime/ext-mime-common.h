@@ -10,8 +10,14 @@
  * Extension
  */
 
+struct ext_extracttext_context {
+	const struct sieve_extension *var_ext;
+	const struct sieve_extension *fep_ext;
+};
+
 extern const struct sieve_extension_def foreverypart_extension;
 extern const struct sieve_extension_def mime_extension;
+extern const struct sieve_extension_def extracttext_extension;
 
 /*
  * Tagged arguments
@@ -35,6 +41,7 @@ struct ext_foreverypart_loop {
 
 extern const struct sieve_command_def cmd_foreverypart;
 extern const struct sieve_command_def cmd_break;
+extern const struct sieve_command_def cmd_extracttext;
 
 /*
  * Operations
@@ -43,6 +50,7 @@ extern const struct sieve_command_def cmd_break;
 extern const struct sieve_operation_def foreverypart_begin_operation;
 extern const struct sieve_operation_def foreverypart_end_operation;
 extern const struct sieve_operation_def break_operation;
+extern const struct sieve_operation_def extracttext_operation;
 
 enum ext_foreverypart_opcode {
 	EXT_FOREVERYPART_OPERATION_FOREVERYPART_BEGIN,
