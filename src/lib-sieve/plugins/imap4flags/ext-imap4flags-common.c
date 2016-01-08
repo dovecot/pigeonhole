@@ -262,7 +262,10 @@ const struct sieve_interpreter_extension imap4flags_interpreter_extension = {
 
 bool sieve_ext_imap4flags_flag_is_valid(const char *flag)
 {
-	if (*flag == '\\') {
+	if ( *flag == '\0' )
+		return FALSE;
+
+	if ( *flag == '\\' ) {
 		/* System flag */
 		const char *atom = t_str_ucase(flag);
 
