@@ -184,6 +184,7 @@ static bool cmd_break_validate
 		return FALSE;
 	}
 
+	sieve_command_exit_block_unconditionally(cmd);
 	return TRUE;
 }
 
