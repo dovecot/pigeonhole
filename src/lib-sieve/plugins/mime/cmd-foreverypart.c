@@ -60,10 +60,8 @@ static bool cmd_foreverypart_validate_name_tag
 /* Argument objects */
 
 static const struct sieve_argument_def foreverypart_name_tag = {
-	"name",
-	NULL,
-	cmd_foreverypart_validate_name_tag,
-	NULL, NULL, NULL
+	.identifier = "name",
+	.validate = cmd_foreverypart_validate_name_tag,
 };
 
 /*

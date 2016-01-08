@@ -52,43 +52,32 @@ static bool tst_duplicate_validate_string_tag
 		struct sieve_command *cmd);
 
 static const struct sieve_argument_def duplicate_seconds_tag = {
-	"seconds",
-	NULL,
-	tst_duplicate_validate_number_tag,
-	NULL, NULL, NULL,
+	.identifier = "seconds",
+	.validate = tst_duplicate_validate_number_tag
 };
 
 static const struct sieve_argument_def duplicate_header_tag = {
-	"header",
-	NULL,
-	tst_duplicate_validate_string_tag,
-	NULL, NULL, NULL
+	.identifier = "header",
+	.validate = tst_duplicate_validate_string_tag
 };
 
 static const struct sieve_argument_def duplicate_uniqueid_tag = {
-	"uniqueid",
-	NULL,
-	tst_duplicate_validate_string_tag,
-	NULL, NULL, NULL
+	.identifier = "uniqueid",
+	.validate = tst_duplicate_validate_string_tag
 };
 
 static const struct sieve_argument_def duplicate_value_tag = {
-	"value", /* vnd.dovecot.duplicate (deprecated) */
-	NULL,
-	tst_duplicate_validate_string_tag,
-	NULL, NULL, NULL
+	.identifier = "value", /* vnd.dovecot.duplicate (deprecated) */
+	.validate = tst_duplicate_validate_string_tag
 };
 
 static const struct sieve_argument_def duplicate_handle_tag = {
-	"handle",
-	NULL,
-	tst_duplicate_validate_string_tag,
-	NULL, NULL, NULL
+	.identifier = "handle",
+	.validate = tst_duplicate_validate_string_tag
 };
 
 static const struct sieve_argument_def duplicate_last_tag = {
-	"last",
-	NULL, NULL,	NULL, NULL, NULL
+	.identifier = "last"
 };
 
 /* Codes for optional arguments */

@@ -53,8 +53,7 @@ const struct sieve_command_def cmd_pipe = {
  */
 
 static const struct sieve_argument_def pipe_try_tag = { 
-	"try", 
-	NULL, NULL, NULL, NULL, NULL 
+	.identifier = "try"
 };
 
 /* 

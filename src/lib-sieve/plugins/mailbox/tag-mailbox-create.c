@@ -27,11 +27,9 @@ static bool tag_mailbox_create_generate
     struct sieve_command *context);
 
 const struct sieve_argument_def mailbox_create_tag = {
-	"create",
-	NULL,
-	tag_mailbox_create_validate,
-	NULL, NULL,
-	tag_mailbox_create_generate
+	.identifier = "create",
+	.validate = tag_mailbox_create_validate,
+	.generate = tag_mailbox_create_generate
 };
 
 /*

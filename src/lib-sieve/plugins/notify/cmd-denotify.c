@@ -66,10 +66,9 @@ static bool tag_match_type_validate
 /* Argument object */
 
 const struct sieve_argument_def denotify_match_tag = {
-	"MATCH-TYPE-STRING",
-	tag_match_type_is_instance_of,
-	tag_match_type_validate,
-	NULL, NULL, NULL,
+	.identifier = "MATCH-TYPE-STRING",
+	.is_instance_of = tag_match_type_is_instance_of,
+	.validate = tag_match_type_validate
 };
 
 /* Codes for optional operands */

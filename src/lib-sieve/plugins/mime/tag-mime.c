@@ -31,11 +31,9 @@ static bool tag_mime_generate
     struct sieve_command *context);
 
 const struct sieve_argument_def mime_tag = {
-	"mime",
-	NULL,
-	tag_mime_validate,
-	NULL, NULL,
-	tag_mime_generate
+	.identifier = "mime",
+	.validate = tag_mime_validate,
+	.generate = tag_mime_generate
 };
 
 static bool tag_mime_option_validate
@@ -43,38 +41,28 @@ static bool tag_mime_option_validate
 		struct sieve_command *cmd);
 
 const struct sieve_argument_def mime_anychild_tag = {
-	"anychild",
-	NULL,
-	tag_mime_option_validate,
-	NULL, NULL, NULL
+	.identifier = "anychild",
+	.validate = tag_mime_option_validate
 };
 
 const struct sieve_argument_def mime_type_tag = {
-	"type",
-	NULL,
-	tag_mime_option_validate,
-	NULL, NULL, NULL
+	.identifier = "type",
+	.validate = tag_mime_option_validate
 };
 
 const struct sieve_argument_def mime_subtype_tag = {
-	"subtype",
-	NULL,
-	tag_mime_option_validate,
-	NULL, NULL, NULL
+	.identifier = "subtype",
+	.validate = tag_mime_option_validate
 };
 
 const struct sieve_argument_def mime_contenttype_tag = {
-	"contenttype",
-	NULL,
-	tag_mime_option_validate,
-	NULL, NULL, NULL
+	.identifier = "contenttype",
+	.validate = tag_mime_option_validate
 };
 
 const struct sieve_argument_def mime_param_tag = {
-	"param",
-	NULL,
-	tag_mime_option_validate,
-	NULL, NULL, NULL
+	.identifier = "param",
+	.validate = tag_mime_option_validate
 };
 
 /*

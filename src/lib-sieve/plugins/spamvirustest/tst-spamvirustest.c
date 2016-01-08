@@ -76,10 +76,8 @@ static bool tst_spamtest_validate_percent_tag
 		struct sieve_command *tst);
 
 static const struct sieve_argument_def spamtest_percent_tag = {
- 	"percent",
-	NULL,
-	tst_spamtest_validate_percent_tag,
-	NULL, NULL, NULL
+ 	.identifier = "percent",
+	.validate = tst_spamtest_validate_percent_tag
 };
 
 /*

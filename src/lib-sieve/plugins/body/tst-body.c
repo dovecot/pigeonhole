@@ -87,27 +87,21 @@ static bool tag_body_transform_generate
 /* Argument objects */
 
 static const struct sieve_argument_def body_raw_tag = {
-	"raw",
-	NULL,
-	tag_body_transform_validate,
-	NULL, NULL,
-	tag_body_transform_generate
+	.identifier = "raw",
+	.validate = tag_body_transform_validate,
+	.generate = tag_body_transform_generate
 };
 
 static const struct sieve_argument_def body_content_tag = {
-	"content",
-	NULL,
-	tag_body_transform_validate,
-	NULL, NULL,
-	tag_body_transform_generate
+	.identifier = "content",
+	.validate = tag_body_transform_validate,
+	.generate = tag_body_transform_generate
 };
 
 static const struct sieve_argument_def body_text_tag = {
-	"text",
-	NULL,
-	tag_body_transform_validate,
-	NULL, NULL,
-	tag_body_transform_generate
+	.identifier = "text",
+	.validate = tag_body_transform_validate,
+	.generate = tag_body_transform_generate
 };
 
 /* Argument implementation */

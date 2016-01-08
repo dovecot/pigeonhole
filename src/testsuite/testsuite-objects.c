@@ -201,9 +201,8 @@ static bool arg_testsuite_object_generate
 		struct sieve_command *cmd);
 
 const struct sieve_argument_def testsuite_object_argument = {
-	"testsuite-object",
-	NULL, NULL, NULL, NULL,
-	arg_testsuite_object_generate
+	.identifier = "testsuite-object",
+	.generate = arg_testsuite_object_generate
 };
 
 struct testsuite_object_argctx {

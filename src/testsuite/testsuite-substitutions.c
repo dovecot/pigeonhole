@@ -86,9 +86,8 @@ struct _testsuite_substitution_context {
 };
 
 const struct sieve_argument_def testsuite_substitution_argument = {
-	"@testsuite-substitution",
-	NULL, NULL, NULL, NULL,
-	arg_testsuite_substitution_generate
+	.identifier = "@testsuite-substitution",
+	.generate = arg_testsuite_substitution_generate
 };
 
 struct sieve_ast_argument *testsuite_substitution_argument_create

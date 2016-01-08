@@ -58,10 +58,8 @@ static bool cmd_break_validate_name_tag
 /* Argument objects */
 
 static const struct sieve_argument_def break_name_tag = {
-	"name",
-	NULL,
-	cmd_break_validate_name_tag,
-	NULL, NULL, NULL
+	.identifier = "name",
+	.validate = cmd_break_validate_name_tag
 };
 
 /*

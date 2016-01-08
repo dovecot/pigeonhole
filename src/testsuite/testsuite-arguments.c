@@ -29,11 +29,9 @@ static bool arg_testsuite_string_validate
 		struct sieve_command *context);
 
 const struct sieve_argument_def testsuite_string_argument = {
-	"@testsuite-string",
-	NULL,
-	arg_testsuite_string_validate,
-	NULL, NULL,
-	sieve_arg_catenated_string_generate,
+	.identifier = "@testsuite-string",
+	.validate = arg_testsuite_string_validate,
+	.generate = sieve_arg_catenated_string_generate,
 };
 
 static bool arg_testsuite_string_validate

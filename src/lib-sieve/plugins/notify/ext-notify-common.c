@@ -34,24 +34,18 @@ static bool tag_importance_validate
 		struct sieve_command *cmd);
 
 static const struct sieve_argument_def importance_low_tag = {
-	"low",
-	NULL,
-	tag_importance_validate,
-	NULL, NULL, NULL
+	.identifier = "low",
+	.validate = tag_importance_validate,
 };
 
 static const struct sieve_argument_def importance_normal_tag = {
-	"normal",
-	NULL,
-	tag_importance_validate,
-	NULL, NULL, NULL
+	.identifier = "normal",
+	.validate = tag_importance_validate,
 };
 
 static const struct sieve_argument_def importance_high_tag = {
-	"high",
-	NULL,
-	tag_importance_validate,
-	NULL, NULL, NULL
+	.identifier = "high",
+	.validate = tag_importance_validate,
 };
 
 static bool tag_importance_validate

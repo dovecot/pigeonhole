@@ -55,8 +55,7 @@ const struct sieve_command_def addheader_command = {
 /* Argument objects */
 
 static const struct sieve_argument_def addheader_last_tag = {
-	"last",
-	NULL, NULL, NULL, NULL, NULL
+	.identifier = "last"
 };
 
 /* Codes for optional arguments */

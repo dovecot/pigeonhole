@@ -91,17 +91,13 @@ static bool cmd_include_validate_location_tag
 		struct sieve_command *cmd);
 
 static const struct sieve_argument_def include_personal_tag = {
-	"personal",
-	NULL,
-	cmd_include_validate_location_tag,
-	NULL, NULL, NULL
+	.identifier = "personal",
+	.validate = cmd_include_validate_location_tag	
 };
 
 static const struct sieve_argument_def include_global_tag = {
-	"global",
-	NULL,
-	cmd_include_validate_location_tag,
-	NULL, NULL, NULL
+	.identifier = "global",
+	.validate = cmd_include_validate_location_tag
 };
 
 static bool cmd_include_validate_boolean_tag
@@ -109,19 +105,14 @@ static bool cmd_include_validate_boolean_tag
 		struct sieve_command *cmd);
 
 static const struct sieve_argument_def include_once_tag = {
-	"once",
-	NULL,
-	cmd_include_validate_boolean_tag,
-	NULL, NULL, NULL
+	.identifier = "once",
+	.validate = cmd_include_validate_boolean_tag
 };
 
 static const struct sieve_argument_def include_optional_tag = {
-	"optional",
-	NULL,
-	cmd_include_validate_boolean_tag,
-	NULL, NULL, NULL
+	.identifier = "optional",
+	.validate = cmd_include_validate_boolean_tag
 };
-
 
 /*
  * Tag validation

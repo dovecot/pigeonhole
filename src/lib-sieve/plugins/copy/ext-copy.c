@@ -92,11 +92,9 @@ static bool tag_copy_generate
     struct sieve_command *cmd);
 
 static const struct sieve_argument_def copy_tag = {
-	"copy",
-	NULL,
-	tag_copy_validate,
-	NULL, NULL,
-	tag_copy_generate
+	.identifier = "copy",
+	.validate = tag_copy_validate,
+	.generate = tag_copy_generate
 };
 
 /*

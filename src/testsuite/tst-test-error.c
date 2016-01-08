@@ -75,10 +75,8 @@ static bool tst_test_error_validate_index_tag
 		struct sieve_command *cmd);
 
 static const struct sieve_argument_def test_error_index_tag = {
-	"index",
-	NULL,
-	tst_test_error_validate_index_tag,
-	NULL, NULL, NULL
+	.identifier = "index",
+	.validate = tst_test_error_validate_index_tag
 };
 
 enum tst_test_error_optional {

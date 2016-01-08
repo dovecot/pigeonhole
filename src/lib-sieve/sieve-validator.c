@@ -375,10 +375,8 @@ static bool _unknown_tag_validate
 }
 
 static const struct sieve_argument_def _unknown_tag = {
-	"",
-	NULL,
-	_unknown_tag_validate,
-	NULL, NULL, NULL
+	.identifier = "",
+	.validate = _unknown_tag_validate,
 };
 
 static inline bool _tag_registration_is_unknown

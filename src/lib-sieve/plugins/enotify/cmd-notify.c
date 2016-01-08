@@ -79,31 +79,23 @@ static bool cmd_notify_validate_importance_tag
 /* Argument objects */
 
 static const struct sieve_argument_def notify_from_tag = {
-	"from",
-	NULL,
-	cmd_notify_validate_string_tag,
-	NULL, NULL, NULL
+	.identifier = "from",
+	.validate = cmd_notify_validate_string_tag
 };
 
 static const struct sieve_argument_def notify_options_tag = {
-	"options",
-	NULL,
-	cmd_notify_validate_stringlist_tag,
-	NULL, NULL, NULL
+	.identifier = "options",
+	.validate = cmd_notify_validate_stringlist_tag
 };
 
 static const struct sieve_argument_def notify_message_tag = {
-	"message",
-	NULL,
-	cmd_notify_validate_string_tag,
-	NULL, NULL, NULL
+	.identifier = "message",
+	.validate = cmd_notify_validate_string_tag
 };
 
 static const struct sieve_argument_def notify_importance_tag = {
-	"importance",
-	NULL,
-	cmd_notify_validate_importance_tag,
-	NULL, NULL, NULL
+	.identifier = "importance",
+	.validate = cmd_notify_validate_importance_tag
 };
 
 /*

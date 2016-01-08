@@ -75,9 +75,8 @@ static bool arg_namespace_generate
 	struct sieve_command *context ATTR_UNUSED);
 
 const struct sieve_argument_def namespace_argument = {
-	"@namespace",
-	NULL, NULL, NULL, NULL,
-	arg_namespace_generate
+	.identifier = "@namespace",
+	.generate = arg_namespace_generate
 };
 
 bool ext_variables_namespace_argument_activate

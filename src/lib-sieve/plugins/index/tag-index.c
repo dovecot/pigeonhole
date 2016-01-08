@@ -30,11 +30,9 @@ static bool tag_index_generate
     struct sieve_command *context);
 
 const struct sieve_argument_def index_tag = {
-	"index",
-	NULL,
-	tag_index_validate,
-	NULL, NULL,
-	tag_index_generate
+	.identifier = "index",
+	.validate = tag_index_validate,
+	.generate = tag_index_generate
 };
 
 static bool tag_last_validate
@@ -42,12 +40,9 @@ static bool tag_last_validate
 		struct sieve_command *cmd);
 
 const struct sieve_argument_def last_tag = {
-	"last",
-	NULL,
-	tag_last_validate,
-	NULL, NULL, NULL
+	.identifier = "last",
+	.validate = tag_last_validate,
 };
-
 
 /*
  * Header override

@@ -38,23 +38,19 @@ static bool arg_string_list_generate
 /* Argument objects */
 
 const struct sieve_argument_def number_argument = {
-	"@number",
-	NULL, NULL, NULL, NULL,
-	arg_number_generate
+	.identifier = "@number",
+	.generate = arg_number_generate
 };
 
 const struct sieve_argument_def string_argument = {
-	"@string",
-	NULL, NULL, NULL, NULL,
-	arg_string_generate
+	.identifier = "@string",
+	.generate = arg_string_generate
 };
 
 const struct sieve_argument_def string_list_argument = {
-	"@string-list",
-	NULL,
-	arg_string_list_validate,
-	NULL, NULL,
-	arg_string_list_generate
+	.identifier = "@string-list",
+	.validate = arg_string_list_validate,
+	.generate = arg_string_list_generate
 };
 
 /* Argument implementations */

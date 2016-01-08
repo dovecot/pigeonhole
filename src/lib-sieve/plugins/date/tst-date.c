@@ -94,19 +94,15 @@ static bool tag_zone_generate
 /* Argument objects */
 
 static const struct sieve_argument_def date_zone_tag = {
- 	"zone",
-	NULL,
-	tag_zone_validate,
-	NULL, NULL,
-	tag_zone_generate
+ 	.identifier = "zone",
+	.validate = tag_zone_validate,
+	.generate = tag_zone_generate
 };
 
 static const struct sieve_argument_def date_originalzone_tag = {
-	"originalzone",
-	NULL,
-	tag_zone_validate,
-	NULL, NULL,
-	tag_zone_generate
+	.identifier = "originalzone",
+	.validate = tag_zone_validate,
+	.generate = tag_zone_generate
 };
 
 /*

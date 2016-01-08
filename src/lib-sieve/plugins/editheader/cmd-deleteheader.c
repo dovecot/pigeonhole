@@ -69,17 +69,13 @@ static bool cmd_deleteheader_validate_last_tag
 /* Argument objects */
 
 static const struct sieve_argument_def deleteheader_index_tag = {
-	"index",
-	NULL,
-	cmd_deleteheader_validate_index_tag,
-	NULL, NULL, NULL
+	.identifier = "index",
+	.validate = cmd_deleteheader_validate_index_tag
 };
 
 static const struct sieve_argument_def deleteheader_last_tag = {
-	"last",
-	NULL,
-	cmd_deleteheader_validate_last_tag,
-	NULL, NULL, NULL
+	.identifier = "last",
+	.validate = cmd_deleteheader_validate_last_tag
 };
 
 /* Codes for optional arguments */

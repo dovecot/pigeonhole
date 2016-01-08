@@ -118,11 +118,9 @@ static bool tag_comparator_generate
 /* Argument object */
 
 const struct sieve_argument_def comparator_tag = {
-	"comparator",
-	NULL,
-	tag_comparator_validate,
-	NULL, NULL,
-	tag_comparator_generate
+	.identifier = "comparator",
+	.validate = tag_comparator_validate,
+	.generate = tag_comparator_generate
 };
 
 /* Argument implementation */

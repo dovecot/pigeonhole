@@ -98,52 +98,38 @@ static bool cmd_vacation_validate_mime_tag
 /* Argument objects */
 
 static const struct sieve_argument_def vacation_days_tag = {
-	"days",
-	NULL,
-	cmd_vacation_validate_number_tag,
-	NULL, NULL, NULL,
+	.identifier = "days",
+	.validate = cmd_vacation_validate_number_tag
 };
 
 static const struct sieve_argument_def vacation_seconds_tag = {
-	"seconds",
-	NULL,
-	cmd_vacation_validate_number_tag,
-	NULL, NULL, NULL,
+	.identifier = "seconds",
+	.validate = cmd_vacation_validate_number_tag
 };
 
 static const struct sieve_argument_def vacation_subject_tag = {
-	"subject",
-	NULL,
-	cmd_vacation_validate_string_tag,
-	NULL, NULL, NULL
+	.identifier = "subject",
+	.validate = cmd_vacation_validate_string_tag
 };
 
 static const struct sieve_argument_def vacation_from_tag = {
-	"from",
-	NULL,
-	cmd_vacation_validate_string_tag,
-	NULL, NULL, NULL
+	.identifier = "from",
+	.validate = cmd_vacation_validate_string_tag
 };
 
 static const struct sieve_argument_def vacation_addresses_tag = {
-	"addresses",
-	NULL,
-	cmd_vacation_validate_stringlist_tag,
-	NULL, NULL, NULL
+	.identifier = "addresses",
+	.validate = cmd_vacation_validate_stringlist_tag
 };
 
 static const struct sieve_argument_def vacation_mime_tag = {
-	"mime",
-	NULL,
-	cmd_vacation_validate_mime_tag,
-	NULL, NULL, NULL
+	.identifier = "mime",
+	.validate = cmd_vacation_validate_mime_tag
 };
 
 static const struct sieve_argument_def vacation_handle_tag = {
-	"handle",
-	NULL,
-	cmd_vacation_validate_string_tag,
-	NULL, NULL, NULL
+	.identifier = "handle",
+	.validate = cmd_vacation_validate_string_tag
 };
 
 /* Codes for optional arguments */

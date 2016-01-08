@@ -96,10 +96,9 @@ static bool tag_modifier_validate
 /* Modifier tag object */
 
 const struct sieve_argument_def modifier_tag = {
-	"MODIFIER",
-	tag_modifier_is_instance_of,
-	tag_modifier_validate,
-	NULL, NULL, NULL
+	.identifier = "MODIFIER",
+	.is_instance_of = tag_modifier_is_instance_of,
+	.validate = tag_modifier_validate
 };
 
 /* Modifier tag implementation */

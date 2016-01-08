@@ -70,8 +70,7 @@ enum cmd_vacation_optional {
 /* Tags */
 
 static const struct sieve_argument_def append_result_tag = {
-	"append_result",
-	NULL, NULL, NULL, NULL, NULL
+	.identifier = "append_result"
 };
 
 static bool tst_test_script_run_registered

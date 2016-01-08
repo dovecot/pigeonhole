@@ -128,17 +128,13 @@ static bool tst_size_validate_under_tag
  */
 
 static const struct sieve_argument_def size_over_tag = {
-	"over",
-	NULL,
-	tst_size_validate_over_tag,
-	NULL, NULL, NULL
+	.identifier = "over",
+	.validate = tst_size_validate_over_tag
 };
 
 static const struct sieve_argument_def size_under_tag = {
-	"under",
-	NULL,
-	tst_size_validate_under_tag,
-	NULL, NULL,  NULL
+	.identifier = "under",
+	.validate = tst_size_validate_under_tag,
 };
 
 static bool tst_size_registered

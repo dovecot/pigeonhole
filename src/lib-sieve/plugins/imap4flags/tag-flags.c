@@ -36,18 +36,15 @@ static bool tag_flags_generate
 		struct sieve_command *cmd);
 
 const struct sieve_argument_def tag_flags = {
-	"flags",
-	NULL,
-	tag_flags_validate,
-	NULL, NULL,
-	tag_flags_generate
+	.identifier = "flags",
+	.validate = tag_flags_validate,
+	.generate = tag_flags_generate
 };
 
 const struct sieve_argument_def tag_flags_implicit = {
-	"flags-implicit",
-	NULL,	NULL, NULL,
-	tag_flags_validate_persistent,
-	tag_flags_generate
+	.identifier = "flags-implicit",
+	.validate_persistent = tag_flags_validate_persistent,
+	.generate = tag_flags_generate
 };
 
 /*

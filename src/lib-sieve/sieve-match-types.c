@@ -358,11 +358,10 @@ static bool tag_match_type_generate
 /* Argument object */
 
 const struct sieve_argument_def match_type_tag = {
-	"MATCH-TYPE",
-	tag_match_type_is_instance_of,
-	tag_match_type_validate,
-	NULL,	NULL,
-	tag_match_type_generate
+	.identifier = "MATCH-TYPE",
+	.is_instance_of = tag_match_type_is_instance_of,
+	.validate = tag_match_type_validate,
+	.generate = tag_match_type_generate
 };
 
 /* Argument implementation */

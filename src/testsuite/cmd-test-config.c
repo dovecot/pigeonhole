@@ -95,10 +95,8 @@ static bool cmd_test_config_reload_validate_tag
 /* Argument objects */
 
 static const struct sieve_argument_def test_config_reload_extension_tag = {
-	"extension",
-	NULL,
-	cmd_test_config_reload_validate_tag,
-	NULL, NULL, NULL,
+	.identifier = "extension",
+	.validate = cmd_test_config_reload_validate_tag,
 };
 
 /* Codes for optional arguments */

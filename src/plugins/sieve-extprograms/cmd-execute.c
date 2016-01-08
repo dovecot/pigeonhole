@@ -72,26 +72,20 @@ static bool cmd_execute_validate_output_tag
 		struct sieve_command *cmd);
 
 static const struct sieve_argument_def execute_input_tag = { 
-	"input", 
-	NULL, 
-	cmd_execute_validate_input_tag,
-	NULL, NULL,
-	cmd_execute_generate_input_tag
+	.identifier = "input", 
+	.validate = cmd_execute_validate_input_tag,
+	.generate = cmd_execute_generate_input_tag
 };
 
 static const struct sieve_argument_def execute_pipe_tag = { 
-	"pipe", 
-	NULL, 
-	cmd_execute_validate_input_tag,
-	NULL, NULL,
-	cmd_execute_generate_input_tag
+	.identifier = "pipe",
+	.validate = cmd_execute_validate_input_tag,
+	.generate = cmd_execute_generate_input_tag
 };
 
 static const struct sieve_argument_def execute_output_tag = { 
-	"output", 
-	NULL, 
-	cmd_execute_validate_output_tag,
-	NULL, NULL, NULL 
+	.identifier = "output", 
+	.validate = cmd_execute_validate_output_tag,
 };
 
 

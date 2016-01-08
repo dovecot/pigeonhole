@@ -53,10 +53,8 @@ static bool cmd_test_imap_metadata_validate_mailbox_tag
 		struct sieve_command *cmd);
 
 static const struct sieve_argument_def test_imap_metadata_mailbox_tag = {
-	"mailbox",
-	NULL,
-	cmd_test_imap_metadata_validate_mailbox_tag,
-	NULL, NULL, NULL
+	.identifier = "mailbox",
+	.validate = cmd_test_imap_metadata_validate_mailbox_tag
 };
 
 /*

@@ -30,9 +30,8 @@ static bool arg_variable_generate
 		struct sieve_command *context);
 
 const struct sieve_argument_def variable_argument = {
-	"@variable",
-	NULL, NULL, NULL, NULL,
-	arg_variable_generate
+	.identifier = "@variable",
+	.generate = arg_variable_generate
 };
 
 static bool ext_variables_variable_argument_activate
@@ -95,9 +94,8 @@ static bool arg_match_value_generate
 	struct sieve_command *context ATTR_UNUSED);
 
 const struct sieve_argument_def match_value_argument = {
-	"@match_value",
-	NULL, NULL, NULL, NULL,
-	arg_match_value_generate
+	.identifier = "@match_value",
+	.generate = arg_match_value_generate
 };
 
 static bool ext_variables_match_value_argument_activate
@@ -165,11 +163,9 @@ static bool arg_variable_string_validate
 		struct sieve_command *cmd);
 
 const struct sieve_argument_def variable_string_argument = {
-	"@variable-string",
-	NULL,
-	arg_variable_string_validate,
-	NULL, NULL,
-	sieve_arg_catenated_string_generate,
+	.identifier = "@variable-string",
+	.validate = arg_variable_string_validate,
+	.generate = sieve_arg_catenated_string_generate,
 };
 
 static bool arg_variable_string_validate

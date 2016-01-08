@@ -148,11 +148,10 @@ static bool tag_address_part_generate
 /* Argument object */
 
 const struct sieve_argument_def address_part_tag = {
-	"ADDRESS-PART",
-	tag_address_part_is_instance_of,
-	tag_address_part_validate,
-	NULL, NULL,
-	tag_address_part_generate
+	.identifier = "ADDRESS-PART",
+	.is_instance_of = tag_address_part_is_instance_of,
+	.validate = tag_address_part_validate,
+	.generate = tag_address_part_generate
 };
 
 /* Argument implementation */

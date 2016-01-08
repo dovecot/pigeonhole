@@ -153,17 +153,13 @@ static bool cmd_test_message_validate_folder_tag
 		struct sieve_command *cmd);
 
 static const struct sieve_argument_def test_message_smtp_tag = {
-	"smtp",
-	NULL,
-	cmd_test_message_validate_smtp_tag,
-	NULL, NULL, NULL
+	.identifier = "smtp",
+	.validate = cmd_test_message_validate_smtp_tag
 };
 
 static const struct sieve_argument_def test_message_folder_tag = {
-	"folder",
-	NULL,
-	cmd_test_message_validate_folder_tag,
-	NULL, NULL, NULL
+	.identifier = "folder",
+	.validate = cmd_test_message_validate_folder_tag
 };
 
 static bool cmd_test_message_registered

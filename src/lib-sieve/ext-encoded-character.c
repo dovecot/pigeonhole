@@ -41,10 +41,8 @@ bool arg_encoded_string_validate
 		struct sieve_command *context);
 
 const struct sieve_argument_def encoded_string_argument = {
-	"@encoded-string",
-	NULL,
-	arg_encoded_string_validate,
-	NULL, NULL, NULL
+	.identifier = "@encoded-string",
+	.validate = arg_encoded_string_validate
 };
 
 /* Parsing */
