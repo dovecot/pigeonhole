@@ -13,8 +13,14 @@
  * Argument definition
  */
 
+enum sieve_argument_flag {
+	/* More than one of this (type of) tagged argument is allowed */
+	SIEVE_ARGUMENT_FLAG_MULTIPLE = (1 << 0)
+};
+
 struct sieve_argument_def {
 	const char *identifier;
+	enum sieve_argument_flag flags;
 
 	bool (*is_instance_of)
 		(struct sieve_validator *valdtr, struct sieve_command *cmd,

@@ -939,28 +939,30 @@ static bool sieve_validate_command_arguments
 		struct sieve_ast_argument *parg;
 
 		/* Scan backwards for any duplicates */
-		parg = sieve_ast_argument_prev(arg);
-		while ( parg != NULL ) {
-			if ( (sieve_ast_argument_type(parg) == SAAT_TAG &&
-					parg->argument->def == tag_def)
-				|| (arg->argument->id_code > 0 && parg->argument != NULL &&
-					parg->argument->id_code == arg->argument->id_code) )
-			{
-				const char *tag_id = sieve_ast_argument_tag(arg);
-				const char *tag_desc =
-					strcmp(tag_def->identifier, tag_id) != 0 ?
-					t_strdup_printf("%s argument (:%s)", tag_def->identifier, tag_id) :
-					t_strdup_printf(":%s argument", tag_def->identifier);
+		if ( (tag_def->flags & SIEVE_ARGUMENT_FLAG_MULTIPLE) == 0 ) {
+			parg = sieve_ast_argument_prev(arg);
+			while ( parg != NULL ) {
+				if ( (sieve_ast_argument_type(parg) == SAAT_TAG &&
+						parg->argument->def == tag_def)
+					|| (arg->argument->id_code > 0 && parg->argument != NULL &&
+						parg->argument->id_code == arg->argument->id_code) )
+				{
+					const char *tag_id = sieve_ast_argument_tag(arg);
+					const char *tag_desc =
+						strcmp(tag_def->identifier, tag_id) != 0 ?
+						t_strdup_printf("%s argument (:%s)", tag_def->identifier, tag_id) :
+						t_strdup_printf(":%s argument", tag_def->identifier);
 
-				sieve_argument_validate_error(valdtr, arg,
-					"encountered duplicate %s for the %s %s",
-					tag_desc, sieve_command_identifier(cmd),
-					sieve_command_type_name(cmd));
+					sieve_argument_validate_error(valdtr, arg,
+						"encountered duplicate %s for the %s %s",
+						tag_desc, sieve_command_identifier(cmd),
+						sieve_command_type_name(cmd));
 
-				return FALSE;
+					return FALSE;
+				}
+
+				parg = sieve_ast_argument_prev(parg);
 			}
-
-			parg = sieve_ast_argument_prev(parg);
 		}
 
 		/* Call the validation function for the tag (if present)
