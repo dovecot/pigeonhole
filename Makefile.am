@@ -16,7 +16,6 @@ EXTRA_DIST = \
 	examples \
 	COPYING.LGPL \
 	ChangeLog \
-	is-tagged.py \
 	update-version.sh
 
 dist-hook:
