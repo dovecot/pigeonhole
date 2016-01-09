@@ -29,8 +29,8 @@ nodist_pkginc_lib_HEADERS = \
 	pigeonhole-config.h
 
 if MAINTAINER_MODE
-ChangeLog: .hg/dirstate
-	hg log --style=changelog > ChangeLog
+ChangeLog: .git/index
+	git log > ChangeLog
 endif
 
 dist_aclocal_DATA = dovecot-pigeonhole.m4
