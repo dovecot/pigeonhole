@@ -34,16 +34,22 @@ bool sieve_ext_imap4flags_flag_is_valid(const char *flag);
 
 int sieve_ext_imap4flags_set_flags
 (const struct sieve_runtime_env *renv,
-	struct sieve_variable_storage *storage, unsigned int var_index,
-	struct sieve_stringlist *flags) ATTR_NULL(2);
+	const struct sieve_extension *flg_ext,
+	struct sieve_variable_storage *storage,
+	unsigned int var_index,
+	struct sieve_stringlist *flags) ATTR_NULL(3);
 int sieve_ext_imap4flags_add_flags
 (const struct sieve_runtime_env *renv,
-	struct sieve_variable_storage *storage, unsigned int var_index,
-	struct sieve_stringlist *flags) ATTR_NULL(2);
+	const struct sieve_extension *flg_ext,
+	struct sieve_variable_storage *storage,
+	unsigned int var_index,
+	struct sieve_stringlist *flags) ATTR_NULL(3);
 int sieve_ext_imap4flags_remove_flags
 (const struct sieve_runtime_env *renv,
-	struct sieve_variable_storage *storage, 	unsigned int var_index,
-	struct sieve_stringlist *flags) ATTR_NULL(2);
+	const struct sieve_extension *flg_ext,
+	struct sieve_variable_storage *storage,
+	unsigned int var_index,
+	struct sieve_stringlist *flags) ATTR_NULL(3);
 
 /*
  * Flag retrieval

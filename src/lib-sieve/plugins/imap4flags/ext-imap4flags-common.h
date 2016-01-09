@@ -92,6 +92,7 @@ const char *ext_imap4flags_iter_get_flag
 
 typedef int (*ext_imapflag_flag_operation_t)
 	(const struct sieve_runtime_env *renv,
+		const struct sieve_extension *flg_ext,
 		struct sieve_variable_storage *storage,
 		unsigned int var_index, struct sieve_stringlist *flags)
 		ATTR_NULL(2);

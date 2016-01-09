@@ -394,7 +394,9 @@ static void ext_imap4flags_iter_delete_last
 
 static string_t *ext_imap4flags_get_flag_variable
 (const struct sieve_runtime_env *renv,
-	struct sieve_variable_storage *storage, unsigned int var_index)
+	const struct sieve_extension *flg_ext,
+	struct sieve_variable_storage *storage,
+	unsigned int var_index)
 	ATTR_NULL(2);
 
 static bool flags_list_flag_exists
@@ -474,7 +476,9 @@ static void flags_list_clear_flags
 
 static string_t *ext_imap4flags_get_flag_variable
 (const struct sieve_runtime_env *renv,
-	struct sieve_variable_storage *storage, unsigned int var_index)
+	const struct sieve_extension *flg_ext,
+	struct sieve_variable_storage *storage,
+	unsigned int var_index)
 {
 	string_t *flags;
 
@@ -492,7 +496,8 @@ static string_t *ext_imap4flags_get_flag_variable
 		if ( !sieve_variable_get_modifiable(storage, var_index, &flags) )
 			return NULL;
 	} else {
-		flags = _get_flags_string(renv->oprtn->ext, renv->result);
+		i_assert( sieve_extension_is(flg_ext, imap4flags_extension) );
+		flags = _get_flags_string(flg_ext, renv->result);
 	}
 
 	return flags;
@@ -500,11 +505,13 @@ static string_t *ext_imap4flags_get_flag_variable
 
 int sieve_ext_imap4flags_set_flags
 (const struct sieve_runtime_env *renv,
-	struct sieve_variable_storage *storage, unsigned int var_index,
+	const struct sieve_extension *flg_ext,
+	struct sieve_variable_storage *storage,
+	unsigned int var_index,
 	struct sieve_stringlist *flags)
 {
 	string_t *cur_flags = ext_imap4flags_get_flag_variable
-		(renv, storage, var_index);
+		(renv, flg_ext, storage, var_index);
 
 	if ( cur_flags != NULL ) {
 		string_t *flags_item;
@@ -528,11 +535,13 @@ int sieve_ext_imap4flags_set_flags
 
 int sieve_ext_imap4flags_add_flags
 (const struct sieve_runtime_env *renv,
-	struct sieve_variable_storage *storage, unsigned int var_index,
+	const struct sieve_extension *flg_ext,
+	struct sieve_variable_storage *storage,
+	unsigned int var_index,
 	struct sieve_stringlist *flags)
 {
 	string_t *cur_flags = ext_imap4flags_get_flag_variable
-		(renv, storage, var_index);
+		(renv, flg_ext, storage, var_index);
 
 	if ( cur_flags != NULL ) {
 		string_t *flags_item;
@@ -555,11 +564,13 @@ int sieve_ext_imap4flags_add_flags
 
 int sieve_ext_imap4flags_remove_flags
 (const struct sieve_runtime_env *renv,
-	struct sieve_variable_storage *storage, 	unsigned int var_index,
+	const struct sieve_extension *flg_ext,
+	struct sieve_variable_storage *storage,
+	unsigned int var_index,
 	struct sieve_stringlist *flags)
 {
 	string_t *cur_flags = ext_imap4flags_get_flag_variable
-		(renv, storage, var_index);
+		(renv, flg_ext, storage, var_index);
 
 	if ( cur_flags != NULL ) {
 		string_t *flags_item;

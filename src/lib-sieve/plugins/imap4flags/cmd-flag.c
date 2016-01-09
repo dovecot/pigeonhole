@@ -241,5 +241,5 @@ static int cmd_flag_operation_execute
 	sieve_runtime_trace_descend(renv);
 
 	/* Perform requested operation */
-	return flag_op(renv, storage, var_index, flag_list);
+	return flag_op(renv, op->ext, storage, var_index, flag_list);
 }
