@@ -20,7 +20,7 @@ Next (mostly in order of descending priority/precedence):
 
 * Implement message modification and extraction API in order to:
 	- Properly implement the interaction between editheader and foreverypart/mime.
-	- Implement replace, enclose, and extracttext extensions.
+	- Implement replace, enclose extensions.
 * Properly implement Sieve internationalization support (utf-8 handling),
   currently it is not complete:
 	- Make this implementation fully conform section 2.7.2 of RFC5228 (Comparisons
