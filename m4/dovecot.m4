@@ -6,7 +6,7 @@
 # unlimited permission to copy and/or distribute it, with or without
 # modifications, as long as this notice is preserved.
 
-# serial 12
+# serial 20
 
 AC_DEFUN([DC_DOVECOT_MODULEDIR],[
 	AC_ARG_WITH(moduledir,
@@ -29,6 +29,43 @@ AC_DEFUN([DC_PLUGIN_DEPS],[
 	AC_MSG_RESULT([$_plugin_deps])
 	AM_CONDITIONAL([DOVECOT_PLUGIN_DEPS], [test "x$_plugin_deps" = "xyes"])
 	unset _plugin_deps
+])
+
+AC_DEFUN([DC_DOVECOT_TEST_WRAPPER],[
+  AC_CHECK_PROG(VALGRIND, valgrind, yes, no)
+  if test $VALGRIND = yes; then
+    cat > run-test.sh <<EOF
+#!/bin/sh
+top_srcdir=\$[1]
+shift
+
+if test "\$NOVALGRIND" != ""; then
+  \$[*]
+  ret=\$?
+else
+  trap "rm -f test.out.\$\$" 0 1 2 3 15
+  supp_path="\$top_srcdir/run-test-valgrind.supp"
+  if test -r "\$supp_path"; then
+    valgrind -q --trace-children=yes --leak-check=full --suppressions="\$supp_path" --log-file=test.out.\$\$ \$[*]
+  else
+    valgrind -q --trace-children=yes --leak-check=full --log-file=test.out.\$\$ \$[*]
+  fi
+  ret=\$?
+  if test -s test.out.\$\$; then
+    cat test.out.\$\$
+    ret=1
+  fi
+fi
+if test \$ret != 0; then
+  echo "Failed to run: \$[*]" >&2
+fi
+exit \$ret
+EOF
+    RUN_TEST='$(SHELL) $(top_builddir)/run-test.sh $(top_srcdir)'
+  else
+    RUN_TEST=''
+  fi
+  AC_SUBST(RUN_TEST)
 ])
 
 # Substitute every var in the given comma seperated list
@@ -56,7 +93,7 @@ AC_DEFUN([DC_DOVECOT],[
 	fi,
 	use_install_dirs=yes)
 
-	AC_MSG_CHECKING([for dovecot-config in "$dovecotdir"])
+	AC_MSG_CHECKING([for "$dovecotdir/dovecot-config"])
 	if test -f "$dovecotdir/dovecot-config"; then
 		AC_MSG_RESULT([$dovecotdir/dovecot-config])
 	else
@@ -75,6 +112,8 @@ AC_DEFUN([DC_DOVECOT],[
 	eval `grep -i '^dovecot_[[a-z_]]*=' "$dovecotdir"/dovecot-config`
 	eval `grep '^LIBDOVECOT[[A-Z_]]*=' "$dovecotdir"/dovecot-config`
 
+	dovecot_installed_moduledir="$dovecot_moduledir"
+
 	if test "$use_install_dirs" = "no"; then
 		# the main purpose of these is to fix make distcheck for plugins
 		# other than that, they don't really make much sense
@@ -85,11 +124,14 @@ AC_DEFUN([DC_DOVECOT],[
 		dovecot_moduledir='$(moduledir)'
 	fi
 
-	AX_SUBST_L([DISTCHECK_CONFIGURE_FLAGS], [dovecotdir], [dovecot_moduledir], [dovecot_pkgincludedir], [dovecot_pkglibexecdir], [dovecot_pkglibdir], [dovecot_docdir])
-	AX_SUBST_L([DOVECOT_CFLAGS], [DOVECOT_LIBS], [DOVECOT_SSL_LIBS], [DOVECOT_SQL_LIBS], [DOVECOT_COMPRESS_LIBS])
-	AX_SUBST_L([LIBDOVECOT], [LIBDOVECOT_LOGIN], [LIBDOVECOT_SQL], [LIBDOVECOT_SSL], [LIBDOVECOT_COMPRESS], [LIBDOVECOT_LDA], [LIBDOVECOT_STORAGE])
-	AX_SUBST_L([LIBDOVECOT_DEPS], [LIBDOVECOT_LOGIN_DEPS], [LIBDOVECOT_SQL_DEPS], [LIBDOVECOT_SSL_DEPS], [LIBDOVECOT_COMPRESS_DEPS], [LIBDOVECOT_LDA_DEPS], [LIBDOVECOT_STORAGE_DEPS])
-	AX_SUBST_L([LIBDOVECOT_INCLUDE], [LIBDOVECOT_LDA_INCLUDE], [LIBDOVECOT_DOVEADM_INCLUDE], [LIBDOVECOT_SERVICE_INCLUDE], [LIBDOVECOT_STORAGE_INCLUDE], [LIBDOVECOT_LOGIN_INCLUDE], [LIBDOVECOT_CONFIG_INCLUDE], [LIBDOVECOT_IMAP_INCLUDE])
+	AX_SUBST_L([DISTCHECK_CONFIGURE_FLAGS], [dovecotdir], [dovecot_moduledir], [dovecot_installed_moduledir], [dovecot_pkgincludedir], [dovecot_pkglibexecdir], [dovecot_pkglibdir], [dovecot_docdir])
+	AX_SUBST_L([DOVECOT_INSTALLED], [DOVECOT_CFLAGS], [DOVECOT_LIBS], [DOVECOT_SSL_LIBS], [DOVECOT_SQL_LIBS], [DOVECOT_COMPRESS_LIBS])
+	AX_SUBST_L([LIBDOVECOT], [LIBDOVECOT_LOGIN], [LIBDOVECOT_SQL], [LIBDOVECOT_SSL], [LIBDOVECOT_COMPRESS], [LIBDOVECOT_LDA], [LIBDOVECOT_STORAGE], [LIBDOVECOT_DSYNC], [LIBDOVECOT_LIBFTS])
+	AX_SUBST_L([LIBDOVECOT_DEPS], [LIBDOVECOT_LOGIN_DEPS], [LIBDOVECOT_SQL_DEPS], [LIBDOVECOT_SSL_DEPS], [LIBDOVECOT_COMPRESS_DEPS], [LIBDOVECOT_LDA_DEPS], [LIBDOVECOT_STORAGE_DEPS], [LIBDOVECOT_DSYNC_DEPS], [LIBDOVECOT_LIBFTS_DEPS])
+	AX_SUBST_L([LIBDOVECOT_INCLUDE], [LIBDOVECOT_LDA_INCLUDE], [LIBDOVECOT_DOVEADM_INCLUDE], [LIBDOVECOT_SERVICE_INCLUDE], [LIBDOVECOT_STORAGE_INCLUDE], [LIBDOVECOT_LOGIN_INCLUDE], [LIBDOVECOT_CONFIG_INCLUDE], [LIBDOVECOT_IMAP_INCLUDE], [LIBDOVECOT_DSYNC_INCLUDE], [LIBDOVECOT_IMAPC_INCLUDE], [LIBDOVECOT_FTS_INCLUDE], [LIBDOVECOT_NOTIFY_INCLUDE], [LIBDOVECOT_ACL_INCLUDE], [LIBDOVECOT_LIBFTS_INCLUDE])
+
+	AM_CONDITIONAL(DOVECOT_INSTALLED, test "$DOVECOT_INSTALLED" = "yes")
 
 	DC_PLUGIN_DEPS
+	DC_DOVECOT_TEST_WRAPPER
 ])
