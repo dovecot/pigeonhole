@@ -121,7 +121,8 @@ following list outlines the implementation status of each supported extension:
         permissions are not verified for mailboxexists.
     mboxmetadata and servermetadata (RFC 5490): fully supported (v0.4.7+)
     foreverypart (RFC 5703; Section 3): fully supported (v0.4.10+).
-    mime (RFC 5703; Section 4): fully supported (v0.4.10+). 
+    mime (RFC 5703; Section 4): fully supported (v0.4.10+).
+    extracttext (RFC 5703; Section 7): fully supported (v0.4.12+).
     include (RFC 6609): fully supported (v0.4.0+)
     duplicate (RFC 7352): fully supported (v0.4.3+).
     regex (draft v08; not latest version): almost fully supported, but
@@ -150,18 +151,20 @@ following list outlines the implementation status of each supported extension:
 
   The following extensions are under development:
 
-    ereject (RFC 5429; page 4): implemented, but currently equal to reject
+    ereject (RFC 5429; page 4): implemented, but currently equal to reject.
+    imapsieve (RFC 6785): partially implemented.
 
   Many more extensions to the language exist. Not all of these extensions are
   useful for Dovecot in particular, but many of them are. Currently, the
   author has taken notice of the following extensions:
 
-    replace, enclose, and extracttext (RFC 5703): planned.
-    imapsieve (RFC 6785): planned.
+    replace (RFC 5703; Section 5): planned.
+    enclose (RFC 5703; Section 6): planned.
     envelope-dsn, envelope-deliverby, redirect-dsn and
       redirect-deliverby (RFC 6009): planned; depends on lib-smtp changes in
         Dovecot.
-    extlists (RFC 6134): under consideration. 
+    extlists (RFC 6134): planned.
+    convert (RFC 6558): under consideration.
 
     These extensions will be added as soon as the necessary infrastructure is
     available.
