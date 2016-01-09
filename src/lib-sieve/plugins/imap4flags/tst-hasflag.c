@@ -175,6 +175,7 @@ static bool tst_hasflag_operation_dump
 static int tst_hasflag_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	const struct sieve_operation *op = renv->oprtn;
 	int opt_code = 0;
 	struct sieve_comparator cmp =
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
@@ -224,13 +225,16 @@ static int tst_hasflag_operation_execute
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "hasflag test");
 
-	value_list = sieve_ext_imap4flags_get_flags(renv, variables_list);
+	value_list = sieve_ext_imap4flags_get_flags
+		(renv, op->ext, variables_list);
 
 	if ( sieve_match_type_is(&mcht, is_match_type) ||
-		sieve_match_type_is(&mcht, contains_match_type) )
-		key_list = sieve_ext_imap4flags_get_flags(renv, flag_list);
-	else
+		sieve_match_type_is(&mcht, contains_match_type) ) {
+		key_list = sieve_ext_imap4flags_get_flags
+			(renv, op->ext, flag_list);
+	} else {
 		key_list = flag_list;
+	}
 
 	/* Perform match */
 	if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )

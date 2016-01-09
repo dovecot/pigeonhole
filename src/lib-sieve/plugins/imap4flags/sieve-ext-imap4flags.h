@@ -57,6 +57,7 @@ int sieve_ext_imap4flags_remove_flags
 
 struct sieve_stringlist *sieve_ext_imap4flags_get_flags
 (const struct sieve_runtime_env *renv,
+	const struct sieve_extension *flg_ext,
 	struct sieve_stringlist *flags_list);
 
 #endif

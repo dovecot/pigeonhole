@@ -700,11 +700,14 @@ static void ext_imap4flags_stringlist_reset
 
 struct sieve_stringlist *sieve_ext_imap4flags_get_flags
 (const struct sieve_runtime_env *renv,
+	const struct sieve_extension *flg_ext,
 	struct sieve_stringlist *flags_list)
 {
-	if ( flags_list == NULL )
+	if ( flags_list == NULL ) {
+		i_assert( sieve_extension_is(flg_ext, imap4flags_extension) );
 		return ext_imap4flags_stringlist_create_single
-			(renv, _get_flags_string(renv->oprtn->ext, renv->result), FALSE);
+			(renv, _get_flags_string(flg_ext, renv->result), FALSE);
+	}
 
 	return ext_imap4flags_stringlist_create(renv, flags_list, TRUE);
 }
