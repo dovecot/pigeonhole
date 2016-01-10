@@ -249,15 +249,20 @@ Compile and Runtime Logging
 Log messages produced at runtime by the Sieve plugin are written to two
 locations:
 
-  * A log file is written in the same directory as the user's main private
-    script (as specified by the sieve setting). This log file bears the name of
-    that script file appended with ".log", e.g. .dovecot.sieve.log. If there are
-    errors or warnings in the script, the messages are appended to that log file
-    until it eventually grows too large. When that happens, the old log file is
-    rotated to a ".log.0" file and an empty log file is started. Informational
-    messages are not written to this log file and the log file is not created
-    until messages are actually logged, i.e. when an error or warning is
-    produced.
+  * Messages are primarily logged to the user log. By default this log file is
+    located in the same directory as the user's main active personal script (as
+    specified by the sieve setting). This log file bears the name of that script
+    file appended with ".log", e.g. ".dovecot.sieve.log". The location of the
+    user log file can also be explicitly configured using the sieve_user_log
+    setting (e.g. for when Sieve scripts are not stored on the local file
+    system).
+
+    If there are errors or warnings in the script, the messages are appended to
+    that log file until it eventually grows too large. When that happens, the
+    old log file is rotated to a ".log.0" file and an empty log file is started.
+    Informational messages are not written to this log file and the log file is
+    not created until messages are actually logged, i.e. when an error or
+    warning is produced.
 
   * Messages that could be of interest to the system administrator are also
     written to the Dovecot LDA logging facility (usually syslog). This includes
