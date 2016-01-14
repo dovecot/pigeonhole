@@ -865,15 +865,16 @@ static int sieve_storage_active_script_do_get_name
 	enum sieve_error error;
 	int ret;
 
+	if (default_r != NULL)
+		*default_r = FALSE;
+
 	i_assert(storage->v.active_script_get_name != NULL);
 	ret = storage->v.active_script_get_name(storage, name_r);
-	
+
 	if ( ret != 0 ||
 		(storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 ||
 		storage->default_location == NULL ||
 		storage->default_name == NULL ) {
-		if (default_r != NULL)
-			*default_r = FALSE;
 		return ret;
 	}
 
@@ -900,7 +901,7 @@ int sieve_storage_active_script_is_default
 (struct sieve_storage *storage)
 {
 	const char *name;
-	bool is_default;
+	bool is_default = FALSE;
 	int ret;
 
 	ret = sieve_storage_active_script_do_get_name
