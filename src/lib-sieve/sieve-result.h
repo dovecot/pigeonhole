@@ -142,8 +142,9 @@ void sieve_result_set_failure_action
  * Result execution
  */
 
-int sieve_result_implicit_keep(struct sieve_result *result,
-	struct sieve_error_handler *ehandler);
+int sieve_result_implicit_keep
+	(struct sieve_result *result,
+		struct sieve_error_handler *ehandler, bool success);
 
 void sieve_result_mark_executed(struct sieve_result *result);
 

@@ -1031,13 +1031,13 @@ static int _sieve_result_implicit_keep
 
 int sieve_result_implicit_keep
 (struct sieve_result *result,
-	struct sieve_error_handler *ehandler)
+	struct sieve_error_handler *ehandler, bool success)
 {
 	int ret;
 
 	_sieve_result_prepare_execution(result, ehandler);
 
-	ret = _sieve_result_implicit_keep(result, TRUE);
+	ret = _sieve_result_implicit_keep(result, !success);
 
 	result->action_env.ehandler = NULL;
 
