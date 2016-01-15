@@ -1,0 +1,45 @@
+require "vnd.dovecot.testsuite";
+require "include";
+require "variables";
+
+/*
+ * Multi script
+ */
+
+test_set "message" text:
+From: idiot@example.com
+To: idiot@example.org
+Subject: Frop!
+
+Frop.
+.
+;
+
+test_result_reset;
+test "Multi script" {
+	if not test_multiscript [
+		"execute/multiscript-before.sieve",
+		"execute/multiscript-personal.sieve",
+		"execute/multiscript-after.sieve"
+	] {
+		test_fail "failed to run all scripts";
+	}
+
+	test_message :folder "INBOX" 0;
+
+	if not header "subject" "Frop!" {
+		test_fail "keep not executed.";
+	}
+
+	if not header "X-Before" "before" {
+		test_fail "No X-Before header";
+	}
+
+	if not header "X-Personal" "personal" {
+		test_fail "No X-Personal header";
+	}
+
+	if not header "X-After" "after" {
+		test_fail "No X-After header";
+	}	
+}

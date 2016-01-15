@@ -160,6 +160,7 @@ test_cases = \
 	tests/extensions/editheader/utf8.svtest \
 	tests/extensions/editheader/protected.svtest \
 	tests/extensions/editheader/errors.svtest \
+	tests/extensions/editheader/execute.svtest \
 	tests/extensions/duplicate/errors.svtest \
 	tests/extensions/duplicate/execute.svtest \
 	tests/extensions/duplicate/execute-vnd.svtest \
