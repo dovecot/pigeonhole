@@ -520,7 +520,6 @@ static int lda_sieve_multiscript_execute
 
 	/* Execute scripts */
 
-	exec_ehandler = srctx->master_ehandler;
 	for ( i = 0; i < count && more; i++ ) {
 		struct sieve_binary *sbin = NULL;
 		struct sieve_script *script = scripts[i];

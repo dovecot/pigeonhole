@@ -683,14 +683,14 @@ static int db_ldap_get_fd(struct ldap_connection *conn)
 	return 0;
 }
 
-static int ATTR_NULL(1)
+static int
 db_ldap_set_opt(struct ldap_connection *conn, int opt, const void *value,
 		const char *optname, const char *value_str)
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	int ret;
 
-	ret = ldap_set_option(conn == NULL ? NULL : conn->ld, opt, value);
+	ret = ldap_set_option(conn->ld, opt, value);
 	if (ret != LDAP_SUCCESS) {
 		sieve_storage_sys_error(storage, "db: "
 			"Can't set option %s to %s: %s",
@@ -700,7 +700,7 @@ db_ldap_set_opt(struct ldap_connection *conn, int opt, const void *value,
 	return 0;
 }
 
-static int ATTR_NULL(1)
+static int
 db_ldap_set_opt_str(struct ldap_connection *conn, int opt, const char *value,
 		    const char *optname)
 {
@@ -717,23 +717,23 @@ static int db_ldap_set_tls_options(struct ldap_connection *conn)
 		return 0;
 
 #ifdef OPENLDAP_TLS_OPTIONS
-	if (db_ldap_set_opt_str(NULL, LDAP_OPT_X_TLS_CACERTFILE,
+	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CACERTFILE,
 			    set->tls_ca_cert_file, "tls_ca_cert_file") < 0)
 		return -1;
-	if (db_ldap_set_opt_str(NULL, LDAP_OPT_X_TLS_CACERTDIR,
+	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CACERTDIR,
 			    set->tls_ca_cert_dir, "tls_ca_cert_dir") < 0)
 		return -1;
-	if (db_ldap_set_opt_str(NULL, LDAP_OPT_X_TLS_CERTFILE,
+	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CERTFILE,
 			    set->tls_cert_file, "tls_cert_file") < 0)
 		return -1;
-	if (db_ldap_set_opt_str(NULL, LDAP_OPT_X_TLS_KEYFILE,
+	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_KEYFILE,
 			    set->tls_key_file, "tls_key_file") < 0)
 		return -1;
-	if (db_ldap_set_opt_str(NULL, LDAP_OPT_X_TLS_CIPHER_SUITE,
+	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CIPHER_SUITE,
 			    set->tls_cipher_suite, "tls_cipher_suite") < 0)
 		return -1;
 	if (set->tls_require_cert != NULL) {
-		if (db_ldap_set_opt(NULL, LDAP_OPT_X_TLS_REQUIRE_CERT,
+		if (db_ldap_set_opt(conn, LDAP_OPT_X_TLS_REQUIRE_CERT,
 				&set->ldap_tls_require_cert,
 				"tls_require_cert", set->tls_require_cert) < 0)
 			return -1;
@@ -764,7 +764,7 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 		return -1;
 #ifdef LDAP_OPT_DEBUG_LEVEL
 	if (str_to_int(set->debug_level, &value) >= 0 && value != 0) {
-		if (db_ldap_set_opt(NULL, LDAP_OPT_DEBUG_LEVEL, &value,
+		if (db_ldap_set_opt(conn, LDAP_OPT_DEBUG_LEVEL, &value,
 				"debug_level", set->debug_level) < 0)
 			return -1;
 	}
