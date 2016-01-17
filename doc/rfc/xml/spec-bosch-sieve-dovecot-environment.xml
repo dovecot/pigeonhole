@@ -17,8 +17,8 @@
 <!-- ***** FRONT MATTER ***** -->
 
 <front>
-<title abbrev="Sieve: Debug Logging">
-Sieve Email Filtering: Logging Debug Messages
+<title abbrev="Sieve: Dovecot Environment">
+Sieve Email Filtering: Dovecot Environment Extension
 </title>
 
 <author fullname="Stephan Bosch" initials="S." surname="Bosch">
