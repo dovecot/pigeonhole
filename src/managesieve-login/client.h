@@ -31,7 +31,7 @@ struct managesieve_client {
 	unsigned int auth_mech_name_parsed:1;
 
 	unsigned int proxy_starttls:1;
-	unsigned int proxy_sasl_plain:1;
+	unsigned int proxy_sasl:1;
 	unsigned int proxy_xclient:1;
 };
 

@@ -78,9 +78,11 @@ static int proxy_write_auth
 
 	i_assert(client->common.proxy_ttl > 1);
 
-	if ( !client->proxy_sasl_plain ) {
+	if ( !client->proxy_sasl ) {
+		/* Prevent sending credentials to a server that has login disabled;
+		   i.e., due to the lack of TLS */
 		client_log_err(&client->common, "proxy: "
-			"Server does not support required PLAIN SASL mechanism");
+			"Server has disabled authentication (TLS required?)");
 		return -1;
 	}
 
@@ -283,10 +285,10 @@ static int proxy_input_capability
 				if ( ret == 2 && managesieve_arg_get_string(&args[1], &sasl_mechs) ) {
 					const char *const *mechs = t_strsplit(sasl_mechs, " ");
 
-					if ( str_array_icase_find(mechs, "PLAIN") )
-						client->proxy_sasl_plain = TRUE;
-					else
-						client->proxy_sasl_plain = FALSE;
+					if ( *mechs != NULL ) {
+						/* At least one SASL mechanism is supported */
+						client->proxy_sasl = TRUE;
+					}
 
 				} else {
 					client_log_err(&client->common, "proxy: "
@@ -404,6 +406,8 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 				return -1;
 			}
 
+			msieve_client->proxy_sasl = FALSE;
+			msieve_client->proxy_xclient = FALSE;
 			msieve_client->proxy_state = MSIEVE_PROXY_STATE_TLS_READY;
 			return 1;
 		}
@@ -538,6 +542,9 @@ void managesieve_proxy_reset(struct client *client)
 	struct managesieve_client *msieve_client =
 		(struct managesieve_client *) client;
 
+	msieve_client->proxy_starttls = FALSE;
+	msieve_client->proxy_sasl = FALSE;
+	msieve_client->proxy_xclient = FALSE;
 	msieve_client->proxy_state = MSIEVE_PROXY_STATE_NONE;
 }
 
