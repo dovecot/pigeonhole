@@ -379,7 +379,7 @@ v0.3.0 16-02-2012 Stephan Bosch <stephan@rename-it.nl>
 	  still recognized for backwards compatibility. Support for the ancient (pre
 	  v1.1) name for this setting "global_script_path" is now dropped.
 	* Added means to prohibit use of redirect action. Setting sieve_max_redirects
-	  to 0 now means that redirect is disallowed in stead of unlimited. Default
+	  to 0 now means that redirect is disallowed instead of unlimited. Default
 	  value remains four.
 	* Fixed interaction of Sieve include extension with ManageSieve. It is updated
 	  to match new requirements in the draft include specification. Missing
@@ -605,7 +605,7 @@ v0.2.0 10-09-2010 Stephan Bosch <stephan@rename-it.nl>
 	- Imap4flags: fixed bug in setflag command; when parameter was a stringlist,
 	  only the last item was actually set.
 	- Variables extension: fixed :length set modifier to recognize utf8 characters
-	  in stead of octets.
+	  instead of octets.
 	- Testsuite: prevented innocent warning messages, i.e. those that are part of
 	  the test, from showing up by default.
 	- ManageSieve/Sieve storage: fixed error handling of PUTSCRIPT commmand; save
@@ -645,7 +645,7 @@ v0.1.16 30-04-2010 Stephan Bosch <stephan@rename-it.nl>
 	+ Vacation extension: the from address of the generated reply is now by
 	  default equal to whatever known recipient alias matched the headers of the
 	  message. If it is one of the aliases specified with :addresses, it is used
-	  in stead of the envelope recipient address that was used before.
+	  instead of the envelope recipient address that was used before.
 	+ Restructured and optimized the lexical scanner.
 	+ Added --with-docs configure option to allow disabling installation of
 	  documentation.
@@ -791,7 +791,7 @@ v0.1.10 03-08-2009 Stephan Bosch <stephan@rename-it.nl>
 	- Fixed a bug in the derivation of the binary path from the script path. A
 	  bare filename would yield a path relative to root.
 	- Fixed a bug in the value matching code. The context data now uses a proper
-	  pool in stead of the data stack. Bug reported by Jan Sechser.
+	  pool instead of the data stack. Bug reported by Jan Sechser.
 	- Fixed assertion fail in the include extension caused by missing
 	  initialization upon binary load. This bug surfaces only for stored
 	  binaries. Bug reported by Tom Hendrikx.
@@ -808,7 +808,7 @@ v0.1.9 22-07-2009  Stephan Bosch <stephan@rename-it.nl>
 	  only built when the --with-unfinished-features switch is supplied during
 	  configure.
 	+ Started building support for the ereject version of the reject action,
-	  which has a preference to use an SMTP/LMTP protocol error in stead of a
+	  which has a preference to use an SMTP/LMTP protocol error instead of a
 	  bounce message. This is to be used to make the Sieve plugin honour Deliver's
 	  -e parameter. This is not yet finished and not built by default.
 	+ Improved 'Permission denied' error messages just like Dovecot does,

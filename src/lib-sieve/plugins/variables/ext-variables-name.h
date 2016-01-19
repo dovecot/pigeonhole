@@ -26,7 +26,7 @@
  * Various options exist to provide this feature. If the extension is entirely
  * namespace-based there is actually not very much of a problem. The variable
  * list can easily be extended with new argument-types that refer to a variable
- * identifier in stead of an index in the variable's storage.
+ * identifier instead of an index in the variable's storage.
  */
 
 #include "lib.h"

@@ -360,7 +360,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		if ( ret == 0 ) {
 			if ( response != MANAGESIEVE_RESPONSE_OK ) {
 				client_log_err(client, "proxy: "
-					"Remote sent unexpected NO/BYE in stead of capability response");
+					"Remote sent unexpected NO/BYE instead of capability response");
 				client_proxy_failed(client, TRUE);
 				return -1;
 			}

@@ -57,7 +57,7 @@ sieve_spamtest_max_value =
 sieve_spamtest_max_header = <header-field> [ ":" <regexp> ]
   Some spam scanners include the maximum score value in one of their status
   headers. Using this setting, this maximum can be extracted from the message
-  itself in stead of specifying the maximum manually using the setting
+  itself instead of specifying the maximum manually using the setting
   `sieve_spamtest_max_value' explained above. The syntax is identical to the
   `sieve_spamtext_status_header' setting.
 

@@ -19,10 +19,10 @@ Using the \fBsieve\-test\fP command, the execution of Sieve scripts can be
 tested. This evaluates the script for the provided message, yielding a set of
 Sieve actions. Unless the \fB\-e\fP option is specified, it does not actually
 execute these actions, meaning that it does not store or forward the message
-anywere. In stead, it prints a detailed list of what actions would normally take
+anywere. Instead, it prints a detailed list of what actions would normally take
 place. Note that, even when \fB\-e\fP is specified, no messages are ever
 transmitted to remote SMTP recipients. The outgoing messages are always printed
-to \fBstdout\fP in stead.
+to \fBstdout\fP instead.
 .PP
 This is a very useful tool to debug the execution of Sieve scripts. It can be
 used to verify newly installed scripts for the intended behaviour and it can
@@ -91,7 +91,7 @@ The final envelope recipient address. Some tests and actions will
 use this as the script owner\(aqs e\-mail address. For example, this is what is
 used by the vacation action to check whether a reply is appropriate. If the
 \fB\-r\fP option is omitted, the orignal envelope recipient address will be used
-in stead (see \fB\-a\fP option for more info).
+instead (see \fB\-a\fP option for more info).
 .TP
 .BI \-s\  script\-file
 Specify additional scripts to be executed before the main script. Multiple

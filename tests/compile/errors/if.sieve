@@ -65,7 +65,7 @@ if true {
 if if true {
 }
 
-# Else if in stead of elsif
+# Else if instead of elsif
 
 if true {
 	stop;
