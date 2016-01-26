@@ -1,4 +1,4 @@
-AC_INIT([Pigeonhole], [0.4.11], [dovecot@dovecot.org], [dovecot-2.2-pigeonhole])
+AC_INIT([Pigeonhole], [0.4.12.rc1], [dovecot@dovecot.org], [dovecot-2.2-pigeonhole])
 AC_DEFINE_UNQUOTED([PIGEONHOLE_ABI_VERSION], "0.4.ABIv2($PACKAGE_VERSION)", [Pigeonhole ABI version])
 
 AC_CONFIG_AUX_DIR([.])

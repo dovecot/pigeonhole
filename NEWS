@@ -1,3 +1,19 @@
+v0.4.12 xx-01-2016 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Implemented the Sieve extracttext extension (RFC 5703; Section 7). It is now
+	  possible to extract body text from a message into a variable.
+	* Increased ABI version due to changes in the Sieve interpreter's object
+	  definitions. 
+	- multiscript: Fixed bug in handling of (implicit) keep; final keep action was
+	  always executed as though there was a failure. This caused the keep action
+	  to revert back to the initial message, causing editheader actions to be
+	  ignored.
+	- managesieve-login: Fixed proxy to allow SASL mechanisms other than PLAIN.
+	  Before, the proxy would fail if the server did not support the PLAIN
+	  mechanism.
+	- ldap storage: Prevent segfault occurring when assigning certain (global)
+	  configuration options.
+	
 v0.4.11 08-01-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	- Sieve mime extension: Fixed the header :mime :anychild test to work properly
