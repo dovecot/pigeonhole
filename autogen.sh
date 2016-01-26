@@ -17,3 +17,5 @@ for dir in $GETTEXT_DIR /usr/share/gettext; do
 done
 
 autoreconf -i
+
+rm -f ChangeLog
