@@ -40,7 +40,8 @@ pigeonhole-version.h: noop
 noop:
 
 DISTCLEANFILES = \
-    $(top_builddir)/pigeonhole-version.h
+    $(top_builddir)/pigeonhole-version.h \
+	$(top_builddir)/run-test.sh
 
 # Testsuite tests (FIXME: ugly)
 
