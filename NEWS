@@ -1,4 +1,4 @@
-v0.4.12 xx-01-2016 Stephan Bosch <stephan@rename-it.nl>
+v0.4.12 06-02-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Implemented the Sieve extracttext extension (RFC 5703; Section 7). It is now
 	  possible to extract body text from a message into a variable.
