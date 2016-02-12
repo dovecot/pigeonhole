@@ -260,16 +260,18 @@ static bool cmd_vacation_validate_number_tag
 		seconds = config->min_period;
 
 		sieve_argument_validate_warning(valdtr, *arg,
-			"specified :%s value '%lu' is under the minimum",
-			sieve_argument_identifier(tag), (unsigned long) period);
+			"specified :%s value '%llu' is under the minimum",
+			sieve_argument_identifier(tag),
+			(unsigned long long)period);
 
 	/* Enforce :days <= max_period */
 	} else if ( config->max_period > 0 && seconds > config->max_period ) {
 		seconds = config->max_period;
 
 		sieve_argument_validate_warning(valdtr, *arg,
-			"specified :%s value '%lu' is over the maximum",
-			sieve_argument_identifier(tag), (unsigned long) period);
+			"specified :%s value '%llu' is over the maximum",
+			sieve_argument_identifier(tag),
+			(unsigned long long)period);
 	}
 
 	sieve_ast_argument_number_set(*arg, seconds);
@@ -772,7 +774,8 @@ static void act_vacation_print
 		(struct act_vacation_context *) action->context;
 
 	sieve_result_action_printf( rpenv, "send vacation message:");
-	sieve_result_printf(rpenv, "    => seconds : %d\n", ctx->seconds);
+	sieve_result_printf(rpenv, "    => seconds : %llu\n",
+		(unsigned long long)ctx->seconds);
 	if ( ctx->subject != NULL )
 		sieve_result_printf(rpenv, "    => subject : %s\n", ctx->subject);
 	if ( ctx->from != NULL )

@@ -274,9 +274,11 @@ static int tst_size_operation_execute
 			sieve_runtime_trace_descend(renv);
 
 			sieve_runtime_trace(renv, 0,
-				"comparing message size %lu", (unsigned long) mail_size);
+				"comparing message size %llu",
+				(unsigned long long)mail_size);
 			sieve_runtime_trace(renv, 0,
-				"with upper limit %lu", (unsigned long) limit);
+				"with upper limit %llu",
+				(unsigned long long)limit);
 		}
 
 		sieve_interpreter_set_test_result(renv->interp, (mail_size > limit));
@@ -287,9 +289,11 @@ static int tst_size_operation_execute
 			sieve_runtime_trace_descend(renv);
 
 			sieve_runtime_trace(renv, 0,
-				"comparing message size %lu", (unsigned long) mail_size);
+				"comparing message size %llu",
+				(unsigned long long)mail_size);
 			sieve_runtime_trace(renv, 0,
-				"with lower limit %lu", (unsigned long) limit);
+				"with lower limit %llu",
+				(unsigned long long)limit);
 		}
 
 		sieve_interpreter_set_test_result(renv->interp, (mail_size < limit));

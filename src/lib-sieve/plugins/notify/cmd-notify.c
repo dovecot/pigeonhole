@@ -629,7 +629,8 @@ static void act_notify_print
 	/* Print main method parameters */
 
 	sieve_result_printf
-		( rpenv, "    => importance    : %d\n", act->importance);
+		( rpenv, "    => importance    : %llu\n",
+			(unsigned long long)act->importance);
 
 	if ( act->message != NULL )
 		sieve_result_printf

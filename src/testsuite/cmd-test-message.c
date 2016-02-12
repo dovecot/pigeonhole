@@ -386,7 +386,8 @@ static int cmd_test_message_smtp_operation_execute
 				"testsuite: test_message test");
 			sieve_runtime_trace_descend(renv);
 			sieve_runtime_trace(renv, 0,
-				"check and retrieve smtp message [index=%d]", msg_index);
+				"check and retrieve smtp message [index=%llu]",
+				(unsigned long long)msg_index);
 		}
 	} else {
 		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
@@ -394,7 +395,8 @@ static int cmd_test_message_smtp_operation_execute
 				"testsuite: test_message command");
 			sieve_runtime_trace_descend(renv);
 			sieve_runtime_trace(renv, 0,
-				"retrieve smtp message [index=%d]", msg_index);
+				"retrieve smtp message [index=%llu]",
+				(unsigned long long)msg_index);
 		}
 	}
 
@@ -405,8 +407,10 @@ static int cmd_test_message_smtp_operation_execute
 		return SIEVE_EXEC_OK;
 	}
 
-	if ( !result )
-		testsuite_test_failf("no outgoing SMTP message with index %d", msg_index);
+	if ( !result ) {
+		testsuite_test_failf("no outgoing SMTP message with index %llu",
+			(unsigned long long)msg_index);
+	}
 
 	return SIEVE_EXEC_OK;
 }
@@ -448,8 +452,8 @@ static int cmd_test_message_mailbox_operation_execute
 				"testsuite: test_message test");
 			sieve_runtime_trace_descend(renv);
 			sieve_runtime_trace(renv, 0,
-				"check and retrieve mailbox message [mailbox=`%s' index=%d]",
-				str_c(folder), msg_index);
+				"check and retrieve mailbox message [mailbox=`%s' index=%llu]",
+				str_c(folder), (unsigned long long)msg_index);
 		}
 	} else {
 		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
@@ -457,8 +461,8 @@ static int cmd_test_message_mailbox_operation_execute
 				"testsuite: test_message command");
 			sieve_runtime_trace_descend(renv);
 			sieve_runtime_trace(renv, 0,
-				"retrieve mailbox message [mailbox=`%s' index=%d]",
-				str_c(folder), msg_index);
+				"retrieve mailbox message [mailbox=`%s' index=%llu]",
+				str_c(folder), (unsigned long long)msg_index);
 		}
 	}
 
@@ -470,8 +474,8 @@ static int cmd_test_message_mailbox_operation_execute
 	}
 
 	if ( !result )
-		testsuite_test_failf("no message in folder '%s' with index %d",
-			str_c(folder), msg_index);
+		testsuite_test_failf("no message in folder '%s' with index %llu",
+			str_c(folder), (unsigned long long)msg_index);
 
 	return SIEVE_EXEC_OK;
 }

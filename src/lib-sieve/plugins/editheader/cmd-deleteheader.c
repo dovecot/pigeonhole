@@ -172,10 +172,11 @@ static bool cmd_deleteheader_validate_index_tag
 	index = sieve_ast_argument_number(*arg);
 	if ( index > INT_MAX ) {
 		sieve_argument_validate_warning(valdtr, *arg,
-			"the :%s tag for the %s %s has a parameter value '%lu' "
+			"the :%s tag for the %s %s has a parameter value '%llu' "
 			"exceeding the maximum (%d)",
 			sieve_argument_identifier(tag), sieve_command_identifier(cmd),
-			sieve_command_type_name(cmd), (unsigned long) index, INT_MAX);
+			sieve_command_type_name(cmd), (unsigned long long) index,
+			INT_MAX);
 		return FALSE;
 	}
 
@@ -453,8 +454,9 @@ static int cmd_deleteheader_operation_execute
 			sieve_runtime_trace_descend(renv);
 			if ( index_offset != 0 ) {
 				sieve_runtime_trace(renv, 0,
-					"deleting matching occurrences of header `%s' at index %u%s",
-					str_c(field_name), index_offset, ( index_last ? " from last": ""));
+					"deleting matching occurrences of header `%s' at index %llu%s",
+					str_c(field_name), (unsigned long long)index_offset,
+					( index_last ? " from last": ""));
 			} else {
 				sieve_runtime_trace(renv, 0,
 					"deleting matching occurrences of header `%s'", str_c(field_name));
@@ -523,8 +525,9 @@ static int cmd_deleteheader_operation_execute
 		if ( trace ) {
 			sieve_runtime_trace_descend(renv);
 			if ( index_offset != 0 ) {
-				sieve_runtime_trace(renv, 0, "deleting header `%s' at index %u%s",
-					str_c(field_name), index_offset, ( index_last ? " from last": ""));
+				sieve_runtime_trace(renv, 0, "deleting header `%s' at index %llu%s",
+					str_c(field_name), (unsigned long long)index_offset,
+					( index_last ? " from last": ""));
 			} else {
 				sieve_runtime_trace(renv, 0, "deleting header `%s'", str_c(field_name));
 			}

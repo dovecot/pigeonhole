@@ -359,7 +359,8 @@ static void ntfy_mailto_action_print
 	/* Print main method parameters */
 
 	sieve_enotify_method_printf
-		(penv,   "    => importance   : %d\n", nact->importance);
+		(penv,   "    => importance   : %llu\n",
+			(unsigned long long)nact->importance);
 
 	if ( nact->message != NULL )
 		sieve_enotify_method_printf

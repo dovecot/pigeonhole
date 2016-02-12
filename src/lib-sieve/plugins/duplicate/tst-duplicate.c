@@ -139,8 +139,8 @@ static bool tst_duplicate_validate_number_tag
 		seconds = config->max_period;
 
 		sieve_argument_validate_warning(valdtr, *arg,
-			"specified :seconds value '%lu' is over the maximum",
-			(unsigned long) seconds);
+			"specified :seconds value '%llu' is over the maximum",
+			(unsigned long long)seconds);
 	}
 
 	sieve_ast_argument_number_set(*arg, seconds);

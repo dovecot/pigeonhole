@@ -17,9 +17,9 @@
 
 typedef size_t sieve_size_t;
 typedef uint32_t sieve_offset_t;
-typedef uint32_t sieve_number_t;
+typedef uint64_t sieve_number_t;
 
-#define SIEVE_MAX_NUMBER ((sieve_number_t) -1)
+#define SIEVE_MAX_NUMBER ((sieve_number_t)-1)
 
 enum sieve_mail_sender_source {
 	SIEVE_MAIL_SENDER_SOURCE_DEFAULT = 0,

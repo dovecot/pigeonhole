@@ -1,60 +1,55 @@
 /*
  * Lexer tests
  *
- * Total errors: 7 (+1 = 8)
+ * Total errors: 8 (+1 = 9)
  */
 
 /*
  * Number limits
  */
 
-# Number too large
-if size :under 4294967300 {
+# 1: Number too large
+if size :under 18446744073709551617 {
 	stop;
 }
 
-# Number too large
-if size :under 4294967296 {
+# 2: Number too large
+if size :under 18446744073709551616 {
 	stop;
 }
 
-# Number too large
-if size :over 35651584k {
+# 3: Number too large
+if size :over 180143985094819840k {
 	stop;
 }
 
-# Number too large
-if size :over 34816M {
+# 4: Number too large
+if size :over 1006622342342296M {
 	stop;
 }
 
-# Number too large
-if size :over 34G {
+# 5: Number too large
+if size :over 34359738368G {
 	stop;
 }
 
-# Number too large
-if size :over 4G {
-	stop;
-}
-
-# Number far too large
+# 6: Number far too large
 if size :over 49834598293485814273947921734981723971293741923 {
 	stop;
 }
 
 # Not an error
-if size :under 4294967295 {
+if size :under 18446744073709551615 {
 	stop;
 }
 
 # Not an error
-if size :under 4294967294 {
+if size :under 18446744073709551614 {
 	stop;
 }
 
 # Not an error
-if size :under 1G {
+if size :under 800G {
 	stop;
 }
 
@@ -62,10 +57,12 @@ if size :under 1G {
  * Identifier limits
  */
 
+# 7: Identifier too long
 if this_is_a_rediculously_long_test_name {
 	stop;
 }
 
+# 8: Identifier way too long
 if test :this_is_an_even_more_rediculously_long_tagged_argument_name {
 	stop;
 }
