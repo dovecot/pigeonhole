@@ -82,17 +82,16 @@ void sieve_binary_update_data
 sieve_size_t sieve_binary_emit_offset
 (struct sieve_binary_block *sblock, sieve_offset_t offset)
 {
-	int i;
 	sieve_size_t address = _sieve_binary_block_get_size(sblock);
+	uint8_t encoded[sizeof(offset)];
+	int i;
 
-	uint8_t encoded[4];
-
-	for ( i = 3; i >= 0; i-- ) {
-		encoded[i] = (uint8_t) offset;
+	for ( i = sizeof(offset)-1; i >= 0; i-- ) {
+		encoded[i] = (uint8_t)offset;
 		offset >>= 8;
 	}
 
-	_sieve_binary_emit_data(sblock, encoded, 4);
+	_sieve_binary_emit_data(sblock, encoded, sizeof(offset));
 
 	return address;
 }
@@ -100,16 +99,21 @@ sieve_size_t sieve_binary_emit_offset
 void sieve_binary_resolve_offset
 (struct sieve_binary_block *sblock, sieve_size_t address)
 {
+	sieve_size_t cur_address = _sieve_binary_block_get_size(sblock);
+	sieve_offset_t offset;
+	uint8_t encoded[sizeof(offset)];
 	int i;
-	sieve_offset_t offset = _sieve_binary_block_get_size(sblock) - address;
-	uint8_t encoded[4];
 
-	for ( i = 3; i >= 0; i-- ) {
-		encoded[i] = (uint8_t) offset;
+	i_assert(cur_address > address);
+	i_assert((cur_address - address) <= (sieve_offset_t)-1);
+	offset = cur_address - address;
+	for ( i = sizeof(offset)-1; i >= 0; i-- ) {
+		encoded[i] = (uint8_t)offset;
 		offset >>= 8;
 	}
 
-	_sieve_binary_update_data(sblock, address, encoded, 4);
+	_sieve_binary_update_data
+		(sblock, address, encoded, sizeof(offset));
 }
 
 /* Literal emission */
