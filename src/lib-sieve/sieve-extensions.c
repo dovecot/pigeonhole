@@ -273,13 +273,21 @@ void sieve_extensions_configure(struct sieve_instance *svinst)
 
 	/* Apply sieve_extensions configuration */
 
-	if ( (extensions=sieve_setting_get(svinst, "sieve_extensions")) != NULL )
-		sieve_extensions_set_string(svinst, extensions, FALSE);
+	if ( (extensions=sieve_setting_get
+		(svinst, "sieve_extensions")) != NULL )
+		sieve_extensions_set_string(svinst, extensions, FALSE, FALSE);
 
 	/* Apply sieve_global_extensions configuration */
 
-	if ( (extensions=sieve_setting_get(svinst, "sieve_global_extensions")) != NULL )
-		sieve_extensions_set_string(svinst, extensions, TRUE);
+	if ( (extensions=sieve_setting_get
+		(svinst, "sieve_global_extensions")) != NULL )
+		sieve_extensions_set_string(svinst, extensions, TRUE, FALSE);
+
+	/* Apply sieve_implicit_extensions configuration */
+
+	if ( (extensions=sieve_setting_get
+		(svinst, "sieve_implicit_extensions")) != NULL )
+		sieve_extensions_set_string(svinst, extensions, FALSE, TRUE);
 }
 
 void sieve_extensions_deinit(struct sieve_instance *svinst)
@@ -494,11 +502,21 @@ void sieve_extension_override
 	(*mod_ext)->overridden = TRUE;
 }
 
-int sieve_extensions_get_count(struct sieve_instance *svinst)
+unsigned int sieve_extensions_get_count(struct sieve_instance *svinst)
 {
 	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
 
 	return array_count(&ext_reg->extensions);
+}
+
+const struct sieve_extension *const *
+sieve_extensions_get_all(struct sieve_instance *svinst,
+	unsigned int *count_r)
+{
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+
+	return (const struct sieve_extension *const *)
+		array_get(&ext_reg->extensions, count_r);
 }
 
 const struct sieve_extension *sieve_extension_get_by_id
@@ -580,7 +598,6 @@ static void sieve_extension_set_enabled
 {
 	if ( enabled ) {
 		ext->enabled = TRUE;
-		ext->global = FALSE;
 
 		if ( !ext->loaded ) {
 			(void)_sieve_extension_load(ext);
@@ -596,21 +613,27 @@ static void sieve_extension_set_global
 (struct sieve_extension *ext, bool enabled)
 {
 	if ( enabled ) {
-		ext->enabled = TRUE;
+		sieve_extension_set_enabled(ext, TRUE);
 		ext->global = TRUE;
-
-		if ( !ext->loaded ) {
-			(void)_sieve_extension_load(ext);
-		}
-
-		ext->loaded = TRUE;
 	} else {
 		ext->global = FALSE;
 	}
 }
 
+static void sieve_extension_set_implicit
+(struct sieve_extension *ext, bool enabled)
+{
+	if ( enabled ) {
+		sieve_extension_set_enabled(ext, TRUE);
+		ext->implicit = TRUE;
+	} else {
+		ext->implicit = FALSE;
+	}
+}
+
 void sieve_extensions_set_string
-(struct sieve_instance *svinst, const char *ext_string, bool global)
+(struct sieve_instance *svinst, const char *ext_string,
+	bool global, bool implicit)
 {
 	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
 	ARRAY(const struct sieve_extension *) enabled_extensions;
@@ -623,7 +646,7 @@ void sieve_extensions_set_string
 	bool relative = FALSE;
 
 	if ( ext_string == NULL ) {
-		if ( global ) return;
+		if ( global || implicit ) return;
 
 		/* Enable all */
 		exts = array_get_modifiable(&ext_reg->extensions, &ext_count);
@@ -696,6 +719,8 @@ void sieve_extensions_set_string
 			if ( relative ) {
 				if ( global )
 					enabled = exts[i]->global;
+				else if ( implicit )
+					enabled = exts[i]->implicit;
 				else
 					enabled = exts[i]->enabled;
 
@@ -722,6 +747,8 @@ void sieve_extensions_set_string
 			/* Perform actual activation/deactivation */
 			if ( global ) {
 				sieve_extension_set_global(exts[i], enabled);
+			} else if ( implicit ) {
+				sieve_extension_set_implicit(exts[i], enabled);
 			} else {
 				sieve_extension_set_enabled(exts[i], enabled);
 			}

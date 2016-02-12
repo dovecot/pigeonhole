@@ -132,7 +132,7 @@ void sieve_deinit(struct sieve_instance **_svinst)
 void sieve_set_extensions
 (struct sieve_instance *svinst, const char *extensions)
 {
-	sieve_extensions_set_string(svinst, extensions, FALSE);
+	sieve_extensions_set_string(svinst, extensions, FALSE, FALSE);
 }
 
 const char *sieve_get_capabilities

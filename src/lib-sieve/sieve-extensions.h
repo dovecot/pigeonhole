@@ -95,6 +95,7 @@ struct sieve_extension {
 	unsigned int enabled:1;
 	unsigned int dummy:1;
 	unsigned int global:1;
+	unsigned int implicit:1;
 	unsigned int overridden:1;
 };
 
@@ -142,7 +143,10 @@ void sieve_extension_override
 	(struct sieve_instance *svinst, const char *name,
 		const struct sieve_extension *ext);
 
-int sieve_extensions_get_count(struct sieve_instance *svinst);
+unsigned int sieve_extensions_get_count(struct sieve_instance *svinst);
+const struct sieve_extension *const *
+sieve_extensions_get_all(struct sieve_instance *svinst,
+	unsigned int *count_r);
 
 const struct sieve_extension *sieve_extension_get_by_id
 	(struct sieve_instance *svinst, unsigned int ext_id);
@@ -152,7 +156,8 @@ const struct sieve_extension *sieve_extension_get_by_name
 const char *sieve_extensions_get_string
 	(struct sieve_instance *svinst);
 void sieve_extensions_set_string
-	(struct sieve_instance *svinst, const char *ext_string, bool global);
+	(struct sieve_instance *svinst, const char *ext_string,
+		bool global, bool implicit);
 
 const struct sieve_extension *sieve_get_match_type_extension
 	(struct sieve_instance *svinst);

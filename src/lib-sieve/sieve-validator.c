@@ -1372,9 +1372,19 @@ static bool sieve_validate_block
 				&& !valdtr->finished_require &&
 				strcasecmp(cmd_node->identifier, cmd_require.identifier) != 0 ) {
 				const struct sieve_validator_extension_reg *extrs;
+				const struct sieve_extension *const *exts;
 				unsigned int ext_count, i;
 
 				valdtr->finished_require = TRUE;
+
+				/* Load implicit extensions */
+				exts = sieve_extensions_get_all(valdtr->svinst, &ext_count);
+				for (i = 0; i < ext_count; i++) {
+					if ( exts[i]->implicit ) {
+						(void)sieve_validator_extension_load
+							(valdtr, NULL, NULL, exts[i]);
+					}
+				}
 
 				/* Validate all 'require'd extensions */
 				extrs = array_get(&valdtr->extensions, &ext_count);
