@@ -273,6 +273,72 @@ static inline const char *_char_sanitize(int ch)
 }
 
 static bool
+sieve_lexer_scan_number(struct sieve_lexical_scanner *scanner)
+{
+	struct sieve_lexer *lexer = &scanner->lexer;
+	uintmax_t value;
+	string_t *str;
+	bool overflow = FALSE;
+
+	str_truncate(lexer->token_str_value,0);
+	str = lexer->token_str_value;
+
+	while ( i_isdigit(sieve_lexer_curchar(scanner)) ) {
+		str_append_c(str, sieve_lexer_curchar(scanner));
+		sieve_lexer_shift(scanner);
+	}
+
+	if (str_to_uintmax(str_c(str), &value) < 0 ||
+		value > (sieve_number_t)-1) {
+		overflow = TRUE;
+	} else {
+		switch ( sieve_lexer_curchar(scanner) ) {
+		case 'k':
+		case 'K': /* Kilo */
+			if ( value > (SIEVE_MAX_NUMBER >> 10) )
+				overflow = TRUE;
+			else
+				value = value << 10;
+			sieve_lexer_shift(scanner);
+			break;
+		case 'm':
+		case 'M': /* Mega */
+			if ( value > (SIEVE_MAX_NUMBER >> 20) )
+				overflow = TRUE;
+			else
+				value = value << 20;
+			sieve_lexer_shift(scanner);
+			break;
+		case 'g':
+		case 'G': /* Giga */
+			if ( value > (SIEVE_MAX_NUMBER >> 30) )
+				overflow = TRUE;
+			else
+				value = value << 30;
+			sieve_lexer_shift(scanner);
+			break;
+		default:
+			/* Next token */
+			break;
+		}
+	}
+
+	/* Check for integer overflow */
+	if ( overflow ) {
+		sieve_lexer_error(lexer,
+			"number exceeds integer limits (max %llu)",
+			(long long) SIEVE_MAX_NUMBER);
+		lexer->token_type = STT_ERROR;
+		return FALSE;
+	}
+
+	lexer->token_type = STT_NUMBER;
+	lexer->token_int_value = (sieve_number_t)value;
+	return TRUE;
+
+}
+
+static bool
 sieve_lexer_scan_hash_comment(struct sieve_lexical_scanner *scanner)
 {
 	struct sieve_lexer *lexer = &scanner->lexer;
@@ -537,65 +603,7 @@ sieve_lexer_scan_raw_token(struct sieve_lexical_scanner *scanner)
 	default:
 		/* number */
 		if ( i_isdigit(sieve_lexer_curchar(scanner)) ) {
-			sieve_number_t value = DIGIT_VAL(sieve_lexer_curchar(scanner));
-			bool overflow = FALSE;
-
-			sieve_lexer_shift(scanner);
-
-			while ( i_isdigit(sieve_lexer_curchar(scanner)) ) {
-				sieve_number_t valnew =
-					value * 10 + DIGIT_VAL(sieve_lexer_curchar(scanner));
-
-				/* Check for integer wrap */
-				if ( valnew < value )
-					overflow = TRUE;
-
-				value = valnew;
-				sieve_lexer_shift(scanner);
- 			}
-
-			switch ( sieve_lexer_curchar(scanner) ) {
-			case 'k':
-			case 'K': /* Kilo */
-				if ( value > (SIEVE_MAX_NUMBER >> 10) )
-					overflow = TRUE;
-				else
-					value = value << 10;
-				sieve_lexer_shift(scanner);
-				break;
-			case 'm':
-			case 'M': /* Mega */
-				if ( value > (SIEVE_MAX_NUMBER >> 20) )
-					overflow = TRUE;
-				else
-					value = value << 20;
-				sieve_lexer_shift(scanner);
-				break;
-			case 'g':
-			case 'G': /* Giga */
-				if ( value > (SIEVE_MAX_NUMBER >> 30) )
-					overflow = TRUE;
-				else
-					value = value << 30;
-				sieve_lexer_shift(scanner);
-				break;
-			default:
-				/* Next token */
-				break;
-			}
-
-			/* Check for integer wrap */
-			if ( overflow ) {
-				sieve_lexer_error(lexer,
-					"number exceeds integer limits (max %llu)",
-					(long long) SIEVE_MAX_NUMBER);
-				lexer->token_type = STT_ERROR;
-				return FALSE;
-			}
-
-			lexer->token_type = STT_NUMBER;
-			lexer->token_int_value = value;
-			return TRUE;
+			return sieve_lexer_scan_number(scanner);
 
 		/* identifier / tag */
 		} else if ( i_isalpha(sieve_lexer_curchar(scanner)) ||
