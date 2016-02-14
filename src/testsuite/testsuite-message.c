@@ -26,8 +26,8 @@ struct sieve_message_data testsuite_msgdata;
 static struct mail *testsuite_mail;
 
 static const char *_default_message_data =
-"From: stephan@rename-it.nl\n"
-"To: sirius@drunksnipers.com\n"
+"From: sender@example.com\n"
+"To: recipient@example.org\n"
 "Subject: Frop!\n"
 "\n"
 "Friep!\n";

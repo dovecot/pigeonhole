@@ -14,7 +14,7 @@ echo "========================================" 1>&2
 echo 1>&2
 
 echo "Subject: frop!"
-echo "From: stephan@rename-it.nl"
+echo "From: stephan@example.org"
 echo "To: tss@example.com"
 echo
 echo "Frop!"

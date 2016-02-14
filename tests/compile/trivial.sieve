@@ -9,7 +9,7 @@ DisCaRD;
 if size :UNDER 34 {
 }
 
-if header :Is "from" "tukker@rename-it.n" {
+if header :Is "from" "tukker@example.com" {
 }
 
 # Numbers must be case-insensitive
