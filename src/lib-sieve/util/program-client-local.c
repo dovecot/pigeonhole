@@ -260,12 +260,23 @@ static int program_client_local_connect
 
 static int program_client_local_close_output(struct program_client *pclient)
 {
+	int fd_out = pclient->fd_out, fd_in = pclient->fd_in;
+
+	pclient->fd_out = -1;
+
 	/* Shutdown output; program stdin will get EOF */
-	if ( pclient->fd_out >= 0 && shutdown(pclient->fd_out, SHUT_WR) < 0 &&
-		errno != ENOTCONN ) {
-		i_error("shutdown(%s, SHUT_WR) failed: %m", pclient->path);
-		return -1;
+	if ( fd_out >= 0 ) {
+		if ( fd_in >= 0 ) {
+			if ( shutdown(fd_out, SHUT_WR) < 0 && errno != ENOTCONN ) {
+				i_error("shutdown(%s, SHUT_WR) failed: %m", pclient->path);
+				return -1;
+			}
+		} else if ( close(fd_out) < 0 ) {
+			i_error("close(%s) failed: %m", pclient->path);
+			return -1;
+		}
 	}
+
 	return 1;
 }
 
