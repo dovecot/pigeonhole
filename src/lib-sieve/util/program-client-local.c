@@ -124,16 +124,21 @@ static int program_client_local_connect
 {
 	struct program_client_local *slclient = 
 		(struct program_client_local *) pclient;
-	int fd[2] = { -1, -1 };
+	int fd_in[2] = { -1, -1 }, fd_out[2] = { -1, -1 };
 	struct program_client_extra_fd *efds = NULL;
 	int *parent_extra_fds = NULL, *child_extra_fds = NULL;
 	unsigned int xfd_count = 0, i;
 
-	/* create normal I/O fd */
-	if ( pclient->input != NULL || pclient->output != NULL ||
-		pclient->output_seekable ) {
-		if ( socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0 ) {
-			i_error("socketpair() failed: %m");
+	/* create normal I/O fds */
+	if ( pclient->input != NULL ) {
+		if ( pipe(fd_in) < 0 ) {
+			i_error("pipe(in) failed: %m");
+			return -1;
+		}
+	}
+	if ( pclient->output != NULL ||	pclient->output_seekable ) {
+		if ( pipe(fd_out) < 0 ) {
+			i_error("pipe(out) failed: %m");
 			return -1;
 		}
 	}
@@ -148,7 +153,7 @@ static int program_client_local_connect
 			child_extra_fds = t_malloc(sizeof(int) * xfd_count * 2 + 1);
 			for ( i = 0; i < xfd_count; i++ ) {
 				if ( pipe(extra_fd) < 0 ) {
-					i_error("pipe() failed: %m");
+					i_error("pipe(extra=%d) failed: %m", extra_fd[1]);
 					return -1;
 				}
 				parent_extra_fds[i] = extra_fd[0];
@@ -164,18 +169,26 @@ static int program_client_local_connect
 		i_error("fork() failed: %m");
 
 		/* clean up */
-		if ( fd[0] >= 0 && close(fd[0]) < 0 ) {
-			i_error("close(pipe_fd[0]) failed: %m");
+		if ( fd_in[0] >= 0 && close(fd_in[0]) < 0 ) {
+			i_error("close(pipe:in:rd) failed: %m");
 		}
-		if ( fd[1] >= 0 && close(fd[1]) < 0 ) {
-			i_error("close(pipe_fd[1]) failed: %m");
+		if ( fd_in[1] >= 0 && close(fd_in[1]) < 0 ) {
+			i_error("close(pipe:in:wr) failed: %m");
+		}
+		if ( fd_out[0] >= 0 && close(fd_out[0]) < 0 ) {
+			i_error("close(pipe:out:rd) failed: %m");
+		}
+		if ( fd_out[1] >= 0 && close(fd_out[1]) < 0 ) {
+			i_error("close(pipe:out:wr) failed: %m");
 		}
 		for ( i = 0; i < xfd_count; i++ ) {
 			if ( close(child_extra_fds[i*2]) < 0 ) {
-				i_error("close(extra_fd[1]) failed: %m");
+				i_error("close(pipe:extra=%d:wr) failed: %m",
+					child_extra_fds[i*2+1]);
 			}
 			if ( close(parent_extra_fds[i]) < 0 ) {
-				i_error("close(extra_fd[0]) failed: %m");
+				i_error("close(pipe:extra=%d:rd) failed: %m",
+					child_extra_fds[i*2+1]);
 			}
 		}
 		return -1;
@@ -186,12 +199,15 @@ static int program_client_local_connect
 		const char *const *envs = NULL;
 
 		/* child */
-		if ( fd[1] >= 0 && close(fd[1]) < 0 ) {
-			i_error("close(pipe_fd[1]) failed: %m");
-		}
+		if ( fd_in[1] >= 0 && close(fd_in[1]) < 0 )
+			i_error("close(pipe:in:wr) failed: %m");
+		if ( fd_out[0] >= 0 && close(fd_out[0]) < 0 )
+			i_error("close(pipe:out:rd) failed: %m");
 		for ( i = 0; i < xfd_count; i++ ) {
-			if ( close(parent_extra_fds[i]) < 0 )
-				i_error("close(extra_fd[0]) failed: %m");
+			if ( close(parent_extra_fds[i]) < 0 ) {
+				i_error("close(pipe:extra=%d:rd) failed: %m",
+					child_extra_fds[i*2+1]);
+			}
 		}
 
 		/* drop privileges if we have any */
@@ -232,24 +248,29 @@ static int program_client_local_connect
 			envs = array_get(&pclient->envs, &count);
 
 		exec_child(pclient->path, pclient->args, envs,
-			( pclient->input != NULL ? fd[0] : -1 ),
-			( pclient->output != NULL || pclient->output_seekable ? fd[0] : -1 ),
-			child_extra_fds, pclient->set.drop_stderr);
+			fd_in[0], fd_out[1], child_extra_fds,
+			pclient->set.drop_stderr);
 		i_unreached();
 	}
 
 	/* parent */
-	if ( fd[0] >= 0 && close(fd[0]) < 0 )
-		i_error("close(pipe_fd[0]) failed: %m");
-	if ( fd[1] >= 0 ) {
-		net_set_nonblock(fd[1], TRUE);
-		pclient->fd_in =
-			( pclient->output != NULL || pclient->output_seekable ? fd[1] : -1 );
-		pclient->fd_out = ( pclient->input != NULL ? fd[1] : -1 );
+	if ( fd_in[0] >= 0 && close(fd_in[0]) < 0 )
+		i_error("close(pipe:in:rd) failed: %m");
+	if ( fd_out[1] >= 0 && close(fd_out[1]) < 0 )
+		i_error("close(pipe:out:wr) failed: %m");
+	if ( fd_in[1] >= 0 ) {
+		net_set_nonblock(fd_in[1], TRUE);
+		pclient->fd_out = fd_in[1];
+	}
+	if ( fd_out[0] >= 0 ) {
+		net_set_nonblock(fd_out[0], TRUE);
+		pclient->fd_in = fd_out[0];
 	}
 	for ( i = 0; i < xfd_count; i++ ) {
-		if ( close(child_extra_fds[i*2]) < 0 )
-			i_error("close(extra_fd[1]) failed: %m");
+		if ( close(child_extra_fds[i*2]) < 0 ) {
+			i_error("close(pipe:extra=%d:wr) failed: %m",
+				child_extra_fds[i*2+1]);
+		}
 		net_set_nonblock(parent_extra_fds[i], TRUE);
 		efds[i].parent_fd = parent_extra_fds[i];
 	}
@@ -260,23 +281,15 @@ static int program_client_local_connect
 
 static int program_client_local_close_output(struct program_client *pclient)
 {
-	int fd_out = pclient->fd_out, fd_in = pclient->fd_in;
+	int fd_out = pclient->fd_out;
 
 	pclient->fd_out = -1;
 
 	/* Shutdown output; program stdin will get EOF */
-	if ( fd_out >= 0 ) {
-		if ( fd_in >= 0 ) {
-			if ( shutdown(fd_out, SHUT_WR) < 0 && errno != ENOTCONN ) {
-				i_error("shutdown(%s, SHUT_WR) failed: %m", pclient->path);
-				return -1;
-			}
-		} else if ( close(fd_out) < 0 ) {
-			i_error("close(%s) failed: %m", pclient->path);
-			return -1;
-		}
+	if ( fd_out >= 0 && close(fd_out) < 0 ) {
+		i_error("close(%s) failed: %m", pclient->path);
+		return -1;
 	}
-
 	return 1;
 }
 

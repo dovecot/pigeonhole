@@ -65,6 +65,15 @@ test "Execute - pipe" {
 }
 
 test_result_reset;
+test "Execute - pipe /dev/stdin" {
+	execute :pipe :output "msg" "cat-stdin";
+
+	if not string :contains "${msg}" "Subject: Frop!" {
+		test_fail "wrong string returned: ${out}";
+	}
+}
+
+test_result_reset;
 test "Execute - env" {
 	test_set "envelope.from" "stephan@sub.example.com";
 	test_set "envelope.to" "stephan@sub.example.net";
