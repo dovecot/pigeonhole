@@ -47,14 +47,18 @@ static void exec_child
 			i_fatal("open(/dev/null) failed: %m");
 	}
 
-	if ( dup2(in_fd, STDIN_FILENO) < 0 )
+	if ( in_fd != STDIN_FILENO &&
+		dup2(in_fd, STDIN_FILENO) < 0 )
 		i_fatal("dup2(stdin) failed: %m");
-	if ( dup2(out_fd, STDOUT_FILENO) < 0 )
+	if ( out_fd != STDOUT_FILENO &&
+		dup2(out_fd, STDOUT_FILENO) < 0 )
 		i_fatal("dup2(stdout) failed: %m");
 
-	if ( close(in_fd) < 0 )
+	if (  in_fd != STDIN_FILENO &&
+		close(in_fd) < 0 )
 		i_error("close(in_fd) failed: %m");
-	if ( (out_fd != in_fd) && close(out_fd) < 0 )
+	if ( out_fd != STDOUT_FILENO &&
+		(out_fd != in_fd) && close(out_fd) < 0 )
 		i_error("close(out_fd) failed: %m");
 
 	/* Drop stderr if requested */
@@ -62,19 +66,32 @@ static void exec_child
 		int err_fd = open("/dev/null", O_WRONLY);
 		if ( err_fd == -1 )
 			i_fatal("open(/dev/null) failed: %m");
-		if ( dup2(err_fd, STDERR_FILENO) < 0 )
-			i_fatal("dup2(stderr) failed: %m");
-		if ( close(err_fd) < 0 )
-			i_error("close(err_fd) failed: %m");
+		if ( err_fd != STDERR_FILENO ) {
+			if ( dup2(err_fd, STDERR_FILENO) < 0 )
+				i_fatal("dup2(stderr) failed: %m");
+			if ( close(err_fd) < 0 )
+				i_error("close(err_fd) failed: %m");
+		}
 	}
 
 	/* Setup extra fds */
 	if ( extra_fds != NULL ) {
-		for (; *extra_fds != -1; extra_fds += 2 ) {
-			if ( dup2(extra_fds[0], extra_fds[1]) < 0 )
-				i_fatal("dup2(extra_fd=%d) failed: %m", extra_fds[1]);
-			if ( close(extra_fds[0]) < 0 )
-				i_error("close(extra_fd=%d) failed: %m", extra_fds[1]);
+		int *efd;
+		for (efd = extra_fds; *efd != -1; efd += 2 ) {
+			i_assert(efd[1] != STDIN_FILENO);
+			i_assert(efd[1] != STDOUT_FILENO);
+			i_assert(efd[1] != STDERR_FILENO);
+			if ( efd[0] != efd[1] ) {
+				if ( dup2(efd[0], efd[1]) < 0 )
+					i_fatal("dup2(extra_fd=%d) failed: %m", efd[1]);
+			}
+		}
+		for (efd = extra_fds; *efd != -1; efd += 2 ) {
+			if ( efd[0] != efd[1] && efd[0] != STDIN_FILENO &&
+				efd[0] != STDOUT_FILENO && efd[0] != STDERR_FILENO) {
+				if ( close(efd[0]) < 0 )
+					i_error("close(extra_fd=%d) failed: %m", efd[1]);
+			}
 		}
 	}
 
