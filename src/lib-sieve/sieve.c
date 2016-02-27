@@ -231,47 +231,49 @@ struct sieve_binary *sieve_compile_script
 {
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin;
-	enum sieve_error error;
+	enum sieve_error error, *errorp;
 
 	if ( error_r != NULL )
-		*error_r = SIEVE_ERROR_NONE;
+		errorp = error_r;
 	else
-		error_r = &error;
+		errorp = &error;
+	*errorp = SIEVE_ERROR_NONE;
 
 	/* Parse */
-	if ( (ast = sieve_parse(script, ehandler, error_r)) == NULL ) {
-		switch ( *error_r ) {
+	if ( (ast = sieve_parse(script, ehandler, errorp)) == NULL ) {
+		switch ( *errorp ) {
 		case SIEVE_ERROR_NOT_FOUND:
-			sieve_error(ehandler, sieve_script_name(script), "script not found");
+			if (error_r == NULL) {
+				sieve_error(ehandler, sieve_script_name(script),
+					"script not found");
+			}
 			break;
 		default:
-	 		sieve_error(ehandler, sieve_script_name(script), "parse failed");
+			sieve_error(ehandler, sieve_script_name(script),
+				"parse failed");
 		}
 		return NULL;
 	}
 
 	/* Validate */
-	if ( !sieve_validate(ast, ehandler, flags, error_r) ) {
-		sieve_error(ehandler, sieve_script_name(script), "validation failed");
+	if ( !sieve_validate(ast, ehandler, flags, errorp) ) {
+		sieve_error(ehandler, sieve_script_name(script),
+			"validation failed");
 
  		sieve_ast_unref(&ast);
  		return NULL;
  	}
 
 	/* Generate */
-	if ( (sbin=sieve_generate(ast, ehandler, flags, error_r)) == NULL ) {
-		sieve_error(ehandler, sieve_script_name(script), "code generation failed");
-
+	if ( (sbin=sieve_generate(ast, ehandler, flags, errorp)) == NULL ) {
+		sieve_error(ehandler, sieve_script_name(script),
+			"code generation failed");
 		sieve_ast_unref(&ast);
 		return NULL;
 	}
 
 	/* Cleanup */
 	sieve_ast_unref(&ast);
-
-	if ( error_r != NULL )
-		*error_r = SIEVE_ERROR_NONE;
-
 	return sbin;
 }
 
