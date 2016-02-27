@@ -71,10 +71,11 @@ static int sieve_ldap_script_open
 		return -1;
 	}
 
-	if ( (ret=sieve_ldap_db_lookup_script(
-		lstorage->conn, script->name, &lscript->dn, &lscript->modattr)) <= 0 ) {
+	if ( (ret=sieve_ldap_db_lookup_script(lstorage->conn,
+		script->name, &lscript->dn, &lscript->modattr)) <= 0 ) {
 		if ( ret == 0 ) {
-			sieve_script_sys_debug(script, "Script not found");
+			sieve_script_sys_debug(script,
+				"Script entry not found");
 			sieve_script_set_error(script,
 				SIEVE_ERROR_NOT_FOUND,
 				"Sieve script not found");
@@ -104,7 +105,8 @@ static int sieve_ldap_script_get_stream
 	if ( (ret=sieve_ldap_db_read_script(
 		lstorage->conn, lscript->dn, stream_r)) <= 0 ) {
 		if ( ret == 0 ) {
-			sieve_script_sys_debug(script, "Script not found");
+			sieve_script_sys_debug(script,
+				"Script attribute not found");
 			sieve_script_set_error(script,
 				SIEVE_ERROR_NOT_FOUND,
 				"Sieve script not found");
