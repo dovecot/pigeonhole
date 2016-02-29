@@ -431,6 +431,7 @@ static int act_redirect_commit
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
 	const char *dupeid = NULL, *resent_id = NULL, *resent_from = NULL;
+	const char *list_id = NULL;
 	int ret;
 
 	/* Prevent mail loops if possible */
@@ -438,6 +439,11 @@ static int act_redirect_commit
 		(msgdata->mail, "resent-message-id", &resent_id) < 0 ) {
 		return sieve_result_mail_error(aenv, mail,
 			"failed to read header field `resent-message-id'");
+	}
+	if ( mail_get_first_header
+		(msgdata->mail, "list-id", &list_id) < 0 ) {
+		return sieve_result_mail_error(aenv, mail,
+			"failed to read header field `list-id'");
 	}
 	if ( msgdata->id != NULL || resent_id != NULL ) {
 		if ( resent_id == NULL ) {
@@ -447,16 +453,27 @@ static int act_redirect_commit
 					"failed to read header field `resent-from'");
 			}
 		}
-		dupeid = t_strdup_printf("%s-%s-%s-%s",
+		/* Base the duplicate ID on:
+		   - the message id
+		   - the recipient running this Sieve script
+		   - redirect target address
+		   - if this message is resent: the message-id or from-address of
+			   the original message
+		   - if the message came through a mailing list: the mailinglist ID
+		 */
+		dupeid = t_strdup_printf("%s-%s-%s-%s-%s",
 			(msgdata->id == NULL ? "" : msgdata->id),
 			orig_recipient, ctx->to_address,
 			(resent_id != NULL ?	
-				resent_id : (resent_from == NULL ? "" : resent_from)));
+				resent_id : (resent_from == NULL ? "" : resent_from)),
+			(list_id != NULL ? list_id : ""));
 	}
 	if ( dupeid != NULL ) {
 		/* Check whether we've seen this message before */
-		if (sieve_action_duplicate_check(senv, dupeid, strlen(dupeid))) {
-			sieve_result_global_log(aenv, "discarded duplicate forward to <%s>",
+		if (sieve_action_duplicate_check
+			(senv, dupeid, strlen(dupeid))) {
+			sieve_result_global_log(aenv,
+				"discarded duplicate forward to <%s>",
 				str_sanitize(ctx->to_address, 128));
 			*keep = FALSE;
 			return SIEVE_EXEC_OK;
