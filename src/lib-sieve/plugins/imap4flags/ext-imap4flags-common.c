@@ -146,23 +146,27 @@ bool ext_imap4flags_command_validate
 
 void ext_imap4flags_attach_flags_tag
 (struct sieve_validator *valdtr, const struct sieve_extension *ext,
-	const char *command, bool implicit)
+	const char *command)
 {
 	/* Register :flags tag with the command and we don't care whether it is
 	 * registered or even whether it will be registered at all. The validator
 	 * handles either situation gracefully
 	 */
 
-	if ( !implicit ) {
-		/* Tag specified by user */
-		sieve_validator_register_external_tag
-			(valdtr, command, ext, &tag_flags, SIEVE_OPT_SIDE_EFFECT);
-	}
-
-    /* Implicit tag if none is specified */
-	sieve_validator_register_persistent_tag
-		(valdtr, command, ext, &tag_flags_implicit);
+	/* Tag specified by user */
+	sieve_validator_register_external_tag
+		(valdtr, command, ext, &tag_flags, SIEVE_OPT_SIDE_EFFECT);
 }
+
+void sieve_ext_imap4flags_register_side_effect
+(struct sieve_validator *valdtr, const struct sieve_extension *flg_ext,
+	const char *command)
+{
+	/* Implicit tag if none is specified */
+	sieve_validator_register_persistent_tag
+		(valdtr, command, flg_ext, &tag_flags_implicit);
+}
+
 
 /*
  * Result context

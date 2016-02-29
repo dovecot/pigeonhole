@@ -23,6 +23,14 @@ sieve_ext_imap4flags_require_extension
 }
 
 /*
+ * Action side-effect
+ */
+
+void sieve_ext_imap4flags_register_side_effect
+(struct sieve_validator *valdtr, const struct sieve_extension *flg_ext,
+        const char *command);
+
+/*
  * Flag syntax
  */
 

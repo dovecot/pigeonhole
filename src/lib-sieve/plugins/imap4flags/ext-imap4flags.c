@@ -66,8 +66,12 @@ static bool ext_imap4flags_validator_load
 	sieve_validator_register_command(valdtr, ext, &tst_hasflag);
 
 	/* Attach :flags tag to keep and fileinto commands */
-	ext_imap4flags_attach_flags_tag(valdtr, ext, "keep", FALSE);
-	ext_imap4flags_attach_flags_tag(valdtr, ext, "fileinto", FALSE);
+	ext_imap4flags_attach_flags_tag(valdtr, ext, "keep");
+	ext_imap4flags_attach_flags_tag(valdtr, ext, "fileinto");
+
+	/* Attach flags side-effect to keep and fileinto actions */
+	sieve_ext_imap4flags_register_side_effect(valdtr, ext, "keep");
+	sieve_ext_imap4flags_register_side_effect(valdtr, ext, "fileinto");
 
 	return TRUE;
 }
