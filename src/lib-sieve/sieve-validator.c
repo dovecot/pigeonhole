@@ -429,13 +429,22 @@ void sieve_validator_register_persistent_tag
 
 		struct sieve_tag_registration *reg;
 
+		if ( !array_is_created(&cmd_reg->persistent_tags) )
+			p_array_init(&cmd_reg->persistent_tags, valdtr->pool, 4);
+		else {
+			struct sieve_tag_registration *const *reg_idx;
+
+			/* Avoid dupplicate registration */
+			array_foreach (&cmd_reg->persistent_tags, reg_idx) {
+				if ((*reg_idx)->tag_def == tag_def)
+					return;
+			}
+		}
+
 		reg = p_new(valdtr->pool, struct sieve_tag_registration, 1);
 		reg->ext = ext;
 		reg->tag_def = tag_def;
 		reg->id_code = -1;
-
-		if ( !array_is_created(&cmd_reg->persistent_tags) )
-			p_array_init(&cmd_reg->persistent_tags, valdtr->pool, 4);
 
 		array_append(&cmd_reg->persistent_tags, &reg, 1);
 	}

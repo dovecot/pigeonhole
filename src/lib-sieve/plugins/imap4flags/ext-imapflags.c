@@ -128,9 +128,9 @@ static bool ext_imapflags_validator_load
 	sieve_validator_register_command(valdtr, master_ext, &cmd_mark);
 	sieve_validator_register_command(valdtr, master_ext, &cmd_unmark);
 
-    /* Attach implicit flags tag to keep and fileinto commands */
-    ext_imap4flags_attach_flags_tag(valdtr, master_ext, "keep", TRUE);
-    ext_imap4flags_attach_flags_tag(valdtr, master_ext, "fileinto", TRUE);
+        /* Attach flags side-effect to keep and fileinto actions */
+        sieve_ext_imap4flags_register_side_effect(valdtr, master_ext, "keep");
+        sieve_ext_imap4flags_register_side_effect(valdtr, master_ext, "fileinto");
 
 	return TRUE;
 }

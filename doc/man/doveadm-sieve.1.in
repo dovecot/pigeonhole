@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2016 Pigeonhole authors, see the included COPYING file
-.TH DOVEADM\-SIEVE 1 "2015-02-21" "Pigeonhole v0.4 for Dovecot v2.2" "Pigeonhole"
+.TH DOVEADM\-SIEVE 1 "2016-02-29" "Pigeonhole v0.4 for Dovecot v2.2" "Pigeonhole"
 .SH NAME
 doveadm\-sieve \- Commands related to handling Sieve scripts
 .\"------------------------------------------------------------------------
@@ -34,7 +34,10 @@ Command specific
 .I scriptname
 Is the name of a
 .IR Sieve\ script ,
-as visible to ManageSieve clients. 
+as visible to ManageSieve clients.
+.IP
+NOTE: For Sieve scripts that are stored on disk, this is the filename without the
+".sieve" extension.
 .\"------------------------------------------------------------------------
 .SH COMMANDS
 .SS sieve put
