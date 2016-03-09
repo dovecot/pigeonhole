@@ -200,6 +200,15 @@ plugin section of the config file (default values are shown if applicable):
    enabled or disabled for exclusive use in global scripts. Currently, no
    extensions are marked as such by default.
 
+ sieve_implicit_extensions =
+   Which Sieve language extensions are implicitly available to users. The
+   extensions listed in this setting do not need to be enabled explicitly using
+   the Sieve "require" command. This behavior directly violates the Sieve
+   standard, but can be necessary for compatibility with some existing
+   implementations of Sieve (notably jSieve). Do not use this setting unless you
+   really need to! The syntax and semantics of this setting are otherwise
+   identical to the `sieve_extensions' setting
+
  sieve_plugins =
    The Pigeonhole Sieve interpreter can have plugins of its own. Using this
    setting, the used plugins can be specified. Check the Dovecot wiki
