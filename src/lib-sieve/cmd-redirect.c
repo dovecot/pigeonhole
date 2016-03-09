@@ -307,7 +307,8 @@ static void act_redirect_print
 
 static int act_redirect_send
 (const struct sieve_action_exec_env *aenv, struct mail *mail,
-	struct act_redirect_context *ctx)
+	struct act_redirect_context *ctx, const char *new_msg_id)
+	ATTR_NULL(4)
 {
 	static const char *hide_headers[] =
 		{ "Return-Path", "X-Sieve", "X-Sieve-Redirected-From" };
@@ -385,6 +386,11 @@ static int act_redirect_send
 			rfc2822_header_append
 				(hdr, "X-Sieve-Redirected-From", recipient, FALSE, NULL);
 		}
+
+		/* Add new Message-ID if message doesn't have one */
+		if ( new_msg_id != NULL )
+			rfc2822_header_write(hdr, "Message-ID", new_msg_id);
+
 		o_stream_send(output, str_data(hdr), str_len(hdr));
 	} T_END;
 
@@ -430,58 +436,69 @@ static int act_redirect_commit
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
-	const char *dupeid = NULL, *resent_id = NULL, *resent_from = NULL;
+	const char *msg_id = msgdata->id, *new_msg_id = NULL;
+	const char *dupeid = NULL, *resent_id = NULL;
 	const char *list_id = NULL;
 	int ret;
 
-	/* Prevent mail loops if possible */
+	/*
+	 * Prevent mail loops
+	 */
+
+	/* Read identifying headers */
 	if ( mail_get_first_header
 		(msgdata->mail, "resent-message-id", &resent_id) < 0 ) {
 		return sieve_result_mail_error(aenv, mail,
 			"failed to read header field `resent-message-id'");
+	}
+	if ( resent_id == NULL ) {
+		if ( mail_get_first_header
+			(msgdata->mail, "resent-from", &resent_id) < 0 ) {
+			return sieve_result_mail_error(aenv, mail,
+				"failed to read header field `resent-from'");
+		}
 	}
 	if ( mail_get_first_header
 		(msgdata->mail, "list-id", &list_id) < 0 ) {
 		return sieve_result_mail_error(aenv, mail,
 			"failed to read header field `list-id'");
 	}
-	if ( msgdata->id != NULL || resent_id != NULL ) {
-		if ( resent_id == NULL ) {
-			if ( mail_get_first_header
-				(msgdata->mail, "resent-from", &resent_from) < 0 ) {
-				return sieve_result_mail_error(aenv, mail,
-					"failed to read header field `resent-from'");
-			}
-		}
-		/* Base the duplicate ID on:
-		   - the message id
-		   - the recipient running this Sieve script
-		   - redirect target address
-		   - if this message is resent: the message-id or from-address of
-			   the original message
-		   - if the message came through a mailing list: the mailinglist ID
-		 */
-		dupeid = t_strdup_printf("%s-%s-%s-%s-%s",
-			(msgdata->id == NULL ? "" : msgdata->id),
-			orig_recipient, ctx->to_address,
-			(resent_id != NULL ?	
-				resent_id : (resent_from == NULL ? "" : resent_from)),
-			(list_id != NULL ? list_id : ""));
-	}
-	if ( dupeid != NULL ) {
-		/* Check whether we've seen this message before */
-		if (sieve_action_duplicate_check
-			(senv, dupeid, strlen(dupeid))) {
-			sieve_result_global_log(aenv,
-				"discarded duplicate forward to <%s>",
-				str_sanitize(ctx->to_address, 128));
-			*keep = FALSE;
-			return SIEVE_EXEC_OK;
-		}
+
+	/* Create Message-ID for the message if it has none */
+	if ( msg_id == NULL ) {	
+		msg_id = new_msg_id =
+			sieve_message_get_new_id(aenv->svinst);
 	}
 
-	/* Try to forward the message */
-	if ( (ret=act_redirect_send(aenv, mail, ctx)) == SIEVE_EXEC_OK) {
+	/* Base the duplicate ID on:
+	   - the message id
+	   - the recipient running this Sieve script
+	   - redirect target address
+	   - if this message is resent: the message-id or from-address of
+		   the original message
+	   - if the message came through a mailing list: the mailinglist ID
+	 */
+	dupeid = t_strdup_printf("%s-%s-%s-%s-%s", msg_id,
+		orig_recipient, ctx->to_address,
+		(resent_id != NULL ? resent_id : ""),
+		(list_id != NULL ? list_id : ""));
+
+	/* Check whether we've seen this message before */
+	if (sieve_action_duplicate_check
+		(senv, dupeid, strlen(dupeid))) {
+		sieve_result_global_log(aenv,
+			"discarded duplicate forward to <%s>",
+			str_sanitize(ctx->to_address, 128));
+		*keep = FALSE;
+		return SIEVE_EXEC_OK;
+	}
+
+	/*
+	 * Try to forward the message
+	 */
+
+	if ( (ret=act_redirect_send
+		(aenv, mail, ctx, new_msg_id)) == SIEVE_EXEC_OK) {
 
 		/* Mark this message id as forwarded to the specified destination */
 		if (dupeid != NULL) {
