@@ -1,4 +1,4 @@
-v0.4.13 xx-03-2016 Stephan Bosch <stephan@rename-it.nl>
+v0.4.13 18-03-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	* redirect action: Added the list-id header to the duplicate ID for mail loop
 	  prevention. This means that the message sent directly to the user and the
