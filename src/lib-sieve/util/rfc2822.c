@@ -170,11 +170,11 @@ unsigned int rfc2822_header_append
 			else
 				str_append(header, "\n");
 
-			if ( *bp != '\0' && (*bp == ' ' || *bp == '\t') ) {
+			while ( *bp == ' ' || *bp == '\t' )
+				bp++;
+			if ( *bp != '\0' ) {
 				/* Continued line; replace leading whitespace with single TAB */
 				str_append_c(header, '\t');
-				while ( *bp == ' ' || *bp == '\t' )
-					bp++;
 			}
 
 			sp = bp;
