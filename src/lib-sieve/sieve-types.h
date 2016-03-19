@@ -137,11 +137,11 @@ struct sieve_message_data {
  * Runtime flags
  */
 
-enum sieve_runtime_flags {
+enum sieve_execute_flags {
 	/* No global extensions are allowed
 	 *  (as marked by sieve_global_extensions setting)
 	 */
-	SIEVE_RUNTIME_FLAG_NOGLOBAL = (1<<0)
+	SIEVE_EXECUTE_FLAG_NOGLOBAL = (1<<0),
 };
 
 /*

@@ -76,7 +76,7 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 
 	/* Execute the result */
 	ret=sieve_result_execute
-		(_testsuite_result, NULL, testsuite_log_ehandler);
+		(_testsuite_result, NULL, testsuite_log_ehandler, 0);
 
 	return ( ret > 0 );
 }

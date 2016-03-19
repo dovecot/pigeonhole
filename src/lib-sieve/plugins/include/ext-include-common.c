@@ -558,9 +558,9 @@ int ext_include_generate_include
 			(void)ext_include_create_ast_context(this_ext, ast, cmd->ast_node->ast);
 
 			if ( location == EXT_INCLUDE_LOCATION_GLOBAL )
-				cpflags &= ~SIEVE_RUNTIME_FLAG_NOGLOBAL;
+				cpflags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
 			else
-				cpflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
+				cpflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
 
 			/* Validate */
 			if ( !sieve_validate(ast, ehandler, cpflags, NULL) ) {
@@ -699,17 +699,19 @@ int ext_include_execute_include
 		/* We are the top-level interpreter instance */
 
 		if ( result == SIEVE_EXEC_OK ) {
-			enum sieve_runtime_flags rtflags = 0;
+			enum sieve_execute_flags exflags = renv->flags;
 
 			if ( included->location != EXT_INCLUDE_LOCATION_GLOBAL )
-				rtflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
+				exflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
+			else
+				exflags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
 
 			/* Create interpreter for top-level included script
 			 * (first sub-interpreter)
 			 */
 			subinterp = sieve_interpreter_create_for_block
 				(included->block, included->script, renv->interp,
-					renv->msgdata, renv->scriptenv, ehandler, rtflags);
+					renv->msgdata, renv->scriptenv, ehandler, exflags);
 
 			if ( subinterp != NULL ) {
 				curctx = ext_include_interpreter_context_init_child
@@ -760,16 +762,18 @@ int ext_include_execute_include
 						/* Sub-include requested */
 
 						if ( result == SIEVE_EXEC_OK ) {
-							enum sieve_runtime_flags rtflags = 0;
+							enum sieve_execute_flags exflags = renv->flags;
 
 							if ( curctx->include->location != EXT_INCLUDE_LOCATION_GLOBAL )
-								rtflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
+								exflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
+							else
+								exflags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
 
 							/* Create sub-interpreter */
 							subinterp = sieve_interpreter_create_for_block
 								(curctx->include->block, curctx->include->script,
 									curctx->interp, renv->msgdata,
-									renv->scriptenv, ehandler, rtflags);
+									renv->scriptenv, ehandler, exflags);
 
 							if ( subinterp != NULL ) {
 								curctx = ext_include_interpreter_context_init_child

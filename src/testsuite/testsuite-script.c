@@ -220,6 +220,6 @@ bool testsuite_script_multiscript
 		sieve_close(&sbin);
 	}
 
-	return ( sieve_multiscript_finish(&mscript, testsuite_log_ehandler, NULL) > 0
-		&& result );
+	return ( sieve_multiscript_finish
+		(&mscript, testsuite_log_ehandler, 0, NULL) > 0	&& result );
 }

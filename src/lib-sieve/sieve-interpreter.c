@@ -94,7 +94,7 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv,
 	struct sieve_error_handler *ehandler,
-	enum sieve_runtime_flags flags)
+	enum sieve_execute_flags flags)
 	ATTR_NULL(3, 4)
 {
 	unsigned int i, ext_count;
@@ -195,7 +195,7 @@ static struct sieve_interpreter *_sieve_interpreter_create
 			}
 
 			if ( ext->def != NULL ) {
-				if ( ext->global && (flags & SIEVE_RUNTIME_FLAG_NOGLOBAL) != 0 ) {
+				if ( ext->global && (flags & SIEVE_EXECUTE_FLAG_NOGLOBAL) != 0 ) {
 					sieve_runtime_error(&interp->runenv, NULL,
 						"failed to enable extension `%s': "
 						"its use is restricted to global scripts",
@@ -230,7 +230,7 @@ struct sieve_interpreter *sieve_interpreter_create
 	const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv,
 	struct sieve_error_handler *ehandler,
-	enum sieve_runtime_flags flags)
+	enum sieve_execute_flags flags)
 {
 	struct sieve_binary_block *sblock;
 
@@ -249,7 +249,7 @@ struct sieve_interpreter *sieve_interpreter_create_for_block
 	const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv,
 	struct sieve_error_handler *ehandler,
-	enum sieve_runtime_flags flags)
+	enum sieve_execute_flags flags)
 {
 	if ( sblock == NULL ) return NULL;
 

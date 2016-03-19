@@ -20,6 +20,7 @@ struct sieve_action_exec_env {
 	struct sieve_instance *svinst;
 
 	struct sieve_result *result;
+	enum sieve_execute_flags flags;
 	struct sieve_error_handler *ehandler;
 
 	const struct sieve_message_data *msgdata;

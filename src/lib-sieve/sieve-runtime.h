@@ -14,7 +14,7 @@ struct sieve_runtime_env {
 	/* Interpreter */
 	struct sieve_instance *svinst;
 	struct sieve_interpreter *interp;
-	enum sieve_runtime_flags flags;
+	enum sieve_execute_flags flags;
 	struct sieve_error_handler *ehandler;
 
 	/* Executing script */

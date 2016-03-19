@@ -382,7 +382,7 @@ int main(int argc, char **argv)
 					ehandler, ehandler, 0);
 			}
 
-			result = sieve_multiscript_finish(&mscript, ehandler, NULL);
+			result = sieve_multiscript_finish(&mscript, ehandler, 0, NULL);
 
 			ret = ret > 0 ? result : ret;
 		}

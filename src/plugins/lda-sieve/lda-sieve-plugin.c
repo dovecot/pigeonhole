@@ -410,13 +410,13 @@ static int lda_sieve_singlescript_execute
 	struct sieve_binary *sbin;
 	bool debug = srctx->mdctx->dest_user->mail_debug;
 	enum sieve_compile_flags cpflags = 0;
-	enum sieve_runtime_flags rtflags = 0;
+	enum sieve_execute_flags exflags = 0;
 	enum sieve_error error;
 	int ret;
 
 	if ( user_script ) {
 		cpflags |= SIEVE_COMPILE_FLAG_NOGLOBAL;
-		rtflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
+		exflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
 		exec_ehandler = srctx->user_ehandler;
 	} else {
 		exec_ehandler = srctx->master_ehandler;
@@ -447,7 +447,7 @@ static int lda_sieve_singlescript_execute
 	action_ehandler = lda_sieve_log_ehandler_create
 		(exec_ehandler, mdctx);
 	ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv,
-		exec_ehandler, action_ehandler, rtflags, NULL);
+		exec_ehandler, action_ehandler, exflags, NULL);
 	sieve_error_handler_unref(&action_ehandler);
 
 	/* Recompile if corrupt binary */
@@ -482,7 +482,7 @@ static int lda_sieve_singlescript_execute
 		action_ehandler = lda_sieve_log_ehandler_create
 			(exec_ehandler, mdctx);
 		ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv,
-			exec_ehandler, action_ehandler, rtflags, NULL);
+			exec_ehandler, action_ehandler, exflags, NULL);
 		sieve_error_handler_unref(&action_ehandler);
 
 		/* Save new version */
@@ -524,14 +524,14 @@ static int lda_sieve_multiscript_execute
 		struct sieve_binary *sbin = NULL;
 		struct sieve_script *script = scripts[i];
 		enum sieve_compile_flags cpflags = 0;
-		enum sieve_runtime_flags rtflags = 0;
+		enum sieve_execute_flags exflags = 0;
 
 		user_script = ( script == srctx->user_script );
 		last_script = script;
 
 		if ( user_script ) {
 			cpflags |= SIEVE_COMPILE_FLAG_NOGLOBAL;
-			rtflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
+			exflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
 			exec_ehandler = srctx->user_ehandler;
 		} else {
 			exec_ehandler = srctx->master_ehandler;
@@ -561,7 +561,7 @@ static int lda_sieve_multiscript_execute
 		action_ehandler = lda_sieve_log_ehandler_create
 			(exec_ehandler, mdctx);
 		more = sieve_multiscript_run(mscript, sbin,
-			exec_ehandler, action_ehandler, rtflags);
+			exec_ehandler, action_ehandler, exflags);
 		sieve_error_handler_unref(&action_ehandler);
 
 		if ( !more ) {
@@ -584,7 +584,7 @@ static int lda_sieve_multiscript_execute
 				action_ehandler = lda_sieve_log_ehandler_create
 					(exec_ehandler, mdctx);
 				more = sieve_multiscript_run(mscript, sbin,
-					exec_ehandler, action_ehandler, rtflags);
+					exec_ehandler, action_ehandler, exflags);
 				sieve_error_handler_unref(&action_ehandler);
 
 				/* Save new version */
@@ -604,10 +604,13 @@ static int lda_sieve_multiscript_execute
 		srctx->user_ehandler : srctx->master_ehandler);
 	action_ehandler = lda_sieve_log_ehandler_create
 		(exec_ehandler, mdctx);
-	if ( compile_error && error == SIEVE_ERROR_TEMP_FAILURE )
-		ret = sieve_multiscript_tempfail(&mscript, action_ehandler);
-	else
-		ret = sieve_multiscript_finish(&mscript, action_ehandler, NULL);
+	if ( compile_error && error == SIEVE_ERROR_TEMP_FAILURE ) {
+		ret = sieve_multiscript_tempfail
+			(&mscript, action_ehandler, 0);
+	} else {
+		ret = sieve_multiscript_finish
+			(&mscript, action_ehandler, 0, NULL);
+	}
 	sieve_error_handler_unref(&action_ehandler);
 
 	/* Don't log additional messages about compile failure */
