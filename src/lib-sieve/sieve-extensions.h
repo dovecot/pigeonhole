@@ -139,6 +139,10 @@ bool sieve_extension_reload(const struct sieve_extension *ext);
 
 void sieve_extension_unregister(const struct sieve_extension *ext);
 
+const struct sieve_extension *sieve_extension_replace
+	(struct sieve_instance *svinst,
+		const struct sieve_extension_def *extdef,
+		bool load);
 void sieve_extension_override
 	(struct sieve_instance *svinst, const char *name,
 		const struct sieve_extension *ext);

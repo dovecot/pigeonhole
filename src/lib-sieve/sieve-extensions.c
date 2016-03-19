@@ -476,6 +476,18 @@ void sieve_extension_unregister(const struct sieve_extension *ext)
 	}
 }
 
+const struct sieve_extension *sieve_extension_replace
+(struct sieve_instance *svinst, const struct sieve_extension_def *extdef,
+	bool load)
+{
+	struct sieve_extension *ext;
+
+	ext = sieve_extension_lookup(svinst, extdef->name);
+	if (ext != NULL)
+		sieve_extension_unregister(ext);
+	return sieve_extension_register(svinst, extdef, load);
+}
+
 const struct sieve_extension *sieve_extension_require
 (struct sieve_instance *svinst, const struct sieve_extension_def *extdef,
 	bool load)
