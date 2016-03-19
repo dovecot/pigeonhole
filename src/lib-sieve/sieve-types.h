@@ -142,6 +142,8 @@ enum sieve_execute_flags {
 	 *  (as marked by sieve_global_extensions setting)
 	 */
 	SIEVE_EXECUTE_FLAG_NOGLOBAL = (1<<0),
+	/* Do not execute (implicit keep) at the end */
+	SIEVE_EXECUTE_FLAG_DEFER_KEEP = (1<<1)
 };
 
 /*

@@ -933,6 +933,9 @@ static int _sieve_result_implicit_keep
 	void *tr_context = NULL;
 	struct sieve_action act_keep;
 
+	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0 )
+		return SIEVE_EXEC_OK;
+
 	if ( rollback ) {
 		act_keep = result->failure_action;
 		act_keep.mail = NULL;
