@@ -11,8 +11,8 @@ Test!
 .
 ;
 
-test_set "envelope.to" "friep++frop@dovecot.example.net";
-test_set "envelope.from" "list--request@lists.dovecot.example.net";
+test_set "envelope.to" "friep+-frop@dovecot.example.net";
+test_set "envelope.from" "list_request@lists.dovecot.example.net";
 
 test "Delimiter default" {
 	if not address :is :user "from" "stephan" {
@@ -37,22 +37,43 @@ test "Delimiter \"-\"" {
 	}
 }
 
-test "Delimiter \"++\"" {
-	test_config_set "recipient_delimiter" "++";
+test "Delimiter \"+-\"" {
+	test_config_set "recipient_delimiter" "+-";
 	test_config_reload :extension "subaddress";
 
 	if not envelope :is :user "to" "friep" {
 		test_fail "wrong user part extracted";
 	}
 
-	if not envelope :is :detail "to" "frop" {
+	if not envelope :is :detail "to" "-frop" {
 		test_fail "wrong detail part extracted";
 	}
 }
 
-test "Delimiter \"--\"" {
-	test_config_set "recipient_delimiter" "--";
+test "Delimiter \"-+\"" {
+	test_config_set "recipient_delimiter" "-+";
 	test_config_reload :extension "subaddress";
+
+	if not envelope :is :user "to" "friep" {
+		test_fail "wrong user part extracted";
+	}
+
+	if not envelope :is :detail "to" "-frop" {
+		test_fail "wrong detail part extracted";
+	}
+}
+
+test "Delimiter \"+-_\"" {
+	test_config_set "recipient_delimiter" "+-_";
+	test_config_reload :extension "subaddress";
+
+	if not envelope :is :user "to" "friep" {
+		test_fail "wrong user part extracted";
+	}
+
+	if not envelope :is :detail "to" "-frop" {
+		test_fail "wrong detail part extracted";
+	}
 
 	if not envelope :is :user "from" "list" {
 		test_fail "wrong user part extracted";
@@ -60,18 +81,5 @@ test "Delimiter \"--\"" {
 
 	if not envelope :is :detail "from" "request" {
 		test_fail "wrong detail part extracted";
-	}
-}
-
-test "Delimiter \"+-\"" {
-	test_config_set "recipient_delimiter" "+-";
-	test_config_reload :extension "subaddress";
-
-	if envelope :is :user "from" "list" {
-		test_fail "user part extracted";
-	}
-
-	if envelope :is :detail "from" "request" {
-		test_fail "detail part extracted";
 	}
 }
