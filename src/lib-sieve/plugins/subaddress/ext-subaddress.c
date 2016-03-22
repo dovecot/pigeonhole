@@ -143,8 +143,10 @@ static const char *subaddress_user_extract_from
 	struct ext_subaddress_config *config =
 		(struct ext_subaddress_config *) addrp->object.ext->context;
 	const char *delim;
+	size_t idx;
 
-	delim = strstr(address->local_part, config->delimiter);
+	idx = strcspn(address->local_part, config->delimiter);
+	delim = address->local_part[idx] != '\0' ? address->local_part + idx : NULL;
 
 	if ( delim == NULL ) return address->local_part;
 
@@ -157,14 +159,14 @@ static const char *subaddress_detail_extract_from
 	struct ext_subaddress_config *config =
 		(struct ext_subaddress_config *) addrp->object.ext->context;
 	const char *delim;
+	size_t idx;
 
-	if ( (delim=strstr(address->local_part, config->delimiter)) == NULL )
-		return NULL;
-
-	delim += strlen(config->delimiter);
+	idx = strcspn(address->local_part, config->delimiter);
+	delim = address->local_part[idx] != '\0' ? address->local_part + idx + 1: NULL;
 
 	/* Just to be sure */
-	if ( delim > (address->local_part + strlen(address->local_part)) )
+	if ( delim == NULL ||
+			delim > (address->local_part + strlen(address->local_part)) )
 		return NULL;
 
 	return delim;
