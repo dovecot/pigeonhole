@@ -48,10 +48,10 @@ static int program_client_close_output(struct program_client *pclient)
 {
 	int ret;
 
-	if ( (ret=pclient->close_output(pclient)) < 0 )
-		return -1;
 	if ( pclient->program_output != NULL )
 		o_stream_destroy(&pclient->program_output);
+	if ( (ret=pclient->close_output(pclient)) < 0 )
+		return -1;
 	pclient->program_output = NULL;
 
 	return ret;
