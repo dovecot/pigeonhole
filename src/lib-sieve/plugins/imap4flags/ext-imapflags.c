@@ -105,7 +105,8 @@ static bool ext_imapflags_validator_check_conflict
 	(const struct sieve_extension *ext,
 		struct sieve_validator *valdtr, void *context,
 		struct sieve_ast_argument *require_arg,
-		const struct sieve_extension *other_ext);
+		const struct sieve_extension *other_ext,
+		bool required);
 
 const struct sieve_validator_extension
 imapflags_validator_extension = {
@@ -141,7 +142,8 @@ static bool ext_imapflags_validator_check_conflict
 (const struct sieve_extension *ext,
 	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
 	struct sieve_ast_argument *require_arg,
-	const struct sieve_extension *ext_other)
+	const struct sieve_extension *ext_other,
+	bool required ATTR_UNUSED)
 {
 	const struct sieve_extension *master_ext =
 		(const struct sieve_extension *) ext->context;

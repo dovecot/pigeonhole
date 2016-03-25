@@ -99,7 +99,8 @@ static bool ext_spamtest_validator_check_conflict
 	(const struct sieve_extension *ext,
 		struct sieve_validator *valdtr, void *context,
 		struct sieve_ast_argument *require_arg,
-		const struct sieve_extension *ext_other);
+		const struct sieve_extension *ext_other,
+		bool required);
 
 const struct sieve_validator_extension spamtest_validator_extension = {
 	.ext = &spamtest_extension,
@@ -130,7 +131,8 @@ static bool ext_spamtest_validator_check_conflict
 (const struct sieve_extension *ext ATTR_UNUSED,
 	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
 	struct sieve_ast_argument *require_arg,
-	const struct sieve_extension *ext_other)
+	const struct sieve_extension *ext_other,
+	bool required ATTR_UNUSED)
 {
 	if ( sieve_extension_name_is(ext_other, "spamtestplus") ) {
 		sieve_argument_validate_warning(valdtr, require_arg,

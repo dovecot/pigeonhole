@@ -139,7 +139,7 @@ static bool tst_ihave_validate
 	caps = array_get(&capabilities, &count);
 	for ( i = 0; i < count; i++ ) {
 		if ( !sieve_validator_extension_load
-			(valdtr, tst, caps[i].arg, caps[i].ext) )
+			(valdtr, tst, caps[i].arg, caps[i].ext, FALSE) )
 			return FALSE;
 	}
 

@@ -54,7 +54,8 @@ static bool ext_notify_validator_check_conflict
 	(const struct sieve_extension *ext,
 		struct sieve_validator *valdtr, void *context,
 		struct sieve_ast_argument *require_arg,
-		const struct sieve_extension *ext_other);
+		const struct sieve_extension *ext_other,
+		bool required);
 
 const struct sieve_validator_extension notify_validator_extension = {
 	.ext = &notify_extension,
@@ -79,7 +80,8 @@ static bool ext_notify_validator_check_conflict
 (const struct sieve_extension *ext ATTR_UNUSED,
 	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
 	struct sieve_ast_argument *require_arg,
-	const struct sieve_extension *ext_other)
+	const struct sieve_extension *ext_other,
+	bool required ATTR_UNUSED)
 {
 	/* Check for conflict with enotify */
 	if ( sieve_extension_name_is(ext_other, "enotify") ) {

@@ -72,7 +72,8 @@ struct sieve_validator_extension_reg {
 	struct sieve_ast_argument *arg;
 	void *context;
 
-	bool loaded;
+	unsigned int loaded:1;
+	unsigned int required:1;
 };
 
 /*
@@ -573,7 +574,8 @@ static bool sieve_validator_extensions_check_conficts
 		if ( ext_reg != NULL && ext_reg->valext != NULL &&
 			ext_reg->valext->check_conflict != NULL ) {
 			if ( !ext_reg->valext->check_conflict(ext, valdtr,
-				ext_reg->context, ext_arg, regs[i].ext) )
+				ext_reg->context, ext_arg, regs[i].ext,
+				ext_reg->required) )
 				return FALSE;
 		}
 
@@ -581,7 +583,8 @@ static bool sieve_validator_extensions_check_conficts
 		if ( regs[i].valext != NULL &&
 			regs[i].valext->check_conflict != NULL ) {
 			if ( !regs[i].valext->check_conflict(regs[i].ext,
-				valdtr, regs[i].context, regs[i].arg, ext) )
+				valdtr, regs[i].context, regs[i].arg, ext,
+				regs[i].required) )
 				return FALSE;
 		}
 	}
@@ -590,7 +593,9 @@ static bool sieve_validator_extensions_check_conficts
 
 bool sieve_validator_extension_load
 (struct sieve_validator *valdtr, struct sieve_command *cmd,
-	struct sieve_ast_argument *ext_arg, const struct sieve_extension *ext)
+	struct sieve_ast_argument *ext_arg,
+	const struct sieve_extension *ext,
+	bool required)
 {
 	const struct sieve_extension_def *extdef = ext->def;
 	struct sieve_validator_extension_reg *reg = NULL;
@@ -611,6 +616,7 @@ bool sieve_validator_extension_load
 			(&valdtr->extensions, (unsigned int) ext->id);
 		i_assert(reg->ext == NULL || reg->ext == ext);
 		reg->ext = ext;
+		reg->required = reg->required && required;
 		if ( reg->arg == NULL )
 			reg->arg = ext_arg;
 	}
@@ -686,7 +692,8 @@ const struct sieve_extension *sieve_validator_extension_load_by_name
 		return NULL;
 	}
 
-	if ( !sieve_validator_extension_load(valdtr, cmd, ext_arg, ext) )
+	if ( !sieve_validator_extension_load
+		(valdtr, cmd, ext_arg, ext, TRUE) )
 		return NULL;
 
 	return ext;
@@ -702,7 +709,8 @@ const struct sieve_extension *sieve_validator_extension_load_implicit
 	if ( ext == NULL || ext->def == NULL )
 		return NULL;
 
-	if ( !sieve_validator_extension_load(valdtr, NULL, NULL, ext) )
+	if ( !sieve_validator_extension_load
+		(valdtr, NULL, NULL, ext, TRUE) )
 		return NULL;
 
 	return ext;
@@ -1440,7 +1448,7 @@ static bool sieve_validate_block
 				for (i = 0; i < ext_count; i++) {
 					if ( exts[i]->implicit ) {
 						(void)sieve_validator_extension_load
-							(valdtr, NULL, NULL, exts[i]);
+							(valdtr, NULL, NULL, exts[i], TRUE);
 					}
 				}
 
@@ -1450,8 +1458,9 @@ static bool sieve_validate_block
 					if ( extrs[i].valext != NULL
 						&& extrs[i].valext->validate != NULL ) {
 
-						if ( !extrs[i].valext->validate
-							(extrs[i].ext, valdtr, extrs[i].context, extrs[i].arg) ) {
+						if ( !extrs[i].valext->validate(extrs[i].ext,
+							valdtr, extrs[i].context, extrs[i].arg,
+							extrs[i].required) ) {
 							fatal = TRUE;
 							break;
 						}

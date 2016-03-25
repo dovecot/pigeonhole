@@ -131,11 +131,13 @@ struct sieve_validator_extension {
 		(const struct sieve_extension *ext,
 			struct sieve_validator *valdtr, void *context,
 			struct sieve_ast_argument *require_arg,
-			const struct sieve_extension *ext_other);
+			const struct sieve_extension *ext_other,
+			bool required);
 	bool (*validate)
 		(const struct sieve_extension *ext,
 			struct sieve_validator *valdtr, void *context,
-			struct sieve_ast_argument *require_arg);
+			struct sieve_ast_argument *require_arg,
+			bool required);
 
 	void (*free)
 		(const struct sieve_extension *ext,
@@ -144,8 +146,9 @@ struct sieve_validator_extension {
 
 bool sieve_validator_extension_load
 	(struct sieve_validator *valdtr, struct sieve_command *cmd,
-		struct sieve_ast_argument *ext_arg, const struct sieve_extension *ext)
-	ATTR_NULL(2, 3);
+		struct sieve_ast_argument *ext_arg,
+		const struct sieve_extension *ext,
+		bool required) ATTR_NULL(2, 3);
 const struct sieve_extension *sieve_validator_extension_load_by_name
 	(struct sieve_validator *valdtr, struct sieve_command *cmd,
 		struct sieve_ast_argument *ext_arg, const char *ext_name);
