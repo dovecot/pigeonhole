@@ -95,14 +95,15 @@ const struct sieve_extension_def virustest_extension = {
  * Implementation
  */
 
-static bool ext_spamtest_validator_extension_validate
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-		void *context, struct sieve_ast_argument *require_arg);
+static bool ext_spamtest_validator_check_conflict
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg,
+		const struct sieve_extension *ext_other);
 
 const struct sieve_validator_extension spamtest_validator_extension = {
-	&spamtest_extension,
-	ext_spamtest_validator_extension_validate,
-	NULL
+	.ext = &spamtest_extension,
+	.check_conflict = ext_spamtest_validator_check_conflict
 };
 
 static bool ext_spamvirustest_validator_load
@@ -125,18 +126,16 @@ static bool ext_spamvirustest_validator_load
 	return TRUE;
 }
 
-static bool ext_spamtest_validator_extension_validate
-(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-	void *context ATTR_UNUSED, struct sieve_ast_argument *require_arg)
+static bool ext_spamtest_validator_check_conflict
+(const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg,
+	const struct sieve_extension *ext_other)
 {
-	const struct sieve_extension *ext_spamtestplus =
-		sieve_extension_get_by_name(ext->svinst, "spamtestplus");
-
-	if ( ext_spamtestplus != NULL &&
-		sieve_validator_extension_loaded(valdtr, ext_spamtestplus) ) {
+	if ( sieve_extension_name_is(ext_other, "spamtestplus") ) {
 		sieve_argument_validate_warning(valdtr, require_arg,
-			"the spamtest and spamtestplus extensions should not be specified "
-			"at the same time");
+			"the spamtest and spamtestplus extensions should "
+			"not be specified at the same time");
 	}
 
 	return TRUE;

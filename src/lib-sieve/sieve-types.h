@@ -28,7 +28,7 @@ struct sieve_exec_status;
 
 enum sieve_flag {
 	/* Relative paths are resolved to HOME */
-	SIEVE_FLAG_HOME_RELATIVE = (1 << 0),
+	SIEVE_FLAG_HOME_RELATIVE = (1 << 0)
 };
 
 /* Sieve evaluation can be performed at various different points as messages

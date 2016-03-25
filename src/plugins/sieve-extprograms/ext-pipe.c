@@ -70,14 +70,14 @@ static void ext_pipe_unload(const struct sieve_extension *ext)
  * Validation
  */
 
-static bool ext_pipe_validator_extension_validate
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr, 
-		void *context, struct sieve_ast_argument *require_arg);
+static bool ext_pipe_validator_validate
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg);
 
 const struct sieve_validator_extension pipe_validator_extension = {
-	&vnd_pipe_extension,
-	ext_pipe_validator_extension_validate,
-	NULL
+	.ext = &vnd_pipe_extension,
+	.validate = ext_pipe_validator_validate
 };
 
 static bool ext_pipe_validator_load
@@ -93,17 +93,18 @@ static bool ext_pipe_validator_load
 	return TRUE;
 }
 
-static bool ext_pipe_validator_extension_validate
-(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-	void *context ATTR_UNUSED, struct sieve_ast_argument *require_arg ATTR_UNUSED)
+static bool ext_pipe_validator_validate
+(const struct sieve_extension *ext,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg ATTR_UNUSED)
 {
 	struct sieve_extprograms_config *ext_config =
 		(struct sieve_extprograms_config *) ext->context;
 
 	if ( ext_config != NULL && ext_config->copy_ext != NULL ) {
 		/* Register :copy command tag */
-		sieve_ext_copy_register_tag
-			(valdtr, ext_config->copy_ext, cmd_pipe.identifier);
+		sieve_ext_copy_register_tag(valdtr,
+			ext_config->copy_ext, cmd_pipe.identifier);
 	}
 	return TRUE;
 }

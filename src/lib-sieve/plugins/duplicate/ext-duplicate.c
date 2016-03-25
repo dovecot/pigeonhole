@@ -58,14 +58,16 @@ const struct sieve_extension_def vnd_duplicate_extension = {
  * Validation
  */
 
-static bool ext_duplicate_validator_extension_validate
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-		void *context, struct sieve_ast_argument *require_arg);
+static bool ext_duplicate_validator_check_conflict
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg,
+		const struct sieve_extension *ext_other);
 
-const struct sieve_validator_extension duplicate_validator_extension = {
-	&vnd_duplicate_extension,
-	ext_duplicate_validator_extension_validate,
-	NULL
+const struct sieve_validator_extension
+duplicate_validator_extension = {
+	.ext = &vnd_duplicate_extension,
+	.check_conflict = ext_duplicate_validator_check_conflict
 };
 
 static bool ext_duplicate_validator_load
@@ -84,22 +86,18 @@ static bool ext_duplicate_validator_load
 	return TRUE;
 }
 
-static bool ext_duplicate_validator_extension_validate
-(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-	void *context ATTR_UNUSED, struct sieve_ast_argument *require_arg)
+static bool ext_duplicate_validator_check_conflict
+(const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg,
+	const struct sieve_extension *ext_other)
 {
-	const struct sieve_extension *ext_dupl;
-
-	if ( (ext_dupl=sieve_extension_get_by_name
-		(ext->svinst, "duplicate")) != NULL ) {
-
-		/* Check for conflict with duplicate extension */
-		if ( sieve_validator_extension_loaded(valdtr, ext_dupl) ) {
-			sieve_argument_validate_error(valdtr, require_arg,
-				"the (deprecated) vnd.dovecot.duplicate extension cannot be used "
-				"together with the duplicate extension");
-			return FALSE;
-		}
+	/* Check for conflict with duplicate extension */
+	if ( sieve_extension_name_is(ext_other, "duplicate") ) {
+		sieve_argument_validate_error(valdtr, require_arg,
+			"the (deprecated) vnd.dovecot.duplicate extension "
+			"cannot be used together with the duplicate extension");
+		return FALSE;
 	}
 
 	return TRUE;

@@ -550,12 +550,50 @@ static struct sieve_tag_registration *sieve_validator_command_tag_get
  * Extension support
  */
 
+static bool sieve_validator_extensions_check_conficts
+(struct sieve_validator *valdtr,
+	struct sieve_ast_argument *ext_arg,
+	const struct sieve_extension *ext)
+{
+	struct sieve_validator_extension_reg *ext_reg = NULL;
+	struct sieve_validator_extension_reg *regs;
+	unsigned int count, i;
+
+	if ( ext->id >= 0 ) {
+		ext_reg = array_idx_modifiable
+			(&valdtr->extensions, (unsigned int) ext->id);
+	}
+
+	regs = array_get_modifiable(&valdtr->extensions, &count);
+	for ( i = 0; i < count; i++ ) {
+		if (regs[i].ext == NULL)
+			continue;
+
+		/* Check this extension vs other extension */
+		if ( ext_reg != NULL && ext_reg->valext != NULL &&
+			ext_reg->valext->check_conflict != NULL ) {
+			if ( !ext_reg->valext->check_conflict(ext, valdtr,
+				ext_reg->context, ext_arg, regs[i].ext) )
+				return FALSE;
+		}
+
+		/* Check other extension vs this extension */
+		if ( regs[i].valext != NULL &&
+			regs[i].valext->check_conflict != NULL ) {
+			if ( !regs[i].valext->check_conflict(regs[i].ext,
+				valdtr, regs[i].context, regs[i].arg, ext) )
+				return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 bool sieve_validator_extension_load
 (struct sieve_validator *valdtr, struct sieve_command *cmd,
 	struct sieve_ast_argument *ext_arg, const struct sieve_extension *ext)
 {
 	const struct sieve_extension_def *extdef = ext->def;
-	struct sieve_validator_extension_reg *reg;
+	struct sieve_validator_extension_reg *reg = NULL;
 
 	if ( ext->global && (valdtr->flags & SIEVE_COMPILE_FLAG_NOGLOBAL) != 0 ) {
 		if ( cmd != NULL && ext_arg != NULL ) {
@@ -566,6 +604,15 @@ bool sieve_validator_extension_load
 				sieve_extension_name(ext));
 		}
 		return FALSE;
+	}
+
+	if ( ext->id >= 0 ) {
+		reg = array_idx_modifiable
+			(&valdtr->extensions, (unsigned int) ext->id);
+		i_assert(reg->ext == NULL || reg->ext == ext);
+		reg->ext = ext;
+		if ( reg->arg == NULL )
+			reg->arg = ext_arg;
 	}
 
 	if ( !sieve_ast_extension_link(valdtr->ast, ext) ) {
@@ -588,14 +635,15 @@ bool sieve_validator_extension_load
 		}
 	}
 
+	/* Check conflicts with other extensions */
+	if ( !sieve_validator_extensions_check_conficts
+		(valdtr, ext_arg, ext) )
+		return FALSE;
+
 	/* Register extension no matter what and store the AST argument registering it
 	 */
-	if ( ext->id >= 0 ) {
-		reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext->id);
-		if ( reg->arg == NULL )
-			reg->arg = ext_arg;
+	if ( reg != NULL )
 		reg->loaded = TRUE;
-	}
 
 	return TRUE;
 }
@@ -669,8 +717,9 @@ void sieve_validator_extension_register
 	if ( ext->id < 0 ) return;
 
 	reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext->id);
-	reg->valext = valext;
+	i_assert(reg->ext == NULL || reg->ext == ext);
 	reg->ext = ext;
+	reg->valext = valext;
 	reg->context = context;
 }
 

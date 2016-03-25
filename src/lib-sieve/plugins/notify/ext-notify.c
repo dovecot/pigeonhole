@@ -50,14 +50,15 @@ const struct sieve_extension_def notify_extension = {
  * Extension validation
  */
 
-static bool ext_notify_validator_extension_validate
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-		void *context, struct sieve_ast_argument *require_arg);
+static bool ext_notify_validator_check_conflict
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg,
+		const struct sieve_extension *ext_other);
 
 const struct sieve_validator_extension notify_validator_extension = {
-	&notify_extension,
-	ext_notify_validator_extension_validate,
-	NULL
+	.ext = &notify_extension,
+	.check_conflict = ext_notify_validator_check_conflict
 };
 
 static bool ext_notify_validator_load
@@ -74,21 +75,18 @@ static bool ext_notify_validator_load
 	return TRUE;
 }
 
-static bool ext_notify_validator_extension_validate
-(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-	void *context ATTR_UNUSED, struct sieve_ast_argument *require_arg)
+static bool ext_notify_validator_check_conflict
+(const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg,
+	const struct sieve_extension *ext_other)
 {
-	const struct sieve_extension *ext_entfy;
-
-	if ( (ext_entfy=sieve_extension_get_by_name(ext->svinst, "enotify")) != NULL ) {
-
-		/* Check for conflict with enotify */
-		if ( sieve_validator_extension_loaded(valdtr, ext_entfy) ) {
-			sieve_argument_validate_error(valdtr, require_arg,
-				"the (deprecated) notify extension cannot be used "
-				"together with the enotify extension");
-			return FALSE;
-		}
+	/* Check for conflict with enotify */
+	if ( sieve_extension_name_is(ext_other, "enotify") ) {
+		sieve_argument_validate_error(valdtr, require_arg,
+			"the (deprecated) notify extension cannot be used "
+			"together with the enotify extension");
+		return FALSE;
 	}
 
 	return TRUE;

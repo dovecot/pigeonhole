@@ -101,14 +101,16 @@ static bool ext_imapflags_load
  * Validator
  */
 
-static bool ext_imapflags_validator_extension_validate
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-		void *context, struct sieve_ast_argument *require_arg);
+static bool ext_imapflags_validator_check_conflict
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg,
+		const struct sieve_extension *other_ext);
 
-const struct sieve_validator_extension imapflags_validator_extension = {
-	&imapflags_extension,
-	ext_imapflags_validator_extension_validate,
-	NULL
+const struct sieve_validator_extension
+imapflags_validator_extension = {
+	.ext = &imapflags_extension,
+	.check_conflict = ext_imapflags_validator_check_conflict
 };
 
 static bool ext_imapflags_validator_load
@@ -135,14 +137,16 @@ static bool ext_imapflags_validator_load
 	return TRUE;
 }
 
-static bool ext_imapflags_validator_extension_validate
-(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-	void *context ATTR_UNUSED, struct sieve_ast_argument *require_arg)
+static bool ext_imapflags_validator_check_conflict
+(const struct sieve_extension *ext,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg,
+	const struct sieve_extension *ext_other)
 {
 	const struct sieve_extension *master_ext =
 		(const struct sieve_extension *) ext->context;
 
-	if ( sieve_validator_extension_loaded(valdtr, master_ext) ) {
+	if ( ext_other == master_ext ) {
 		sieve_argument_validate_error(valdtr, require_arg,
 			"the (deprecated) imapflags extension cannot be used "
 			"together with the imap4flags extension");

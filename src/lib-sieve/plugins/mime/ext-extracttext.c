@@ -75,14 +75,15 @@ static void ext_extracttext_unload
  * Extension validation
  */
 
-static bool ext_extracttext_validator_extension_validate
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-		void *context, struct sieve_ast_argument *require_arg);
+static bool ext_extracttext_validator_validate
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg);
 
-const struct sieve_validator_extension extracttext_validator_extension = {
-	&extracttext_extension,
-	ext_extracttext_validator_extension_validate,
-	NULL
+const struct sieve_validator_extension
+extracttext_validator_extension = {
+	.ext = &extracttext_extension,
+	.validate = ext_extracttext_validator_validate
 };
 
 static bool ext_extracttext_validator_load
@@ -98,9 +99,10 @@ static bool ext_extracttext_validator_load
 	return TRUE;
 }
 
-static bool ext_extracttext_validator_extension_validate
-(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-	void *context ATTR_UNUSED, struct sieve_ast_argument *require_arg)
+static bool ext_extracttext_validator_validate
+(const struct sieve_extension *ext,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg)
 {
 	struct ext_extracttext_context *ectx =
 		(struct ext_extracttext_context *)ext->context;

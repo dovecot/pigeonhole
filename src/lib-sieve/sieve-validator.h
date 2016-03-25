@@ -127,13 +127,19 @@ bool sieve_validate_tag_parameter
 struct sieve_validator_extension {
 	const struct sieve_extension_def *ext;
 
+	bool (*check_conflict)
+		(const struct sieve_extension *ext,
+			struct sieve_validator *valdtr, void *context,
+			struct sieve_ast_argument *require_arg,
+			const struct sieve_extension *ext_other);
 	bool (*validate)
-		(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-			void *context, struct sieve_ast_argument *require_arg);
+		(const struct sieve_extension *ext,
+			struct sieve_validator *valdtr, void *context,
+			struct sieve_ast_argument *require_arg);
 
 	void (*free)
-		(const struct sieve_extension *ext, struct sieve_validator *valdtr,
-			void *context);
+		(const struct sieve_extension *ext,
+			struct sieve_validator *valdtr, void *context);
 };
 
 bool sieve_validator_extension_load
