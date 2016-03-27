@@ -5,7 +5,7 @@
  * -------------------
  *
  * Authors: Stephan Bosch
- * Specification: rfc6785
+ * Specification: RFC 6785
  * Implementation: full
  * Status: experimental
  *

@@ -510,7 +510,14 @@ Sieve Interpreter - Extension Configuration
 
   This plugin and the extensions it provides require explicit configuration and
   are not enabled for use by default. Refer to doc/plugins/sieve_extprograms.txt
-	for more information.
+  for more information.
+
+- Imapsieve plugins
+
+  The "sieve_imapsieve" Sieve plugin and the "imap_sieve" IMAP plugin add Sieve
+  support to IMAP.
+
+  Refer to doc/plugins/imapsieve.txt for more information.
 
 Sieve Interpreter - Migration from CMUSieve (Dovecot v1.0/v1.1)
 ---------------------------------------------------------------

@@ -1,0 +1,117 @@
+IMAPSIEVE plugins for Pigeonhole
+
+Relevant specifications
+=======================
+
+	doc/rfc/imapsieve.rfc6785.txt
+
+Introduction
+============
+
+As defined in the base specification, the Sieve language is used only during
+delivery. However, in principle, it can be used at any point in the processing
+of an email message. RFC 6785 defines the use of Sieve filtering in IMAP,
+operating when messages are created or their attributes are changed. This
+feature extends both Sieve and IMAP. Therefore, Pigeonhole provides both an
+IMAP and a Sieve plugin. The IMAP plugin is called "imap_sieve" and the Sieve
+plugin is called "sieve_imapsieve".
+
+The basic IMAPSIEVE capability allows attaching a Sieve script to a mailbox
+(or any mailbox) by setting a special IMAP METADATA entry. This way, users can
+configure Sieve scripts that are run for IMAP events in their mailboxes. The
+Pigeonhole implementation also adds the ability for administrators to configure
+Sieve scripts outside the user's control, that are run either before or after a
+user's script if there is one.
+
+Configuration
+=============
+
+The IMAP plugin is activated by adding it to the mail_plugins setting for 
+the imap protocol:
+
+protocol imap {
+	mail_plugins = $mail_plugins imap_sieve
+}
+
+This only will enable support for administrator scripts. User scripts are only
+supported when additionally a Sieve URL is configured using the imapsieve_url
+plugin setting. This URL points to the ManageSieve server that users need to use
+to upload their Sieve scripts. This URL will be shown to the client in the IMAP
+CAPABILITY response as IMAPSIEVE=<URL>.
+
+The Sieve plugin is activated by adding it to the sieve_plugins setting:
+
+sieve_plugins = sieve_imapsieve
+
+This plugin registers the "imapsieve" extension with the Sieve interpreter. This
+extension is enabled implicitly, which means that it does not need to be added
+to the "sieve_extensions" setting.
+
+Note that the "imapsieve" extension can only be used from IMAP. When it is used
+in the active delivery script, it will cause runtime errors. To make a Sieve
+script suitable for both delivery and IMAP, the availability of the extension
+can be tested using the "ihave" test (RFC 5463) as usual.
+
+The following settings are recognized the "imap_sieve" plugin:
+
+imapsieve_url =
+  If configured, this setting enables support for user Sieve scripts in IMAP.
+  So, leave this unconfigured if you don't want users to have the ability to
+  associate Sieve scripts with mailboxes. The value is an URL pointing to the
+  ManageSieve server that users must use to upload their Sieve scripts. 
+
+imapsieve_mailboxXXX_name =
+  This setting configures the name of a mailbox for which administrator scripts
+  are configured. The `XXX' in this setting is a sequence number, which allows
+  configuring multiple associations between Sieve scripts and mailboxes. The 
+  settings defined hereafter with matching sequence numbers apply to the mailbox
+  named by this setting. The sequence of configured mailboxes ends at the first
+  missing "imapsieve_mailboxXXX_name" setting. This setting supports wildcards
+  with a syntax compatible with the IMAP LIST command, meaning that this
+  setting can apply to multiple or even all ("*") mailboxes.
+
+imapsieve_mailboxXXX_before =
+imapsieve_mailboxXXX_after =
+  When an IMAP event of interest occurs, these sieve scripts are executed before
+  and after any user script respectively. These settings each specify the
+  location of a single sieve script. The semantics of these settings are very
+  similar to the "sieve_before" and "sieve_after" settings: the specified
+  scripts form a sequence together with the user script in which the next script
+  is only executed when an (implicit) keep action is executed.
+
+imapsieve_mailboxXXX_causes =
+  Only execute the administrator Sieve scripts for the mailbox configured with
+  "imapsieve_mailboxXXX_name" when one of the listed IMAPSIEVE causes apply.
+  This has no effect on the user script, which is always executed no matter the
+  cause.
+
+imapsieve_mailboxXXX_from =
+  Only execute the administrator Sieve scripts for the mailbox configured with
+  "imapsieve_mailboxXXX_name" when the message originates from the indicated
+  mailbox. This setting supports wildcards with a syntax compatible with the
+  IMAP LIST command
+
+Example
+-------
+
+protocol imap {
+  # Space separated list of plugins to load (default is global mail_plugins).
+  mail_plugins = $mail_plugins imap_sieve
+}
+
+plugin {
+  sieve_plugins = sieve_imapsieve
+
+  imapsieve_url = sieve://sieve.example.org
+
+  # From elsewhere to Spam folder
+  imapsieve_mailbox1_name = Spam
+  imapsieve_mailbox1_causes = COPY
+  imapsieve_mailbox1_before = file:/usr/lib/dovecot/sieve/report-spam.sieve
+  # From Spam folder to elsewhere
+  imapsieve_mailbox2_name = *
+  imapsieve_mailbox2_from = Spam
+  imapsieve_mailbox2_causes = COPY
+  imapsieve_mailbox2_before = file:/usr/lib/dovecot/sieve/report-ham.sieve
+}
+
