@@ -643,8 +643,8 @@ imap_sieve_mailbox_transaction_run(
 			if (rule->after != NULL)
 				array_append(&scripts_after, &rule->after, 1);
 		}
-		array_append_space(&scripts_before);
-		array_append_space(&scripts_after);
+		(void)array_append_space(&scripts_before);
+		(void)array_append_space(&scripts_after);
 
 		/* Initialize */
 		ret = imap_sieve_run_init
