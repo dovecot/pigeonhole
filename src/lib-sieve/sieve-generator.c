@@ -476,12 +476,18 @@ struct sieve_binary *sieve_generator_run
 	(void) sieve_binary_emit_unsigned(sblock, ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
 		const struct sieve_extension *ext = extensions[i];
+		bool deferred;
 
 		/* Link to binary */
 		(void)sieve_binary_extension_link(sbin, ext);
 
 		/* Emit */
 		sieve_binary_emit_extension(sblock, ext, 0);
+
+		/* Emit deferred flag */
+		deferred = !sieve_ast_extension_is_required
+			(gentr->genenv.ast, ext);
+		sieve_binary_emit_byte(sblock, (deferred ? 1 : 0));
 
 		/* Load */
 		if ( ext->def != NULL && ext->def->generator_load != NULL &&

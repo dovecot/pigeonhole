@@ -154,12 +154,13 @@ int sieve_runtime_mail_error
 struct sieve_interpreter_extension {
 	const struct sieve_extension_def *ext_def;
 
-	void (*run)
-		(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
-			void *context);
+	int (*run)
+		(const struct sieve_extension *ext,
+			const struct sieve_runtime_env *renv,
+			void *context, bool deferred);
 	void (*free)
-		(const struct sieve_extension *ext, struct sieve_interpreter *interp,
-			void *context);
+		(const struct sieve_extension *ext,
+			struct sieve_interpreter *interp, void *context);
 };
 
 void sieve_interpreter_extension_register
@@ -170,6 +171,10 @@ void sieve_interpreter_extension_set_context
 		void *context);
 void *sieve_interpreter_extension_get_context
 	(struct sieve_interpreter *interp, const struct sieve_extension *ext);
+
+int sieve_interpreter_extension_start
+	(struct sieve_interpreter *interp,
+		const struct sieve_extension *ext);
 
 /*
  * Opcodes and operands

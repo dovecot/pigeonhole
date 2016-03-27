@@ -36,6 +36,9 @@ struct sieve_interpreter_extension_reg {
 	const struct sieve_extension *ext;
 
 	void *context;
+
+	unsigned int deferred:1;
+	unsigned int started:1;
 };
 
 /*
@@ -186,12 +189,22 @@ static struct sieve_interpreter *_sieve_interpreter_create
 		sieve_binary_read_unsigned(sblock, address, &ext_count) ) {
 
 		for ( i = 0; i < ext_count; i++ ) {
-			unsigned int code = 0;
+			unsigned int code = 0, deferred;
+			struct sieve_interpreter_extension_reg *reg;
 			const struct sieve_extension *ext;
 
-			if ( !sieve_binary_read_extension(sblock, address, &code, &ext) ) {
+			if ( !sieve_binary_read_extension
+					(sblock, address, &code, &ext) ||
+				!sieve_binary_read_byte
+					(sblock, address, &deferred) ) {
 				success = FALSE;
 				break;
+			}
+
+			if ( deferred > 0 && ext->id >= 0 ) {
+				reg = array_idx_modifiable
+					(&interp->extensions, (unsigned int)ext->id);
+				reg->deferred = TRUE;
 			}
 
 			if ( ext->def != NULL ) {
@@ -504,6 +517,34 @@ void *sieve_interpreter_extension_get_context
 	reg = array_idx(&interp->extensions, (unsigned int) ext->id);
 
 	return reg->context;
+}
+
+int sieve_interpreter_extension_start
+(struct sieve_interpreter *interp,
+	const struct sieve_extension *ext)
+{
+	struct sieve_interpreter_extension_reg *reg;
+	int ret;
+
+	i_assert( ext->id >= 0 );
+
+	if ( ext->id >= (int) array_count(&interp->extensions) )
+		return SIEVE_EXEC_OK;
+
+	reg = array_idx_modifiable
+		(&interp->extensions, (unsigned int)ext->id);
+
+	if (!reg->deferred)
+		return SIEVE_EXEC_OK;
+	reg->deferred = FALSE;
+	reg->started = TRUE;
+
+	if ( reg->intext != NULL &&
+		reg->intext->run != NULL &&
+		(ret=reg->intext->run(ext,
+			&interp->runenv, reg->context, TRUE)) <= 0 )
+		return ret;
+	return SIEVE_EXEC_OK;
 }
 
 /*
@@ -923,17 +964,25 @@ int sieve_interpreter_continue
 int sieve_interpreter_start
 (struct sieve_interpreter *interp, struct sieve_result *result, bool *interrupted)
 {
-	const struct sieve_interpreter_extension_reg *eregs;
+	struct sieve_interpreter_extension_reg *eregs;
 	unsigned int ext_count, i;
+	int ret;
 
 	interp->runenv.result = result;
 	interp->runenv.msgctx = sieve_result_get_message_context(result);
 
 	/* Signal registered extensions that the interpreter is being run */
-	eregs = array_get(&interp->extensions, &ext_count);
+	eregs = array_get_modifiable(&interp->extensions, &ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
-		if ( eregs[i].intext != NULL && eregs[i].intext->run != NULL )
-			eregs[i].intext->run(eregs[i].ext, &interp->runenv, eregs[i].context);
+		if ( !eregs[i].deferred ) {
+			eregs[i].started = TRUE;
+			if (eregs[i].intext != NULL &&
+				eregs[i].intext->run != NULL &&
+				(ret=eregs[i].intext->run(eregs[i].ext,
+					&interp->runenv, eregs[i].context, FALSE)) <= 0 ) {
+				return ret;
+			}
+		}
 	}
 
 	return sieve_interpreter_continue(interp, interrupted);

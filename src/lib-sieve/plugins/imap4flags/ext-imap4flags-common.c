@@ -242,18 +242,20 @@ static string_t *_get_flags_string
  * Runtime initialization
  */
 
-static void ext_imap4flags_runtime_init
-(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
-	void *context ATTR_UNUSED)
+static int ext_imap4flags_runtime_init
+(const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv,
+	void *context ATTR_UNUSED, bool deferred ATTR_UNUSED)
 {
 	sieve_result_add_implicit_side_effect
 		(renv->result, NULL, TRUE, ext, &flags_side_effect, NULL);
+	return SIEVE_EXEC_OK;
 }
 
-const struct sieve_interpreter_extension imap4flags_interpreter_extension = {
-	&imap4flags_extension,
-	ext_imap4flags_runtime_init,
-	NULL,
+const struct sieve_interpreter_extension
+imap4flags_interpreter_extension = {
+	.ext_def = &imap4flags_extension,
+	.run = ext_imap4flags_runtime_init
 };
 
 /*

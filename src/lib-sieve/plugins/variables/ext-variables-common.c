@@ -717,10 +717,10 @@ static void ext_variables_interpreter_free
 	sieve_variable_scope_binary_unref(&ctx->local_scope_bin);
 }
 
-static struct sieve_interpreter_extension variables_interpreter_extension = {
-	&variables_extension,
-	NULL,
-	ext_variables_interpreter_free
+static struct sieve_interpreter_extension
+variables_interpreter_extension = {
+	.ext_def = &variables_extension,
+	.free = ext_variables_interpreter_free
 };
 
 static struct ext_variables_interpreter_context *

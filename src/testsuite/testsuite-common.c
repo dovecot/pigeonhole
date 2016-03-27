@@ -109,7 +109,7 @@ bool testsuite_generator_context_initialize
 
 static void testsuite_interpreter_free
 (const struct sieve_extension *ext ATTR_UNUSED,
-        struct sieve_interpreter *interp ATTR_UNUSED, void *context)
+	struct sieve_interpreter *interp ATTR_UNUSED, void *context)
 {
 	struct testsuite_interpreter_context *ctx =
 		(struct testsuite_interpreter_context *)context;
@@ -118,10 +118,10 @@ static void testsuite_interpreter_free
 		sieve_binary_unref(&ctx->compiled_script);
 }
 
-const struct sieve_interpreter_extension testsuite_interpreter_ext = {
-        &testsuite_extension,
-	NULL,
-        testsuite_interpreter_free,
+const struct sieve_interpreter_extension
+testsuite_interpreter_ext = {
+	.ext_def = &testsuite_extension,
+	.free = testsuite_interpreter_free,
 };
 
 bool testsuite_interpreter_context_initialize

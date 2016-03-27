@@ -144,10 +144,10 @@ static void mtch_interpreter_free
 	}
 }
 
-struct sieve_interpreter_extension mtch_interpreter_extension = {
-	&match_type_extension,
-	NULL,
-	mtch_interpreter_free
+struct sieve_interpreter_extension
+mtch_interpreter_extension = {
+	.ext_def = &match_type_extension,
+	.free = mtch_interpreter_free
 };
 
 static inline struct mtch_interpreter_context *get_interpreter_context

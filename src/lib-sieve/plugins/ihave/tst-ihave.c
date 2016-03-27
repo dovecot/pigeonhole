@@ -5,10 +5,13 @@
 #include "array.h"
 
 #include "sieve-common.h"
+#include "sieve-stringlist.h"
 #include "sieve-extensions.h"
+#include "sieve-code.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
+#include "sieve-interpreter.h"
 
 #include "ext-ihave-common.h"
 
@@ -24,6 +27,8 @@ static bool tst_ihave_validate
 static bool tst_ihave_validate_const
 	(struct sieve_validator *valdtr, struct sieve_command *tst,
 		int *const_current, int const_next);
+static bool tst_ihave_generate
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *tst);
 
 const struct sieve_command_def ihave_test = {
 	.identifier = "ihave",
@@ -33,7 +38,25 @@ const struct sieve_command_def ihave_test = {
 	.block_allowed = FALSE,
 	.block_required = FALSE,
 	.validate = tst_ihave_validate,
-	.validate_const = tst_ihave_validate_const
+	.validate_const = tst_ihave_validate_const,
+	.generate = tst_ihave_generate
+};
+
+/*
+ * Ihave operation
+ */
+
+static bool tst_ihave_operation_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static int tst_ihave_operation_execute
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+
+const struct sieve_operation_def tst_ihave_operation = {
+	.mnemonic = "IHAVE",
+	.ext_def = &ihave_extension,
+	.code = EXT_IHAVE_OPERATION_IHAVE,
+	.dump = tst_ihave_operation_dump,
+	.execute = tst_ihave_operation_execute
 };
 
 /*
@@ -143,6 +166,10 @@ static bool tst_ihave_validate
 			return FALSE;
 	}
 
+	if ( !sieve_validator_argument_activate
+		(valdtr, tst, arg, FALSE) )
+		return FALSE;
+
 	tst->data = (void *) TRUE;
 	return TRUE;
 }
@@ -152,8 +179,105 @@ static bool tst_ihave_validate_const
 	int *const_current, int const_next ATTR_UNUSED)
 {
 	if ( (bool)tst->data == TRUE )
-		*const_current = 1;
+		*const_current = -1;
 	else
 		*const_current = 0;
 	return TRUE;
+}
+
+/*
+ * Code generation
+ */
+
+bool tst_ihave_generate
+(const struct sieve_codegen_env *cgenv, struct sieve_command *tst)
+{
+	/* Emit opcode */
+	sieve_operation_emit(cgenv->sblock,
+		tst->ext, &tst_ihave_operation);
+
+	/* Generate arguments */
+	return sieve_generate_arguments(cgenv, tst, NULL);
+}
+
+/*
+ * Code dump
+ */
+
+static bool tst_ihave_operation_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	sieve_code_dumpf(denv, "IHAVE");
+	sieve_code_descend(denv);
+
+	return sieve_opr_stringlist_dump
+		(denv, address, "capabilities");
+}
+
+/*
+ * Code execution
+ */
+
+static int tst_ihave_operation_execute
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
+{
+	struct sieve_instance *svinst = renv->svinst;
+	struct sieve_stringlist *capabilities;
+	string_t *cap_item;
+	bool matched;
+	int ret;
+
+	/*
+	 * Read operands
+	 */
+
+	/* Read capabilities */
+	if ( (ret=sieve_opr_stringlist_read
+		(renv, address, "capabilities", &capabilities)) <= 0 )
+		return ret;
+
+	/*
+	 * Perform test
+	 */
+
+	/* Perform the test */
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "ihave test");
+	sieve_runtime_trace_descend(renv);
+
+	cap_item = NULL;
+	matched = TRUE;
+	while ( matched &&
+		(ret=sieve_stringlist_next_item(capabilities, &cap_item)) > 0 ) {
+		const struct sieve_extension *ext;
+		int sret;
+
+		ext = sieve_extension_get_by_name(svinst, str_c(cap_item));
+		if (ext == NULL) {
+			sieve_runtime_trace_error(renv,
+				"ihave: invalid extension name");
+			return SIEVE_EXEC_BIN_CORRUPT;
+		}
+		sret = sieve_interpreter_extension_start(renv->interp, ext);
+		if ( sret == SIEVE_EXEC_FAILURE ) {
+			sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+				"extension `%s' not available",
+				sieve_extension_name(ext));
+			matched = FALSE;
+		} else if ( sret == SIEVE_EXEC_OK ) {
+			sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+				"extension `%s' available",
+				sieve_extension_name(ext));
+		} else {
+			return sret;
+		}
+	}
+	if ( ret < 0 ) {
+		sieve_runtime_trace_error(renv,
+			"invalid capabilities item");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	/* Set test result for subsequent conditional jump */
+	sieve_interpreter_set_test_result(renv->interp, matched);
+	return SIEVE_EXEC_OK;
 }

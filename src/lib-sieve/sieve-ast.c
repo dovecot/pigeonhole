@@ -32,6 +32,8 @@ struct sieve_ast_extension_reg {
 	const struct sieve_extension *ext;
 	const struct sieve_ast_extension *ast_ext;
 	void *context;
+
+	unsigned int required:1;
 };
 
 /*
@@ -129,24 +131,32 @@ struct sieve_script *sieve_ast_script(struct sieve_ast *ast)
  * Extension support
  */
 
-bool sieve_ast_extension_link
-(struct sieve_ast *ast, const struct sieve_extension *ext)
+void sieve_ast_extension_link
+(struct sieve_ast *ast, const struct sieve_extension *ext,
+	bool required)
 {
 	unsigned int i, ext_count;
 	const struct sieve_extension *const *extensions;
+	struct sieve_ast_extension_reg *reg;
 
-	if ( ext->id < 0 ) return TRUE;
+	if ( ext->id < 0 ) return;
+
+	/* Initialize registration */
+	reg = array_idx_modifiable(&ast->extensions,
+		(unsigned int) ext->id);
+	i_assert(reg->ext == NULL || reg->ext == ext);
+	reg->ext = ext;
+	reg->required = reg->required || required;
 
 	/* Prevent duplicates */
 	extensions = array_get(&ast->linked_extensions, &ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
 		if ( extensions[i] == ext )
-			return FALSE;
+			return;
 	}
 
 	/* Add extension */
 	array_append(&ast->linked_extensions, &ext, 1);
-	return TRUE;
 }
 
 const struct sieve_extension * const *sieve_ast_extensions_get
@@ -165,8 +175,9 @@ void sieve_ast_extension_register
 
 	/* Initialize registration */
 	reg = array_idx_modifiable(&ast->extensions, (unsigned int) ext->id);
-	reg->ast_ext = ast_ext;
+	i_assert(reg->ext == NULL || reg->ext == ext);
 	reg->ext = ext;
+	reg->ast_ext = ast_ext;
 	reg->context = context;
 }
 
@@ -192,6 +203,18 @@ void *sieve_ast_extension_get_context
 	reg = array_idx(&ast->extensions, (unsigned int) ext->id);
 
 	return reg->context;
+}
+
+bool sieve_ast_extension_is_required
+(struct sieve_ast *ast, const struct sieve_extension *ext)
+{
+	const struct sieve_ast_extension_reg *reg;
+
+	i_assert( ext->id >= 0 &&
+		ext->id < (int) array_count(&ast->extensions) );
+
+	reg = array_idx(&ast->extensions, (unsigned int)ext->id);
+	return reg->required;
 }
 
 /*

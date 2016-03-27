@@ -27,9 +27,10 @@ struct ext_date_context {
  * Runtime initialization
  */
 
-static void ext_date_runtime_init
-(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
-	void *context ATTR_UNUSED)
+static int ext_date_runtime_init
+(const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv,
+	void *context ATTR_UNUSED, bool deferred ATTR_UNUSED)
 {
 	struct ext_date_context *dctx;
 	pool_t pool;
@@ -53,12 +54,13 @@ static void ext_date_runtime_init
 
 	sieve_message_context_extension_set
 		(renv->msgctx, ext, (void *) dctx);
+	return SIEVE_EXEC_OK;
 }
 
-static struct sieve_interpreter_extension date_interpreter_extension = {
-	&date_extension,
-	ext_date_runtime_init,
-	NULL,
+static struct sieve_interpreter_extension
+date_interpreter_extension = {
+	.ext_def = &date_extension,
+	.run = ext_date_runtime_init
 };
 
 bool ext_date_interpreter_load
@@ -116,7 +118,7 @@ time_t ext_date_get_current_date
 		sieve_message_context_extension_get(renv->msgctx, this_ext);
 
 	if ( dctx == NULL ) {
-		ext_date_runtime_init(this_ext, renv, NULL);
+		ext_date_runtime_init(this_ext, renv, NULL, FALSE);
 		dctx = (struct ext_date_context *)
 			sieve_message_context_extension_get(renv->msgctx, this_ext);
 

@@ -567,6 +567,7 @@ static bool sieve_validator_extensions_check_conficts
 
 	regs = array_get_modifiable(&valdtr->extensions, &count);
 	for ( i = 0; i < count; i++ ) {
+		bool required = ext_reg->required && regs[i].required;
 		if (regs[i].ext == NULL)
 			continue;
 
@@ -575,7 +576,7 @@ static bool sieve_validator_extensions_check_conficts
 			ext_reg->valext->check_conflict != NULL ) {
 			if ( !ext_reg->valext->check_conflict(ext, valdtr,
 				ext_reg->context, ext_arg, regs[i].ext,
-				ext_reg->required) )
+				required) )
 				return FALSE;
 		}
 
@@ -584,7 +585,7 @@ static bool sieve_validator_extensions_check_conficts
 			regs[i].valext->check_conflict != NULL ) {
 			if ( !regs[i].valext->check_conflict(regs[i].ext,
 				valdtr, regs[i].context, regs[i].arg, ext,
-				regs[i].required) )
+				required) )
 				return FALSE;
 		}
 	}
@@ -616,29 +617,23 @@ bool sieve_validator_extension_load
 			(&valdtr->extensions, (unsigned int) ext->id);
 		i_assert(reg->ext == NULL || reg->ext == ext);
 		reg->ext = ext;
-		reg->required = reg->required && required;
+		reg->required = reg->required || required;
 		if ( reg->arg == NULL )
 			reg->arg = ext_arg;
 	}
 
-	if ( !sieve_ast_extension_link(valdtr->ast, ext) ) {
-		/*if ( cmd != NULL && ext_arg != NULL ) {
-			sieve_argument_validate_warning(valdtr, ext_arg,
-				"%s %s: sieve capability `%s' already loaded",
+	/* Link extension to AST for use at code generation */
+	sieve_ast_extension_link(valdtr->ast, ext, reg->required);
+
+	if ( extdef->validator_load != NULL &&
+		!extdef->validator_load(ext, valdtr) ) {
+		if ( cmd != NULL && ext_arg != NULL ) {
+			sieve_argument_validate_error(valdtr, ext_arg,
+				"%s %s: failed to load Sieve capability `%s'",
 				sieve_command_identifier(cmd), sieve_command_type_name(cmd),
 				sieve_extension_name(ext));
-		}*/
-	} else {
-		if ( extdef->validator_load != NULL &&
-			!extdef->validator_load(ext, valdtr) ) {
-			if ( cmd != NULL && ext_arg != NULL ) {
-				sieve_argument_validate_error(valdtr, ext_arg,
-					"%s %s: failed to load Sieve capability `%s'",
-					sieve_command_identifier(cmd), sieve_command_type_name(cmd),
-					sieve_extension_name(ext));
-			}
-			return FALSE;
 		}
+		return FALSE;
 	}
 
 	/* Check conflicts with other extensions */

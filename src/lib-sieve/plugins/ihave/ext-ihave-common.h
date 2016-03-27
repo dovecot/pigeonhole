@@ -28,7 +28,13 @@ extern const struct sieve_command_def error_command;
  * Operations
  */
 
-extern const struct sieve_operation_def error_operation;
+enum ext_ihave_opcode {
+	EXT_IHAVE_OPERATION_IHAVE,
+	EXT_IHAVE_OPERATION_ERROR
+};
+
+extern const struct sieve_operation_def tst_ihave_operation;
+extern const struct sieve_operation_def cmd_error_operation;
 
 /*
  * AST context

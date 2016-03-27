@@ -280,13 +280,16 @@ void sieve_code_dumper_run(struct sieve_code_dumper *cdumper)
 		sieve_code_descend(denv);
 
 		for ( i = 0; i < ext_count; i++ ) {
-			unsigned int code = 0;
+			unsigned int code = 0, deferred;
 			const struct sieve_extension *ext;
 
 			T_BEGIN {
 				sieve_code_mark(denv);
 
-				if ( !sieve_binary_read_extension(sblock, address, &code, &ext) ) {
+				if ( !sieve_binary_read_extension
+						(sblock, address, &code, &ext) ||
+					!sieve_binary_read_byte
+						(sblock, address, &deferred) ) {
 					success = FALSE;
 					break;
 				}
@@ -295,7 +298,9 @@ void sieve_code_dumper_run(struct sieve_code_dumper *cdumper)
 					sieve_code_dumpf(denv, "[undefined]");
 
 				} else {
-					sieve_code_dumpf(denv, "%s", sieve_extension_name(ext));
+					sieve_code_dumpf(denv, "%s%s",
+						sieve_extension_name(ext),
+						(deferred > 0 ? " (deferred)" : ""));
 
 					if (ext->def->code_dump != NULL ) {
 						sieve_code_descend(denv);

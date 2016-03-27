@@ -24,6 +24,15 @@
 #include "ext-ihave-binary.h"
 
 /*
+ * Operations
+ */
+
+const struct sieve_operation_def *ext_ihave_operations[] = {
+	&tst_ihave_operation,
+	&cmd_error_operation
+};
+
+/*
  * Extension
  */
 
@@ -34,11 +43,12 @@ static bool ext_ihave_generator_load
 
 const struct sieve_extension_def ihave_extension = {
 	"ihave",
+	.version = 1,
 	.validator_load = ext_ihave_validator_load,
 	.generator_load = ext_ihave_generator_load,
 	.binary_load = ext_ihave_binary_load,
 	.binary_dump = ext_ihave_binary_dump,
-	SIEVE_EXT_DEFINE_OPERATION(error_operation)
+	SIEVE_EXT_DEFINE_OPERATIONS(ext_ihave_operations)
 };
 
 static bool ext_ihave_validator_load

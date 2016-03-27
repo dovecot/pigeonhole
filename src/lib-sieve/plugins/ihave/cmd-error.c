@@ -48,9 +48,10 @@ static bool cmd_error_operation_dump
 static int cmd_error_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def error_operation = {
+const struct sieve_operation_def cmd_error_operation = {
 	.mnemonic = "ERROR",
 	.ext_def = &ihave_extension,
+	.code = EXT_IHAVE_OPERATION_ERROR,
 	.dump = cmd_error_operation_dump,
 	.execute = cmd_error_operation_execute
 };
@@ -79,7 +80,7 @@ static bool cmd_error_validate
 static bool cmd_error_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &error_operation);
+	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &cmd_error_operation);
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);

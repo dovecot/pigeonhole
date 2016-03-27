@@ -327,19 +327,18 @@ void ext_include_register_generator_context
  * Runtime initialization
  */
 
-static void ext_include_runtime_init
-(const struct sieve_extension *this_ext, const struct sieve_runtime_env *renv,
-	void *context)
+static int ext_include_runtime_init
+(const struct sieve_extension *this_ext,
+	const struct sieve_runtime_env *renv,
+	void *context, bool deferred ATTR_UNUSED)
 {
 	struct ext_include_interpreter_context *ctx =
 		(struct ext_include_interpreter_context *) context;
 	struct ext_include_context *ectx = ext_include_get_context(this_ext);
 
-
 	if ( ctx->parent == NULL ) {
 		ctx->global = p_new(ctx->pool, struct ext_include_interpreter_global, 1);
 		p_array_init(&ctx->global->included_scripts, ctx->pool, 10);
-
 
 		ctx->global->var_scope =
 			ext_include_binary_get_global_scope(this_ext, renv->sbin);
@@ -351,12 +350,12 @@ static void ext_include_runtime_init
 
 	sieve_ext_variables_runtime_set_storage
 		(ectx->var_ext, renv, this_ext, ctx->global->var_storage);
+	return SIEVE_EXEC_OK;
 }
 
 static struct sieve_interpreter_extension include_interpreter_extension = {
-	&include_extension,
-	ext_include_runtime_init,
-	NULL,
+	.ext_def = &include_extension,
+	.run = ext_include_runtime_init
 };
 
 /*
