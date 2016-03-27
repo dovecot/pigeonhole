@@ -223,6 +223,7 @@ src/plugins/Makefile
 src/plugins/doveadm-sieve/Makefile
 src/plugins/lda-sieve/Makefile
 src/plugins/sieve-extprograms/Makefile
+src/plugins/imapsieve/Makefile
 src/plugins/settings/Makefile
 src/sieve-tools/Makefile
 src/managesieve/Makefile
