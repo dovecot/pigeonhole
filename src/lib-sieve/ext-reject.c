@@ -50,15 +50,39 @@ static const struct sieve_operation_def ereject_operation;
  * Extensions
  */
 
+static bool ext_reject_validator_validate
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg,
+		bool required);
+static int ext_reject_interpreter_run
+	(const struct sieve_extension *this_ext,
+		const struct sieve_runtime_env *renv,
+		void *context, bool deferred);
+
 /* Reject */
 
 static bool ext_reject_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool ext_reject_interpreter_load
+	(const struct sieve_extension *ext,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_extension_def reject_extension = {
 	.name = "reject",
 	.validator_load =	ext_reject_validator_load,
+	.interpreter_load = ext_reject_interpreter_load,
 	SIEVE_EXT_DEFINE_OPERATION(reject_operation)
+};
+const struct sieve_validator_extension
+reject_validator_extension = {
+	.ext = &reject_extension,
+	.validate = ext_reject_validator_validate
+};
+const struct sieve_interpreter_extension
+reject_interpreter_extension = {
+	.ext_def = &reject_extension,
+	.run = ext_reject_interpreter_run
 };
 
 static bool ext_reject_validator_load
@@ -67,18 +91,44 @@ static bool ext_reject_validator_load
 	/* Register new command */
 	sieve_validator_register_command(valdtr, ext, &reject_command);
 
+	sieve_validator_extension_register
+		(valdtr, ext, &reject_validator_extension, NULL);
+	return TRUE;
+}
+
+static bool ext_reject_interpreter_load
+(const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv,
+	sieve_size_t *address ATTR_UNUSED)
+{
+	sieve_interpreter_extension_register
+		(renv->interp, ext, &reject_interpreter_extension, NULL);
 	return TRUE;
 }
 
 /* EReject */
 
 static bool ext_ereject_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool ext_ereject_interpreter_load
+	(const struct sieve_extension *ext,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_extension_def ereject_extension = {
 	.name = "ereject",
 	.validator_load = ext_ereject_validator_load,
+	.interpreter_load = ext_ereject_interpreter_load,
 	SIEVE_EXT_DEFINE_OPERATION(ereject_operation)
+};
+const struct sieve_validator_extension
+ereject_validator_extension = {
+	.ext = &ereject_extension,
+	.validate = ext_reject_validator_validate
+};
+const struct sieve_interpreter_extension
+ereject_interpreter_extension = {
+	.ext_def = &ereject_extension,
+	.run = ext_reject_interpreter_run
 };
 
 static bool ext_ereject_validator_load
@@ -87,7 +137,59 @@ static bool ext_ereject_validator_load
 	/* Register new command */
 	sieve_validator_register_command(valdtr, ext, &ereject_command);
 
+	sieve_validator_extension_register
+		(valdtr, ext, &ereject_validator_extension, NULL);
 	return TRUE;
+}
+
+static bool ext_ereject_interpreter_load
+(const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv,
+	sieve_size_t *address ATTR_UNUSED)
+{
+	sieve_interpreter_extension_register
+		(renv->interp, ext, &ereject_interpreter_extension, NULL);
+	return TRUE;
+}
+
+/* Environment checking */
+
+static bool ext_reject_validator_validate
+(const struct sieve_extension *ext,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg,
+	bool required)
+{
+	if (required) {
+		enum sieve_compile_flags flags =
+			sieve_validator_compile_flags(valdtr);
+
+		if ( (flags & SIEVE_COMPILE_FLAG_NO_ENVELOPE) != 0 ) {
+			sieve_argument_validate_error(valdtr, require_arg,
+				"the %s extension cannot be used in this context "
+				"(needs access to message envelope)",
+				sieve_extension_name(ext));
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+static int ext_reject_interpreter_run
+(const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv,
+	void *context ATTR_UNUSED, bool deferred)
+{
+	if ( (renv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0 ) {
+		if ( !deferred ) {
+			sieve_runtime_error(renv, NULL,
+				"the %s extension cannot be used in this context "
+				"(needs access to message envelope)",
+				sieve_extension_name(ext));
+		}
+		return SIEVE_EXEC_FAILURE;
+	}
+	return SIEVE_EXEC_OK;
 }
 
 /*

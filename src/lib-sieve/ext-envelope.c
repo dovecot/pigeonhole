@@ -45,12 +45,37 @@ const struct sieve_extension_def envelope_extension;
  */
 
 static bool ext_envelope_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool ext_envelope_interpreter_load
+	(const struct sieve_extension *ext,
+		const struct sieve_runtime_env *renv,
+		sieve_size_t *address);
+
+static bool ext_envelope_validator_validate
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg,
+		bool required);
+static int ext_envelope_interpreter_run
+	(const struct sieve_extension *this_ext,
+		const struct sieve_runtime_env *renv,
+		void *context, bool deferred);
 
 const struct sieve_extension_def envelope_extension = {
 	.name = "envelope",
+	.interpreter_load = ext_envelope_interpreter_load,
 	.validator_load = ext_envelope_validator_load,
 	SIEVE_EXT_DEFINE_OPERATION(envelope_operation)
+};
+const struct sieve_validator_extension
+envelope_validator_extension = {
+	.ext = &envelope_extension,
+	.validate = ext_envelope_validator_validate
+};
+const struct sieve_interpreter_extension
+envelope_interpreter_extension = {
+	.ext_def = &envelope_extension,
+	.run = ext_envelope_interpreter_run
 };
 
 static bool ext_envelope_validator_load
@@ -59,7 +84,57 @@ static bool ext_envelope_validator_load
 	/* Register new test */
 	sieve_validator_register_command(valdtr, ext, &envelope_test);
 
+	sieve_validator_extension_register
+		(valdtr, ext, &envelope_validator_extension, NULL);
 	return TRUE;
+}
+
+static bool ext_envelope_interpreter_load
+(const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv,
+	sieve_size_t *address ATTR_UNUSED)
+{
+	sieve_interpreter_extension_register
+		(renv->interp, ext, &envelope_interpreter_extension, NULL);
+	return TRUE;
+}
+
+static bool ext_envelope_validator_validate
+(const struct sieve_extension *ext,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg,
+	bool required)
+{
+	if (required) {
+		enum sieve_compile_flags flags =
+			sieve_validator_compile_flags(valdtr);
+
+		if ( (flags & SIEVE_COMPILE_FLAG_NO_ENVELOPE) != 0 ) {
+			sieve_argument_validate_error(valdtr, require_arg,
+				"the %s extension cannot be used in this context "
+				"(needs access to message envelope)",
+				sieve_extension_name(ext));
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+static int ext_envelope_interpreter_run
+(const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv,
+	void *context ATTR_UNUSED, bool deferred)
+{
+	if ( (renv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0 ) {
+		if ( !deferred ) {
+			sieve_runtime_error(renv, NULL,
+				"the %s extension cannot be used in this context "
+				"(needs access to message envelope)",
+				sieve_extension_name(ext));
+		}
+		return SIEVE_EXEC_FAILURE;
+	}
+	return SIEVE_EXEC_OK;
 }
 
 /*

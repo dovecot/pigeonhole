@@ -116,6 +116,8 @@ enum sieve_compile_flags {
 	SIEVE_COMPILE_FLAG_UPLOADED = (1<<1),
 	/* Script is being activated (usually through ManageSieve) */
 	SIEVE_COMPILE_FLAG_ACTIVATED = (1<<2),
+	/* Compiled for environment with no access to envelope */
+	SIEVE_COMPILE_FLAG_NO_ENVELOPE = (1<<3)
 };
 
 /*
@@ -143,7 +145,9 @@ enum sieve_execute_flags {
 	 */
 	SIEVE_EXECUTE_FLAG_NOGLOBAL = (1<<0),
 	/* Do not execute (implicit keep) at the end */
-	SIEVE_EXECUTE_FLAG_DEFER_KEEP = (1<<1)
+	SIEVE_EXECUTE_FLAG_DEFER_KEEP = (1<<1),
+	/* There is no envelope */
+	SIEVE_EXECUTE_FLAG_NO_ENVELOPE = (1<<2)
 };
 
 /*
