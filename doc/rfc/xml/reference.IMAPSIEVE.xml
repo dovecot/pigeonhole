@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='IMAPSIEVE' target='http://www.rfc-editor.org/info/rfc6785'>
+<front>
+<title>Support for Internet Message Access Protocol (IMAP) Events in Sieve</title>
+<author initials='B.' surname='Leiba' fullname='B. Leiba'><organization /></author>
+<date year='2012' month='November' />
+<abstract><t>Sieve defines an email filtering language that can, in principle, plug into any point in the processing of an email message.  As defined in the base specification, it plugs into mail delivery.  This document defines how Sieve can plug into points in IMAP where messages are created or changed, adding the option of user-defined or installation-defined filtering (or, with Sieve extensions, features such as notifications).  Because this requires future Sieve extensions to specify their interactions with this one, this document updates the base Sieve specification, RFC 5228.  [STANDARDS-TRACK]</t></abstract>
+</front>
+<seriesInfo name='RFC' value='6785'/>
+<seriesInfo name='DOI' value='10.17487/RFC6785'/>
+</reference>

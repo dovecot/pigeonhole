@@ -179,6 +179,8 @@ test_cases = \
 	tests/extensions/vnd.dovecot/debug/execute.svtest \
 	tests/extensions/vnd.dovecot/environment/basic.svtest \
 	tests/extensions/vnd.dovecot/environment/variables.svtest \
+	tests/extensions/vnd.dovecot/report/errors.svtest \
+	tests/extensions/vnd.dovecot/report/execute.svtest \
 	tests/deprecated/notify/basic.svtest \
 	tests/deprecated/notify/mailto.svtest \
 	tests/deprecated/notify/errors.svtest \

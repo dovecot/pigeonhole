@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='MARF' target='http://www.rfc-editor.org/info/rfc5965'>
+<front>
+<title>An Extensible Format for Email Feedback Reports</title>
+<author initials='Y.' surname='Shafranovich' fullname='Y. Shafranovich'><organization /></author>
+<author initials='J.' surname='Levine' fullname='J. Levine'><organization /></author>
+<author initials='M.' surname='Kucherawy' fullname='M. Kucherawy'><organization /></author>
+<date year='2010' month='August' />
+<abstract><t>This document defines an extensible format and MIME type that may be used by mail operators to report feedback about received email to other parties.  This format is intended as a machine-readable replacement for various existing report formats currently used in Internet email.  [STANDARDS-TRACK]</t></abstract>
+</front>
+<seriesInfo name='RFC' value='5965'/>
+<seriesInfo name='DOI' value='10.17487/RFC5965'/>
+</reference>

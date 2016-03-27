@@ -1,2 +1,2 @@
-SUBDIRS = debug environment
+SUBDIRS = debug environment report
 

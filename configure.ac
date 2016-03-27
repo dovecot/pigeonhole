@@ -217,6 +217,7 @@ src/lib-sieve/plugins/mime/Makefile
 src/lib-sieve/plugins/vnd.dovecot/Makefile
 src/lib-sieve/plugins/vnd.dovecot/debug/Makefile
 src/lib-sieve/plugins/vnd.dovecot/environment/Makefile
+src/lib-sieve/plugins/vnd.dovecot/report/Makefile
 src/lib-sieve-tool/Makefile
 src/lib-managesieve/Makefile
 src/plugins/Makefile

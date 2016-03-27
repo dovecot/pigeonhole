@@ -1,0 +1,70 @@
+require "vnd.dovecot.testsuite";
+require "vnd.dovecot.report";
+require "relational";
+require "comparator-i;ascii-numeric";
+require "body";
+
+/*
+ * Simple test
+ */
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Simple" {
+	report "abuse" "This message is spam!" "abuse@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not body :raw :contains "This message is spam!" {
+		test_fail "report does not contain user text";
+	}
+
+	if not body :raw :contains "Klutsefluts" {
+		test_fail "report does not contain message body";
+	}
+}
+
+/*
+ * Simple - :headers_only test
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Simple - :headers_only" {
+	report :headers_only "abuse"
+		"This message is spam!" "abuse@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not body :raw :contains "This message is spam!" {
+		test_fail "report does not contain user text";
+	}
+
+	if body :raw :contains "Klutsefluts" {
+		test_fail "report contains message body";
+	}
+}

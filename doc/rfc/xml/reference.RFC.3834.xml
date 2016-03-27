@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference  anchor='RFC3834' target='http://www.rfc-editor.org/info/rfc3834'>
+<front>
+<title>Recommendations for Automatic Responses to Electronic Mail</title>
+<author initials='K.' surname='Moore' fullname='K. Moore'><organization /></author>
+<date year='2004' month='August' />
+<abstract><t>This memo makes recommendations for software that automatically responds to incoming electronic mail messages, including &quot;out of the office&quot; or &quot;vacation&quot; response generators, mail filtering software, email-based information services, and other automatic responders.  The purpose of these recommendations is to discourage undesirable behavior which is caused or aggravated by such software, to encourage uniform behavior (where appropriate) among automatic mail responders, and to clear up some sources of confusion among implementors of automatic email responders.  [STANDARDS-TRACK]</t></abstract>
+</front>
+<seriesInfo name='RFC' value='3834'/>
+<seriesInfo name='DOI' value='10.17487/RFC3834'/>
+</reference>

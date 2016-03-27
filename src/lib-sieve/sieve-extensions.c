@@ -144,6 +144,7 @@ extern const struct sieve_extension_def editheader_extension;
 
 extern const struct sieve_extension_def vnd_debug_extension;
 extern const struct sieve_extension_def vnd_environment_extension;
+extern const struct sieve_extension_def vnd_report_extension;
 
 const struct sieve_extension_def *sieve_extra_extensions[] = {
 	&vacation_seconds_extension, &spamtest_extension, &spamtestplus_extension,
@@ -151,7 +152,7 @@ const struct sieve_extension_def *sieve_extra_extensions[] = {
 	&mboxmetadata_extension, &servermetadata_extension,
 
 	/* vnd.dovecot. */
-	&vnd_debug_extension, &vnd_environment_extension
+	&vnd_debug_extension, &vnd_environment_extension, &vnd_report_extension
 };
 
 const unsigned int sieve_extra_extensions_count =
