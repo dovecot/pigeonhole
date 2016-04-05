@@ -327,7 +327,9 @@ static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 				msgdata->final_envelope_to);
 		}
 	} else if ( msgctx->envelope_final_recipient->local_part == NULL ) {
-		if ( strcmp(msgdata->orig_envelope_to, msgdata->final_envelope_to) != 0 ) {
+		if (msgdata->orig_envelope_to != NULL &&
+			msgdata->final_envelope_to != NULL &&
+			strcmp(msgdata->orig_envelope_to, msgdata->final_envelope_to) != 0 ) {
 			sieve_sys_warning(svinst,
 				"final envelope recipient address '%s' is a null path",
 				msgdata->final_envelope_to);
