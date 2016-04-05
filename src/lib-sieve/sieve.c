@@ -800,6 +800,43 @@ size_t sieve_max_script_size(struct sieve_instance *svinst)
 }
 
 /*
+ * User log
+ */
+
+const char *sieve_user_get_log_path
+(struct sieve_instance *svinst,
+	struct sieve_script *user_script)
+{
+	const char *log_path = NULL;
+
+	/* Determine user log file path */
+	if ( (log_path=sieve_setting_get
+		(svinst, "sieve_user_log")) == NULL ) {
+		const char *path;
+
+		if ( user_script == NULL ||
+			(path=sieve_file_script_get_path(user_script)) == NULL ) {
+			/* Default */
+			if ( svinst->home_dir != NULL ) {
+				log_path = t_strconcat
+					(svinst->home_dir, "/.dovecot.sieve.log", NULL);
+			}
+		} else {
+			/* Use script file as a base (legacy behavior) */
+			log_path = t_strconcat(path, ".log", NULL);
+		}
+	} else if ( svinst->home_dir != NULL ) {
+		/* Expand home dir if necessary */
+		if ( log_path[0] == '~' ) {
+			log_path = home_expand_tilde(log_path, svinst->home_dir);
+		} else if ( log_path[0] != '/' ) {
+			log_path = t_strconcat(svinst->home_dir, "/", log_path, NULL);
+		}
+	}
+	return log_path;
+}
+
+/*
  * Script trace log
  */
 

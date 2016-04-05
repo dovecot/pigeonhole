@@ -214,6 +214,15 @@ unsigned int sieve_max_actions(struct sieve_instance *svinst);
 size_t sieve_max_script_size(struct sieve_instance *svinst);
 
 /*
+ * User log
+ */
+
+const char *sieve_user_get_log_path
+	(struct sieve_instance *svinst,
+		struct sieve_script *user_script)
+	ATTR_NULL(2);
+
+/*
  * Script trace log
  */
 

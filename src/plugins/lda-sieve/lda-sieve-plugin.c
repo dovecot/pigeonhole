@@ -793,32 +793,9 @@ static int lda_sieve_execute
 		/* Initialize user error handler */
 
 		if ( srctx->user_script != NULL ) {
-			const char *log_path = NULL;
-
-			/* Determine user log file path */
-			if ( (log_path=mail_user_plugin_getenv
-				(mdctx->dest_user, "sieve_user_log")) == NULL ) {
-				const char *path;
-
-				if ( (path=sieve_file_script_get_path(srctx->user_script)) == NULL ) {
-					/* Default */
-					if ( srctx->home_dir != NULL ) {
-						log_path = t_strconcat
-							(srctx->home_dir, "/.dovecot.sieve.log", NULL);
-					}
-				} else {
-					/* Use script file as a basic (legacy behavior) */
-					log_path = t_strconcat(path, ".log", NULL);
-				}
-			} else if ( srctx->home_dir != NULL ) {
-				/* Expand home dir if necessary */
-				if ( log_path[0] == '~' ) {
-					log_path = home_expand_tilde(log_path, srctx->home_dir);
-				} else if ( log_path[0] != '/' ) {
-					log_path = t_strconcat(srctx->home_dir, "/", log_path, NULL);
-				}
-			}
-
+			const char *log_path =
+				sieve_user_get_log_path(svinst, srctx->user_script);
+	
 			if ( log_path != NULL ) {
 				srctx->userlog = log_path;
 				srctx->user_ehandler = sieve_logfile_ehandler_create

@@ -246,44 +246,14 @@ struct imap_sieve_run {
 };
 
 static void
-imap_sieve_run_init_user_log(
-	struct imap_sieve_run *isrun)
+imap_sieve_run_init_user_log(struct imap_sieve_run *isrun)
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
 	const char *log_path;
 
-	/* Determine user log file path */ // FIXME: code shared with LDA
-	if ( (log_path=mail_user_plugin_getenv
-		(isieve->user, "sieve_user_log")) == NULL ) {
-		const char *path;
-
-		if ( isrun->user_script == NULL ||
-			(path=sieve_file_script_get_path
-				(isrun->user_script)) == NULL ) {
-			/* Default */
-			if ( isieve->home_dir != NULL ) {
-				log_path = t_strconcat
-					(isieve->home_dir, "/.dovecot.sieve.log", NULL);
-			}
-		} else {
-			/* Use script file as a basis (legacy behavior) */
-			log_path = t_strconcat(path, ".log", NULL);
-		}
-	} else {
-		if ( isieve->home_dir != NULL ) {
-			/* Expand home dir if necessary */
-			if ( log_path[0] == '~' ) {
-				log_path = home_expand_tilde
-					(log_path, isieve->home_dir);
-			} else if ( log_path[0] != '/' ) {
-				log_path = t_strconcat
-					(isieve->home_dir, "/", log_path, NULL);
-			}
-		}
-	}
-
-	/* Initialize user error handler */
+	log_path = sieve_user_get_log_path
+		(svinst, isrun->user_script);
 	if ( log_path != NULL ) {
 		isrun->userlog = p_strdup(isrun->pool, log_path);
 		isrun->user_ehandler = sieve_logfile_ehandler_create
