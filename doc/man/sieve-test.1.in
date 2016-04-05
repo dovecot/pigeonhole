@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2016 Pigeonhole authors, see the included COPYING file
-.TH "SIEVE\-TEST" 1 "2014-01-01" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
+.TH "SIEVE\-TEST" 1 "2016-04-05" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
 .SH NAME
 sieve\-test \- Pigeonhole\(aqs Sieve script tester
 .\"------------------------------------------------------------------------
@@ -86,6 +86,17 @@ fileinto and keep are skipped.
 The mailbox where the keep action stores the message. This is \(dqINBOX\(dq
 by default.
 .TP
+.BI \-o\  setting = value
+Overrides the configuration
+.I setting
+from
+.I @pkgsysconfdir@/dovecot.conf
+and from the userdb with the given
+.IR value .
+In order to override multiple settings, the
+.B \-o
+option may be specified multiple times.
+.TP
 .BI \-r\  recipient\-address
 The final envelope recipient address. Some tests and actions will
 use this as the script owner\(aqs e\-mail address. For example, this is what is
@@ -108,6 +119,11 @@ Using '\-' as filename causes the trace data to be written to \fBstdout\fP.
 .BI \-T\  trace\-option
 Configures runtime trace debugging, which is enabled with the \fP\-t\fP option.
 Refer to the runtime trace debugging section below.
+.TP
+.BI \-u\  user
+Run the Sieve script for the given \fIuser\fP. When omitted, the
+.I command
+will be executed with the environment of the currently logged in user.
 .TP
 .BI \-x\  extensions
 Set the available extensions. The parameter is a space\-separated list of the

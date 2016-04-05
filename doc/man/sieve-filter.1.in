@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2016 Pigeonhole authors, see the included COPYING file
-.TH "SIEVE\-FILTER" 1 "2014-01-01" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
+.TH "SIEVE\-FILTER" 1 "2016-04-05" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
 .SH NAME
 sieve\-filter \- Pigeonhole\(aqs Sieve mailbox filter tool
 
@@ -95,6 +95,17 @@ messages to the indicated folder, instead of just leaving them in the
 \fIsource\-mailbox\fP. Refer to the explanation of the \fIsource\-mailbox\fP
 argument for more information on mailbox naming.
 .TP
+.BI \-o\  setting = value
+Overrides the configuration
+.I setting
+from
+.I @pkgsysconfdir@/dovecot.conf
+and from the userdb with the given
+.IR value .
+In order to override multiple settings, the
+.B \-o
+option may be specified multiple times.
+.TP
 .BI \-q\  output\-mailbox\  \fB[not\ implemented\ yet]\fP
 Store outgoing e\-mail into the indicated \fIoutput\-mailbox\fP. By default,
 the sieve\-filter command ignores Sieve actions such as redirect, reject,
@@ -116,7 +127,9 @@ Specify additional scripts to be executed before the main script. Multiple
 sequentially in the order specified at the command line.
 .TP
 .BI \-u\  user
-Run the Sieve script for the given \fIuser\fP.
+Run the Sieve script for the given \fIuser\fP. When omitted, the
+.I command
+will be executed with the environment of the currently logged in user.
 .TP
 .B \-v
 Produce verbose output during filtering.

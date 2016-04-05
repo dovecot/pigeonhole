@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2016 Pigeonhole authors, see the included COPYING file
-.TH "SIEVEC" 1 "2014-01-01" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
+.TH "SIEVEC" 1 "2016-04-05" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
 sievec \- Pigeonhole\(aqs Sieve script compiler
@@ -59,6 +59,22 @@ for a compiled Sieve binary file. Note that this option is not allowed when the
 .TP
 .B \-D
 Enable Sieve debugging.
+.TP
+.BI \-o\  setting = value
+Overrides the configuration
+.I setting
+from
+.I @pkgsysconfdir@/dovecot.conf
+and from the userdb with the given
+.IR value .
+In order to override multiple settings, the
+.B \-o
+option may be specified multiple times.
+.TP
+.BI \-u\  user
+Run the Sieve script for the given \fIuser\fP. When omitted, the
+.I command
+will be executed with the environment of the currently logged in user.
 .TP
 .BI \-x\  extensions
 Set the available extensions. The parameter is a space\-separated list of the
