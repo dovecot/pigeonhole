@@ -655,6 +655,7 @@ imap_sieve_mailbox_transaction_run(
 
 	if (ret <= 0) {
 		// FIXME: temp fail should be handled properly
+		mailbox_free(&sbox);
 		return 0;
 	}
 
