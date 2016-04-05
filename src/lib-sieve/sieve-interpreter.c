@@ -130,8 +130,8 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.scriptenv = senv;
 
-	if ( senv->trace_stream != NULL ) {
-		interp->trace.stream = senv->trace_stream;
+	if ( senv->trace_log != NULL ) {
+		interp->trace.log = senv->trace_log;
 		interp->trace.config = senv->trace_config;
 		interp->trace.indent = 0;
 		interp->runenv.trace = &interp->trace;

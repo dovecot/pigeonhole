@@ -4,9 +4,12 @@
 #include "lib.h"
 #include "str.h"
 #include "istream.h"
+#include "ostream.h"
 #include "buffer.h"
+#include "time-util.h"
 #include "eacces-error.h"
 #include "home-expand.h"
+#include "hostpid.h"
 
 #include "sieve-settings.h"
 #include "sieve-extensions.h"
@@ -796,5 +799,94 @@ size_t sieve_max_script_size(struct sieve_instance *svinst)
 	return svinst->max_script_size;
 }
 
+/*
+ * Script trace log
+ */
 
+struct sieve_trace_log {
+	struct ostream *output;
+};
+
+int sieve_trace_log_create
+(struct sieve_instance *svinst, const char *path,
+	struct sieve_trace_log **trace_log_r)
+{
+	struct sieve_trace_log *trace_log;
+	struct ostream *output;
+	int fd;
+
+	*trace_log_r = NULL;
+
+	if ( path == NULL ) {
+		output = o_stream_create_fd(1, 0, FALSE);
+	} else {
+		fd = open(path, O_CREAT | O_APPEND | O_WRONLY, 0600);
+		if ( fd == -1 ) {
+			sieve_sys_error(svinst, "trace: "
+				"creat(%s) failed: %m", path);
+			return -1;
+		}
+		output = o_stream_create_fd_autoclose(&fd, 0);
+	}
+
+	trace_log = i_new(struct sieve_trace_log, 1);
+	trace_log->output = output;
+
+	*trace_log_r = trace_log;
+	return 0;
+}
+
+int sieve_trace_log_create_dir
+(struct sieve_instance *svinst, const char *dir,
+	struct sieve_trace_log **trace_log_r)
+{
+	static unsigned int counter = 0;
+	const char *timestamp, *prefix;
+	struct stat st;
+
+	*trace_log_r = NULL;
+
+	if (stat(dir, &st) < 0) {
+		if (errno != ENOENT && errno != EACCES) {
+			sieve_sys_error(svinst, "trace: "
+				"stat(%s) failed: %m", dir);
+		}
+		return -1;
+	}
+
+	timestamp = t_strflocaltime("%Y%m%d-%H%M%S", ioloop_time);
+
+	counter++;
+	prefix = t_strdup_printf("%s/%s.%s.%u.trace",
+		dir, timestamp, my_pid, counter);
+	return sieve_trace_log_create(svinst, prefix, trace_log_r);
+}
+
+void sieve_trace_log_write_line
+(struct sieve_trace_log *trace_log, const string_t *line)
+{
+	struct const_iovec iov[2];
+
+	if (line == NULL) {
+		o_stream_send_str(trace_log->output, "\n");
+		return;
+	}
+
+	memset(iov, 0, sizeof(iov));
+	iov[0].iov_base = str_data(line);
+	iov[0].iov_len = str_len(line);
+	iov[1].iov_base = "\n";
+	iov[1].iov_len = 1;
+	o_stream_sendv(trace_log->output, iov, 2);
+}
+
+void sieve_trace_log_free(struct sieve_trace_log **_trace_log)
+{
+	struct sieve_trace_log *trace_log = *_trace_log;
+
+	*_trace_log = NULL;
+
+	o_stream_destroy(&trace_log->output);
+	i_free(trace_log);
+}
 

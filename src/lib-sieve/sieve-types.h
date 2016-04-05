@@ -21,6 +21,7 @@ struct sieve_binary;
 struct sieve_message_data;
 struct sieve_script_env;
 struct sieve_exec_status;
+struct sieve_trace_log;
 
 /*
  * System environment
@@ -225,7 +226,7 @@ struct sieve_script_env {
 	struct sieve_exec_status *exec_status;
 
 	/* Runtime trace*/
-	struct ostream *trace_stream;
+	struct sieve_trace_log *trace_log;
 	struct sieve_trace_config trace_config;
 };
 

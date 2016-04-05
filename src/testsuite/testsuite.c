@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
 	const char *scriptfile, *dumpfile, *tracefile;
-	struct sieve_trace_config tr_config;
+	struct sieve_trace_config trace_config;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 	bool log_stdout = FALSE;
@@ -95,8 +95,8 @@ int main(int argc, char **argv)
 
 	/* Parse arguments */
 	dumpfile = tracefile = NULL;
-	memset(&tr_config, 0, sizeof(tr_config));
-	tr_config.level = SIEVE_TRLVL_ACTIONS;
+	memset(&trace_config, 0, sizeof(trace_config));
+	trace_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'd':
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 			tracefile = optarg;
 			break;
 		case 'T':
-			sieve_tool_parse_trace_option(&tr_config, optarg);
+			sieve_tool_parse_trace_option(&trace_config, optarg);
 			break;
 		case 'E':
 			log_stdout = TRUE;
@@ -162,14 +162,17 @@ int main(int argc, char **argv)
 	if ( (sbin = sieve_compile
 		(svinst, scriptfile, NULL, testsuite_log_main_ehandler, 0, NULL))
 			!= NULL ) {
-		struct ostream *tracestream = NULL;
+		struct sieve_trace_log *trace_log = NULL;
 		struct sieve_script_env scriptenv;
 
 		/* Dump script */
 		sieve_tool_dump_binary_to(sbin, dumpfile, FALSE);
 
-		if ( tracefile != NULL )
-			tracestream = sieve_tool_open_output_stream(tracefile);
+		if ( tracefile != NULL ) {
+			(void)sieve_trace_log_create(svinst,
+				(strcmp(tracefile, "-") == 0 ? NULL : tracefile),
+				&trace_log);
+		}
 
 		testsuite_mailstore_init();
 		testsuite_message_init();
@@ -182,8 +185,8 @@ int main(int argc, char **argv)
 		scriptenv.smtp_add_rcpt = testsuite_smtp_add_rcpt;
 		scriptenv.smtp_send = testsuite_smtp_send;
 		scriptenv.smtp_finish = testsuite_smtp_finish;
-		scriptenv.trace_stream = tracestream;
-		scriptenv.trace_config = tr_config;
+		scriptenv.trace_log = trace_log;
+		scriptenv.trace_config = trace_config;
 
 		testsuite_scriptenv = &scriptenv;
 
@@ -213,8 +216,8 @@ int main(int argc, char **argv)
 		testsuite_mailstore_deinit();
 		testsuite_result_deinit();
 
-		if ( tracestream != NULL )
-			o_stream_unref(&tracestream);
+		if ( trace_log != NULL )
+			sieve_trace_log_free(&trace_log);
 
 		testsuite_scriptenv = NULL;
 	} else {

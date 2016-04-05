@@ -36,15 +36,13 @@ static inline string_t *_trace_line_new
 static inline void _trace_line_print
 (string_t *trline, const struct sieve_runtime_env *renv)
 {
-	str_append_c(trline, '\n');
-
-	o_stream_send(renv->trace->stream, str_data(trline), str_len(trline));
+	sieve_trace_log_write_line(renv->trace->log, trline);
 }
 
 static inline void _trace_line_print_empty
 (const struct sieve_runtime_env *renv)
 {
-	o_stream_send_str(renv->trace->stream, "\n");
+	sieve_trace_log_write_line(renv->trace->log, NULL);
 }
 
 /*

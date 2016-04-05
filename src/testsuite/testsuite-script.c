@@ -116,7 +116,7 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
 	scriptenv.user = renv->scriptenv->user;
-	scriptenv.trace_stream = renv->scriptenv->trace_stream;
+	scriptenv.trace_log = renv->scriptenv->trace_log;
 	scriptenv.trace_config = renv->scriptenv->trace_config;
 
 	result = testsuite_result_get();
@@ -189,7 +189,7 @@ bool testsuite_script_multiscript
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
 	scriptenv.user = renv->scriptenv->user;
-	scriptenv.trace_stream = renv->scriptenv->trace_stream;
+	scriptenv.trace_log = renv->scriptenv->trace_log;
 	scriptenv.trace_config = renv->scriptenv->trace_config;
 
 	/* Start execution */

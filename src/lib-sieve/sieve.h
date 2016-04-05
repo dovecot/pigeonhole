@@ -213,4 +213,20 @@ unsigned int sieve_max_redirects(struct sieve_instance *svinst);
 unsigned int sieve_max_actions(struct sieve_instance *svinst);
 size_t sieve_max_script_size(struct sieve_instance *svinst);
 
+/*
+ * Script trace log
+ */
+
+struct sieve_trace_log;
+
+int sieve_trace_log_create
+	(struct sieve_instance *svinst, const char *path,
+		struct sieve_trace_log **trace_log_r)
+	ATTR_NULL(2);
+int sieve_trace_log_create_dir
+	(struct sieve_instance *svinst, const char *dir,
+		struct sieve_trace_log **trace_log_r);
+
+void sieve_trace_log_free(struct sieve_trace_log **_trace_log);
+
 #endif

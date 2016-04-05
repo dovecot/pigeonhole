@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 	ARRAY_TYPE (const_string) scriptfiles;
 	const char *scriptfile, *recipient, *final_recipient, *sender, *mailbox,
 		*dumpfile, *tracefile, *mailfile, *mailloc;
-	struct sieve_trace_config tr_config;
+	struct sieve_trace_config trace_config;
 	struct mail *mail;
 	struct sieve_binary *main_sbin, *sbin = NULL;
 	struct sieve_message_data msgdata;
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 	struct sieve_exec_status estatus;
 	struct sieve_error_handler *ehandler, *action_ehandler;
 	struct ostream *teststream = NULL;
-	struct ostream *tracestream = NULL;
+	struct sieve_trace_log *trace_log = NULL;
 	bool force_compile = FALSE, execute = FALSE;
 	int exit_status = EXIT_SUCCESS;
 	int ret, c;
@@ -146,8 +146,8 @@ int main(int argc, char **argv)
 	/* Parse arguments */
 	recipient = final_recipient = sender = mailbox = dumpfile =
 		tracefile = mailloc = NULL;
-	memset(&tr_config, 0, sizeof(tr_config));
-	tr_config.level = SIEVE_TRLVL_ACTIONS;
+	memset(&trace_config, 0, sizeof(trace_config));
+	trace_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'r':
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 			break;
 			/* trace options */
 		case 'T':
-			sieve_tool_parse_trace_option(&tr_config, optarg);
+			sieve_tool_parse_trace_option(&trace_config, optarg);
 			break;
 		case 'd':
 			/* dump file */
@@ -287,8 +287,11 @@ int main(int argc, char **argv)
 					( msgdata.id == NULL ? "unspecified" : msgdata.id )));
 		}
 
-		if ( tracefile != NULL )
-			tracestream = sieve_tool_open_output_stream(tracefile);
+		if ( tracefile != NULL ) {
+			(void)sieve_trace_log_create(svinst,
+				(strcmp(tracefile, "-") == 0 ? NULL : tracefile),
+				&trace_log);
+		}
 
 		/* Compose script environment */
 		memset(&scriptenv, 0, sizeof(scriptenv));
@@ -301,8 +304,8 @@ int main(int argc, char **argv)
 		scriptenv.smtp_finish = sieve_smtp_finish;
 		scriptenv.duplicate_mark = duplicate_mark;
 		scriptenv.duplicate_check = duplicate_check;
-		scriptenv.trace_stream = tracestream;
-		scriptenv.trace_config = tr_config;
+		scriptenv.trace_log = trace_log;
+		scriptenv.trace_config = trace_config;
 		scriptenv.exec_status = &estatus;
 
 		/* Run the test */
@@ -412,6 +415,8 @@ int main(int argc, char **argv)
 
 		if ( teststream != NULL )
 			o_stream_destroy(&teststream);
+		if ( trace_log != NULL )
+			sieve_trace_log_free(&trace_log);
 
 		/* Cleanup remaining binaries */
 		if ( sbin != NULL )

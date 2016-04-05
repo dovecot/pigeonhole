@@ -216,4 +216,12 @@ struct sieve_instance {
 	struct sieve_mail_sender redirect_from;
 };
 
+/*
+ * Script trace log
+ */
+
+void sieve_trace_log_write_line
+	(struct sieve_trace_log *trace_log, const string_t *line)
+	ATTR_NULL(2);
+
 #endif /* __SIEVE_COMMON_H */

@@ -13,7 +13,7 @@
 
 struct sieve_runtime_trace {
 	struct sieve_trace_config config;
-	struct ostream *stream;
+	struct sieve_trace_log *log;
 	unsigned int indent;
 };
 
