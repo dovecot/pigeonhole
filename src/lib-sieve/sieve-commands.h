@@ -69,14 +69,22 @@ struct sieve_argument {
 /* Error handling */
 
 #define sieve_argument_validate_error(validator, arg_node, ...) \
-	sieve_validator_error(validator, (arg_node)->source_line, __VA_ARGS__)
+	sieve_validator_error(validator, \
+		((arg_node) == NULL ? 0 : (arg_node)->source_line), \
+		__VA_ARGS__)
 #define sieve_argument_validate_warning(validator, arg_node, ...) \
-	sieve_validator_warning(validator, (arg_node)->source_line, __VA_ARGS__)
+	sieve_validator_warning(validator, \
+		((arg_node) == NULL ? 0 : (arg_node)->source_line), \
+		__VA_ARGS__)
 
 #define sieve_argument_generate_error(gentr, arg_node, ...) \
-	sieve_generator_error(gentr, (arg_node)->source_line, __VA_ARGS__)
+	sieve_generator_error(gentr, \
+		((arg_node) == NULL ? 0 : (arg_node)->source_line), \
+		__VA_ARGS__)
 #define sieve_argument_generate_warning(gentr, arg_node, ...) \
-	sieve_generator_warning(gentr, (arg_node)->source_line, __VA_ARGS__)
+	sieve_generator_warning(gentr, \
+		((arg_node) == NULL ? 0 : (arg_node)->source_line), \
+		__VA_ARGS__)
 
 /* Argument API */
 
@@ -205,14 +213,22 @@ bool sieve_command_block_exits_unconditionally
 /* Error handling */
 
 #define sieve_command_validate_error(validator, context, ...) \
-	sieve_validator_error(validator, (context)->ast_node->source_line, __VA_ARGS__)
+	sieve_validator_error(validator, \
+		((context) == NULL ? 0 : (context)->ast_node->source_line), \
+		__VA_ARGS__)
 #define sieve_command_validate_warning(validator, context, ...) \
-	sieve_validator_warning(validator, (context)->ast_node->source_line, __VA_ARGS__)
+	sieve_validator_warning(validator, \
+		((context) == NULL ? 0 : (context)->ast_node->source_line), \
+		__VA_ARGS__)
 
 #define sieve_command_generate_error(gentr, context, ...) \
-	sieve_generator_error(gentr, (context)->ast_node->source_line, __VA_ARGS__)
+	sieve_generator_error(gentr, \
+		((context) == NULL ? 0 : (context)->ast_node->source_line), \
+		__VA_ARGS__)
 #define sieve_command_generate_warning(gentr, context, ...) \
-	sieve_generator_warning(gentr, (context)->ast_node->source_line, __VA_ARGS__)
+	sieve_generator_warning(gentr, \
+		((context) == NULL ? 0 : (context)->ast_node->source_line), \
+		__VA_ARGS__)
 
 /* Utility macros */
 
