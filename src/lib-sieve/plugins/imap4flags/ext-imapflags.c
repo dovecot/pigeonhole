@@ -107,33 +107,24 @@ static bool ext_imapflags_validator_check_conflict
 		struct sieve_ast_argument *require_arg,
 		const struct sieve_extension *other_ext,
 		bool required);
+static bool ext_imapflags_validator_validate
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg,
+		bool required);
 
 const struct sieve_validator_extension
 imapflags_validator_extension = {
 	.ext = &imapflags_extension,
-	.check_conflict = ext_imapflags_validator_check_conflict
+	.check_conflict = ext_imapflags_validator_check_conflict,
+	.validate = ext_imapflags_validator_validate
 };
 
 static bool ext_imapflags_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
-	const struct sieve_extension *master_ext =
-		(const struct sieve_extension *) ext->context;
-
 	sieve_validator_extension_register
 		(valdtr, ext, &imapflags_validator_extension, NULL);
-
-	/* Register commands */
-	sieve_validator_register_command(valdtr, master_ext, &cmd_setflag);
-	sieve_validator_register_command(valdtr, master_ext, &cmd_addflag);
-	sieve_validator_register_command(valdtr, master_ext, &cmd_removeflag);
-
-	sieve_validator_register_command(valdtr, master_ext, &cmd_mark);
-	sieve_validator_register_command(valdtr, master_ext, &cmd_unmark);
-
-        /* Attach flags side-effect to keep and fileinto actions */
-        sieve_ext_imap4flags_register_side_effect(valdtr, master_ext, "keep");
-        sieve_ext_imap4flags_register_side_effect(valdtr, master_ext, "fileinto");
 
 	return TRUE;
 }
@@ -154,6 +145,32 @@ static bool ext_imapflags_validator_check_conflict
 			"together with the imap4flags extension");
 		return FALSE;
 	}
+
+	return TRUE;
+}
+
+static bool ext_imapflags_validator_validate
+(const struct sieve_extension *ext,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg ATTR_UNUSED,
+	bool required ATTR_UNUSED)
+{
+	const struct sieve_extension *master_ext =
+		(const struct sieve_extension *) ext->context;
+
+	/* No conflicts */
+
+	/* Register commands */
+	sieve_validator_register_command(valdtr, master_ext, &cmd_setflag);
+	sieve_validator_register_command(valdtr, master_ext, &cmd_addflag);
+	sieve_validator_register_command(valdtr, master_ext, &cmd_removeflag);
+
+	sieve_validator_register_command(valdtr, master_ext, &cmd_mark);
+	sieve_validator_register_command(valdtr, master_ext, &cmd_unmark);
+
+	/* Attach flags side-effect to keep and fileinto actions */
+	sieve_ext_imap4flags_register_side_effect(valdtr, master_ext, "keep");
+	sieve_ext_imap4flags_register_side_effect(valdtr, master_ext, "fileinto");
 
 	return TRUE;
 }

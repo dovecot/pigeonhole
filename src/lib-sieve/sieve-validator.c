@@ -568,15 +568,23 @@ static bool sieve_validator_extensions_check_conficts
 	regs = array_get_modifiable(&valdtr->extensions, &count);
 	for ( i = 0; i < count; i++ ) {
 		bool required = ext_reg->required && regs[i].required;
+
 		if (regs[i].ext == NULL)
 			continue;
+		if (regs[i].ext == ext)
+			continue;
+		if (!regs[i].loaded)
+			continue;		
 
 		/* Check this extension vs other extension */
 		if ( ext_reg != NULL && ext_reg->valext != NULL &&
 			ext_reg->valext->check_conflict != NULL ) {
-			if ( !ext_reg->valext->check_conflict(ext, valdtr,
-				ext_reg->context, ext_arg, regs[i].ext,
-				required) )
+			struct sieve_ast_argument *this_ext_arg =
+				(ext_arg == NULL ? regs[i].arg : ext_arg);
+
+			if ( !ext_reg->valext->check_conflict(ext,
+				valdtr, ext_reg->context, this_ext_arg,
+				regs[i].ext, required) )
 				return FALSE;
 		}
 
@@ -602,16 +610,18 @@ bool sieve_validator_extension_load
 	struct sieve_validator_extension_reg *reg = NULL;
 
 	if ( ext->global && (valdtr->flags & SIEVE_COMPILE_FLAG_NOGLOBAL) != 0 ) {
-		if ( cmd != NULL && ext_arg != NULL ) {
-			sieve_argument_validate_error(valdtr, ext_arg,
-				"%s %s: failed to load Sieve capability `%s': "
-				"its use is restricted to global scripts",
-				sieve_command_identifier(cmd), sieve_command_type_name(cmd),
-				sieve_extension_name(ext));
-		}
+		const char *cmd_prefix = (cmd == NULL ? "" :
+			t_strdup_printf("%s %s: ", sieve_command_identifier(cmd),
+				sieve_command_type_name(cmd)));
+		sieve_argument_validate_error(valdtr, ext_arg,
+			"%sfailed to load Sieve capability `%s': "
+			"its use is restricted to global scripts",
+			cmd_prefix, sieve_extension_name(ext));
 		return FALSE;
 	}
 
+	/* Register extension no matter what and store the
+	 * AST argument registering it */
 	if ( ext->id >= 0 ) {
 		reg = array_idx_modifiable
 			(&valdtr->extensions, (unsigned int) ext->id);
@@ -622,17 +632,14 @@ bool sieve_validator_extension_load
 			reg->arg = ext_arg;
 	}
 
-	/* Link extension to AST for use at code generation */
-	sieve_ast_extension_link(valdtr->ast, ext, reg->required);
-
 	if ( extdef->validator_load != NULL &&
 		!extdef->validator_load(ext, valdtr) ) {
-		if ( cmd != NULL && ext_arg != NULL ) {
-			sieve_argument_validate_error(valdtr, ext_arg,
-				"%s %s: failed to load Sieve capability `%s'",
-				sieve_command_identifier(cmd), sieve_command_type_name(cmd),
-				sieve_extension_name(ext));
-		}
+		const char *cmd_prefix = (cmd == NULL ? "" :
+			t_strdup_printf("%s %s: ", sieve_command_identifier(cmd),
+				sieve_command_type_name(cmd)));
+		sieve_argument_validate_error(valdtr, ext_arg,
+			"%sfailed to load Sieve capability `%s'",
+			cmd_prefix, sieve_extension_name(ext));
 		return FALSE;
 	}
 
@@ -641,8 +648,9 @@ bool sieve_validator_extension_load
 		(valdtr, ext_arg, ext) )
 		return FALSE;
 
-	/* Register extension no matter what and store the AST argument registering it
-	 */
+	/* Link extension to AST for use at code generation */
+	sieve_ast_extension_link(valdtr->ast, ext, reg->required);
+
 	if ( reg != NULL )
 		reg->loaded = TRUE;
 
@@ -1450,7 +1458,7 @@ static bool sieve_validate_block
 				/* Validate all 'require'd extensions */
 				extrs = array_get(&valdtr->extensions, &ext_count);
 				for ( i = 0; i < ext_count; i++ ) {
-					if ( extrs[i].valext != NULL
+					if ( extrs[i].loaded && extrs[i].valext != NULL
 						&& extrs[i].valext->validate != NULL ) {
 
 						if ( !extrs[i].valext->validate(extrs[i].ext,

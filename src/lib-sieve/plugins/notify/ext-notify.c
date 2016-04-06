@@ -56,10 +56,16 @@ static bool ext_notify_validator_check_conflict
 		struct sieve_ast_argument *require_arg,
 		const struct sieve_extension *ext_other,
 		bool required);
+static bool ext_notify_validator_validate
+	(const struct sieve_extension *ext,
+		struct sieve_validator *valdtr, void *context,
+		struct sieve_ast_argument *require_arg,
+		bool required);
 
 const struct sieve_validator_extension notify_validator_extension = {
 	.ext = &notify_extension,
-	.check_conflict = ext_notify_validator_check_conflict
+	.check_conflict = ext_notify_validator_check_conflict,
+	.validate = ext_notify_validator_validate	
 };
 
 static bool ext_notify_validator_load
@@ -68,11 +74,6 @@ static bool ext_notify_validator_load
 	/* Register validator extension to check for conflict with enotify */
 	sieve_validator_extension_register
 		(valdtr, ext, &notify_validator_extension, NULL);
-
-	/* Register new commands */
-	sieve_validator_register_command(valdtr, ext, &cmd_notify_old);
-	sieve_validator_register_command(valdtr, ext, &cmd_denotify);
-
 	return TRUE;
 }
 
@@ -94,4 +95,14 @@ static bool ext_notify_validator_check_conflict
 	return TRUE;
 }
 
-
+static bool ext_notify_validator_validate
+(const struct sieve_extension *ext,
+	struct sieve_validator *valdtr, void *context ATTR_UNUSED,
+	struct sieve_ast_argument *require_arg ATTR_UNUSED,
+	bool required ATTR_UNUSED)
+{
+	/* No conflicts: register new commands */
+	sieve_validator_register_command(valdtr, ext, &cmd_notify_old);
+	sieve_validator_register_command(valdtr, ext, &cmd_denotify);
+	return TRUE;
+}

@@ -17,7 +17,7 @@ test "Depricated notify extension used with enotify" {
 		test_fail "compile should have failed";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
 		test_fail "wrong number of errors reported";
 	}
 }
@@ -27,7 +27,7 @@ test "Depricated notify extension used with enotify (ihave)" {
 		test_fail "compile should have failed";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
 		test_fail "wrong number of errors reported";
 	}
 }
