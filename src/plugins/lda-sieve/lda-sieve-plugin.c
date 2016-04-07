@@ -771,6 +771,8 @@ static int lda_sieve_execute
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
+	struct sieve_trace_config trace_config;
+	struct sieve_trace_log *trace_log;
 	bool debug = mdctx->dest_user->mail_debug;
 	int ret;
 
@@ -801,6 +803,14 @@ static int lda_sieve_execute
 				srctx->user_ehandler = sieve_logfile_ehandler_create
 					(svinst, srctx->userlog, LDA_SIEVE_MAX_USER_ERRORS);
 			}
+		}
+
+		/* Initialize trace logging */
+
+		if ( sieve_trace_config_get(svinst, &trace_config) >= 0 &&
+			sieve_trace_log_open(svinst, NULL, &trace_log) < 0 ) {
+			memset(&trace_config, 0, sizeof(trace_config));
+			trace_log = NULL;
 		}
 
 		/* Collect necessary message data */
@@ -835,6 +845,8 @@ static int lda_sieve_execute
 		scriptenv.duplicate_flush = lda_sieve_duplicate_flush;
 		scriptenv.reject_mail = lda_sieve_reject_mail;
 		scriptenv.script_context = (void *) mdctx;
+		scriptenv.trace_log = trace_log;
+		scriptenv.trace_config = trace_config;
 		scriptenv.exec_status = &estatus;
 
 		srctx->scriptenv = &scriptenv;
@@ -850,6 +862,9 @@ static int lda_sieve_execute
 
 		mdctx->tried_default_save = estatus.tried_default_save;
 		*storage_r = estatus.last_storage;
+
+		if ( trace_log != NULL )
+			sieve_trace_log_free(&trace_log);
 	}
 
 	return ret;
