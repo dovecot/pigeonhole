@@ -677,11 +677,14 @@ int imap_sieve_run_mail
 	const char *changed_flags)
 {
 	struct imap_sieve *isieve = isrun->isieve;
+	struct sieve_instance *svinst = isieve->svinst;
 	const struct lda_settings *lda_set = isieve->lda_set;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
 	struct imap_sieve_context context;
+	struct sieve_trace_config trace_config;
+	struct sieve_trace_log *trace_log;
 	int ret;
 
 	memset(&context, 0, sizeof(context));
@@ -689,6 +692,18 @@ int imap_sieve_run_mail
 	context.event.cause = isrun->cause;
 	context.event.changed_flags = changed_flags;
 	context.isieve = isieve;
+
+	/* Initialize trace logging */
+
+	if ( sieve_trace_config_get(svinst, &trace_config) >= 0) {
+		const char *tr_label = t_strdup_printf
+			("%s.%s.%u", isieve->user->username,
+				mailbox_get_vname(isrun->mailbox), mail->uid);
+		if ( sieve_trace_log_open(svinst, tr_label, &trace_log) < 0 ) {
+			memset(&trace_config, 0, sizeof(trace_config));
+			trace_log = NULL;
+		}
+	}
 
 	T_BEGIN {
 		/* Collect necessary message data */
@@ -714,12 +729,17 @@ int imap_sieve_run_mail
 		scriptenv.duplicate_check = imap_sieve_duplicate_check;
 		scriptenv.duplicate_flush = imap_sieve_duplicate_flush;
 		scriptenv.exec_status = &estatus;
+		scriptenv.trace_log = trace_log;
+		scriptenv.trace_config = trace_config;
 		scriptenv.script_context = (void *)&context;
 
 		/* Execute script(s) */
 
 		ret = imap_sieve_run_scripts(isrun, &msgdata, &scriptenv);
 	} T_END;
+
+	if ( trace_log != NULL )
+		sieve_trace_log_free(&trace_log);
 
 	return ret;
 }
