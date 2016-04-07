@@ -807,11 +807,10 @@ static int lda_sieve_execute
 
 		/* Initialize trace logging */
 
+		trace_log = NULL;
 		if ( sieve_trace_config_get(svinst, &trace_config) >= 0 &&
-			sieve_trace_log_open(svinst, NULL, &trace_log) < 0 ) {
+			sieve_trace_log_open(svinst, NULL, &trace_log) < 0 )
 			memset(&trace_config, 0, sizeof(trace_config));
-			trace_log = NULL;
-		}
 
 		/* Collect necessary message data */
 
