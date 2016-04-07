@@ -899,6 +899,30 @@ int sieve_trace_log_create_dir
 	return sieve_trace_log_create(svinst, prefix, trace_log_r);
 }
 
+int sieve_trace_log_open
+(struct sieve_instance *svinst,
+	struct sieve_trace_log **trace_log_r)
+{
+	const char *trace_dir =
+		sieve_setting_get(svinst, "sieve_trace_dir");
+
+	*trace_log_r = NULL;
+	if (trace_dir == NULL)
+		return -1;
+
+	if ( svinst->home_dir != NULL ) {
+		/* Expand home dir if necessary */
+		if ( trace_dir[0] == '~' ) {
+			trace_dir = home_expand_tilde(trace_dir, svinst->home_dir);
+		} else if ( trace_dir[0] != '/' ) {
+			trace_dir = t_strconcat(svinst->home_dir, "/", trace_dir, NULL);
+		}
+	}
+
+	return sieve_trace_log_create_dir
+		(svinst, trace_dir, trace_log_r)	;
+}
+
 void sieve_trace_log_write_line
 (struct sieve_trace_log *trace_log, const string_t *line)
 {
@@ -927,3 +951,43 @@ void sieve_trace_log_free(struct sieve_trace_log **_trace_log)
 	i_free(trace_log);
 }
 
+int sieve_trace_config_get(struct sieve_instance *svinst,
+	struct sieve_trace_config *tr_config)
+{
+	const char *tr_level =
+		sieve_setting_get(svinst, "sieve_trace_level");
+	bool tr_debug, tr_addresses;
+
+	memset(tr_config, 0, sizeof(*tr_config));
+
+	if ( tr_level == NULL || *tr_level == '\0' ||
+		strcasecmp(tr_level, "none") == 0 )
+		return -1;
+
+	if ( strcasecmp(tr_level, "actions") == 0 ) {
+		tr_config->level = SIEVE_TRLVL_ACTIONS;
+	} else if ( strcasecmp(tr_level, "commands") == 0 ) {
+		tr_config->level = SIEVE_TRLVL_COMMANDS;
+	} else if ( strcasecmp(tr_level, "tests") == 0 ) {
+		tr_config->level = SIEVE_TRLVL_TESTS;
+	} else if ( strcasecmp(tr_level, "matching") == 0 ) {
+		tr_config->level = SIEVE_TRLVL_MATCHING;
+	} else {
+		sieve_sys_error(svinst,
+			"Unknown trace level: %s", tr_level);
+		return -1;
+	}
+
+	tr_debug = FALSE;
+	(void)sieve_setting_get_bool_value
+		(svinst, "sieve_trace_debug", &tr_debug);
+	tr_addresses = FALSE;
+	(void)sieve_setting_get_bool_value
+		(svinst, "sieve_trace_addresses", &tr_addresses);
+
+	if (tr_debug)
+		tr_config->flags |= SIEVE_TRFLG_DEBUG;
+	if (tr_addresses)
+		tr_config->flags |= SIEVE_TRFLG_ADDRESSES;
+	return 0;
+}

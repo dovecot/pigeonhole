@@ -156,7 +156,7 @@ enum sieve_execute_flags {
  */
 
 typedef enum {
-	SIEVE_TRLVL_NONE,
+	SIEVE_TRLVL_NONE = 0,
 	SIEVE_TRLVL_ACTIONS,
 	SIEVE_TRLVL_COMMANDS,
 	SIEVE_TRLVL_TESTS,
