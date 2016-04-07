@@ -875,7 +875,7 @@ int sieve_trace_log_create
 
 int sieve_trace_log_create_dir
 (struct sieve_instance *svinst, const char *dir,
-	struct sieve_trace_log **trace_log_r)
+	const char *label, struct sieve_trace_log **trace_log_r)
 {
 	static unsigned int counter = 0;
 	const char *timestamp, *prefix;
@@ -894,13 +894,18 @@ int sieve_trace_log_create_dir
 	timestamp = t_strflocaltime("%Y%m%d-%H%M%S", ioloop_time);
 
 	counter++;
-	prefix = t_strdup_printf("%s/%s.%s.%u.trace",
-		dir, timestamp, my_pid, counter);
+	if ( label != NULL ) {
+		prefix = t_strdup_printf("%s/%s.%s.%s.%u.trace",
+			dir, label, timestamp, my_pid, counter);
+	} else {
+		prefix = t_strdup_printf("%s/%s.%s.%u.trace",
+			dir, timestamp, my_pid, counter);
+	}
 	return sieve_trace_log_create(svinst, prefix, trace_log_r);
 }
 
 int sieve_trace_log_open
-(struct sieve_instance *svinst,
+(struct sieve_instance *svinst, const char *label,
 	struct sieve_trace_log **trace_log_r)
 {
 	const char *trace_dir =
@@ -920,7 +925,7 @@ int sieve_trace_log_open
 	}
 
 	return sieve_trace_log_create_dir
-		(svinst, trace_dir, trace_log_r)	;
+		(svinst, trace_dir, label, trace_log_r)	;
 }
 
 void sieve_trace_log_write_line
