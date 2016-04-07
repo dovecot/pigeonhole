@@ -519,6 +519,45 @@ Sieve Interpreter - Extension Configuration
 
   Refer to doc/plugins/imapsieve.txt for more information.
 
+Sieve Interpreter - Trace Debugging
+-----------------------------------
+
+Trace debugging provides detailed insight in the operations performed by
+the Sieve script. Messages about what the Sieve script is doing are written
+to the specified directory.
+
+WARNING: On a busy server, this functionality can quickly fill up the trace
+directory with a lot of trace files. Enable this only temporarily and as
+selective as possible.
+
+The following settings apply to both the LDA Sieve plugin and the IMAPSIEVE
+plugin:
+
+ sieve_trace_dir =  
+  The directory where trace files are written. Trace debugging is disabled if
+  this setting is not configured or if the directory does not exist. If the 
+  path is relative or it starts with "~/" it is interpreted relative to the
+  current user's home directory.
+
+ sieve_trace_level = 
+   The verbosity level of the trace messages. Trace debugging is disabled if
+   this setting is not configured. Possible values are:
+  
+     "actions"  - Only print executed action commands, like keep, fileinto,
+                  reject and redirect.
+     "commands" - Print any executed command, excluding test commands.
+     "tests"    - Print all executed commands and performed tests.
+     "matching" - Print all executed commands, performed tests and the values
+                  matched in those tests.
+
+ sieve_trace_debug = no  
+   Enables highly verbose debugging messages that are usually only useful for
+   developers.
+
+ sieve_trace_addresses = no   
+   Enables showing byte code addresses in the trace output, rather than only
+   the source line numbers.
+
 Sieve Interpreter - Migration from CMUSieve (Dovecot v1.0/v1.1)
 ---------------------------------------------------------------
 
