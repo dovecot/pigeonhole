@@ -126,6 +126,7 @@ libdovecot_sieve_la_SOURCES = \
 	sieve-comparators.c \
 	sieve-match-types.c \
 	sieve-address-parts.c \
+	sieve-address-source.c \
 	sieve-match.c \
 	sieve-commands.c \
 	sieve-code.c \
@@ -174,6 +175,7 @@ headers = \
 	sieve-comparators.h \
 	sieve-match-types.h \
 	sieve-address-parts.h \
+	sieve-address-source.h \
 	sieve-commands.h \
 	sieve-code.h \
 	sieve-actions.h \

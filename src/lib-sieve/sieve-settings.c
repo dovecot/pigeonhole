@@ -8,7 +8,7 @@
 #include "sieve-common.h"
 #include "sieve-limits.h"
 #include "sieve-error.h"
-#include "sieve-address.h"
+#include "sieve-actions.h"
 #include "sieve-settings.h"
 
 #include <ctype.h>
@@ -197,51 +197,6 @@ bool sieve_setting_get_duration_value
 	return TRUE;
 }
 
-bool sieve_setting_get_mail_sender_value
-(struct sieve_instance *svinst, pool_t pool, const char *setting,
-	struct sieve_mail_sender *sender)
-{
-	const char *str_value;
-	size_t set_len;
-
-	str_value = sieve_setting_get(svinst, setting);
-	if ( str_value == NULL )
-		return FALSE;
-
-	str_value = ph_t_str_trim(str_value, "\t ");
-	str_value = t_str_lcase(str_value);
-	set_len = strlen(str_value);
-	if ( set_len > 0 ) {
-		if ( strcmp(str_value, "default") == 0 ) {
-			sender->source = SIEVE_MAIL_SENDER_SOURCE_DEFAULT;
-		} else if ( strcmp(str_value, "sender") == 0 ) {
-			sender->source = SIEVE_MAIL_SENDER_SOURCE_SENDER;
-		} else if ( strcmp(str_value, "recipient") == 0 ) {
-			sender->source = SIEVE_MAIL_SENDER_SOURCE_RECIPIENT;
-		} else if ( strcmp(str_value, "orig_recipient") == 0 ) {
-			sender->source = SIEVE_MAIL_SENDER_SOURCE_ORIG_RECIPIENT;
-		} else if ( strcmp(str_value, "postmaster") == 0 ) {
-			sender->source = SIEVE_MAIL_SENDER_SOURCE_POSTMASTER;
-		} else if ( str_value[0] == '<' &&	str_value[set_len-1] == '>') {
-			sender->source = SIEVE_MAIL_SENDER_SOURCE_EXPLICIT;
-
-			sender->address = sieve_address_parse_envelope_path
-				(pool, t_strndup(str_value+1, set_len-2));
-			if (sender->address == NULL) {
-				sieve_sys_warning(svinst,
-					"Invalid explicit address value for setting '%s': "
-					"'%s'", setting, str_value);
-			}
-		} else {
-			sieve_sys_warning(svinst,
-				"Invalid value for setting '%s': '%s'", setting,
-				str_value);
-			return FALSE;
-		}
-	}
-	return TRUE;
-}
-
 /*
  * Main Sieve engine settings
  */
@@ -270,12 +225,9 @@ void sieve_settings_load
 		svinst->max_redirects = (unsigned int) uint_setting;
 	}
 
-	if (!sieve_setting_get_mail_sender_value
-		(svinst, svinst->pool, "sieve_redirect_envelope_from",
-			&svinst->redirect_from)) {
-		svinst->redirect_from.source =
-			SIEVE_MAIL_SENDER_SOURCE_DEFAULT;
-	}
+	(void)sieve_address_source_parse_from_setting(svinst,
+		svinst->pool, "sieve_redirect_envelope_from",
+		&svinst->redirect_from);
 }
 
 

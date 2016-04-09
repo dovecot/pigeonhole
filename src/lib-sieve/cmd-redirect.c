@@ -317,7 +317,7 @@ static int act_redirect_send
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *sender = sieve_message_get_sender(msgctx);
 	const char *recipient = sieve_message_get_final_recipient(msgctx);
-	struct sieve_mail_sender *env_from =
+	struct sieve_address_source *env_from =
 		&aenv->svinst->redirect_from;
 	struct istream *input;
 	struct ostream *output;
@@ -351,17 +351,17 @@ static int act_redirect_send
 		 being redirected to the same invalid address.
 	 */
 	if ( sender != NULL ) {
-		switch ( env_from->source ) {
-		case SIEVE_MAIL_SENDER_SOURCE_RECIPIENT:
+		switch ( env_from->type ) {
+		case SIEVE_ADDRESS_SOURCE_RECIPIENT:
 			sender = sieve_message_get_final_recipient(msgctx);
 			break;
-		case SIEVE_MAIL_SENDER_SOURCE_ORIG_RECIPIENT:
+		case SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT:
 			sender = sieve_message_get_orig_recipient(msgctx);
 			break;
-		case SIEVE_MAIL_SENDER_SOURCE_POSTMASTER:
+		case SIEVE_ADDRESS_SOURCE_POSTMASTER:
 			sender = senv->postmaster_address;
 			break;
-		case SIEVE_MAIL_SENDER_SOURCE_EXPLICIT:
+		case SIEVE_ADDRESS_SOURCE_EXPLICIT:
 			sender = sieve_address_to_string(env_from->address);
 			break;
 		default:

@@ -8,6 +8,7 @@
 
 #include "sieve-config.h"
 #include "sieve-types.h"
+#include "sieve-address-source.h"
 
 #include <sys/types.h>
 
@@ -20,20 +21,6 @@ typedef uint32_t sieve_offset_t;
 typedef uint64_t sieve_number_t;
 
 #define SIEVE_MAX_NUMBER ((sieve_number_t)-1)
-
-enum sieve_mail_sender_source {
-	SIEVE_MAIL_SENDER_SOURCE_DEFAULT = 0,
-	SIEVE_MAIL_SENDER_SOURCE_SENDER,
-	SIEVE_MAIL_SENDER_SOURCE_RECIPIENT,
-	SIEVE_MAIL_SENDER_SOURCE_ORIG_RECIPIENT,
-	SIEVE_MAIL_SENDER_SOURCE_POSTMASTER,
-	SIEVE_MAIL_SENDER_SOURCE_EXPLICIT
-};
-
-struct sieve_mail_sender {
-	enum sieve_mail_sender_source source;
-	const struct sieve_address *address;
-};
 
 /*
  * Forward declarations
@@ -213,7 +200,7 @@ struct sieve_instance {
 	size_t max_script_size;
 	unsigned int max_actions;
 	unsigned int max_redirects;
-	struct sieve_mail_sender redirect_from;
+	struct sieve_address_source redirect_from;
 };
 
 /*

@@ -19,6 +19,7 @@
 #include "rfc2822.h"
 
 #include "sieve-code.h"
+#include "sieve-settings.h"
 #include "sieve-extensions.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"

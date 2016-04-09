@@ -29,6 +29,7 @@
 
 #include "sieve-common.h"
 #include "sieve-address.h"
+#include "sieve-address-source.h"
 #include "sieve-message.h"
 #include "sieve-smtp.h"
 #include "sieve-settings.h"
@@ -52,7 +53,7 @@
  */
 
 struct ntfy_mailto_config {
-	struct sieve_mail_sender envelope_from;
+	struct sieve_address_source envelope_from;
 };
 
 /*
@@ -163,12 +164,9 @@ static bool ntfy_mailto_load
 
 	config = i_new(struct ntfy_mailto_config, 1);
 
-	if (!sieve_setting_get_mail_sender_value
-		(svinst, default_pool, "sieve_notify_mailto_envelope_from",
-			&config->envelope_from)) {
-		config->envelope_from.source =
-			SIEVE_MAIL_SENDER_SOURCE_DEFAULT;
-	}
+	(void)sieve_address_source_parse_from_setting	(svinst,
+		default_pool, "sieve_notify_mailto_envelope_from",
+		&config->envelope_from);
 
 	*context = (void *) config;
 
@@ -439,7 +437,7 @@ static int ntfy_mailto_send
 		(struct ntfy_mailto_context *) nact->method_context;
 	struct ntfy_mailto_config *mth_config =
 		(struct ntfy_mailto_config *)nenv->method->context;
-	struct sieve_mail_sender *env_from =
+	struct sieve_address_source *env_from =
 		&mth_config->envelope_from;
 	const char *from = NULL, *from_smtp = NULL;
 	const char *subject = mtctx->uri->subject;
@@ -489,25 +487,25 @@ static int ntfy_mailto_send
 	 */
 	from_smtp = sieve_message_get_sender(nenv->msgctx);
 	if ( from_smtp != NULL ) {
-		switch ( env_from->source ) {
-		case SIEVE_MAIL_SENDER_SOURCE_SENDER:
+		switch ( env_from->type ) {
+		case SIEVE_ADDRESS_SOURCE_SENDER:
 			break;
-		case SIEVE_MAIL_SENDER_SOURCE_RECIPIENT:
+		case SIEVE_ADDRESS_SOURCE_RECIPIENT:
 			from_smtp = sieve_message_get_final_recipient(nenv->msgctx);
 			break;
-		case SIEVE_MAIL_SENDER_SOURCE_ORIG_RECIPIENT:
+		case SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT:
 			from_smtp = sieve_message_get_orig_recipient(nenv->msgctx);
 			break;
-		case SIEVE_MAIL_SENDER_SOURCE_EXPLICIT:
+		case SIEVE_ADDRESS_SOURCE_EXPLICIT:
 			from_smtp = sieve_address_to_string(env_from->address);
 			break;
-		case SIEVE_MAIL_SENDER_SOURCE_DEFAULT:
+		case SIEVE_ADDRESS_SOURCE_DEFAULT:
 			if ( mtctx->from_normalized != NULL ) {
 				from_smtp = mtctx->from_normalized;
 				break;
 			}
 			/* Fall through */
-		case SIEVE_MAIL_SENDER_SOURCE_POSTMASTER:
+		case SIEVE_ADDRESS_SOURCE_POSTMASTER:
 			from_smtp = senv->postmaster_address;
 			break;
 		default:
