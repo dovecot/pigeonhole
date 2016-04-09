@@ -19,7 +19,7 @@ bool sieve_address_source_parse
 {
 	size_t val_len;
 
-	memset(asrc, 0, sizeof(asrc));
+	memset(asrc, 0, sizeof(*asrc));
 
 	value = ph_t_str_trim(value, "\t ");
 	value = t_str_lcase(value);
