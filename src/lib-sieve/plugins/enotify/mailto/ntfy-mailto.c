@@ -486,30 +486,14 @@ static int ntfy_mailto_send
 		 messages.
 	 */
 	from_smtp = sieve_message_get_sender(nenv->msgctx);
-	if ( from_smtp != NULL ) {
-		switch ( env_from->type ) {
-		case SIEVE_ADDRESS_SOURCE_SENDER:
-			break;
-		case SIEVE_ADDRESS_SOURCE_RECIPIENT:
-			from_smtp = sieve_message_get_final_recipient(nenv->msgctx);
-			break;
-		case SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT:
-			from_smtp = sieve_message_get_orig_recipient(nenv->msgctx);
-			break;
-		case SIEVE_ADDRESS_SOURCE_EXPLICIT:
-			from_smtp = sieve_address_to_string(env_from->address);
-			break;
-		case SIEVE_ADDRESS_SOURCE_DEFAULT:
-			if ( mtctx->from_normalized != NULL ) {
-				from_smtp = mtctx->from_normalized;
-				break;
-			}
-			/* Fall through */
-		case SIEVE_ADDRESS_SOURCE_POSTMASTER:
-			from_smtp = senv->postmaster_address;
-			break;
-		default:
-			break;
+	if ( from_smtp != NULL &&
+		env_from->type != SIEVE_ADDRESS_SOURCE_SENDER ) {
+		if ((ret=sieve_address_source_get_address
+			(env_from, senv, nenv->msgctx, &from_smtp)) < 0) {
+			from_smtp = NULL;
+		} else if (ret == 0) {
+			from_smtp = ( mtctx->from_normalized != NULL ?
+				mtctx->from_normalized : senv->postmaster_address );
 		}
 	}
 

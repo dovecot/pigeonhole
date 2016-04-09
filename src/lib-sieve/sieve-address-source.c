@@ -9,6 +9,7 @@
 #include "sieve-error.h"
 #include "sieve-settings.h"
 #include "sieve-address.h"
+#include "sieve-message.h"
 
 #include "sieve-address-source.h"
 
@@ -65,4 +66,32 @@ bool sieve_address_source_parse_from_setting
 		return FALSE;
 	}
 	return TRUE;
+}
+
+int sieve_address_source_get_address
+(struct sieve_address_source *asrc,
+	const struct sieve_script_env *senv,
+	struct sieve_message_context *msgctx,
+	const char **addr_r)
+{
+	switch ( asrc->type ) {
+	case SIEVE_ADDRESS_SOURCE_SENDER:
+		*addr_r = sieve_message_get_sender(msgctx);
+		return 1;
+	case SIEVE_ADDRESS_SOURCE_RECIPIENT:
+		*addr_r = sieve_message_get_final_recipient(msgctx);
+		return 1;
+	case SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT:
+		*addr_r = sieve_message_get_orig_recipient(msgctx);
+		return 1;
+	case SIEVE_ADDRESS_SOURCE_EXPLICIT:
+		*addr_r = sieve_address_to_string(asrc->address);
+		return 1;
+	case SIEVE_ADDRESS_SOURCE_POSTMASTER:
+		*addr_r = senv->postmaster_address;
+		return 1;
+	case SIEVE_ADDRESS_SOURCE_DEFAULT:
+		break;
+	}
+	return 0;
 }

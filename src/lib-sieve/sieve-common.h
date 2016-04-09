@@ -8,7 +8,6 @@
 
 #include "sieve-config.h"
 #include "sieve-types.h"
-#include "sieve-address-source.h"
 
 #include <sys/types.h>
 
@@ -157,6 +156,8 @@ bool sieve_validate
 /*
  * Sieve engine instance
  */
+
+#include "sieve-address-source.h"
 
 struct sieve_instance {
 	/* Main engine pool */

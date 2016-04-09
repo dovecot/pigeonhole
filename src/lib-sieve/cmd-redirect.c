@@ -350,23 +350,10 @@ static int act_redirect_send
 		 when then returns a delivery status notification that also ends up
 		 being redirected to the same invalid address.
 	 */
-	if ( sender != NULL ) {
-		switch ( env_from->type ) {
-		case SIEVE_ADDRESS_SOURCE_RECIPIENT:
-			sender = sieve_message_get_final_recipient(msgctx);
-			break;
-		case SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT:
-			sender = sieve_message_get_orig_recipient(msgctx);
-			break;
-		case SIEVE_ADDRESS_SOURCE_POSTMASTER:
-			sender = senv->postmaster_address;
-			break;
-		case SIEVE_ADDRESS_SOURCE_EXPLICIT:
-			sender = sieve_address_to_string(env_from->address);
-			break;
-		default:
-			break;
-		}
+	if ( sender != NULL &&
+		env_from->type != SIEVE_ADDRESS_SOURCE_SENDER) {
+		(void)sieve_address_source_get_address
+			(env_from, senv, msgctx, &sender);
 	}
 
 	/* Open SMTP transport */
