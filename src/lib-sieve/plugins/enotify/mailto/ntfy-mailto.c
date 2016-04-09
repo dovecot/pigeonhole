@@ -431,6 +431,7 @@ static int ntfy_mailto_send
 (const struct sieve_enotify_exec_env *nenv,
 	const struct sieve_enotify_action *nact, const char *recipient)
 {
+	struct sieve_instance *svinst = nenv->svinst;
 	const struct sieve_message_data *msgdata = nenv->msgdata;
 	const struct sieve_script_env *senv = nenv->scriptenv;
 	struct ntfy_mailto_context *mtctx =
@@ -467,13 +468,6 @@ static int ntfy_mailto_send
 		return 0;
 	}
 
-	/* Determine message from address */
-	if ( nact->from == NULL ) {
-		from = t_strdup_printf("Postmaster <%s>", senv->postmaster_address);
-	} else {
-		from = nact->from;
-	}
-
 	/* Determine which sender to use
 
 	   From RFC 5436, Section 2.3:
@@ -493,12 +487,23 @@ static int ntfy_mailto_send
 			env_from.type = SIEVE_ADDRESS_SOURCE_EXPLICIT;
 		}
 	}
-	if ( (ret=sieve_address_source_get_address(&env_from,
+	if ( (ret=sieve_address_source_get_address(&env_from, svinst,
 		senv, nenv->msgctx, nenv->flags, &from_smtp)) < 0 ) {
 		from_smtp = NULL;
 	} else if ( ret == 0 ) {
-		from_smtp = ( mtctx->from_normalized != NULL ?
-			mtctx->from_normalized : senv->postmaster_address );
+		if ( mtctx->from_normalized != NULL )
+			from_smtp = mtctx->from_normalized;
+		else if ( svinst->user_email != NULL )
+			from_smtp = sieve_address_to_string(svinst->user_email);
+		else
+			from_smtp = senv->postmaster_address;
+	}
+
+	/* Determine message from address */
+	if ( nact->from == NULL ) {
+		from = t_strdup_printf("<%s>", from_smtp);
+	} else {
+		from = nact->from;
 	}
 
 	/* Determine subject */
@@ -551,7 +556,7 @@ static int ntfy_mailto_send
 	}
 
 	msg = t_str_new(512);
-	outmsgid = sieve_message_get_new_id(nenv->svinst);
+	outmsgid = sieve_message_get_new_id(svinst);
 
 	rfc2822_header_write(msg, "X-Sieve", SIEVE_IMPLEMENTATION);
 	rfc2822_header_write(msg, "Message-ID", outmsgid);

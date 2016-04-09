@@ -312,13 +312,12 @@ static int act_redirect_send
 {
 	static const char *hide_headers[] =
 		{ "Return-Path", "X-Sieve", "X-Sieve-Redirected-From" };
-
+	struct sieve_instance *svinst = aenv->svinst;
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *sender;
 	const char *recipient = sieve_message_get_final_recipient(msgctx);
-	struct sieve_address_source env_from =
-		aenv->svinst->redirect_from;
+	struct sieve_address_source env_from = svinst->redirect_from;
 	struct istream *input;
 	struct ostream *output;
 	const char *error;
@@ -354,14 +353,20 @@ static int act_redirect_send
 		/* Envelope available */
 		sender = sieve_message_get_sender(msgctx);
 		if ( sender != NULL &&
-			sieve_address_source_get_address(&env_from,
+			sieve_address_source_get_address(&env_from, svinst,
 				senv, msgctx, aenv->flags, &sender) < 0 )
 			sender = NULL;
 	} else {
 		/* No envelope available */
-		if ( sieve_address_source_get_address(&env_from,
-			senv, msgctx, aenv->flags, &sender) <= 0 )
+		if ( (ret=sieve_address_source_get_address(&env_from, svinst,
+			senv, msgctx, aenv->flags, &sender)) < 0 ) {
 			sender = NULL;
+		} else if ( ret == 0 ) {
+			if ( svinst->user_email == NULL )
+				sender = NULL;
+			else
+				sieve_address_to_string(svinst->user_email);
+		}
 	}
 
 	/* Open SMTP transport */

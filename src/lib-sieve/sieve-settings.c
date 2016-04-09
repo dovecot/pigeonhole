@@ -8,7 +8,8 @@
 #include "sieve-common.h"
 #include "sieve-limits.h"
 #include "sieve-error.h"
-#include "sieve-actions.h"
+#include "sieve-address.h"
+#include "sieve-address-source.h"
 #include "sieve-settings.h"
 
 #include <ctype.h>
@@ -204,6 +205,7 @@ bool sieve_setting_get_duration_value
 void sieve_settings_load
 (struct sieve_instance *svinst)
 {
+	const char *str_setting;
 	unsigned long long int uint_setting;
 	size_t size_setting;
 
@@ -228,6 +230,18 @@ void sieve_settings_load
 	(void)sieve_address_source_parse_from_setting(svinst,
 		svinst->pool, "sieve_redirect_envelope_from",
 		&svinst->redirect_from);
+
+	str_setting = sieve_setting_get(svinst, "sieve_user_email");
+	if ( str_setting != NULL && *str_setting != '\0' ) {
+		svinst->user_email =
+			sieve_address_parse_envelope_path
+				(svinst->pool, str_setting);
+		if ( svinst->user_email == NULL ) {
+			sieve_sys_warning(svinst,
+				"Invalid address value for setting "
+				"`sieve_user_email': `%s'", str_setting);
+		}
+	}
 }
 
 

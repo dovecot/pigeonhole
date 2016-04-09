@@ -11,6 +11,7 @@ enum sieve_address_source_type {
 	SIEVE_ADDRESS_SOURCE_SENDER,
 	SIEVE_ADDRESS_SOURCE_RECIPIENT,
 	SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT,
+	SIEVE_ADDRESS_SOURCE_USER_EMAIL,
 	SIEVE_ADDRESS_SOURCE_POSTMASTER,
 	SIEVE_ADDRESS_SOURCE_EXPLICIT
 };
@@ -28,10 +29,11 @@ bool sieve_address_source_parse_from_setting
 		const char *setting, struct sieve_address_source *asrc);
 
 int sieve_address_source_get_address
-(struct sieve_address_source *asrc,
-	const struct sieve_script_env *senv,
-	struct sieve_message_context *msgctx,
-	enum sieve_execute_flags flags,
-	const char **addr_r);
+	(struct sieve_address_source *asrc,
+		struct sieve_instance *svinst,
+		const struct sieve_script_env *senv,
+		struct sieve_message_context *msgctx,
+		enum sieve_execute_flags flags,
+		const char **addr_r);
 
 #endif

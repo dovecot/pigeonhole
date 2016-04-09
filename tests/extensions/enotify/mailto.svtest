@@ -423,3 +423,63 @@ test "Envelope config - recipient" {
 		test_fail "envelope recipient set incorrectly";
 	}
 }
+
+/*
+ * Envelope config - user_email
+ */
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "bertus@frop.example.org";
+
+test_config_set "sieve_notify_mailto_envelope_from"
+	"user_email";
+test_config_set "sieve_user_email" "b.wortel@example.org";
+test_config_reload;
+test_config_reload :extension "enotify";
+test_result_reset;
+
+test "Envelope config - user_email" {
+	notify :from "nico@frop.example.org"
+		"mailto:stephan@example.org?cc=timo@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not header :is "from" "nico@frop.example.org" {
+		test_fail "from set incorrectly";
+	}
+
+	if not envelope :is "from" "b.wortel@example.org" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	if not envelope :is "to" "stephan@example.org" {
+		test_fail "envelope recipient set incorrectly";
+	}
+
+	test_message :smtp 1;
+
+	if not header :is "from" "nico@frop.example.org" {
+		test_fail "from set incorrectly";
+	}
+
+	if not envelope :is "from" "b.wortel@example.org" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	if not envelope :is "to" "timo@example.com" {
+		test_fail "envelope recipient set incorrectly";
+	}
+}

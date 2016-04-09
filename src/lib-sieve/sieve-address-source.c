@@ -33,6 +33,8 @@ bool sieve_address_source_parse
 			asrc->type = SIEVE_ADDRESS_SOURCE_RECIPIENT;
 		} else if ( strcmp(value, "orig_recipient") == 0 ) {
 			asrc->type = SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT;
+		} else if ( strcmp(value, "user_email") == 0 ) {
+			asrc->type = SIEVE_ADDRESS_SOURCE_USER_EMAIL;
 		} else if ( strcmp(value, "postmaster") == 0 ) {
 			asrc->type = SIEVE_ADDRESS_SOURCE_POSTMASTER;
 		} else if ( value[0] == '<' &&	value[val_len-1] == '>') {
@@ -70,6 +72,7 @@ bool sieve_address_source_parse_from_setting
 
 int sieve_address_source_get_address
 (struct sieve_address_source *asrc,
+	struct sieve_instance *svinst,
 	const struct sieve_script_env *senv,
 	struct sieve_message_context *msgctx,
 	enum sieve_execute_flags flags,
@@ -77,8 +80,12 @@ int sieve_address_source_get_address
 {
 	enum sieve_address_source_type type = asrc->type;
 
+	if ( type == SIEVE_ADDRESS_SOURCE_USER_EMAIL &&
+		svinst->user_email == NULL )
+		type = SIEVE_ADDRESS_SOURCE_RECIPIENT;
+
 	if ( (flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0 ) {
-		switch ( asrc->type ) {
+		switch ( type ) {
 		case SIEVE_ADDRESS_SOURCE_SENDER:
 		case SIEVE_ADDRESS_SOURCE_RECIPIENT:
 		case SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT:
@@ -100,11 +107,14 @@ int sieve_address_source_get_address
 	case SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT:
 		*addr_r = sieve_message_get_orig_recipient(msgctx);
 		return 1;
-	case SIEVE_ADDRESS_SOURCE_EXPLICIT:
-		*addr_r = sieve_address_to_string(asrc->address);
+	case SIEVE_ADDRESS_SOURCE_USER_EMAIL:
+		*addr_r = sieve_address_to_string(svinst->user_email);
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_POSTMASTER:
 		*addr_r = senv->postmaster_address;
+		return 1;
+	case SIEVE_ADDRESS_SOURCE_EXPLICIT:
+		*addr_r = sieve_address_to_string(asrc->address);
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_DEFAULT:
 		break;

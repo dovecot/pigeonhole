@@ -217,6 +217,14 @@ plugin section of the config file (default values are shown if applicable):
    release. LDAP support may also be compiled as a plugin called
    `sieve_storage_ldap'.
 
+ sieve_user_email =
+   The primary e-mail address for the user. This is used as a default when no
+   other appropriate address is available for sending messages. If this setting
+   is not configured, either the postmaster or null "<>" address is used as a
+   sender, depending on the action involved. This setting is important when
+   there is no message envelope to extract addresses from, such as when the
+   script is executed in IMAP.
+
  sieve_user_log =
    The path to the file where the user log file is written. If not configured, a
    default location is used. If the main user's personal Sieve (as configured
@@ -241,6 +249,10 @@ plugin section of the config file (default values are shown if applicable):
      "sender"         - The sender address is used (default).
      "recipient"      - The final recipient address is used.
      "orig_recipient" - The original recipient is used.
+     "user_email"     - The user's primary address is used. This is
+                        configured with the "sieve_user_email" setting. If
+                        that setting is unconfigured, "user_mail" is equal to
+                        "sender" (the default).
      "postmaster"     - The postmaster_address configured for the LDA.
      "<user@domain>"  - Redirected messages are always sent from user@domain.
                         The angle brackets are mandatory. The null "<>" address

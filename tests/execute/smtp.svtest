@@ -188,3 +188,53 @@ test "Redirect from <> with [<explicit>]" {
 		test_fail "envelope sender incorrect";
 	}
 }
+
+test_result_reset;
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
+test_set "envelope.orig_to" "tss@example.net";
+
+test_config_set "sieve_redirect_envelope_from" "user_email";
+test_config_reload;
+
+test "Redirect from [user email - fallback default]" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	test_message :smtp 0;
+
+	if not envelope :is "from" "timo@example.net" {
+		test_fail "envelope sender incorrect";
+	}
+}
+
+test_result_reset;
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
+test_set "envelope.orig_to" "tss@example.net";
+
+test_config_set "sieve_redirect_envelope_from" "user_email";
+test_config_set "sieve_user_email" "t.sirainen@example.net";
+test_config_reload;
+
+test "Redirect from [user email]" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	test_message :smtp 0;
+
+	if envelope :is "from" "sirius@example.org" {
+		test_fail "envelope sender incorrect (not changed)";
+	}
+
+	if not envelope :is "from" "t.sirainen@example.net" {
+		test_fail "envelope sender incorrect";
+	}
+}
+
