@@ -123,7 +123,8 @@ following list outlines the implementation status of each supported extension:
     foreverypart (RFC 5703; Section 3): fully supported (v0.4.10+).
     mime (RFC 5703; Section 4): fully supported (v0.4.10+).
     extracttext (RFC 5703; Section 7): fully supported (v0.4.12+).
-    include (RFC 6609): fully supported (v0.4.0+)
+    include (RFC 6609): fully supported (v0.4.0+).
+    imapsieve (RFC 6785): fully supported (v0.4.14+).
     duplicate (RFC 7352): fully supported (v0.4.3+).
     regex (draft v08; not latest version): almost fully supported, but
         UTF-8 is not supported.
@@ -152,7 +153,6 @@ following list outlines the implementation status of each supported extension:
   The following extensions are under development:
 
     ereject (RFC 5429; page 4): implemented, but currently equal to reject.
-    imapsieve (RFC 6785): partially implemented.
 
   Many more extensions to the language exist. Not all of these extensions are
   useful for Dovecot in particular, but many of them are. Currently, the
