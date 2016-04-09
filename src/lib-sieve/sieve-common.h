@@ -32,7 +32,7 @@ enum sieve_mail_sender_source {
 
 struct sieve_mail_sender {
 	enum sieve_mail_sender_source source;
-	const char *address;
+	const struct sieve_address *address;
 };
 
 /*

@@ -8,6 +8,7 @@
 #include "sieve-common.h"
 #include "sieve-limits.h"
 #include "sieve-error.h"
+#include "sieve-address.h"
 #include "sieve-settings.h"
 
 #include <ctype.h>
@@ -224,10 +225,13 @@ bool sieve_setting_get_mail_sender_value
 		} else if ( str_value[0] == '<' &&	str_value[set_len-1] == '>') {
 			sender->source = SIEVE_MAIL_SENDER_SOURCE_EXPLICIT;
 
-			str_value = ph_t_str_trim(t_strndup(str_value+1, set_len-2), "\t ");
-			sender->address = NULL;
-			if ( *str_value != '\0' )
-				sender->address = p_strdup(pool, str_value);
+			sender->address = sieve_address_parse_envelope_path
+				(pool, t_strndup(str_value+1, set_len-2));
+			if (sender->address == NULL) {
+				sieve_sys_warning(svinst,
+					"Invalid explicit address value for setting '%s': "
+					"'%s'", setting, str_value);
+			}
 		} else {
 			sieve_sys_warning(svinst,
 				"Invalid value for setting '%s': '%s'", setting,

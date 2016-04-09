@@ -499,7 +499,7 @@ static int ntfy_mailto_send
 			from_smtp = sieve_message_get_orig_recipient(nenv->msgctx);
 			break;
 		case SIEVE_MAIL_SENDER_SOURCE_EXPLICIT:
-			from_smtp = env_from->address;
+			from_smtp = sieve_address_to_string(env_from->address);
 			break;
 		case SIEVE_MAIL_SENDER_SOURCE_DEFAULT:
 			if ( mtctx->from_normalized != NULL ) {

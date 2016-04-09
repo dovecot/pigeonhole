@@ -362,7 +362,7 @@ static int act_redirect_send
 			sender = senv->postmaster_address;
 			break;
 		case SIEVE_MAIL_SENDER_SOURCE_EXPLICIT:
-			sender = env_from->address;
+			sender = sieve_address_to_string(env_from->address);
 			break;
 		default:
 			break;
