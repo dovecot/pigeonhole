@@ -429,7 +429,8 @@ static bool _contains_8bit(const char *msg)
 
 static int ntfy_mailto_send
 (const struct sieve_enotify_exec_env *nenv,
-	const struct sieve_enotify_action *nact, const char *recipient)
+	const struct sieve_enotify_action *nact,
+	const char *owner_email)
 {
 	struct sieve_instance *svinst = nenv->svinst;
 	const struct sieve_message_data *msgdata = nenv->msgdata;
@@ -572,7 +573,7 @@ static int ntfy_mailto_send
 		rfc2822_header_utf8_printf(msg, "Cc", "%s", str_c(cc));
 
 	rfc2822_header_printf(msg, "Auto-Submitted",
-		"auto-notified; owner-email=\"%s\"", recipient);
+		"auto-notified; owner-email=\"%s\"", owner_email);
 	rfc2822_header_write(msg, "Precedence", "bulk");
 
 	/* Set importance */
@@ -655,19 +656,20 @@ static int ntfy_mailto_action_execute
 (const struct sieve_enotify_exec_env *nenv,
 	const struct sieve_enotify_action *nact)
 {
+	struct sieve_instance *svinst = nenv->svinst;
+	const struct sieve_script_env *senv = nenv->scriptenv;
 	struct mail *mail = nenv->msgdata->mail;
-	const char *sender = sieve_message_get_sender(nenv->msgctx);
-	const char *recipient = sieve_message_get_final_recipient(nenv->msgctx);
+	const char *owner_email;
 	const char *const *hdsp;
 	int ret;
 
-	/* Is the recipient unset?
-	 */
-	if ( recipient == NULL ) {
-		sieve_enotify_global_warning(nenv,
-			"notify mailto action aborted: envelope recipient is <>");
-		return 0;
-	}
+	owner_email = sieve_address_to_string(svinst->user_email);
+	if ( owner_email == NULL &&
+		(nenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
+		owner_email = sieve_message_get_final_recipient(nenv->msgctx);
+	if ( owner_email == NULL )
+		owner_email = senv->postmaster_address;
+	i_assert( owner_email != NULL );
 
 	/* Is the message an automatic reply ? */
 	if ( mail_get_headers(mail, "auto-submitted", &hdsp) < 0 ) {
@@ -683,16 +685,23 @@ static int ntfy_mailto_action_execute
 	/* Theoretically multiple headers could exist, so lets make sure */
 	while ( *hdsp != NULL ) {
 		if ( strcasecmp(*hdsp, "no") != 0 ) {
+			const char *from = NULL;
+
+			if ( (nenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
+				from = sieve_message_get_sender(nenv->msgctx);
+			from = (from == NULL ? "" :
+				t_strdup_printf(" from <%s>", str_sanitize(from, 256)));
+
 			sieve_enotify_global_info(nenv,
-				"not sending notification for auto-submitted message from <%s>",
-				str_sanitize(sender, 128));
-				return 0;
+				"not sending notification for auto-submitted message%s",
+				from);
+			return 0;
 		}
 		hdsp++;
 	}
 
 	T_BEGIN {
-		ret = ntfy_mailto_send(nenv, nact, recipient);
+		ret = ntfy_mailto_send(nenv, nact, owner_email);
 	} T_END;
 
 	return ret;
