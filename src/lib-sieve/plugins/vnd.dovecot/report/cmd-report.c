@@ -462,7 +462,6 @@ static int act_report_send
 	struct ostream *output;
 	string_t *msg;
 	const char *const *headers;
-	const char *sender, *orig_recipient;
 	const char *outmsgid, *boundary, *error, *subject;
 	int ret;
 
@@ -472,9 +471,6 @@ static int act_report_send
 			"report action has no means to send mail");
 		return SIEVE_EXEC_OK;
 	}
-
-	sender = sieve_message_get_sender(msgctx);
-	orig_recipient = sieve_message_get_orig_recipient(msgctx);
 
 	/* Make sure we have a subject for our report */
 	if ( mail_get_headers_utf8
@@ -551,16 +547,24 @@ static int act_report_send
 	rfc2822_header_write(msg,	"User-Agent",
 		PACKAGE_NAME "/" PACKAGE_VERSION " "
 		PIGEONHOLE_NAME "/" PIGEONHOLE_VERSION);
-	if (sender == NULL) {
-		rfc2822_header_write(msg,
-			"Original-Mail-From", "<>");
-	} else {
-		rfc2822_header_printf(msg,
-			"Original-Mail-From", "<%s>", sender);
-	}
-	if (orig_recipient != NULL) {
-		rfc2822_header_printf(msg,
-			"Original-Rcpt-To", "<%s>", orig_recipient);
+
+	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 ) {
+		const char *sender, *orig_recipient;
+
+		sender = sieve_message_get_sender(msgctx);
+		orig_recipient = sieve_message_get_orig_recipient(msgctx);
+
+		if (sender == NULL) {
+			rfc2822_header_write(msg,
+				"Original-Mail-From", "<>");
+		} else {
+			rfc2822_header_printf(msg,
+				"Original-Mail-From", "<%s>", sender);
+		}
+		if (orig_recipient != NULL) {
+			rfc2822_header_printf(msg,
+				"Original-Rcpt-To", "<%s>", orig_recipient);
+		}
 	}
 	str_append(msg, "\r\n");
 
