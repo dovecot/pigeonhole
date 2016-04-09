@@ -458,6 +458,7 @@ const char *sieve_rfc2822_mailbox_normalize
 (const char *address, const char **error_r)
 {
 	struct sieve_message_address_parser ctx;
+	struct sieve_address addr;
 
 	if ( error_r != NULL )
 		*error_r = NULL;
@@ -480,7 +481,10 @@ const char *sieve_rfc2822_mailbox_normalize
 
 	(void)str_lcase(str_c_modifiable(ctx.domain));
 
-	return t_strconcat(str_c(ctx.local_part), "@", str_c(ctx.domain), NULL);
+	memset(&addr, 0, sizeof(addr));
+	addr.local_part = str_c(ctx.local_part);
+	addr.domain = str_c(ctx.domain);
+	return sieve_address_to_string(&addr);
 }
 
 /*
@@ -491,6 +495,7 @@ const char *sieve_address_normalize
 (string_t *address, const char **error_r)
 {
 	struct sieve_message_address_parser ctx;
+	struct sieve_address addr;
 
 	memset(&ctx, 0, sizeof(ctx));
 
@@ -508,7 +513,10 @@ const char *sieve_address_normalize
 	*error_r = NULL;
 	(void)str_lcase(str_c_modifiable(ctx.domain));
 
-	return t_strconcat(str_c(ctx.local_part), "@", str_c(ctx.domain), NULL);
+	memset(&addr, 0, sizeof(addr));
+	addr.local_part = str_c(ctx.local_part);
+	addr.domain = str_c(ctx.domain);
+	return sieve_address_to_string(&addr);
 }
 
 bool sieve_address_validate
@@ -961,5 +969,62 @@ const struct sieve_address *sieve_address_parse_envelope_path
 
 	return parser.address;
 }
+
+/*
+ * Address encoding
+ */
+
+const char *sieve_address_to_string
+(const struct sieve_address *address)
+{
+	string_t *out;
+	bool quoted = FALSE;
+	const unsigned char *p, *pend, *pblock;
+
+	if (address == NULL || address->local_part == NULL)
+		return NULL;
+
+	out = t_str_new(256);
+	
+	/* encode localpart */
+	p = (const unsigned char *)address->local_part;
+	pend = p + strlen(address->local_part);	
+	while (p < pend) {
+		pblock = p;
+		while ( p < pend && IS_ATEXT(*p))
+			p++;
+
+		if (!quoted && p < pend && (*p != '.' || p == pblock)) {
+			quoted = TRUE;
+			str_insert(out, 0, "\"");
+		} 
+		
+		str_append_n(out, pblock, p-pblock);
+		if (p >= pend)
+			break;
+
+		if (!quoted) {
+			str_append_c(out, '.');
+		} else {
+			if (!IS_QTEXT(*p))
+				str_append_c(out, '\\');
+			str_append_c(out, *p);
+		}
+
+		p++;
+	}
+
+	if (quoted)
+		str_append_c(out, '\"');
+
+	if (address->domain != NULL) {
+		str_append_c(out, '@');
+		str_append(out, address->domain);	
+	}
+	
+	return str_c(out);
+}
+
+
 
 

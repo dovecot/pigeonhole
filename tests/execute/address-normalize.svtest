@@ -1,0 +1,49 @@
+require "vnd.dovecot.testsuite";
+require "envelope";
+
+test_set "message" text:
+From: tss@example.net
+To: stephan@example.org
+Subject: Frop!
+
+Frop!
+.
+;
+
+test_set "envelope.from" "timo@example.net";
+test_set "envelope.to" "\"sirius\"@example.org";
+
+/*
+ * Mail address normalization - redirect
+ */
+
+test "Mail address normalization - redirect" {
+	redirect "\"S[r]us\"@example.net";
+	redirect "\"Sirius\"@example.net";
+	redirect "\"Stephan Bosch\" <\"S.Bosch\"@example.net>";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	test_message :smtp 0;
+	test_message_print;
+
+	if not envelope :is "to" "\"S[r]us\"@example.net" {
+		test_fail "envelope recipient incorrect";
+	}
+
+	test_message :smtp 1;
+	test_message_print;
+
+	if not envelope :is "to" "Sirius@example.net" {
+		test_fail "envelope recipient incorrect";
+	}
+
+	test_message :smtp 2;
+	test_message_print;
+
+	if not envelope :is "to" "S.Bosch@example.net" {
+		test_fail "envelope recipient incorrect";
+	}
+}

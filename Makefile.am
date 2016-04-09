@@ -78,6 +78,7 @@ test_cases = \
 	tests/execute/actions.svtest \
 	tests/execute/smtp.svtest \
 	tests/execute/mailstore.svtest \
+	tests/execute/address-normalize.svtest \
 	tests/execute/examples.svtest \
 	tests/lexer.svtest \
 	tests/comparators/i-octet.svtest \

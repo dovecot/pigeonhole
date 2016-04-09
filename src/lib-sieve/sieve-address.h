@@ -19,18 +19,6 @@ struct sieve_address {
 	const char *domain;
 };
 
-static inline const char *sieve_address_to_string
-(const struct sieve_address *address)
-{
-	if ( address == NULL || address->local_part == NULL )
-		return NULL;
-
-	if ( address->domain == NULL )
-		return address->local_part;
-
-	return t_strconcat(address->local_part, "@", address->domain, NULL);
-}
-
 /*
  * Address list API
  */
@@ -99,5 +87,12 @@ int sieve_address_compare
 
 const struct sieve_address *sieve_address_parse_envelope_path
 	(pool_t pool, const char *field_value);
+
+/*
+ * Address encoding
+ */
+
+const char *sieve_address_to_string
+	(const struct sieve_address *address);
 
 #endif
