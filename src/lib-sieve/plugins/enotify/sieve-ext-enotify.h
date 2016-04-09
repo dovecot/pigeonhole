@@ -124,6 +124,7 @@ void sieve_enotify_method_printf
 
 struct sieve_enotify_exec_env {
 	struct sieve_instance *svinst;
+	enum sieve_execute_flags flags;
 
 	const struct sieve_enotify_method *method;
 

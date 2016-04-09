@@ -31,6 +31,7 @@ int sieve_address_source_get_address
 (struct sieve_address_source *asrc,
 	const struct sieve_script_env *senv,
 	struct sieve_message_context *msgctx,
+	enum sieve_execute_flags flags,
 	const char **addr_r);
 
 #endif

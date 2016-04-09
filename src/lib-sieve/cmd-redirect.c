@@ -315,10 +315,10 @@ static int act_redirect_send
 
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = aenv->scriptenv;
-	const char *sender = sieve_message_get_sender(msgctx);
+	const char *sender;
 	const char *recipient = sieve_message_get_final_recipient(msgctx);
-	struct sieve_address_source *env_from =
-		&aenv->svinst->redirect_from;
+	struct sieve_address_source env_from =
+		aenv->svinst->redirect_from;
 	struct istream *input;
 	struct ostream *output;
 	const char *error;
@@ -350,10 +350,18 @@ static int act_redirect_send
 		 when then returns a delivery status notification that also ends up
 		 being redirected to the same invalid address.
 	 */
-	if ( sender != NULL &&
-		env_from->type != SIEVE_ADDRESS_SOURCE_SENDER) {
-		(void)sieve_address_source_get_address
-			(env_from, senv, msgctx, &sender);
+	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 ) {
+		/* Envelope available */
+		sender = sieve_message_get_sender(msgctx);
+		if ( sender != NULL &&
+			sieve_address_source_get_address(&env_from,
+				senv, msgctx, aenv->flags, &sender) < 0 )
+			sender = NULL;
+	} else {
+		/* No envelope available */
+		if ( sieve_address_source_get_address(&env_from,
+			senv, msgctx, aenv->flags, &sender) <= 0 )
+			sender = NULL;
 	}
 
 	/* Open SMTP transport */

@@ -72,9 +72,25 @@ int sieve_address_source_get_address
 (struct sieve_address_source *asrc,
 	const struct sieve_script_env *senv,
 	struct sieve_message_context *msgctx,
+	enum sieve_execute_flags flags,
 	const char **addr_r)
 {
-	switch ( asrc->type ) {
+	enum sieve_address_source_type type = asrc->type;
+
+	if ( (flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0 ) {
+		switch ( asrc->type ) {
+		case SIEVE_ADDRESS_SOURCE_SENDER:
+		case SIEVE_ADDRESS_SOURCE_RECIPIENT:
+		case SIEVE_ADDRESS_SOURCE_ORIG_RECIPIENT:
+			/* We have no envelope */
+			type = SIEVE_ADDRESS_SOURCE_DEFAULT;
+			break;
+		default:
+			break;
+		}
+	}
+
+	switch ( type ) {
 	case SIEVE_ADDRESS_SOURCE_SENDER:
 		*addr_r = sieve_message_get_sender(msgctx);
 		return 1;

@@ -568,6 +568,7 @@ static int act_notify_commit
 		/* Compose log structure */
 		memset(&nenv, 0, sizeof(nenv));
 		nenv.svinst = aenv->svinst;
+		nenv.flags = aenv->flags;
 		nenv.method = method;
 		nenv.scriptenv = aenv->scriptenv;
 		nenv.msgdata = aenv->msgdata;

@@ -437,8 +437,8 @@ static int ntfy_mailto_send
 		(struct ntfy_mailto_context *) nact->method_context;
 	struct ntfy_mailto_config *mth_config =
 		(struct ntfy_mailto_config *)nenv->method->context;
-	struct sieve_address_source *env_from =
-		&mth_config->envelope_from;
+	struct sieve_address_source env_from =
+		mth_config->envelope_from;
 	const char *from = NULL, *from_smtp = NULL;
 	const char *subject = mtctx->uri->subject;
 	const char *body = mtctx->uri->body;
@@ -485,16 +485,20 @@ static int ntfy_mailto_send
 		 prefer to establish a mailbox that receives bounces from notification
 		 messages.
 	 */
-	from_smtp = sieve_message_get_sender(nenv->msgctx);
-	if ( from_smtp != NULL &&
-		env_from->type != SIEVE_ADDRESS_SOURCE_SENDER ) {
-		if ((ret=sieve_address_source_get_address
-			(env_from, senv, nenv->msgctx, &from_smtp)) < 0) {
-			from_smtp = NULL;
-		} else if (ret == 0) {
-			from_smtp = ( mtctx->from_normalized != NULL ?
-				mtctx->from_normalized : senv->postmaster_address );
+	if ( (nenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 ) {
+		from_smtp = sieve_message_get_sender(nenv->msgctx);
+		if ( from_smtp == NULL ) {
+			/* "<>" */
+			memset(&env_from, 0, sizeof(env_from));
+			env_from.type = SIEVE_ADDRESS_SOURCE_EXPLICIT;
 		}
+	}
+	if ( (ret=sieve_address_source_get_address(&env_from,
+		senv, nenv->msgctx, nenv->flags, &from_smtp)) < 0 ) {
+		from_smtp = NULL;
+	} else if ( ret == 0 ) {
+		from_smtp = ( mtctx->from_normalized != NULL ?
+			mtctx->from_normalized : senv->postmaster_address );
 	}
 
 	/* Determine subject */
