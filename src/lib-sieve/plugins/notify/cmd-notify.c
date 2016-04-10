@@ -745,7 +745,8 @@ static bool act_notify_send
 	outmsgid = sieve_message_get_new_id(aenv->svinst);
 	rfc2822_header_write(msg, "Message-ID", outmsgid);
 
-	if ( sieve_message_get_sender(aenv->msgctx) != NULL )
+	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 &&
+		sieve_message_get_sender(aenv->msgctx) != NULL )
 		sctx = sieve_smtp_start(senv, senv->postmaster_address);
 	else
 		sctx = sieve_smtp_start(senv, NULL);
@@ -802,7 +803,6 @@ static int act_notify_commit
 	struct mail *mail = aenv->msgdata->mail;
 	const struct ext_notify_action *act =
 		(const struct ext_notify_action *) action->context;
-	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const char *const *hdsp;
 	bool result;
 
@@ -816,9 +816,16 @@ static int act_notify_commit
 	/* Theoretically multiple headers could exist, so lets make sure */
 	while ( *hdsp != NULL ) {
 		if ( strcasecmp(*hdsp, "no") != 0 ) {
+			const char *from = NULL;
+
+			if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
+				from = sieve_message_get_sender(aenv->msgctx);
+			from = (from == NULL ? "" :
+				t_strdup_printf(" from <%s>", str_sanitize(from, 256)));
+
 			sieve_result_global_log(aenv,
-				"not sending notification for auto-submitted message from <%s>",
-				str_sanitize(msgdata->return_path, 128));
+				"not sending notification for auto-submitted message%s",
+				from);
 			return SIEVE_EXEC_OK;
 		}
 		hdsp++;
