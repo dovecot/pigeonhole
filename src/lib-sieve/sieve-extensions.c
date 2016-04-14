@@ -570,7 +570,7 @@ const struct sieve_extension *sieve_extension_get_by_name
 static inline bool _sieve_extension_listable(const struct sieve_extension *ext)
 {
 	return ( ext->enabled && ext->def != NULL && *(ext->def->name) != '@'
-		&& !ext->dummy && !ext->global );
+		&& !ext->dummy && !ext->global && !ext->overridden);
 }
 
 const char *sieve_extensions_get_string(struct sieve_instance *svinst)
