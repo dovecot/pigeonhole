@@ -512,7 +512,8 @@ void sieve_extension_override
 	i_assert( old_ext == NULL || !old_ext->overridden );
 
 	sieve_extension_insert(svinst, name, *mod_ext);
-	(*mod_ext)->overridden = TRUE;
+	if ( old_ext != NULL )
+		old_ext->overridden = TRUE;
 }
 
 unsigned int sieve_extensions_get_count(struct sieve_instance *svinst)
