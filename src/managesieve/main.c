@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 	};
 	struct master_login_settings login_set;
 	enum master_service_flags service_flags = 0;
-	enum mail_storage_service_flags storage_service_flags = 0;
+	enum mail_storage_service_flags storage_service_flags = MAIL_STORAGE_SERVICE_FLAG_NO_NAMESPACES;
 	const char *username = NULL;
 	int c;
 
