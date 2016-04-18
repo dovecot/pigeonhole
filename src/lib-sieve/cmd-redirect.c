@@ -315,12 +315,10 @@ static int act_redirect_send
 	struct sieve_instance *svinst = aenv->svinst;
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = aenv->scriptenv;
-	const char *sender;
-	const char *recipient = sieve_message_get_final_recipient(msgctx);
 	struct sieve_address_source env_from = svinst->redirect_from;
 	struct istream *input;
 	struct ostream *output;
-	const char *error;
+	const char *sender, *error;
 	struct sieve_smtp_context *sctx;
 	int ret;
 
@@ -379,12 +377,18 @@ static int act_redirect_send
 
 	T_BEGIN {
 		string_t *hdr = t_str_new(256);
+		const char *user_email;
 
 		/* Prepend sieve headers (should not affect signatures) */
-		rfc2822_header_append(hdr, "X-Sieve", SIEVE_IMPLEMENTATION, FALSE, NULL);
-		if ( recipient != NULL ) {
-			rfc2822_header_append
-				(hdr, "X-Sieve-Redirected-From", recipient, FALSE, NULL);
+		rfc2822_header_append(hdr,
+			"X-Sieve", SIEVE_IMPLEMENTATION, FALSE, NULL);
+		if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
+			user_email = sieve_message_get_final_recipient(msgctx);
+		else
+			user_email = sieve_get_user_email(aenv->svinst);
+		if ( user_email != NULL ) {
+			rfc2822_header_append(hdr,
+				"X-Sieve-Redirected-From", user_email, FALSE, NULL);
 		}
 
 		/* Add new Message-ID if message doesn't have one */
@@ -431,14 +435,15 @@ static int act_redirect_commit
 {
 	struct act_redirect_context *ctx =
 		(struct act_redirect_context *) action->context;
+	struct sieve_message_context *msgctx = aenv->msgctx;
 	struct mail *mail =	( action->mail != NULL ?
-		action->mail : sieve_message_get_mail(aenv->msgctx) );
+		action->mail : sieve_message_get_mail(msgctx) );
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
-	const char *orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
 	const char *msg_id = msgdata->id, *new_msg_id = NULL;
 	const char *dupeid = NULL, *resent_id = NULL;
 	const char *list_id = NULL;
+	const char *recipient;
 	int ret;
 
 	/*
@@ -470,6 +475,11 @@ static int act_redirect_commit
 			sieve_message_get_new_id(aenv->svinst);
 	}
 
+	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
+		recipient = sieve_message_get_orig_recipient(msgctx);
+	else
+		recipient = sieve_get_user_email(aenv->svinst);
+
 	/* Base the duplicate ID on:
 	   - the message id
 	   - the recipient running this Sieve script
@@ -479,7 +489,7 @@ static int act_redirect_commit
 	   - if the message came through a mailing list: the mailinglist ID
 	 */
 	dupeid = t_strdup_printf("%s-%s-%s-%s-%s", msg_id,
-		orig_recipient, ctx->to_address,
+		(recipient != NULL ? recipient : ""), ctx->to_address,
 		(resent_id != NULL ? resent_id : ""),
 		(list_id != NULL ? list_id : ""));
 
