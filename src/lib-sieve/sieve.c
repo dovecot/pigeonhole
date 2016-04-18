@@ -1005,16 +1005,14 @@ int sieve_trace_config_get(struct sieve_instance *svinst,
 const char *sieve_get_user_email
 (struct sieve_instance *svinst)
 {
-    const char *username = svinst->username;
+	const char *username = svinst->username;
 
 	if (svinst->user_email != NULL)
 		return sieve_address_to_string(svinst->user_email);
 
-    if ( strchr(username, '@') != 0 )
-        return username;
-    if ( svinst->domainname != NULL )
-        return t_strconcat(username, "@", svinst->domainname, NULL);
-    return NULL;
-
-
+	if ( strchr(username, '@') != 0 )
+		return username;
+	if ( svinst->domainname != NULL )
+		return t_strconcat(username, "@", svinst->domainname, NULL);
+	return NULL;
 }
