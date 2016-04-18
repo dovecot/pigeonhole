@@ -363,7 +363,7 @@ static int act_redirect_send
 			if ( svinst->user_email == NULL )
 				sender = NULL;
 			else
-				sieve_address_to_string(svinst->user_email);
+				sender = sieve_address_to_string(svinst->user_email);
 		}
 	}
 
