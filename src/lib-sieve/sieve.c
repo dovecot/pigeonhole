@@ -15,6 +15,7 @@
 #include "sieve-extensions.h"
 #include "sieve-plugins.h"
 
+#include "sieve-address.h"
 #include "sieve-script.h"
 #include "sieve-storage-private.h"
 #include "sieve-ast.h"
@@ -995,4 +996,25 @@ int sieve_trace_config_get(struct sieve_instance *svinst,
 	if (tr_addresses)
 		tr_config->flags |= SIEVE_TRFLG_ADDRESSES;
 	return 0;
+}
+
+/*
+ * User e-mail address
+ */
+
+const char *sieve_get_user_email
+(struct sieve_instance *svinst)
+{
+    const char *username = svinst->username;
+
+	if (svinst->user_email != NULL)
+		return sieve_address_to_string(svinst->user_email);
+
+    if ( strchr(username, '@') != 0 )
+        return username;
+    if ( svinst->domainname != NULL )
+        return t_strconcat(username, "@", svinst->domainname, NULL);
+    return NULL;
+
+
 }

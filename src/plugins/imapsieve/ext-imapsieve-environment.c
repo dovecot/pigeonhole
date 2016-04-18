@@ -24,9 +24,7 @@
 static const char *envit_imap_user_get_value
 (const struct sieve_runtime_env *renv)
 {
-	const struct sieve_script_env *senv = renv->scriptenv;
-
-	return senv->user->username;
+	return renv->svinst->username;
 }
 
 const struct sieve_environment_item imap_user_env_item = {
@@ -39,16 +37,7 @@ const struct sieve_environment_item imap_user_env_item = {
 static const char *envit_imap_email_get_value
 (const struct sieve_runtime_env *renv)
 {
-	struct sieve_instance *svinst = renv->svinst;
-	const struct sieve_script_env *senv = renv->scriptenv;
-	const char *username = senv->user->username;
-
-	// FIXME: explicit configuration
-	if ( strchr(username, '@') != 0 )
-		return username;
-	if ( svinst->domainname != NULL )
-		return t_strconcat(username, "@", svinst->domainname, NULL);
-	return NULL;
+	return sieve_get_user_email(renv->svinst);
 }
 
 const struct sieve_environment_item imap_email_env_item = {

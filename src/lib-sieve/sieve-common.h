@@ -213,4 +213,11 @@ void sieve_trace_log_write_line
 	(struct sieve_trace_log *trace_log, const string_t *line)
 	ATTR_NULL(2);
 
+/*
+ * User e-mail address
+ */
+
+const char *sieve_get_user_email
+	(struct sieve_instance *svinst);
+
 #endif /* __SIEVE_COMMON_H */
