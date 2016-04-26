@@ -649,10 +649,10 @@ bool sieve_validator_extension_load
 		return FALSE;
 
 	/* Link extension to AST for use at code generation */
-	sieve_ast_extension_link(valdtr->ast, ext, reg->required);
-
-	if ( reg != NULL )
+	if ( reg != NULL ) {
+		sieve_ast_extension_link(valdtr->ast, ext, reg->required);
 		reg->loaded = TRUE;
+	}
 
 	return TRUE;
 }
