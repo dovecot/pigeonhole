@@ -1,3 +1,33 @@
+v0.4.14 26-04-2016 Stephan Bosch <stephan@rename-it.nl>
+
+	* The address test now allows specifying the X-Original-To header.
+	+ Implemented the Sieve imapsieve extension and its IMAP counterpart
+	  (RFC 6785) as a set of plugins. This allows running Sieve scripts at IMAP
+	  activity, rather than at delivery. There are also facilities for the
+	  familiar sieve_before/sieve_after administrator scripts. A user script is
+	  defined for a mailbox using an IMAP METADATA entry, whereas administrator
+	  scripts are configured using mailbox matching rules defined in the plugin
+	  settings.
+	+ Adjusted the Sieve ihave extension to allow capability tests to be performed
+	  at runtime. This way, scripts can be written that work both at delivery and
+	  from IMAP.
+	+ Implemented support for runtime trace debugging. This means that detailed
+	  information about which commands, actions and tests are performed is written
+	  to a file. That file is created in the configured directory, but only if
+	  that directory exists. This way, a particular user can be easily singled out
+	  for debugging. This works much like the Dovecot rawlog facility. The trace
+	  output is identical to what is produced using sieve-test with its "-t"
+	  command line option. 
+	+ Added a "sieve_user_email" setting that configures the user's primary email
+	  address. This is mainly useful to have a user email address available in
+	  IMAP, where envelope data is unavailable.
+	+ Implemented the dovecot-specific "vnd.dovecot.report" extension. This allows
+	  sending report messages in the Message Abuse Reporting Format (RFC 5965).
+	- extprograms plugin: Fixed epoll() panic caused by closing the output FD
+	  before the output stream.
+	- Made sure that the local part of a mail address is encoded properly using
+	  quoted string syntax when it is not a dot-atom.
+
 v0.4.13 18-03-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	* redirect action: Added the list-id header to the duplicate ID for mail loop
