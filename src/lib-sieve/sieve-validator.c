@@ -556,14 +556,15 @@ static bool sieve_validator_extensions_check_conficts
 	struct sieve_ast_argument *ext_arg,
 	const struct sieve_extension *ext)
 {
-	struct sieve_validator_extension_reg *ext_reg = NULL;
+	struct sieve_validator_extension_reg *ext_reg;
 	struct sieve_validator_extension_reg *regs;
 	unsigned int count, i;
 
-	if ( ext->id >= 0 ) {
-		ext_reg = array_idx_modifiable
-			(&valdtr->extensions, (unsigned int) ext->id);
-	}
+	if ( ext->id < 0 )
+		return TRUE;
+
+	ext_reg = array_idx_modifiable
+		(&valdtr->extensions, (unsigned int) ext->id);
 
 	regs = array_get_modifiable(&valdtr->extensions, &count);
 	for ( i = 0; i < count; i++ ) {
@@ -577,7 +578,7 @@ static bool sieve_validator_extensions_check_conficts
 			continue;		
 
 		/* Check this extension vs other extension */
-		if ( ext_reg != NULL && ext_reg->valext != NULL &&
+		if ( ext_reg->valext != NULL &&
 			ext_reg->valext->check_conflict != NULL ) {
 			struct sieve_ast_argument *this_ext_arg =
 				(ext_arg == NULL ? regs[i].arg : ext_arg);
