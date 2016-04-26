@@ -1,3 +1,30 @@
+v0.4.13 18-03-2016 Stephan Bosch <stephan@rename-it.nl>
+
+	* redirect action: Added the list-id header to the duplicate ID for mail loop
+	  prevention. This means that the message sent directly to the user and the
+	  message coming through the mailing list itself are treated as different
+	  messages by the loop detection of the redirect command, even though their
+	  Message-ID may be identical.
+	* Changed the Sieve number type to uint64_t, which means that Sieve numbers
+	  can now technically range up to 2^64. Some other Sieve implementation
+	  allowed this, making this change necessary for successful migration.
+	+ Implemented the sieve_implicit_extensions setting. The extensions listed in
+	  this setting do not need to be enabled explicitly using the Sieve "require"
+	  command. This behavior directly violates the standard, but can be necessary
+	  for compatibility with some existing implementations of Sieve. Do not use
+	  this setting unless you really need to!
+	- redirect action: Made mail loop detection more robust by forcibly adding a
+	  Message-ID header if it is missing.
+	- Prevent logging a useless "script not found" error message for LDAP scripts
+	  for which the entry exists but no attribute containing a script. This is not
+	  necessarily an error.
+	- extprograms plugin: Changed the communication channel between parent and
+	  child process for a directly forked program from a socketpair to a double
+	  pipe. Linux does not support /dev/stdin, /dev/stdout and friends for
+	  sockets. For some shell program authors this may be confusing, so that is
+	  why it is changed. When using the script service, these device nodes are
+	  still not usable though.
+
 v0.4.12 06-02-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Implemented the Sieve extracttext extension (RFC 5703; Section 7). It is now
