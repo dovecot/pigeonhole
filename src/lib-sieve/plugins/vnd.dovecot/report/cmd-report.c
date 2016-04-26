@@ -261,7 +261,6 @@ static bool cmd_report_operation_dump
 	/* Dump optional operands */
 	for (;;) {
 		int opt;
-		bool opok = TRUE;
 
 		if ( (opt=sieve_opr_optional_dump
 			(denv, address, &opt_code)) < 0 )
@@ -276,8 +275,6 @@ static bool cmd_report_operation_dump
 		default:
 			return FALSE;
 		}
-
-		if ( !opok ) return FALSE;
 	}
 
 	return
@@ -318,14 +315,11 @@ static int cmd_report_operation_execute
 		switch ( opt_code ) {
 		case OPT_HEADERS_ONLY:
 			headers_only = TRUE;
-			ret = SIEVE_EXEC_OK;
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
-
-		if ( ret <= 0 ) return ret;
 	}
 
 	/* Fixed operands */
