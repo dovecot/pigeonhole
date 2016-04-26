@@ -441,7 +441,7 @@ static int act_redirect_commit
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *msg_id = msgdata->id, *new_msg_id = NULL;
-	const char *dupeid = NULL, *resent_id = NULL;
+	const char *dupeid, *resent_id = NULL;
 	const char *list_id = NULL;
 	const char *recipient;
 	int ret;
@@ -511,10 +511,8 @@ static int act_redirect_commit
 		(aenv, mail, ctx, new_msg_id)) == SIEVE_EXEC_OK) {
 
 		/* Mark this message id as forwarded to the specified destination */
-		if (dupeid != NULL) {
-			sieve_action_duplicate_mark(senv, dupeid, strlen(dupeid),
-				ioloop_time + CMD_REDIRECT_DUPLICATE_KEEP);
-		}
+		sieve_action_duplicate_mark(senv, dupeid, strlen(dupeid),
+			ioloop_time + CMD_REDIRECT_DUPLICATE_KEEP);
 
 		sieve_result_global_log(aenv, "forwarded to <%s>",
 			str_sanitize(ctx->to_address, 128));
