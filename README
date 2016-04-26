@@ -141,14 +141,16 @@ following list outlines the implementation status of each supported extension:
 
     vnd.dovecot.debug (v0.3.0+):
         Allows logging debug messages.
-    vnd.dovecot.pipe (v0.4.0+; sieve_extprograms plugin):
-        Implements piping messages to a pre-defined set of external programs.
-    vnd.dovecot.filter (v0.4.0+; sieve_extprograms plugin):
-        Implements filtering messages through a pre-defined set of external
-        programs.
     vnd.dovecot.execute (v0.4.0+; sieve_extprograms plugin):
         Implements executing a pre-defined set of external programs with the
         option to process string data through the external program.
+    vnd.dovecot.filter (v0.4.0+; sieve_extprograms plugin):
+        Implements filtering messages through a pre-defined set of external
+        programs.
+    vnd.dovecot.pipe (v0.4.0+; sieve_extprograms plugin):
+        Implements piping messages to a pre-defined set of external programs.
+    vnd.dovecot.report (v0.4.14):
+        Implements sending MARF reports (RFC 5965).
 
   The following extensions are under development:
 
