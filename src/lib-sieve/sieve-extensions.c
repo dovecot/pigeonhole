@@ -504,12 +504,14 @@ void sieve_extension_override
 	struct sieve_extension * const *mod_ext;
 	struct sieve_extension *old_ext;
 
+	old_ext = sieve_extension_lookup(svinst, name);
+	if (old_ext == ext)
+		return;
+	i_assert( old_ext == NULL || !old_ext->overridden );
+
 	i_assert( ext->id >= 0 &&
 		ext->id < (int) array_count(&ext_reg->extensions) );
 	mod_ext = array_idx(&ext_reg->extensions, ext->id);
-
-	old_ext = sieve_extension_lookup(svinst, name);
-	i_assert( old_ext == NULL || !old_ext->overridden );
 
 	sieve_extension_insert(svinst, name, *mod_ext);
 	if ( old_ext != NULL )
