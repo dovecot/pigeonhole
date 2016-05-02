@@ -212,8 +212,8 @@ extprograms_test_cases = \
 $(extprograms_test_cases):
 	@$(TEST_EXTPROGRAMS_BIN) 	$(top_srcdir)/$@
 
-.PHONY: $(test_cases) $(extprograms_test_cases)
-test: $(test_cases)
-test-plugins: $(extprograms_test_cases)
+.PHONY: test test-plugins $(test_cases) $(extprograms_test_cases)
+test: all-am $(test_cases)
+test-plugins: all-am $(extprograms_test_cases)
 
-check: check-am test all-am
+check: check-am test
