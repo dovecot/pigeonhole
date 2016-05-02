@@ -97,6 +97,8 @@ void testsuite_mailstore_init(void)
 
 	if (mail_storage_create(ns, "maildir", 0, &error) < 0)
 		i_fatal("Couldn't create testsuite storage: %s", error);
+	if (mail_namespaces_init_finish(ns, &error) < 0)
+		i_fatal("Couldn't create testsuite namespace: %s", error);
 
 	testsuite_mailstore_user = mail_user;
 }
