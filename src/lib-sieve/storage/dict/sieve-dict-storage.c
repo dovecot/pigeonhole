@@ -88,12 +88,15 @@ int sieve_dict_storage_get_dict
 {
 	struct sieve_storage *storage = &dstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
+	struct dict_settings dict_set;
 	const char *error;
 	int ret;
 
 	if ( dstorage->dict == NULL ) {
-		ret = dict_init(dstorage->uri, DICT_DATA_TYPE_STRING,
-			dstorage->username, svinst->base_dir, &dstorage->dict, &error);
+		memset(&dict_set, 0, sizeof(dict_set));
+		dict_set.username = dstorage->username;
+		dict_set.base_dir = svinst->base_dir;
+		ret = dict_init(dstorage->uri, &dict_set, &dstorage->dict, &error);
 		if ( ret < 0 ) {
 			sieve_storage_set_critical(storage,
 				"Failed to initialize dict with data `%s' for user `%s': %s",
