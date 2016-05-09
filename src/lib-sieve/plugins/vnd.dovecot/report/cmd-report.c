@@ -593,8 +593,22 @@ static int act_report_send
 		return sieve_result_mail_error(aenv, msgdata->mail,
 			"report action: failed to read input message");
 	}
+
   ret = o_stream_send_istream(output, input);
-  i_assert(ret != 0);
+
+	/* blocking i/o required */
+	i_assert( ret != 0 );
+
+	if ( ret < 0 && input->stream_errno != 0 ) {
+		/* Error; clean up */
+		sieve_result_critical(aenv,
+			"report action: failed to read input message",
+			"report action: read(%s) failed: %s",
+			i_stream_get_name(input),
+			i_stream_get_error(input));
+		i_stream_unref(&input);
+		return SIEVE_EXEC_OK;
+	}
 	i_stream_unref(&input);
 
   str_truncate(msg, 0);

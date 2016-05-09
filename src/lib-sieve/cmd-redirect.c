@@ -398,12 +398,18 @@ static int act_redirect_send
 		o_stream_send(output, str_data(hdr), str_len(hdr));
 	} T_END;
 
-	o_stream_send_istream(output, input);
-	if (input->stream_errno != 0) {
+	ret = o_stream_send_istream(output, input);
+
+	/* blocking i/o required */
+	i_assert( ret != 0 );
+
+	if (ret < 0 && input->stream_errno != 0) {
 		sieve_result_critical(aenv,
 			"redirect action: failed to read input message",
-			"redirect action: failed to read message stream: %s",
+			"redirect action: read(%s) failed: %s",
+			i_stream_get_name(input),
 			i_stream_get_error(input));
+		i_stream_unref(&input);
 		return SIEVE_EXEC_TEMP_FAILURE;
 	}
   i_stream_unref(&input);
