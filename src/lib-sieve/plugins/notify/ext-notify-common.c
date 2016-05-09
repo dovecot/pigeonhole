@@ -230,7 +230,8 @@ static int cmd_notify_extract_body_text
 	if ( ret < 0 && input->stream_errno != 0 ) {
 		sieve_runtime_critical(renv, NULL,
 			"notify action: failed to read input message",
-			"notify action: failed to read message stream: %s",
+			"notify action: read(%s) failed: %s",
+			i_stream_get_name(input),
 			i_stream_get_error(input));
 		return SIEVE_EXEC_TEMP_FAILURE;
 	}

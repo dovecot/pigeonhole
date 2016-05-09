@@ -1484,7 +1484,8 @@ static int sieve_message_parts_add_missing
 	if ( input->stream_errno != 0 ) {
 		sieve_runtime_critical(renv, NULL,
 			"failed to read input message",
-			"failed to read message stream: %s",
+			"read(%s) failed: %s",
+			i_stream_get_name(input),
 			i_stream_get_error(input));
 		return SIEVE_EXEC_TEMP_FAILURE;
 	}
@@ -1585,10 +1586,11 @@ int sieve_message_body_get_raw
 			i_stream_skip(input, size);
 		}
 
-		if ( ret == -1 && input->stream_errno != 0 ) {
+		if ( ret < 0 && input->stream_errno != 0 ) {
 			sieve_runtime_critical(renv, NULL,
 				"failed to read input message",
-				"failed to read raw message stream: %s",
+				"read(%s) failed: %s",
+				i_stream_get_name(input),
 				i_stream_get_error(input));
 			return SIEVE_EXEC_TEMP_FAILURE;
 		}
