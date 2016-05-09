@@ -11,7 +11,7 @@ enum program_client_error {
 	PROGRAM_CLIENT_ERROR_CONNECT_TIMEOUT,
 	PROGRAM_CLIENT_ERROR_RUN_TIMEOUT,
 	PROGRAM_CLIENT_ERROR_IO,
-	PROGRAM_CLIENT_ERROR_UNKNOWN
+	PROGRAM_CLIENT_ERROR_OTHER
 };
 
 struct program_client_extra_fd {
@@ -51,8 +51,6 @@ struct program_client {
 	int (*connect)(struct program_client *pclient);
 	int (*close_output)(struct program_client *pclient);
 	int (*disconnect)(struct program_client *pclient, bool force);
-	void (*failure)
-		(struct program_client *pclient, enum program_client_error error);
 	
 	unsigned int debug:1;
 	unsigned int disconnected:1;

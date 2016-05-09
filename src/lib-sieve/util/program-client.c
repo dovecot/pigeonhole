@@ -19,11 +19,15 @@
 
 static void program_client_timeout(struct program_client *pclient)
 {
+	i_error("program `%s' execution timed out (> %d secs)",
+		pclient->path, pclient->set.input_idle_timeout_secs);
 	program_client_fail(pclient, PROGRAM_CLIENT_ERROR_RUN_TIMEOUT);
 }
 
 static void program_client_connect_timeout(struct program_client *pclient)
 {
+	i_error("program `%s' socket connection timed out (> %d msecs)",
+		pclient->path, pclient->set.client_connect_timeout_msecs);
 	program_client_fail(pclient, PROGRAM_CLIENT_ERROR_CONNECT_TIMEOUT);
 }
 
@@ -118,7 +122,7 @@ static void program_client_disconnect
 	
 	pclient->disconnected = TRUE;
 	if (error && pclient->error == PROGRAM_CLIENT_ERROR_NONE ) {
-		pclient->error = PROGRAM_CLIENT_ERROR_UNKNOWN;
+		pclient->error = PROGRAM_CLIENT_ERROR_OTHER;
 	}
 }
 
@@ -130,8 +134,6 @@ void program_client_fail
 
 	pclient->error = error;
 	program_client_disconnect(pclient, TRUE);
-
-	pclient->failure(pclient, error);
 }
 
 static bool program_client_input_pending(struct program_client *pclient)
@@ -168,8 +170,12 @@ static int program_client_program_output(struct program_client *pclient)
 	int ret = 0;
 
 	if ((ret = o_stream_flush(output)) <= 0) {
-		if (ret < 0)
+		if (ret < 0) {
+			i_error("write(%s) failed: %s",
+				o_stream_get_name(output),
+				o_stream_get_error(output));
 			program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
+		}
 		return ret;
 	}
 
@@ -179,6 +185,9 @@ static int program_client_program_output(struct program_client *pclient)
 				ssize_t sent;
 	
 				if ( (sent=o_stream_send(output, data, size)) < 0 ) {
+					i_error("write(%s) failed: %s",
+						o_stream_get_name(output),
+						o_stream_get_error(output));
 					program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
 					return -1;
 				}
@@ -193,7 +202,10 @@ static int program_client_program_output(struct program_client *pclient)
 			return 1;
 
 		if ( ret < 0 ) {
-			if ( !input->eof ) {
+			if ( input->stream_errno != 0 ) {
+				i_error("read(%s) failed: %s",
+					i_stream_get_name(input),
+					i_stream_get_error(input));
 				program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
 				return -1;
 			} else if ( !i_stream_have_bytes_left(input) ) {
@@ -201,8 +213,12 @@ static int program_client_program_output(struct program_client *pclient)
 				input = NULL;
 
 				if ( (ret = o_stream_flush(output)) <= 0 ) {
-					if ( ret < 0 )
+					if ( ret < 0 ) {
+						i_error("write(%s) failed: %s",
+							o_stream_get_name(output),
+							o_stream_get_error(output));
 						program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
+					}
 					return ret;
 				}
 			} 
@@ -213,7 +229,7 @@ static int program_client_program_output(struct program_client *pclient)
 		if ( !program_client_input_pending(pclient) ) {
 			program_client_disconnect(pclient, FALSE);
 		} else if (program_client_close_output(pclient) < 0) {
-			program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
+			program_client_fail(pclient, PROGRAM_CLIENT_ERROR_OTHER);
 		}
 	}
 	return 1;
@@ -233,6 +249,9 @@ static void program_client_program_input(struct program_client *pclient)
 				ssize_t sent;
 
 				if ( (sent=o_stream_send(output, data, size)) < 0 ) {
+					i_error("write(%s) failed: %s",
+						o_stream_get_name(output),
+						o_stream_get_error(output));
 					program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
 					return;
 				}
@@ -243,12 +262,15 @@ static void program_client_program_input(struct program_client *pclient)
 		}
 
 		if ( ret < 0 ) {
-			if ( i_stream_is_eof(input) ) {
+			if ( input->stream_errno != 0 ) {
+				i_error("read(%s) failed: %s",
+					i_stream_get_name(input),
+					i_stream_get_error(input));
+				program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
+			} else {
 				if ( !program_client_input_pending(pclient) )
 					program_client_disconnect(pclient, FALSE);
-				return;
 			}
-			program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
 		}
 	}
 }
@@ -424,6 +446,7 @@ void program_client_init_streams(struct program_client *pclient)
 	if ( pclient->fd_out >= 0 ) {
 		pclient->program_output =
 			o_stream_create_fd(pclient->fd_out, MAX_OUTPUT_BUFFER_SIZE, FALSE);
+		o_stream_set_name(pclient->program_output, "program stdin");
 	}
 	if ( pclient->fd_in >= 0 ) {
 		struct istream *input;
@@ -442,6 +465,8 @@ void program_client_init_streams(struct program_client *pclient)
 		}
 
 		pclient->program_input = input;
+		i_stream_set_name(pclient->program_input, "program stdout");
+
 		pclient->io = io_add
 			(pclient->fd_in, IO_READ, program_client_program_input, pclient);
 	}
@@ -456,6 +481,8 @@ void program_client_init_streams(struct program_client *pclient)
 			i_assert( efds[i].parent_fd >= 0 );
 			efds[i].input = i_stream_create_fd
 				(efds[i].parent_fd, (size_t)-1, FALSE);
+			i_stream_set_name(efds[i].input,
+				t_strdup_printf("program output fd=%d", efds[i].child_fd));
 			efds[i].io = io_add
 				(efds[i].parent_fd, IO_READ, program_client_extra_fd_input, &efds[i]);
 		}
@@ -504,6 +531,9 @@ int program_client_run(struct program_client *pclient)
 
 		/* run i/o event loop */
 		if ( ret < 0 ) {
+			i_error("write(%s) failed: %s",
+				o_stream_get_name(pclient->program_output),
+				o_stream_get_error(pclient->program_output));
 			pclient->error = PROGRAM_CLIENT_ERROR_IO;
 		} else if ( !pclient->disconnected &&
 			(ret == 0 || program_client_input_pending(pclient)) ) {
