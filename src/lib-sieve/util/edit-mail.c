@@ -826,11 +826,14 @@ static int edit_mail_headers_parse
 
 	message_parse_header_deinit(&hparser);
 
-	if ( ret <= 0 ) {
-		/* blocking i/o required */
-		i_assert( ret != 0 );
+	/* blocking i/o required */
+	i_assert( ret != 0 );
 
+	if ( ret < 0 && edmail->wrapped_stream->stream_errno != 0 ) {
 		/* Error; clean up */
+		i_error("read(%s) failed: %s",
+			i_stream_get_name(edmail->wrapped_stream),
+			i_stream_get_error(edmail->wrapped_stream));
 		current = head;
 		while ( current != NULL ) {
 			struct _header_field_index *next = current->next;
