@@ -426,19 +426,6 @@ static int program_client_local_disconnect
 	return -1;
 }
 
-static void program_client_local_failure
-(struct program_client *pclient, enum program_client_error error)
-{
-	switch ( error ) {
-	case PROGRAM_CLIENT_ERROR_RUN_TIMEOUT:
-		i_error("program `%s' execution timed out (> %d secs)",
-			pclient->path, pclient->set.input_idle_timeout_secs);
-		break;
-	default:
-		break;
-	}
-}
-
 struct program_client *program_client_local_create
 (const char *bin_path, const char *const *args,
 	const struct program_client_settings *set)
@@ -452,7 +439,6 @@ struct program_client *program_client_local_create
 	pclient->client.connect = program_client_local_connect;
 	pclient->client.close_output = program_client_local_close_output;
 	pclient->client.disconnect = program_client_local_disconnect;
-	pclient->client.failure = program_client_local_failure;
 	pclient->pid = -1;
 
 	return &pclient->client;

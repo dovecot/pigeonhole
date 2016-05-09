@@ -205,6 +205,9 @@ static void program_client_remote_connected(struct program_client *pclient)
 
 	if ( o_stream_send
 		(pclient->program_output, str_data(str), str_len(str)) < 0 ) {
+		i_error("write(%s) failed: %s",
+			o_stream_get_name(pclient->program_output),
+			o_stream_get_error(pclient->program_output));
 		program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
 		return;
 	}
@@ -294,23 +297,6 @@ static int program_client_remote_disconnect
 	return ret;
 }
 
-static void program_client_remote_failure
-(struct program_client *pclient, enum program_client_error error)
-{
-	switch ( error ) {
-	case PROGRAM_CLIENT_ERROR_CONNECT_TIMEOUT:
-		i_error("program `%s' socket connection timed out (> %d msecs)",
-			pclient->path, pclient->set.client_connect_timeout_msecs);
-		break;
-	case PROGRAM_CLIENT_ERROR_RUN_TIMEOUT:
-		i_error("program `%s' execution timed out (> %d secs)",
-			pclient->path, pclient->set.input_idle_timeout_secs);
-		break;
-	default:
-		break;
-	}
-}
-
 struct program_client *program_client_remote_create
 (const char *socket_path, const char *const *args, 
 	const struct program_client_settings *set, bool noreply)
@@ -324,7 +310,6 @@ struct program_client *program_client_remote_create
 	pclient->client.connect = program_client_remote_connect;
 	pclient->client.close_output = program_client_remote_close_output;
 	pclient->client.disconnect = program_client_remote_disconnect;
-	pclient->client.failure = program_client_remote_failure;
 	pclient->noreply = noreply;
 
 	return &pclient->client;
