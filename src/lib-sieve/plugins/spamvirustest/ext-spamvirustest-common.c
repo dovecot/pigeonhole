@@ -69,7 +69,7 @@ static bool _regexp_compile
 	errsize = regerror(ret, regexp, NULL, 0);
 
 	if ( errsize > 0 ) {
-		char *errbuf = t_malloc(errsize);
+		char *errbuf = t_malloc0(errsize);
 
 		(void)regerror(ret, regexp, errbuf, errsize);
 

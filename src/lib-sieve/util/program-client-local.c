@@ -149,8 +149,8 @@ static int program_client_local_connect
 		
 		efds = array_get_modifiable(&pclient->extra_fds, &xfd_count);
 		if (	xfd_count > 0 ) {
-			parent_extra_fds = t_malloc(sizeof(int) * xfd_count);
-			child_extra_fds = t_malloc(sizeof(int) * xfd_count * 2 + 1);
+			parent_extra_fds = t_malloc0(sizeof(int) * xfd_count);
+			child_extra_fds = t_malloc0(sizeof(int) * xfd_count * 2 + 1);
 			for ( i = 0; i < xfd_count; i++ ) {
 				if ( pipe(extra_fd) < 0 ) {
 					i_error("pipe(extra=%d) failed: %m", extra_fd[1]);

@@ -630,7 +630,7 @@ static bool _file_lazy_read
 static const void *_file_lazy_load_data
 (struct sieve_binary_file *file, off_t *offset, size_t size)
 {
-	void *data = t_malloc(size);
+	void *data = t_malloc_no0(size);
 
 	if ( _file_lazy_read(file, offset, data, size) ) {
 		return data;
