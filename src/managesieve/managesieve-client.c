@@ -264,9 +264,7 @@ void client_destroy(struct client *client, const char *reason)
 		timeout_remove(&client->to_idle_output);
 	timeout_remove(&client->to_idle);
 
-	i_stream_destroy(&client->input);
-	o_stream_destroy(&client->output);
-
+	/* i/ostreams are already closed at this stage, so fd can be closed */
 	net_disconnect(client->fd_in);
 	if (client->fd_in != client->fd_out)
 		net_disconnect(client->fd_out);
@@ -274,6 +272,11 @@ void client_destroy(struct client *client, const char *reason)
 	/* Free the user after client is already disconnected. It may start
 	   some background work like autoexpunging. */
 	mail_user_unref(&client->user);
+
+	/* free the i/ostreams after mail_user_unref(), which could trigger
+		 mail_storage_callbacks notifications that write to the ostream. */
+	i_stream_destroy(&client->input);
+	o_stream_destroy(&client->output);
 
 	sieve_storage_unref(&client->storage);
 	sieve_deinit(&client->svinst);
