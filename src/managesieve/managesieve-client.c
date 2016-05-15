@@ -256,7 +256,6 @@ void client_destroy(struct client *client, const char *reason)
 			mail_user_get_anvil_userip_ident(client->user),
 			"\n", NULL));
 	}
-	mail_user_unref(&client->user);
 
 	managesieve_parser_destroy(&client->parser);
 	if (client->io != NULL)
@@ -271,6 +270,10 @@ void client_destroy(struct client *client, const char *reason)
 	net_disconnect(client->fd_in);
 	if (client->fd_in != client->fd_out)
 		net_disconnect(client->fd_out);
+
+	/* Free the user after client is already disconnected. It may start
+	   some background work like autoexpunging. */
+	mail_user_unref(&client->user);
 
 	sieve_storage_unref(&client->storage);
 	sieve_deinit(&client->svinst);
