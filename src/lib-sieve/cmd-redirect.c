@@ -395,15 +395,12 @@ static int act_redirect_send
 		if ( new_msg_id != NULL )
 			rfc2822_header_write(hdr, "Message-ID", new_msg_id);
 
-		o_stream_send(output, str_data(hdr), str_len(hdr));
+		o_stream_nsend(output, str_data(hdr), str_len(hdr));
 	} T_END;
 
-	ret = o_stream_send_istream(output, input);
+	o_stream_nsend_istream(output, input);
 
-	/* blocking i/o required */
-	i_assert( ret != 0 );
-
-	if (ret < 0 && input->stream_errno != 0) {
+	if (input->stream_errno != 0) {
 		sieve_result_critical(aenv,
 			"redirect action: failed to read input message",
 			"redirect action: read(%s) failed: %s",

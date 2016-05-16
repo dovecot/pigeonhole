@@ -776,7 +776,7 @@ static bool act_notify_send
 	str_printfa(msg, "\r\n%s\r\n", act->message);
 
 	output = sieve_smtp_send(sctx);
-	o_stream_send(output, str_data(msg), str_len(msg));
+	o_stream_nsend(output, str_data(msg), str_len(msg));
 
 	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if (ret < 0) {

@@ -865,6 +865,7 @@ int sieve_trace_log_create
 			return -1;
 		}
 		output = o_stream_create_fd_autoclose(&fd, 0);
+		o_stream_set_name(output, path);
 	}
 
 	trace_log = i_new(struct sieve_trace_log, 1);
@@ -935,7 +936,7 @@ void sieve_trace_log_write_line
 	struct const_iovec iov[2];
 
 	if (line == NULL) {
-		o_stream_send_str(trace_log->output, "\n");
+		o_stream_nsend_str(trace_log->output, "\n");
 		return;
 	}
 
@@ -944,7 +945,7 @@ void sieve_trace_log_write_line
 	iov[0].iov_len = str_len(line);
 	iov[1].iov_base = "\n";
 	iov[1].iov_len = 1;
-	o_stream_sendv(trace_log->output, iov, 2);
+	o_stream_nsendv(trace_log->output, iov, 2);
 }
 
 void sieve_trace_log_free(struct sieve_trace_log **_trace_log)
@@ -953,6 +954,11 @@ void sieve_trace_log_free(struct sieve_trace_log **_trace_log)
 
 	*_trace_log = NULL;
 
+	if (o_stream_nfinish(trace_log->output) < 0) {
+		i_error("write(%s) failed: %s",
+			o_stream_get_name(trace_log->output),
+			o_stream_get_error(trace_log->output));
+	}
 	o_stream_destroy(&trace_log->output);
 	i_free(trace_log);
 }

@@ -163,7 +163,7 @@ void sieve_code_dumpf
 	str_append_c(outbuf, '\n');
 	va_end(args);
 
-	o_stream_send(denv->stream, str_data(outbuf), str_len(outbuf));
+	o_stream_nsend(denv->stream, str_data(outbuf), str_len(outbuf));
 }
 
 static inline void sieve_code_line_mark
@@ -246,7 +246,7 @@ void sieve_code_dumper_run(struct sieve_code_dumper *cdumper)
 	address = &(denv->offset);
 
 	/* Heading */
-	o_stream_send_str(denv->stream, "Address   Line  Code\n");
+	o_stream_nsend_str(denv->stream, "Address   Line  Code\n");
 
 	/* Load debug block */
 	sieve_code_mark(denv);

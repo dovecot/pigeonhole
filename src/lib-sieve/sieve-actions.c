@@ -876,7 +876,7 @@ static int sieve_action_do_reject_mail
 	str_printfa(hdr, "--%s\r\n", boundary);
 	rfc2822_header_write(hdr, "Content-Type", "message/rfc822");
 	str_append(hdr, "\r\n");
-	o_stream_send(output, str_data(hdr), str_len(hdr));
+	o_stream_nsend(output, str_data(hdr), str_len(hdr));
 
 	if (mail_get_hdr_stream(msgdata->mail, NULL, &input) == 0) {
     /* Note: If you add more headers, they need to be sorted.
@@ -893,15 +893,13 @@ static int sieve_action_do_reject_mail
 		N_ELEMENTS(exclude_headers),
 		*null_header_filter_callback, (void *)NULL);
 
-    ret = o_stream_send_istream(output, input);
+    o_stream_nsend_istream(output, input);
     i_stream_unref(&input);
-
-    i_assert(ret != 0);
   }
 
   str_truncate(hdr, 0);
   str_printfa(hdr, "\r\n\r\n--%s--\r\n", boundary);
-  o_stream_send(output, str_data(hdr), str_len(hdr));
+  o_stream_nsend(output, str_data(hdr), str_len(hdr));
 
 	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if ( ret < 0 ) {

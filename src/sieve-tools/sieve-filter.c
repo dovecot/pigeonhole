@@ -132,7 +132,7 @@ static int filter_message
 		sieve_error_handler_unref(&action_ehandler);
 
 	} else {
-		(void)o_stream_send_str(sfctx->teststream,
+		o_stream_nsend_str(sfctx->teststream,
 			t_strdup_printf(">> Filtering message:\n\n"
 				"  ID:      %s\n"
 			  "  Date:    %s\n"
@@ -288,8 +288,10 @@ static int filter_mailbox
 	sfctx.data = sfdata;
 
 	/* Create test stream */
-	if ( !sfdata->execute )
+	if ( !sfdata->execute ) {
 		sfctx.teststream = o_stream_create_fd(1, 0, FALSE);
+		o_stream_set_no_error_handling(sfctx.teststream, TRUE);
+	}
 
 	/* Start move mailbox transaction */
 

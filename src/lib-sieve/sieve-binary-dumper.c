@@ -71,7 +71,7 @@ void sieve_binary_dumpf
 	str_vprintfa(outbuf, fmt, args);
 	va_end(args);
 
-	o_stream_send(denv->stream, str_data(outbuf), str_len(outbuf));
+	o_stream_nsend(denv->stream, str_data(outbuf), str_len(outbuf));
 }
 
 void sieve_binary_dump_sectionf
@@ -86,7 +86,7 @@ void sieve_binary_dump_sectionf
 	str_printfa(outbuf, ":\n\n");
 	va_end(args);
 
-	o_stream_send(denv->stream, str_data(outbuf), str_len(outbuf));
+	o_stream_nsend(denv->stream, str_data(outbuf), str_len(outbuf));
 }
 
 /*
@@ -279,13 +279,13 @@ void sieve_binary_dumper_hexdump
 			}
 
 			str_append(line, "|\n");
-			o_stream_send(stream, str_data(line), str_len(line));
+			o_stream_nsend(stream, str_data(line), str_len(line));
 			str_truncate(line, 0);
 			offset += len;
 		}
 
 		str_printfa(line, "%08llx\n", (unsigned long long) offset);
-		o_stream_send(stream, str_data(line), str_len(line));
+		o_stream_nsend(stream, str_data(line), str_len(line));
 	}
 }
 

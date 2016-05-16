@@ -728,7 +728,7 @@ void sieve_result_vprintf
 
 	str_vprintfa(outbuf, fmt, args);
 
-	o_stream_send(penv->stream, str_data(outbuf), str_len(outbuf));
+	o_stream_nsend(penv->stream, str_data(outbuf), str_len(outbuf));
 }
 
 void sieve_result_printf
@@ -753,7 +753,7 @@ void sieve_result_action_printf
 	str_append_c(outbuf, '\n');
 	va_end(args);
 
-	o_stream_send(penv->stream, str_data(outbuf), str_len(outbuf));
+	o_stream_nsend(penv->stream, str_data(outbuf), str_len(outbuf));
 }
 
 void sieve_result_seffect_printf
@@ -768,7 +768,7 @@ void sieve_result_seffect_printf
 	str_append_c(outbuf, '\n');
 	va_end(args);
 
-	o_stream_send(penv->stream, str_data(outbuf), str_len(outbuf));
+	o_stream_nsend(penv->stream, str_data(outbuf), str_len(outbuf));
 }
 
 static void sieve_result_print_side_effects

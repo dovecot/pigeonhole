@@ -87,10 +87,11 @@ void testsuite_result_print
 	struct ostream *out;
 
 	out = o_stream_create_fd(1, 0, FALSE);
+	o_stream_set_no_error_handling(out, TRUE);
 
-	o_stream_send_str(out, "\n--");
+	o_stream_nsend_str(out, "\n--");
 	sieve_result_print(_testsuite_result, renv->scriptenv, out, NULL);
-	o_stream_send_str(out, "--\n\n");
+	o_stream_nsend_str(out, "--\n\n");
 
 	o_stream_destroy(&out);
 }

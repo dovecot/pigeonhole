@@ -123,12 +123,18 @@ int testsuite_smtp_finish
 	void *handle, const char **error_r ATTR_UNUSED)
 {
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
+	int ret = 1;
 
+	if (o_stream_nfinish(smtp->output) < 0) {
+		i_error("write(%s) failed: %s", smtp->msg_file,
+			o_stream_get_error(smtp->output));
+		ret = -1;
+	}
 	o_stream_unref(&smtp->output);
 	i_free(smtp->msg_file);
 	i_free(smtp->return_path);
 	i_free(smtp);
-	return 1;
+	return ret;
 }
 
 /*

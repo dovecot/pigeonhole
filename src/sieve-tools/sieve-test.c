@@ -281,6 +281,7 @@ int main(int argc, char **argv)
 		if ( !execute ) {
 			action_ehandler = NULL;
 			teststream = o_stream_create_fd(1, 0, FALSE);
+			o_stream_set_no_error_handling(teststream, TRUE);
 		} else {
 			action_ehandler = sieve_prefix_ehandler_create
 				(ehandler, NULL, t_strdup_printf("msgid=%s",
@@ -342,7 +343,7 @@ int main(int argc, char **argv)
 			sfiles = array_get(&scriptfiles, &count);
 			for ( i = 0; i < count && more; i++ ) {
 				if ( teststream != NULL )
-					o_stream_send_str(teststream,
+					o_stream_nsend_str(teststream,
 						t_strdup_printf("\n## Executing script: %s\n", sfiles[i]));
 
 				/* Close previous script */
@@ -371,7 +372,7 @@ int main(int argc, char **argv)
 			/* Execute/Test main script */
 			if ( more && ret > 0 ) {
 				if ( teststream != NULL )
-					o_stream_send_str(teststream,
+					o_stream_nsend_str(teststream,
 						t_strdup_printf("## Executing script: %s\n", scriptfile));
 
 				/* Close previous script */

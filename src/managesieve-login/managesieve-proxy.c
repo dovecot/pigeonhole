@@ -392,7 +392,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 				msieve_client->proxy_state = MSIEVE_PROXY_STATE_AUTH;
 			}
 
-			(void)o_stream_send(output, str_data(command), str_len(command));
+			o_stream_nsend(output, str_data(command), str_len(command));
 		}
 		return 0;
 
@@ -444,7 +444,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 				}
 				msieve_client->proxy_state = MSIEVE_PROXY_STATE_AUTH;
 			}
-			(void)o_stream_send(output, str_data(command), str_len(command));
+			o_stream_nsend(output, str_data(command), str_len(command));
 		}
 		return 0;
 
@@ -457,7 +457,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 				client_proxy_failed(client, TRUE);
 				return -1;
 			}
-			(void)o_stream_send(output, str_data(command), str_len(command));
+			o_stream_nsend(output, str_data(command), str_len(command));
 			msieve_client->proxy_state = MSIEVE_PROXY_STATE_AUTH;
 			return 0;
 		}
@@ -484,7 +484,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 				client_proxy_failed(client, TRUE);
 				return -1;
 			}
-			(void)o_stream_send(output, str_data(command), str_len(command));
+			o_stream_nsend(output, str_data(command), str_len(command));
 			return 0;
 		}
 
@@ -500,7 +500,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 			/* Send this line to client. */
 			str_append(str, line );
 			str_append(str, "\r\n");
-			(void)o_stream_send(client->output, str_data(str), str_len(str));
+			o_stream_nsend(client->output, str_data(str), str_len(str));
 
 			(void)client_skip_line(msieve_client);
 			client_proxy_finish_destroy_client(client);
