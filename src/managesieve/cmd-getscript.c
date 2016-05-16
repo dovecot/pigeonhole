@@ -16,7 +16,7 @@ struct cmd_getscript_context {
 	struct client *client;
 	struct client_command_context *cmd;
 	struct sieve_storage *storage;
-	uoff_t script_size, script_offset;
+	uoff_t script_size;
 
 	struct sieve_script *script;
 	struct istream *script_stream;
@@ -73,16 +73,14 @@ static bool cmd_getscript_continue(struct client_command_context *cmd)
 		return cmd_getscript_finish(ctx);
 	}
 
-	ctx->script_offset += ret;
-
-	if ( ctx->script_offset != ctx->script_size && !ctx->failed ) {
+	if ( ctx->script_stream->v_offset != ctx->script_size && !ctx->failed ) {
 		/* unfinished */
 		if ( !i_stream_have_bytes_left(ctx->script_stream) ) {
 			/* Input stream gave less data than expected */
 			sieve_storage_set_critical(ctx->storage,
 				"GETSCRIPT for script `%s' from %s got too little data: "
 				"%"PRIuUOFF_T" vs %"PRIuUOFF_T, sieve_script_name(ctx->script),
-				sieve_script_location(ctx->script), ctx->script_offset, ctx->script_size);
+				sieve_script_location(ctx->script), ctx->script_stream->v_offset, ctx->script_size);
 
 			client_disconnect(ctx->client, "GETSCRIPT failed");
 			ctx->failed = TRUE;
@@ -135,7 +133,7 @@ bool cmd_getscript(struct client_command_context *cmd)
 		return cmd_getscript_finish(ctx);
 	}
 
-	ctx->script_offset = 0;
+	i_assert(ctx->script_stream->v_offset == 0);
 
 	client_send_line
 		(client, t_strdup_printf("{%"PRIuUOFF_T"}", ctx->script_size));
