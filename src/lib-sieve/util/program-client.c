@@ -244,7 +244,7 @@ static void program_client_program_input(struct program_client *pclient)
 	int ret = 0;
 
 	if ( input != NULL ) {
-		while ( (ret=i_stream_read_data(input, &data, &size, 0)) > 0 ) {
+		while ( (ret=i_stream_read_more(input, &data, &size)) > 0 ) {
 			if ( output != NULL ) {
 				ssize_t sent;
 

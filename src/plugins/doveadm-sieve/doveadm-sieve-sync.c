@@ -248,7 +248,7 @@ sieve_attribute_set_default(struct mail_storage *storage,
 	if (value->value != NULL) {
 		type = value->value[0];
 	} else if (value->value_stream != NULL) {
-		ret = i_stream_read_data(value->value_stream, &data, &size, 0);
+		ret = i_stream_read_more(value->value_stream, &data, &size);
 		if (ret == -1) {
 			mail_storage_set_critical(storage, "read(%s) failed: %m",
 				i_stream_get_name(value->value_stream));

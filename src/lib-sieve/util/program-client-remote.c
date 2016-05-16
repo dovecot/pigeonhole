@@ -280,8 +280,8 @@ static int program_client_remote_disconnect
 		size_t size;
 
 		/* Skip any remaining program output and parse the exit code */
-		while ((ret = i_stream_read_data
-			(pclient->program_input, &data, &size, 0)) > 0) {	
+		while ((ret = i_stream_read_more
+			(pclient->program_input, &data, &size)) > 0) {
 			i_stream_skip(pclient->program_input, size);
 		}
 

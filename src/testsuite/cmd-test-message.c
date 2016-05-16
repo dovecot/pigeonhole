@@ -497,7 +497,7 @@ static int cmd_test_message_print_operation_execute
 	printf("\n--MESSAGE: \n");
 
 	/* Pipe the message to the outgoing SMTP transport */
-	while (i_stream_read_data(input, &data, &size, 0) > 0) {
+	while (i_stream_read_more(input, &data, &size) > 0) {
 		ssize_t wret;
 
 		if ( (wret=write(1, data, size)) <= 0 )

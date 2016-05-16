@@ -1580,7 +1580,7 @@ int sieve_message_body_get_raw
 		i_stream_skip(input, hdr_size.physical_size);
 
 		/* Read raw message body */
-		while ( (ret=i_stream_read_data(input, &data, &size, 0)) > 0 ) {
+		while ( (ret=i_stream_read_more(input, &data, &size)) > 0 ) {
 			buffer_append(buf, data, size);
 
 			i_stream_skip(input, size);
