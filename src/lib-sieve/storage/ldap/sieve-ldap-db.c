@@ -797,8 +797,11 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct timeval start, end;
-	int debug_level, ret;
+	int debug_level;
 	bool debug;
+#if defined(HAVE_LDAP_SASL) || defined(LDAP_HAVE_START_TLS_S)
+	int ret;
+#endif
 
 	if (conn->conn_state != LDAP_CONN_STATE_DISCONNECTED)
 		return 0;
