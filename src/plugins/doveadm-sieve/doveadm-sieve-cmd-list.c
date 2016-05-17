@@ -68,7 +68,12 @@ cmd_sieve_list_alloc(void)
 	return &ctx->ctx;
 }
 
-struct doveadm_mail_cmd doveadm_sieve_cmd_list = {
-	cmd_sieve_list_alloc, "sieve list", NULL
+struct doveadm_cmd_ver2 doveadm_sieve_cmd_list = {
+	.name = "sieve list",
+	.mail_cmd = cmd_sieve_list_alloc,
+	.usage = DOVEADM_CMD_MAIL_USAGE_PREFIX,
+DOVEADM_CMD_PARAMS_START
+DOVEADM_CMD_MAIL_COMMON
+DOVEADM_CMD_PARAMS_END
 };
 
