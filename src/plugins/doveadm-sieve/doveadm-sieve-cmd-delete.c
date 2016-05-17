@@ -105,7 +105,13 @@ cmd_sieve_delete_alloc(void)
 	return &ctx->ctx.ctx;
 }
 
-struct doveadm_mail_cmd doveadm_sieve_cmd_delete = {
-	cmd_sieve_delete_alloc, "sieve delete", "[-a] <scriptname> [...]"
+struct doveadm_cmd_ver2 doveadm_sieve_cmd_put = {
+	.name = "sieve delete",
+	.mail_cmd = cmd_sieve_delete_alloc,
+	.usage = DOVEADM_CMD_MAIL_USAGE_PREFIX"[-a] <scriptname> [...]",
+DOVEADM_CMD_PARAMS_START
+DOVEADM_CMD_MAIL_COMMON
+DOVEADM_CMD_PARAM('a',"ignore-active",CMD_PARAM_BOOL,0)
+DOVEADM_CMD_PARAM('\0',"scriptname",CMD_PARAM_ARRAY,CMD_PARAM_FLAG_POSITIONAL)
+DOVEADM_CMD_PARAMS_END
 };
-
