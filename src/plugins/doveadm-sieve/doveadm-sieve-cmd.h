@@ -35,13 +35,13 @@ doveadm_sieve_cmd_alloc_size(size_t size);
 
 void doveadm_sieve_cmd_scriptnames_check(const char *const args[]);
 
-extern struct doveadm_mail_cmd doveadm_sieve_cmd_list;
-extern struct doveadm_mail_cmd doveadm_sieve_cmd_get;
-extern struct doveadm_mail_cmd doveadm_sieve_cmd_put;
-extern struct doveadm_mail_cmd doveadm_sieve_cmd_delete;
-extern struct doveadm_mail_cmd doveadm_sieve_cmd_activate;
-extern struct doveadm_mail_cmd doveadm_sieve_cmd_deactivate;
-extern struct doveadm_mail_cmd doveadm_sieve_cmd_rename;
+extern struct doveadm_cmd_ver2 doveadm_sieve_cmd_list;
+extern struct doveadm_cmd_ver2 doveadm_sieve_cmd_get;
+extern struct doveadm_cmd_ver2 doveadm_sieve_cmd_put;
+extern struct doveadm_cmd_ver2 doveadm_sieve_cmd_delete;
+extern struct doveadm_cmd_ver2 doveadm_sieve_cmd_activate;
+extern struct doveadm_cmd_ver2 doveadm_sieve_cmd_deactivate;
+extern struct doveadm_cmd_ver2 doveadm_sieve_cmd_rename;
 
 void doveadm_sieve_cmds_init(void);
 

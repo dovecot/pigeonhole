@@ -125,12 +125,21 @@ cmd_sieve_deactivate_alloc(void)
 	return &ctx->ctx;
 }
 
-struct doveadm_mail_cmd doveadm_sieve_cmd_activate = {
-	cmd_sieve_activate_alloc, "sieve activate", "<scriptname>"
+struct doveadm_cmd_ver2 doveadm_sieve_cmd_activate = {
+	.name = "sieve activate",
+	.mail_cmd = cmd_sieve_activate_alloc,
+	.usage = DOVEADM_CMD_MAIL_USAGE_PREFIX"<scriptname>",
+DOVEADM_CMD_PARAMS_START
+DOVEADM_CMD_MAIL_COMMON
+DOVEADM_CMD_PARAM('\0',"scriptname",CMD_PARAM_STR,CMD_PARAM_FLAG_POSITIONAL)
+DOVEADM_CMD_PARAMS_END
 };
 
-struct doveadm_mail_cmd doveadm_sieve_cmd_deactivate = {
-	cmd_sieve_deactivate_alloc, "sieve deactivate", NULL
+struct doveadm_cmd_ver2 doveadm_sieve_cmd_deactivate = {
+	.name = "sieve deactivate",
+	.mail_cmd = cmd_sieve_deactivate_alloc,
+	.usage = DOVEADM_CMD_MAIL_USAGE_PREFIX,
+DOVEADM_CMD_PARAMS_START
+DOVEADM_CMD_MAIL_COMMON
+DOVEADM_CMD_PARAMS_END
 };
-
-

@@ -169,7 +169,7 @@ doveadm_sieve_cmd_alloc_size(size_t size)
 	return ctx;
 }
 
-static struct doveadm_mail_cmd *doveadm_sieve_commands[] = {
+static struct doveadm_cmd_ver2 *doveadm_sieve_commands[] = {
 	&doveadm_sieve_cmd_list,
 	&doveadm_sieve_cmd_get,
 	&doveadm_sieve_cmd_put,
@@ -184,5 +184,5 @@ void doveadm_sieve_cmds_init(void)
 	unsigned int i;
 
 	for (i = 0; i < N_ELEMENTS(doveadm_sieve_commands); i++)
-		doveadm_mail_register_cmd(doveadm_sieve_commands[i]);
+		doveadm_cmd_register_ver2(doveadm_sieve_commands[i]);
 }

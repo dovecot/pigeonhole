@@ -69,7 +69,12 @@ cmd_sieve_get_alloc(void)
 	return &ctx->ctx.ctx;
 }
 
-struct doveadm_mail_cmd doveadm_sieve_cmd_get = {
-	cmd_sieve_get_alloc, "sieve get", "<scriptname>"
+struct doveadm_cmd_ver2 doveadm_sieve_cmd_get = {
+	.name = "sieve get",
+	.mail_cmd = cmd_sieve_get_alloc,
+	.usage = DOVEADM_CMD_MAIL_USAGE_PREFIX"<scriptname>",
+DOVEADM_CMD_PARAMS_START
+DOVEADM_CMD_MAIL_COMMON
+DOVEADM_CMD_PARAM('\0',"scriptname",CMD_PARAM_STR,CMD_PARAM_FLAG_POSITIONAL)
+DOVEADM_CMD_PARAMS_END
 };
-
