@@ -105,7 +105,7 @@ cmd_sieve_delete_alloc(void)
 	return &ctx->ctx.ctx;
 }
 
-struct doveadm_cmd_ver2 doveadm_sieve_cmd_put = {
+struct doveadm_cmd_ver2 doveadm_sieve_cmd_delete = {
 	.name = "sieve delete",
 	.mail_cmd = cmd_sieve_delete_alloc,
 	.usage = DOVEADM_CMD_MAIL_USAGE_PREFIX"[-a] <scriptname> [...]",
