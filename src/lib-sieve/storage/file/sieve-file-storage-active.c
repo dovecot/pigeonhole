@@ -163,7 +163,7 @@ int sieve_file_storage_active_replace_link
 
 	if ( ret < 0 ) {
 		/* Failed; created symlink must be deleted */
-		(void)unlink(active_path_new);
+		i_unlink(active_path_new);
 		sieve_storage_set_critical(storage,
 			"Performing rename() %s to %s failed: %m",
 			active_path_new, fstorage->active_path);

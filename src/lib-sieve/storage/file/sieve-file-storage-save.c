@@ -443,14 +443,14 @@ sieve_file_storage_save_to(struct sieve_file_storage *fstorage,
 			"read(%s) failed: %s", i_stream_get_name(input),
 			i_stream_get_error(input));
 		o_stream_destroy(&output);
-		(void)unlink(str_c(temp_path));
+		i_unlink(str_c(temp_path));
 		return -1;
 	case OSTREAM_SEND_ISTREAM_RESULT_ERROR_OUTPUT:
 		sieve_storage_set_critical(storage,
 			"write(%s) failed: %s", str_c(temp_path),
 			o_stream_get_error(output));
 		o_stream_destroy(&output);
-		(void)unlink(str_c(temp_path));
+		i_unlink(str_c(temp_path));
 		return -1;
 	}
 	o_stream_destroy(&output);
@@ -468,9 +468,8 @@ sieve_file_storage_save_to(struct sieve_file_storage *fstorage,
 				"rename(%s, %s) failed: %m",
 				str_c(temp_path), target);
 		}
+		i_unlink(str_c(temp_path));
 	}
-
-	(void)unlink(str_c(temp_path));
 	return 0;
 }
 
