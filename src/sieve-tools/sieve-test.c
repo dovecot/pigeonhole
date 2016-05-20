@@ -398,7 +398,7 @@ int main(int argc, char **argv)
 			break;
 		case SIEVE_EXEC_BIN_CORRUPT:
 			i_info("corrupt binary deleted.");
-			(void) unlink(sieve_binary_path(sbin));
+			i_unlink_if_exists(sieve_binary_path(sbin));
 			/* fall through */
 		case SIEVE_EXEC_FAILURE:
 			i_info("final result: failed; resolved with successful implicit keep");

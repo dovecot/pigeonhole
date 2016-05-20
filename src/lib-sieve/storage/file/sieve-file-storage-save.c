@@ -422,7 +422,7 @@ sieve_file_storage_save_to(struct sieve_file_storage *fstorage,
 		sieve_storage_set_critical(storage,
 			"o_stream_send_istream(%s) failed: %m", str_c(temp_path));
 		o_stream_destroy(&output);
-		(void)unlink(str_c(temp_path));
+		i_unlink(str_c(temp_path));
 		return -1;
 	}
 	o_stream_destroy(&output);
@@ -440,9 +440,8 @@ sieve_file_storage_save_to(struct sieve_file_storage *fstorage,
 				"rename(%s, %s) failed: %m",
 				str_c(temp_path), target);
 		}
+		i_unlink(str_c(temp_path));
 	}
-
-	(void)unlink(str_c(temp_path));
 	return 0;
 }
 
