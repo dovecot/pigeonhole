@@ -1206,7 +1206,7 @@ db_ldap_get_var_expand_table(struct ldap_connection *conn,
 
 	/* keep the extra fields at the beginning. the last static_tab field
 	   contains the ending NULL-fields. */
-	tab = t_malloc((auth_count) * sizeof(*tab));
+	tab = t_malloc_no0((auth_count) * sizeof(*tab));
 
 	memcpy(tab, auth_request_var_expand_static_tab,
 	       auth_count * sizeof(*tab));
