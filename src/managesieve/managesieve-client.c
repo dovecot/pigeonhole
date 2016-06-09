@@ -141,8 +141,8 @@ struct client *client_create
 	client->fd_in = fd_in;
 	client->fd_out = fd_out;
 	client->input = i_stream_create_fd
-		(fd_in, set->managesieve_max_line_length, FALSE);
-	client->output = o_stream_create_fd(fd_out, (size_t)-1, FALSE);
+		(fd_in, set->managesieve_max_line_length);
+	client->output = o_stream_create_fd(fd_out, (size_t)-1);
 
 	o_stream_set_no_error_handling(client->output, TRUE);
 	i_stream_set_name(client->input, "<managesieve client>");

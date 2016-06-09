@@ -86,7 +86,7 @@ void testsuite_result_print
 {
 	struct ostream *out;
 
-	out = o_stream_create_fd(1, 0, FALSE);
+	out = o_stream_create_fd(1, 0);
 	o_stream_set_no_error_handling(out, TRUE);
 
 	o_stream_nsend_str(out, "\n--");

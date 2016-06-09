@@ -289,7 +289,7 @@ static int filter_mailbox
 
 	/* Create test stream */
 	if ( !sfdata->execute ) {
-		sfctx.teststream = o_stream_create_fd(1, 0, FALSE);
+		sfctx.teststream = o_stream_create_fd(1, 0);
 		o_stream_set_no_error_handling(sfctx.teststream, TRUE);
 	}
 

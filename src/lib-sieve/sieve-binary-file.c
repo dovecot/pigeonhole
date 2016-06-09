@@ -317,7 +317,7 @@ int sieve_binary_save
 
 	/* Save binary */
 	result = 1;
-	stream = o_stream_create_fd(fd, 0, FALSE);
+	stream = o_stream_create_fd(fd, 0);
 	if ( !_sieve_binary_save(sbin, stream) ) {
 		result = -1;
 		if ( error_r != NULL )

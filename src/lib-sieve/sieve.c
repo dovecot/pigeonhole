@@ -856,7 +856,7 @@ int sieve_trace_log_create
 	*trace_log_r = NULL;
 
 	if ( path == NULL ) {
-		output = o_stream_create_fd(1, 0, FALSE);
+		output = o_stream_create_fd(1, 0);
 	} else {
 		fd = open(path, O_CREAT | O_APPEND | O_WRONLY, 0600);
 		if ( fd == -1 ) {

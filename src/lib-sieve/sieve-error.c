@@ -1062,7 +1062,7 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 		}
 	}
 
-	ostream = o_stream_create_fd(fd, 0, FALSE);
+	ostream = o_stream_create_fd(fd, 0);
 	if ( ostream == NULL ) {
 		/* Can't we do anything else in this most awkward situation? */
 		sieve_sys_error(svinst, "failed to open log stream on open file: "

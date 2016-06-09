@@ -214,7 +214,7 @@ sieve_file_storage_save_init(struct sieve_storage *storage,
 			fsctx->context.input = input;
 			fsctx->context.pool = pool;
 			fsctx->fd = fd;
-			fsctx->output = o_stream_create_fd(fsctx->fd, 0, FALSE);
+			fsctx->output = o_stream_create_fd(fsctx->fd, 0);
 			fsctx->tmp_path = p_strdup(pool, path);
 		}
 	} T_END;
@@ -417,7 +417,7 @@ sieve_file_storage_save_to(struct sieve_file_storage *fstorage,
 		return -1;
 	}
 
-	output = o_stream_create_fd(fd, 0, FALSE);
+	output = o_stream_create_fd(fd, 0);
 	if ( o_stream_send_istream(output, input) < 0 ) {
 		sieve_storage_set_critical(storage,
 			"o_stream_send_istream(%s) failed: %m", str_c(temp_path));

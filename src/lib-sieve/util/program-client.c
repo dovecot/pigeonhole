@@ -445,13 +445,13 @@ void program_client_init_streams(struct program_client *pclient)
 	/* Create streams for normal program I/O */
 	if ( pclient->fd_out >= 0 ) {
 		pclient->program_output =
-			o_stream_create_fd(pclient->fd_out, MAX_OUTPUT_BUFFER_SIZE, FALSE);
+			o_stream_create_fd(pclient->fd_out, MAX_OUTPUT_BUFFER_SIZE);
 		o_stream_set_name(pclient->program_output, "program stdin");
 	}
 	if ( pclient->fd_in >= 0 ) {
 		struct istream *input;
 		
-		input = i_stream_create_fd(pclient->fd_in, (size_t)-1, FALSE);
+		input = i_stream_create_fd(pclient->fd_in, (size_t)-1);
 
 		if (pclient->output_seekable) {
 			struct istream *input2 = input, *input_list[2];
@@ -480,7 +480,7 @@ void program_client_init_streams(struct program_client *pclient)
 		for ( i = 0; i < count; i++ ) {
 			i_assert( efds[i].parent_fd >= 0 );
 			efds[i].input = i_stream_create_fd
-				(efds[i].parent_fd, (size_t)-1, FALSE);
+				(efds[i].parent_fd, (size_t)-1);
 			i_stream_set_name(efds[i].input,
 				t_strdup_printf("program output fd=%d", efds[i].child_fd));
 			efds[i].io = io_add

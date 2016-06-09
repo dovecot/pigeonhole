@@ -64,7 +64,7 @@ static void *sieve_smtp_start
 	i_info("sending message from <%s>:",
 		( return_path == NULL ? "" : return_path ));
 
-	output = o_stream_create_fd(STDOUT_FILENO, (size_t)-1, FALSE);
+	output = o_stream_create_fd(STDOUT_FILENO, (size_t)-1);
 	return (void*)output;
 }
 
@@ -280,7 +280,7 @@ int main(int argc, char **argv)
 
 		if ( !execute ) {
 			action_ehandler = NULL;
-			teststream = o_stream_create_fd(1, 0, FALSE);
+			teststream = o_stream_create_fd(1, 0);
 			o_stream_set_no_error_handling(teststream, TRUE);
 		} else {
 			action_ehandler = sieve_prefix_ehandler_create
