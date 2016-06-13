@@ -827,9 +827,15 @@ void sieve_extension_capabilities_register
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
-	struct sieve_capability_registration *reg =
-		p_new(svinst->pool, struct sieve_capability_registration, 1);
+	struct sieve_capability_registration *reg;
 
+	reg = hash_table_lookup(ext_reg->capabilities_index, cap->name);
+	if (reg != NULL) {
+		/* Already registered */
+		return;
+	}
+
+	reg = p_new(svinst->pool, struct sieve_capability_registration, 1);
 	reg->ext = ext;
 	reg->capabilities = cap;
 
