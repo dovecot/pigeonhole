@@ -155,10 +155,17 @@ struct sieve_variable *sieve_variable_scope_get_variable
 struct sieve_variable *sieve_variable_scope_import
 (struct sieve_variable_scope *scope, struct sieve_variable *var)
 {
-	struct sieve_variable *new_var;
+	struct sieve_variable *old_var, *new_var;
+
+	old_var = sieve_variable_scope_get_variable
+		(scope, var->identifier, FALSE);
+	if (old_var != NULL) {
+		i_assert(memcmp(old_var, var, sizeof(*var)) == 0);
+		return old_var;
+	}
 
 	new_var = p_new(scope->pool, struct sieve_variable, 1);
-	memcpy(new_var, var, sizeof(struct sieve_variable));
+	memcpy(new_var, var, sizeof(*new_var));
 
 	hash_table_insert(scope->variables, new_var->identifier, new_var);
 
