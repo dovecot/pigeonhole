@@ -129,15 +129,15 @@ static int _header_is_allowed
 		const char * const *hdsp = _allowed_headers;
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp( *hdsp, header ) == 0 )
-				return TRUE;
+				return 1;
 
 			hdsp++;
 		}
 
-		return FALSE;
+		return 0;
 	}
 
-	return TRUE;
+	return 1;
 }
 
 static bool tst_address_validate
@@ -165,7 +165,8 @@ static bool tst_address_validate
 	 *   FIXME: verify dynamic header names at runtime
 	 */
 	header = arg;
-	if ( !sieve_ast_stringlist_map(&header, NULL, _header_is_allowed) ) {
+	if ( sieve_ast_stringlist_map
+		(&header, NULL, _header_is_allowed) <= 0 ) {
 		sieve_argument_validate_error(valdtr, header,
 			"specified header '%s' is not allowed for the address test",
 			str_sanitize(sieve_ast_strlist_strc(header), 64));
