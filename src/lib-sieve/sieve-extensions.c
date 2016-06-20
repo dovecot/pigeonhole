@@ -382,15 +382,6 @@ static struct sieve_extension *sieve_extension_lookup
 	return 	hash_table_lookup(ext_reg->extension_index, name);
 }
 
-static void sieve_extension_insert
-(struct sieve_instance *svinst, const char *name,
-	struct sieve_extension *ext)
-{
-	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
-
-	hash_table_insert(ext_reg->extension_index, name, ext);
-} 
-
 static struct sieve_extension *sieve_extension_alloc
 (struct sieve_instance *svinst,
 	const struct sieve_extension_def *extdef)
@@ -421,7 +412,8 @@ static struct sieve_extension *_sieve_extension_register
 	/* Register extension if it is not registered already */
 	if ( ext == NULL ) {
 		ext = sieve_extension_alloc(svinst, extdef);
-		sieve_extension_insert(svinst, extdef->name, ext);
+		hash_table_insert
+			(svinst->ext_reg->extension_index, extdef->name, ext);
 
 	} else if ( ext->overridden ) {
 		/* Create a dummy */
@@ -513,7 +505,8 @@ void sieve_extension_override
 		ext->id < (int) array_count(&ext_reg->extensions) );
 	mod_ext = array_idx(&ext_reg->extensions, ext->id);
 
-	sieve_extension_insert(svinst, name, *mod_ext);
+	hash_table_update
+		(ext_reg->extension_index, name, *mod_ext);
 	if ( old_ext != NULL )
 		old_ext->overridden = TRUE;
 }
