@@ -41,7 +41,7 @@ static bool ext_variables_variable_argument_activate
 	struct sieve_ast *ast = arg->ast;
 	struct sieve_variable *var;
 
-	var = ext_variables_validator_get_variable(this_ext, valdtr, variable, TRUE);
+	var = ext_variables_validator_declare_variable(this_ext, valdtr, variable);
 
 	if ( var == NULL ) {
 		sieve_argument_validate_error(valdtr, arg,

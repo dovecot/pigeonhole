@@ -66,7 +66,10 @@ struct ext_variables_validator_context *ext_variables_validator_context_get
 
 struct sieve_variable *ext_variables_validator_get_variable
 	(const struct sieve_extension *this_ext, struct sieve_validator *validator,
-		const char *variable, bool declare);
+		const char *variable);
+struct sieve_variable *ext_variables_validator_declare_variable
+	(const struct sieve_extension *this_ext, struct sieve_validator *validator,
+		const char *variable);
 
 /*
  * Code generation

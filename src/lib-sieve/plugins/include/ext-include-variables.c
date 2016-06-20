@@ -48,7 +48,7 @@ struct sieve_variable *ext_include_variable_import_global
 	}
 
 	/* Get/Declare the variable in the global scope */
-	global_var = sieve_variable_scope_get_variable(global_scope, variable, TRUE);
+	global_var = sieve_variable_scope_declare(global_scope, variable);
 
 	/* Check whether scope is over its size limit */
 	if ( global_var == NULL ) {
@@ -62,7 +62,7 @@ struct sieve_variable *ext_include_variable_import_global
 	/* Import the global variable into the local script scope */
 	local_scope = sieve_ext_variables_get_local_scope(ectx->var_ext, valdtr);
 
-	local_var = sieve_variable_scope_get_variable(local_scope, variable, FALSE);
+	local_var = sieve_variable_scope_get_variable(local_scope, variable);
 	if ( local_var != NULL && local_var->ext != this_ext ) {
 		/* FIXME: indicate location of conflicting set statement */
 		sieve_command_validate_error(valdtr, cmd,
@@ -206,7 +206,7 @@ bool vnspc_global_variables_validate
 
 	/* Get/Declare the variable in the global scope */
 
-	var = sieve_variable_scope_get_variable(ctx->global_vars, variable, TRUE);
+	var = sieve_variable_scope_declare(ctx->global_vars, variable);
 
 	if ( var == NULL ) {
 		sieve_argument_validate_error(valdtr, arg,

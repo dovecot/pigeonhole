@@ -112,44 +112,39 @@ pool_t sieve_variable_scope_pool(struct sieve_variable_scope *scope)
 struct sieve_variable *sieve_variable_scope_declare
 (struct sieve_variable_scope *scope, const char *identifier)
 {
-	struct sieve_variable *new_var;
+	struct sieve_variable *var;
 
-	new_var = p_new(scope->pool, struct sieve_variable, 1);
-	new_var->ext = scope->ext;
+	var = hash_table_lookup(scope->variables, identifier);
+	if (var != NULL)
+		return var;
 
 	if ( array_count(&scope->variable_index) >= EXT_VARIABLES_MAX_SCOPE_SIZE ) {
 		if ( scope->error_var == NULL ) {
-			new_var->identifier = "@ERROR@";
-			new_var->index = 0;
+			var = p_new(scope->pool, struct sieve_variable, 1);
+			var->identifier = "@ERROR@";
+			var->index = 0;
 
-			scope->error_var = new_var;
+			scope->error_var = var;
 			return NULL;
 		}
 
 		return scope->error_var;
 	}
 
-	new_var->identifier = p_strdup(scope->pool, identifier);
-	new_var->index = array_count(&scope->variable_index);
+	var = p_new(scope->pool, struct sieve_variable, 1);
+	var->ext = scope->ext;
+	var->identifier = p_strdup(scope->pool, identifier);
+	var->index = array_count(&scope->variable_index);
 
-	hash_table_insert(scope->variables, new_var->identifier, new_var);
-	array_append(&scope->variable_index, &new_var, 1);
-
-	return new_var;
+	hash_table_insert(scope->variables, var->identifier, var);
+	array_append(&scope->variable_index, &var, 1);
+	return var;
 }
 
 struct sieve_variable *sieve_variable_scope_get_variable
-(struct sieve_variable_scope *scope, const char *identifier, bool declare)
+(struct sieve_variable_scope *scope, const char *identifier)
 {
-	struct sieve_variable *var;
-
-	var = hash_table_lookup(scope->variables, identifier);
-
-	if ( var == NULL && declare ) {
-		var = sieve_variable_scope_declare(scope, identifier);
-	}
-
-	return var;
+	return hash_table_lookup(scope->variables, identifier);
 }
 
 struct sieve_variable *sieve_variable_scope_import
@@ -158,7 +153,7 @@ struct sieve_variable *sieve_variable_scope_import
 	struct sieve_variable *old_var, *new_var;
 
 	old_var = sieve_variable_scope_get_variable
-		(scope, var->identifier, FALSE);
+		(scope, var->identifier);
 	if (old_var != NULL) {
 		i_assert(memcmp(old_var, var, sizeof(*var)) == 0);
 		return old_var;
@@ -643,12 +638,22 @@ void ext_variables_validator_initialize
 
 struct sieve_variable *ext_variables_validator_get_variable
 (const struct sieve_extension *this_ext, struct sieve_validator *validator,
-	const char *variable, bool declare)
+	const char *variable)
 {
 	struct ext_variables_validator_context *ctx =
 		ext_variables_validator_context_get(this_ext, validator);
 
-	return sieve_variable_scope_get_variable(ctx->local_scope, variable, declare);
+	return sieve_variable_scope_get_variable(ctx->local_scope, variable);
+}
+
+struct sieve_variable *ext_variables_validator_declare_variable
+(const struct sieve_extension *this_ext, struct sieve_validator *validator,
+	const char *variable)
+{
+	struct ext_variables_validator_context *ctx =
+		ext_variables_validator_context_get(this_ext, validator);
+
+	return sieve_variable_scope_declare(ctx->local_scope, variable);
 }
 
 struct sieve_variable_scope *sieve_ext_variables_get_local_scope
