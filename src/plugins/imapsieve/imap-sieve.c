@@ -391,7 +391,7 @@ imap_sieve_run_open_script(
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
-	struct sieve_error_handler *ehandler = isrun->user_ehandler;
+	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	const char *compile_name = "compile";
 	bool debug = isieve->user->mail_debug;
