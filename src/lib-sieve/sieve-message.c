@@ -419,6 +419,8 @@ int sieve_message_substitute
 	const char *sender;
 	int ret;
 
+	i_assert(input->blocking);
+
 	if ( msgctx->raw_mail_user == NULL ) {
 		void **sets = master_service_settings_get_others(master_service);
 
