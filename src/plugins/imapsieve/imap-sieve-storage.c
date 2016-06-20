@@ -723,7 +723,7 @@ imap_sieve_mailbox_transaction_commit(
 
 	if ((lbox->super.transaction_commit(t, changes_r)) < 0)
 		ret = -1;
-	else {
+	else if (ismt != NULL) {
 		isuser->sieve_active = TRUE;
 		if (imap_sieve_mailbox_transaction_run
 			(ismt, box, changes_r) < 0)
