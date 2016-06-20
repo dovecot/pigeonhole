@@ -225,8 +225,10 @@ struct imap_sieve_run_script {
 	struct sieve_script *script;
 	struct sieve_binary *binary;
 
-	/* Compile failed once; don't try again for this transaction */
-	unsigned int compile_failed:1;
+	/* Compile failed once with this error;
+	   don't try again for this transaction */
+	enum sieve_error compile_error;
+
 	/* Binary corrupt after recompile; don't recompile again */
 	unsigned int binary_corrupt:1;
 };
@@ -547,12 +549,11 @@ static int imap_sieve_run_scripts
 	struct sieve_multiscript *mscript;
 	struct sieve_error_handler *ehandler;
 	struct sieve_script *last_script = NULL;
-	bool user_script = FALSE, more = TRUE, compile_error = FALSE;
+	bool user_script = FALSE, more = TRUE;
 	bool debug = isieve->user->mail_debug, keep = TRUE;
 	enum sieve_compile_flags cpflags;
 	enum sieve_execute_flags exflags;
-
-	enum sieve_error error;
+	enum sieve_error compile_error = SIEVE_ERROR_NONE;
 	unsigned int i;
 	int ret;
 
@@ -590,17 +591,16 @@ static int imap_sieve_run_scripts
 			}
 
 			/* Already known to fail */
-			if (scripts[i].compile_failed) {
-				compile_error = TRUE;
+			if (scripts[i].compile_error != SIEVE_ERROR_NONE) {
+				compile_error = scripts[i].compile_error;
 				break;
 			}
 
 			/* Try to open/compile binary */
 			scripts[i].binary = sbin = imap_sieve_run_open_script
-				(isrun, script, cpflags, FALSE, &error);
+				(isrun, script, cpflags, FALSE, &compile_error);
 			if ( sbin == NULL ) {
-				scripts[i].compile_failed = TRUE;
-				compile_error = TRUE;
+				scripts[i].compile_error = compile_error;
 				break;
 			}
 		}
@@ -625,10 +625,9 @@ static int imap_sieve_run_scripts
 
 				/* Recompile */
 				scripts[i].binary = sbin = imap_sieve_run_open_script
-					(isrun, script, cpflags, FALSE, &error);
+					(isrun, script, cpflags, FALSE, &compile_error);
 				if ( sbin == NULL ) {
-					scripts[i].compile_failed = TRUE;
-					compile_error = TRUE;
+					scripts[i].compile_error = compile_error;
 					break;
 				}
 
@@ -652,7 +651,7 @@ static int imap_sieve_run_scripts
 		SIEVE_EXECUTE_FLAG_NO_ENVELOPE;
 	ehandler = (isrun->user_ehandler != NULL ?
 		isrun->user_ehandler : isieve->master_ehandler);
-	if ( compile_error && error == SIEVE_ERROR_TEMP_FAILURE ) {
+	if ( compile_error == SIEVE_ERROR_TEMP_FAILURE ) {
 		ret = sieve_multiscript_tempfail
 			(&mscript, ehandler, exflags);
 	} else {
@@ -661,7 +660,8 @@ static int imap_sieve_run_scripts
 	}
 
 	/* Don't log additional messages about compile failure */
-	if ( compile_error && ret == SIEVE_EXEC_FAILURE ) {
+	if ( compile_error != SIEVE_ERROR_NONE &&
+		ret == SIEVE_EXEC_FAILURE ) {
 		sieve_sys_info(svinst,
 			"Aborted script execution sequence "
 			"with successful implicit keep");
