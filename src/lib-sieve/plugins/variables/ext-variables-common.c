@@ -244,12 +244,12 @@ struct sieve_variable_scope *sieve_variable_scope_binary_dump
 	/* Read scope size */
 	sieve_code_mark(denv);
 	if ( !sieve_binary_read_unsigned(denv->sblock, address, &scope_size) )
-		return FALSE;
+		return NULL;
 
 	/* Read offset */
 	pc = *address;
 	if ( !sieve_binary_read_offset(denv->sblock, address, &end_offset) )
-		return FALSE;
+		return NULL;
 
 	/* Create scope */
 	local_scope = sieve_variable_scope_create(svinst, ext);
@@ -264,7 +264,7 @@ struct sieve_variable_scope *sieve_variable_scope_binary_dump
 
 		sieve_code_mark(denv);
 		if (!sieve_binary_read_string(denv->sblock, address, &identifier) ) {
-			return FALSE;
+			return NULL;
 		}
 
 		sieve_code_dumpf(denv, "%3d: '%s'", i, str_c(identifier));
