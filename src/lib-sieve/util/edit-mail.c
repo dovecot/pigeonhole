@@ -721,7 +721,7 @@ static inline char *_header_decode
 
 	/* Decode MIME encoded-words. */
 	message_header_decode_utf8
-		((const unsigned char *)hdr_data, hdr_data_len, str, FALSE);
+		((const unsigned char *)hdr_data, hdr_data_len, str, NULL);
 	return i_strdup(str_c(str));
 }
 
