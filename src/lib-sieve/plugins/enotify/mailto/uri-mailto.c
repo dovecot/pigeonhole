@@ -601,7 +601,7 @@ struct uri_mailto *uri_mailto_parse
 	p_array_init(&parser.uri->headers, pool, max_headers);
 
 	if ( !uri_mailto_parse_uri(&parser, uri_body) )
-		return FALSE;
+		return NULL;
 
 	if ( ehandler != NULL ) {
 		if ( array_count(&parser.uri->recipients) == 0 )
