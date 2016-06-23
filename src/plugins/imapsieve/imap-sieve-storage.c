@@ -595,13 +595,6 @@ imap_sieve_mailbox_transaction_run(
 			(user, isuser->client->lda_set);
 	}
 
-	/* Get synchronized view on the mailbox */
-	sbox = mailbox_alloc(box->list, box->vname, 0);
-	if (mailbox_sync(sbox, 0) < 0) {
-		mailbox_free(&sbox);
-		return -1;
-	}
-
 	can_discard = FALSE;
 	switch (isuser->cur_cmd) {
 	case IMAP_SIEVE_CMD_APPEND:
@@ -655,8 +648,14 @@ imap_sieve_mailbox_transaction_run(
 
 	if (ret <= 0) {
 		// FIXME: temp fail should be handled properly
-		mailbox_free(&sbox);
 		return 0;
+	}
+
+	/* Get synchronized view on the mailbox */
+	sbox = mailbox_alloc(box->list, box->vname, 0);
+	if (mailbox_sync(sbox, 0) < 0) {
+		mailbox_free(&sbox);
+		return -1;
 	}
 
 	/* Create transaction for event messages */
