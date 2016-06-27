@@ -1,7 +1,7 @@
 # pigeonhole.m4 - Check presence of pigeonhole -*-Autoconf-*-
 #.
 
-# serial 3
+# serial 4
 
 AC_DEFUN([DC_PIGEONHOLE],[
 	AC_ARG_WITH(pigeonhole,
@@ -35,9 +35,7 @@ AC_DEFUN([DC_PIGEONHOLE],[
 			-I$(pigeonhole_incdir)/src/lib-sieve/plugins/imap4flags \
 			-I$(pigeonhole_incdir)/src/lib-sieve/plugins/mailbox \
 			-I$(pigeonhole_incdir)/src/lib-sieve/plugins/variables'
-		if test -f "$pigeonholedir/src/testsuite/testsuite"; then
-			PIGEONHOLE_TESTSUITE="${pigeonholedir}/src/testsuite/testsuite"
-  		fi
+		PIGEONHOLE_TESTSUITE="${pigeonholedir}/src/testsuite/testsuite"
 	elif test -f "$pigeonholedir/sieve.h"; then
 		AC_MSG_RESULT([found])
 		pigeonhole_incdir="$pigeonholedir"
