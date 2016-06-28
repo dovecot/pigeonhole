@@ -138,7 +138,10 @@ static bool cmd_if_validate
 static bool cmd_elsif_validate
 (struct sieve_validator *valdtr, struct sieve_command *cmd)
 {
-	struct sieve_command *prev = sieve_command_prev(cmd);
+	struct sieve_command *prev;
+
+	i_assert(cmd != NULL);
+	prev = sieve_command_prev(cmd);
 
 	/* Check valid command placement */
 	if ( prev == NULL ||
