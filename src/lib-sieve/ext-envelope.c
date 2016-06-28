@@ -569,7 +569,7 @@ static bool tst_envelope_validate
 	epart = arg;
 	if ( sieve_ast_stringlist_map(&epart, (void *) &not_address,
 		_envelope_part_is_supported) <= 0 ) {
-
+		i_assert(epart != NULL);
 		sieve_argument_validate_error(valdtr, epart,
 			"specified envelope part '%s' is not supported by the envelope test",
 				str_sanitize(sieve_ast_strlist_strc(epart), 64));
