@@ -154,6 +154,8 @@ static bool tag_mime_option_validate
 	struct sieve_ast_argument *mime_arg;
 	struct tag_mime_data *data;
 
+	i_assert(tag != NULL);
+
 	/* Detach tag itself */
 	*arg = sieve_ast_arguments_detach(*arg,1);
 

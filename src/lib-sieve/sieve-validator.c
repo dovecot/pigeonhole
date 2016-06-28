@@ -915,6 +915,8 @@ bool sieve_validate_tag_parameter
 	const char *arg_name, unsigned int arg_pos,
 	enum sieve_ast_argument_type req_type, bool constant)
 {
+	i_assert(tag != NULL);
+
 	if ( param == NULL ) {
 		const char *position = ( arg_pos == 0 ? "" :
 			t_strdup_printf(" %d (%s)", arg_pos, arg_name) );
