@@ -125,6 +125,8 @@ static bool tag_match_type_validate
         (struct cmd_denotify_context_data *) cmd->data;
 	struct sieve_ast_argument *tag = *arg;
 
+	i_assert(tag != NULL);
+
 	if ( !match_type_tag.validate(valdtr, arg, cmd) )
 		return FALSE;
 
