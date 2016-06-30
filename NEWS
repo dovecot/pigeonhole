@@ -1,3 +1,13 @@
+v0.4.15 01-07-2016 Stephan Bosch <stephan@rename-it.nl>
+
+	- imapsieve plugin: For any mail transaction, the mailbox was opened a second
+	  time, even if no mailbox rule matched. This was unintentional, useless and
+	  caused problems when the imapsieve plugin was used with other plugins like
+	  acl.
+	- extprograms plugin: Significantly improved error handling. No stream errors
+	  were logged.
+	- Several small fixes based on static analysis.
+
 v0.4.14 26-04-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	* The address test now allows specifying the X-Original-To header.
