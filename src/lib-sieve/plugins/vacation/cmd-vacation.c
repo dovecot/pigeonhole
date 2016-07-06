@@ -850,11 +850,16 @@ static inline bool _contains_my_address
 
 			while ( addr != NULL && !result ) {
 				if (addr->domain != NULL) {
+					struct sieve_address svaddr;
 					const char *hdr_address;
 
 					i_assert(addr->mailbox != NULL);
 
-					hdr_address = t_strconcat(addr->mailbox, "@", addr->domain, NULL);
+					memset(&svaddr, 0, sizeof(svaddr));
+					svaddr.local_part = addr->mailbox;
+					svaddr.domain = addr->domain;
+
+					hdr_address = sieve_address_to_string(&svaddr);
 					if ( sieve_address_compare(hdr_address, my_address, TRUE) == 0 ) {
 						result = TRUE;
 						break;

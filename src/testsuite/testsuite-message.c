@@ -9,6 +9,7 @@
 #include "master-service.h"
 
 #include "sieve-common.h"
+#include "sieve-address.h"
 #include "sieve-message.h"
 #include "sieve-interpreter.h"
 
@@ -44,16 +45,23 @@ testsuite_message_get_address(struct mail *mail, const char *header)
 {
 	struct message_address *addr;
 	const char *str;
+	struct sieve_address svaddr;
 
 	if (mail_get_first_header(mail, header, &str) <= 0)
 		return NULL;
 	addr = message_address_parse(pool_datastack_create(),
 	             (const unsigned char *)str,
 	             strlen(str), 1, FALSE);
-	return (addr == NULL ||
-		addr->mailbox == NULL || *addr->mailbox == '\0' ? NULL :
-			( addr->domain == NULL || *addr->domain == '\0' ? addr->mailbox :
-				t_strconcat(addr->mailbox, "@", addr->domain, NULL)));
+	if ( addr == NULL ||
+		addr->mailbox == NULL || *addr->mailbox == '\0' )
+		return NULL;
+	if ( addr->domain == NULL || *addr->domain == '\0' )
+		return addr->mailbox;
+
+	memset(&svaddr, 0, sizeof(svaddr));
+	svaddr.local_part = addr->mailbox;
+	svaddr.domain = addr->domain;
+	return sieve_address_to_string(&svaddr);
 }
 
 static void testsuite_message_set_data(struct mail *mail)
@@ -147,9 +155,23 @@ void testsuite_message_deinit(void)
 	pool_unref(&message_pool);
 }
 
+static void
+normalize_address(const char **address)
+{
+	const struct sieve_address *svaddr;
+
+	svaddr = sieve_address_parse_envelope_path
+		(pool_datastack_create(), *address);
+	if (svaddr == NULL)
+		return;
+	*address = sieve_address_to_string(svaddr);
+}
+
 void testsuite_envelope_set_sender
 (const struct sieve_runtime_env *renv, const char *value)
 {
+	normalize_address(&value);
+
 	sieve_message_context_reset(renv->msgctx);
 
 	str_truncate(envelope_from, 0);
@@ -163,6 +185,8 @@ void testsuite_envelope_set_sender
 void testsuite_envelope_set_recipient
 (const struct sieve_runtime_env *renv, const char *value)
 {
+	normalize_address(&value);
+
 	sieve_message_context_reset(renv->msgctx);
 
 	str_truncate(envelope_to, 0);
@@ -177,6 +201,8 @@ void testsuite_envelope_set_recipient
 void testsuite_envelope_set_orig_recipient
 (const struct sieve_runtime_env *renv, const char *value)
 {
+	normalize_address(&value);
+
 	sieve_message_context_reset(renv->msgctx);
 
 	str_truncate(envelope_orig_to, 0);

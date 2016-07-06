@@ -811,12 +811,10 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 	str_truncate(parser->str, 0);
 	if ( *parser->data == '"' ) {
 		/* Quoted-string = DQUOTE *qcontent DQUOTE */
-		str_append_c(parser->str, *parser->data);
 		parser->data++;
 
 		while ( parser->data < parser->end ) {
 			if ( *parser->data == '\\' ) {
-				str_append_c(parser->str, *parser->data);
 				parser->data++;
 
 				if ( parser->data < parser->end ) {
@@ -838,7 +836,6 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 		if ( *parser->data != '"' )
 			return -1;
 
-		str_append_c(parser->str, *parser->data);
 		parser->data++;
 
 		if ( (ret=path_skip_white_space(parser)) < 0 )
