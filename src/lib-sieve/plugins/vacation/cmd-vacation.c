@@ -1030,6 +1030,7 @@ static int act_vacation_commit
 	void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
 	const struct sieve_extension *ext = action->ext;
+	struct sieve_instance *svinst = aenv->svinst;
 	const struct ext_vacation_config *config =
 		(const struct ext_vacation_config *) ext->context;
 	const struct sieve_script_env *senv = aenv->scriptenv;
@@ -1040,8 +1041,10 @@ static int act_vacation_commit
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
 	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
 	const char *const *hdsp, *const *headers;
-	const char *reply_from = NULL, *orig_recipient = NULL, *smtp_from = NULL;
+	const char *reply_from, *orig_recipient, *smtp_from, *user_email;
 	int ret;
+
+	reply_from = orig_recipient = smtp_from = user_email = NULL;
 
 	/* Is the recipient unset?
 	 */
@@ -1166,6 +1169,9 @@ static int act_vacation_commit
 	/* Fetch original recipient if necessary */
 	if ( config->use_original_recipient  )
 		orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
+	/* Fetch explicitly configured user email address */
+	if (svinst->user_email != NULL)
+		user_email = sieve_address_to_string(svinst->user_email);
 
 	/* Is the original message directly addressed to the user or the addresses
 	 * specified using the :addresses tag?
@@ -1211,6 +1217,15 @@ static int act_vacation_commit
 
 				if ( found ) break;
 			}
+
+			/* Explicitly-configured user email address directly listed in
+			   headers? */
+			if ( user_email != NULL &&
+				_contains_my_address(headers, user_email) ) {
+				reply_from = user_email;
+				smtp_from = user_email;
+				break;
+			}
 		}
 		hdsp++;
 	}
@@ -1223,21 +1238,26 @@ static int act_vacation_commit
 			smtp_from = recipient;
 
 		} else {
-			const char *original_recipient = "";
+			const char *orig_rcpt_str = "", *user_email_str = "";
 
 			/* Bail out */
 
 			if ( config->use_original_recipient ) {
-				original_recipient = t_strdup_printf("original-recipient=<%s>, ",
+				orig_rcpt_str = t_strdup_printf("original-recipient=<%s>, ",
 					( orig_recipient == NULL ? "UNAVAILABLE" :
-						str_sanitize(orig_recipient, 128) ));
+						str_sanitize(orig_recipient, 256) ));
+			}
+
+			if ( user_email != NULL ) {
+				user_email_str = t_strdup_printf("user-email=<%s>, ",
+						str_sanitize(user_email, 256) );
 			}
 
 			sieve_result_global_log(aenv,
 				"discarding vacation response for implicitly delivered message; "
 				"no known (envelope) recipient address found in message headers "
-				"(recipient=<%s>, %sand%s additional `:addresses' are specified)",
-				str_sanitize(recipient, 128), original_recipient,
+				"(recipient=<%s>, %s%sand%s additional `:addresses' are specified)",
+				str_sanitize(recipient, 256), orig_rcpt_str, user_email_str,
 				(ctx->addresses == NULL || *ctx->addresses == NULL ? " no" : ""));
 
 			return SIEVE_EXEC_OK;
