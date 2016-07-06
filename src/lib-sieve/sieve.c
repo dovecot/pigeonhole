@@ -1018,7 +1018,13 @@ const char *sieve_get_user_email
 
 	if ( strchr(username, '@') != 0 )
 		return username;
-	if ( svinst->domainname != NULL )
-		return t_strconcat(username, "@", svinst->domainname, NULL);
+	if ( svinst->domainname != NULL ) {
+		struct sieve_address svaddr;
+
+		memset(&svaddr, 0, sizeof(svaddr));
+		svaddr.local_part = username;
+		svaddr.domain = svinst->domainname;
+		return sieve_address_to_string(&svaddr);
+	}
 	return NULL;
 }
