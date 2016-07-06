@@ -221,12 +221,8 @@ static int program_client_remote_connect(struct program_client *pclient)
 		(struct program_client_remote *)pclient;
 	int fd;
 
-	if ((fd = net_connect_unix(pclient->path)) < 0) {
+	if ((fd = net_connect_unix_with_retries(pclient->path, 1000)) < 0) {
 		switch (errno) {
-		case EAGAIN:
-		case ECONNREFUSED:
-			// FIXME: retry;
-			return -1;
 		case EACCES:
 			i_error("%s", eacces_error_get("net_connect_unix", pclient->path));
 			return -1;
