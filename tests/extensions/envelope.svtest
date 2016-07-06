@@ -54,14 +54,6 @@ test "Envelope - from empty" {
 	if envelope :all :is "from" "nico@frop.example.org" {
 		test_fail "envelope test matches nonsense";
 	}
-
-	/* Forward path: <> */
-
-	test_set "envelope.to" "<>";
-
-	if envelope :all :is "to" "" {
-		test_fail "successfully matched a <> forward path, which is wrong";
-	}
 }
 
 /*

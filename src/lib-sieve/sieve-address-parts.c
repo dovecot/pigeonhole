@@ -456,18 +456,14 @@ static const char *addrp_all_extract_from
 (const struct sieve_address_part *addrp ATTR_UNUSED,
 	const struct sieve_address *address)
 {
-	const char *local_part = address->local_part;
-	const char *domain = address->domain;
-
-	if ( domain == NULL ) {
-		return local_part;
+	if ( address->domain == NULL ) {
+		return address->local_part;
 	}
 
-	if ( local_part == NULL ) {
+	if ( address->local_part == NULL )
 		return NULL;
-	}
 
-	return t_strconcat(local_part, "@", domain, NULL);
+	return sieve_address_to_string(address);
 }
 
 static const char *addrp_domain_extract_from
