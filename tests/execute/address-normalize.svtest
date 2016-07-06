@@ -27,21 +27,18 @@ test "Mail address normalization - redirect" {
 	}
 
 	test_message :smtp 0;
-	test_message_print;
 
 	if not envelope :is "to" "\"S[r]us\"@example.net" {
 		test_fail "envelope recipient incorrect";
 	}
 
 	test_message :smtp 1;
-	test_message_print;
 
 	if not envelope :is "to" "Sirius@example.net" {
 		test_fail "envelope recipient incorrect";
 	}
 
 	test_message :smtp 2;
-	test_message_print;
 
 	if not envelope :is "to" "S.Bosch@example.net" {
 		test_fail "envelope recipient incorrect";
