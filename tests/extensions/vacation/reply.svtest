@@ -194,6 +194,9 @@ Frop!
 test_set "envelope.from" "timo@example.com";
 test_set "envelope.to" "stephan@example.com";
 
+test_config_set "sieve_user_email" "jason@example.com";
+test_config_reload;
+
 test "No reply for implicitly delivered message" {
 	vacation "I am gone";
 
@@ -330,6 +333,44 @@ test "Reply for original recipient" {
 
 	if not test_message :smtp 0 {
 		test_fail "vacation did not reply";
+	}
+}
+
+/*
+ * Reply for user's explicitly configured email address
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: timo@example.com
+To: user@example.com
+Subject: Frop!
+
+Frop!
+.
+;
+
+test_set "envelope.from" "timo@example.com";
+test_set "envelope.to" "jibberish@example.com";
+test_set "envelope.orig_to" "even-more-jibberish@example.com";
+
+test_config_set "sieve_user_email" "user@example.com";
+test_config_reload;
+
+test "Reply for user's explicitly configured email address" {
+	vacation "I am gone";
+
+	if not test_result_execute {
+		test_fail "failed to execute vacation";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "vacation did not reply";
+	}
+
+	if not address "from" "user@example.com" {
+		test_fail "mail not sent from user's email address";
 	}
 }
 
