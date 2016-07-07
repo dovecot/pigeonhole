@@ -19,3 +19,21 @@ test "Command syntax" {
                 test_fail "wrong number of errors reported";
         }
 }
+
+/*
+ * Unknown program
+ */
+
+test "Unknown program" {
+        if not test_script_compile "errors/unknown-program.sieve" {
+                test_fail "compile should have succeeded";
+        }
+
+        if test_script_run {
+                test_fail "execution should have failed";
+        }
+
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
+                test_fail "wrong number of errors reported";
+        }
+}
