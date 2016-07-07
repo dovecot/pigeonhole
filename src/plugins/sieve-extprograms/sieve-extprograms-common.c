@@ -480,8 +480,6 @@ struct sieve_extprogram *sieve_extprogram_create
 						"executable path `%s' for program `%s' not found",
 						action, path, program_name);
 				}
-				sieve_sys_error(svinst, "action %s: program `%s' not found",
-					action, program_name);
 				*error_r = SIEVE_ERROR_NOT_FOUND;
 				break;
 			case EACCES:
