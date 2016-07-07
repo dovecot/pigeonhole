@@ -231,9 +231,12 @@ static int cmd_filter_operation_execute
 			"filter action: program indicated false result");
 	}
 
-	if ( is_test )
+	if ( is_test ) {
 		sieve_interpreter_set_test_result(renv->interp, ( ret > 0 ));
 
-	return SIEVE_EXEC_OK;
+		return SIEVE_EXEC_OK;
+	}
+
+	return ( ret >= 0 ? SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE );
 }
 
