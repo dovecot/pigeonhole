@@ -1,12 +1,18 @@
-v0.4.15 01-07-2016 Stephan Bosch <stephan@rename-it.nl>
+v0.4.15 07-07-2016 Stephan Bosch <stephan@rename-it.nl>
 
+	* vacation extension: The sieve_user_email setting is now used in the check
+	  for implicit delivery.
 	- imapsieve plugin: For any mail transaction, the mailbox was opened a second
 	  time, even if no mailbox rule matched. This was unintentional, useless and
 	  caused problems when the imapsieve plugin was used with other plugins like
 	  acl.
 	- extprograms plugin: Significantly improved error handling. No stream errors
 	  were logged.
+	- extprograms plugin: Fixed bug in handling of result code from remote program
+	  (script service).
+	- extprograms plugin: Connection to remote program service was not retried.
 	- Several small fixes based on static analysis.
+	- Fixed handling of quoted string localparts in email addresses.
 
 v0.4.14 26-04-2016 Stephan Bosch <stephan@rename-it.nl>
 
