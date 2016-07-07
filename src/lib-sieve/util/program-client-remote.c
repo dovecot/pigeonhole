@@ -86,8 +86,6 @@ static ssize_t program_client_istream_read(struct istream_private *stream)
 			}
 		}
 	
-		if ( ret == 0 || (ret < 0 && !stream->parent->eof) ) break;
-
 		if ( stream->buffer != NULL && pos >= 1 ) {
 			/* retain/hide potential return code at end of buffer */
 			reserved = ( stream->buffer[pos-1] == '\n' && pos > 1 ? 2 : 1 );
@@ -98,6 +96,8 @@ static ssize_t program_client_istream_read(struct istream_private *stream)
 				ret = ( (size_t)ret > reserved ? ret - reserved : 0 );
 			}
 		}
+
+		if ( ret == 0 || (ret < 0 && !stream->parent->eof) ) break;
 
 		if ( ret <= 0 && stream->parent->eof ) {
 			/* Parent EOF and not more data to return; EOF here as well */
