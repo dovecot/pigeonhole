@@ -278,8 +278,11 @@ arguments that are passed to the external program, as explained in
 
 <t>If the external program fails to execute, finishes execution with an error,
 or fails to provide message output, the "filter" action MUST terminate and leave
-the message unchanged. No error condition is raised, script processing
-continues, and prior or subsequent "filter" actions are not affected.
+the message unchanged. Depending on the severity of the error, implementations
+MAY subsequently fail the entire script execution with an appropriate error
+(causing an implicit "keep" action to be executed). If no error condition is
+raised, script processing continues, and prior or subsequent "filter" actions
+are not affected.
 </t>
 
 <section title="Interaction with Other Tests and Actions">
@@ -371,14 +374,15 @@ compatible with the "set" command as described in <xref target="VARIABLES"/>,
 Section 4. This means that match variables cannot be specified and that variable
 namespaces are only allowed when their specification explicitly indicates
 compatibility with the "set" command. Use of an incompatible variable MUST
-trigger a compile error.
+trigger a compile error. The data actually stored in the variable MAY be
+truncated to conform to an implementation-specific limit on variable length.
 </t>
 
-<t>The data actually stored in the variable MAY be truncated to conform to an
-implementation-specific limit on variable length. If the execution of the
-external program fails, the contents of the variable referenced with ":output"
-MUST remain unchanged. 
-</t>
+<t>If the external program fails to execute or finishes execution with an error,
+the "execute" action MUST terminate and leave the contents of the variable
+referenced with ":output" unchanged. Depending on the severity of the error,
+implementations MAY subsequently fail the entire script execution with an
+appropriate error (causing an implicit "keep" action to be executed).</t>
 
 </section>
 

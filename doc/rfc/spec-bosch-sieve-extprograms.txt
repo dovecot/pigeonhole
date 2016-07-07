@@ -1,11 +1,14 @@
 
 
 
-Pigeonhole Project                                              S. Bosch
-                                                        October 12, 2012
+
+                                                                S. Bosch
+
+                                                            July 7, 2016
 
 
            Sieve Email Filtering: Invoking External Programs
+                         spec-bosch-sieve-pipe
 
 Abstract
 
@@ -23,94 +26,36 @@ Abstract
    through those programs and string data can be input to and retrieved
    from those programs.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Bosch                                                           [Page 1]
-
-                         Sieve External Programs            October 2012
-
-
 Table of Contents
 
-   1.  Introduction . . . . . . . . . . . . . . . . . . . . . . . . .  3
-   2.  Conventions Used in This Document  . . . . . . . . . . . . . .  3
-   3.  Naming of External Programs  . . . . . . . . . . . . . . . . .  3
-   4.  Arguments for External Programs  . . . . . . . . . . . . . . .  4
-   5.  Action "pipe"  . . . . . . . . . . . . . . . . . . . . . . . .  5
-     5.1.  Interactions with Other Sieve Actions  . . . . . . . . . .  5
-     5.2.  Interaction with the Sieve "copy" Extension  . . . . . . .  6
-   6.  Action "filter"  . . . . . . . . . . . . . . . . . . . . . . .  6
-     6.1.  Interaction with Other Tests and Actions . . . . . . . . .  7
-   7.  Action "execute" . . . . . . . . . . . . . . . . . . . . . . .  7
-   8.  Actions "filter" and "execute" as Tests  . . . . . . . . . . .  8
-   9.  Sieve Capability Strings . . . . . . . . . . . . . . . . . . .  9
-   10. Examples . . . . . . . . . . . . . . . . . . . . . . . . . . .  9
-     10.1. Example 1  . . . . . . . . . . . . . . . . . . . . . . . .  9
-     10.2. Example 2  . . . . . . . . . . . . . . . . . . . . . . . . 10
-     10.3. Example 3  . . . . . . . . . . . . . . . . . . . . . . . . 10
-     10.4. Example 4  . . . . . . . . . . . . . . . . . . . . . . . . 11
-   11. Security Considerations  . . . . . . . . . . . . . . . . . . . 12
-   12. References . . . . . . . . . . . . . . . . . . . . . . . . . . 12
-     12.1. Normative References . . . . . . . . . . . . . . . . . . . 12
-     12.2. Informative References . . . . . . . . . . . . . . . . . . 13
-   Author's Address . . . . . . . . . . . . . . . . . . . . . . . . . 13
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+   2.  Conventions Used in This Document . . . . . . . . . . . . . .   2
+   3.  Naming of External Programs . . . . . . . . . . . . . . . . .   2
+   4.  Arguments for External Programs . . . . . . . . . . . . . . .   3
+   5.  Action "pipe" . . . . . . . . . . . . . . . . . . . . . . . .   4
+     5.1.  Interactions with Other Sieve Actions . . . . . . . . . .   4
+     5.2.  Interaction with the Sieve "copy" Extension . . . . . . .   5
+   6.  Action "filter" . . . . . . . . . . . . . . . . . . . . . . .   5
+     6.1.  Interaction with Other Tests and Actions  . . . . . . . .   6
+   7.  Action "execute"  . . . . . . . . . . . . . . . . . . . . . .   6
+   8.  Actions "filter" and "execute" as Tests . . . . . . . . . . .   7
+   9.  Sieve Capability Strings  . . . . . . . . . . . . . . . . . .   8
+   10. Examples  . . . . . . . . . . . . . . . . . . . . . . . . . .   8
+     10.1.  Example 1  . . . . . . . . . . . . . . . . . . . . . . .   8
+     10.2.  Example 2  . . . . . . . . . . . . . . . . . . . . . . .   9
+     10.3.  Example 3  . . . . . . . . . . . . . . . . . . . . . . .   9
+     10.4.  Example 4  . . . . . . . . . . . . . . . . . . . . . . .  10
+   11. Security Considerations . . . . . . . . . . . . . . . . . . .  11
+   12. References  . . . . . . . . . . . . . . . . . . . . . . . . .  11
+     12.1.  Normative References . . . . . . . . . . . . . . . . . .  11
+     12.2.  Informative References . . . . . . . . . . . . . . . . .  12
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  12
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Bosch                                                           [Page 2]
+Bosch                    Expires January 8, 2017                [Page 1]
 
-                         Sieve External Programs            October 2012
+                         Sieve External Programs               July 2016
 
 
 1.  Introduction
@@ -146,7 +91,6 @@ Bosch                                                           [Page 2]
    extension is primarily meant for use in small setups or global
    scripts that are managed by the system's administrator.
 
-
 2.  Conventions Used in This Document
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -157,19 +101,19 @@ Bosch                                                           [Page 2]
    use of the "Usage:" label for the definition of action and tagged
    arguments syntax.
 
-
 3.  Naming of External Programs
 
    An external program is identified by a name.  This MUST not
-
-
-
-Bosch                                                           [Page 3]
-
-                         Sieve External Programs            October 2012
-
-
    correspond to a file system path or otherwise have the ability to
+
+
+
+
+Bosch                    Expires January 8, 2017                [Page 2]
+
+                         Sieve External Programs               July 2016
+
+
    point to arbitrary programs on the system.  The list of valid program
    names MUST be limited, subject to administrator configuration.
 
@@ -202,7 +146,6 @@ Bosch                                                           [Page 3]
    program names; in other words, the "program-name" value MUST be a
    constant string as defined in [VARIABLES], Section 3.
 
-
 4.  Arguments for External Programs
 
    Optionally, arguments can be passed to an external program.  The
@@ -220,15 +163,16 @@ Bosch                                                           [Page 3]
 
 
 
-Bosch                                                           [Page 4]
+
+
+Bosch                    Expires January 8, 2017                [Page 3]
 
-                         Sieve External Programs            October 2012
+                         Sieve External Programs               July 2016
 
 
    Note that implementations MAY also implicitly pass other data, such
    as the message envelope, to all executed programs avoiding the need
    to pass this information explicitly through program arguments.
-
 
 5.  Action "pipe"
 
@@ -273,15 +217,14 @@ Bosch                                                           [Page 4]
    The "pipe" action can only be executed once per script for a
    particular external program.  A script MUST fail with an appropriate
    error if it attempts to "pipe" messages to the same program multiple
-
-
-
-Bosch                                                           [Page 5]
-
-                         Sieve External Programs            October 2012
-
-
    times.
+
+
+
+Bosch                    Expires January 8, 2017                [Page 4]
+
+                         Sieve External Programs               July 2016
+
 
    The "pipe" action is incompatible with the Sieve "reject" and
    "ereject" actions [RFC5429].
@@ -304,7 +247,6 @@ Bosch                                                           [Page 5]
    Usage: "pipe" [":copy"] [":try"] <program-name: string>
                  [<arguments: string-list>]
 
-
 6.  Action "filter"
 
    Usage: "filter" <program-name: string> [<arguments: string-list>]
@@ -326,15 +268,18 @@ Bosch                                                           [Page 5]
 
    If the external program fails to execute, finishes execution with an
    error, or fails to provide message output, the "filter" action MUST
-   terminate and leave the message unchanged.  No error condition is
-   raised, script processing continues, and prior or subsequent "filter"
-   actions are not affected.
+   terminate and leave the message unchanged.  Depending on the severity
+   of the error, implementations MAY subsequently fail the entire script
+   execution with an appropriate error (causing an implicit "keep"
+   action to be executed).  If no error condition is raised, script
+   processing continues, and prior or subsequent "filter" actions are
+   not affected.
 
 
 
-Bosch                                                           [Page 6]
+Bosch                    Expires January 8, 2017                [Page 5]
 
-                         Sieve External Programs            October 2012
+                         Sieve External Programs               July 2016
 
 
 6.1.  Interaction with Other Tests and Actions
@@ -368,7 +313,6 @@ Bosch                                                           [Page 6]
    actions; any action that was applicable before the "filter"
    invocation is equally applicable to the changed message afterward.
 
-
 7.  Action "execute"
 
    Usage: "execute" [":input" <input-data: string> / ":pipe"]
@@ -385,15 +329,15 @@ Bosch                                                           [Page 6]
    in any way and it never affects Sieve's implicit keep.
 
    The specified "program-name" argument MUST conform to the syntax and
-
-
-
-Bosch                                                           [Page 7]
-
-                         Sieve External Programs            October 2012
-
-
    restrictions defined in Section 3.  A script MUST fail with an
+
+
+
+Bosch                    Expires January 8, 2017                [Page 6]
+
+                         Sieve External Programs               July 2016
+
+
    appropriate error if it attempts to use the "execute" action with an
    invalid, restricted or unknown program name.  The optional
    "arguments" argument lists the arguments that are passed to the
@@ -427,28 +371,30 @@ Bosch                                                           [Page 7]
    specified and that variable namespaces are only allowed when their
    specification explicitly indicates compatibility with the "set"
    command.  Use of an incompatible variable MUST trigger a compile
-   error.
+   error.  The data actually stored in the variable MAY be truncated to
+   conform to an implementation-specific limit on variable length.
 
-   The data actually stored in the variable MAY be truncated to conform
-   to an implementation-specific limit on variable length.  If the
-   execution of the external program fails, the contents of the variable
-   referenced with ":output" MUST remain unchanged.
-
+   If the external program fails to execute or finishes execution with
+   an error, the "execute" action MUST terminate and leave the contents
+   of the variable referenced with ":output" unchanged.  Depending on
+   the severity of the error, implementations MAY subsequently fail the
+   entire script execution with an appropriate error (causing an
+   implicit "keep" action to be executed).
 
 8.  Actions "filter" and "execute" as Tests
 
    To simplify checking the successful invocation of the external
    program, the "filter" and "execute" actions can also be used as
    tests.  As such, these will attempt to execute the requested external
-   program, and will evaluate to "true" if the program executed
 
 
 
-Bosch                                                           [Page 8]
+Bosch                    Expires January 8, 2017                [Page 7]
 
-                         Sieve External Programs            October 2012
+                         Sieve External Programs               July 2016
 
 
+   program, and will evaluate to "true" if the program executed
    successfully and, if applicable, output was retrieved from it
    successfully.  The usage as a test is exactly the same as the usage
    as an action: as a test it doubles as an action and a test of the
@@ -474,7 +420,6 @@ Bosch                                                           [Page 8]
    as a syntactically invalid or restricted program name, MUST always
    cause the script to fail with an appropriate error.
 
-
 9.  Sieve Capability Strings
 
    A Sieve implementation that defines the "pipe" action command will
@@ -486,7 +431,6 @@ Bosch                                                           [Page 8]
    A Sieve implementation that defines the "execute" command will
    advertise the capability string "vnd.dovecot.execute".
 
-
 10.  Examples
 
    The examples outlined in this section all refer to some external
@@ -495,20 +439,20 @@ Bosch                                                           [Page 8]
 
 10.1.  Example 1
 
-   The following example passes messages directed to a
-   "user-request@example.com" address to an external program called
+   The following example passes messages directed to a "user-
+   request@example.com" address to an external program called "request-
+   handler".  The "-request" part of the recipient address is identified
 
 
 
-Bosch                                                           [Page 9]
+Bosch                    Expires January 8, 2017                [Page 8]
 
-                         Sieve External Programs            October 2012
+                         Sieve External Programs               July 2016
 
 
-   "request-handler".  The "-request" part of the recipient address is
-   identified using the "subaddress" extension [SUBADDRESS].  If the
-   program is executed successfully, the message is considered delivered
-   and does not end up in the user's inbox.
+   using the "subaddress" extension [SUBADDRESS].  If the program is
+   executed successfully, the message is considered delivered and does
+   not end up in the user's inbox.
 
    require [ "vnd.dovecot.pipe", "subaddress", "envelope" ];
 
@@ -556,9 +500,10 @@ Bosch                                                           [Page 9]
 
 
 
-Bosch                                                          [Page 10]
+
+Bosch                    Expires January 8, 2017                [Page 9]
 
-                         Sieve External Programs            October 2012
+                         Sieve External Programs               July 2016
 
 
    Note that (formerly) Dutch messages are filed into the "Translated"
@@ -612,9 +557,9 @@ Bosch                                                          [Page 10]
 
 
 
-Bosch                                                          [Page 11]
+Bosch                    Expires January 8, 2017               [Page 10]
 
-                         Sieve External Programs            October 2012
+                         Sieve External Programs               July 2016
 
 
 11.  Security Considerations
@@ -635,7 +580,7 @@ Bosch                                                          [Page 11]
    Unlike the Sieve interpreter itself, an external program can easily
    consume a large amount of resources if not implemented carefully.
    This can be triggered by coincidence or intentionally by an attacker.
-   Therefore, amount of resources available to the external programs
+   Therefore, the amount of resources available to the external programs
    SHOULD be limited appropriately.  For one, external programs MUST NOT
    be allowed to execute indefinitely.
 
@@ -648,7 +593,6 @@ Bosch                                                          [Page 11]
    the details of external program invocation from the user's view and
    it limits access to external programs to whatever the administrator
    defines.
-
 
 12.  References
 
@@ -668,9 +612,10 @@ Bosch                                                          [Page 11]
 
 
 
-Bosch                                                          [Page 12]
+
+Bosch                    Expires January 8, 2017               [Page 11]
 
-                         Sieve External Programs            October 2012
+                         Sieve External Programs               July 2016
 
 
    [SIEVE]    Guenther, P. and T. Showalter, "Sieve: An Email Filtering
@@ -686,8 +631,8 @@ Bosch                                                          [Page 12]
 12.2.  Informative References
 
    [DSN]      Moore, K. and G. Vaudreuil, "An Extensible Message Format
-              for Delivery Status Notifications", RFC 3464,
-              January 2003.
+              for Delivery Status Notifications", RFC 3464, January
+              2003.
 
    [INCLUDE]  Daboo, C. and A. Stone, "Sieve Email Filtering: Include
               Extension", RFC 6609, May 2012.
@@ -701,7 +646,6 @@ Bosch                                                          [Page 12]
    [SUBADDRESS]
               Murchison, K., "Sieve Email Filtering -- Subaddress
               Extension", RFC 3598, September 2003.
-
 
 Author's Address
 
@@ -724,5 +668,5 @@ Author's Address
 
 
 
-Bosch                                                          [Page 13]
-
+
+Bosch                    Expires January 8, 2017               [Page 12]
