@@ -47,12 +47,7 @@ DISTCLEANFILES = \
 
 TESTSUITE_BIN = $(top_builddir)/src/testsuite/testsuite $(TESTSUITE_OPTIONS)
 
-if TESTSUITE_VALGRIND
-TEST_BIN = libtool --mode=execute valgrind -q --error-exitcode=1 \
-	--show-reachable=yes --leak-check=full --trace-children=yes $(TESTSUITE_BIN)
-else
-TEST_BIN = $(TESTSUITE_BIN)
-endif
+TEST_BIN = $(RUN_TEST) $(TESTSUITE_BIN)
 
 if BUILD_UNFINISHED
 test_unfinished =

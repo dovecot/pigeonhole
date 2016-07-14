@@ -45,6 +45,7 @@ Makefile.in
 src/**/test-*
 !src/**/test-*.c
 !src/**/test-*.h
+**/test.out.*
 
 doc/man/doveadm-sieve.1
 doc/man/sievec.1

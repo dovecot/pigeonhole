@@ -1,7 +1,7 @@
 # pigeonhole.m4 - Check presence of pigeonhole -*-Autoconf-*-
 #.
 
-# serial 4
+# serial 5
 
 AC_DEFUN([DC_PIGEONHOLE],[
 	AC_ARG_WITH(pigeonhole,
@@ -54,16 +54,6 @@ AC_DEFUN([DC_PIGEONHOLE],[
 	AM_CONDITIONAL(PIGEONHOLE_TESTSUITE_AVAILABLE, ! test -z "$PIGEONHOLE_TESTSUITE")
 
 	pigeonhole_incdir="$pigeonholedir"
-
-	AC_ARG_ENABLE(valgrind,
-	[AC_HELP_STRING([--enable-valgrind], [Enable Valgrind memory leak checks in testsuite [default=no]])],
-	    if test x$enableval = xno || test x$enableval = xauto; then
-    	    want_valgrind=$enableval
-	    else
-    	    want_valgrind=yes
-	    fi,
-	want_valgrind=no)
-	AM_CONDITIONAL(PIGEONHOLE_TESTSUITE_VALGRIND, test "$want_valgrind" = "yes")
 
 	AC_SUBST(pigeonhole_incdir)
 
