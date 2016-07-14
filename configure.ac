@@ -99,16 +99,6 @@ AC_ARG_WITH(docs,
     want_docs=yes)
 AM_CONDITIONAL(BUILD_DOCS, test "$want_docs" = "yes")
 
-AC_ARG_ENABLE(valgrind,
-[AC_HELP_STRING([--enable-valgrind], [Enable Valgrind memory leak checks in testsuite [default=no]])],
-    if test x$enableval = xno || test x$enableval = xauto; then
-        want_valgrind=$enableval
-    else
-        want_valgrind=yes
-    fi,
-    want_valgrind=no)
-AM_CONDITIONAL(TESTSUITE_VALGRIND, test "$want_valgrind" = "yes")
-
 AC_ARG_WITH(managesieve,
 [AC_HELP_STRING([--with-managesieve],
 	[Build ManageSieve service [default=yes]])],
