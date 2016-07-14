@@ -18,12 +18,13 @@ settings_LTLIBRARIES = \
 libmanagesieve_settings_la_SOURCES = \
 	managesieve-settings.c
 
-managesieve_LDFLAGS = -export-dynamic
-
 libs = \
 	managesieve-settings.lo \
 	$(top_builddir)/src/lib-managesieve/libmanagesieve.la \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la
+
+managesieve_CPPFLAGS = $(AM_CPPFLAGS) $(BINARY_CFLAGS)
+managesieve_LDFLAGS = -export-dynamic $(BINARY_LDFLAGS)
 
 managesieve_LDADD = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT_LDA) $(LIBDOVECOT)
 
