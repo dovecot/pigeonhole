@@ -236,19 +236,19 @@ void sieve_lexer_token_print(const struct sieve_lexer *lexer)
 
 static void sieve_lexer_shift(struct sieve_lexical_scanner *scanner)
 {
-	if ( scanner->buffer != NULL && scanner->buffer[scanner->buffer_pos] == '\n' )
+	if ( scanner->buffer_size > 0 && scanner->buffer[scanner->buffer_pos] == '\n' )
 		scanner->current_line++;
 
-	if ( scanner->buffer != NULL &&
+	if ( scanner->buffer_size > 0 &&
 		scanner->buffer_pos + 1 < scanner->buffer_size )
 		scanner->buffer_pos++;
 	else {
-		if ( scanner->buffer != NULL )
+		if ( scanner->buffer_size > 0 )
 			i_stream_skip(scanner->input, scanner->buffer_size);
 
 		scanner->buffer = i_stream_get_data(scanner->input, &scanner->buffer_size);
 
-		if ( scanner->buffer == NULL && i_stream_read(scanner->input) > 0 )
+		if ( scanner->buffer_size == 0 && i_stream_read(scanner->input) > 0 )
 	  		scanner->buffer = i_stream_get_data
 					(scanner->input, &scanner->buffer_size);
 
@@ -258,7 +258,7 @@ static void sieve_lexer_shift(struct sieve_lexical_scanner *scanner)
 
 static inline int sieve_lexer_curchar(struct sieve_lexical_scanner *scanner)
 {
-	if ( scanner->buffer == NULL )
+	if ( scanner->buffer_size == 0 )
 		return -1;
 
 	return scanner->buffer[scanner->buffer_pos];
