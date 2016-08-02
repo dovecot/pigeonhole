@@ -165,8 +165,7 @@ static int program_client_program_output(struct program_client *pclient)
 {
 	struct istream *input = pclient->input;
 	struct ostream *output = pclient->program_output;
-	const unsigned char *data;
-	size_t size;
+	enum ostream_send_istream_result res;
 	int ret = 0;
 
 	if ((ret = o_stream_flush(output)) <= 0) {
@@ -180,48 +179,29 @@ static int program_client_program_output(struct program_client *pclient)
 	}
 
 	if ( input != NULL && output != NULL ) {
-		do {
-			while ( (data=i_stream_get_data(input, &size)) != NULL ) {
-				ssize_t sent;
-	
-				if ( (sent=o_stream_send(output, data, size)) < 0 ) {
-					i_error("write(%s) failed: %s",
-						o_stream_get_name(output),
-						o_stream_get_error(output));
-					program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
-					return -1;
-				}
-	
-				if ( sent == 0 )
-					return 0;
-				i_stream_skip(input, sent);
-			}
-		} while ( (ret=i_stream_read(input)) > 0 );
+		res = o_stream_send_istream(output, input);
 
-		if ( ret == 0 )
+		switch (res) {
+		case OSTREAM_SEND_ISTREAM_RESULT_FINISHED:
+			i_stream_unref(&pclient->input);
+			input = NULL;
+			break;
+		case OSTREAM_SEND_ISTREAM_RESULT_WAIT_INPUT:
 			return 1;
-
-		if ( ret < 0 ) {
-			if ( input->stream_errno != 0 ) {
-				i_error("read(%s) failed: %s",
-					i_stream_get_name(input),
-					i_stream_get_error(input));
-				program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
-				return -1;
-			} else if ( !i_stream_have_bytes_left(input) ) {
-				i_stream_unref(&pclient->input);
-				input = NULL;
-
-				if ( (ret = o_stream_flush(output)) <= 0 ) {
-					if ( ret < 0 ) {
-						i_error("write(%s) failed: %s",
-							o_stream_get_name(output),
-							o_stream_get_error(output));
-						program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
-					}
-					return ret;
-				}
-			} 
+		case OSTREAM_SEND_ISTREAM_RESULT_WAIT_OUTPUT:
+			return 0;
+		case OSTREAM_SEND_ISTREAM_RESULT_ERROR_INPUT:
+			i_error("read(%s) failed: %s",
+				i_stream_get_name(input),
+				i_stream_get_error(input));
+			program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
+			return -1;
+		case OSTREAM_SEND_ISTREAM_RESULT_ERROR_OUTPUT:
+			i_error("write(%s) failed: %s",
+				o_stream_get_name(output),
+				o_stream_get_error(output));
+			program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
+			return -1;
 		}
 	}
 
@@ -239,39 +219,53 @@ static void program_client_program_input(struct program_client *pclient)
 {
 	struct istream *input = pclient->program_input;
 	struct ostream *output = pclient->output;
+	enum ostream_send_istream_result res;
 	const unsigned char *data;
 	size_t size;
 	int ret = 0;
 
 	if ( input != NULL ) {
-		while ( (ret=i_stream_read_more(input, &data, &size)) > 0 ) {
-			if ( output != NULL ) {
-				ssize_t sent;
+		if ( output != NULL ) {
+			res = o_stream_send_istream(output, input);
 
-				if ( (sent=o_stream_send(output, data, size)) < 0 ) {
-					i_error("write(%s) failed: %s",
-						o_stream_get_name(output),
-						o_stream_get_error(output));
-					program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
-					return;
-				}
-				size = (size_t)sent;
-			}
-
-			i_stream_skip(input, size);
-		}
-
-		if ( ret < 0 ) {
-			if ( input->stream_errno != 0 ) {
+			switch (res) {
+			case OSTREAM_SEND_ISTREAM_RESULT_FINISHED:
+				break;
+			case OSTREAM_SEND_ISTREAM_RESULT_WAIT_INPUT:
+			case OSTREAM_SEND_ISTREAM_RESULT_WAIT_OUTPUT:
+				return;
+			case OSTREAM_SEND_ISTREAM_RESULT_ERROR_INPUT:
 				i_error("read(%s) failed: %s",
 					i_stream_get_name(input),
 					i_stream_get_error(input));
 				program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
-			} else {
-				if ( !program_client_input_pending(pclient) )
-					program_client_disconnect(pclient, FALSE);
+				return;
+			case OSTREAM_SEND_ISTREAM_RESULT_ERROR_OUTPUT:
+				i_error("write(%s) failed: %s",
+					o_stream_get_name(output),
+					o_stream_get_error(output));
+				program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
+				return;
+			}
+		} else {
+			while ( (ret=i_stream_read_more(input, &data, &size)) > 0 ||
+				ret == -2 )
+				i_stream_skip(input, size);
+
+			if ( ret == 0 )
+				return;
+			if ( ret < 0 ) {
+				if ( input->stream_errno != 0 ) {
+					i_error("read(%s) failed: %s",
+						i_stream_get_name(input),
+						i_stream_get_error(input));
+					program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
+					return;
+				}
 			}
 		}
+		if ( !program_client_input_pending(pclient) )
+			program_client_disconnect(pclient, FALSE);
 	}
 }
 
