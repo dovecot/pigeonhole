@@ -186,7 +186,7 @@ imap_sieve_mailbox_error(struct mailbox *box,
  */
 
 static int imap_sieve_mailbox_get_script_real
-(struct mailbox *box, struct mailbox_transaction_context *t,
+(struct mailbox *box,
 	const char **script_name_r)
 {
 	struct mail_user *user = box->storage->user;
@@ -196,9 +196,9 @@ static int imap_sieve_mailbox_get_script_real
 	*script_name_r = NULL;
 
 	/* get the name of the Sieve script from mailbox METADATA */
-	if ((ret=mailbox_attribute_get(t, MAIL_ATTRIBUTE_TYPE_SHARED,
+	if ((ret=mailbox_attribute_get(box, MAIL_ATTRIBUTE_TYPE_SHARED,
 			MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT, &value)) < 0) {
-		imap_sieve_mailbox_error(t->box,
+		imap_sieve_mailbox_error(box,
 			"Failed to read /shared/"
 			MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
 			"mailbox attribute"); // FIXME: details?
@@ -206,7 +206,7 @@ static int imap_sieve_mailbox_get_script_real
 	}
 
 	if (ret > 0) {
-		imap_sieve_mailbox_debug(t->box,
+		imap_sieve_mailbox_debug(box,
 			"Mailbox attribute /shared/"
 			MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
 			"points to Sieve script `%s'", value.value);
@@ -216,9 +216,8 @@ static int imap_sieve_mailbox_get_script_real
 	} else {
 		struct mail_namespace *ns;
 		struct mailbox *box;
-		struct mailbox_transaction_context *ibt;
 
-		imap_sieve_mailbox_debug(t->box,
+		imap_sieve_mailbox_debug(box,
 			"Mailbox attribute /shared/"
 			MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
 			"not found");
@@ -226,25 +225,20 @@ static int imap_sieve_mailbox_get_script_real
 		ns = mail_namespace_find_inbox(user->namespaces);
 		box = mailbox_alloc(ns->list, "INBOX",
 			MAILBOX_FLAG_READONLY);
-		if ((ret=mailbox_open(box)) >= 0) {
-			ibt = mailbox_transaction_begin
-				(box, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
-			ret = mailbox_attribute_get(ibt,
-				MAIL_ATTRIBUTE_TYPE_SHARED,
-				MAILBOX_ATTRIBUTE_PREFIX_DOVECOT_PVT_SERVER
-				MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT, &value);
-			mailbox_transaction_rollback(&ibt);
-		}
+		ret = mailbox_attribute_get(box,
+			MAIL_ATTRIBUTE_TYPE_SHARED,
+			MAILBOX_ATTRIBUTE_PREFIX_DOVECOT_PVT_SERVER
+			MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT, &value);
 		mailbox_free(&box);
 
 		if (ret <= 0) {
 			if (ret < 0) {
-				imap_sieve_mailbox_error(t->box,
+				imap_sieve_mailbox_error(box,
 					"Failed to read /shared/"
 					MAIL_SERVER_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
 					"server attribute"); // FIXME: details?
 			} else if (ret == 0) {
-				imap_sieve_mailbox_debug(t->box,
+				imap_sieve_mailbox_debug(box,
 					"Server attribute /shared/"
 					MAIL_SERVER_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
 					"not found");
@@ -252,7 +246,7 @@ static int imap_sieve_mailbox_get_script_real
 			return ret;
 		}
 
-		imap_sieve_mailbox_debug(t->box,
+		imap_sieve_mailbox_debug(box,
 			"Server attribute /shared/"
 			MAIL_SERVER_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
 			"points to Sieve script `%s'", value.value);
@@ -265,13 +259,10 @@ static int imap_sieve_mailbox_get_script_real
 static int imap_sieve_mailbox_get_script
 (struct mailbox *box, const char **script_name_r)
 {
-	struct mailbox_transaction_context *t;
 	int ret;
 
-	t = mailbox_transaction_begin(box, 0);
 	ret = imap_sieve_mailbox_get_script_real
-		(box, t, script_name_r);
-	mailbox_transaction_rollback(&t);
+		(box, script_name_r);
 	return ret;
 }
 
