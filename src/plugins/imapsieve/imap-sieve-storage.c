@@ -534,6 +534,8 @@ imap_sieve_mailbox_transaction_begin(struct mailbox *box,
 	if (isuser == NULL || isuser->sieve_active)
 		return t;
 
+	i_assert(isuser->client != NULL);
+
 	pool = pool_alloconly_create("imap_sieve_mailbox_transaction", 1024);
 	ismt = p_new(pool, struct imap_sieve_mailbox_transaction, 1);
 	ismt->pool = pool;
@@ -580,6 +582,8 @@ imap_sieve_mailbox_transaction_run(
 		/* Nothing to do */
 		return 0;
 	}
+
+	i_assert(isuser->client != NULL);
 
 	/* Get user script for this mailbox */
 	if (isuser->user_script && imap_sieve_mailbox_get_script
@@ -756,7 +760,7 @@ static void imap_sieve_mailbox_allocated(struct mailbox *box)
 	struct mailbox_vfuncs *v = box->vlast;
 	union mailbox_module_context *lbox;
 
-	if (isuser->sieve_active ||
+	if (isuser->client == NULL || isuser->sieve_active ||
 		(box->flags & MAILBOX_FLAG_READONLY) != 0)
 		return;
 
