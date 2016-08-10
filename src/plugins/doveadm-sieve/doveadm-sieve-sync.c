@@ -357,7 +357,8 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 static int
 sieve_attribute_set(struct mailbox_transaction_context *t,
 		    enum mail_attribute_type type, const char *key,
-		    const struct mail_attribute_value *value)
+		    const struct mail_attribute_value *value,
+		    bool internal_attribute)
 {
 	struct mail_user *user = t->box->storage->user;
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(t->box);
@@ -393,7 +394,7 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 			mail_index_attribute_unset(t->itrans, TRUE, key, ts);
 		return 0;
 	}
-	return sbox->super.attribute_set(t, type, key, value);
+	return sbox->super.attribute_set(t, type, key, value, internal_attribute);
 }
 
 static int
@@ -531,20 +532,21 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 }
 
 static int
-sieve_attribute_get(struct mailbox_transaction_context *t,
+sieve_attribute_get(struct mailbox *box,
 		    enum mail_attribute_type type, const char *key,
-		    struct mail_attribute_value *value_r)
+		    struct mail_attribute_value *value_r,
+		    bool internal_attribute)
 {
-	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(t->box);
-	struct mail_user *user = t->box->storage->user;
+	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(box);
+	struct mail_user *user = box->storage->user;
 	int ret;
 
-	if (t->box->storage->user->dsyncing &&
+	if (box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
 	    strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE,
 		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0) {
 
-		ret = sieve_attribute_get_sieve(t->box->storage, key, value_r);
+		ret = sieve_attribute_get_sieve(box->storage, key, value_r);
 		if (ret >= 0 && user->mail_debug) {
 			struct tm *tm = localtime(&value_r->last_change);
 			char str[256];
@@ -564,7 +566,7 @@ sieve_attribute_get(struct mailbox_transaction_context *t,
 		}
 		return ret;
 	}
-	return sbox->super.attribute_get(t, type, key, value_r);
+	return sbox->super.attribute_get(box, type, key, value_r, internal_attribute);
 }
 
 static int
