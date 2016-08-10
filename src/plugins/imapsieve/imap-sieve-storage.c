@@ -62,8 +62,6 @@ struct imap_sieve_mailbox_rule {
 };
 
 struct imap_sieve_user {
-	pool_t pool;
-
 	union mail_user_module_context module_ctx;
 	struct client *client;
 	struct imap_sieve *isieve;
