@@ -1589,7 +1589,7 @@ static int edit_mail_get_special
 			/* This is in essence a new message */
 			*value_r = "";
 			return 0;
-		case MAIL_FETCH_UIDL_FILE_NAME:
+		case MAIL_FETCH_STORAGE_ID:
 			/* Prevent hardlink copying */
 			*value_r = "";
 			return 0;
