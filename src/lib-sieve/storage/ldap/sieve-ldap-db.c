@@ -1293,7 +1293,7 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	sieve_storage_sys_debug(storage,
 			       "base=%s scope=%s filter=%s fields=%s",
 			       request->request.base, lstorage->set.scope,
-			       request->request.filter, attr_names == NULL ? "(all)" :
+			       request->request.filter,
 			       t_strarray_join((const char **)attr_names, ","));
 
 	request->request.callback = sieve_ldap_lookup_script_callback;
@@ -1368,7 +1368,6 @@ int sieve_ldap_db_read_script(struct ldap_connection *conn,
 	sieve_storage_sys_debug(storage,
 			       "base=%s scope=base filter=%s fields=%s",
 			       request->request.base, request->request.filter,
-			       attr_names == NULL ? "(all)" :
 			       t_strarray_join((const char **)attr_names, ","));
 
 	request->request.callback = sieve_ldap_read_script_callback;
