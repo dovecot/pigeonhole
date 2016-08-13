@@ -233,7 +233,7 @@ static int imap_sieve_mailbox_get_script_real
 	   server METADATA */
 	} else {
 		struct mail_namespace *ns;
-		struct mailbox *box;
+		struct mailbox *inbox;
 		struct mailbox_transaction_context *ibt;
 
 		imap_sieve_mailbox_debug(t->box,
@@ -242,18 +242,18 @@ static int imap_sieve_mailbox_get_script_real
 			"not found");
 
 		ns = mail_namespace_find_inbox(user->namespaces);
-		box = mailbox_alloc(ns->list, "INBOX",
+		inbox = mailbox_alloc(ns->list, "INBOX",
 			MAILBOX_FLAG_READONLY);
-		if ((ret=mailbox_open(box)) >= 0) {
+		if ((ret=mailbox_open(inbox)) >= 0) {
 			ibt = mailbox_transaction_begin
-				(box, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
+				(inbox, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
 			ret = mailbox_attribute_get(ibt,
 				MAIL_ATTRIBUTE_TYPE_SHARED,
 				MAILBOX_ATTRIBUTE_PREFIX_DOVECOT_PVT_SERVER
 				MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT, &value);
 			mailbox_transaction_rollback(&ibt);
 		}
-		mailbox_free(&box);
+		mailbox_free(&inbox);
 
 		if (ret <= 0) {
 			if (ret < 0) {
