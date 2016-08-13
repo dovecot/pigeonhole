@@ -74,7 +74,7 @@ int mcht_value_match_key
 		return ( cmp_result != 0 ? 1 : 0);
 	}
 
-	return -1;
+	i_unreached();
 }
 
 
