@@ -72,8 +72,6 @@ int mcht_value_match_key
 		return ( cmp_result == 0 ? 1 : 0);
 	case REL_MATCH_NOT_EQUAL:
 		return ( cmp_result != 0 ? 1 : 0);
- 	default:
-		break;
 	}
 
 	return -1;
