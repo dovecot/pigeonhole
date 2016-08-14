@@ -1655,20 +1655,12 @@ static void edit_mail_expunge(struct mail *mail ATTR_UNUSED)
 }
 
 static void edit_mail_set_cache_corrupted
-(struct mail *mail, enum mail_fetch_field field)
-{
-	struct edit_mail *edmail = (struct edit_mail *)mail;
-
-	edmail->wrapped->v.set_cache_corrupted(&edmail->wrapped->mail, field);
-}
-
-static void edit_mail_set_cache_corrupted_reason
 (struct mail *mail, enum mail_fetch_field field,
 	const char *reason)
 {
 	struct edit_mail *edmail = (struct edit_mail *)mail;
 
-	edmail->wrapped->v.set_cache_corrupted_reason
+	edmail->wrapped->v.set_cache_corrupted
 		(&edmail->wrapped->mail, field, reason);
 }
 
@@ -1707,7 +1699,6 @@ static struct mail_vfuncs edit_mail_vfuncs = {
 	edit_mail_expunge,
 	edit_mail_set_cache_corrupted,
 	NULL,
-	edit_mail_set_cache_corrupted_reason
 };
 
 /*
