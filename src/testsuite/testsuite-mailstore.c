@@ -105,11 +105,13 @@ void testsuite_mailstore_init(void)
 
 void testsuite_mailstore_deinit(void)
 {
+	const char *error;
+
 	testsuite_mailstore_close();
 
-	if ( unlink_directory(testsuite_mailstore_location, TRUE) < 0 ) {
-		i_warning("failed to remove temporary directory '%s': %m.",
-			testsuite_mailstore_location);
+	if ( unlink_directory(testsuite_mailstore_location, UNLINK_DIRECTORY_FLAG_RMDIR, &error) < 0 ) {
+		i_warning("failed to remove temporary directory '%s': %s.",
+			testsuite_mailstore_location, error);
 	}
 
 	i_free(testsuite_mailstore_location);

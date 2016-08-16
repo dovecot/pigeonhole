@@ -43,9 +43,11 @@ void testsuite_binary_init(void)
 
 void testsuite_binary_deinit(void)
 {
-	if ( unlink_directory(testsuite_binary_tmp, TRUE) < 0 ) {
-		i_warning("failed to remove temporary directory '%s': %m.",
-			testsuite_binary_tmp);
+	const char *error;
+
+	if ( unlink_directory(testsuite_binary_tmp, UNLINK_DIRECTORY_FLAG_RMDIR, &error) < 0 ) {
+		i_warning("failed to remove temporary directory '%s': %s.",
+			testsuite_binary_tmp, error);
 	}
 
 	i_free(testsuite_binary_tmp);

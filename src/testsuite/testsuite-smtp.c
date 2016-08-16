@@ -52,9 +52,11 @@ void testsuite_smtp_init(void)
 
 void testsuite_smtp_deinit(void)
 {
-	if ( unlink_directory(testsuite_smtp_tmp, TRUE) < 0 )
-		i_warning("failed to remove temporary directory '%s': %m.",
-			testsuite_smtp_tmp);
+	const char *error;
+
+	if ( unlink_directory(testsuite_smtp_tmp, UNLINK_DIRECTORY_FLAG_RMDIR, &error) < 0 )
+		i_warning("failed to remove temporary directory '%s': %s.",
+			testsuite_smtp_tmp, error);
 
 	pool_unref(&testsuite_smtp_pool);
 }
