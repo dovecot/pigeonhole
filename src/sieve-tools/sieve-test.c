@@ -65,6 +65,7 @@ static void *sieve_smtp_start
 		( return_path == NULL ? "" : return_path ));
 
 	output = o_stream_create_fd(STDOUT_FILENO, (size_t)-1, FALSE);
+	o_stream_set_no_error_handling(output, TRUE);
 	return (void*)output;
 }
 
