@@ -41,28 +41,31 @@ static ssize_t program_client_istream_read(struct istream_private *stream)
 	struct program_client_istream *scstream =
 		(struct program_client_istream *)stream;
 	size_t pos, reserved;
-	ssize_t ret;
+	ssize_t ret = 0;
 
 	i_stream_skip(stream->parent, stream->skip);
-	stream->pos -= stream->skip;
 	stream->skip = 0;
 
 	stream->buffer = i_stream_get_data(stream->parent, &pos);
 
+	reserved = 0;
 	if ( stream->buffer != NULL && pos >= 1 ) {
 		/* retain/hide potential return code at end of buffer */
 		reserved = ( stream->buffer[pos-1] == '\n' && pos > 1 ? 2 : 1 );
 		pos -= reserved;
 	}
 
-	if (pos > stream->pos) {
-		ret = 0;
-	} else if ( stream->parent->eof ) {
+	if ( stream->parent->eof ) {
+		if (pos == 0)
+			i_stream_skip(stream->parent, reserved);
 		stream->istream.eof = TRUE;
 		ret = -1;
 	} else do {
-		if ((ret = i_stream_read(stream->parent)) == -2)
+		if ((ret = i_stream_read(stream->parent)) == -2) {
 			return -2; /* input buffer full */
+		}
+
+		if ( ret == 0 || (ret < 0 && !stream->parent->eof) ) break;
 
 		stream->istream.stream_errno = stream->parent->stream_errno;
 		stream->buffer = i_stream_get_data(stream->parent, &pos);
@@ -88,30 +91,33 @@ static ssize_t program_client_istream_read(struct istream_private *stream)
 	
 		if ( stream->buffer != NULL && pos >= 1 ) {
 			/* retain/hide potential return code at end of buffer */
-			reserved = ( stream->buffer[pos-1] == '\n' && pos > 1 ? 2 : 1 );
+			size_t old_reserved = reserved;
+			ssize_t reserve_inc;
 
+			reserved = ( stream->buffer[pos-1] == '\n' && pos > 1 ? 2 : 1 );
+			i_assert(reserved >= old_reserved);
+			reserve_inc = reserved - old_reserved;
 			pos -= reserved;
 
-			if ( ret > 0 ) {
-				ret = ( (size_t)ret > reserved ? ret - reserved : 0 );
+			if (ret > 0) {
+				i_assert(ret >= reserve_inc);
+				ret -= reserve_inc;
 			}
 		}
 
-		if ( ret == 0 || (ret < 0 && !stream->parent->eof) ) break;
-
 		if ( ret <= 0 && stream->parent->eof ) {
 			/* Parent EOF and not more data to return; EOF here as well */
+			if (pos == 0)
+				i_stream_skip(stream->parent, reserved);
 			stream->istream.eof = TRUE;
 			ret = -1;
 		}		
 	} while ( ret == 0 );
 
- 	ret = pos > stream->pos ? (ssize_t)(pos - stream->pos) : (ret == 0 ? 0 : -1);
 	stream->pos = pos;
 
 	i_assert(ret != -1 || stream->istream.eof ||
 		stream->istream.stream_errno != 0);
-
 	return ret;
 }
 
