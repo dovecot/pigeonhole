@@ -17,6 +17,32 @@
 #define MAX_OUTPUT_BUFFER_SIZE 16384
 #define MAX_OUTPUT_MEMORY_BUFFER (1024*128)
 
+static int program_client_seekable_fd_callback
+(const char **path_r, void *context)
+{
+	struct program_client *pclient = (struct program_client *)context;
+	string_t *path;
+	int fd;
+
+	path = t_str_new(128);
+	str_append(path, pclient->temp_prefix);
+	fd = safe_mkstemp(path, 0600, (uid_t)-1, (gid_t)-1);
+	if (fd == -1) {
+		i_error("safe_mkstemp(%s) failed: %m", str_c(path));
+		return -1;
+	}
+
+	/* we just want the fd, unlink it */
+	if (i_unlink(str_c(path)) < 0) {
+		/* shouldn't happen.. */
+		i_close_fd(&fd);
+		return -1;
+	}
+
+	*path_r = str_c(path);
+	return fd;
+}
+
 static void program_client_timeout(struct program_client *pclient)
 {
 	i_error("program `%s' execution timed out (> %d secs)",
@@ -243,6 +269,18 @@ static void program_client_program_input(struct program_client *pclient)
 	size_t size;
 	int ret = 0;
 
+	if (pclient->output_seekable && pclient->seekable_output == NULL) {
+		struct istream *input_list[2] = { input, NULL };
+
+		input = i_stream_create_seekable(input_list, MAX_OUTPUT_MEMORY_BUFFER,
+					 program_client_seekable_fd_callback, pclient);
+		i_stream_unref(&pclient->program_input);
+		pclient->program_input = input;
+
+		pclient->seekable_output = input;
+		i_stream_ref(pclient->seekable_output);
+	}
+
 	if ( input != NULL ) {
 		while ( (ret=i_stream_read_data(input, &data, &size, 0)) > 0 ) {
 			if ( output != NULL ) {
@@ -413,32 +451,6 @@ void program_client_set_env
 	array_append(&pclient->envs, &env, 1);
 }
 
-static int program_client_seekable_fd_callback
-(const char **path_r, void *context)
-{
-	struct program_client *pclient = (struct program_client *)context;
-	string_t *path;
-	int fd;
-
-	path = t_str_new(128);
-	str_append(path, pclient->temp_prefix);
-	fd = safe_mkstemp(path, 0600, (uid_t)-1, (gid_t)-1);
-	if (fd == -1) {
-		i_error("safe_mkstemp(%s) failed: %m", str_c(path));
-		return -1;
-	}
-
-	/* we just want the fd, unlink it */
-	if (i_unlink(str_c(path)) < 0) {
-		/* shouldn't happen.. */
-		i_close_fd(&fd);
-		return -1;
-	}
-
-	*path_r = str_c(path);
-	return fd;
-}
-
 void program_client_init_streams(struct program_client *pclient)
 {
 	/* Create streams for normal program I/O */
@@ -451,17 +463,6 @@ void program_client_init_streams(struct program_client *pclient)
 		struct istream *input;
 		
 		input = i_stream_create_fd(pclient->fd_in, (size_t)-1, FALSE);
-
-		if (pclient->output_seekable) {
-			struct istream *input2 = input, *input_list[2];
-	
-			input_list[0] = input2; input_list[1] = NULL;
-			input = i_stream_create_seekable(input_list, MAX_OUTPUT_MEMORY_BUFFER,
-						 program_client_seekable_fd_callback, pclient);
-			i_stream_unref(&input2);
-			pclient->seekable_output = input;
-			i_stream_ref(pclient->seekable_output);
-		}
 
 		pclient->program_input = input;
 		i_stream_set_name(pclient->program_input, "program stdout");
