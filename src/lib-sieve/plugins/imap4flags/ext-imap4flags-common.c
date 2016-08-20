@@ -611,7 +611,7 @@ struct ext_imap4flags_stringlist {
 	string_t *flags_string;
 	struct ext_imap4flags_iter flit;
 
-	unsigned int normalize:1;
+	bool normalize:1;
 };
 
 static struct sieve_stringlist *ext_imap4flags_stringlist_create

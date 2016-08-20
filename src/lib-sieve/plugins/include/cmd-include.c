@@ -80,7 +80,7 @@ struct cmd_include_context_data {
 	struct sieve_script *script;
 	enum ext_include_flags flags;
 
-	unsigned int location_assigned:1;
+	bool location_assigned:1;
 };
 
 /*

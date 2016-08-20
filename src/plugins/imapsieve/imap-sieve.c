@@ -230,7 +230,7 @@ struct imap_sieve_run_script {
 	enum sieve_error compile_error;
 
 	/* Binary corrupt after recompile; don't recompile again */
-	unsigned int binary_corrupt:1;
+	bool binary_corrupt:1;
 };
 
 struct imap_sieve_run {

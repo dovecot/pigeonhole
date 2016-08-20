@@ -13,8 +13,8 @@ struct program_client_settings {
 	uid_t uid;
 	gid_t gid;
 
-	unsigned int debug:1;
-	unsigned int drop_stderr:1;
+	bool debug:1;
+	bool drop_stderr:1;
 };
 
 typedef void program_client_fd_callback_t

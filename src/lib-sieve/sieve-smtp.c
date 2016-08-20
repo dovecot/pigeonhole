@@ -9,7 +9,7 @@ struct sieve_smtp_context {
 	const struct sieve_script_env *senv;
 	void *handle;
 	
-	unsigned int sent:1;
+	bool sent:1;
 };
 
 bool sieve_smtp_available

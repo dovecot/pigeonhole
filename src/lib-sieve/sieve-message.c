@@ -73,8 +73,8 @@ struct sieve_message_part {
 	size_t decoded_body_size;
 	size_t text_body_size;
 
-	unsigned int have_body:1; /* there's the empty end-of-headers line */
-	unsigned int epilogue:1;  /* this is a multipart epilogue */
+	bool have_body:1; /* there's the empty end-of-headers line */
+	bool epilogue:1;  /* this is a multipart epilogue */
 };
 
 struct sieve_message_version {
@@ -118,8 +118,8 @@ struct sieve_message_context {
 	ARRAY(struct sieve_message_part_data) return_body_parts;
 	buffer_t *raw_body;
 
-	unsigned int edit_snapshot:1;
-	unsigned int substitute_snapshot:1;
+	bool edit_snapshot:1;
+	bool substitute_snapshot:1;
 };
 
 /*
@@ -529,7 +529,7 @@ struct sieve_message_header_list {
 	const char *const *headers;
 	int headers_index;
 
-	unsigned int mime_decode:1;
+	bool mime_decode:1;
 };
 
 struct sieve_header_list *sieve_message_header_list_create
@@ -1770,8 +1770,8 @@ struct sieve_mime_header_list {
 	const struct sieve_message_header *headers;
 	unsigned int headers_index, headers_count;
 
-	unsigned int mime_decode:1;
-	unsigned int children:1;
+	bool mime_decode:1;
+	bool children:1;
 };
 
 struct sieve_header_list *sieve_mime_header_list_create

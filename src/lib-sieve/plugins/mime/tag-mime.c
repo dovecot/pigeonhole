@@ -110,7 +110,7 @@ const struct sieve_operand_def mime_operand = {
 struct tag_mime_data {
 	enum ext_mime_option mimeopt;
 	struct sieve_ast_argument *param_arg;
-	unsigned int anychild:1;
+	bool anychild:1;
 };
 
 /*
@@ -586,7 +586,7 @@ static void content_header_stringlist_set_trace
 struct svmo_mime_context {
 	enum ext_mime_option mimeopt;
 	const char *const *params;
-	unsigned int anychild:1;
+	bool anychild:1;
 };
 
 /* Context coding */

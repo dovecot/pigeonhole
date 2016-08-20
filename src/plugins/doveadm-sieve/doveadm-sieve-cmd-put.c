@@ -16,7 +16,7 @@ struct doveadm_sieve_put_cmd_context {
 
 	const char *scriptname;
 	
-	unsigned int activate:1;
+	bool activate:1;
 };
 
 static int cmd_sieve_put_run

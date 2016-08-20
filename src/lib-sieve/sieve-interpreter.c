@@ -37,8 +37,8 @@ struct sieve_interpreter_extension_reg {
 
 	void *context;
 
-	unsigned int deferred:1;
-	unsigned int started:1;
+	bool deferred:1;
+	bool started:1;
 };
 
 /*

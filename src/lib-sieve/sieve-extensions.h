@@ -90,13 +90,13 @@ struct sieve_extension {
 	struct sieve_instance *svinst;
 	void *context;
 
-	unsigned int required:1;
-	unsigned int loaded:1;
-	unsigned int enabled:1;
-	unsigned int dummy:1;
-	unsigned int global:1;
-	unsigned int implicit:1;
-	unsigned int overridden:1;
+	bool required:1;
+	bool loaded:1;
+	bool enabled:1;
+	bool dummy:1;
+	bool global:1;
+	bool implicit:1;
+	bool overridden:1;
 };
 
 #define sieve_extension_is(ext, definition) \

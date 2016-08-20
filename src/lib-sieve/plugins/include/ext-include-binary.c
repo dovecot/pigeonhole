@@ -63,7 +63,7 @@ struct ext_include_binary_context {
 
 	struct sieve_variable_scope_binary *global_vars;
 
-	unsigned int outdated:1;
+	bool outdated:1;
 };
 
 static struct ext_include_binary_context *ext_include_binary_create_context

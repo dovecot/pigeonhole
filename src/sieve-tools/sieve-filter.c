@@ -55,9 +55,9 @@ struct sieve_filter_data {
 	struct sieve_binary *main_sbin;
 	struct sieve_error_handler *ehandler;
 
-	unsigned int execute:1;
-	unsigned int source_write:1;
-	unsigned int default_move:1;
+	bool execute:1;
+	bool source_write:1;
+	bool default_move:1;
 };
 
 struct sieve_filter_context {

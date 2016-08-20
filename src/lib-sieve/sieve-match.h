@@ -23,7 +23,7 @@ struct sieve_match_context {
 	int match_status;
 	int exec_status;
 
-	unsigned int trace:1;
+	bool trace:1;
 };
 
 /*

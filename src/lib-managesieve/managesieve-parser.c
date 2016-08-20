@@ -44,10 +44,10 @@ struct managesieve_parser {
 
 	const char *error;
 
-	unsigned int literal_skip_crlf:1;
-	unsigned int literal_nonsync:1;
-	unsigned int eol:1;
-	unsigned int fatal_error:1;
+	bool literal_skip_crlf:1;
+	bool literal_nonsync:1;
+	bool eol:1;
+	bool fatal_error:1;
 };
 
 static struct istream *quoted_string_istream_create
@@ -611,9 +611,9 @@ struct quoted_string_istream {
 
 	struct managesieve_parser *parser;
 
-	unsigned int pending_slash:1;
-	unsigned int last_slash:1;
-	unsigned int finished:1;
+	bool pending_slash:1;
+	bool last_slash:1;
+	bool finished:1;
 };
 
 static ssize_t quoted_string_istream_read(struct istream_private *stream)

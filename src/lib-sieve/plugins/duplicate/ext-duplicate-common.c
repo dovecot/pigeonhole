@@ -73,7 +73,7 @@ struct act_duplicate_mark_data {
 	const char *handle;
 	unsigned int period;
 	unsigned char hash[MD5_RESULTLEN];
-	unsigned int last:1;
+	bool last:1;
 };
 
 static void act_duplicate_mark_print
@@ -129,15 +129,15 @@ static void act_duplicate_mark_finish
 
 struct ext_duplicate_handle {
 	const char *handle;
-	unsigned int last:1;
-	unsigned int duplicate:1;
+	bool last:1;
+	bool duplicate:1;
 };
 
 struct ext_duplicate_context {
 	ARRAY(struct ext_duplicate_handle) handles;
 
-	unsigned int nohandle_duplicate:1;
-	unsigned int nohandle_checked:1;
+	bool nohandle_duplicate:1;
+	bool nohandle_checked:1;
 };
 
 static void ext_duplicate_hash

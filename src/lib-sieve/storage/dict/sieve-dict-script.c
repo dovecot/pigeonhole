@@ -281,7 +281,7 @@ const struct sieve_script sieve_dict_script = {
 struct sieve_dict_script_sequence {
 	struct sieve_script_sequence seq;
 
-	unsigned int done:1;
+	bool done:1;
 };
 
 struct sieve_script_sequence *sieve_dict_storage_get_script_sequence

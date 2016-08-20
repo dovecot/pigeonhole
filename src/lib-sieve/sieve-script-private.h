@@ -69,7 +69,7 @@ struct sieve_script {
 	/* Stream */
 	struct istream *stream;
 
-	unsigned int open:1;
+	bool open:1;
 };
 
 void sieve_script_init

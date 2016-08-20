@@ -21,7 +21,7 @@ struct cmd_getscript_context {
 	struct sieve_script *script;
 	struct istream *script_stream;
 
-	unsigned int failed:1;
+	bool failed:1;
 };
 
 static bool cmd_getscript_finish(struct cmd_getscript_context *ctx)

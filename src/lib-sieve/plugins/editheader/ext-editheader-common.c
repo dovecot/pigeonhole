@@ -22,8 +22,8 @@
 struct ext_editheader_header {
 	const char *name;
 
-	unsigned int forbid_add:1;
-	unsigned int forbid_delete:1;
+	bool forbid_add:1;
+	bool forbid_delete:1;
 };
 
 struct ext_editheader_config {

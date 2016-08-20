@@ -236,9 +236,9 @@ struct act_store_transaction {
 	enum mail_flags flags;
 	ARRAY_TYPE(const_string) keywords;
 
-	unsigned int flags_altered:1;
-	unsigned int disabled:1;
-	unsigned int redundant:1;
+	bool flags_altered:1;
+	bool disabled:1;
+	bool redundant:1;
 };
 
 int sieve_act_store_add_to_result

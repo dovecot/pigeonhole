@@ -195,12 +195,12 @@ struct edit_mail {
 	struct _header_field_index *header_fields_appended;
 	struct message_size appended_hdr_size;
 
-	unsigned int modified:1;
-	unsigned int snapshot_modified:1;
-	unsigned int crlf:1;
-	unsigned int eoh_crlf:1;
-	unsigned int headers_parsed:1;
-	unsigned int destroying_stream:1;
+	bool modified:1;
+	bool snapshot_modified:1;
+	bool crlf:1;
+	bool eoh_crlf:1;
+	bool headers_parsed:1;
+	bool destroying_stream:1;
 };
 
 struct edit_mail *edit_mail_wrap(struct mail *mail)
@@ -1109,7 +1109,7 @@ struct edit_mail_header_iter
 	struct _header_index *header;
 	struct _header_field_index *current;
 
-	unsigned int reverse:1;
+	bool reverse:1;
 };
 
 int edit_mail_headers_iterate_init
@@ -1714,7 +1714,7 @@ struct edit_mail_istream {
 
 	struct _header_field_index *cur_header;
 
-	unsigned int header_read:1;
+	bool header_read:1;
 };
 
 static void edit_mail_istream_destroy(struct iostream_private *stream)

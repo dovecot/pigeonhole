@@ -469,7 +469,7 @@ struct ext_date_stringlist {
 	time_t local_time;
 	int local_zone;
 
-	unsigned int read:1;
+	bool read:1;
 };
 
 struct sieve_stringlist *ext_date_stringlist_create

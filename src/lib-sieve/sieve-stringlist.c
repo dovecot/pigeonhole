@@ -79,8 +79,8 @@ struct sieve_single_stringlist {
 
 	string_t *value;
 
-	unsigned int end:1;
-	unsigned int count_empty:1;
+	bool end:1;
+	bool count_empty:1;
 };
 
 struct sieve_stringlist *sieve_single_stringlist_create
@@ -165,7 +165,7 @@ struct sieve_index_stringlist {
 	struct sieve_stringlist *source;
 
 	int index;
-	unsigned int end:1;
+	bool end:1;
 };
 
 struct sieve_stringlist *sieve_index_stringlist_create

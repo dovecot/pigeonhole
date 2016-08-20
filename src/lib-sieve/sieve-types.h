@@ -240,11 +240,11 @@ struct sieve_script_env {
 struct sieve_exec_status {
 	struct mail_storage *last_storage;
 
-	unsigned int message_saved:1;
-	unsigned int message_forwarded:1;
-	unsigned int tried_default_save:1;
-	unsigned int keep_original:1;
-	unsigned int store_failed:1;
+	bool message_saved:1;
+	bool message_forwarded:1;
+	bool tried_default_save:1;
+	bool keep_original:1;
+	bool store_failed:1;
 };
 
 /*

@@ -30,8 +30,8 @@ struct sieve_file_save_context {
 
 	time_t mtime;
 
-	unsigned int failed:1;
-	unsigned int finished:1;
+	bool failed:1;
+	bool finished:1;
 };
 
 static const char *sieve_generate_tmp_filename(const char *scriptname)

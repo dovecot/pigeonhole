@@ -33,7 +33,7 @@ struct ext_environment_interpreter_context {
 	HASH_TABLE(const char *,
 		   const struct sieve_environment_item *) environment_items;
 
-	unsigned int active:1;
+	bool active:1;
 };
 
 static void ext_environment_interpreter_extension_free

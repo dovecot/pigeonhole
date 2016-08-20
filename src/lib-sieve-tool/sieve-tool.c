@@ -57,7 +57,7 @@ struct sieve_tool {
 	struct mail_user *mail_raw_user;
 	struct mail_raw *mail_raw;
 
-	unsigned int debug:1;
+	bool debug:1;
 };
 
 struct sieve_tool *sieve_tool;

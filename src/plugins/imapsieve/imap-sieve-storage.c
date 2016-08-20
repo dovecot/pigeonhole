@@ -71,8 +71,8 @@ struct imap_sieve_user {
 	HASH_TABLE_TYPE(imap_sieve_mailbox_rule) mbox_rules;
 	ARRAY_TYPE(imap_sieve_mailbox_rule) mbox_patterns;
 
-	unsigned int sieve_active:1;
-	unsigned int user_script:1;
+	bool sieve_active:1;
+	bool user_script:1;
 };
 
 struct imap_sieve_mailbox_event {

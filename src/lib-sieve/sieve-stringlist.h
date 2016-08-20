@@ -26,7 +26,7 @@ struct sieve_stringlist {
 	const struct sieve_runtime_env *runenv;
 	int exec_status;
 
-	unsigned int trace:1;
+	bool trace:1;
 };
 
 static inline void sieve_stringlist_set_trace

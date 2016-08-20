@@ -177,7 +177,7 @@ static struct istream *program_client_istream_create
 struct program_client_remote {
 	struct program_client client;
 
-	unsigned int noreply:1;
+	bool noreply:1;
 };
 
 static void program_client_remote_connected(struct program_client *pclient)

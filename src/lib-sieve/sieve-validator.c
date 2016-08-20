@@ -72,8 +72,8 @@ struct sieve_validator_extension_reg {
 	struct sieve_ast_argument *arg;
 	void *context;
 
-	unsigned int loaded:1;
-	unsigned int required:1;
+	bool loaded:1;
+	bool required:1;
 };
 
 /*

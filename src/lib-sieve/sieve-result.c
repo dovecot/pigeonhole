@@ -87,7 +87,7 @@ struct sieve_result {
 	HASH_TABLE(const struct sieve_action_def *,
 			   struct sieve_result_action_context *) action_contexts;
 
-	unsigned int executed:1;
+	bool executed:1;
 };
 
 struct sieve_result *sieve_result_create

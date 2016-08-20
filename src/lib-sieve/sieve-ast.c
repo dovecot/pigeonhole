@@ -33,7 +33,7 @@ struct sieve_ast_extension_reg {
 	const struct sieve_ast_extension *ast_ext;
 	void *context;
 
-	unsigned int required:1;
+	bool required:1;
 };
 
 /*

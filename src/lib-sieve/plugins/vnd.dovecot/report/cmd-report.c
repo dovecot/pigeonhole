@@ -129,7 +129,7 @@ struct act_report_data {
 	const char *feedback_type;
 	const char *message;
 	const char *to_address;
-	unsigned int headers_only:1;
+	bool headers_only:1;
 };
 
 /*

@@ -52,9 +52,9 @@ struct program_client {
 	int (*close_output)(struct program_client *pclient);
 	int (*disconnect)(struct program_client *pclient, bool force);
 	
-	unsigned int debug:1;
-	unsigned int disconnected:1;
-	unsigned int output_seekable:1;
+	bool debug:1;
+	bool disconnected:1;
+	bool output_seekable:1;
 };
 
 void program_client_init

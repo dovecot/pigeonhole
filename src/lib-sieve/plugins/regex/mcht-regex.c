@@ -178,7 +178,7 @@ struct mcht_regex_context {
 	ARRAY(struct mcht_regex_key) reg_expressions;
 	regmatch_t *pmatch;
 	size_t nmatch;
-	unsigned int all_compiled:1;
+	bool all_compiled:1;
 };
 
 static void mcht_regex_match_init
