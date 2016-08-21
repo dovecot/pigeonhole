@@ -75,7 +75,7 @@ bool mod_encodeurl_modify(string_t *in, string_t **result)
 	c = str_data(in);
 
 	for ( i = 0; i < str_len(in); i++, c++ ) {
-		if ( _uri_reserved_lookup[*c] ) {
+		if ( (_uri_reserved_lookup[*c] & 0x01) != 0 ) {
 			str_printfa(*result, "%%%02X", *c);
 		} else {
 			str_append_c(*result, *c);

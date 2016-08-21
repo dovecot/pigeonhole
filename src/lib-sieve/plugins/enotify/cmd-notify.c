@@ -497,7 +497,7 @@ static int act_notify_check_duplicate
 	const struct sieve_enotify_action *nact, *nact_other;
 	const struct sieve_enotify_method_def *nmth_def;
 	struct sieve_enotify_env nenv;
-	bool result = TRUE;
+	int result;
 
 	if ( act->context == NULL || act_other->context == NULL )
 		return 0;
