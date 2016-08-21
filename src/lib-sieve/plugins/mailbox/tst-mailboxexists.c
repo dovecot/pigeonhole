@@ -85,7 +85,7 @@ static int tst_mailboxexists_mailbox_validate
 		}
 	}
 
-	return TRUE;
+	return 1;
 }
 
 static bool tst_mailboxexists_validate
@@ -108,8 +108,8 @@ static bool tst_mailboxexists_validate
 	valctx.valdtr = valdtr;
 	valctx.tst = tst;
 
-	return sieve_ast_stringlist_map
-		(&aarg, (void*)&valctx, tst_mailboxexists_mailbox_validate);
+	return ( sieve_ast_stringlist_map(&aarg,
+		(void*)&valctx, tst_mailboxexists_mailbox_validate) >= 0 );
 }
 
 /*
