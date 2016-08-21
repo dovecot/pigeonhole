@@ -283,12 +283,12 @@ static int cmd_notify_address_validate
 	if ( sieve_argument_is_string_literal(arg) ) {
 		string_t *address = sieve_ast_argument_str(arg);
 		const char *error;
-		bool result = FALSE;
+		int result;
 
 		T_BEGIN {
-			result = sieve_address_validate(address, &error);
+			result = ( sieve_address_validate(address, &error) ? 1 : -1 );
 
-			if ( !result ) {
+			if ( result <= 0 ) {
 				sieve_argument_validate_error(valdtr, arg,
 					"specified :options address '%s' is invalid for "
 					"the mailto notify method: %s",
@@ -299,7 +299,7 @@ static int cmd_notify_address_validate
 		return result;
 	}
 
-	return TRUE;
+	return 1;
 }
 
 static bool cmd_notify_validate
