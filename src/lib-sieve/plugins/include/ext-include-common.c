@@ -601,7 +601,7 @@ int ext_include_generate_include
  * Executing an included script during interpretation
  */
 
-static int ext_include_runtime_check_circular
+static bool ext_include_runtime_check_circular
 (struct ext_include_interpreter_context *ctx,
 	const struct ext_include_script_info *include)
 {
@@ -717,8 +717,8 @@ int ext_include_execute_include
 					(this_ext, subinterp, ctx, included->script, included);
 
 				/* Activate and start the top-level included script */
-				result = ( sieve_interpreter_start
-					(subinterp, renv->result, &interrupted) == 1 );
+				result = sieve_interpreter_start
+					(subinterp, renv->result, &interrupted);
 			} else
 				result = SIEVE_EXEC_BIN_CORRUPT;
 		}
@@ -755,7 +755,7 @@ int ext_include_execute_include
 					curctx->include = NULL;
 					curctx->returned = FALSE;
 
-					result = ( sieve_interpreter_continue(subinterp, &interrupted) == 1 );
+					result = sieve_interpreter_continue(subinterp, &interrupted);
 				} else {
 					if ( curctx->include != NULL ) {
 						/* Sub-include requested */
@@ -782,8 +782,8 @@ int ext_include_execute_include
 								/* Start the sub-include's interpreter */
 								curctx->include = NULL;
 								curctx->returned = FALSE;
-								result = ( sieve_interpreter_start(subinterp, renv->result,
-									&interrupted) == 1 );
+								result = sieve_interpreter_start
+									(subinterp, renv->result, &interrupted);
 							} else
 								result = SIEVE_EXEC_BIN_CORRUPT;
 						}

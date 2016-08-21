@@ -370,9 +370,9 @@ static bool opc_include_dump
 	sieve_code_descend(denv);
 	sieve_code_dumpf(denv, "script: `%s' from %s %s%s[ID: %d, BLOCK: %d]",
 		sieve_script_name(included->script), sieve_script_location(included->script),
-		(flags & EXT_INCLUDE_FLAG_ONCE ? "(once) " : ""), 
-		(flags & EXT_INCLUDE_FLAG_OPTIONAL ? "(optional) " : ""), include_id,
-		sieve_binary_block_get_id(included->block));
+		((flags & EXT_INCLUDE_FLAG_ONCE) != 0 ? "(once) " : ""), 
+		((flags & EXT_INCLUDE_FLAG_OPTIONAL) != 0 ? "(optional) " : ""),
+		include_id, sieve_binary_block_get_id(included->block));
 
 	return TRUE;
 }
