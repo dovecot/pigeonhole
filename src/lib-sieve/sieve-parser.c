@@ -134,8 +134,8 @@ static int sieve_parse_arguments
 	struct sieve_ast_node *test = NULL;
 	bool test_present = TRUE;
 	bool arg_present = TRUE;
-	int result = TRUE; /* Indicates whether the parser is in a defined, not
-	                       necessarily error-free state */
+	int result = 1; /* Indicates whether the parser is in a defined, not
+	                    necessarily error-free state */
 
 	/* Parse arguments */
 	while ( arg_present && result > 0 ) {
@@ -217,7 +217,7 @@ static int sieve_parse_arguments
 					"expecting ',' or end of string list ']', but found %s",
 					sieve_lexer_token_description(lexer));
 
-				if ( (result=sieve_parser_recover(parser, STT_RSQUARE)) == TRUE )
+				if ( (result=sieve_parser_recover(parser, STT_RSQUARE)) > 0 )
 					sieve_lexer_skip_token(lexer);
 			}
 
@@ -263,7 +263,7 @@ static int sieve_parse_arguments
 		if ( sieve_ast_argument_count(node) > SIEVE_MAX_COMMAND_ARGUMENTS ) {
 			sieve_parser_error(parser,
 				"too many arguments for command '%s'", node->identifier);
-			return FALSE;
+			return 0;
 		}
 	}
 
@@ -281,7 +281,7 @@ static int sieve_parse_arguments
 			sieve_parser_error(parser,
 				"cannot nest tests deeper than %u levels",
 				SIEVE_MAX_TEST_NESTING);
-			return FALSE;
+			return 0;
 		}
 
 		test = sieve_ast_test_create
@@ -293,8 +293,8 @@ static int sieve_parse_arguments
 		if ( test == NULL ) break;
 
 		/* Parse test arguments, which may include more tests (recurse) */
-		if ( !sieve_parse_arguments(parser, test, depth+1) ) {
-			return FALSE; /* Defer recovery to caller */
+		if ( sieve_parse_arguments(parser, test, depth+1) <= 0 ) {
+			return 0; /* Defer recovery to caller */
 		}
 
 		break;
@@ -309,7 +309,7 @@ static int sieve_parse_arguments
 				SIEVE_MAX_TEST_NESTING);
 			result = sieve_parser_recover(parser, STT_RBRACKET);
 
-			if ( result ) sieve_lexer_skip_token(lexer);
+			if ( result > 0 ) sieve_lexer_skip_token(lexer);
 			return result;
 		}
 
@@ -390,7 +390,7 @@ static int sieve_parse_arguments
 			/* Recover function tries to make next token equal to ')'. If it succeeds
 			 * we need to skip it.
 			 */
-			if ( (result=sieve_parser_recover(parser, STT_RBRACKET)) == TRUE )
+			if ( (result=sieve_parser_recover(parser, STT_RBRACKET)) > 0 )
 				sieve_lexer_skip_token(lexer);
 		}
 		break;
@@ -420,7 +420,7 @@ static int sieve_parse_commands
 (struct sieve_parser *parser, struct sieve_ast_node *block, unsigned int depth)
 {
 	const struct sieve_lexer *lexer = parser->lexer;
-	int result = TRUE;
+	int result = 1;
 
 	while ( result > 0 &&
 		sieve_lexer_token_type(lexer) == STT_IDENTIFIER ) {
@@ -458,7 +458,7 @@ static int sieve_parse_commands
 				"expected end of command ';' or the beginning of a compound block '{', "
 				"but found %s",
 				sieve_lexer_token_description(lexer));
-			result = FALSE;
+			result = 0;
 		}
 
 		/* Try to recover from parse errors to reacquire a defined state */
@@ -632,7 +632,7 @@ static int sieve_parser_recover
 
 			if ( nesting == 0 ) {
 				/* Next character is the end */
-				return TRUE;
+				return 1;
 			}
 		}
 
@@ -642,12 +642,12 @@ static int sieve_parser_recover
 	/* Special case: COMMAND */
 	if (end_token == STT_SEMICOLON &&
 		sieve_lexer_token_type(lexer) == STT_LCURLY) {
-		return TRUE;
+		return 1;
 	}
 
 	/* End not found before eof or end of surrounding grammatical structure
 	 */
-	return FALSE;
+	return 0;
 }
 
 

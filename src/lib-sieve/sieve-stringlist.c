@@ -141,7 +141,7 @@ static int sieve_single_stringlist_get_length
 	struct sieve_single_stringlist *strlist =
 		(struct sieve_single_stringlist *)_strlist;
 
-	return ( strlist->count_empty || str_len(strlist->value) > 0 );
+	return ( strlist->count_empty || str_len(strlist->value) > 0 ? 1 : 0 );
 }
 
 /*

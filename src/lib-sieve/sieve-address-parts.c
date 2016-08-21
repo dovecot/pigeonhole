@@ -300,7 +300,7 @@ static int sieve_address_part_stringlist_next_item
 					str_sanitize(sieve_address_to_string(&item), 80));
 			}
 
-			if ( addrp->def != NULL && addrp->def->extract_from )
+			if ( addrp->def != NULL && addrp->def->extract_from != NULL )
 				part = addrp->def->extract_from(addrp, &item);
 
 			if ( part != NULL )

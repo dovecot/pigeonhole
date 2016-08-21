@@ -607,7 +607,7 @@ int sieve_opr_string_read_ex
 
 	if ( optional && sieve_operand_is_omitted(&operand) ) {
 		*str_r = NULL;
-		return TRUE;
+		return 1;
 	}
 
 	if ( literal_r != NULL )
@@ -848,7 +848,7 @@ int sieve_opr_stringlist_read_ex
 
 	if ( optional && sieve_operand_is_omitted(&operand) ) {
 		*strlist_r = NULL;
-		return TRUE;
+		return 1;
 	}
 
 	return sieve_opr_stringlist_read_data
@@ -1101,7 +1101,7 @@ bool sieve_operation_read
 	if ( !sieve_binary_read_extension(sblock, address, &code, &oprtn->ext) )
 		return FALSE;
 
-	if ( !oprtn->ext ) {
+	if ( oprtn->ext == NULL ) {
 		if ( code < sieve_operation_count ) {
 			oprtn->def = sieve_operations[code];
 		}

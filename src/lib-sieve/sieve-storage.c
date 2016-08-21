@@ -291,7 +291,7 @@ static struct sieve_storage *sieve_storage_init
 		return NULL;
 	}
 
-	if ((flags & SIEVE_STORAGE_FLAG_READWRITE) &&
+	if ((flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 &&
 		storage_class->v.save_init == NULL) {
 		sieve_sys_error(svinst, "%s storage: "
 			"Storage does not support write access",
