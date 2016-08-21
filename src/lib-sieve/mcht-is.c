@@ -41,12 +41,12 @@ static int mcht_is_match_key
 	const char *key, size_t key_size)
 {
 	if ( val_size == 0 )
-		return ( key_size == 0 );
+		return ( key_size == 0 ? 1 : 0 );
 
 	if ( mctx->comparator->def != NULL && mctx->comparator->def->compare != NULL )
 		return (mctx->comparator->def->compare(mctx->comparator,
 			val, val_size, key, key_size) == 0);
 
-	return FALSE;
+	return 0;
 }
 
