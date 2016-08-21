@@ -63,9 +63,9 @@ void testsuite_binary_reset(void)
 
 bool testsuite_binary_save(struct sieve_binary *sbin, const char *name)
 {
-	return sieve_save_as(sbin, t_strdup_printf
+	return ( sieve_save_as(sbin, t_strdup_printf
 		("%s/%s", testsuite_binary_tmp, sieve_binfile_from_name(name)), TRUE,
-			0600, NULL);
+			0600, NULL) > 0 );
 }
 
 struct sieve_binary *testsuite_binary_load(const char *name)

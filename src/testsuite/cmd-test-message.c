@@ -283,7 +283,8 @@ static bool cmd_test_message_generate
 		test_message_operations[ctx_data->msg_source]);
 
 	/* Emit is_test flag */
-	sieve_binary_emit_byte(cgenv->sblock, ( cmd->ast_node->type == SAT_TEST ));
+	sieve_binary_emit_byte(cgenv->sblock,
+		( cmd->ast_node->type == SAT_TEST ? 1 : 0));
 
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
@@ -314,7 +315,7 @@ static bool cmd_test_message_smtp_operation_dump
 		return FALSE;
 
 	sieve_code_dumpf(denv, "TEST_MESSAGE_SMTP (%s):",
-		( is_test ? "TEST" : "COMMAND" ));
+		( is_test > 0 ? "TEST" : "COMMAND" ));
 
 	sieve_code_descend(denv);
 
@@ -330,7 +331,7 @@ static bool cmd_test_message_mailbox_operation_dump
 		return FALSE;
 
 	sieve_code_dumpf(denv, "TEST_MESSAGE_MAILBOX (%s):",
-		( is_test ? "TEST" : "COMMAND" ));
+		( is_test > 0 ? "TEST" : "COMMAND" ));
 
 	sieve_code_descend(denv);
 
@@ -380,7 +381,7 @@ static int cmd_test_message_smtp_operation_execute
 	 * Perform operation
 	 */
 
-	if ( is_test ) {
+	if ( is_test > 0 ) {
 		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
 			sieve_runtime_trace(renv, 0,
 				"testsuite: test_message test");
@@ -402,7 +403,7 @@ static int cmd_test_message_smtp_operation_execute
 
 	result = testsuite_smtp_get(renv, msg_index);
 
-	if ( is_test ) {
+	if ( is_test > 0 ) {
 		sieve_interpreter_set_test_result(renv->interp, result);
 		return SIEVE_EXEC_OK;
 	}
@@ -446,7 +447,7 @@ static int cmd_test_message_mailbox_operation_execute
 	 * Perform operation
 	 */
 
-	if ( is_test ) {
+	if ( is_test > 0 ) {
 		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
 			sieve_runtime_trace(renv, 0,
 				"testsuite: test_message test");
@@ -468,7 +469,7 @@ static int cmd_test_message_mailbox_operation_execute
 
 	result = testsuite_mailstore_mail_index(renv, str_c(folder), msg_index);
 
-	if ( is_test ) {
+	if ( is_test > 0 ) {
 		sieve_interpreter_set_test_result(renv->interp, result);
 		return SIEVE_EXEC_OK;
 	}
