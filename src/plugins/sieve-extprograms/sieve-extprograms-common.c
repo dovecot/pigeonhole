@@ -235,11 +235,11 @@ static int _arg_validate
 				sieve_command_identifier(actx->cmd), sieve_command_type_name(actx->cmd),
 				str_sanitize(str_c(arg), 128));
 
-			return FALSE;
+			return -1;
 		}
 	}
 
-	return TRUE;
+	return 1;
 }
 
 bool sieve_extprogram_command_validate
