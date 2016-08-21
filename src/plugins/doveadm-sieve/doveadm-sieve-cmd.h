@@ -19,8 +19,6 @@ struct doveadm_sieve_cmd_context {
 	struct sieve_storage *storage;
 
 	struct doveadm_sieve_cmd_vfuncs v;
-
-	unsigned int subscriptions; // FIXME: remove
 };
 
 void doveadm_sieve_cmd_failed_error

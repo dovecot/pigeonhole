@@ -76,19 +76,10 @@ static const struct sieve_callbacks sieve_callbacks = {
 };
 
 static bool doveadm_sieve_cmd_parse_arg
-(struct doveadm_mail_cmd_context *_ctx, int c)
+(struct doveadm_mail_cmd_context *_ctx ATTR_UNUSED,
+	int c ATTR_UNUSED)
 {
-	struct doveadm_sieve_cmd_context *ctx =
-		(struct doveadm_sieve_cmd_context *)_ctx;
-
-	switch (c) {
-	case 's': // FIXME: our own common options here
-		ctx->subscriptions = TRUE;
-		break;
-	default:
-		return FALSE;
-	}
-	return TRUE;
+	return FALSE;
 }
 
 void doveadm_sieve_cmd_scriptnames_check(const char *const args[])
