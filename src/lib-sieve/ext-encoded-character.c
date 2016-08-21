@@ -120,8 +120,9 @@ static bool _decode_hex
 	return ( values > 0 );
 }
 
-static int _decode_unicode
-(const char **in, const char *inend, string_t *result, unsigned int *error_hex)
+static bool _decode_unicode
+(const char **in, const char *inend, string_t *result,
+	unsigned int *error_hex)
 {
 	int values = 0;
 	bool valid = TRUE;
