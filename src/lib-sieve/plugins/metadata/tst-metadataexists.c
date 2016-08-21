@@ -130,7 +130,7 @@ static int tst_metadataexists_annotation_validate
 		}
 	}
 
-	return TRUE; /* Can't check at compile time */
+	return 1; /* Can't check at compile time */
 }
 
 static bool tst_metadataexists_validate
@@ -179,8 +179,8 @@ static bool tst_metadataexists_validate
 	valctx.valdtr = valdtr;
 	valctx.tst = tst;
 
-	return sieve_ast_stringlist_map
-		(&aarg, (void*)&valctx, tst_metadataexists_annotation_validate);
+	return (sieve_ast_stringlist_map(&aarg,
+		(void*)&valctx, tst_metadataexists_annotation_validate) >= 0);
 }
 
 /*
