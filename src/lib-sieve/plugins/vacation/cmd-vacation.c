@@ -961,7 +961,7 @@ static int act_vacation_send
 	/* Compose proper in-reply-to and references headers */
 
 	if ( mail_get_headers
-		(msgdata->mail, "references", &headers) ) {
+		(msgdata->mail, "references", &headers) < 0 ) {
 		return sieve_result_mail_error(aenv, msgdata->mail,
 			"vacation action: "
 			"failed to read header field `references'");
