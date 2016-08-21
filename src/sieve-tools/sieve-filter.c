@@ -309,7 +309,7 @@ static int filter_mailbox
 
 	/* Iterate through all requested messages */
 
-	while ( ret >= 0 && mailbox_search_next(search_ctx, &mail) > 0 ) {
+	while ( ret >= 0 && mailbox_search_next(search_ctx, &mail) ) {
 		ret = filter_message(&sfctx, mail);
 	}
 
