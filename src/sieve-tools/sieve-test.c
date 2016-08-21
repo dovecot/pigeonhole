@@ -100,7 +100,7 @@ static int sieve_smtp_finish
  * Dummy duplicate check implementation
  */
 
-static int duplicate_check
+static bool duplicate_check
 (const struct sieve_script_env *senv, const void *id ATTR_UNUSED,
 	size_t id_size ATTR_UNUSED)
 {
