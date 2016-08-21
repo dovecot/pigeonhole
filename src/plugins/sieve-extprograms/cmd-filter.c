@@ -77,7 +77,8 @@ static bool cmd_filter_generate
 	sieve_operation_emit(cgenv->sblock, cmd->ext, &cmd_filter_operation);
 
 	/* Emit is_test flag */
-	sieve_binary_emit_byte(cgenv->sblock, ( cmd->ast_node->type == SAT_TEST ));
+	sieve_binary_emit_byte(cgenv->sblock,
+		(uint8_t)( cmd->ast_node->type == SAT_TEST ? 1 : 0 ));
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
@@ -103,7 +104,8 @@ static bool cmd_filter_operation_dump
 	if ( !sieve_binary_read_byte(denv->sblock, address, &is_test) )
 		return FALSE;
 
-	sieve_code_dumpf(denv, "FILTER (%s)", (is_test ? "test" : "command"));
+	sieve_code_dumpf(denv, "FILTER (%s)",
+		(is_test > 0 ? "test" : "command"));
 	sieve_code_descend(denv);		
 
 	/* Dump optional operands */
@@ -230,7 +232,7 @@ static int cmd_filter_operation_execute
 			"filter action: program indicated false result");
 	}
 
-	if ( is_test ) {
+	if ( is_test > 0 ) {
 		sieve_interpreter_set_test_result(renv->interp, ( ret > 0 ));
 
 		return SIEVE_EXEC_OK;
