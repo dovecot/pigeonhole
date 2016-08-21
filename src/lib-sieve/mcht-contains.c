@@ -50,17 +50,17 @@ static int mcht_contains_match_key
 	const char *kp = key;
 
 	if ( val_size == 0 )
-		return ( key_size == 0 );
+		return ( key_size == 0 ? 1 : 0 );
 
 	if ( cmp->def == NULL || cmp->def->char_match == NULL )
-		return FALSE;
+		return 0;
 
 	while ( (vp < vend) && (kp < kend) ) {
 		if ( !cmp->def->char_match(cmp, &vp, vend, &kp, kend) )
 			vp++;
 	}
 
-	return (kp == kend);
+	return ( kp == kend ? 1 : 0 );
 }
 
 

@@ -95,7 +95,7 @@ static int mcht_matches_match_key
 	unsigned int key_offset = 0;
 
 	if ( cmp->def == NULL || cmp->def->char_match == NULL )
-		return FALSE;
+		return 0;
 
 	/* Key sections */
 	section = t_str_new(32);    /* Section (after beginning or *) */
@@ -428,11 +428,11 @@ static int mcht_matches_match_key
 			/* Commit new match values */
 			sieve_match_values_commit(mctx->runenv, &mvalues);
 		}
-		return TRUE;
+		return 1;
 	}
 
 	/* No match; drop collected match values */
 	sieve_match_values_abort(&mvalues);
-	return FALSE;
+	return 0;
 }
 
