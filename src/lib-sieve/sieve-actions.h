@@ -270,7 +270,7 @@ void sieve_action_duplicate_flush
 
 /* Rejecting mail */
 
-bool sieve_action_reject_mail
+int sieve_action_reject_mail
 (const struct sieve_action_exec_env *aenv,
 	const char *sender, const char *recipient, const char *reason);
 

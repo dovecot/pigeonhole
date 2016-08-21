@@ -484,6 +484,7 @@ static int act_reject_commit
 		(struct act_reject_context *) action->context;
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
 	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
+	int ret;
 
 	if ( recipient == NULL ) {
 		sieve_result_global_warning(aenv,
@@ -506,16 +507,16 @@ static int act_reject_commit
 		return SIEVE_EXEC_OK;
 	}
 
-	if ( sieve_action_reject_mail(aenv, sender, recipient, rj_ctx->reason) ) {
-		sieve_result_global_log(aenv,
-			"rejected message from <%s> (%s)", str_sanitize(sender, 80),
-			( rj_ctx->ereject ? "ereject" : "reject" ));
+	if ( (ret=sieve_action_reject_mail
+		(aenv, sender, recipient, rj_ctx->reason)) <= 0 )
+		return ret;
 
-		*keep = FALSE;
-		return SIEVE_EXEC_OK;
-	}
+	sieve_result_global_log(aenv,
+		"rejected message from <%s> (%s)", str_sanitize(sender, 80),
+		( rj_ctx->ereject ? "ereject" : "reject" ));
 
-	return SIEVE_EXEC_FAILURE;
+	*keep = FALSE;
+	return SIEVE_EXEC_OK;
 }
 
 

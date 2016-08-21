@@ -921,17 +921,18 @@ static int sieve_action_do_reject_mail
 	return SIEVE_EXEC_OK;
 }
 
-bool sieve_action_reject_mail
+int sieve_action_reject_mail
 (const struct sieve_action_exec_env *aenv,
 	const char *sender, const char *recipient, const char *reason)
 {
 	const struct sieve_script_env *senv = aenv->scriptenv;
-	bool result;
+	int result;
 
 	T_BEGIN {
 		if ( senv->reject_mail != NULL ) {
 			result =
-				( senv->reject_mail(senv, recipient, reason) >= 0 );
+				( senv->reject_mail(senv, recipient, reason) >= 0 ?
+					SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE );
 		} else {
 			result = sieve_action_do_reject_mail(aenv, sender, recipient, reason);
 		}
