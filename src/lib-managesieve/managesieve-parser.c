@@ -112,7 +112,8 @@ const char *managesieve_parser_get_error
 }
 
 /* skip over everything parsed so far, plus the following whitespace */
-static int managesieve_parser_skip_to_next(struct managesieve_parser *parser,
+static bool
+managesieve_parser_skip_to_next(struct managesieve_parser *parser,
 				    const unsigned char **data,
 				    size_t *data_size)
 {
@@ -201,7 +202,8 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 	parser->cur_type = ARG_PARSE_NONE;
 }
 
-static int is_valid_atom_char(struct managesieve_parser *parser, char chr)
+static bool
+is_valid_atom_char(struct managesieve_parser *parser, char chr)
 {
 	if (IS_ATOM_SPECIAL((unsigned char)chr)) {
 		parser->error = "Invalid characters in atom";
@@ -214,7 +216,8 @@ static int is_valid_atom_char(struct managesieve_parser *parser, char chr)
 	return TRUE;
 }
 
-static int managesieve_parser_read_atom(struct managesieve_parser *parser,
+static bool
+managesieve_parser_read_atom(struct managesieve_parser *parser,
 				 const unsigned char *data, size_t data_size)
 {
 	size_t i;
@@ -230,10 +233,11 @@ static int managesieve_parser_read_atom(struct managesieve_parser *parser,
 	}
 
 	parser->cur_pos = i;
-	return parser->cur_type == ARG_PARSE_NONE;
+	return ( parser->cur_type == ARG_PARSE_NONE );
 }
 
-static int managesieve_parser_read_string(struct managesieve_parser *parser,
+static bool
+managesieve_parser_read_string(struct managesieve_parser *parser,
 				   const unsigned char *data, size_t data_size)
 {
 	size_t i;
@@ -287,10 +291,11 @@ static int managesieve_parser_read_string(struct managesieve_parser *parser,
 	}
 
 	parser->cur_pos = i;
-	return parser->cur_type == ARG_PARSE_NONE;
+	return ( parser->cur_type == ARG_PARSE_NONE );
 }
 
-static int managesieve_parser_literal_end(struct managesieve_parser *parser)
+static bool
+managesieve_parser_literal_end(struct managesieve_parser *parser)
 {
 	if ((parser->flags & MANAGESIEVE_PARSE_FLAG_STRING_STREAM) == 0) {
 		if (parser->line_size >= parser->max_line_size ||
@@ -310,7 +315,8 @@ static int managesieve_parser_literal_end(struct managesieve_parser *parser)
 	return TRUE;
 }
 
-static int managesieve_parser_read_literal(struct managesieve_parser *parser,
+static bool
+managesieve_parser_read_literal(struct managesieve_parser *parser,
 				    const unsigned char *data,
 				    size_t data_size)
 {
@@ -354,7 +360,8 @@ static int managesieve_parser_read_literal(struct managesieve_parser *parser,
 	return FALSE;
 }
 
-static int managesieve_parser_read_literal_data(struct managesieve_parser *parser,
+static bool
+managesieve_parser_read_literal_data(struct managesieve_parser *parser,
 					 const unsigned char *data,
 					 size_t data_size)
 {
@@ -415,7 +422,8 @@ static int managesieve_parser_read_literal_data(struct managesieve_parser *parse
 
 /* Returns TRUE if argument was fully processed. Also returns TRUE if
    an argument inside a list was processed. */
-static int managesieve_parser_read_arg(struct managesieve_parser *parser)
+static bool
+managesieve_parser_read_arg(struct managesieve_parser *parser)
 {
 	const unsigned char *data;
 	size_t data_size;
