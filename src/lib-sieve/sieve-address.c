@@ -644,7 +644,7 @@ static int path_skip_white_space(struct sieve_envelope_address_parser *parser)
 		(*parser->data == ' ' || *parser->data == '\t') )
 		parser->data++;
 
-	return parser->data < parser->end;
+	return ( parser->data < parser->end ? 1 : 0 );
 }
 
 static int path_skip_address_literal
@@ -692,7 +692,7 @@ static int path_skip_address_literal
 	str_append_c(parser->str, *parser->data);
 	parser->data++;
 
-	return parser->data < parser->end;
+	return ( parser->data < parser->end ? 1 : 0 );
 }
 
 static int path_parse_domain
@@ -868,7 +868,7 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 	}
 
 	parser->address->local_part = p_strdup(parser->pool, str_c(parser->str));
-	return parser->data < parser->end;
+	return ( parser->data < parser->end ? 1 : 0 );
 }
 
 static int path_parse_mailbox(struct sieve_envelope_address_parser *parser)
@@ -936,7 +936,7 @@ static int path_parse(struct sieve_envelope_address_parser *parser)
 		parser->data++;
 	}
 
-	return parser->data < parser->end;
+	return ( parser->data < parser->end ? 1 : 0 );
 }
 
 const struct sieve_address *sieve_address_parse_envelope_path

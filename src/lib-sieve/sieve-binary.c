@@ -244,7 +244,7 @@ static bool sieve_binary_block_fetch(struct sieve_binary_block *sblock)
 {
 	struct sieve_binary *sbin = sblock->sbin;
 
-	if ( sbin->file ) {
+	if ( sbin->file != NULL ) {
 		/* Try to acces the block in the binary on disk (apperently we were lazy)
 		 */
 		if ( !sieve_binary_load_block(sblock) || sblock->data == NULL )

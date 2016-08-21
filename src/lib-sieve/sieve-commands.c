@@ -389,10 +389,10 @@ static int _verify_header_name_item
 			(valdtr, header, "specified header field name '%s' is invalid",
 				str_sanitize(str_c(name), 80));
 
-		return FALSE;
+		return 0;
 	}
 
-	return TRUE;
+	return 1;
 }
 
 bool sieve_command_verify_headers_argument

@@ -333,7 +333,7 @@ int sieve_binary_save
 	}
 
 	/* Replace any original binary atomically */
-	if ( result && (rename(str_c(temp_path), path) < 0) ) {
+	if ( result > 0 && (rename(str_c(temp_path), path) < 0) ) {
 		if ( errno == EACCES ) {
 			sieve_sys_error(sbin->svinst, "binary save: failed to save binary: %s",
 				eacces_error_get_creating("rename", path));
@@ -748,7 +748,7 @@ static int _read_extensions(struct sieve_binary_block *sblock)
 	struct sieve_binary *sbin = sblock->sbin;
 	sieve_size_t offset = 0;
 	unsigned int i, count;
-	bool result = 1;
+	int result = 1;
 
 	if ( !sieve_binary_read_unsigned(sblock, &offset, &count) )
 		return -1;

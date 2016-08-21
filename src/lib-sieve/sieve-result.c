@@ -1218,7 +1218,7 @@ static void sieve_result_action_rollback
 	rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
 	while ( rsef != NULL ) {
 		struct sieve_side_effect *sef = &rsef->seffect;
-		if ( sef->def && sef->def->rollback != NULL )
+		if ( sef->def != NULL && sef->def->rollback != NULL )
 			sef->def->rollback
 				(sef, act, &result->action_env, rac->tr_context, rac->success);
 		rsef = rsef->next;

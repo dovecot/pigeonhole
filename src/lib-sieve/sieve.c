@@ -524,7 +524,8 @@ int sieve_test
 
 	/* Print result if successful */
 	if ( ret > 0 ) {
-		ret = sieve_result_print(result, senv, stream, keep);
+		ret = ( sieve_result_print(result, senv, stream, keep) ?
+			SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE );
 	} else if ( ret == 0 ) {
 		if ( keep != NULL ) *keep = TRUE;
 	}
@@ -643,8 +644,9 @@ static void sieve_multiscript_test
 (struct sieve_multiscript *mscript, bool *keep)
 {
 	if ( mscript->status > 0 ) {
-		mscript->status = sieve_result_print
-			(mscript->result, mscript->scriptenv, mscript->teststream, keep);
+		mscript->status = ( sieve_result_print(mscript->result,
+			mscript->scriptenv, mscript->teststream, keep) ?
+				SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE );
 	} else {
 		if ( keep != NULL ) *keep = TRUE;
 	}
@@ -661,8 +663,8 @@ static void sieve_multiscript_execute
 		mscript->status = sieve_result_execute
 			(mscript->result, keep, ehandler, flags);
 	} else {
-		if ( !sieve_result_implicit_keep
-			(mscript->result, ehandler, flags, FALSE) )
+		if ( sieve_result_implicit_keep
+			(mscript->result, ehandler, flags, FALSE) <= 0 )
 			mscript->status = SIEVE_EXEC_KEEP_FAILED;
 		else
 			if ( keep != NULL ) *keep = TRUE;
@@ -719,7 +721,7 @@ int sieve_multiscript_tempfail(struct sieve_multiscript **_mscript,
 	if ( mscript->active ) {
 		ret = SIEVE_EXEC_TEMP_FAILURE;
 
-		if ( !mscript->teststream && sieve_result_executed(result) ) {
+		if ( mscript->teststream == NULL && sieve_result_executed(result) ) {
 			/* Part of the result is already executed, need to fall back to
 			 * to implicit keep (FIXME)
 			 */
@@ -753,7 +755,7 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 		(mscript->result, NULL, &act_store);
 
 	if ( mscript->active ) {
-		if ( mscript->teststream ) {
+		if ( mscript->teststream != NULL ) {
 			mscript->keep = TRUE;
 		} else {
 			switch ( sieve_result_implicit_keep
