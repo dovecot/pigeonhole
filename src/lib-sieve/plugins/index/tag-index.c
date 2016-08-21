@@ -211,7 +211,7 @@ static bool svmo_index_dump_context
 	if ( !sieve_binary_read_byte(denv->sblock, address, &last) )
 		return FALSE;
 
-	if (last)
+	if (last > 0)
 		sieve_code_dumpf(denv, "last");
 	return TRUE;
 }
