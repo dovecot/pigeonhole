@@ -222,7 +222,7 @@ static const char *client_stats(struct client *client)
 
 void client_destroy(struct client *client, const char *reason)
 {
-	int ret;
+	bool ret;
 
  	i_assert(!client->handling_input);
 	i_assert(!client->destroyed);
@@ -640,7 +640,7 @@ static bool client_handle_input(struct client_command_context *cmd)
 void client_input(struct client *client)
 {
 	struct client_command_context *cmd = &client->cmd;
-	int ret;
+	bool ret;
 
 	if (client->command_pending) {
 		/* already processing one command. wait. */
