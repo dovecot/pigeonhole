@@ -110,7 +110,8 @@ static void program_client_disconnect_extra_fds
 static void program_client_disconnect
 (struct program_client *pclient, bool force)
 {
-	int ret, error = FALSE;
+	bool error = FALSE;
+	int ret;
 
 	if ( pclient->ioloop != NULL )
 		io_loop_stop(pclient->ioloop);
