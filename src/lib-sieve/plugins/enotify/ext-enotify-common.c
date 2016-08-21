@@ -320,7 +320,8 @@ static int _ext_enotify_option_check
 	struct sieve_enotify_env nenv;
 	const char *option = sieve_ast_argument_strc(arg);
 	const char *opt_name = NULL, *opt_value = NULL;
-	bool result = TRUE, check = TRUE;
+	bool check = TRUE;
+	int result = 1;
 
 	/* Compose log structure */
 	memset(&nenv, 0, sizeof(nenv));
@@ -349,13 +350,15 @@ static int _ext_enotify_option_check
 		/* Literal string: full option parse */
 		if ( !ext_enotify_option_parse
 			(&nenv, option, FALSE, &opt_name, &opt_value) )
-			result = FALSE;
+			result = -1;
 	}
 
 	/* Call method's option check function */
-	if ( result && check && method->def != NULL &&
-		method->def->compile_check_option != NULL )
-		result = method->def->compile_check_option(&nenv, opt_name, opt_value);
+	if ( result > 0 && check && method->def != NULL &&
+		method->def->compile_check_option != NULL ) {
+		result = ( method->def->compile_check_option
+			(&nenv, opt_name, opt_value) ? 1 : -1 );
+	}
 
 	sieve_error_handler_unref(&nenv.ehandler);
 

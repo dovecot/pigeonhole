@@ -112,7 +112,7 @@ static const char _qchar_lookup[256] = {
 
 static inline bool _is_qchar(unsigned char c)
 {
-	return _qchar_lookup[c];
+	return ((_qchar_lookup[c] & 0x01) != 0);
 }
 
 static inline int _decode_hex_digit(unsigned char digit)

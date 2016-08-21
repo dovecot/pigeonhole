@@ -271,7 +271,7 @@ static bool ntfy_mailto_runtime_check_operands
 				mtctx->from_normalized = p_strdup(context_pool, normalized);
 		} T_END;
 
-		if ( !normalized ) return FALSE;
+		if ( normalized == NULL ) return FALSE;
 	}
 
 	if ( (parsed_uri=uri_mailto_parse
