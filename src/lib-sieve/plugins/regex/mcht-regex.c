@@ -100,11 +100,11 @@ static int mcht_regex_validate_regexp
 			str_sanitize(regex_str, 128), _regexp_error(&regexp, ret));
 
 		regfree(&regexp);
-		return FALSE;
+		return -1;
 	}
 
 	regfree(&regexp);
-	return TRUE;
+	return 1;
 }
 
 struct _regex_key_context {
@@ -126,7 +126,7 @@ static int mcht_regex_validate_key_argument
 			(keyctx->valdtr, keyctx->mtctx, key, keyctx->cflags);
 	}
 
-	return TRUE;
+	return 1;
 }
 
 static bool mcht_regex_validate_context
@@ -158,8 +158,8 @@ static bool mcht_regex_validate_context
 	keyctx.cflags = cflags;
 
 	kitem = key_arg;
-	if ( !sieve_ast_stringlist_map(&kitem, (void *) &keyctx,
-		mcht_regex_validate_key_argument) )
+	if ( sieve_ast_stringlist_map(&kitem, (void *) &keyctx,
+		mcht_regex_validate_key_argument) <= 0 )
 		return FALSE;
 
 	return TRUE;
