@@ -182,7 +182,7 @@ static void sieve_dict_script_binary_write_metadata
 	sieve_binary_emit_cstring(sblock, dscript->data_id);
 }
 
-static int sieve_dict_script_binary_dump_metadata
+static bool sieve_dict_script_binary_dump_metadata
 (struct sieve_script *script ATTR_UNUSED, struct sieve_dumptime_env *denv,
 	struct sieve_binary_block *sblock, sieve_size_t *offset)
 {

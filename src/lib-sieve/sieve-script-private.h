@@ -27,7 +27,7 @@ struct sieve_script_vfuncs {
 			sieve_size_t *offset);
 	void (*binary_write_metadata)
 		(struct sieve_script *script, struct sieve_binary_block *sblock);
-	int (*binary_dump_metadata)
+	bool (*binary_dump_metadata)
 		(struct sieve_script *script, struct sieve_dumptime_env *denv,
 			struct sieve_binary_block *sblock, sieve_size_t *offset);
 	struct sieve_binary *(*binary_load)
