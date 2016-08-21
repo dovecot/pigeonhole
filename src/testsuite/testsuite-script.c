@@ -126,7 +126,7 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 		NULL, renv->msgdata, &scriptenv, testsuite_log_ehandler, 0);
 
 	if ( interp == NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+		return FALSE;
 
 	ret = sieve_interpreter_run(interp, result);
 
