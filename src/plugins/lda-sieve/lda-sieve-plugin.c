@@ -120,7 +120,7 @@ static int lda_sieve_reject_mail
  * Duplicate checking
  */
 
-static int lda_sieve_duplicate_check
+static bool lda_sieve_duplicate_check
 (const struct sieve_script_env *senv, const void *id, size_t id_size)
 {
 	struct mail_deliver_context *dctx =

@@ -260,7 +260,7 @@ void sieve_act_store_get_storage_error
 
 bool sieve_action_duplicate_check_available
 	(const struct sieve_script_env *senv);
-int sieve_action_duplicate_check
+bool sieve_action_duplicate_check
 	(const struct sieve_script_env *senv, const void *id, size_t id_size);
 void sieve_action_duplicate_mark
 	(const struct sieve_script_env *senv, const void *id, size_t id_size,

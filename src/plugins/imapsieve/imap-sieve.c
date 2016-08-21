@@ -187,7 +187,7 @@ static int imap_sieve_smtp_finish
  * Duplicate checking
  */
 
-static int imap_sieve_duplicate_check
+static bool imap_sieve_duplicate_check
 (const struct sieve_script_env *senv, const void *id,
 	size_t id_size)
 {

@@ -769,11 +769,11 @@ bool sieve_action_duplicate_check_available
 	return ( senv->duplicate_check != NULL && senv->duplicate_mark != NULL );
 }
 
-int sieve_action_duplicate_check
+bool sieve_action_duplicate_check
 (const struct sieve_script_env *senv, const void *id, size_t id_size)
 {
 	if ( senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
-		return 0;
+		return FALSE;
 
 	return senv->duplicate_check(senv, id, id_size);
 }

@@ -210,7 +210,7 @@ struct sieve_script_env {
 			const char **error_r);
 
 	/* Interface for marking and checking duplicates */
-	int (*duplicate_check)
+	bool (*duplicate_check)
 		(const struct sieve_script_env *senv, const void *id, size_t id_size);
 	void (*duplicate_mark)
 		(const struct sieve_script_env *senv, const void *id, size_t id_size,
