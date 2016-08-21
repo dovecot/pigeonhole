@@ -350,7 +350,7 @@ bool sieve_file_storage_active_rescue_regular
 
 			dstpath = t_strconcat( fstorage->path, "/",
 				sieve_script_file_from_name("dovecot.orig"), NULL );
-			if ( file_copy(fstorage->active_path, dstpath, 1) < 1 ) {
+			if ( file_copy(fstorage->active_path, dstpath, TRUE) < 1 ) {
 				sieve_storage_set_critical(storage,
 					"Active sieve script file '%s' is a regular file "
 					"and copying it to the script storage as '%s' failed. "
