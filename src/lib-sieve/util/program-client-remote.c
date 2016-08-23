@@ -92,16 +92,14 @@ static ssize_t program_client_istream_read(struct istream_private *stream)
 		if ( stream->buffer != NULL && pos >= 1 ) {
 			/* retain/hide potential return code at end of buffer */
 			size_t old_reserved = reserved;
-			ssize_t reserve_inc;
+			ssize_t reserve_mod;
 
 			reserved = ( stream->buffer[pos-1] == '\n' && pos > 1 ? 2 : 1 );
-			i_assert(reserved >= old_reserved);
-			reserve_inc = reserved - old_reserved;
+			reserve_mod = reserved - old_reserved;
 			pos -= reserved;
 
-			if (ret > 0) {
-				i_assert(ret >= reserve_inc);
-				ret -= reserve_inc;
+			if (ret >= reserve_mod) {
+				ret -= reserve_mod;
 			}
 		}
 
