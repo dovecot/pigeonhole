@@ -3,7 +3,7 @@ require "vnd.dovecot.testsuite";
 require "comparator-i;ascii-numeric";
 require "relational";
 
-test "Depricated imapflags extension used with imap4flags" {
+test "Deprecated imapflags extension used with imap4flags" {
 	if test_script_compile "errors/conflict.sieve" {
 		test_fail "compile should have failed";
 	}
@@ -13,7 +13,7 @@ test "Depricated imapflags extension used with imap4flags" {
 	}
 }
 
-test "Depricated imapflags extension used with imap4flags (ihave)" {
+test "Deprecated imapflags extension used with imap4flags (ihave)" {
 	if test_script_compile "errors/conflict-ihave.sieve" {
 		test_fail "compile should have failed";
 	}

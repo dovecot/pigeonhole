@@ -12,7 +12,7 @@ test "Invalid :options argument (FIXME: count only)" {
 	}
 }
 
-test "Depricated notify extension used with enotify" {
+test "Deprecated notify extension used with enotify" {
 	if test_script_compile "errors/conflict.sieve" {
 		test_fail "compile should have failed";
 	}
@@ -22,7 +22,7 @@ test "Depricated notify extension used with enotify" {
 	}
 }
 
-test "Depricated notify extension used with enotify (ihave)" {
+test "Deprecated notify extension used with enotify (ihave)" {
 	if test_script_compile "errors/conflict-ihave.sieve" {
 		test_fail "compile should have failed";
 	}
