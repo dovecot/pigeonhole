@@ -140,6 +140,8 @@ sieve_attribute_set_active(struct mail_storage *storage,
 {
 	const char *scriptname;
 	struct sieve_script *script;
+	time_t last_change =
+		(value->last_change == 0 ? ioloop_time : value->last_change);
 	int ret;
 
 	if (mailbox_attribute_value_to_string(storage, value, &scriptname) < 0)
@@ -156,7 +158,7 @@ sieve_attribute_set_active(struct mail_storage *storage,
 		}
 
 		/* deactivate current script */
-		if (sieve_storage_deactivate(svstorage, value->last_change) < 0) {
+		if (sieve_storage_deactivate(svstorage, last_change) < 0) {
 			mail_storage_set_critical(storage,
 				"Failed to deactivate Sieve: %s",
 				sieve_storage_get_last_error(svstorage, NULL));
@@ -170,7 +172,7 @@ sieve_attribute_set_active(struct mail_storage *storage,
 	/* activate specified script */
 	script = sieve_storage_open_script(svstorage, scriptname, NULL);
 	ret = script == NULL ? -1 :
-		sieve_script_activate(script, value->last_change);
+		sieve_script_activate(script, last_change);
 	if (ret < 0) {
 		mail_storage_set_critical(storage,
 			"Failed to activate Sieve script '%s': %s", scriptname,
@@ -178,7 +180,7 @@ sieve_attribute_set_active(struct mail_storage *storage,
 	}
 	if (script != NULL)
 		sieve_script_unref(&script);
-	sieve_storage_set_modified(svstorage, value->last_change);
+	sieve_storage_set_modified(svstorage, last_change);
 	return ret;
 }
 
@@ -209,6 +211,8 @@ sieve_attribute_set_active_script(struct mail_storage *storage,
 			   const struct mail_attribute_value *value)
 {
 	struct istream *input;
+	time_t last_change =
+		(value->last_change == 0 ? ioloop_time : value->last_change);
 
 	if (value->value != NULL) {
 		input = i_stream_create_from_data(value->value, strlen(value->value));
@@ -216,13 +220,14 @@ sieve_attribute_set_active_script(struct mail_storage *storage,
 		input = value->value_stream;
 		i_stream_ref(input);
 	} else {
-		return sieve_attribute_unset_active_script(storage, svstorage, value->last_change);
+		return sieve_attribute_unset_active_script
+			(storage, svstorage, last_change);
 	}
 	/* skip over the 'S' type */
 	i_stream_skip(input, 1);
 
 	if (sieve_storage_save_as_active
-		(svstorage, input, value->last_change) < 0) {
+		(svstorage, input, last_change) < 0) {
 		mail_storage_set_critical(storage,
 			"Failed to save active sieve script: %s",
 			sieve_storage_get_last_error(svstorage, NULL));
@@ -230,7 +235,7 @@ sieve_attribute_set_active_script(struct mail_storage *storage,
 		return -1;
 	}
 
-	sieve_storage_set_modified(svstorage, value->last_change);
+	sieve_storage_set_modified(svstorage, last_change);
 	i_stream_unref(&input);
 	return 0;
 }
@@ -317,7 +322,8 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 		return -1;
 	}
 
-	sieve_storage_save_set_mtime(save_ctx, value->last_change);
+	if (value->last_change != 0)
+		sieve_storage_save_set_mtime(save_ctx, value->last_change);
 
 	ret = 0;
 	while (i_stream_read(input) > 0) {
