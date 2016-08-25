@@ -155,9 +155,9 @@ int sieve_ldap_storage_read_settings
 
 #ifdef OPENLDAP_TLS_OPTIONS	
 	if ( lstorage->set.tls_require_cert != NULL &&
-		ldap_tls_require_cert_from_str
-		(lstorage->set.tls_require_cert, &lstorage->set.ldap_tls_require_cert) ) {
-				sieve_storage_set_critical(storage,
+		ldap_tls_require_cert_from_str(lstorage->set.tls_require_cert,
+		&lstorage->set.ldap_tls_require_cert) < 0) {
+		sieve_storage_set_critical(storage,
 			"Invalid LDAP storage config `%s': "
 			"Invalid tls_require_cert option `%s'",
 			config_path, lstorage->set.tls_require_cert);
