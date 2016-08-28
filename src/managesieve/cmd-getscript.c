@@ -96,7 +96,7 @@ bool cmd_getscript(struct client_command_context *cmd)
 	enum sieve_error error;
 
 	/* <scriptname> */
-	if ( !client_read_string_args(cmd, 1, TRUE, &scriptname) )
+	if ( !client_read_string_args(cmd, TRUE, 1, &scriptname) )
 		return FALSE;
 
 	ctx = p_new(cmd->pool, struct cmd_getscript_context, 1);

@@ -131,7 +131,7 @@ bool client_read_args
 /* Reads a number of string arguments. ... is a list of pointers where to
    store the arguments. */
 bool client_read_string_args
-	(struct client_command_context *cmd, unsigned int count, bool no_more, ...);
+	(struct client_command_context *cmd, bool no_more, unsigned int count, ...);
 
 static inline bool client_read_no_args
 (struct client_command_context *cmd)
