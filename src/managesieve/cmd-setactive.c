@@ -20,7 +20,7 @@ bool cmd_setactive(struct client_command_context *cmd)
 	int ret;
 
 	/* <scriptname> */
-	if ( !client_read_string_args(cmd, 1, TRUE, &scriptname) )
+	if ( !client_read_string_args(cmd, TRUE, 1, &scriptname) )
 		return FALSE;
 
 	/* Activate, or .. */

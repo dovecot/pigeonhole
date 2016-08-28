@@ -482,7 +482,7 @@ bool client_read_args(struct client_command_context *cmd, unsigned int count,
 }
 
 bool client_read_string_args(struct client_command_context *cmd,
-			     unsigned int count, bool no_more, ...)
+			     bool no_more, unsigned int count, ...)
 {
 	const struct managesieve_arg *msieve_args;
 	va_list va;
@@ -493,7 +493,7 @@ bool client_read_string_args(struct client_command_context *cmd,
 	if ( !client_read_args(cmd, count, 0, no_more, &msieve_args) )
 		return FALSE;
 
-	va_start(va, no_more);
+	va_start(va, count);
 	for ( i = 0; i < count; i++ ) {
 		const char **ret = va_arg(va, const char **);
 
