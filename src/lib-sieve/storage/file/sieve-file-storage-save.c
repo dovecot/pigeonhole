@@ -231,8 +231,8 @@ int sieve_file_storage_save_continue
 
 	switch (o_stream_send_istream(fsctx->output, sctx->input)) {
 	case OSTREAM_SEND_ISTREAM_RESULT_FINISHED:
-		return 0;
 	case OSTREAM_SEND_ISTREAM_RESULT_WAIT_INPUT:
+		return 0;
 	case OSTREAM_SEND_ISTREAM_RESULT_WAIT_OUTPUT:
 		i_unreached();
 	case OSTREAM_SEND_ISTREAM_RESULT_ERROR_INPUT:
