@@ -36,6 +36,8 @@ struct cmd_putscript_context {
 
 	struct managesieve_parser *save_parser;
 	struct sieve_storage_save_context *save_ctx;
+
+	bool script_size_valid:1;
 };
 
 static void cmd_putscript_finish(struct cmd_putscript_context *ctx);
@@ -182,12 +184,14 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 		}
 
 		/* If quoted string, the size was not known until now */
-		if ( ctx->script_size == 0 ) {
+		if ( !ctx->script_size_valid ) {
 			if (sieve_script_get_size(script, &ctx->script_size) < 0) {
 				client_send_storage_error(client, ctx->storage);
 				cmd_putscript_finish(ctx);
 				return TRUE;
 			}
+			ctx->script_size_valid = TRUE;
+
 			/* Check quota; max size is already checked */
 			if ( ctx->scriptname != NULL && !managesieve_quota_check_all
 					(client, ctx->scriptname, ctx->script_size) ) {
@@ -310,18 +314,10 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 	}
 
 	if ( i_stream_get_size(ctx->input, FALSE, &ctx->script_size) > 0 ) {
-		if ( ctx->script_size == 0 ) {
-			/* no script content, abort */
-			if ( ctx->scriptname != NULL )
-				client_send_no(client, "PUTSCRIPT aborted (empty script).");
-			else
-				client_send_no(client, "CHECKSCRIPT aborted (empty script).");
-
-			cmd_putscript_finish(ctx);
-			return TRUE;
+		ctx->script_size_valid = TRUE;
 
 		/* Check quota */
-		} else if ( ctx->scriptname == NULL ) {
+		if ( ctx->scriptname == NULL ) {
 			if ( !managesieve_quota_check_validsize(client, ctx->script_size) )
 				return cmd_putscript_cancel(ctx, TRUE);
 		} else {
@@ -360,7 +356,9 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 	int ret;
 
 	if (ctx->save_ctx != NULL) {
-		while (ctx->script_size == 0 || ctx->input->v_offset != ctx->script_size) {
+		for (;;) {
+			i_assert(!ctx->script_size_valid ||
+				ctx->input->v_offset <= ctx->script_size);
 			if ( ctx->max_script_size > 0 &&
 				ctx->input->v_offset > ctx->max_script_size ) {
 				(void)managesieve_quota_check_validsize(client, ctx->input->v_offset);
@@ -392,7 +390,7 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 		bool failed = FALSE;
 		bool all_written = FALSE;
 
-		if ( ctx->script_size == 0 ) {
+		if ( !ctx->script_size_valid ) {
 			if ( !client->input->eof &&
 				ctx->input->stream_errno == EINVAL ) {
 				client_send_command_error(cmd, t_strdup_printf(
