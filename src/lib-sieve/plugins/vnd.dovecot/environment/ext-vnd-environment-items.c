@@ -25,7 +25,8 @@
 /* default_mailbox */
 
 static const char *envit_default_mailbox_get_value
-(const struct sieve_runtime_env *renv)
+(const struct sieve_runtime_env *renv,
+	const char *name ATTR_UNUSED)
 {
 	i_assert(renv->scriptenv->default_mailbox != NULL);
 	return renv->scriptenv->default_mailbox;
@@ -39,7 +40,8 @@ const struct sieve_environment_item default_mailbox_env_item = {
 /* username */
 
 static const char *envit_username_get_value
-(const struct sieve_runtime_env *renv)
+(const struct sieve_runtime_env *renv,
+	const char *name ATTR_UNUSED)
 {
 	return renv->svinst->username;
 }
