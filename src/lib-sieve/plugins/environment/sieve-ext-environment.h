@@ -40,10 +40,11 @@ bool sieve_ext_environment_is_active
 
 struct sieve_environment_item {
 	const char *name;
+	bool prefix;
 
 	const char *value;
 	const char *(*get_value)
-		(const struct sieve_runtime_env *renv);
+		(const struct sieve_runtime_env *renv, const char *name);
 };
 
 void sieve_environment_item_register
