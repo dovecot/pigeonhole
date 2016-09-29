@@ -277,12 +277,8 @@ static bool arg_variable_string_validate
 							(this_ext, valdtr, *arg, cmd, &substitution);
 					}
 
-					if ( strarg != NULL ) {
+					if ( strarg != NULL )
 						sieve_arg_catenated_string_add_element(catstr, strarg);
-					} else {
-						result = FALSE;
-						break;
-					}
 
 					strstart = p + 1;
 					substart = strstart;
