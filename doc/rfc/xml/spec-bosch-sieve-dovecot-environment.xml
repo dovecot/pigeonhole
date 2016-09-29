@@ -89,6 +89,13 @@ configuration.</t>
 <t hangText="&quot;vnd.dovecot.username&quot;">
 <vspace />
 The username of the recipient for this particular message delivery.</t>
+<t hangText="&quot;vnd.dovecot.config.*&quot;">
+<vspace />
+This environment item obtains its value from the mail server configuration.
+The part of the environment item name after the "vnd.dovecot.config." prefix
+is used as an identifier of the configuration setting. This will only be
+able to access settings within a limited namespace, e.g. settings with a
+particular identifier prefix.</t>
 </list>
 </t>
 </section>
