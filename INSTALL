@@ -512,6 +512,14 @@ Sieve Interpreter - Extension Configuration
   Refer to doc/extensions/vnd.dovecot.duplicate.txt for configuration
   information.
 
+- Dovecot environment extension:
+
+  The vnd.dovecot.environment extension builds on the standard environment
+  extension. It adds a few extra environment items that are useful for Sieve
+  scripts used by Dovecot.
+
+  Refer to doc/extensions/vnd.dovecot.environment.txt for more information.
+
 - Extprograms plugin;
     vnd.dovovecot.pipe, vnd.dovecot.filter, vnd.dovecot.execute extensions:
 

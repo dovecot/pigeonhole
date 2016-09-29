@@ -1,0 +1,48 @@
+Vnd.dovecot.environment Extension
+
+Relevant specifications
+=======================
+
+  doc/rfc/spec-bosch-sieve-dovecot-environment.txt
+
+Description
+===========
+
+The "vnd.dovecot.environment" extension builds upon the existing standard
+"environment" extension, which allows Sieve scripts to access information about
+their execution context, such as the name and version of the Sieve interpreter
+implementation. The new "vnd.dovecot.environment" extension adds a few more
+environment items that can be accessed by Sieve scripts. Additionally, it makes
+the environment items available directly as variables [VARIABLES].
+
+Configuration
+=============
+
+The "vnd.dovecot.environment" extension is not available by default; it needs
+to be added to the sieve_extensions or (rather) the sieve_global extensions
+setting.
+
+Currently, the "vnd.dovecot.environment" extension has no specific settings.
+However, this extension adds environment items with a "vnd.dovecot.config."
+prefix that can be used to access part of the Dovecot configuration. An
+environment item named "vnd.dovecot.config.identifier" yields the value of a
+plugin setting called "sieve_env_identifier".
+
+Example
+=======
+
+With the following configuration:
+
+plugin {
+  sieve = ~/.dovecot.sieve
+
+  sieve_env_reject_reason = Please don't mail me.
+}
+
+The following script will reject the message with the configured reason:
+
+require "reject";
+require "variables";
+require "vnd.dovecot.environment";
+
+reject "${vnd.dovecot.config.reject_reason}";

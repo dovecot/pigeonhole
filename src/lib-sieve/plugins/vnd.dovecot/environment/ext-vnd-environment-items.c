@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "array.h"
 
+#include "sieve-settings.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-comparators.h"
@@ -51,6 +52,25 @@ const struct sieve_environment_item username_env_item = {
 	.get_value = envit_username_get_value
 };
 
+/* config.* */
+
+static const char *envit_config_get_value
+(const struct sieve_runtime_env *renv, const char *name)
+{
+	if (*name == '\0')
+		return NULL;
+
+	return sieve_setting_get(renv->svinst,
+		t_strconcat("sieve_env_", name, NULL));
+}
+
+const struct sieve_environment_item config_env_item = {
+	.name = "vnd.dovecot.config",
+	.prefix = TRUE,
+	.get_value = envit_config_get_value
+};
+
+
 /*
  * Register
  */
@@ -65,4 +85,6 @@ void ext_vnd_environment_items_register
 		(ectx->env_ext, renv->interp, &default_mailbox_env_item);
 	sieve_environment_item_register
 		(ectx->env_ext, renv->interp, &username_env_item);
+	sieve_environment_item_register
+		(ectx->env_ext, renv->interp, &config_env_item);
 }

@@ -16,3 +16,14 @@ test "username" {
 	}
 }
 
+test_config_set "sieve_env_display_name" "Jan Jansen";
+test_config_reload :extension "vnd.dovecot.environment";
+
+test "config" {
+	if not environment :contains "vnd.dovecot.config.display_name" "" {
+		test_fail "vnd.dovecot.config.display_name environment does not exist";
+	}
+	if not environment :is "vnd.dovecot.config.display_name" "Jan Jansen" {
+		test_fail "vnd.dovecot.config.display_name environment has wrong value";
+	}
+}
