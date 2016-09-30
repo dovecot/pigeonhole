@@ -158,6 +158,8 @@ int sieve_result_execute
 
 bool sieve_result_executed(struct sieve_result *result);
 
+bool sieve_result_executed_delivery(struct sieve_result *result);
+
 /*
  * Result evaluation
  */

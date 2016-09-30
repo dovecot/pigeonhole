@@ -88,6 +88,7 @@ struct sieve_result {
 			   struct sieve_result_action_context *) action_contexts;
 
 	bool executed:1;
+	bool executed_delivery:1;
 };
 
 struct sieve_result *sieve_result_create
@@ -1083,6 +1084,11 @@ bool sieve_result_executed(struct sieve_result *result)
 	return result->executed;
 }
 
+bool sieve_result_executed_delivery(struct sieve_result *result)
+{
+	return result->executed_delivery;
+}
+
 static int sieve_result_transaction_start
 (struct sieve_result *result, struct sieve_result_action *first,
 	struct sieve_result_action **last_r)
@@ -1274,6 +1280,7 @@ static int sieve_result_transaction_commit_or_rollback
 {
 	struct sieve_result_action *rac;
 	int commit_status = status;
+	bool seen_delivery = FALSE;
 
 	/* First commit/rollback all storage actions */
 	rac = first;
@@ -1288,6 +1295,10 @@ static int sieve_result_transaction_commit_or_rollback
 
 		status = sieve_result_action_commit_or_rollback
 			(result, rac, status, implicit_keep, keep, &commit_status);
+		
+		if ( act->def != NULL &&
+			(act->def->flags & SIEVE_ACTFLAG_TRIES_DELIVER) != 0 )
+			seen_delivery = TRUE;
 
 		rac = rac->next;
 	}
@@ -1306,10 +1317,17 @@ static int sieve_result_transaction_commit_or_rollback
 		status = sieve_result_action_commit_or_rollback
 			(result, rac, status, implicit_keep, keep, &commit_status);
 
+		if ( act->def != NULL &&
+			(act->def->flags & SIEVE_ACTFLAG_TRIES_DELIVER) != 0 )
+			seen_delivery = TRUE;
+
 		rac = rac->next;
 	}
 
 	if ( *implicit_keep && keep != NULL ) *keep = TRUE;
+
+	if ( commit_status == SIEVE_EXEC_OK )
+		result->executed_delivery = seen_delivery;
 
 	return commit_status;
 }
