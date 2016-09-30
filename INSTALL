@@ -178,6 +178,15 @@ plugin section of the config file (default values are shown if applicable):
    setting used to be called `sieve_global_dir', but that name is now
    deprecated.
 
+ sieve_discard =
+   The location of a Sieve script that is run for any message that is about to
+   be discarded; i.e., it is not delivered anywhere by the normal Sieve
+   execution. This only happens when the "implicit keep" is canceled, by e.g.
+   the "discard" action, and no actions that deliver the message are executed.
+   This "discard script" can prevent discarding the message, by executing
+   alternative actions. If the discard script does nothing, the message is still
+   discarded as it would be when no discard script is configured.
+
  sieve_extensions =
    Which Sieve language extensions are available to users. By default, all
    supported extensions are available, except for deprecated extensions or those
