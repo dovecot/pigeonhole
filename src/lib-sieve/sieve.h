@@ -194,6 +194,14 @@ bool sieve_multiscript_run
 		struct sieve_error_handler *action_ehandler,
 		enum sieve_execute_flags flags);
 
+bool sieve_multiscript_will_discard
+	(struct sieve_multiscript *mscript);
+void sieve_multiscript_run_discard
+	(struct sieve_multiscript *mscript, struct sieve_binary *sbin,
+		struct sieve_error_handler *exec_ehandler,
+		struct sieve_error_handler *action_ehandler,
+		enum sieve_execute_flags flags);
+
 int sieve_multiscript_status(struct sieve_multiscript *mscript);
 
 int sieve_multiscript_tempfail
