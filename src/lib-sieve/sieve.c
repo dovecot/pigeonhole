@@ -597,10 +597,12 @@ struct sieve_multiscript {
 	const struct sieve_script_env *scriptenv;
 
 	int status;
-	bool active;
 	bool keep;
 
 	struct ostream *teststream;
+
+	bool active:1;
+	bool discard_handled:1;
 };
 
 struct sieve_multiscript *sieve_multiscript_start_execute
@@ -700,6 +702,44 @@ bool sieve_multiscript_run
 		return FALSE;
 
 	return mscript->active;
+}
+
+bool sieve_multiscript_will_discard
+(struct sieve_multiscript *mscript)
+{
+	return ( !mscript->active &&
+		!sieve_result_executed_delivery(mscript->result) );
+}
+
+void sieve_multiscript_run_discard
+(struct sieve_multiscript *mscript, struct sieve_binary *sbin,
+	struct sieve_error_handler *exec_ehandler,
+	struct sieve_error_handler *action_ehandler,
+	enum sieve_execute_flags flags)
+{
+	if ( !sieve_multiscript_will_discard(mscript) )
+		return;
+	i_assert( !mscript->discard_handled );
+
+	sieve_result_set_keep_action
+		(mscript->result, NULL, &act_store);
+
+	/* Run the discard script */
+	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata,
+		mscript->scriptenv, exec_ehandler, flags);
+
+	if ( mscript->status >= 0 ) {
+		mscript->keep = FALSE;
+
+		if ( mscript->teststream != NULL ) {
+			sieve_multiscript_test(mscript, &mscript->keep);
+		} else {
+			sieve_multiscript_execute(mscript,
+				action_ehandler, flags, &mscript->keep);
+		}
+	}
+
+	mscript->discard_handled = TRUE;
 }
 
 int sieve_multiscript_status(struct sieve_multiscript *mscript)
