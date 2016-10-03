@@ -172,6 +172,8 @@ test_cases = \
 	tests/extensions/mime/foreverypart.svtest \
 	tests/extensions/mime/extracttext.svtest \
 	tests/extensions/mime/calendar-example.svtest \
+	tests/extensions/special-use/errors.svtest \
+	tests/extensions/special-use/execute.svtest \
 	tests/extensions/vnd.dovecot/debug/execute.svtest \
 	tests/extensions/vnd.dovecot/environment/basic.svtest \
 	tests/extensions/vnd.dovecot/environment/variables.svtest \

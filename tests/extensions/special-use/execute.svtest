@@ -1,0 +1,35 @@
+require "vnd.dovecot.testsuite";
+require "special-use";
+require "fileinto";
+
+test "Specialuse_exists - None exist" {
+	if specialuse_exists "\\Sent" {
+		test_fail "specialuse_exists confirms existence of unassigned special-use flag";
+	}
+}
+
+test "Specialuse_exists <MAILBOX> - None exist" {
+	if specialuse_exists "INBOX" "\\Sent" {
+		test_fail "specialuse_exists confirms existence of unassigned special-use flag";
+	}
+}
+
+test_mailbox_create "frop";
+test_mailbox_create "friep";
+
+test ":specialuse" {
+	test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+Subject: Frop 1
+
+Frop!
+.
+	;
+
+	fileinto :specialuse "\\Junk" "frop";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+}

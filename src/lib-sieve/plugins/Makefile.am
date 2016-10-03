@@ -25,6 +25,7 @@ SUBDIRS = \
 	index \
 	metadata \
 	mime \
+	special-use \
 	vnd.dovecot \
 	$(UNFINISHED)
 
