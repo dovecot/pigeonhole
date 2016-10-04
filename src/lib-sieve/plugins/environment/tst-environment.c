@@ -1,6 +1,9 @@
 /* Copyright (c) 2002-2016 Pigeonhole authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "str-sanitize.h"
+
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-stringlist.h"
@@ -199,6 +202,11 @@ static int tst_environment_operation_execute
 			return ret;
 	} else {
 		match = 0;
+
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+			"environment item `%s' not found",
+			str_sanitize(str_c(name), 128));
 	}
 
 	/* Set test result for subsequent conditional jump */
