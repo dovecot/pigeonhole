@@ -10,17 +10,12 @@ libsieve_util_la_DEPENDENCIES = $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
 libsieve_util_la_SOURCES = \
 	edit-mail.c \
 	rfc2822.c \
-	program-client-local.c \
-	program-client-remote.c \
-	program-client.c \
 	realpath.c \
 	strtrim.c
 
 headers = \
 	edit-mail.h \
 	rfc2822.h \
-	program-client-private.h \
-	program-client.h \
 	realpath.h \
 	strtrim.h
 
