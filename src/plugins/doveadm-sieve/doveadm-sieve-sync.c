@@ -326,7 +326,8 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 		sieve_storage_save_set_mtime(save_ctx, value->last_change);
 
 	ret = 0;
-	while (i_stream_read(input) > 0) {
+	while (input->stream_errno == 0 &&
+		!i_stream_is_eof(input)) {
 		if (sieve_storage_save_continue(save_ctx) < 0) {
 			mail_storage_set_critical(storage,
 				"Failed to save sieve script '%s': %s", scriptname,
@@ -335,7 +336,6 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 			break;
 		}
 	}
-	i_assert(input->eof || ret < 0);
 	if (input->stream_errno != 0) {
 		errno = input->stream_errno;
 		mail_storage_set_critical(storage,
@@ -343,6 +343,7 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 			i_stream_get_name(input));
 		ret = -1;
 	}
+	i_assert(input->eof || ret < 0);
 	if (ret == 0 && sieve_storage_save_finish(save_ctx) < 0) {
 		mail_storage_set_critical(storage,
 			"Failed to save sieve script '%s': %s", scriptname,
