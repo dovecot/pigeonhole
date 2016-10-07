@@ -16,6 +16,7 @@ libsieve_util_la_SOURCES = \
 headers = \
 	edit-mail.h \
 	rfc2822.h \
+	realpath.h \
 	strtrim.h
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
