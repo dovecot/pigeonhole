@@ -535,7 +535,7 @@ struct sieve_extprogram *sieve_extprogram_create
 			program_client_local_create(path, args, &sprog->set);
 	} else {
 		sprog->program_client =
-			program_client_remote_create(path, args, &sprog->set, FALSE);
+			program_client_unix_create(path, args, &sprog->set, FALSE);
 	}
 
 	if ( svinst->username != NULL )
