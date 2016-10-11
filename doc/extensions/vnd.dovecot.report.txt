@@ -1,0 +1,54 @@
+Vnd.dovecot.report Extension
+
+Relevant specifications
+=======================
+
+  doc/rfc/spec-bosch-sieve-report.txt
+
+Description
+===========
+
+The "vnd.dovecot.report" extension provides the means to send Messaging Abuse
+Reporting Format (MARF) reports (RFC 5965). This format is intended for
+communications regarding email abuse and related issues.  The "report" command
+allows (partially) automating the exchange of these reports, which is
+particularly useful when the Sieve script is executed for an IMAP event
+(RFC 6785) that is triggered by direct user action.
+
+Configuration
+=============
+
+The "vnd.dovecot.report" extension is not available by default; it needs
+to be added to the sieve_extensions setting (or any of the alternatives).
+
+The "vnd.dovecot.report" extension has its own specific settings. The following
+settings can be configured for the vacation extension (default values are
+indicated):
+
+ sieve_report_from = postmaster
+   Specifies what address is used for the "From:" header field in reports.
+   The following values are supported for this setting:
+   
+     "postmaster"     - The postmaster_address configured for the LDA (default).
+     "sender"         - The sender address is used.
+     "recipient"      - The final recipient address is used.
+     "orig_recipient" - The original recipient is used.
+     "user_email"     - The user's primary address is used. This is
+                        configured with the "sieve_user_email" setting. If
+                        that setting is unconfigured, "user_mail" is equal to
+                        "recipient".
+     "<user@domain>"  - Redirected messages are always sent from user@domain.
+                        The angle brackets are mandatory. The null "<>" address
+                        not supported and interpreted as "postmaster".
+
+Invalid values for the settings above will make the Sieve interpreter log a
+warning and revert to the default values.
+
+Example
+=======
+
+plugin {
+  sieve = file:~/sieve;active=~/.dovecot.sieve
+
+  sieve_report_from = <reporter@example.com>
+}

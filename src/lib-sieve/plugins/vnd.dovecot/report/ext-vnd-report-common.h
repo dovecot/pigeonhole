@@ -5,10 +5,21 @@
 #define __EXT_REPORT_COMMON_H
 
 /*
+ * Extension configuration
+ */
+
+struct ext_report_config {
+	struct sieve_address_source report_from;
+};
+
+/*
  * Extension
  */
 
 extern const struct sieve_extension_def vnd_report_extension;
+
+bool ext_report_load
+	(const struct sieve_extension *ext, void **context);
 
 /*
  * Commands

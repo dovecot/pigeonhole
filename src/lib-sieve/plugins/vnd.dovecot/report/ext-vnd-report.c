@@ -33,6 +33,7 @@ static bool ext_report_validator_load
 
 const struct sieve_extension_def vnd_report_extension = {
 	.name = "vnd.dovecot.report",
+	.load = ext_report_load,
 	.validator_load = ext_report_validator_load,
 	SIEVE_EXT_DEFINE_OPERATION(report_operation)
 };
