@@ -291,6 +291,7 @@ static bool cmd_report_operation_dump
 static int cmd_report_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct act_report_data *act;
 	string_t *fbtype, *message, *to_address;
 	const char *norm_address, *feedback_type, *error;
@@ -378,7 +379,7 @@ static int cmd_report_operation_execute
 	act->to_address = p_strdup(pool, norm_address);
 
 	if ( sieve_result_add_action(renv,
-		NULL, &act_report, NULL, (void *) act, 0, TRUE) < 0 )
+		this_ext, &act_report, NULL, (void *) act, 0, TRUE) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;
@@ -445,18 +446,20 @@ static bool _contains_8bit(const char *msg)
 
 static int act_report_send
 (const struct sieve_action_exec_env *aenv,
+	const struct ext_report_config *config,
 	const struct act_report_data *act)
 {
 	struct sieve_instance *svinst = aenv->svinst;
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
+	struct sieve_address_source report_from = config->report_from;
 	struct sieve_smtp_context *sctx;
 	struct istream *input;
 	struct ostream *output;
 	string_t *msg;
 	const char *const *headers;
-	const char *outmsgid, *boundary, *error, *subject;
+	const char *outmsgid, *boundary, *error, *subject, *from;
 	int ret;
 
 	/* Just to be sure */
@@ -479,6 +482,18 @@ static int act_report_send
 		subject = "Report: (message without subject)";
 	}
 
+	/* Determine from address */
+	if ( report_from.type == SIEVE_ADDRESS_SOURCE_POSTMASTER ) {
+		report_from.type = SIEVE_ADDRESS_SOURCE_DEFAULT;
+		report_from.address = NULL;
+	}
+	if ( (ret=sieve_address_source_get_address
+		(&report_from, svinst, senv, msgctx,
+			aenv->flags, &from)) <= 0 || from == NULL || *from == '\0') {
+		from = t_strdup_printf
+			("Postmaster <%s>", senv->postmaster_address);
+	}
+
 	/* Start message */
 	sctx = sieve_smtp_start_single
 		(senv, act->to_address, NULL, &output);
@@ -492,11 +507,8 @@ static int act_report_send
 	rfc2822_header_write(msg, "Message-ID", outmsgid);
 	rfc2822_header_write(msg, "Date", message_date_create(ioloop_time));
 
-	rfc2822_header_printf(msg, "From",
-		"Postmaster <%s>", senv->postmaster_address);
-
-	rfc2822_header_printf(msg, "To",
-		"<%s>", act->to_address);
+	rfc2822_header_write(msg, "From", from);
+	rfc2822_header_printf(msg, "To", "<%s>", act->to_address);
 
 	if ( _contains_8bit(subject) )
 		rfc2822_header_utf8_printf(msg, "Subject", "%s", subject);
@@ -650,12 +662,15 @@ static int act_report_commit
 	void *tr_context ATTR_UNUSED,
 	bool *keep ATTR_UNUSED)
 {
+	const struct sieve_extension *ext = action->ext;
+	const struct ext_report_config *config =
+		(const struct ext_report_config *) ext->context;
 	const struct act_report_data *act =
 		(const struct act_report_data *) action->context;
 	int ret;
 
 	T_BEGIN {
-		ret = act_report_send(aenv, act);
+		ret = act_report_send(aenv, config, act);
 	} T_END;
 
 	if ( ret == SIEVE_EXEC_TEMP_FAILURE )

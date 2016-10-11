@@ -3,6 +3,7 @@ require "vnd.dovecot.report";
 require "relational";
 require "comparator-i;ascii-numeric";
 require "body";
+require "variables";
 
 /*
  * Simple test
@@ -68,3 +69,168 @@ test "Simple - :headers_only" {
 		test_fail "report contains message body";
 	}
 }
+
+/*
+ * Configuration
+ */
+
+set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+/* default */
+
+test_set "message" "${message}";
+test_set "envelope.from" "from@example.com";
+test_set "envelope.to" "to@example.com";
+test_set "envelope.orig_to" "orig_to@example.com";
+
+test_result_reset;
+
+test "Configuration - from default" {
+	report "abuse" "This message is spam!" "abuse@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not address :localpart "from" "postmaster" {
+		test_fail "not sent from postmaster";
+	}
+}
+
+/* from sender */
+
+test_set "message" "${message}";
+test_set "envelope.from" "from@example.com";
+test_set "envelope.to" "to@example.com";
+test_set "envelope.orig_to" "orig_to@example.com";
+
+test_config_set "sieve_report_from" "sender";
+test_config_reload :extension "vnd.dovecot.report";
+test_result_reset;
+
+test "Configuration - from sender" {
+	report "abuse" "This message is spam!" "abuse@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not address :localpart "from" "from" {
+		test_fail "not sent from sender";
+	}
+}
+
+/* from recipient */
+
+test_set "message" "${message}";
+test_set "envelope.from" "from@example.com";
+test_set "envelope.to" "to@example.com";
+test_set "envelope.orig_to" "orig_to@example.com";
+
+test_config_set "sieve_report_from" "recipient";
+test_config_reload :extension "vnd.dovecot.report";
+test_result_reset;
+
+test "Configuration - from recipient" {
+	report "abuse" "This message is spam!" "abuse@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not address :localpart "from" "to" {
+		test_fail "not sent from recipient";
+	}
+}
+
+/* from original recipient */
+
+test_set "message" "${message}";
+test_set "envelope.from" "from@example.com";
+test_set "envelope.to" "to@example.com";
+test_set "envelope.orig_to" "orig_to@example.com";
+
+test_config_set "sieve_report_from" "orig_recipient";
+test_config_reload :extension "vnd.dovecot.report";
+test_result_reset;
+
+test "Configuration - from original recipient" {
+	report "abuse" "This message is spam!" "abuse@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not address :localpart "from" "orig_to" {
+		test_fail "not sent from original recipient";
+	}
+}
+
+/* from user email */
+
+test_set "message" "${message}";
+test_set "envelope.from" "from@example.com";
+test_set "envelope.to" "to@example.com";
+test_set "envelope.orig_to" "orig_to@example.com";
+
+test_config_set "sieve_report_from" "user_email";
+test_config_set "sieve_user_email" "user@example.com";
+test_config_reload;
+test_config_reload :extension "vnd.dovecot.report";
+test_result_reset;
+
+test "Configuration - from user email" {
+	report "abuse" "This message is spam!" "abuse@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not address :localpart "from" "user" {
+		test_fail "not sent from user email";
+	}
+}
+
+/* explicit */
+
+test_set "message" "${message}";
+test_set "envelope.from" "from@example.com";
+test_set "envelope.to" "to@example.com";
+test_set "envelope.orig_to" "orig_to@example.com";
+
+test_config_set "sieve_report_from" "<frop@example.com>";
+test_config_reload :extension "vnd.dovecot.report";
+test_result_reset;
+
+test "Configuration - explicit" {
+	report "abuse" "This message is spam!" "abuse@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not address :localpart "from" "frop" {
+		test_fail "not sent from explicit address";
+	}
+}
+
+

@@ -6,8 +6,24 @@
 #include "rfc822-parser.h"
 
 #include "sieve-common.h"
+#include "sieve-extensions.h"
 
 #include "ext-vnd-report-common.h"
+
+bool ext_report_load
+(const struct sieve_extension *ext, void **context)
+{
+	struct sieve_instance *svinst = ext->svinst;
+	struct ext_report_config *config;
+
+	config = p_new(svinst->pool, struct ext_report_config, 1);
+
+	(void)sieve_address_source_parse_from_setting(svinst,
+		svinst->pool, "sieve_report_from", &config->report_from);
+
+	*context = (void *) config;
+	return TRUE;
+}
 
 const char *
 ext_vnd_report_parse_feedback_type(const char *feedback_type)
