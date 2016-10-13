@@ -526,8 +526,11 @@ struct sieve_extprogram *sieve_extprogram_create
 	sprog->set.client_connect_timeout_msecs =
 		SIEVE_EXTPROGRAMS_CONNECT_TIMEOUT_MSECS;
 	sprog->set.input_idle_timeout_secs = ext_config->execute_timeout;
-	sprog->set.uid = senv->user->uid;
-	sprog->set.gid = senv->user->gid;
+	restrict_access_init(&sprog->set.restrict_set);
+	if (senv->user->uid != 0)
+		sprog->set.restrict_set.uid = senv->user->uid;
+	if (senv->user->gid != 0)
+		sprog->set.restrict_set.gid = senv->user->gid;
 	sprog->set.debug = svinst->debug;
 
 	if ( fork ) {
