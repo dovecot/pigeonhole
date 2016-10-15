@@ -410,7 +410,7 @@ static int lda_sieve_execute_scripts
 	bool debug = srctx->mdctx->dest_user->mail_debug;
 	struct sieve_script *last_script = NULL;
 	bool user_script, discard_script;
-	bool more = TRUE, compile_error = FALSE;
+	bool compile_error = FALSE;
 	enum sieve_error error;
 	unsigned int i;
 	int ret;
@@ -425,23 +425,24 @@ static int lda_sieve_execute_scripts
 	/* Execute scripts */
 
 	i = 0;
-	while ( more ) {
+	discard_script = FALSE;
+	for (;;) {
 		struct sieve_binary *sbin = NULL;
 		struct sieve_script *script;
 		enum sieve_compile_flags cpflags = 0;
 		enum sieve_execute_flags exflags = 0;
+		bool more;
 
-		if ( i < srctx->script_count ) {
+		if ( !discard_script ) {
 			/* normal script sequence */
+			i_assert( i < srctx->script_count );
 			script = srctx->scripts[i];
 			i++;
 			user_script = ( script == srctx->user_script );
-			discard_script = FALSE;
 		} else {
 			/* discard script */
 			script = srctx->discard_script;
 			user_script = FALSE;
-			discard_script = TRUE;
 		}
 
 		i_assert( script != NULL );
@@ -520,7 +521,6 @@ static int lda_sieve_execute_scripts
 				} else {
 					sieve_multiscript_run_discard(mscript, sbin,
 						exec_ehandler, action_ehandler, exflags);
-					i_assert(!more);
 				}
 				sieve_error_handler_unref(&action_ehandler);
 
@@ -533,11 +533,22 @@ static int lda_sieve_execute_scripts
 
 		sieve_close(&sbin);
 
-		if ( !discard_script && !more &&
-			sieve_multiscript_will_discard(mscript) &&
+		if ( discard_script ) {
+			/* Executed discard script, which is always final */
+			break;
+		} else if ( more ) {
+			/* The "keep" action is applied; execute next script */
+			i_assert( i <= srctx->script_count );
+			if ( i == srctx->script_count ) {
+				/* End of normal script sequence */
+				break;
+			}
+		} else if ( sieve_multiscript_will_discard(mscript) &&
 			srctx->discard_script != NULL ) {
-			i = srctx->script_count;
-			more = TRUE;
+			/* Mail is set to be discarded, but we have a discard script. */
+			discard_script = TRUE;
+		} else {
+			break;
 		}
 	}
 
