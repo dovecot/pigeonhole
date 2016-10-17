@@ -1326,8 +1326,10 @@ static int sieve_result_transaction_commit_or_rollback
 
 	if ( *implicit_keep && keep != NULL ) *keep = TRUE;
 
-	if ( commit_status == SIEVE_EXEC_OK )
-		result->executed_delivery = seen_delivery;
+	if ( commit_status == SIEVE_EXEC_OK ) {
+		result->executed_delivery =
+			result->executed_delivery || seen_delivery;
+	}
 
 	return commit_status;
 }
