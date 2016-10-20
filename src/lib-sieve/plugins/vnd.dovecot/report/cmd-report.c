@@ -459,7 +459,7 @@ static int act_report_send
 	struct ostream *output;
 	string_t *msg;
 	const char *const *headers;
-	const char *outmsgid, *boundary, *error, *subject, *from;
+	const char *outmsgid, *boundary, *error, *subject, *from, *user;
 	int ret;
 
 	/* Just to be sure */
@@ -571,6 +571,15 @@ static int act_report_send
 			rfc2822_header_printf(msg,
 				"Original-Rcpt-To", "<%s>", orig_recipient);
 		}
+	}
+	if (svinst->user_email != NULL)
+		user = sieve_address_to_string(svinst->user_email);
+	else if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0 ||
+		(user=sieve_message_get_orig_recipient(msgctx)) == NULL)
+		user = sieve_get_user_email(svinst);
+	if (user != NULL) {
+		rfc2822_header_printf(msg,
+			"Dovecot-Reporting-User", "<%s>", user);
 	}
 	str_append(msg, "\r\n");
 

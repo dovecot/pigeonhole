@@ -233,4 +233,37 @@ test "Configuration - explicit" {
 	}
 }
 
+/*
+ * Reporting-User
+ */
 
+/* sieve_user_email */
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test_set "envelope.orig_to" "orig_to@example.com";
+
+test_config_set "sieve_user_email" "newuser@example.com";
+test_config_reload;
+test_result_reset;
+
+test "Reporting-User - sieve_user_email" {
+	report "abuse" "This message is spam!" "abuse@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not body :raw :contains "Dovecot-Reporting-User: <newuser@example.com>" {
+		test_fail "Reporting-User field is wrong.";
+	}
+}
