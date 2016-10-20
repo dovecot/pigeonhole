@@ -232,13 +232,49 @@ static bool sieve_code_dumper_print_operation
 	return FALSE;
 }
 
+static bool sieve_code_dumper_print_extension
+(struct sieve_code_dumper *cdumper)
+{
+	struct sieve_dumptime_env *denv = cdumper->dumpenv;
+	sieve_size_t *address	= &(denv->offset);
+	struct sieve_binary_block *sblock = denv->sblock;
+	unsigned int code = 0, deferred;
+	const struct sieve_extension *ext;
+
+	sieve_code_mark(denv);
+
+	if ( !sieve_binary_read_extension
+			(sblock, address, &code, &ext) ||
+		!sieve_binary_read_byte
+			(sblock, address, &deferred) ) {
+		return FALSE;
+	}
+
+	if ( ext->def == NULL) {
+		sieve_code_dumpf(denv, "[undefined]");
+
+	} else {
+		sieve_code_dumpf(denv, "%s%s",
+			sieve_extension_name(ext),
+			(deferred > 0 ? " (deferred)" : ""));
+
+		if (ext->def->code_dump != NULL ) {
+			sieve_code_descend(denv);
+			if ( !ext->def->code_dump(ext, denv, address) )
+				return FALSE;
+			sieve_code_ascend(denv);
+		}
+	}
+	return TRUE;
+}
+
 void sieve_code_dumper_run(struct sieve_code_dumper *cdumper)
 {
 	struct sieve_dumptime_env *denv = cdumper->dumpenv;
 	struct sieve_binary *sbin = denv->sbin;
 	struct sieve_binary_block *sblock = denv->sblock;
 	unsigned int debug_block_id, ext_count;
-	bool success = TRUE;
+	bool success;
 	sieve_size_t *address;
 
 	denv->offset = 0;
@@ -273,44 +309,17 @@ void sieve_code_dumper_run(struct sieve_code_dumper *cdumper)
 	/* Load and dump extensions listed in code */
 	sieve_code_mark(denv);
 
+	success = TRUE;
 	if ( sieve_binary_read_unsigned(sblock, address, &ext_count) ) {
 		unsigned int i;
 
 		sieve_code_dumpf(denv, "EXTENSIONS [%d]:", ext_count);
 		sieve_code_descend(denv);
 
-		for ( i = 0; i < ext_count; i++ ) {
-			unsigned int code = 0, deferred;
-			const struct sieve_extension *ext;
-
+		for ( i = 0; success && (i < ext_count); i++ ) {
 			T_BEGIN {
-				sieve_code_mark(denv);
-
-				if ( !sieve_binary_read_extension
-						(sblock, address, &code, &ext) ||
-					!sieve_binary_read_byte
-						(sblock, address, &deferred) ) {
-					success = FALSE;
-					break;
-				}
-
-				if ( ext->def == NULL) {
-					sieve_code_dumpf(denv, "[undefined]");
-
-				} else {
-					sieve_code_dumpf(denv, "%s%s",
-						sieve_extension_name(ext),
-						(deferred > 0 ? " (deferred)" : ""));
-
-					if (ext->def->code_dump != NULL ) {
-						sieve_code_descend(denv);
-						if ( !ext->def->code_dump(ext, denv, address) ) {
-							success = FALSE;
-							break;
-						}
-						sieve_code_ascend(denv);
-					}
-				}
+				success = success &&
+					sieve_code_dumper_print_extension(cdumper);
 			} T_END;
 		}
 
