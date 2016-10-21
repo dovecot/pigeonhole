@@ -982,6 +982,9 @@ static int act_vacation_send
 	rfc2822_header_write(msg, "Auto-Submitted", "auto-replied (vacation)");
 	rfc2822_header_write(msg, "Precedence", "bulk");
 
+	/* Prevent older Microsoft products from replying to this message */
+	rfc2822_header_write(msg, "X-Auto-Response-Suppress", "All");
+
 	rfc2822_header_write(msg, "MIME-Version", "1.0");
 
 	if ( !ctx->mime ) {
@@ -1154,6 +1157,32 @@ static int act_vacation_commit
 				"discarding vacation response to precedence=%s message from <%s>",
 				*hdsp, str_sanitize(sender, 128));
 				return SIEVE_EXEC_OK;
+		}
+		hdsp++;
+	}
+
+	/* Check for the (non-standard) Microsoft X-Auto-Response-Suppress header */
+	if ( mail_get_headers
+		(mail, "x-auto-response-suppress", &headers) < 0 ) {
+		return sieve_result_mail_error(aenv, mail,
+			"vacation action: "
+			"failed to read header field `x-auto-response-suppress'");
+	}
+	/* Theoretically multiple headers could exist, so lets make sure */
+	hdsp = headers;
+	while ( *hdsp != NULL ) {
+		const char *const *flags = t_strsplit(*hdsp, ",");
+		while ( *flags != NULL ) {
+			const char *flag = t_str_trim(*flags, " \t");
+			if ( strcasecmp(flag, "All") == 0 ||
+				strcasecmp(flag, "OOF") == 0 ) {
+				sieve_result_global_log(aenv,
+					"discarding vacation response to message from <%s> "
+					"(`%s' flag found in x-auto-response-suppress header)",
+					str_sanitize(sender, 128), flag);
+					return SIEVE_EXEC_OK;
+			}
+			flags++;
 		}
 		hdsp++;
 	}
