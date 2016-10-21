@@ -15,6 +15,7 @@ enum managesieve_client_workarounds {
 struct managesieve_settings {
 	bool mail_debug;
 	bool verbose_proctitle;
+	const char *rawlog_dir;
 
 	/* managesieve: */
 	unsigned int managesieve_max_line_length;
