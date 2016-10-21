@@ -10,6 +10,7 @@
 #include "istream.h"
 #include "ostream.h"
 #include "iostream.h"
+#include "iostream-rawlog.h"
 #include "var-expand.h"
 #include "master-service.h"
 #include "mail-storage-service.h"
@@ -152,8 +153,6 @@ struct client *client_create
 
 	client->io = io_add_istream(client->input, client_input, client);
 	client->last_input = ioloop_time;
-	client->parser = managesieve_parser_create
-		(client->input, set->managesieve_max_line_length);
 	client->to_idle = timeout_add
 		(CLIENT_IDLE_TIMEOUT_MSECS, client_idle_timeout, client);
 
@@ -161,6 +160,14 @@ struct client *client_create
 		pool_alloconly_create(MEMPOOL_GROWING"client command", 1024*12);
 	client->cmd.client = client;
 	client->user = user;
+
+	if (set->rawlog_dir[0] != '\0') {
+		(void)iostream_rawlog_create(set->rawlog_dir, &client->input,
+						   &client->output);
+	}
+
+	client->parser = managesieve_parser_create
+		(client->input, set->managesieve_max_line_length);
 
 	client->svinst = svinst;
 	client->storage = storage;

@@ -65,6 +65,7 @@ struct service_settings managesieve_settings_service_settings = {
 static struct setting_define managesieve_setting_defines[] = {
 	DEF(SET_BOOL, mail_debug),
 	DEF(SET_BOOL, verbose_proctitle),
+	DEF(SET_STR_VARS, rawlog_dir),
 
 	DEF(SET_UINT, managesieve_max_line_length),
 	DEF(SET_STR, managesieve_implementation_string),
@@ -79,6 +80,7 @@ static struct setting_define managesieve_setting_defines[] = {
 static struct managesieve_settings managesieve_default_settings = {
 	.mail_debug = FALSE,
 	.verbose_proctitle = FALSE,
+	.rawlog_dir = "",
 
 	/* RFC-2683 recommends at least 8000 bytes. Some clients however don't
 	   break large message sets to multiple commands, so we're pretty
