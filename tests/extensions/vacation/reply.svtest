@@ -147,6 +147,99 @@ test "No reply to auto-submitted mail" {
 }
 
 /*
+ * No reply to Microsoft X-Auto-Response-Suppress - All
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: spam@example.com
+To: stephan@example.com
+X-Auto-Response-Suppress: All
+Subject: Frop!
+
+Frop!
+.
+;
+
+test_set "envelope.from" "spam@example.com";
+test_set "envelope.to" "stephan@example.com";
+
+test "No reply to Microsoft X-Auto-Response-Suppress - All" {
+	vacation "I am gone";
+
+	if not test_result_execute {
+		test_fail "failed to execute vacation";
+	}
+
+	if test_message :smtp 0 {
+		test_fail "vacation not supposed to send message";
+	}
+}
+
+/*
+ * No reply to Microsoft X-Auto-Response-Suppress - OOF
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: spam@example.com
+To: stephan@example.com
+X-Auto-Response-Suppress: OOF
+Subject: Frop!
+
+Frop!
+.
+;
+
+test_set "envelope.from" "spam@example.com";
+test_set "envelope.to" "stephan@example.com";
+
+test "No reply to Microsoft X-Auto-Response-Suppress - OOF" {
+	vacation "I am gone";
+
+	if not test_result_execute {
+		test_fail "failed to execute vacation";
+	}
+
+	if test_message :smtp 0 {
+		test_fail "vacation not supposed to send message";
+	}
+}
+
+/*
+ * No reply to Microsoft X-Auto-Response-Suppress - DR,OOF,RN
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: spam@example.com
+To: stephan@example.com
+X-Auto-Response-Suppress: DR, OOF,	RN
+Subject: Frop!
+
+Frop!
+.
+;
+
+test_set "envelope.from" "spam@example.com";
+test_set "envelope.to" "stephan@example.com";
+
+test "No reply to Microsoft X-Auto-Response-Suppress - DR,OOF,RN" {
+	vacation "I am gone";
+
+	if not test_result_execute {
+		test_fail "failed to execute vacation";
+	}
+
+	if test_message :smtp 0 {
+		test_fail "vacation not supposed to send message";
+	}
+}
+
+/*
  * No reply to system address
  */
 
@@ -252,6 +345,7 @@ To: stephan@example.com
 Subject: Frop!
 Auto-submitted: no
 Precedence: normal
+X-Auto-Response-Suppress: None
 
 Frop!
 .
