@@ -69,3 +69,5 @@ noinst_HEADERS = \
 	testsuite-mailstore.h \
 	testsuite-binary.h
 
+clean-local:
+	-rm -rf test.out.*
