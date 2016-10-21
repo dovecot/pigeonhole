@@ -3,8 +3,6 @@
 
 #include "lib.h"
 
-#include "strtrim.h"
-
 #include "sieve-common.h"
 #include "sieve-limits.h"
 #include "sieve-error.h"
@@ -124,7 +122,7 @@ bool sieve_setting_get_bool_value
 	if ( str_value == NULL )
 		return FALSE;
 
-	str_value = ph_t_str_trim(str_value, "\t ");
+	str_value = t_str_trim(str_value, "\t ");
 	if ( *str_value == '\0' )
 		return FALSE;
 
@@ -156,7 +154,7 @@ bool sieve_setting_get_duration_value
 	if ( str_value == NULL )
 		return FALSE;
 
-	str_value = ph_t_str_trim(str_value, "\t ");
+	str_value = t_str_trim(str_value, "\t ");
 	if ( *str_value == '\0' )
 		return FALSE;
 

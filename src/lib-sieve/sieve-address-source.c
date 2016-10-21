@@ -3,8 +3,6 @@
 
 #include "lib.h"
 
-#include "strtrim.h"
-
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-settings.h"
@@ -21,7 +19,7 @@ bool sieve_address_source_parse
 
 	memset(asrc, 0, sizeof(*asrc));
 
-	value = ph_t_str_trim(value, "\t ");
+	value = t_str_trim(value, "\t ");
 	value = t_str_lcase(value);
 	val_len = strlen(value);
 	if ( val_len > 0 ) {

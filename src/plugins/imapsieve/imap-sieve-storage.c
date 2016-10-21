@@ -14,8 +14,6 @@
 #include "imap-match.h"
 #include "imap-util.h"
 
-#include "strtrim.h"
-
 #include "imap-sieve.h"
 #include "imap-sieve-storage.h"
 
@@ -839,13 +837,13 @@ imap_sieve_mailbox_rules_init(struct mail_user *user)
 		mbrule = p_new(user->pool,
 			struct imap_sieve_mailbox_rule, 1);
 		mbrule->index = i;
-		mbrule->mailbox = ph_p_str_trim(user->pool, setval, "\t ");
+		mbrule->mailbox = p_str_trim(user->pool, setval, "\t ");
 
 		str_truncate(identifier, id_len);
 		str_append(identifier, "_from");
 		setval = mail_user_plugin_getenv(user, str_c(identifier));
 		if (setval != NULL && *setval != '\0') {
-			mbrule->from = ph_p_str_trim(user->pool, setval, "\t ");
+			mbrule->from = p_str_trim(user->pool, setval, "\t ");
 			if (strcmp(mbrule->from, "*") == 0)
 				mbrule->from = NULL;
 		}
