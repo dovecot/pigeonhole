@@ -1,4 +1,4 @@
-v0.4.16 21-10-2016 Stephan Bosch <stephan@rename-it.nl>
+v0.4.16 30-10-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	* Part of the Sieve extprograms implementation was moved to Dovecot, which
 	  means that this release depends on Dovecot v2.2.26+.
