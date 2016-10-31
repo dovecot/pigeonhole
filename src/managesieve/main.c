@@ -129,6 +129,7 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	struct mail_user *mail_user;
 	struct client *client;
 	struct managesieve_settings *set;
+	const char *error;
 
 	if (mail_storage_service_lookup_next(storage_service, input,
 					     &user, &mail_user, error_r) <= 0)
@@ -139,8 +140,13 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	if (set->verbose_proctitle)
 		verbose_proctitle = TRUE;
 
-	settings_var_expand(&managesieve_setting_parser_info, set, mail_user->pool,
-			    mail_user_var_expand_table(mail_user));
+	if (settings_var_expand(&managesieve_setting_parser_info, set, mail_user->pool,
+				mail_user_var_expand_table(mail_user), &error) <= 0) {
+		i_error("Failed to expand settings: %s", error);
+		mail_storage_service_user_free(&user);
+		mail_user_unref(&mail_user);
+		return -1;
+	}
 
 	client = client_create
 		(fd_in, fd_out, input->session_id, mail_user, user, set);

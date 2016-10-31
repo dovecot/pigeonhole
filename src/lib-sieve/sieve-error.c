@@ -1300,13 +1300,22 @@ static const char *ATTR_FORMAT(3, 0) _expand_message
 	struct var_expand_table *table =
 		array_get_modifiable(&ehandler->table, &count);
 	string_t *str = t_str_new(256);
+	const char *error;
+	static bool expand_error_logged = FALSE;
 
 	/* Fill in substitution items */
 	table[0].value = t_strdup_vprintf(fmt, args);
 	table[1].value = location;
 
 	/* Expand variables */
-	var_expand(str, ehandler->format, table);
+	if (var_expand(str, ehandler->format, table, &error) <= 0 &&
+	    !expand_error_logged) {
+		/* Log the error only once. This also prevents recursively
+		   looping back here. */
+		expand_error_logged = TRUE;
+		sieve_sys_error(_ehandler->svinst,
+			"Failed to expand error message: %s", error);
+	}
 
 	return str_c(str);
 }

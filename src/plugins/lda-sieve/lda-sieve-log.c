@@ -26,12 +26,16 @@ static const char *ATTR_FORMAT(2, 0) lda_sieve_log_expand_message
 	struct mail_deliver_context *mdctx = ehandler->mdctx;
 	const struct var_expand_table *table;
 	string_t *str;
+	const char *error;
 
 	table = mail_deliver_ctx_get_log_var_expand_table
 		(mdctx, t_strdup_vprintf(fmt, args));
 
 	str = t_str_new(256);
-	var_expand(str, mdctx->set->deliver_log_format, table);
+	if (var_expand(str, mdctx->set->deliver_log_format, table, &error) <= 0) {
+		i_error("Failed to expand deliver_log_format=%s: %s",
+			mdctx->set->deliver_log_format, error);
+	}
 	return str_c(str);
 }
 

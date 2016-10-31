@@ -206,6 +206,7 @@ static const char *client_stats(struct client *client)
 	};
 	struct var_expand_table *tab;
 	string_t *str;
+	const char *error;
 
 	tab = t_malloc_no0(sizeof(static_tab));
 	memcpy(tab, static_tab, sizeof(static_tab));
@@ -223,7 +224,10 @@ static const char *client_stats(struct client *client)
 	tab[10].value = client->session_id;
 
 	str = t_str_new(128);
-	var_expand(str, client->set->managesieve_logout_format, tab);
+	if (var_expand(str, client->set->managesieve_logout_format, tab, &error) <= 0) {
+		i_error("Failed to expand managesieve_logout_format=%s: %s",
+			client->set->managesieve_logout_format, error);
+	}
 	return str_c(str);
 }
 
