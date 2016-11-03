@@ -1266,8 +1266,9 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	struct sieve_storage *storage = &lstorage->storage;
 	const struct sieve_ldap_storage_settings *set = &lstorage->set;
 	struct sieve_ldap_script_lookup_request *request;
-	const struct var_expand_table *vars;
+	const struct var_expand_table *tab;
 	char **attr_names;
+	const char *error;
 	string_t *str;
 
 	pool_t pool = pool_alloconly_create
@@ -1275,17 +1276,28 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	request = p_new(pool, struct sieve_ldap_script_lookup_request, 1);
 	request->request.pool = pool;
 
-	vars = db_ldap_get_var_expand_table(conn, name);
+	tab = db_ldap_get_var_expand_table(conn, name);
 
 	str = t_str_new(512);
-	var_expand(str, set->base, vars);
+	if (var_expand(str, set->base, tab, &error) <= 0) {
+		sieve_storage_sys_error(storage, "db: "
+			"Failed to expand base=%s: %s",
+			set->base, error);
+		return -1;
+	}
 	request->request.base = p_strdup(pool, str_c(str));
 
 	attr_names = p_new(pool, char *, 3);
 	attr_names[0] = p_strdup(pool, set->sieve_ldap_mod_attr);
 
 	str_truncate(str, 0);
-	var_expand(str, set->sieve_ldap_filter, vars);
+	if (var_expand(str, set->sieve_ldap_filter, tab, &error) <= 0) {
+		sieve_storage_sys_error(storage, "db: "
+			"Failed to expand sieve_ldap_filter=%s: %s",
+			set->sieve_ldap_filter, error);
+		return -1;
+	}
+
 	request->request.scope = lstorage->set.ldap_scope;
 	request->request.filter = p_strdup(pool, str_c(str));
 	request->request.attributes = attr_names;
