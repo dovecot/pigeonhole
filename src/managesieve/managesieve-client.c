@@ -190,41 +190,26 @@ struct client *client_create
 
 static const char *client_stats(struct client *client)
 {
-	static struct var_expand_table static_tab[] = {
-		{ 't', NULL, "put_bytes" },
-		{ 'p', NULL, "put_count" },
-		{ 'b', NULL, "get_bytes" },
-		{ 'g', NULL, "get_count" },
-		{ 'v', NULL, "check_bytes" },
-		{ 'c', NULL, "check_count" },
-		{ 'd', NULL, "deleted_count" },
-		{ 'r', NULL, "renamed_count" },
-		{ 'i', NULL, "input" },
-		{ 'o', NULL, "output" },
-		{ '\0', NULL, "session" },
+	struct var_expand_table tab[] = {
+		{ 't', dec2str(client->put_bytes), "put_bytes" },
+		{ 'p', dec2str(client->put_count), "put_count" },
+		{ 'b', dec2str(client->get_bytes), "get_bytes" },
+		{ 'g', dec2str(client->get_count), "get_count" },
+		{ 'v', dec2str(client->check_bytes), "check_bytes" },
+		{ 'c', dec2str(client->check_count), "check_count" },
+		{ 'd', dec2str(client->deleted_count), "deleted_count" },
+		{ 'r', dec2str(client->renamed_count), "renamed_count" },
+		{ 'i', dec2str(i_stream_get_absolute_offset(client->input)), "input" },
+		{ 'o', dec2str(client->output->offset), "output" },
+		{ '\0', client->session_id, "session" },
 		{ '\0', NULL, NULL }
 	};
-	struct var_expand_table *tab;
 	string_t *str;
 	const char *error;
 
-	tab = t_malloc_no0(sizeof(static_tab));
-	memcpy(tab, static_tab, sizeof(static_tab));
-
-	tab[0].value = dec2str(client->put_bytes);
-	tab[1].value = dec2str(client->put_count);
-	tab[2].value = dec2str(client->get_bytes);
-	tab[3].value = dec2str(client->get_count);
-	tab[4].value = dec2str(client->check_bytes);
-	tab[5].value = dec2str(client->check_count);
-	tab[6].value = dec2str(client->deleted_count);
-	tab[7].value = dec2str(client->renamed_count);
-	tab[8].value = dec2str(i_stream_get_absolute_offset(client->input));
-	tab[9].value = dec2str(client->output->offset);
-	tab[10].value = client->session_id;
-
 	str = t_str_new(128);
-	if (var_expand(str, client->set->managesieve_logout_format, tab, &error) <= 0) {
+	if (var_expand(str, client->set->managesieve_logout_format,
+		tab, &error) <= 0) {
 		i_error("Failed to expand managesieve_logout_format=%s: %s",
 			client->set->managesieve_logout_format, error);
 	}
