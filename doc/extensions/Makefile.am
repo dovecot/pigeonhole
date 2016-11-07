@@ -3,7 +3,9 @@ docfiles = \
 	editheader.txt \
 	include.txt \
 	spamtest-virustest.txt \
-	vacation.txt
+	vacation.txt \
+	vnd.dovecot.environment.txt \
+	vnd.dovecot.report.txt
 
 if BUILD_DOCS
 extensions_docdir = $(sieve_docdir)/extensions

@@ -1,4 +1,5 @@
 docfiles = \
+	imapsieve.txt \
 	sieve_extprograms.txt
 
 if BUILD_DOCS

@@ -12,6 +12,7 @@ docfiles = \
 	ihave.rfc5463.txt \
 	imail.rfc2822.txt \
 	imap4flags.rfc5232.txt \
+	imapsieve.rfc6785.txt \
 	include.rfc6609.txt \
 	mailbox-metadata.rfc5490.txt \
 	mailto.rfc2368.txt \
@@ -23,14 +24,15 @@ docfiles = \
 	sieve.rfc5228.txt \
 	spamvirustest.rfc5235.txt \
 	spec-bosch-sieve-debug.txt \
+	spec-bosch-sieve-dovecot-environment.txt \
 	spec-bosch-sieve-extprograms.txt \
+	spec-bosch-sieve-report.txt \
 	subaddress.rfc5233.txt \
 	uri.rfc3986.txt \
 	utf-8.rfc3629.txt \
 	vacation.rfc5230.txt \
 	vacation-seconds.rfc6131.txt \
 	variables.rfc5229.txt
-
 
 EXTRA_DIST = \
 	$(docfiles)
