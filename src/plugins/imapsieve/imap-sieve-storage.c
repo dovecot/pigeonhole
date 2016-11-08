@@ -520,7 +520,8 @@ imap_sieve_mailbox_transaction_begin(struct mailbox *box,
 	/* commence parent transaction */
 	t = lbox->super.transaction_begin(box, flags);
 
-	if (isuser == NULL || isuser->sieve_active)
+	if (isuser == NULL || isuser->sieve_active ||
+		isuser->cur_cmd == IMAP_SIEVE_CMD_NONE)
 		return t;
 
 	i_assert(isuser->client != NULL);
