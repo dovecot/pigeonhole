@@ -314,7 +314,6 @@ imap_sieve_mail_update_keywords(struct mail *_mail,
 	enum modify_type modify_type, struct mail_keywords *keywords)
 {
 	struct mail_private *mail = (struct mail_private *)_mail;
-	struct mail_user *user = _mail->box->storage->user;
 	struct imap_sieve_mail *ismail = IMAP_SIEVE_MAIL_CONTEXT(mail);
 	const char *const *old_keywords, *const *new_keywords;
 	unsigned int i, j;
@@ -325,8 +324,6 @@ imap_sieve_mail_update_keywords(struct mail *_mail,
 
 	if (ismail->flags == NULL)
 		ismail->flags = str_new(default_pool, 64);
-
-	imap_sieve_debug(user, "Mail set keywords");
 
 	/* Removed flags */
 	for (i = 0; old_keywords[i] != NULL; i++) {
