@@ -119,8 +119,8 @@ static const char *sieve_storage_get_relative_link_path
 	/* Add trailing '/' when link path is not empty
 	 */
 	pathlen = strlen(link_path);
-    if ( pathlen != 0 && link_path[pathlen-1] != '/')
-        return t_strconcat(link_path, "/", NULL);
+	if ( pathlen != 0 && link_path[pathlen-1] != '/')
+		return t_strconcat(link_path, "/", NULL);
 
 	return t_strdup(link_path);
 }
