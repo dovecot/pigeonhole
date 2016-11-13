@@ -700,8 +700,8 @@ int client_output(struct client *client)
 
 	client->last_output = ioloop_time;
     timeout_reset(client->to_idle);
-    if (client->to_idle_output != NULL)
-        timeout_reset(client->to_idle_output);
+	if (client->to_idle_output != NULL)
+		timeout_reset(client->to_idle_output);
 
 	if ((ret = o_stream_flush(client->output)) < 0) {
 		client_destroy(client, NULL);
