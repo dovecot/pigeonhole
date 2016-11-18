@@ -193,18 +193,20 @@ static int mcht_matches_match_key
 
 			} else {
 				const char *qp, *qend;
+				size_t slen;
 
 				/* No more wildcards; find the needle substring at the end of string */
 				debug_printf("next_wcard = NUL; must find needle at end\n");
 
 				/* Check if the value is still large enough */
-				if ( vend - str_len(section) < vp ) {
+				slen = str_len(section);
+				if ( (vp + slen) > vend ) {
 					debug_printf("  wont match: value is too short\n");
 					break;
 				}
 
 				/* Move value pointer to where the needle should be */
-				vp = PTR_OFFSET(vend, -str_len(section));
+				vp = vend - slen;
 
 				/* Record match values */
 				qend = vp;
@@ -312,7 +314,7 @@ static int mcht_matches_match_key
 
 				/* Determine what we are looking for */
 				needle = str_c(subsection);
-				nend = PTR_OFFSET(needle, str_len(subsection));
+				nend = needle + str_len(subsection);
 
 				debug_printf("  sub key:       '%s'\n", t_strdup_until(needle, nend));
 				debug_printf("  value remnant: '%s'\n", vp <= vend ? t_strdup_until(vp, vend) : "");
