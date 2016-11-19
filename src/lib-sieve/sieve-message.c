@@ -555,14 +555,18 @@ struct sieve_header_list *sieve_message_header_list_create
 static inline string_t *_header_right_trim(const char *raw)
 {
 	string_t *result;
-	int i;
+	const char *p, *pend;
 
-	for ( i = strlen(raw)-1; i >= 0; i-- ) {
-		if ( raw[i] != ' ' && raw[i] != '\t' ) break;
+	pend = raw + strlen(raw);
+	if (raw == pend) {
+		result = t_str_new(1);
+	} else {
+		for ( p = pend-1; p >= raw; p-- ) {
+			if ( *p != ' ' && *p != '\t' ) break;
+		}
+		result = t_str_new(p - raw + 1);
+		str_append_n(result, raw, p - raw + 1);
 	}
-
-	result = t_str_new(i+1);
-	str_append_n(result, raw, i + 1);
 	return result;
 }
 
