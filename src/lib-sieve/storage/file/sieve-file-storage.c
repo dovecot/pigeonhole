@@ -2,15 +2,13 @@
  */
 
 #include "lib.h"
-#include "abspath.h"
+#include "path-util.h"
 #include "home-expand.h"
 #include "ioloop.h"
 #include "mkdir-parents.h"
 #include "eacces-error.h"
 #include "unlink-old-files.h"
 #include "mail-storage-private.h"
-
-#include "realpath.h"
 
 #include "sieve.h"
 #include "sieve-common.h"
@@ -54,6 +52,7 @@ static int sieve_file_storage_stat
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct stat st;
+	const char *abspath, *error;
 
 	if ( lstat(path, &st) == 0 ) {
 		fstorage->lnk_st = st;
@@ -66,8 +65,14 @@ static int sieve_file_storage_stat
 
 	switch ( errno ) {
 	case ENOENT:
+		if (t_abspath(path, &abspath, &error) < 0) {
+			sieve_storage_set_critical(storage,
+				"t_abspath(%s) failed: %s", path, error);
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			break;
+		}
 		sieve_storage_sys_debug(storage,
-			"Storage path `%s' not found", t_abspath(path));
+			"Storage path `%s' not found", abspath);
 		sieve_storage_set_internal_error(storage); // should be overriden
 		*error_r = SIEVE_ERROR_NOT_FOUND;
 		break;
@@ -294,7 +299,7 @@ static int sieve_file_storage_init_common
 	ATTR_NULL(2, 3)
 {
 	struct sieve_storage *storage = &fstorage->storage;
-	const char *tmp_dir, *link_path, *active_fname, *storage_dir;
+	const char *tmp_dir, *link_path, *active_fname, *storage_dir, *error;
 	bool have_link = FALSE;
 	int ret;
 
@@ -333,11 +338,11 @@ static int sieve_file_storage_init_common
 			return -1;
 		}
 
-		if (t_realpath(active_dir, &active_dir) < 0) {
+		if (t_realpath(active_dir, &active_dir, &error) < 0) {
 			if (errno != ENOENT) {
 				sieve_storage_sys_error(storage,
-					"Failed to normalize active script directory (path=%s): %m",
-					active_dir);
+					"Failed to normalize active script directory (path=%s): %s",
+					active_dir, error);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			} 
@@ -455,10 +460,10 @@ static int sieve_file_storage_init_common
 		return -1;
 
 	if ( have_link ) {
-		if ( t_realpath(storage_path, &storage_path) < 0 ) {
+		if ( t_realpath(storage_path, &storage_path, &error) < 0 ) {
 			sieve_storage_sys_error(storage,
-				"Failed to normalize storage path (path=%s): %m",
-				storage_path);
+				"Failed to normalize storage path (path=%s): %s",
+				storage_path, error);
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}

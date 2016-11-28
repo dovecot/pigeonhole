@@ -7,7 +7,7 @@
 #include "env-util.h"
 #include "ostream.h"
 #include "hostpid.h"
-#include "abspath.h"
+#include "path-util.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 	const char *scriptfile, *dumpfile, *tracefile;
 	struct sieve_trace_config trace_config;
 	struct sieve_binary *sbin;
-	const char *sieve_dir;
+	const char *sieve_dir, *cwd, *error;
 	bool log_stdout = FALSE;
 	int ret, c;
 
@@ -133,8 +133,10 @@ int main(int argc, char **argv)
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
 	}
 
+	if (t_get_working_dir(&cwd, &error) < 0)
+		i_fatal("Failed to get working directory: %s", error);
 	/* Initialize mail user */
-	sieve_tool_set_homedir(sieve_tool, t_abspath(""));
+	sieve_tool_set_homedir(sieve_tool, cwd);
 
 	/* Initialize settings environment */
 	testsuite_settings_init();

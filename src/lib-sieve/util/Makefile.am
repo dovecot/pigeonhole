@@ -9,13 +9,11 @@ libsieve_util_la_DEPENDENCIES = $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
 
 libsieve_util_la_SOURCES = \
 	edit-mail.c \
-	rfc2822.c \
-	realpath.c
+	rfc2822.c
 
 headers = \
 	edit-mail.h \
-	rfc2822.h \
-	realpath.h
+	rfc2822.h
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 pkginc_lib_HEADERS = $(headers)

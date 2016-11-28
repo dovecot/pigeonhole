@@ -2,12 +2,10 @@
  */
 
 #include "lib.h"
-#include "abspath.h"
+#include "path-util.h"
 #include "ioloop.h"
 #include "hostpid.h"
 #include "file-copy.h"
-
-#include "realpath.h"
 
 #include "sieve-file-storage.h"
 
@@ -21,9 +19,10 @@ static int sieve_file_storage_active_read_link
 (struct sieve_file_storage *fstorage, const char **link_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
+	const char *error = NULL;
 	int ret;
 
-	ret = t_readlink(fstorage->active_path, link_r);
+	ret = t_readlink(fstorage->active_path, link_r, &error);
 
 	if ( ret < 0 ) {
 		*link_r = NULL;
@@ -49,8 +48,8 @@ static int sieve_file_storage_active_read_link
 
 		/* We do need to panic otherwise */
 		sieve_storage_set_critical(storage,
-			"Performing readlink() on active sieve symlink '%s' failed: %m",
-			fstorage->active_path);
+			"Performing t_readlink() on active sieve symlink '%s' failed: %s",
+			fstorage->active_path, error);
 		return -1;
 	}
 
@@ -95,11 +94,12 @@ static const char *sieve_file_storage_active_parse_link
 	}
 
 	/* Check whether the path is any good */
-	if ( t_normpath_to(scriptpath, link_dir, &scriptpath) < 0 ) {
+	const char *error = NULL;
+	if ( t_normpath_to(scriptpath, link_dir, &scriptpath, &error) < 0 ) {
 		sieve_storage_sys_warning(storage,
 			"Failed to check active Sieve script symlink %s: "
-			"Failed to normalize path (points to %s).",
-			fstorage->active_path, scriptpath);
+			"Failed to normalize path (points to %s): %s",
+			fstorage->active_path, scriptpath, error);
 		return NULL;
 	}
 	if ( strcmp(scriptpath, fstorage->path) != 0 ) {

@@ -3,7 +3,7 @@
 
 #include "lib.h"
 #include "mempool.h"
-#include "abspath.h"
+#include "path-util.h"
 #include "istream.h"
 #include "time-util.h"
 #include "eacces-error.h"
@@ -55,10 +55,20 @@ static void sieve_file_script_handle_error
 	const char *name, enum sieve_error *error_r)
 {
 	struct sieve_script *script = &fscript->script;
+	const char *abspath, *error;
 
 	switch ( errno ) {
 	case ENOENT:
-		sieve_script_sys_debug(script, "File `%s' not found", t_abspath(path));
+		if (t_abspath(path, &abspath, &error) < 0) {
+			sieve_script_set_error(script,
+				SIEVE_ERROR_TEMP_FAILURE,
+				"t_abspath(%s) failed: %s",
+				path, error);
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			break;
+		}
+		sieve_script_sys_debug(script, "File `%s' not found",
+				       abspath);
 		sieve_script_set_error(script,
 			SIEVE_ERROR_NOT_FOUND,
 			"Sieve script `%s' not found", name);

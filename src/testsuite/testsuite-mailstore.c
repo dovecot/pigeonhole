@@ -7,7 +7,7 @@
 #include "array.h"
 #include "strfuncs.h"
 #include "str-sanitize.h"
-#include "abspath.h"
+#include "path-util.h"
 #include "unlink-directory.h"
 #include "env-util.h"
 #include "mail-namespace.h"
@@ -57,7 +57,7 @@ void testsuite_mailstore_init(void)
 	struct mail_namespace *ns;
 	struct mail_namespace_settings *ns_set;
 	struct mail_storage_settings *mail_set;
-	const char *tmpdir, *error;
+	const char *tmpdir, *error, *cwd;
 
 	tmpdir = testsuite_tmp_dir_get();
 	testsuite_mailstore_location =
@@ -74,7 +74,9 @@ void testsuite_mailstore_init(void)
 	mail_user = mail_user_alloc("testsuite mail user",
 		mail_user_dovecot->set_info, mail_user_dovecot->unexpanded_set);
 	mail_user->autocreated = TRUE;
-	mail_user_set_home(mail_user, t_abspath(""));
+	if (t_get_working_dir(&cwd, &error) < 0)
+		i_fatal("Failed to get working directory: %s", error);
+	mail_user_set_home(mail_user, cwd);
 	if (mail_user_init(mail_user, &error) < 0)
 		i_fatal("Testsuite user initialization failed: %s", error);
 

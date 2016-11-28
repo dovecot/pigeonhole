@@ -6,7 +6,7 @@
 #include "ioloop.h"
 #include "istream.h"
 #include "ostream.h"
-#include "abspath.h"
+#include "path-util.h"
 #include "str.h"
 #include "base64.h"
 #include "process-title.h"
@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
 	struct master_login_settings login_set;
 	enum master_service_flags service_flags = 0;
 	enum mail_storage_service_flags storage_service_flags = 0;
-	const char *username = NULL;
+	const char *username = NULL, *error = NULL;
 	int c;
 
 	i_zero(&login_set);
@@ -314,9 +314,18 @@ int main(int argc, char *argv[])
 			main_stdio_run(username);
 		} T_END;
 	} else {
-		login_set.auth_socket_path = t_abspath("auth-master");
-		if (argv[optind] != NULL)
-			login_set.postlogin_socket_path = t_abspath(argv[optind]);
+		if (t_abspath("auth-master",
+			&login_set.auth_socket_path, &error) < 0) {
+			i_fatal("t_abspath(%s) failed: %s",
+				"auth-master", error);
+		}
+
+		if (argv[optind] != NULL && t_abspath(argv[optind],
+			&login_set.postlogin_socket_path, &error) < 0) {
+			i_fatal("t_abspath(%s) failed: %s",
+				argv[optind], error);
+		}
+
 		login_set.callback = login_client_connected;
 		login_set.failure_callback = login_client_failed;
 

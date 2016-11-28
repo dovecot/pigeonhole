@@ -9,7 +9,7 @@
 #include "str-sanitize.h"
 #include "strescape.h"
 #include "safe-mkstemp.h"
-#include "abspath.h"
+#include "path-util.h"
 #include "message-address.h"
 #include "mbox-from.h"
 #include "raw-storage.h"
@@ -153,11 +153,13 @@ static struct mail_raw *mail_raw_create
 {
 	struct mail_raw *mailr;
 	struct mailbox_header_lookup_ctx *headers_ctx;
-	const char *envelope_sender;
+	const char *envelope_sender, *error;
 	int ret;
 
 	if ( mailfile != NULL && *mailfile != '/' )
-		mailfile = t_abspath(mailfile);
+		if (t_abspath(mailfile, &mailfile, &error) < 0)
+			i_fatal("t_abspath(%s) failed: %s",
+				mailfile, error);
 
 	mailr = i_new(struct mail_raw, 1);
 
