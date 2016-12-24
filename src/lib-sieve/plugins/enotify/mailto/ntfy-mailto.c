@@ -484,7 +484,7 @@ static int ntfy_mailto_send
 		from_smtp = sieve_message_get_sender(nenv->msgctx);
 		if ( from_smtp == NULL ) {
 			/* "<>" */
-			memset(&env_from, 0, sizeof(env_from));
+			i_zero(&env_from);
 			env_from.type = SIEVE_ADDRESS_SOURCE_EXPLICIT;
 		}
 	}

@@ -86,11 +86,11 @@ static int filter_message
 	sieve_tool_get_envelope_data(mail, &recipient, &sender);
 
 	/* Initialize execution status */
-	memset(&estatus, 0, sizeof(estatus));
+	i_zero(&estatus);
 	senv->exec_status = &estatus;
 
 	/* Collect necessary message data */
-	memset(&msgdata, 0, sizeof(msgdata));
+	i_zero(&msgdata);
 	msgdata.mail = mail;
 	msgdata.return_path = sender;
 	msgdata.orig_envelope_to = recipient;
@@ -284,7 +284,7 @@ static int filter_mailbox
 
 	/* Initialize */
 
-	memset(&sfctx, 0, sizeof(sfctx));
+	i_zero(&sfctx);
 	sfctx.data = sfdata;
 
 	/* Create test stream */
@@ -554,14 +554,14 @@ int main(int argc, char **argv)
 	}
 
 	/* Compose script environment */
-	memset(&scriptenv, 0, sizeof(scriptenv));
+	i_zero(&scriptenv);
 	scriptenv.mailbox_autocreate = FALSE;
 	scriptenv.default_mailbox = dst_mailbox;
 	scriptenv.user = mail_user;
 	scriptenv.postmaster_address = "postmaster@example.com";
 
 	/* Compose filter context */
-	memset(&sfdata, 0, sizeof(sfdata));
+	i_zero(&sfdata);
 	sfdata.senv = &scriptenv;
 	sfdata.discard_action = discard_action;
 	sfdata.move_mailbox = move_box;

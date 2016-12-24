@@ -73,7 +73,7 @@ struct imap_sieve *imap_sieve_init(struct mail_user *user,
 
 	isieve->dup_ctx = duplicate_init(user);
 
-	memset(&svenv, 0, sizeof(svenv));
+	i_zero(&svenv);
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
 	svenv.hostname = lda_set->hostname;
@@ -687,7 +687,7 @@ int imap_sieve_run_mail
 	struct sieve_trace_log *trace_log;
 	int ret;
 
-	memset(&context, 0, sizeof(context));
+	i_zero(&context);
 	context.event.mailbox = isrun->mailbox;
 	context.event.cause = isrun->cause;
 	context.event.changed_flags = changed_flags;
@@ -701,13 +701,13 @@ int imap_sieve_run_mail
 			("%s.%s.%u", isieve->user->username,
 				mailbox_get_vname(isrun->mailbox), mail->uid);
 		if ( sieve_trace_log_open(svinst, tr_label, &trace_log) < 0 )
-			memset(&trace_config, 0, sizeof(trace_config));
+			i_zero(&trace_config);
 	}
 
 	T_BEGIN {
 		/* Collect necessary message data */
 
-		memset(&msgdata, 0, sizeof(msgdata));
+		i_zero(&msgdata);
 		msgdata.mail = mail;
 		msgdata.auth_user = isieve->user->username;
 		(void)mail_get_first_header
@@ -715,8 +715,8 @@ int imap_sieve_run_mail
 
 		/* Compose script execution environment */
 
-		memset(&scriptenv, 0, sizeof(scriptenv));
-		memset(&estatus, 0, sizeof(estatus));
+		i_zero(&scriptenv);
+		i_zero(&estatus);
 		scriptenv.default_mailbox = mailbox_get_vname(isrun->mailbox);
 		scriptenv.user = isieve->user;
 		scriptenv.postmaster_address = lda_set->postmaster_address;

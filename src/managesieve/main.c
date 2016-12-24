@@ -162,7 +162,7 @@ static void main_stdio_run(const char *username)
 	const char *value, *error, *input_base64;
 	buffer_t *input_buf;
 
-	memset(&input, 0, sizeof(input));
+	i_zero(&input);
 	input.module = "managesieve";
 	input.service = "sieve";
 	input.username =  username != NULL ? username : getenv("USER");
@@ -193,7 +193,7 @@ login_client_connected(const struct master_login_client *client,
 	const char *error;
 	buffer_t input_buf;
 
-	memset(&input, 0, sizeof(input));
+	i_zero(&input);
 	input.module = "managesieve";
 	input.service = "sieve";
 	input.local_ip = client->auth_req.local_ip;
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
 	const char *username = NULL;
 	int c;
 
-	memset(&login_set, 0, sizeof(login_set));
+	i_zero(&login_set);
 	login_set.postlogin_timeout_secs = MASTER_POSTLOGIN_TIMEOUT_DEFAULT;
 
 	if (IS_STANDALONE() && getuid() == 0 &&

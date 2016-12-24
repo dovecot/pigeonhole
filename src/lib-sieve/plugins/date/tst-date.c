@@ -397,7 +397,7 @@ static int tst_date_operation_execute
 		int opt;
 
 		/* Optional operands */
-		memset(&svmos, 0, sizeof(svmos));
+		i_zero(&svmos);
 		if ( (opt=sieve_message_opr_optional_read
 			(renv, address, &opt_code, &ret, NULL, &mcht, &cmp, &svmos)) < 0 )
 			return ret;

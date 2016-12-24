@@ -532,7 +532,7 @@ void _client_reset_command(struct client *client)
     o_stream_set_flush_callback(client->output, client_output, client);
 
 	pool = client->cmd.pool;
-	memset(&client->cmd, 0, sizeof(client->cmd));
+	i_zero(&client->cmd);
 
 	p_clear(pool);
 	client->cmd.pool = pool;

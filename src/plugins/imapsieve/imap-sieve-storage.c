@@ -989,7 +989,7 @@ imap_sieve_mailbox_rules_match(struct mail_user *user,
 	struct imap_sieve_mailbox_rule lookup_rule;
 	struct imap_sieve_mailbox_rule *rule;
 
-	memset(&lookup_rule, 0, sizeof(lookup_rule));
+	i_zero(&lookup_rule);
 	lookup_rule.mailbox = dst_box;
 	lookup_rule.from = src_box;
 	rule = hash_table_lookup(isuser->mbox_rules, &lookup_rule);

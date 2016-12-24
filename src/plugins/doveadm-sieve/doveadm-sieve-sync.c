@@ -87,7 +87,7 @@ mail_sieve_user_init
 	}
 
 	/* Delayed initialization of sieve storage until it's actually needed */
-	memset(&svenv, 0, sizeof(svenv));
+	i_zero(&svenv);
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
 	svenv.base_dir = user->set->base_dir;

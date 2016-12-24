@@ -787,11 +787,11 @@ static int lda_sieve_execute
 		trace_log = NULL;
 		if ( sieve_trace_config_get(svinst, &trace_config) >= 0 &&
 			sieve_trace_log_open(svinst, NULL, &trace_log) < 0 )
-			memset(&trace_config, 0, sizeof(trace_config));
+			i_zero(&trace_config);
 
 		/* Collect necessary message data */
 
-		memset(&msgdata, 0, sizeof(msgdata));
+		i_zero(&msgdata);
 
 		msgdata.mail = mdctx->src_mail;
 		msgdata.return_path = mail_deliver_get_return_address(mdctx);
@@ -804,8 +804,8 @@ static int lda_sieve_execute
 
 		/* Compose script execution environment */
 
-		memset(&scriptenv, 0, sizeof(scriptenv));
-		memset(&estatus, 0, sizeof(estatus));
+		i_zero(&scriptenv);
+		i_zero(&estatus);
 
 		scriptenv.default_mailbox = mdctx->dest_mailbox_name;
 		scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
@@ -854,7 +854,7 @@ static int lda_sieve_deliver_mail
 
 	/* Initialize run context */
 
-	memset(&srctx, 0, sizeof(srctx));
+	i_zero(&srctx);
 	srctx.mdctx = mdctx;
 	(void)mail_user_get_home(mdctx->dest_user, &srctx.home_dir);
 
