@@ -73,7 +73,7 @@ static int proxy_write_auth
 {
 	struct dsasl_client_settings sasl_set;
 	const unsigned char *output;
-	unsigned int len;
+	size_t len;
 	const char *mech_name, *error;
 
 	i_assert(client->common.proxy_ttl > 1);
@@ -182,7 +182,7 @@ static int proxy_write_auth_response
 	const char *challenge, string_t *str)
 {
 	const unsigned char *data;
-	unsigned int data_len;
+	size_t data_len;
 	const char *error;
 	int ret;
 
