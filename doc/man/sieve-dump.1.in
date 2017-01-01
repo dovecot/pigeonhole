@@ -1,4 +1,4 @@
-.\" Copyright (c) 2010-2016 Pigeonhole authors, see the included COPYING file
+.\" Copyright (c) 2010-2017 Pigeonhole authors, see the included COPYING file
 .TH "SIEVE\-DUMP" 1 "2016-04-05" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
