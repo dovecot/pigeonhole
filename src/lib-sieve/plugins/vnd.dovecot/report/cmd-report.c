@@ -470,13 +470,13 @@ static int act_report_send
 	}
 
 	/* Make sure we have a subject for our report */
-	if ( mail_get_headers_utf8
-		(msgdata->mail, "subject", &headers) < 0 ) {
+	if ( (ret=mail_get_headers_utf8
+		(msgdata->mail, "subject", &headers)) < 0 ) {
 		return sieve_result_mail_error(aenv, msgdata->mail,
 			"report action: "
 			"failed to read header field `subject'");
 	}
-	if ( headers[0] != NULL ) {
+	if ( ret > 0 && headers[0] != NULL ) {
 		subject = t_strconcat("Report: ", headers[0], NULL);
 	}	else {
 		subject = "Report: (message without subject)";
