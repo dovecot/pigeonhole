@@ -805,30 +805,33 @@ static int act_notify_commit
 		(const struct ext_notify_action *) action->context;
 	const char *const *hdsp;
 	bool result;
+	int ret;
 
 	/* Is the message an automatic reply ? */
-	if ( mail_get_headers(mail, "auto-submitted", &hdsp) < 0 ) {
+	if ( (ret=mail_get_headers(mail, "auto-submitted", &hdsp)) < 0 ) {
 		return sieve_result_mail_error(aenv, mail,
 			"notify action: "
 			"failed to read `auto-submitted' header field");
 	}
 
 	/* Theoretically multiple headers could exist, so lets make sure */
-	while ( *hdsp != NULL ) {
-		if ( strcasecmp(*hdsp, "no") != 0 ) {
-			const char *from = NULL;
+	if (ret > 0) {
+		while ( *hdsp != NULL ) {
+			if ( strcasecmp(*hdsp, "no") != 0 ) {
+				const char *from = NULL;
 
-			if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
-				from = sieve_message_get_sender(aenv->msgctx);
-			from = (from == NULL ? "" :
-				t_strdup_printf(" from <%s>", str_sanitize(from, 256)));
+				if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
+					from = sieve_message_get_sender(aenv->msgctx);
+				from = (from == NULL ? "" :
+					t_strdup_printf(" from <%s>", str_sanitize(from, 256)));
 
-			sieve_result_global_log(aenv,
-				"not sending notification for auto-submitted message%s",
-				from);
-			return SIEVE_EXEC_OK;
+				sieve_result_global_log(aenv,
+					"not sending notification for auto-submitted message%s",
+					from);
+				return SIEVE_EXEC_OK;
+			}
+			hdsp++;
 		}
-		hdsp++;
 	}
 
 	T_BEGIN {

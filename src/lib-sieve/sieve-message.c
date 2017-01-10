@@ -627,7 +627,7 @@ static int sieve_message_header_list_next_item
 			return -1;
 		}
 
-		if ( hdrlist->headers == NULL || hdrlist->headers[0] == NULL ) {
+		if ( ret == 0 || hdrlist->headers[0] == NULL ) {
 			/* Try next item when no headers found */
 			hdrlist->headers = NULL;
 		}
