@@ -1537,7 +1537,7 @@ static int edit_mail_get_headers
 
 	(void)array_append_space(&header_values);
 	*value_r = array_idx(&header_values, 0);
-	return 0;
+	return 1;
 }
 
 static int ATTR_NORETURN edit_mail_get_header_stream
