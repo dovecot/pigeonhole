@@ -324,7 +324,7 @@ static int _ext_enotify_option_check
 	int result = 1;
 
 	/* Compose log structure */
-	memset(&nenv, 0, sizeof(nenv));
+	i_zero(&nenv);
 	nenv.svinst = optn_context->svinst;
 	nenv.method = method;
 	nenv.ehandler = sieve_prefix_ehandler_create
@@ -402,7 +402,7 @@ bool ext_enotify_compile_check_arguments
 	if ( method->def == NULL ) return TRUE;
 
 	/* Compose log structure */
-	memset(&nenv, 0, sizeof(nenv));
+	i_zero(&nenv);
 	nenv.svinst = svinst;
 	nenv.method = method;
 
@@ -501,7 +501,7 @@ bool ext_enotify_runtime_method_validate
 	if ( method->def != NULL && method->def->runtime_check_uri != NULL ) {
 		struct sieve_enotify_env nenv;
 
-		memset(&nenv, 0, sizeof(nenv));
+		i_zero(&nenv);
 		nenv.svinst = renv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
@@ -565,7 +565,7 @@ const char *ext_enotify_runtime_get_method_capability
 		method->def->runtime_get_method_capability != NULL ) {
 		struct sieve_enotify_env nenv;
 
-		memset(&nenv, 0, sizeof(nenv));
+		i_zero(&nenv);
 		nenv.svinst = renv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
@@ -599,7 +599,7 @@ int ext_enotify_runtime_check_operands
 		struct sieve_enotify_env nenv;
 		int result = SIEVE_EXEC_OK;
 
-		memset(&nenv, 0, sizeof(nenv));
+		i_zero(&nenv);
 		nenv.svinst = renv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create

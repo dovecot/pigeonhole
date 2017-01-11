@@ -434,7 +434,7 @@ bool sieve_rfc2822_mailbox_validate(const char *address, const char **error_r)
 		return FALSE;
 	}
 
-	memset(&ctx, 0, sizeof(ctx));
+	i_zero(&ctx);
 
 	ctx.local_part = t_str_new(128);
 	ctx.domain = t_str_new(128);
@@ -465,7 +465,7 @@ const char *sieve_rfc2822_mailbox_normalize
 
 	if ( address == NULL ) return NULL;
 
-	memset(&ctx, 0, sizeof(ctx));
+	i_zero(&ctx);
 
 	ctx.local_part = t_str_new(128);
 	ctx.domain = t_str_new(128);
@@ -481,7 +481,7 @@ const char *sieve_rfc2822_mailbox_normalize
 
 	(void)str_lcase(str_c_modifiable(ctx.domain));
 
-	memset(&addr, 0, sizeof(addr));
+	i_zero(&addr);
 	addr.local_part = str_c(ctx.local_part);
 	addr.domain = str_c(ctx.domain);
 	return sieve_address_to_string(&addr);
@@ -497,7 +497,7 @@ const char *sieve_address_normalize
 	struct sieve_message_address_parser ctx;
 	struct sieve_address addr;
 
-	memset(&ctx, 0, sizeof(ctx));
+	i_zero(&ctx);
 
 	ctx.local_part = t_str_new(128);
 	ctx.domain = t_str_new(128);
@@ -513,7 +513,7 @@ const char *sieve_address_normalize
 	*error_r = NULL;
 	(void)str_lcase(str_c_modifiable(ctx.domain));
 
-	memset(&addr, 0, sizeof(addr));
+	i_zero(&addr);
 	addr.local_part = str_c(ctx.local_part);
 	addr.domain = str_c(ctx.domain);
 	return sieve_address_to_string(&addr);
@@ -524,7 +524,7 @@ bool sieve_address_validate
 {
 	struct sieve_message_address_parser ctx;
 
-	memset(&ctx, 0, sizeof(ctx));
+	i_zero(&ctx);
 
 	ctx.local_part = ctx.domain = ctx.str = t_str_new(128);
 	ctx.error = t_str_new(128);

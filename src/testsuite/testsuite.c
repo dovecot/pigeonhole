@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 
 	/* Parse arguments */
 	dumpfile = tracefile = NULL;
-	memset(&trace_config, 0, sizeof(trace_config));
+	i_zero(&trace_config);
 	trace_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 		testsuite_mailstore_init();
 		testsuite_message_init();
 
-		memset(&scriptenv, 0, sizeof(scriptenv));
+		i_zero(&scriptenv);
 		scriptenv.user = testsuite_mailstore_get_user();
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.postmaster_address = "postmaster@example.com";

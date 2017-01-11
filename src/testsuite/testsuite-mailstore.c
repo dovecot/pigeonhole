@@ -263,7 +263,7 @@ int testsuite_mailstore_set_imap_metadata
 			(testsuite_mailstore_user);
 	}
 
-	memset(&avalue, 0, sizeof(avalue));
+	i_zero(&avalue);
 	avalue.value = value;
 	if ((ret=imap_metadata_set(imtrans, annotation, &avalue)) < 0) {
 		error = imap_metadata_transaction_get_last_error

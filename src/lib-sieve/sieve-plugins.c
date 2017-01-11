@@ -76,7 +76,7 @@ void sieve_plugins_load
 	if ( path == NULL || *path == '\0' )
 		path = MODULEDIR"/sieve";
 
-	memset(&mod_set, 0, sizeof(mod_set));
+	i_zero(&mod_set);
 	mod_set.abi_version = PIGEONHOLE_ABI_VERSION;
 	mod_set.require_init_funcs = TRUE;
 	mod_set.debug = FALSE;

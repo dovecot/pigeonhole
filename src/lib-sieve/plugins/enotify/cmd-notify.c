@@ -512,7 +512,7 @@ static int act_notify_check_duplicate
 	if ( nmth_def->action_check_duplicates == NULL )
 		return 0;
 
-	memset(&nenv, 0, sizeof(nenv));
+	i_zero(&nenv);
 	nenv.svinst = renv->svinst;
 	nenv.method = nact->method;
 	nenv.ehandler = sieve_prefix_ehandler_create
@@ -544,7 +544,7 @@ static void act_notify_print
 		if ( method->def->action_print != NULL ) {
 			struct sieve_enotify_print_env penv;
 
-			memset(&penv, 0, sizeof(penv));
+			i_zero(&penv);
 			penv.result_penv = rpenv;
 
 			method->def->action_print(&penv, act);
@@ -566,7 +566,7 @@ static int act_notify_commit
 
 	if ( method->def != NULL && method->def->action_execute != NULL )	{
 		/* Compose log structure */
-		memset(&nenv, 0, sizeof(nenv));
+		i_zero(&nenv);
 		nenv.svinst = aenv->svinst;
 		nenv.flags = aenv->flags;
 		nenv.method = method;

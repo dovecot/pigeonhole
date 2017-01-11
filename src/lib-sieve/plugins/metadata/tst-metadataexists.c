@@ -175,7 +175,7 @@ static bool tst_metadataexists_validate
 		return FALSE;
 
 	aarg = arg;
-	memset(&valctx, 0, sizeof(valctx));
+	i_zero(&valctx);
 	valctx.valdtr = valdtr;
 	valctx.tst = tst;
 

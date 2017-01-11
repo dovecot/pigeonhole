@@ -251,7 +251,7 @@ struct sieve_instance *sieve_tool_init_finish
 		storage_service_flags |=
 			MAIL_STORAGE_SERVICE_FLAG_NO_NAMESPACES;
 
-	memset(&service_input, 0, sizeof(service_input));
+	i_zero(&service_input);
 	service_input.module = "mail";
 	service_input.service = tool->name;
 	service_input.username = username;

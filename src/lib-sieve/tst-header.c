@@ -166,7 +166,7 @@ static int tst_header_operation_execute
 	 */
 
 	/* Optional operands */
-	memset(&svmos, 0, sizeof(svmos));
+	i_zero(&svmos);
 	if ( sieve_message_opr_optional_read
 		(renv, address, NULL, &ret, NULL, &mcht, &cmp, &svmos) < 0 )
 		return ret;

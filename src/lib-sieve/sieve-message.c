@@ -912,7 +912,7 @@ void sieve_message_part_get_data
 (struct sieve_message_part *mpart,
 	struct sieve_message_part_data *data, bool text)
 {
-	memset(data, 0, sizeof(*data));
+	i_zero(data);
 	data->content_type = mpart->content_type;
 	data->content_disposition = mpart->content_disposition;
 
@@ -1199,7 +1199,7 @@ static int sieve_message_parts_add_missing
 		hdr_content = t_str_new(512);
 		hparser_flags |= MESSAGE_HEADER_PARSER_FLAG_CLEAN_ONELINE;
 	} else {
-		memset(&headers, 0, sizeof(headers));
+		i_zero(&headers);
 	}
 
 	/* Initialize body decoder */
@@ -1651,7 +1651,7 @@ int sieve_message_part_iter_init
 	if ( status <= 0 )
 		return status;
 
-	memset(iter, 0, sizeof(*iter));
+	i_zero(iter);
 	iter->renv = renv;
 	iter->index = 0;
 	iter->offset = 0;

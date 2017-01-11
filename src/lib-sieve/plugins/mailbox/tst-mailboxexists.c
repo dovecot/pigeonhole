@@ -104,7 +104,7 @@ static bool tst_mailboxexists_validate
 		return FALSE;
 
 	aarg = arg;
-	memset(&valctx, 0, sizeof(valctx));
+	i_zero(&valctx);
 	valctx.valdtr = valdtr;
 	valctx.tst = tst;
 

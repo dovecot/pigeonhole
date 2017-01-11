@@ -58,7 +58,7 @@ testsuite_message_get_address(struct mail *mail, const char *header)
 	if ( addr->domain == NULL || *addr->domain == '\0' )
 		return addr->mailbox;
 
-	memset(&svaddr, 0, sizeof(svaddr));
+	i_zero(&svaddr);
 	svaddr.local_part = addr->mailbox;
 	svaddr.domain = addr->domain;
 	return sieve_address_to_string(&svaddr);
@@ -88,7 +88,7 @@ static void testsuite_message_set_data(struct mail *mail)
 	if ( sender == NULL )
 		sender = "sender@example.com";
 
-	memset(&testsuite_msgdata, 0, sizeof(testsuite_msgdata));
+	i_zero(&testsuite_msgdata);
 	testsuite_msgdata.mail = mail;
 	testsuite_msgdata.auth_user = sieve_tool_get_username(sieve_tool);
 

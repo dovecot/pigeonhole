@@ -538,7 +538,7 @@ static void ldap_input(struct ldap_connection *conn)
 		if (conn->ld == NULL)
 			return;
 
-		memset(&timeout, 0, sizeof(timeout));
+		i_zero(&timeout);
 		ret = ldap_result(conn->ld, LDAP_RES_ANY, 0, &timeout, &msg);
 #ifdef OPENLDAP_ASYNC_WORKAROUND
 		if (ret == 0) {
@@ -812,7 +812,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 
 	if (debug) {
 		if (gettimeofday(&start, NULL) < 0)
-			memset(&start, 0, sizeof(start));
+			i_zero(&start);
 	}
 	i_assert(conn->pending_count == 0);
 	if (conn->ld == NULL) {
@@ -864,7 +864,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 #ifdef HAVE_LDAP_SASL
 		struct db_ldap_sasl_bind_context context;
 
-		memset(&context, 0, sizeof(context));
+		i_zero(&context);
 		context.authcid = set->dn;
 		context.passwd = set->dnpass;
 		context.realm = set->sasl_realm;

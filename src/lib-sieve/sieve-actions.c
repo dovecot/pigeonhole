@@ -375,7 +375,7 @@ static bool act_store_mailbox_open
 		return FALSE;
 	}
 
-	memset(&save_ctx, 0, sizeof(save_ctx));
+	i_zero(&save_ctx);
 	save_ctx.user = aenv->scriptenv->user;
 	save_ctx.lda_mailbox_autocreate = aenv->scriptenv->mailbox_autocreate;
 	save_ctx.lda_mailbox_autosubscribe = aenv->scriptenv->mailbox_autosubscribe;

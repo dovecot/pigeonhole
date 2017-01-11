@@ -242,7 +242,7 @@ static int tst_address_operation_execute
 	int match, ret;
 
 	/* Read optional operands */
-	memset(&svmos, 0, sizeof(svmos));
+	i_zero(&svmos);
 	if ( sieve_message_opr_optional_read
 		(renv, address, NULL, &ret, &addrp, &mcht, &cmp, &svmos) < 0 )
 		return ret;

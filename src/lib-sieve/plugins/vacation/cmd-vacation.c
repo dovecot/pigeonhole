@@ -856,7 +856,7 @@ static inline bool _contains_my_address
 
 					i_assert(addr->mailbox != NULL);
 
-					memset(&svaddr, 0, sizeof(svaddr));
+					i_zero(&svaddr);
 					svaddr.local_part = addr->mailbox;
 					svaddr.domain = addr->domain;
 
