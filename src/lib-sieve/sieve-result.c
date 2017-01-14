@@ -1054,7 +1054,7 @@ static int _sieve_result_implicit_keep
 	/* Finish keep action */
 	if ( act_keep.def->finish != NULL ) {
 		act_keep.def->finish
-			(&act_keep, aenv, &rac->tr_context, status);
+			(&act_keep, aenv, tr_context, status);
 	}
 
 	return status;
@@ -1366,7 +1366,7 @@ static void sieve_result_transaction_finish
 
 		if ( act->def->finish != NULL ) {
 			act->def->finish
-				(act, &result->action_env, &rac->tr_context, status);
+				(act, &result->action_env, rac->tr_context, status);
 		}
 
 		rac = rac->next;
