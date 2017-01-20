@@ -3,10 +3,12 @@
 
 #include "lib.h"
 #include "home-expand.h"
+#include "smtp-address.h"
+#include "smtp-submit.h"
 #include "mail-storage.h"
 #include "mail-user.h"
 #include "mail-duplicate.h"
-#include "smtp-submit.h"
+#include "iostream-ssl.h"
 #include "imap-client.h"
 #include "imap-settings.h"
 
@@ -155,23 +157,29 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
  */
 
 static void *imap_sieve_smtp_start
-(const struct sieve_script_env *senv, const char *return_path)
+(const struct sieve_script_env *senv,
+	const struct smtp_address *mail_from)
 {
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 	struct imap_sieve *isieve = isctx->isieve;
+	struct mail_user *user = isieve->client->user;
 	const struct smtp_submit_settings *smtp_set = isieve->client->smtp_set;
+	struct ssl_iostream_settings ssl_set;
 	
-	return (void *)smtp_submit_init_simple(smtp_set, return_path);
+	i_zero(&ssl_set);
+	mail_user_init_ssl_client_settings(user, &ssl_set);
+
+	return (void *)smtp_submit_init_simple(smtp_set, &ssl_set, mail_from);
 }
 
 static void imap_sieve_smtp_add_rcpt
 (const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
-	const char *address)
+	const struct smtp_address *rcpt_to)
 {
 	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
 
-	smtp_submit_add_rcpt(smtp_submit, address);
+	smtp_submit_add_rcpt(smtp_submit, rcpt_to);
 }
 
 static struct ostream *imap_sieve_smtp_send

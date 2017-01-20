@@ -202,8 +202,8 @@ struct act_vacation_context {
 	const char *handle;
 	bool mime;
 	const char *from;
-	const char *from_normalized;
-	const char *const *addresses;
+	const struct smtp_address *from_address;
+	const struct smtp_address *const *addresses;
 };
 
 /*
@@ -310,7 +310,7 @@ static bool cmd_vacation_validate_string_tag
 	 		bool result;
 
 	 		T_BEGIN {
-	 			result = sieve_address_validate(address, &error);
+				result = sieve_address_validate_str(address, &error);
 
 				if ( !result ) {
 					sieve_argument_validate_error(valdtr, *arg,
@@ -588,7 +588,7 @@ static int ext_vacation_operation_execute
 	bool mime = FALSE;
 	struct sieve_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL;
-	const char *from_normalized = NULL;
+	const struct smtp_address *from_address = NULL;
 	int ret;
 
 	/*
@@ -650,13 +650,12 @@ static int ext_vacation_operation_execute
 			str_sanitize(str_c(reason), 80));
 	}
 
-	/* Check and normalize :from address */
+	/* Parse :from address */
 	if ( from != NULL ) {
 		const char *error;
 
-		from_normalized = sieve_address_normalize(from, &error);
-
-		if ( from_normalized == NULL) {
+		from_address = sieve_address_parse_str(from, &error);
+		if ( from_address == NULL) {
 			sieve_runtime_error(renv, NULL,
 				"specified :from address '%s' is invalid for vacation action: %s",
 				str_sanitize(str_c(from), 128), error);
@@ -675,28 +674,29 @@ static int ext_vacation_operation_execute
 		act->subject = p_strdup(pool, str_c(subject));
 	if ( from != NULL ) {
 		act->from = p_strdup(pool, str_c(from));
-		act->from_normalized = p_strdup(pool, from_normalized);
+		act->from_address = smtp_address_clone(pool, from_address);
 	}
 
 	/* Normalize all addresses */
 	if ( addresses != NULL ) {
-		ARRAY(const char *) norm_addresses;
+		ARRAY_TYPE(smtp_address_const) addrs;
 		string_t *raw_address;
 		int ret;
 
 		sieve_stringlist_reset(addresses);
 
-		p_array_init(&norm_addresses, pool, 4);
+		p_array_init(&addrs, pool, 4);
 
 		raw_address = NULL;
 		while ( (ret=sieve_stringlist_next_item(addresses, &raw_address)) > 0 ) {
+			const struct smtp_address *addr;
 			const char *error;
-			const char *addr_norm = sieve_address_normalize(raw_address, &error);
 
-			if ( addr_norm != NULL ) {
-				addr_norm = p_strdup(pool, addr_norm);
+			addr = sieve_address_parse_str(raw_address, &error);
+			if ( addr != NULL ) {
+				addr = smtp_address_clone(pool, addr);
+				array_append(&addrs, &addr, 1);
 
-				array_append(&norm_addresses, &addr_norm, 1);
 			} else {
 				sieve_runtime_error(renv, NULL,
 					"specified :addresses item '%s' is invalid: %s for vacation action "
@@ -710,8 +710,8 @@ static int ext_vacation_operation_execute
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 
-		(void)array_append_space(&norm_addresses);
-		act->addresses = array_idx(&norm_addresses, 0);
+		(void)array_append_space(&addrs);
+		act->addresses = array_idx(&addrs, 0);
 	}
 
 	if ( sieve_result_add_action
@@ -823,60 +823,54 @@ static const char * const _sender_headers[] = {
 	NULL
 };
 
-static inline bool _is_system_address(const char *address)
+static inline bool _is_system_address
+(const struct smtp_address *address)
 {
-	if ( strncasecmp(address, "MAILER-DAEMON", 13) == 0 )
+	if ( strcasecmp(address->localpart, "MAILER-DAEMON") == 0 )
 		return TRUE;
 
-	if ( strncasecmp(address, "LISTSERV", 8) == 0 )
+	if ( strcasecmp(address->localpart, "LISTSERV") == 0 )
 		return TRUE;
 
-	if ( strncasecmp(address, "majordomo", 9) == 0 )
+	if ( strcasecmp(address->localpart, "majordomo") == 0 )
 		return TRUE;
 
-	if ( strstr(address, "-request@") != NULL )
+	if ( strstr(address->localpart, "-request") != NULL )
 		return TRUE;
 
-	if ( strncmp(address, "owner-", 6) == 0 )
+	if ( strncmp(address->localpart, "owner-", 6) == 0 )
 		return TRUE;
 
 	return FALSE;
 }
 
 static inline bool _contains_my_address
-	(const char * const *headers, const char *my_address)
+(const char * const *headers,
+	const struct smtp_address *my_address)
 {
 	const char *const *hdsp = headers;
 	bool result = FALSE;
 
 	while ( *hdsp != NULL && !result ) {
-		const struct message_address *addr;
+		const struct message_address *msg_addr;
 
 		T_BEGIN {
-
-			addr = message_address_parse
+			msg_addr = message_address_parse
 				(pool_datastack_create(), (const unsigned char *) *hdsp,
 					strlen(*hdsp), 256, FALSE);
+			while ( msg_addr != NULL && !result ) {
+				if (msg_addr->domain != NULL) {
+					struct smtp_address addr;
 
-			while ( addr != NULL && !result ) {
-				if (addr->domain != NULL) {
-					struct sieve_address svaddr;
-					const char *hdr_address;
-
-					i_assert(addr->mailbox != NULL);
-
-					i_zero(&svaddr);
-					svaddr.local_part = addr->mailbox;
-					svaddr.domain = addr->domain;
-
-					hdr_address = sieve_address_to_string(&svaddr);
-					if ( sieve_address_compare(hdr_address, my_address, TRUE) == 0 ) {
+					i_assert(msg_addr->mailbox != NULL);
+					smtp_address_init_from_msg(&addr, msg_addr);
+					if ( smtp_address_equals(&addr, my_address) ) {
 						result = TRUE;
 						break;
 					}
 				}
 
-				addr = addr->next;
+				msg_addr = msg_addr->next;
 			}
 		} T_END;
 
@@ -900,7 +894,8 @@ static bool _contains_8bit(const char *text)
 static int _get_full_reply_recipient
 (const struct sieve_action_exec_env *aenv,
 	const struct ext_vacation_config *config,
-	const char *smtp_to, const char **reply_to_r)
+	const struct smtp_address *smtp_to,
+	struct message_address *reply_to_r)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const char *const *hdsp;
@@ -925,31 +920,18 @@ static int _get_full_reply_recipient
 
 			while ( addr != NULL ) {
 				if ( addr->domain != NULL && !addr->invalid_syntax ) {
-					struct sieve_address svaddr;
-					const char *hdr_address;
+					struct smtp_address saddr;
 					bool matched = config->to_header_ignore_envelope;
 
 					if (!matched) {
 						i_assert(addr->mailbox != NULL);
 
-						i_zero(&svaddr);
-						svaddr.local_part = addr->mailbox;
-						svaddr.domain = addr->domain;
-
-						hdr_address = sieve_address_to_string(&svaddr);
-						matched = ( sieve_address_compare
-							(hdr_address, smtp_to, TRUE) == 0 );
+						smtp_address_init_from_msg(&saddr, addr);
+						matched = smtp_address_equals(smtp_to, &saddr);
 					}
 
 					if (matched) {
-						struct message_address this_addr;
-
-						this_addr = *addr;
-						this_addr.next = NULL;
-
-						string_t *str = t_str_new(256);
-						message_address_write(str, &this_addr);
-						*reply_to_r = str_c(str);
+						*reply_to_r = *addr;
 						return SIEVE_EXEC_OK;
 					}
 				}
@@ -960,7 +942,8 @@ static int _get_full_reply_recipient
 		hdsp++;
 	}
 
-	*reply_to_r = t_strconcat("<", smtp_to, ">", NULL);
+	reply_to_r->mailbox = smtp_to->localpart;
+	reply_to_r->domain = smtp_to->domain;
 	return SIEVE_EXEC_OK;
 }
 
@@ -968,15 +951,17 @@ static int act_vacation_send
 (const struct sieve_action_exec_env *aenv,
 	const struct ext_vacation_config *config,
 	struct act_vacation_context *ctx,
-	const char *smtp_to, const char *smtp_from,
-	const char *reply_from)
+	const struct smtp_address *smtp_to,
+	const struct smtp_address *smtp_from,
+	const struct message_address *reply_from)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct sieve_smtp_context *sctx;
 	struct ostream *output;
 	string_t *msg;
-	const char *header, *outmsgid, *subject, *reply_to, *error;
+	struct message_address reply_to;
+	const char *header, *outmsgid, *subject, *error;
 	int ret;
 
 	/* Check smpt functions just to be sure */
@@ -1009,7 +994,9 @@ static int act_vacation_send
 
 	/* Obtain full To address for reply */
 
-	reply_to = smtp_to;
+	i_zero(&reply_to);
+	reply_to.mailbox = smtp_to->localpart;
+	reply_to.domain = smtp_to->domain;
 	if ((ret=_get_full_reply_recipient(aenv, config,
 		smtp_to, &reply_to)) <= 0)
 		return ret;
@@ -1027,16 +1014,18 @@ static int act_vacation_send
 	rfc2822_header_write(msg, "Message-ID", outmsgid);
 	rfc2822_header_write(msg, "Date", message_date_create(ioloop_time));
 
-	if ( ctx->from != NULL && *(ctx->from) != '\0' )
+	if ( ctx->from != NULL && *(ctx->from) != '\0' ) {
 		rfc2822_header_utf8_printf(msg, "From", "%s", ctx->from);
-	else if ( reply_from != NULL )
-		rfc2822_header_printf(msg, "From", "<%s>", reply_from);
-	else {
-		rfc2822_header_printf(msg, "From", "Postmaster <%s>",
-			sieve_get_postmaster_address(senv));
+	} else {
+		if ( reply_from == NULL || reply_from->mailbox == NULL ||
+			*reply_from->mailbox == '\0' )
+			reply_from = sieve_get_postmaster(senv);
+		rfc2822_header_write(msg, "From",
+			message_address_first_to_string(reply_from));
 	}
 
-	rfc2822_header_printf(msg, "To", "%s", reply_to);
+	rfc2822_header_write(msg, "To",
+		message_address_first_to_string(&reply_to));
 
 	if ( _contains_8bit(subject) )
 		rfc2822_header_utf8_printf(msg, "Subject", "%s", subject);
@@ -1086,12 +1075,16 @@ static int act_vacation_send
 	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if ( ret < 0 ) {
 			sieve_result_global_error(aenv,
-				"failed to send vacation response to <%s>: %s (temporary error)",
-				str_sanitize(reply_to, 256), str_sanitize(error, 512));
+				"failed to send vacation response to %s: "
+				"<%s> (temporary error)",
+				smtp_address_encode(smtp_to),
+				str_sanitize(error, 512));
 		} else {
 			sieve_result_global_log_error(aenv,
-				"failed to send vacation response to <%s>: %s (permanent error)",
-				str_sanitize(reply_to, 256), str_sanitize(error, 512));
+				"failed to send vacation response to %s: "
+				"<%s> (permanent error)",
+				smtp_address_encode(smtp_to),
+				str_sanitize(error, 512));
 		}
 		/* This error will be ignored in the end */
 		return SIEVE_EXEC_FAILURE;
@@ -1127,17 +1120,22 @@ static int act_vacation_commit
 		(struct act_vacation_context *) action->context;
 	unsigned char dupl_hash[MD5_RESULTLEN];
 	struct mail *mail = sieve_message_get_mail(aenv->msgctx);
-	const char *sender = sieve_message_get_sender(aenv->msgctx);
-	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
+	const struct smtp_address *sender, *recipient;
+	const struct smtp_address *orig_recipient, *user_email;
+	const struct smtp_address *smtp_from;
+	struct message_address reply_from;
 	const char *const *hdsp, *const *headers;
-	const char *reply_from, *orig_recipient, *smtp_from, *user_email;
 	int ret;
 
-	reply_from = orig_recipient = smtp_from = user_email = NULL;
+	sender = sieve_message_get_sender(aenv->msgctx);
+	recipient = sieve_message_get_final_recipient(aenv->msgctx);
+
+	i_zero(&reply_from);
+	smtp_from = orig_recipient = user_email = NULL;
 
 	/* Is the recipient unset?
 	 */
-	if ( recipient == NULL ) {
+	if ( smtp_address_isnull(recipient) ) {
 		sieve_result_global_warning
 			(aenv, "vacation action aborted: envelope recipient is <>");
 		return SIEVE_EXEC_OK;
@@ -1145,31 +1143,32 @@ static int act_vacation_commit
 
 	/* Is the return path unset ?
 	 */
-	if ( sender == NULL ) {
+	if ( smtp_address_isnull(sender) ) {
 		sieve_result_global_log(aenv, "discarded vacation reply to <>");
 		return SIEVE_EXEC_OK;
 	}
 
 	/* Are we perhaps trying to respond to ourselves ?
 	 */
-	if ( sieve_address_compare(sender, recipient, TRUE) == 0 ) {
+	if ( smtp_address_equals(sender, recipient) ) {
 		sieve_result_global_log(aenv,
 			"discarded vacation reply to own address <%s>",
-			str_sanitize(sender, 128));
+			smtp_address_encode(sender));
 		return SIEVE_EXEC_OK;
 	}
 
 	/* Are we perhaps trying to respond to one of our alternative :addresses?
 	 */
 	if ( ctx->addresses != NULL ) {
-		const char * const *alt_address = ctx->addresses;
+		const struct smtp_address * const *alt_address;
 
+		alt_address = ctx->addresses;
 		while ( *alt_address != NULL ) {
-			if ( sieve_address_compare(sender, *alt_address, TRUE) == 0 ) {
+			if ( smtp_address_equals(sender, *alt_address) ) {
 				sieve_result_global_log(aenv,
 					"discarded vacation reply to own address <%s> "
 					"(as specified using :addresses argument)",
-					str_sanitize(sender, 128));
+					smtp_address_encode(sender));
 				return SIEVE_EXEC_OK;
 			}
 			alt_address++;
@@ -1178,13 +1177,15 @@ static int act_vacation_commit
 
 	/* Did whe respond to this user before? */
 	if ( sieve_action_duplicate_check_available(senv) ) {
-		act_vacation_hash(ctx, sender, dupl_hash);
+		act_vacation_hash(ctx,
+			smtp_address_encode(sender), dupl_hash);
 
-		if ( sieve_action_duplicate_check(senv, dupl_hash, sizeof(dupl_hash)) )
+		if ( sieve_action_duplicate_check
+			(senv, dupl_hash, sizeof(dupl_hash)) )
 		{
 			sieve_result_global_log(aenv,
 				"discarded duplicate vacation response to <%s>",
-				str_sanitize(sender, 128));
+				smtp_address_encode(sender));
 			return SIEVE_EXEC_OK;
 		}
 	}
@@ -1203,7 +1204,7 @@ static int act_vacation_commit
 			sieve_result_global_log(aenv,
 				"discarding vacation response "
 				"to mailinglist recipient <%s>",
-				str_sanitize(sender, 128));
+				smtp_address_encode(sender));
 			return SIEVE_EXEC_OK;
 		}
 		hdsp++;
@@ -1224,7 +1225,7 @@ static int act_vacation_commit
 				sieve_result_global_log(aenv,
 					"discarding vacation response "
 					"to auto-submitted message from <%s>",
-					str_sanitize(sender, 128));
+					smtp_address_encode(sender));
 					return SIEVE_EXEC_OK;
 			}
 			hdsp++;
@@ -1248,7 +1249,7 @@ static int act_vacation_commit
 				sieve_result_global_log(aenv,
 					"discarding vacation response "
 					"to precedence=%s message from <%s>",
-					*hdsp, str_sanitize(sender, 128));
+					*hdsp, smtp_address_encode(sender));
 					return SIEVE_EXEC_OK;
 			}
 			hdsp++;
@@ -1274,7 +1275,7 @@ static int act_vacation_commit
 					sieve_result_global_log(aenv,
 						"discarding vacation response to message from <%s> "
 						"(`%s' flag found in x-auto-response-suppress header)",
-						str_sanitize(sender, 128), flag);
+						smtp_address_encode(sender), flag);
 						return SIEVE_EXEC_OK;
 				}
 				flags++;
@@ -1287,7 +1288,7 @@ static int act_vacation_commit
 	if ( _is_system_address(sender) ) {
 		sieve_result_global_log(aenv,
 			"not sending vacation response to system address <%s>",
-			str_sanitize(sender, 128));
+			smtp_address_encode(sender));
 		return SIEVE_EXEC_OK;
 	}
 
@@ -1296,7 +1297,7 @@ static int act_vacation_commit
 		orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
 	/* Fetch explicitly configured user email address */
 	if (svinst->user_email != NULL)
-		user_email = sieve_address_to_string(svinst->user_email);
+		user_email = svinst->user_email;
 
 	/* Is the original message directly addressed to the user or the addresses
 	 * specified using the :addresses tag?
@@ -1312,30 +1313,34 @@ static int act_vacation_commit
 
 			/* Final recipient directly listed in headers? */
 			if ( _contains_my_address(headers, recipient) ) {
-				reply_from = recipient;
 				smtp_from = recipient;
+				message_address_init_from_smtp(&reply_from,
+					NULL, recipient);
 				break;
 			}
 
 			/* Original recipient directly listed in headers? */
-			if ( orig_recipient != NULL &&
+			if ( !smtp_address_isnull(orig_recipient) &&
 				_contains_my_address(headers, orig_recipient) ) {
-				reply_from = orig_recipient;
 				smtp_from = orig_recipient;
+				message_address_init_from_smtp(&reply_from,
+					NULL, recipient);
 				break;
 			}
 
 			/* User-provided :addresses listed in headers? */
 			if ( ctx->addresses != NULL ) {
 				bool found = FALSE;
-				const char * const *my_address = ctx->addresses;
+				const struct smtp_address * const *my_address;
 
+				my_address = ctx->addresses;
 				while ( !found && *my_address != NULL ) {
 					if ( (found=_contains_my_address(headers, *my_address)) ) {
-						reply_from = *my_address;
 						/* Avoid letting user determine SMTP sender directly */
 						smtp_from =
 							( orig_recipient == NULL ? recipient : orig_recipient );
+						message_address_init_from_smtp(&reply_from,
+							NULL, *my_address);
 					}
 					my_address++;
 				}
@@ -1347,8 +1352,9 @@ static int act_vacation_commit
 			   headers? */
 			if ( user_email != NULL &&
 				_contains_my_address(headers, user_email) ) {
-				reply_from = user_email;
 				smtp_from = user_email;
+				message_address_init_from_smtp(&reply_from,
+					NULL, smtp_from);
 				break;
 			}
 		}
@@ -1359,8 +1365,12 @@ static int act_vacation_commit
 	if ( *hdsp == NULL ) {
 		if ( config->dont_check_recipient ) {
 			/* Send reply from envelope recipient address */
-			reply_from = recipient;
-			smtp_from = recipient;
+			smtp_from = ( orig_recipient == NULL ?
+				recipient : orig_recipient );
+			if (user_email == NULL)
+				user_email = sieve_get_user_email(svinst);
+			message_address_init_from_smtp(&reply_from,
+				NULL, user_email);
 
 		} else {
 			const char *orig_rcpt_str = "", *user_email_str = "";
@@ -1370,21 +1380,20 @@ static int act_vacation_commit
 			if ( config->use_original_recipient ) {
 				orig_rcpt_str = t_strdup_printf("original-recipient=<%s>, ",
 					( orig_recipient == NULL ? "UNAVAILABLE" :
-						str_sanitize(orig_recipient, 256) ));
+						smtp_address_encode(orig_recipient) ));
 			}
 
 			if ( user_email != NULL ) {
 				user_email_str = t_strdup_printf("user-email=<%s>, ",
-						str_sanitize(user_email, 256) );
+						smtp_address_encode(user_email));
 			}
 
 			sieve_result_global_log(aenv,
 				"discarding vacation response for implicitly delivered message; "
 				"no known (envelope) recipient address found in message headers "
 				"(recipient=<%s>, %s%sand%s additional `:addresses' are specified)",
-				str_sanitize(recipient, 256), orig_rcpt_str, user_email_str,
+				smtp_address_encode(recipient), orig_rcpt_str, user_email_str,
 				(ctx->addresses == NULL || *ctx->addresses == NULL ? " no" : ""));
-
 			return SIEVE_EXEC_OK;
 		}
 	}
@@ -1394,14 +1403,14 @@ static int act_vacation_commit
 	T_BEGIN {
 		ret = act_vacation_send(aenv, config, ctx, sender,
 			(config->send_from_recipient ? smtp_from : NULL),
-			reply_from);
+			&reply_from);
 	} T_END;
 
 	if ( ret == SIEVE_EXEC_OK ) {
 		sieve_number_t seconds;
 
 		sieve_result_global_log(aenv, "sent vacation response to <%s>",
-			str_sanitize(sender, 128));
+			smtp_address_encode(sender));
 
 		/* Check period limits once more */
 		seconds = ctx->seconds;

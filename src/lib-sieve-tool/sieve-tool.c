@@ -11,6 +11,8 @@
 #include "mail-namespace.h"
 #include "mail-storage.h"
 #include "mail-user.h"
+#include "message-address.h"
+#include "smtp-params.h"
 #include "master-service.h"
 #include "master-service-settings.h"
 #include "mail-storage-service.h"
@@ -477,26 +479,57 @@ struct mail_user *sieve_tool_get_mail_user
  * Commonly needed functionality
  */
 
-void sieve_tool_get_envelope_data
-	(struct mail *mail, const char **recipient, const char **sender)
+static const struct smtp_address *
+sieve_tool_get_address(struct mail *mail, const char *header)
 {
-	/* Get recipient address */
-	if ( *recipient == NULL )
-		(void)mail_get_first_header(mail, "Envelope-To", recipient);
-	if ( *recipient == NULL )
-		(void)mail_get_first_header(mail, "To", recipient);
-	if ( *recipient == NULL )
-		*recipient = "recipient@example.com";
+    struct message_address *addr;
+    const char *str;
+
+    if (mail_get_first_header(mail, header, &str) <= 0)
+        return NULL;
+    addr = message_address_parse(pool_datastack_create(),
+                     (const unsigned char *)str,
+                     strlen(str), 1, FALSE);
+    return addr == NULL || addr->mailbox == NULL || addr->domain == NULL ||
+        *addr->mailbox == '\0' || *addr->domain == '\0' ?
+        NULL : smtp_address_create_temp(addr->mailbox, addr->domain);
+}
+
+void sieve_tool_get_envelope_data
+(struct sieve_message_data *msgdata, struct mail *mail,
+	const struct smtp_address *sender,
+	const struct smtp_address *rcpt_orig,
+	const struct smtp_address *rcpt_final)
+{
+	struct smtp_params_rcpt *rcpt_params;
 
 	/* Get sender address */
-	if ( *sender == NULL )
-		(void)mail_get_first_header(mail, "Return-path", sender);
-	if ( *sender == NULL )
-		(void)mail_get_first_header(mail, "Sender", sender);
-	if ( *sender == NULL )
-		(void)mail_get_first_header(mail, "From", sender);
-	if ( *sender == NULL )
-		*sender = "sender@example.com";
+	if ( sender == NULL )
+		sender = sieve_tool_get_address(mail, "Return-path");
+	if ( sender == NULL )
+		sender = sieve_tool_get_address(mail, "Sender");
+	if ( sender == NULL )
+		sender = sieve_tool_get_address(mail, "From");
+	if ( sender == NULL )
+		sender = smtp_address_create_temp("sender", "example.com");
+
+	/* Get recipient address */
+	if ( rcpt_final == NULL )
+		rcpt_final = sieve_tool_get_address(mail, "Envelope-To");
+	if ( rcpt_final == NULL )
+		rcpt_final = sieve_tool_get_address(mail, "To");
+	if ( rcpt_final == NULL )
+		rcpt_final = smtp_address_create_temp("recipient", "example.com");
+	if ( rcpt_orig == NULL )
+		rcpt_orig = rcpt_final;
+
+	msgdata->envelope.mail_from = sender;
+	msgdata->envelope.rcpt_to = rcpt_final;
+
+	rcpt_params = t_new(struct smtp_params_rcpt, 1);
+	rcpt_params->orcpt.addr = rcpt_orig;
+
+	msgdata->envelope.rcpt_params = rcpt_params;
 }
 
 /*

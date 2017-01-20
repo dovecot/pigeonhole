@@ -190,17 +190,17 @@ const struct sieve_operation_def envelope_operation = {
 struct sieve_envelope_part {
 	const char *identifier;
 
-	const struct sieve_address *const *(*get_addresses)
+	const struct smtp_address *const *(*get_addresses)
 		(const struct sieve_runtime_env *renv);
 	const char * const *(*get_values)
 		(const struct sieve_runtime_env *renv);
 };
 
-static const struct sieve_address *const *_from_part_get_addresses
+static const struct smtp_address *const *_from_part_get_addresses
 	(const struct sieve_runtime_env *renv);
 static const char *const *_from_part_get_values
 	(const struct sieve_runtime_env *renv);
-static const struct sieve_address *const *_to_part_get_addresses
+static const struct smtp_address *const *_to_part_get_addresses
 	(const struct sieve_runtime_env *renv);
 static const char *const *_to_part_get_values
 	(const struct sieve_runtime_env *renv);
@@ -251,49 +251,51 @@ static const struct sieve_envelope_part *_envelope_part_find
 
 /* Envelope parts implementation */
 
-static const struct sieve_address *const *_from_part_get_addresses
+static const struct smtp_address *const *_from_part_get_addresses
 (const struct sieve_runtime_env *renv)
 {
-	ARRAY(const struct sieve_address *) envelope_values;
-	const struct sieve_address *address =
-		sieve_message_get_sender_address(renv->msgctx);
+	ARRAY(const struct smtp_address *) envelope_values;
+	const struct smtp_address *address =
+		sieve_message_get_sender(renv->msgctx);
 
-	if ( address != NULL ) {
-		t_array_init(&envelope_values, 2);
+	t_array_init(&envelope_values, 2);
 
-        array_append(&envelope_values, &address, 1);
+	if ( address == NULL )
+		address = smtp_address_create_temp(NULL, NULL);
+	array_append(&envelope_values, &address, 1);
 
-	    (void)array_append_space(&envelope_values);
-    	return array_idx(&envelope_values, 0);
-	}
-
-	return NULL;
+  (void)array_append_space(&envelope_values);
+	return array_idx(&envelope_values, 0);
 }
 
 static const char *const *_from_part_get_values
 (const struct sieve_runtime_env *renv)
 {
 	ARRAY(const char *) envelope_values;
+	const struct smtp_address *address =
+		sieve_message_get_sender(renv->msgctx);
+	const char *value;
 
 	t_array_init(&envelope_values, 2);
 
-	if ( renv->msgdata->return_path != NULL ) {
-        array_append(&envelope_values, &renv->msgdata->return_path, 1);
-	}
+	value = "";
+	if ( !smtp_address_isnull(address) )
+		value = smtp_address_encode(address);
+	array_append(&envelope_values, &value, 1);
 
 	(void)array_append_space(&envelope_values);
 
 	return array_idx(&envelope_values, 0);
 }
 
-static const struct sieve_address *const *_to_part_get_addresses
+static const struct smtp_address *const *_to_part_get_addresses
 (const struct sieve_runtime_env *renv)
 {
-	ARRAY(const struct sieve_address *) envelope_values;
-	const struct sieve_address *address =
-		sieve_message_get_orig_recipient_address(renv->msgctx);
+	ARRAY(const struct smtp_address *) envelope_values;
+	const struct smtp_address *address =
+		sieve_message_get_orig_recipient(renv->msgctx);
 
-	if ( address != NULL && address->local_part != NULL ) {
+	if ( address != NULL && address->localpart != NULL ) {
 		t_array_init(&envelope_values, 2);
 
 		array_append(&envelope_values, &address, 1);
@@ -309,11 +311,14 @@ static const char *const *_to_part_get_values
 (const struct sieve_runtime_env *renv)
 {
 	ARRAY(const char *) envelope_values;
+	const struct smtp_address *address =
+		sieve_message_get_orig_recipient(renv->msgctx);
 
 	t_array_init(&envelope_values, 2);
 
-	if ( renv->msgdata->orig_envelope_to != NULL ) {
-        array_append(&envelope_values, &renv->msgdata->orig_envelope_to, 1);
+	if ( address != NULL && address->localpart != NULL) {
+		const char *value = smtp_address_encode(address);
+		array_append(&envelope_values, &value, 1);
 	}
 
 	(void)array_append_space(&envelope_values);
@@ -329,7 +334,7 @@ static const char *const *_auth_part_get_values
 	t_array_init(&envelope_values, 2);
 
 	if ( renv->msgdata->auth_user != NULL )
-        array_append(&envelope_values, &renv->msgdata->auth_user, 1);
+		array_append(&envelope_values, &renv->msgdata->auth_user, 1);
 
 	(void)array_append_space(&envelope_values);
 
@@ -345,7 +350,7 @@ static const char *const *_auth_part_get_values
 static int sieve_envelope_address_list_next_string_item
 	(struct sieve_stringlist *_strlist, string_t **str_r);
 static int sieve_envelope_address_list_next_item
-	(struct sieve_address_list *_addrlist, struct sieve_address *addr_r,
+	(struct sieve_address_list *_addrlist, struct smtp_address *addr_r,
 		string_t **unparsed_r);
 static void sieve_envelope_address_list_reset
 	(struct sieve_stringlist *_strlist);
@@ -357,7 +362,7 @@ struct sieve_envelope_address_list {
 
 	struct sieve_stringlist *env_parts;
 
-	const struct sieve_address *const *cur_addresses;
+	const struct smtp_address *const *cur_addresses;
 	const char * const *cur_values;
 
 	int value_index;
@@ -381,14 +386,15 @@ static struct sieve_address_list *sieve_envelope_address_list_create
 }
 
 static int sieve_envelope_address_list_next_item
-(struct sieve_address_list *_addrlist, struct sieve_address *addr_r,
+(struct sieve_address_list *_addrlist, struct smtp_address *addr_r,
 	string_t **unparsed_r)
 {
 	struct sieve_envelope_address_list *addrlist =
 		(struct sieve_envelope_address_list *) _addrlist;
 	const struct sieve_runtime_env *renv = _addrlist->strlist.runenv;
 
-	if ( addr_r != NULL ) addr_r->local_part = NULL;
+	if ( addr_r != NULL )
+		smtp_address_init(addr_r, NULL, NULL);
 	if ( unparsed_r != NULL ) *unparsed_r = NULL;
 
 	while ( addrlist->cur_addresses == NULL && addrlist->cur_values == NULL ) {
@@ -433,10 +439,10 @@ static int sieve_envelope_address_list_next_item
 
 	/* Return next item */
 	if ( addrlist->cur_addresses != NULL ) {
-		const struct sieve_address *addr =
+		const struct smtp_address *addr =
 			addrlist->cur_addresses[addrlist->value_index];
 
-		if ( addr->local_part == NULL ) {
+		if ( addr->localpart == NULL ) {
 			/* Null path <> */
 			if ( unparsed_r != NULL )
 				*unparsed_r = t_str_new_const("", 0);
@@ -472,16 +478,17 @@ static int sieve_envelope_address_list_next_item
 static int sieve_envelope_address_list_next_string_item
 (struct sieve_stringlist *_strlist, string_t **str_r)
 {
-	struct sieve_address_list *addrlist = (struct sieve_address_list *)_strlist;
-	struct sieve_address addr;
+	struct sieve_address_list *addrlist =
+		(struct sieve_address_list *)_strlist;
+	struct smtp_address addr;
 	int ret;
 
 	if ( (ret=sieve_envelope_address_list_next_item
 		(addrlist, &addr, str_r)) <= 0 )
 		return ret;
 
-	if ( addr.local_part != NULL ) {
-		const char *addr_str = sieve_address_to_string(&addr);
+	if ( addr.localpart != NULL ) {
+		const char *addr_str = smtp_address_encode(&addr);
 		if (str_r != NULL)
 			*str_r = t_str_new_const(addr_str, strlen(addr_str));
 	}

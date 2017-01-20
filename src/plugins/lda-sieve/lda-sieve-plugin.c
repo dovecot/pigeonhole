@@ -5,12 +5,15 @@
 #include "array.h"
 #include "home-expand.h"
 #include "eacces-error.h"
+#include "smtp-address.h"
+#include "smtp-submit.h"
 #include "mail-storage.h"
 #include "mail-deliver.h"
 #include "mail-user.h"
 #include "mail-duplicate.h"
 #include "smtp-submit.h"
 #include "mail-send.h"
+#include "iostream-ssl.h"
 #include "lda-settings.h"
 
 #include "sieve.h"
@@ -50,8 +53,8 @@ static const char *lda_sieve_get_setting
 	if ( mdctx == NULL )
 		return NULL;
 
-	if ( mdctx->dest_user == NULL ||
-		(value=mail_user_plugin_getenv(mdctx->dest_user, identifier)) == NULL ) {
+	if ( mdctx->rcpt_user == NULL ||
+		(value=mail_user_plugin_getenv(mdctx->rcpt_user, identifier)) == NULL ) {
 		if ( strcmp(identifier, "recipient_delimiter") == 0 )
 			value = mdctx->set->recipient_delimiter;
 	}
@@ -69,21 +72,28 @@ static const struct sieve_callbacks lda_sieve_callbacks = {
  */
 
 static void *lda_sieve_smtp_start
-(const struct sieve_script_env *senv, const char *return_path)
+(const struct sieve_script_env *senv,
+	const struct smtp_address *mail_from)
 {
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) senv->script_context;
+	struct mail_user *user = dctx->rcpt_user;
+	struct ssl_iostream_settings ssl_set;
 	
-	return (void *)smtp_submit_init_simple(dctx->smtp_set, return_path);
+	i_zero(&ssl_set);
+	mail_user_init_ssl_client_settings(user, &ssl_set);
+
+	return (void *)smtp_submit_init_simple(dctx->smtp_set,
+		&ssl_set, mail_from);
 }
 
 static void lda_sieve_smtp_add_rcpt
 (const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
-	const char *address)
+	const struct smtp_address *rcpt_to)
 {
 	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
 
-	smtp_submit_add_rcpt(smtp_submit, address);
+	smtp_submit_add_rcpt(smtp_submit, rcpt_to);
 }
 
 static struct ostream *lda_sieve_smtp_send
@@ -115,8 +125,8 @@ static int lda_sieve_smtp_finish
 }
 
 static int lda_sieve_reject_mail
-(const struct sieve_script_env *senv, const char *recipient,
-	const char *reason)
+(const struct sieve_script_env *senv,
+	const struct smtp_address *recipient, const char *reason)
 {
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) senv->script_context;
@@ -273,7 +283,7 @@ static struct sieve_binary *lda_sieve_open
 	struct sieve_instance *svinst = srctx->svinst;
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
-	bool debug = srctx->mdctx->dest_user->mail_debug;
+	bool debug = srctx->mdctx->rcpt_user->mail_debug;
 	const char *compile_name = "compile";
 
 	if ( recompile ) {
@@ -423,7 +433,7 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 	struct sieve_binary *sbin = NULL;
 	enum sieve_compile_flags cpflags = 0;
 	enum sieve_execute_flags exflags = 0;
-	bool debug = srctx->mdctx->dest_user->mail_debug;
+	bool debug = srctx->mdctx->rcpt_user->mail_debug;
 	bool user_script, more;
 
 	user_script = ( script == srctx->user_script );
@@ -614,14 +624,14 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	enum sieve_error error;
 	ARRAY_TYPE(sieve_script) script_sequence;
 	struct sieve_script *const *scripts;
-	bool debug = mdctx->dest_user->mail_debug;
+	bool debug = mdctx->rcpt_user->mail_debug;
 	unsigned int after_index, count, i;
 	int ret = 1;
 
 	/* Find the personal script to execute */
 
 	ret = lda_sieve_get_personal_storage
-		(svinst, mdctx->dest_user, &main_storage, &error);
+		(svinst, mdctx->rcpt_user, &main_storage, &error);
 	if ( ret == 0 && error == SIEVE_ERROR_NOT_POSSIBLE )
 		return 0;
 	if ( ret > 0 ) {
@@ -667,7 +677,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	if ( ret >= 0 ) {
 		i = 2;
 		setting_name = "sieve_before";
-		sieve_before = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
+		sieve_before = mail_user_plugin_getenv(mdctx->rcpt_user, setting_name);
 		while ( ret >= 0 && sieve_before != NULL && *sieve_before != '\0' ) {
 			ret = lda_sieve_multiscript_get_scripts(svinst, setting_name,
 				sieve_before, &script_sequence, &error);
@@ -680,7 +690,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 			}
 			ret = 0;
 			setting_name = t_strdup_printf("sieve_before%u", i++);
-			sieve_before = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
+			sieve_before = mail_user_plugin_getenv(mdctx->rcpt_user, setting_name);
 		}
 
 		if ( ret >= 0 && debug ) {
@@ -710,7 +720,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	if ( ret >= 0 ) {
 		i = 2;
 		setting_name = "sieve_after";
-		sieve_after = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
+		sieve_after = mail_user_plugin_getenv(mdctx->rcpt_user, setting_name);
 		while ( sieve_after != NULL && *sieve_after != '\0' ) {
 			ret = lda_sieve_multiscript_get_scripts(svinst, setting_name,
 				sieve_after, &script_sequence, &error);
@@ -723,7 +733,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 			}
 			ret = 0;
 			setting_name = t_strdup_printf("sieve_after%u", i++);
-			sieve_after = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
+			sieve_after = mail_user_plugin_getenv(mdctx->rcpt_user, setting_name);
 		}
 
 		if ( ret >= 0 && debug ) {
@@ -737,7 +747,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 
 	/* discard */
 	sieve_discard = mail_user_plugin_getenv
-		(mdctx->dest_user, "sieve_discard");
+		(mdctx->rcpt_user, "sieve_discard");
 	if ( sieve_discard != NULL && *sieve_discard != '\0' ) {
 		srctx->discard_script = sieve_script_create_open
 			(svinst, sieve_discard, NULL, &error);
@@ -789,7 +799,7 @@ static int lda_sieve_execute
 	struct sieve_exec_status estatus;
 	struct sieve_trace_config trace_config;
 	struct sieve_trace_log *trace_log;
-	bool debug = mdctx->dest_user->mail_debug;
+	bool debug = mdctx->rcpt_user->mail_debug;
 	int ret;
 
 	/* Check whether there are any scripts to execute at all */
@@ -833,10 +843,11 @@ static int lda_sieve_execute
 		i_zero(&msgdata);
 
 		msgdata.mail = mdctx->src_mail;
-		msgdata.return_path = mail_deliver_get_return_address(mdctx);
-		msgdata.orig_envelope_to = mdctx->dest_addr;
-		msgdata.final_envelope_to = mdctx->final_dest_addr;
-		msgdata.auth_user = mdctx->dest_user->username;
+		msgdata.auth_user = mdctx->rcpt_user->username;
+		msgdata.envelope.mail_from = mail_deliver_get_return_address(mdctx);
+		msgdata.envelope.mail_params = &mdctx->mail_params;
+		msgdata.envelope.rcpt_to = mdctx->rcpt_to;
+		msgdata.envelope.rcpt_params = &mdctx->rcpt_params;
 		(void)mail_get_first_header(msgdata.mail, "Message-ID", &msgdata.id);
 
 		srctx->msgdata = &msgdata;
@@ -846,10 +857,10 @@ static int lda_sieve_execute
 		i_zero(&scriptenv);
 		i_zero(&estatus);
 
-		scriptenv.default_mailbox = mdctx->dest_mailbox_name;
+		scriptenv.default_mailbox = mdctx->rcpt_default_mailbox;
 		scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
 		scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;
-		scriptenv.user = mdctx->dest_user;
+		scriptenv.user = mdctx->rcpt_user;
 		scriptenv.smtp_start = lda_sieve_smtp_start;
 		scriptenv.smtp_add_rcpt = lda_sieve_smtp_add_rcpt;
 		scriptenv.smtp_send = lda_sieve_smtp_send;
@@ -887,8 +898,8 @@ static int lda_sieve_deliver_mail
 {
 	struct lda_sieve_run_context srctx;
 	const struct mail_storage_settings *mail_set =
-		mail_user_set_get_storage_set(mdctx->dest_user);
-	bool debug = mdctx->dest_user->mail_debug;
+		mail_user_set_get_storage_set(mdctx->rcpt_user);
+	bool debug = mdctx->rcpt_user->mail_debug;
 	struct sieve_environment svenv;
 	int ret = 0;
 
@@ -896,16 +907,16 @@ static int lda_sieve_deliver_mail
 
 	i_zero(&srctx);
 	srctx.mdctx = mdctx;
-	(void)mail_user_get_home(mdctx->dest_user, &srctx.home_dir);
+	(void)mail_user_get_home(mdctx->rcpt_user, &srctx.home_dir);
 
 	/* Initialize Sieve engine */
 
 	memset((void*)&svenv, 0, sizeof(svenv));
-	svenv.username = mdctx->dest_user->username;
+	svenv.username = mdctx->rcpt_user->username;
 	svenv.home_dir = srctx.home_dir;
 	svenv.hostname = mail_set->hostname;
-	svenv.base_dir = mdctx->dest_user->set->base_dir;
-	svenv.temp_dir = mdctx->dest_user->set->mail_temp_dir;
+	svenv.base_dir = mdctx->rcpt_user->set->base_dir;
+	svenv.temp_dir = mdctx->rcpt_user->set->mail_temp_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 	svenv.location = SIEVE_ENV_LOCATION_MDA;
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_DURING;

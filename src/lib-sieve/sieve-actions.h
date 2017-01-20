@@ -256,12 +256,13 @@ void sieve_act_store_get_storage_error
  */
 
 struct act_redirect_context {
-	const char *to_address;
+	const struct smtp_address *to_address;
 };
 
 int sieve_act_redirect_add_to_result
 (const struct sieve_runtime_env *renv,
-	struct sieve_side_effects_list *seffects, const char *norm_address);
+	struct sieve_side_effects_list *seffects,
+	const struct smtp_address *to_address);
 
 /*
  * Action utility functions
@@ -283,7 +284,7 @@ void sieve_action_duplicate_flush
 
 int sieve_action_reject_mail
 (const struct sieve_action_exec_env *aenv,
-	const char *sender, const char *recipient, const char *reason);
+	const struct smtp_address *recipient, const char *reason);
 
 /*
  * Mailbox

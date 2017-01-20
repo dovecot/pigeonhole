@@ -71,7 +71,10 @@ void sieve_tool_set_setting_callback
  */
 
 void sieve_tool_get_envelope_data
-	(struct mail *mail, const char **recipient, const char **sender);
+(struct sieve_message_data *msgdata, struct mail *mail,
+	const struct smtp_address *sender,
+	const struct smtp_address *rcpt_orig,
+	const struct smtp_address *rcpt_final);
 
 /*
  * File I/O

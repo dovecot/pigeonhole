@@ -2,6 +2,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
 	$(LIBDOVECOT_INCLUDE) \
 	$(LIBDOVECOT_DICT_INCLUDE) \
+	$(LIBDOVECOT_SMTP_INCLUDE) \
 	$(LIBDOVECOT_LDA_INCLUDE)
 
 lib90_sieve_plugin_la_LDFLAGS = -module -avoid-version

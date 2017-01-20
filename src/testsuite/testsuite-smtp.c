@@ -20,8 +20,7 @@
 #include <sys/types.h>
 
 struct testsuite_smtp_message {
-	const char *envelope_from;
-	const char *envelope_to;
+	const struct smtp_address *envelope_from, *envelope_to;
 	const char *file;
 };
 
@@ -72,12 +71,14 @@ void testsuite_smtp_reset(void)
  */
 
 struct testsuite_smtp {
-	char *msg_file, *return_path;
+	char *msg_file;
+	struct smtp_address *mail_from;
 	struct ostream *output;
 };
 
 void *testsuite_smtp_start
-(const struct sieve_script_env *senv ATTR_UNUSED, const char *return_path)
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	const struct smtp_address *mail_from)
 {
 	struct testsuite_smtp *smtp;
 	unsigned int smtp_count = array_count(&testsuite_smtp_messages);
@@ -86,7 +87,7 @@ void *testsuite_smtp_start
 	smtp = i_new(struct testsuite_smtp, 1);
 
 	smtp->msg_file = i_strdup_printf("%s/%d.eml", testsuite_smtp_tmp, smtp_count);
-	smtp->return_path = i_strdup(return_path);
+	smtp->mail_from = smtp_address_clone(default_pool, mail_from);
 	
 	if ( (fd=open(smtp->msg_file, O_WRONLY | O_CREAT, 0600)) < 0 ) {
 		i_fatal("failed create tmp file for SMTP simulation: open(%s) failed: %m",
@@ -100,7 +101,7 @@ void *testsuite_smtp_start
 
 void testsuite_smtp_add_rcpt
 (const struct sieve_script_env *senv ATTR_UNUSED,
-	void *handle, const char *address)
+	void *handle, const struct smtp_address *rcpt_to)
 {
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
 	struct testsuite_smtp_message *msg;
@@ -108,8 +109,8 @@ void testsuite_smtp_add_rcpt
 	msg = array_append_space(&testsuite_smtp_messages);
 
 	msg->file = p_strdup(testsuite_smtp_pool, smtp->msg_file);
-	msg->envelope_from = p_strdup(testsuite_smtp_pool, smtp->return_path);
-	msg->envelope_to = p_strdup(testsuite_smtp_pool, address);
+	msg->envelope_from = smtp_address_clone(testsuite_smtp_pool, smtp->mail_from);
+	msg->envelope_to = smtp_address_clone(testsuite_smtp_pool, rcpt_to);
 }
 
 struct ostream *testsuite_smtp_send
@@ -130,7 +131,7 @@ void testsuite_smtp_abort
 	o_stream_unref(&smtp->output);
 	i_unlink(smtp->msg_file);
 	i_free(smtp->msg_file);
-	i_free(smtp->return_path);
+	i_free(smtp->mail_from);
 	i_free(smtp);
 }
 
@@ -148,7 +149,7 @@ int testsuite_smtp_finish
 	}
 	o_stream_unref(&smtp->output);
 	i_free(smtp->msg_file);
-	i_free(smtp->return_path);
+	i_free(smtp->mail_from);
 	i_free(smtp);
 	return ret;
 }
@@ -168,8 +169,8 @@ bool testsuite_smtp_get
 	smtp_msg = array_idx(&testsuite_smtp_messages, index);
 
 	testsuite_message_set_file(renv, smtp_msg->file);
-	testsuite_envelope_set_sender(renv, smtp_msg->envelope_from);
-	testsuite_envelope_set_recipient(renv, smtp_msg->envelope_to);
+	testsuite_envelope_set_sender_address(renv, smtp_msg->envelope_from);
+	testsuite_envelope_set_recipient_address(renv, smtp_msg->envelope_to);
 
 	return TRUE;
 }

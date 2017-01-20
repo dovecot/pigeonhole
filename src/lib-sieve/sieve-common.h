@@ -110,7 +110,6 @@ struct sieve_match_type;
 struct sieve_match_context;
 
 /* sieve-address.h */
-struct sieve_address;
 struct sieve_address_list;
 
 /* sieve-address-parts.h */
@@ -201,7 +200,7 @@ struct sieve_instance {
 	size_t max_script_size;
 	unsigned int max_actions;
 	unsigned int max_redirects;
-	const struct sieve_address *user_email;
+	const struct smtp_address *user_email, *user_email_implicit;
 	struct sieve_address_source redirect_from;
 	unsigned int redirect_duplicate_period;
 };
@@ -218,14 +217,16 @@ void sieve_trace_log_write_line
  * User e-mail address
  */
 
-const char *sieve_get_user_email
+const struct smtp_address *sieve_get_user_email
 	(struct sieve_instance *svinst);
 
 /*
  * Postmaster address 
  */
 
-const char *sieve_get_postmaster_address
-(const struct sieve_script_env *senv);
+const struct message_address *
+sieve_get_postmaster(const struct sieve_script_env *senv);
+const char *
+sieve_get_postmaster_address(const struct sieve_script_env *senv);
 
 #endif /* __SIEVE_COMMON_H */

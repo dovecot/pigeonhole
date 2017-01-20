@@ -128,7 +128,7 @@ const struct sieve_action_def act_report = {
 struct act_report_data {
 	const char *feedback_type;
 	const char *message;
-	const char *to_address;
+	struct smtp_address *to_address;
 	bool headers_only:1;
 };
 
@@ -209,25 +209,21 @@ static bool cmd_report_validate
 	 * done at runtime.
 	 */
 	if ( sieve_argument_is_string_literal(arg) ) {
-		string_t *address = sieve_ast_argument_str(arg);
+		string_t *raw_address = sieve_ast_argument_str(arg);
 		const char *error;
-		const char *norm_address;
+		bool result;
 
 		T_BEGIN {
-			/* Verify and normalize the address to 'local_part@domain' */
-			norm_address = sieve_address_normalize(address, &error);
-
-			if ( norm_address == NULL ) {
+			/* Parse the address */
+			result = sieve_address_validate_str(raw_address, &error);
+			if ( !result ) {
 				sieve_argument_validate_error(valdtr, arg,
-					"specified redirect address `%s' is invalid: %s",
-					str_sanitize(str_c(address),128), error);
-			} else {
-				/* Replace string literal in AST */
-				sieve_ast_argument_string_setc(arg, norm_address);
+					"specified report address '%s' is invalid: %s",
+					str_sanitize(str_c(raw_address),128), error);
 			}
 		} T_END;
 
-		return ( norm_address != NULL );
+		return result;
 	}
 
 	return TRUE;
@@ -294,7 +290,8 @@ static int cmd_report_operation_execute
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct act_report_data *act;
 	string_t *fbtype, *message, *to_address;
-	const char *norm_address, *feedback_type, *error;
+	const char *feedback_type, *error;
+	const struct smtp_address *parsed_address;
 	int opt_code = 0, ret = 0;
 	bool headers_only = FALSE;
 	pool_t pool;
@@ -351,11 +348,11 @@ static int cmd_report_operation_execute
 	}
 
 	/* Verify and normalize the address to 'local_part@domain' */
-	norm_address = sieve_address_normalize(to_address, &error);
-	if ( norm_address == NULL ) {
+	parsed_address = sieve_address_parse_str(to_address, &error);
+	if ( parsed_address == NULL ) {
 		sieve_runtime_error(renv, NULL,
-			"specified report address `%s' is invalid: %s",
-			str_sanitize(str_c(to_address), 256), error);
+			"specified report address '%s' is invalid: %s",
+			str_sanitize(str_c(to_address),128), error);
 		return SIEVE_EXEC_FAILURE;
 	}
 
@@ -364,9 +361,9 @@ static int cmd_report_operation_execute
 		sieve_runtime_trace(renv, 0, "report action");
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(renv, 0,
-			"report incoming message as `%s' to address `%s'",
+			"report incoming message as `%s' to address %s",
 			str_sanitize(str_c(fbtype), 32),
-			str_sanitize(norm_address, 80));
+			smtp_address_encode_path(parsed_address));
 	}
 
 	/* Add report action to the result */
@@ -376,7 +373,7 @@ static int cmd_report_operation_execute
 	act->headers_only = headers_only;
 	act->feedback_type = p_strdup(pool, feedback_type);
 	act->message = p_strdup(pool, str_c(message));
-	act->to_address = p_strdup(pool, norm_address);
+	act->to_address = smtp_address_clone(pool, parsed_address);
 
 	if ( sieve_result_add_action(renv,
 		this_ext, &act_report, NULL, (void *) act, 0, TRUE) < 0 )
@@ -402,8 +399,8 @@ static bool act_report_equals
 		(struct act_report_data *) act2->context;
 
 	/* Address is already normalized */
-	return ( sieve_address_compare
-		(rdd1->to_address, rdd2->to_address, TRUE) == 0 );
+	return ( smtp_address_equals
+		(rdd1->to_address, rdd2->to_address) );
 }
 
 static int act_report_check_duplicate
@@ -428,7 +425,7 @@ static void act_report_print
 	sieve_result_action_printf(rpenv,
 		"report incoming message as `%s' to: %s",
 		str_sanitize(rdd->feedback_type, 32),
-		str_sanitize(rdd->to_address, 256));
+		smtp_address_encode_path(rdd->to_address));
 }
 
 /* Result execution */
@@ -454,12 +451,13 @@ static int act_report_send
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct sieve_address_source report_from = config->report_from;
+	const struct smtp_address *sender, *user;
 	struct sieve_smtp_context *sctx;
 	struct istream *input;
 	struct ostream *output;
 	string_t *msg;
 	const char *const *headers;
-	const char *outmsgid, *boundary, *error, *subject, *from, *user;
+	const char *outmsgid, *boundary, *error, *subject, *from;
 	int ret;
 
 	/* Just to be sure */
@@ -489,9 +487,10 @@ static int act_report_send
 	}
 	if ( (ret=sieve_address_source_get_address
 		(&report_from, svinst, senv, msgctx,
-			aenv->flags, &from)) <= 0 || from == NULL || *from == '\0') {
-		from = t_strdup_printf("Postmaster <%s>",
-			sieve_get_postmaster_address(senv));
+			aenv->flags, &sender)) > 0 && sender != NULL) {
+		from = smtp_address_encode_path(sender);
+	} else {
+		from = sieve_get_postmaster_address(senv);
 	}
 
 	/* Start message */
@@ -508,7 +507,8 @@ static int act_report_send
 	rfc2822_header_write(msg, "Date", message_date_create(ioloop_time));
 
 	rfc2822_header_write(msg, "From", from);
-	rfc2822_header_printf(msg, "To", "<%s>", act->to_address);
+	rfc2822_header_write(msg, "To",
+		smtp_address_encode_path(act->to_address));
 
 	if ( _contains_8bit(subject) )
 		rfc2822_header_utf8_printf(msg, "Subject", "%s", subject);
@@ -555,7 +555,7 @@ static int act_report_send
 		PIGEONHOLE_NAME "/" PIGEONHOLE_VERSION);
 
 	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 ) {
-		const char *sender, *orig_recipient;
+		const struct smtp_address *sender, *orig_recipient;
 
 		sender = sieve_message_get_sender(msgctx);
 		orig_recipient = sieve_message_get_orig_recipient(msgctx);
@@ -565,21 +565,23 @@ static int act_report_send
 				"Original-Mail-From", "<>");
 		} else {
 			rfc2822_header_printf(msg,
-				"Original-Mail-From", "<%s>", sender);
+				"Original-Mail-From", "<%s>",
+				smtp_address_encode_path(sender));
 		}
 		if (orig_recipient != NULL) {
 			rfc2822_header_printf(msg,
-				"Original-Rcpt-To", "<%s>", orig_recipient);
+				"Original-Rcpt-To", "<%s>",
+				smtp_address_encode_path(orig_recipient));
 		}
 	}
 	if (svinst->user_email != NULL)
-		user = sieve_address_to_string(svinst->user_email);
+		user = svinst->user_email;
 	else if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0 ||
 		(user=sieve_message_get_orig_recipient(msgctx)) == NULL)
 		user = sieve_get_user_email(svinst);
 	if (user != NULL) {
-		rfc2822_header_printf(msg,
-			"Dovecot-Reporting-User", "<%s>", user);
+		rfc2822_header_write(msg, "Dovecot-Reporting-User",
+			smtp_address_encode_path(user));
 	}
 	str_append(msg, "\r\n");
 
@@ -642,21 +644,21 @@ static int act_report_send
 				"failed to send `%s' report to <%s>: %s "
 				"(temporary failure)",
 				str_sanitize(act->feedback_type, 32),
-				str_sanitize(act->to_address, 256),
+				smtp_address_encode(act->to_address),
 				str_sanitize(error, 512));
 		} else {
 			sieve_result_global_log_error(aenv,
 				"failed to send `%s' report to <%s>: %s "
 				"(permanent failure)",
 				str_sanitize(act->feedback_type, 32),
-				str_sanitize(act->to_address, 256),
+				smtp_address_encode(act->to_address),
 				str_sanitize(error, 512));
 		}
 	} else {
 		sieve_result_global_log(aenv,
 			"sent `%s' report to <%s>",
 			str_sanitize(act->feedback_type, 32),
-			str_sanitize(act->to_address, 256));
+			smtp_address_encode(act->to_address));
 	}
 
 	return SIEVE_EXEC_OK;

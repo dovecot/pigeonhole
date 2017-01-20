@@ -39,7 +39,6 @@ const struct sieve_script_env *testsuite_scriptenv;
  */
 
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
-#define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
 /*
  * Testsuite execution
@@ -132,6 +131,10 @@ int main(int argc, char **argv)
 		print_help();
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
 	}
+
+	// FIXME: very very ugly
+	master_service_parse_option(master_service,
+		'o', "postmaster_address=postmaster@example.com");
 
 	if (t_get_working_dir(&cwd, &error) < 0)
 		i_fatal("Failed to get working directory: %s", error);

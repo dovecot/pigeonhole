@@ -15,7 +15,7 @@ struct uri_mailto_header_field {
 
 struct uri_mailto_recipient {
 	const char *full;
-	const char *normalized;
+	const struct smtp_address *address;
 	bool carbon_copy;
 };
 

@@ -203,7 +203,7 @@ bool sieve_setting_get_duration_value
 void sieve_settings_load
 (struct sieve_instance *svinst)
 {
-	const char *str_setting;
+	const char *str_setting, *error;
 	unsigned long long int uint_setting;
 	size_t size_setting;
 	sieve_number_t period;
@@ -241,13 +241,15 @@ void sieve_settings_load
 
 	str_setting = sieve_setting_get(svinst, "sieve_user_email");
 	if ( str_setting != NULL && *str_setting != '\0' ) {
-		svinst->user_email =
-			sieve_address_parse_envelope_path
-				(svinst->pool, str_setting);
-		if ( svinst->user_email == NULL ) {
+		struct smtp_address *address;
+		if (smtp_address_parse_path(svinst->pool, str_setting,
+			SMTP_ADDRESS_PARSE_FLAG_BRACKETS_OPTIONAL,
+			&address, &error) < 0) {
 			sieve_sys_warning(svinst,
 				"Invalid address value for setting "
-				"`sieve_user_email': `%s'", str_setting);
+				"`sieve_user_email': %s", error);
+		} else {
+			svinst->user_email = address;
 		}
 	}
 }

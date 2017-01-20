@@ -22,12 +22,24 @@ void testsuite_message_set_file
 void testsuite_message_set_mail
 	(const struct sieve_runtime_env *renv, struct mail *mail);
 
+void testsuite_envelope_set_sender_address
+	(const struct sieve_runtime_env *renv,
+		const struct smtp_address *address);
 void testsuite_envelope_set_sender
 	(const struct sieve_runtime_env *renv, const char *value);
+
+void testsuite_envelope_set_recipient_address
+	(const struct sieve_runtime_env *renv,
+		const struct smtp_address *address);
 void testsuite_envelope_set_recipient
 	(const struct sieve_runtime_env *renv, const char *value);
+
+void testsuite_envelope_set_orig_recipient_address
+	(const struct sieve_runtime_env *renv,
+		const struct smtp_address *address);
 void testsuite_envelope_set_orig_recipient
 	(const struct sieve_runtime_env *renv, const char *value);
+
 void testsuite_envelope_set_auth_user
 	(const struct sieve_runtime_env *renv, const char *value);
 

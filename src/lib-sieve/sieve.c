@@ -10,6 +10,7 @@
 #include "eacces-error.h"
 #include "home-expand.h"
 #include "hostpid.h"
+#include "message-address.h"
 #include "mail-user.h"
 
 #include "sieve-settings.h"
@@ -1052,23 +1053,27 @@ int sieve_trace_config_get(struct sieve_instance *svinst,
  * User e-mail address
  */
 
-const char *sieve_get_user_email
+const struct smtp_address *sieve_get_user_email
 (struct sieve_instance *svinst)
 {
+	struct smtp_address *address;
 	const char *username = svinst->username;
 
+	if (svinst->user_email_implicit != NULL)
+		return svinst->user_email_implicit;
 	if (svinst->user_email != NULL)
-		return sieve_address_to_string(svinst->user_email);
+		return svinst->user_email;
 
-	if ( strchr(username, '@') != 0 )
-		return username;
+	if (smtp_address_parse_mailbox(svinst->pool, username,
+		0, &address, NULL) >= 0) {
+		svinst->user_email_implicit = address;
+		return svinst->user_email_implicit;
+	}
+
 	if ( svinst->domainname != NULL ) {
-		struct sieve_address svaddr;
-
-		i_zero(&svaddr);
-		svaddr.local_part = username;
-		svaddr.domain = svinst->domainname;
-		return sieve_address_to_string(&svaddr);
+		svinst->user_email_implicit = smtp_address_create(svinst->pool,
+			username, svinst->domainname);
+		return svinst->user_email_implicit;
 	}
 	return NULL;
 }
@@ -1077,14 +1082,24 @@ const char *sieve_get_user_email
  * Postmaster address
  */
 
-const char *sieve_get_postmaster_address
-(const struct sieve_script_env *senv)
+const struct message_address *
+sieve_get_postmaster(const struct sieve_script_env *senv)
 {
 	const struct mail_storage_settings *mail_set =
 		mail_user_set_get_storage_set(senv->user);
 
-	i_assert(mail_set->postmaster_address != NULL &&
-		*mail_set->postmaster_address != '\0');
-	return mail_set->postmaster_address;
+	i_assert(mail_set->parsed_postmaster_address != NULL);
+	return mail_set->parsed_postmaster_address;
+}
+
+const char *
+sieve_get_postmaster_address(const struct sieve_script_env *senv)
+{
+	const struct message_address *postmaster =
+		sieve_get_postmaster(senv);
+	string_t *addr = t_str_new(256);
+
+	message_address_write(addr, postmaster);
+	return str_c(addr);
 }
 

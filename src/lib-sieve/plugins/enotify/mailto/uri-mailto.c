@@ -167,10 +167,11 @@ static bool uri_mailto_add_valid_recipient
 	struct uri_mailto_recipient *rcpts;
 	unsigned int count, i;
 	const char *error;
-	const char *normalized;
+	const struct smtp_address *address;
 
 	/* Verify recipient */
-	if ( (normalized=sieve_address_normalize(recipient, &error)) == NULL ) {
+	if ( (address=sieve_address_parse_str
+		(recipient, &error)) == NULL ) {
 		uri_mailto_error(parser, "invalid recipient '%s': %s",
 			str_sanitize(str_c(recipient), 80), error);
 		return FALSE;
@@ -193,8 +194,7 @@ static bool uri_mailto_add_valid_recipient
 
 		/* Check for duplicate first */
 		for ( i = 0; i < count; i++ ) {
-			if ( sieve_address_compare(rcpts[i].normalized, normalized, TRUE) == 0 )
-				{
+			if ( smtp_address_equals(rcpts[i].address, address) ) {
 				/* Upgrade existing Cc: recipient to a To: recipient if possible */
 				rcpts[i].carbon_copy = ( rcpts[i].carbon_copy && cc );
 
@@ -208,7 +208,7 @@ static bool uri_mailto_add_valid_recipient
 		new_recipient = array_append_space(&uri->recipients);
 		new_recipient->carbon_copy = cc;
 		new_recipient->full = p_strdup(parser->pool, str_c(recipient));
-		new_recipient->normalized = p_strdup(parser->pool, normalized);
+		new_recipient->address = smtp_address_clone(parser->pool, address);
 	}
 
 	return TRUE;

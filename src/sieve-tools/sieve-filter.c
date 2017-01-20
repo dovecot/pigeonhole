@@ -75,14 +75,11 @@ static int filter_message
 	struct sieve_exec_status estatus;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
-	const char *recipient = NULL, *sender = NULL;
 	bool execute = sfctx->data->execute;
 	bool source_write = sfctx->data->source_write;
 	const char *subject, *date;
 	uoff_t size = 0;
 	int ret;
-
-	sieve_tool_get_envelope_data(mail, &recipient, &sender);
 
 	/* Initialize execution status */
 	i_zero(&estatus);
@@ -91,11 +88,11 @@ static int filter_message
 	/* Collect necessary message data */
 	i_zero(&msgdata);
 	msgdata.mail = mail;
-	msgdata.return_path = sender;
-	msgdata.orig_envelope_to = recipient;
-	msgdata.final_envelope_to = recipient;
 	msgdata.auth_user = senv->user->username;
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
+
+	sieve_tool_get_envelope_data
+		(&msgdata, mail, NULL, NULL, NULL);
 
 	if ( mail_get_virtual_size(mail, &size) < 0 ) {
 		if ( mail->expunged )

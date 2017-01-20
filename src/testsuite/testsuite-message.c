@@ -4,12 +4,14 @@
 #include "lib.h"
 #include "str.h"
 #include "istream.h"
+#include "smtp-params.h"
 #include "message-address.h"
 #include "mail-storage.h"
 #include "master-service.h"
 
 #include "sieve-common.h"
 #include "sieve-address.h"
+#include "sieve-error.h"
 #include "sieve-message.h"
 #include "sieve-interpreter.h"
 
@@ -23,6 +25,7 @@
  */
 
 struct sieve_message_data testsuite_msgdata;
+static struct smtp_params_rcpt testsuite_rcpt_params;
 
 static struct mail *testsuite_mail;
 
@@ -33,19 +36,18 @@ static const char *_default_message_data =
 "\n"
 "Friep!\n";
 
-static string_t *envelope_from;
-static string_t *envelope_to;
-static string_t *envelope_orig_to;
-static string_t *envelope_auth;
+static struct smtp_address *env_mail_from = NULL;
+static struct smtp_address *env_rcpt_to = NULL;
+static struct smtp_address *env_orig_rcpt_to = NULL;
+static char *env_auth = NULL;
 
 pool_t message_pool;
 
-static const char *
+static const struct smtp_address *
 testsuite_message_get_address(struct mail *mail, const char *header)
 {
 	struct message_address *addr;
 	const char *str;
-	struct sieve_address svaddr;
 
 	if (mail_get_first_header(mail, header, &str) <= 0)
 		return NULL;
@@ -55,18 +57,20 @@ testsuite_message_get_address(struct mail *mail, const char *header)
 	if ( addr == NULL ||
 		addr->mailbox == NULL || *addr->mailbox == '\0' )
 		return NULL;
-	if ( addr->domain == NULL || *addr->domain == '\0' )
-		return addr->mailbox;
-
-	i_zero(&svaddr);
-	svaddr.local_part = addr->mailbox;
-	svaddr.domain = addr->domain;
-	return sieve_address_to_string(&svaddr);
+	return smtp_address_create_temp(addr->mailbox, addr->domain);
 }
 
 static void testsuite_message_set_data(struct mail *mail)
 {
-	const char *recipient = NULL, *sender = NULL;
+	const struct smtp_address *recipient = NULL, *sender = NULL;
+
+	i_free(env_mail_from);
+	i_free(env_rcpt_to);
+	i_free(env_orig_rcpt_to);
+	i_free(env_auth);
+
+	env_mail_from = env_rcpt_to = env_orig_rcpt_to = NULL;
+	env_auth = NULL;
 
 	/*
 	 * Collect necessary message data
@@ -77,7 +81,7 @@ static void testsuite_message_set_data(struct mail *mail)
 	if ( recipient == NULL )
 		recipient = testsuite_message_get_address(mail, "To");
 	if ( recipient == NULL )
-		recipient = "recipient@example.com";
+		recipient = SMTP_ADDRESS_LITERAL("recipient", "example.com");
 
 	/* Get sender address */
 	sender = testsuite_message_get_address(mail, "Return-path");
@@ -86,23 +90,22 @@ static void testsuite_message_set_data(struct mail *mail)
 	if ( sender == NULL )
 		sender = testsuite_message_get_address(mail, "From");
 	if ( sender == NULL )
-		sender = "sender@example.com";
+		sender = SMTP_ADDRESS_LITERAL("sender", "example.com");
+
+	env_mail_from = smtp_address_clone(default_pool, sender);
+	env_rcpt_to = smtp_address_clone(default_pool, recipient);
+	env_orig_rcpt_to = smtp_address_clone(default_pool, recipient);
 
 	i_zero(&testsuite_msgdata);
 	testsuite_msgdata.mail = mail;
 	testsuite_msgdata.auth_user = sieve_tool_get_username(sieve_tool);
+	testsuite_msgdata.envelope.mail_from = env_mail_from;
+	testsuite_msgdata.envelope.rcpt_to = env_rcpt_to;
 
-	str_truncate(envelope_from, 0);
-	str_append(envelope_from, sender);
-	testsuite_msgdata.return_path = str_c(envelope_from);
+	i_zero(&testsuite_rcpt_params);
+	testsuite_rcpt_params.orcpt.addr = env_orig_rcpt_to;
 
-	str_truncate(envelope_to, 0);
-	str_append(envelope_to, recipient);
-	testsuite_msgdata.final_envelope_to = str_c(envelope_to);
-
-	str_truncate(envelope_orig_to, 0);
-	str_append(envelope_orig_to, recipient);
-	testsuite_msgdata.orig_envelope_to = str_c(envelope_orig_to);
+	testsuite_msgdata.envelope.rcpt_params = &testsuite_rcpt_params;
 
 	(void)mail_get_first_header(mail, "Message-ID", &testsuite_msgdata.id);
 }
@@ -115,12 +118,6 @@ void testsuite_message_init(void)
 	str_append(default_message, _default_message_data);
 
 	testsuite_mail = sieve_tool_open_data_as_mail(sieve_tool, default_message);
-
-	envelope_to = str_new(message_pool, 256);
-	envelope_orig_to = str_new(message_pool, 256);
-	envelope_from = str_new(message_pool, 256);
-	envelope_auth = str_new(message_pool, 256);
-
 	testsuite_message_set_data(testsuite_mail);
 }
 
@@ -152,65 +149,101 @@ void testsuite_message_set_mail
 
 void testsuite_message_deinit(void)
 {
+	i_free(env_mail_from);
+	i_free(env_rcpt_to);
+	i_free(env_orig_rcpt_to);
+	i_free(env_auth);
 	pool_unref(&message_pool);
 }
 
-static void
-normalize_address(const char **address)
+void testsuite_envelope_set_sender_address
+(const struct sieve_runtime_env *renv,
+	const struct smtp_address *address)
 {
-	const struct sieve_address *svaddr;
+	sieve_message_context_reset(renv->msgctx);
 
-	svaddr = sieve_address_parse_envelope_path
-		(pool_datastack_create(), *address);
-	if (svaddr == NULL)
-		return;
-	*address = sieve_address_to_string(svaddr);
+	i_free(env_mail_from);
+
+	env_mail_from = smtp_address_clone(default_pool, address);
+	testsuite_msgdata.envelope.mail_from = env_mail_from;
 }
 
 void testsuite_envelope_set_sender
 (const struct sieve_runtime_env *renv, const char *value)
 {
-	normalize_address(&value);
+	struct smtp_address *address = NULL;
+	const char *error;
 
+	if (smtp_address_parse_path(pool_datastack_create(), value,
+		SMTP_ADDRESS_PARSE_FLAG_ALLOW_EMPTY |
+		SMTP_ADDRESS_PARSE_FLAG_BRACKETS_OPTIONAL,
+		&address, &error) < 0) {
+		sieve_sys_error(testsuite_sieve_instance,
+			"testsuite: envelope sender address "
+			"`%s' is invalid: %s", value, error);
+	}
+	testsuite_envelope_set_sender_address(renv, address);
+}
+
+void testsuite_envelope_set_recipient_address
+(const struct sieve_runtime_env *renv,
+	const struct smtp_address *address)
+{
 	sieve_message_context_reset(renv->msgctx);
 
-	str_truncate(envelope_from, 0);
+	i_free(env_rcpt_to);
+	i_free(env_orig_rcpt_to);
 
-	if ( value != NULL )
-		str_append(envelope_from, value);
-
-	testsuite_msgdata.return_path = str_c(envelope_from);
+	env_rcpt_to = smtp_address_clone(default_pool, address);
+	env_orig_rcpt_to = smtp_address_clone(default_pool, address);
+	testsuite_msgdata.envelope.rcpt_to = env_rcpt_to;
+	testsuite_rcpt_params.orcpt.addr = env_orig_rcpt_to;
 }
 
 void testsuite_envelope_set_recipient
 (const struct sieve_runtime_env *renv, const char *value)
 {
-	normalize_address(&value);
+	struct smtp_address *address = NULL;
+	const char *error;
 
+	if (smtp_address_parse_path(pool_datastack_create(), value,
+		SMTP_ADDRESS_PARSE_FLAG_ALLOW_LOCALPART |
+		SMTP_ADDRESS_PARSE_FLAG_BRACKETS_OPTIONAL,
+		&address, &error) < 0) {
+		sieve_sys_error(testsuite_sieve_instance,
+			"testsuite: envelope recipient address "
+			"`%s' is invalid: %s", value, error);
+	}
+	testsuite_envelope_set_recipient_address(renv, address);
+}
+
+void testsuite_envelope_set_orig_recipient_address
+(const struct sieve_runtime_env *renv,
+	const struct smtp_address *address)
+{
 	sieve_message_context_reset(renv->msgctx);
 
-	str_truncate(envelope_to, 0);
+	i_free(env_orig_rcpt_to);
 
-	if ( value != NULL )
-		str_append(envelope_to, value);
-
-	testsuite_msgdata.orig_envelope_to = str_c(envelope_to);
-	testsuite_msgdata.final_envelope_to = str_c(envelope_to);
+	env_orig_rcpt_to = smtp_address_clone(default_pool, address);
+	testsuite_rcpt_params.orcpt.addr = env_orig_rcpt_to;
 }
 
 void testsuite_envelope_set_orig_recipient
 (const struct sieve_runtime_env *renv, const char *value)
 {
-	normalize_address(&value);
+	struct smtp_address *address = NULL;
+	const char *error;
 
-	sieve_message_context_reset(renv->msgctx);
-
-	str_truncate(envelope_orig_to, 0);
-
-	if ( value != NULL )
-		str_append(envelope_orig_to, value);
-
-	testsuite_msgdata.orig_envelope_to = str_c(envelope_orig_to);
+	if (smtp_address_parse_path(pool_datastack_create(), value,
+		SMTP_ADDRESS_PARSE_FLAG_ALLOW_LOCALPART |
+		SMTP_ADDRESS_PARSE_FLAG_BRACKETS_OPTIONAL,
+		&address, &error) < 0) {
+		sieve_sys_error(testsuite_sieve_instance,
+			"testsuite: envelope recipient address "
+			"`%s' is invalid: %s", value, error);
+	}
+	testsuite_envelope_set_orig_recipient_address(renv, address);
 }
 
 void testsuite_envelope_set_auth_user
@@ -218,11 +251,9 @@ void testsuite_envelope_set_auth_user
 {
 	sieve_message_context_reset(renv->msgctx);
 
-	str_truncate(envelope_auth, 0);
+	i_free(env_auth);
 
-	if ( value != NULL )
-		str_append(envelope_auth, value);
-
-	testsuite_msgdata.auth_user = str_c(envelope_auth);
+	env_auth = i_strdup(value);
+	testsuite_msgdata.auth_user = env_auth;
 }
 

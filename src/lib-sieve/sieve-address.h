@@ -6,18 +6,10 @@
 
 #include "lib.h"
 #include "strfuncs.h"
+#include "smtp-address.h"
 
 #include "sieve-common.h"
 #include "sieve-stringlist.h"
-
-/*
- * Generic address representation
- */
-
-struct sieve_address {
-	const char *local_part;
-	const char *domain;
-};
 
 /*
  * Address list API
@@ -27,12 +19,12 @@ struct sieve_address_list {
 	struct sieve_stringlist strlist;
 
 	int (*next_item)
-		(struct sieve_address_list *_addrlist, struct sieve_address *addr_r,
+		(struct sieve_address_list *_addrlist, struct smtp_address *addr_r,
 			string_t **unparsed_r);
 };
 
 static inline int sieve_address_list_next_item
-(struct sieve_address_list *addrlist, struct sieve_address *addr_r,
+(struct sieve_address_list *addrlist, struct smtp_address *addr_r,
 	string_t **unparsed_r)
 {
 	return addrlist->next_item(addrlist, addr_r, unparsed_r);
@@ -64,35 +56,17 @@ struct sieve_address_list *sieve_header_address_list_create
 	(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_values);
 
 /*
- * RFC 2822 addresses
+ * Sieve address parsing/validatin
  */
 
-bool sieve_rfc2822_mailbox_validate
+const struct smtp_address *sieve_address_parse
 	(const char *address, const char **error_r);
-const char *sieve_rfc2822_mailbox_normalize
-	(const char *address, const char **error_r);
-
-
-const char *sieve_address_normalize
+const struct smtp_address *sieve_address_parse_str
 	(string_t *address, const char **error_r);
+
 bool sieve_address_validate
+	(const char *address, const char **error_r);
+bool sieve_address_validate_str
 	(string_t *address, const char **error_r);
-
-int sieve_address_compare
-	(const char *address1, const char *address2, bool normalized);
-
-/*
- * RFC 2821 addresses (paths)
- */
-
-const struct sieve_address *sieve_address_parse_envelope_path
-	(pool_t pool, const char *field_value);
-
-/*
- * Address encoding
- */
-
-const char *sieve_address_to_string
-	(const struct sieve_address *address);
 
 #endif

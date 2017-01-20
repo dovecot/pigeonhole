@@ -39,7 +39,12 @@ static const char *envit_imap_email_get_value
 (const struct sieve_runtime_env *renv,
 	const char *name ATTR_UNUSED)
 {
-	return sieve_get_user_email(renv->svinst);
+	const struct smtp_address *user_email =
+		sieve_get_user_email(renv->svinst);
+
+	if (user_email == NULL)
+		return NULL;
+	return smtp_address_encode(user_email);
 }
 
 const struct sieve_environment_item imap_email_env_item = {

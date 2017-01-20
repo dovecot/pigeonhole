@@ -120,25 +120,21 @@ static bool cmd_redirect_validate
 	 * done at runtime.
 	 */
 	if ( sieve_argument_is_string_literal(arg) ) {
-		string_t *address = sieve_ast_argument_str(arg);
+		string_t *raw_address = sieve_ast_argument_str(arg);
 		const char *error;
-		const char *norm_address;
+		bool result;
 
 		T_BEGIN {
-			/* Verify and normalize the address to 'local_part@domain' */
-			norm_address = sieve_address_normalize(address, &error);
-
-			if ( norm_address == NULL ) {
+			/* Parse the address */
+			result = sieve_address_validate_str(raw_address, &error);
+			if ( !result ) {
 				sieve_argument_validate_error(validator, arg,
 					"specified redirect address '%s' is invalid: %s",
-					str_sanitize(str_c(address),128), error);
-			} else {
-				/* Replace string literal in AST */
-				sieve_ast_argument_string_setc(arg, norm_address);
+					str_sanitize(str_c(raw_address),128), error);
 			}
 		} T_END;
 
-		return ( norm_address != NULL );
+		return result;
 	}
 
 	if ( svinst->max_redirects == 0 ) {
@@ -146,10 +142,10 @@ static bool cmd_redirect_validate
 			"local policy prohibits the use of a redirect action");
 		return FALSE;
 	}
-
-
 	return TRUE;
 }
+
+
 
 /*
  * Code generation
@@ -190,8 +186,8 @@ static int cmd_redirect_operation_execute
 	struct sieve_instance *svinst = renv->svinst;
 	struct sieve_side_effects_list *slist = NULL;
 	string_t *redirect;
-	bool literal_address;
-	const char *norm_address;
+	const struct smtp_address *to_address;
+	const char *error;
 	int ret;
 
 	/*
@@ -203,28 +199,21 @@ static int cmd_redirect_operation_execute
 		return ret;
 
 	/* Read the address */
-	if ( (ret=sieve_opr_string_read_ex
-		(renv, address, "address", FALSE, &redirect, &literal_address)) <= 0 )
+	if ( (ret=sieve_opr_string_read
+		(renv, address, "address", &redirect)) <= 0 )
 		return ret;
 
 	/*
 	 * Perform operation
 	 */
 
-	if ( !literal_address ) {
-		const char *error;
-
-		/* Verify and normalize the address to 'local_part@domain' */
-		norm_address = sieve_address_normalize(redirect, &error);
-
-		if ( norm_address == NULL ) {
-			sieve_runtime_error(renv, NULL,
-				"specified redirect address '%s' is invalid: %s",
-				str_sanitize(str_c(redirect),128), error);
-			return SIEVE_EXEC_FAILURE;
-		}
-	} else {
-		norm_address = str_c(redirect);
+	/* Parse the address */
+	to_address = sieve_address_parse_str(redirect, &error);
+	if ( to_address == NULL ) {
+		sieve_runtime_error(renv, NULL,
+			"specified redirect address '%s' is invalid: %s",
+			str_sanitize(str_c(redirect),128), error);
+		return SIEVE_EXEC_FAILURE;
 	}
 
 	if ( svinst->max_redirects == 0 ) {
@@ -236,14 +225,14 @@ static int cmd_redirect_operation_execute
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {
 		sieve_runtime_trace(renv, 0, "redirect action");
 		sieve_runtime_trace_descend(renv);
-		sieve_runtime_trace(renv, 0, "forward message to address `%s'",
-			str_sanitize(norm_address, 80));
+		sieve_runtime_trace(renv, 0, "forward message to address %s",
+			smtp_address_encode_path(to_address));
 	}
 
 	/* Add redirect action to the result */
 
 	return sieve_act_redirect_add_to_result
-		(renv, slist, norm_address);
+		(renv, slist, to_address);
 }
 
 /*
@@ -260,8 +249,8 @@ static bool act_redirect_equals
 		(struct act_redirect_context *) act2->context;
 
 	/* Address is already normalized */
-	return ( sieve_address_compare
-		(rd_ctx1->to_address, rd_ctx2->to_address, TRUE) == 0 );
+	return ( smtp_address_equals
+		(rd_ctx1->to_address, rd_ctx2->to_address) );
 }
 
 static int act_redirect_check_duplicate
@@ -269,7 +258,8 @@ static int act_redirect_check_duplicate
 	const struct sieve_action *act,
 	const struct sieve_action *act_other)
 {
-	return ( act_redirect_equals(renv->scriptenv, act, act_other) ? 1 : 0 );
+	return ( act_redirect_equals
+		(renv->scriptenv, act, act_other) ? 1 : 0 );
 }
 
 static void act_redirect_print
@@ -280,7 +270,7 @@ static void act_redirect_print
 		(struct act_redirect_context *) action->context;
 
 	sieve_result_action_printf(rpenv, "redirect message to: %s",
-		str_sanitize(ctx->to_address, 128));
+		smtp_address_encode_path(ctx->to_address));
 
 	*keep = FALSE;
 }
@@ -298,7 +288,8 @@ static int act_redirect_send
 	struct sieve_address_source env_from = svinst->redirect_from;
 	struct istream *input;
 	struct ostream *output;
-	const char *sender, *error;
+	const struct smtp_address *sender;
+	const char *error;
 	struct sieve_smtp_context *sctx;
 	int ret;
 
@@ -340,10 +331,7 @@ static int act_redirect_send
 			senv, msgctx, aenv->flags, &sender)) < 0 ) {
 			sender = NULL;
 		} else if ( ret == 0 ) {
-			if ( svinst->user_email == NULL )
-				sender = NULL;
-			else
-				sender = sieve_address_to_string(svinst->user_email);
+			sender = svinst->user_email;
 		}
 	}
 
@@ -357,7 +345,7 @@ static int act_redirect_send
 
 	T_BEGIN {
 		string_t *hdr = t_str_new(256);
-		const char *user_email;
+		const struct smtp_address *user_email;
 
 		/* Prepend sieve headers (should not affect signatures) */
 		rfc2822_header_append(hdr,
@@ -368,8 +356,8 @@ static int act_redirect_send
 		else
 			user_email = sieve_get_user_email(aenv->svinst);
 		if ( user_email != NULL ) {
-			rfc2822_header_append(hdr,
-				"X-Sieve-Redirected-From", user_email, FALSE, NULL);
+			rfc2822_header_append(hdr, "X-Sieve-Redirected-From",
+				smtp_address_encode(user_email), FALSE, NULL);
 		}
 
 		/* Add new Message-ID if message doesn't have one */
@@ -398,14 +386,16 @@ static int act_redirect_send
 			sieve_result_global_error(aenv,
 				"failed to redirect message to <%s>: %s "
 				"(temporary failure)",
-				str_sanitize(ctx->to_address, 256), str_sanitize(error, 512));
+				smtp_address_encode(ctx->to_address),
+				str_sanitize(error, 512));
 			return SIEVE_EXEC_TEMP_FAILURE;
 		}
 
 		sieve_result_global_log_error(aenv,
 			"failed to redirect message to <%s>: %s "
 			"(permanent failure)",
-			str_sanitize(ctx->to_address, 256), str_sanitize(error, 512));
+			smtp_address_encode(ctx->to_address),
+			str_sanitize(error, 512));
 		return SIEVE_EXEC_FAILURE;
 	}
 
@@ -425,10 +415,10 @@ static int act_redirect_commit
 		action->mail : sieve_message_get_mail(msgctx) );
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct smtp_address *recipient;
 	const char *msg_id = msgdata->id, *new_msg_id = NULL;
 	const char *dupeid, *resent_id = NULL;
 	const char *list_id = NULL;
-	const char *recipient;
 	int ret;
 
 	/*
@@ -474,7 +464,8 @@ static int act_redirect_commit
 	   - if the message came through a mailing list: the mailinglist ID
 	 */
 	dupeid = t_strdup_printf("%s-%s-%s-%s-%s", msg_id,
-		(recipient != NULL ? recipient : ""), ctx->to_address,
+		(recipient != NULL ? smtp_address_encode(recipient) : ""),
+		smtp_address_encode(ctx->to_address),
 		(resent_id != NULL ? resent_id : ""),
 		(list_id != NULL ? list_id : ""));
 
@@ -483,7 +474,7 @@ static int act_redirect_commit
 		(senv, dupeid, strlen(dupeid))) {
 		sieve_result_global_log(aenv,
 			"discarded duplicate forward to <%s>",
-			str_sanitize(ctx->to_address, 128));
+			smtp_address_encode(ctx->to_address));
 		*keep = FALSE;
 		return SIEVE_EXEC_OK;
 	}
@@ -500,7 +491,7 @@ static int act_redirect_commit
 			ioloop_time + svinst->redirect_duplicate_period);
 
 		sieve_result_global_log(aenv, "forwarded to <%s>",
-			str_sanitize(ctx->to_address, 128));
+			smtp_address_encode(ctx->to_address));
 
 		/* Indicate that message was successfully forwarded */
 		aenv->exec_status->message_forwarded = TRUE;

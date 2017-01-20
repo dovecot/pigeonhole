@@ -32,7 +32,6 @@
  */
 
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
-#define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
 /*
  * Print help
@@ -57,12 +56,12 @@ static void print_help(void)
 
 static void *sieve_smtp_start
 (const struct sieve_script_env *senv ATTR_UNUSED,
-	const char *return_path)
+	const struct smtp_address *mail_from)
 {
 	struct ostream *output;
 
 	i_info("sending message from <%s>:",
-		( return_path == NULL ? "" : return_path ));
+		smtp_address_encode(mail_from));
 
 	output = o_stream_create_fd(STDOUT_FILENO, (size_t)-1);
 	o_stream_set_no_error_handling(output, TRUE);
@@ -71,9 +70,11 @@ static void *sieve_smtp_start
 
 static void sieve_smtp_add_rcpt
 (const struct sieve_script_env *senv ATTR_UNUSED,
-	void *handle ATTR_UNUSED, const char *address)
+	void *handle ATTR_UNUSED,
+	const struct smtp_address *rcpt_to)
 {
-	printf("\nRECIPIENT: %s\n", address);
+	printf("\nRECIPIENT: %s\n",
+		smtp_address_encode(rcpt_to));
 }
 
 static struct ostream *sieve_smtp_send
@@ -133,8 +134,9 @@ int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
 	ARRAY_TYPE (const_string) scriptfiles;
-	const char *scriptfile, *recipient, *final_recipient, *sender, *mailbox,
-		*dumpfile, *tracefile, *mailfile, *mailloc;
+	const char *scriptfile, *mailbox, *dumpfile, *tracefile, *mailfile,
+		*mailloc, *errstr;
+	struct smtp_address *rcpt_to, *final_rcpt_to, *mail_from;
 	struct sieve_trace_config trace_config;
 	struct mail *mail;
 	struct sieve_binary *main_sbin, *sbin = NULL;
@@ -155,23 +157,34 @@ int main(int argc, char **argv)
 	t_array_init(&scriptfiles, 16);
 
 	/* Parse arguments */
-	recipient = final_recipient = sender = mailbox = dumpfile =
-		tracefile = mailloc = NULL;
+	mailbox = dumpfile = tracefile = mailloc = NULL;
+	mail_from = final_rcpt_to = rcpt_to = NULL;
 	i_zero(&trace_config);
 	trace_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'r':
 			/* final recipient address */
-			final_recipient = optarg;
+			if (smtp_address_parse_mailbox(pool_datastack_create(), optarg,
+				SMTP_ADDRESS_PARSE_FLAG_ALLOW_LOCALPART,
+				&final_rcpt_to, &errstr) < 0) {
+				i_fatal("Invalid -r parameter: %s", errstr);
+			}
 			break;
 		case 'a':
 			/* original recipient address */
-			recipient = optarg;
+			if (smtp_address_parse_mailbox(pool_datastack_create(), optarg,
+				SMTP_ADDRESS_PARSE_FLAG_ALLOW_LOCALPART,
+				&rcpt_to, &errstr) < 0) {
+				i_fatal("Invalid -a parameter: %s", errstr);
+			}
 			break;
 		case 'f':
 			/* envelope sender address */
-			sender = optarg;
+			if (smtp_address_parse_mailbox(pool_datastack_create(), optarg,
+				0, &mail_from, &errstr) < 0) {
+				i_fatal("Invalid -f parameter: %s", errstr);
+			}
 			break;
 		case 'm':
 			/* default mailbox (keep box) */
@@ -272,20 +285,17 @@ int main(int argc, char **argv)
 		/* Initialize raw mail object */
 		mail = sieve_tool_open_file_as_mail(sieve_tool, mailfile);
 
-		sieve_tool_get_envelope_data(mail, &recipient, &sender);
-
 		if ( mailbox == NULL )
 			mailbox = "INBOX";
 
 		/* Collect necessary message data */
 		i_zero(&msgdata);
 		msgdata.mail = mail;
-		msgdata.return_path = sender;
-		msgdata.orig_envelope_to = recipient;
-		msgdata.final_envelope_to =
-			( final_recipient == NULL ? recipient : final_recipient );
 		msgdata.auth_user = sieve_tool_get_username(sieve_tool);
 		(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
+
+		sieve_tool_get_envelope_data(&msgdata, mail,
+			mail_from, rcpt_to, final_rcpt_to);
 
 		/* Create streams for test and trace output */
 

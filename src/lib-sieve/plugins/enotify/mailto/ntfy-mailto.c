@@ -53,6 +53,7 @@
  */
 
 struct ntfy_mailto_config {
+	pool_t pool;
 	struct sieve_address_source envelope_from;
 };
 
@@ -145,7 +146,7 @@ static const char *_unique_headers[] = {
 
 struct ntfy_mailto_context {
 	struct uri_mailto *uri;
-	const char *from_normalized;
+	const struct smtp_address *from_address;
 };
 
 /*
@@ -157,15 +158,18 @@ static bool ntfy_mailto_load
 {
 	struct sieve_instance *svinst = nmth->svinst;
 	struct ntfy_mailto_config *config;
+	pool_t pool;
 
 	if ( *context != NULL ) {
 		ntfy_mailto_unload(nmth);
 	}
 
-	config = i_new(struct ntfy_mailto_config, 1);
+	pool = pool_alloconly_create("ntfy_mailto_config", 256);
+	config = p_new(pool, struct ntfy_mailto_config, 1);
+	config->pool = pool;
 
 	(void)sieve_address_source_parse_from_setting	(svinst,
-		default_pool, "sieve_notify_mailto_envelope_from",
+		config->pool, "sieve_notify_mailto_envelope_from",
 		&config->envelope_from);
 
 	*context = (void *) config;
@@ -178,10 +182,8 @@ static void ntfy_mailto_unload
 {
 	struct ntfy_mailto_config *config =
 		(struct ntfy_mailto_config *) nmth->context;
-	char *address = (char *)config->envelope_from.address;
 
-	i_free(address);
-	i_free(config);
+	pool_unref(&config->pool);
 }
 
 /*
@@ -204,8 +206,7 @@ static bool ntfy_mailto_compile_check_from
 	bool result = FALSE;
 
 	T_BEGIN {
-		result = sieve_address_validate(from, &error);
-
+		result = sieve_address_validate_str(from, &error);
 		if ( !result ) {
 			sieve_enotify_error(nenv,
 				"specified :from address '%s' is invalid for "
@@ -252,7 +253,8 @@ static bool ntfy_mailto_runtime_check_operands
 {
 	struct ntfy_mailto_context *mtctx;
 	struct uri_mailto *parsed_uri;
-	const char *error, *normalized;
+	const struct smtp_address *address;
+	const char *error;
 
 	/* Need to create context before validation to have arrays present */
 	mtctx = p_new(context_pool, struct ntfy_mailto_context, 1);
@@ -260,18 +262,18 @@ static bool ntfy_mailto_runtime_check_operands
 	/* Validate :from */
 	if ( from != NULL ) {
 		T_BEGIN {
-			normalized = sieve_address_normalize(from, &error);
-
-			if ( normalized == NULL ) {
+			address = sieve_address_parse_str(from, &error);
+			if ( address == NULL ) {
 				sieve_enotify_error(nenv,
 					"specified :from address '%s' is invalid for "
 					"the mailto method: %s",
 					str_sanitize(str_c(from), 128), error);
 			} else
-				mtctx->from_normalized = p_strdup(context_pool, normalized);
+				mtctx->from_address =
+					smtp_address_clone(context_pool, address);
 		} T_END;
 
-		if ( normalized == NULL ) return FALSE;
+		if ( address == NULL ) return FALSE;
 	}
 
 	if ( (parsed_uri=uri_mailto_parse
@@ -308,8 +310,8 @@ static int ntfy_mailto_action_check_duplicates
 
 	for ( i = 0; i < new_count; i++ ) {
 		for ( j = 0; j < old_count; j++ ) {
-			if ( sieve_address_compare
-				(new_rcpts[i].normalized, old_rcpts[j].normalized, TRUE) == 0 )
+			if ( smtp_address_equals
+				(new_rcpts[i].address, old_rcpts[j].address) )
 				break;
 		}
 
@@ -430,7 +432,7 @@ static bool _contains_8bit(const char *msg)
 static int ntfy_mailto_send
 (const struct sieve_enotify_exec_env *nenv,
 	const struct sieve_enotify_action *nact,
-	const char *owner_email)
+	const struct smtp_address *owner_email)
 {
 	struct sieve_instance *svinst = nenv->svinst;
 	const struct sieve_message_data *msgdata = nenv->msgdata;
@@ -441,7 +443,8 @@ static int ntfy_mailto_send
 		(struct ntfy_mailto_config *)nenv->method->context;
 	struct sieve_address_source env_from =
 		mth_config->envelope_from;
-	const char *from = NULL, *from_smtp = NULL;
+	const char *from = NULL;
+	const struct smtp_address *from_smtp = NULL;
 	const char *subject = mtctx->uri->subject;
 	const char *body = mtctx->uri->body;
 	string_t *to, *cc, *all;
@@ -488,26 +491,31 @@ static int ntfy_mailto_send
 			env_from.type = SIEVE_ADDRESS_SOURCE_EXPLICIT;
 		}
 	}
+	from = nact->from;
 	if ( (ret=sieve_address_source_get_address(&env_from, svinst,
 		senv, nenv->msgctx, nenv->flags, &from_smtp)) < 0 ) {
 		from_smtp = NULL;
 	} else if ( ret == 0 ) {
-		if ( mtctx->from_normalized != NULL )
-			from_smtp = mtctx->from_normalized;
+		if ( mtctx->from_address != NULL )
+			from_smtp = mtctx->from_address;
 		else if ( svinst->user_email != NULL )
-			from_smtp = sieve_address_to_string(svinst->user_email);
-		else
-			from_smtp = sieve_get_postmaster_address(senv);
+			from_smtp = svinst->user_email;
+		else {
+			from_smtp = smtp_address_create_from_msg_temp(
+				sieve_get_postmaster(senv));
+			if (from == NULL)
+				from = sieve_get_postmaster_address(senv);
+		}
 	}
 
 	/* Determine message from address */
-	if ( nact->from != NULL ) {
-		from = nact->from;
-	} else if ( from_smtp == NULL ) {
-		from = t_strdup_printf("<%s>",
-			sieve_get_postmaster_address(senv));
-	} else {
-		from = t_strdup_printf("<%s>", from_smtp);
+	if ( from == NULL ) {
+		if ( from_smtp == NULL )
+			from = sieve_get_postmaster_address(senv);
+		else {
+			from = t_strdup_printf("<%s>",
+				smtp_address_encode(from_smtp));
+		}
 	}
 
 	/* Determine subject */
@@ -551,9 +559,8 @@ static int ntfy_mailto_send
 		if ( i < 3) {
 			if ( i > 0 )
 				str_append(all, ", ");
-			str_append_c(all, '<');
-			str_append(all, str_sanitize(recipients[i].normalized, 256));
-			str_append_c(all, '>');
+			str_append(all,
+				smtp_address_encode_path(recipients[i].address));
 		} else if (i == 3) {
 			str_printfa(all, ", ... (%u total)", count);
 		}
@@ -576,7 +583,8 @@ static int ntfy_mailto_send
 		rfc2822_header_utf8_printf(msg, "Cc", "%s", str_c(cc));
 
 	rfc2822_header_printf(msg, "Auto-Submitted",
-		"auto-notified; owner-email=\"%s\"", owner_email);
+		"auto-notified; owner-email=\"%s\"",
+		smtp_address_encode(owner_email));
 	rfc2822_header_write(msg, "Precedence", "bulk");
 
 	/* Set importance */
@@ -632,7 +640,7 @@ static int ntfy_mailto_send
 
 	/* Send message to all recipients */
 	for ( i = 0; i < count; i++ )
-		sieve_smtp_add_rcpt(sctx, recipients[i].normalized);
+		sieve_smtp_add_rcpt(sctx, recipients[i].address);
 
 	output = sieve_smtp_send(sctx);
 	o_stream_nsend(output, str_data(msg), str_len(msg));
@@ -662,16 +670,18 @@ static int ntfy_mailto_action_execute
 	struct sieve_instance *svinst = nenv->svinst;
 	const struct sieve_script_env *senv = nenv->scriptenv;
 	struct mail *mail = nenv->msgdata->mail;
-	const char *owner_email;
+	const struct smtp_address *owner_email;
 	const char *const *hdsp;
 	int ret;
 
-	owner_email = sieve_address_to_string(svinst->user_email);
+	owner_email = svinst->user_email;
 	if ( owner_email == NULL &&
 		(nenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
 		owner_email = sieve_message_get_final_recipient(nenv->msgctx);
-	if ( owner_email == NULL )
-		owner_email = sieve_get_postmaster_address(senv);
+	if ( owner_email == NULL ) {
+		owner_email = smtp_address_create_from_msg_temp(
+			sieve_get_postmaster(senv));
+	}
 	i_assert( owner_email != NULL );
 
 	/* Is the message an automatic reply ? */
@@ -689,12 +699,13 @@ static int ntfy_mailto_action_execute
 	if ( ret > 0 ) {
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				const char *from = NULL;
+				const struct smtp_address *sender = NULL;
+				const char *from;
 
 				if ( (nenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
-					from = sieve_message_get_sender(nenv->msgctx);
-				from = (from == NULL ? "" :
-					t_strdup_printf(" from <%s>", str_sanitize(from, 256)));
+					sender = sieve_message_get_sender(nenv->msgctx);
+				from = (sender == NULL ? "" : t_strdup_printf
+						(" from <%s>", smtp_address_encode(sender)));
 
 				sieve_enotify_global_info(nenv,
 					"not sending notification "

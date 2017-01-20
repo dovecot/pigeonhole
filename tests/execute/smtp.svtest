@@ -168,7 +168,7 @@ test_set "envelope.from" "sirius@example.org";
 test_set "envelope.to" "timo@example.net";
 test_set "envelope.orig_to" "tss@example.net";
 
-test_config_set "sieve_redirect_envelope_from" "< backscatter@example.net> ";
+test_config_set "sieve_redirect_envelope_from" "<backscatter@example.net> ";
 test_config_reload;
 
 test "Redirect from [<explicit>]" {

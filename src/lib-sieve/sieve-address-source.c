@@ -15,6 +15,8 @@ bool sieve_address_source_parse
 (pool_t pool, const char *value,
 	struct sieve_address_source *asrc)
 {
+	struct smtp_address *address;
+	const char *error;
 	size_t val_len;
 
 	i_zero(asrc);
@@ -35,13 +37,10 @@ bool sieve_address_source_parse
 			asrc->type = SIEVE_ADDRESS_SOURCE_USER_EMAIL;
 		} else if ( strcmp(value, "postmaster") == 0 ) {
 			asrc->type = SIEVE_ADDRESS_SOURCE_POSTMASTER;
-		} else if ( value[0] == '<' &&	value[val_len-1] == '>') {
+		} else if ( smtp_address_parse_path(pool_datastack_create(), value,
+			SMTP_ADDRESS_PARSE_FLAG_ALLOW_EMPTY, &address, &error) >= 0 ) {
 			asrc->type = SIEVE_ADDRESS_SOURCE_EXPLICIT;
-
-			asrc->address = sieve_address_parse_envelope_path
-				(pool, t_strndup(value+1, val_len-2));
-			if (asrc->address == NULL)
-				return FALSE;
+			asrc->address = smtp_address_clone(pool, address);
 		} else {
 			return FALSE;
 		}
@@ -74,7 +73,7 @@ int sieve_address_source_get_address
 	const struct sieve_script_env *senv,
 	struct sieve_message_context *msgctx,
 	enum sieve_execute_flags flags,
-	const char **addr_r)
+	const struct smtp_address **addr_r)
 {
 	enum sieve_address_source_type type = asrc->type;
 
@@ -106,13 +105,14 @@ int sieve_address_source_get_address
 		*addr_r = sieve_message_get_orig_recipient(msgctx);
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_USER_EMAIL:
-		*addr_r = sieve_address_to_string(svinst->user_email);
+		*addr_r = svinst->user_email;
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_POSTMASTER:
-		*addr_r = sieve_get_postmaster_address(senv);
+		*addr_r = smtp_address_create_from_msg_temp(
+			sieve_get_postmaster(senv));
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_EXPLICIT:
-		*addr_r = sieve_address_to_string(asrc->address);
+		*addr_r = asrc->address;
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_DEFAULT:
 		break;

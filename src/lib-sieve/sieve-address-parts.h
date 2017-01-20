@@ -20,7 +20,7 @@ struct sieve_address_part_def {
 
 	const char *(*extract_from)
 		(const struct sieve_address_part *addrp,
-			const struct sieve_address *address);
+			const struct smtp_address *address);
 };
 
 /*

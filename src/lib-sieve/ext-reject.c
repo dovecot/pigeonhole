@@ -482,11 +482,13 @@ static int act_reject_commit
 {
 	struct act_reject_context *rj_ctx =
 		(struct act_reject_context *) action->context;
-	const char *sender = sieve_message_get_sender(aenv->msgctx);
-	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
+	const struct smtp_address *sender, *recipient;
 	int ret;
 
-	if ( recipient == NULL ) {
+	sender = sieve_message_get_sender(aenv->msgctx);
+	recipient = sieve_message_get_orig_recipient(aenv->msgctx);
+
+	if ( smtp_address_isnull(recipient) ) {
 		sieve_result_global_warning(aenv,
 			"reject action aborted: envelope recipient is <>");
 		return SIEVE_EXEC_OK;
@@ -500,7 +502,7 @@ static int act_reject_commit
 		return SIEVE_EXEC_OK;
 	}
 
-	if ( sender == NULL ) {
+	if ( smtp_address_isnull(sender) ) {
 		sieve_result_global_log(aenv, "not sending reject message to <>");
 
 		*keep = FALSE;
@@ -508,11 +510,12 @@ static int act_reject_commit
 	}
 
 	if ( (ret=sieve_action_reject_mail
-		(aenv, sender, recipient, rj_ctx->reason)) <= 0 )
+		(aenv, recipient, rj_ctx->reason)) <= 0 )
 		return ret;
 
 	sieve_result_global_log(aenv,
-		"rejected message from <%s> (%s)", str_sanitize(sender, 80),
+		"rejected message from <%s> (%s)",
+		smtp_address_encode(sender),
 		( rj_ctx->ereject ? "ereject" : "reject" ));
 
 	*keep = FALSE;

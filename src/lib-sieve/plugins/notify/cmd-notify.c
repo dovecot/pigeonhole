@@ -286,7 +286,7 @@ static int cmd_notify_address_validate
 		int result;
 
 		T_BEGIN {
-			result = ( sieve_address_validate(address, &error) ? 1 : -1 );
+			result = ( sieve_address_validate_str(address, &error) ? 1 : -1 );
 
 			if ( result <= 0 ) {
 				sieve_argument_validate_error(valdtr, arg,
@@ -490,10 +490,11 @@ static int cmd_notify_operation_execute
 		raw_address = NULL;
 		while ( (ret=sieve_stringlist_next_item(options, &raw_address)) > 0 ) {
 			const char *error = NULL;
-			const char *addr_norm = sieve_address_normalize(raw_address, &error);
+			const struct smtp_address *address;
 
 			/* Add if valid address */
-			if ( addr_norm != NULL ) {
+			address = sieve_address_parse_str(raw_address, &error);
+			if ( address != NULL ) {
 				const struct ext_notify_recipient *rcpts;
 				unsigned int rcpt_count, i;
 
@@ -501,8 +502,7 @@ static int cmd_notify_operation_execute
 				rcpts = array_get(&act->recipients, &rcpt_count);
 
 				for ( i = 0; i < rcpt_count; i++ ) {
-					if ( sieve_address_compare
-						(rcpts[i].normalized, addr_norm, TRUE) == 0 )
+					if ( smtp_address_equals(rcpts[i].address, address) )
 						break;
 				}
 
@@ -525,7 +525,7 @@ static int cmd_notify_operation_execute
 					struct ext_notify_recipient recipient;
 
 					recipient.full = p_strdup(pool, str_c(raw_address));
-					recipient.normalized = p_strdup(pool, addr_norm);
+					recipient.address = smtp_address_clone(pool, address);
 
 					array_append(&act->recipients, &recipient, 1);
 				}
@@ -579,8 +579,8 @@ static int act_notify_check_duplicate
 
 	for ( i = 0; i < new_count; i++ ) {
 		for ( j = 0; j < old_count; j++ ) {
-			if ( sieve_address_compare
-				(new_rcpts[i].normalized, old_rcpts[j].normalized, TRUE) == 0 )
+			if ( smtp_address_equals
+				(new_rcpts[i].address, old_rcpts[j].address) )
 				break;
 		}
 
@@ -723,8 +723,8 @@ static bool act_notify_send
 		break;
 	}
 
-	rfc2822_header_printf(msg, "From",
-		"Postmaster <%s>", sieve_get_postmaster_address(senv));
+	rfc2822_header_write(msg, "From",
+		sieve_get_postmaster_address(senv));
 
 	rfc2822_header_write(msg, "Subject", "[SIEVE] New mail notification");
 
@@ -747,8 +747,11 @@ static bool act_notify_send
 
 	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 &&
 		sieve_message_get_sender(aenv->msgctx) != NULL ) {
-		sctx = sieve_smtp_start(senv,
-			sieve_get_postmaster_address(senv));
+		struct smtp_address postmaster;
+		
+		smtp_address_init_from_msg(&postmaster, 
+			sieve_get_postmaster(senv));
+		sctx = sieve_smtp_start(senv, &postmaster);
 	} else {
 		sctx = sieve_smtp_start(senv, NULL);
 	}
@@ -757,16 +760,14 @@ static bool act_notify_send
 	to = t_str_new(128);
 	all = t_str_new(256);
 	for ( i = 0; i < count; i++ ) {
-		sieve_smtp_add_rcpt(sctx, recipients[i].normalized);
+		sieve_smtp_add_rcpt(sctx, recipients[i].address);
 		if ( i > 0 )
 			str_append(to, ", ");
 		str_append(to, recipients[i].full);
 		if ( i < 3) {
 			if ( i > 0 )
 				str_append(all, ", ");
-			str_append_c(all, '<');
-			str_append(all, str_sanitize(recipients[i].normalized, 256));
-			str_append_c(all, '>');
+			str_append(all, smtp_address_encode_path(recipients[i].address));
 		} else if (i == 3) {
 			str_printfa(all, ", ... (%u total)", count);
 		}
@@ -820,12 +821,13 @@ static int act_notify_commit
 	if (ret > 0) {
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				const char *from = NULL;
+				const struct smtp_address *sender = NULL;
+				const char *from;
 
 				if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
-					from = sieve_message_get_sender(aenv->msgctx);
-				from = (from == NULL ? "" :
-					t_strdup_printf(" from <%s>", str_sanitize(from, 256)));
+					sender = sieve_message_get_sender(aenv->msgctx);
+				from = (sender == NULL ? "" : t_strdup_printf
+					(" from <%s>", smtp_address_encode(sender)));
 
 				sieve_result_global_log(aenv,
 					"not sending notification for auto-submitted message%s",

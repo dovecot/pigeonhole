@@ -5,12 +5,16 @@
 #define __SIEVE_TYPES_H
 
 #include "lib.h"
+#include "smtp-address.h"
 
 #include <stdio.h>
 
 /*
  * Forward declarations
  */
+
+struct smtp_params_mail;
+struct smtp_params_rcpt;
 
 struct sieve_instance;
 struct sieve_callbacks;
@@ -129,11 +133,17 @@ enum sieve_compile_flags {
 
 struct sieve_message_data {
 	struct mail *mail;
-	const char *return_path;
-	const char *orig_envelope_to;
-	const char *final_envelope_to;
+
 	const char *auth_user;
 	const char *id;
+
+	struct {
+		const struct smtp_address *mail_from;
+		const struct smtp_params_mail *mail_params;
+
+		const struct smtp_address *rcpt_to;
+		const struct smtp_params_rcpt *rcpt_params;
+	} envelope;
 };
 
 /*
@@ -194,11 +204,12 @@ struct sieve_script_env {
 
 	/* Interface for sending mail */
 	void *(*smtp_start)
-		(const struct sieve_script_env *senv, const char *return_path);
+		(const struct sieve_script_env *senv,
+			const struct smtp_address *mail_from);
 	/* Add a new recipient */
 	void (*smtp_add_rcpt)	
 		(const struct sieve_script_env *senv, void *handle,
-			const char *address);
+			const struct smtp_address *rcpt_to);
 	/* Get an output stream where the message can be written to. The recipients
 	   must already be added before calling this. */
 	struct ostream *(*smtp_send)
@@ -222,7 +233,7 @@ struct sieve_script_env {
 
 	/* Interface for rejecting mail */
 	int (*reject_mail)(const struct sieve_script_env *senv,
-		const char *recipient, const char *reason);
+		const struct smtp_address *recipient, const char *reason);
 
 	/* Execution status record */
 	struct sieve_exec_status *exec_status;

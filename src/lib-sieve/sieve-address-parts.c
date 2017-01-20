@@ -265,7 +265,7 @@ static int sieve_address_part_stringlist_next_item
 {
 	struct sieve_address_part_stringlist *strlist =
 		(struct sieve_address_part_stringlist *)_strlist;
-	struct sieve_address item;
+	struct smtp_address item;
 	string_t *item_unparsed;
 	int ret;
 
@@ -276,7 +276,7 @@ static int sieve_address_part_stringlist_next_item
 			(strlist->addresses, &item, &item_unparsed)) <= 0 )
 			return ret;
 
-		if ( item.local_part == NULL ) {
+		if ( item.localpart == NULL ) {
 			if ( item_unparsed != NULL ) {
 				if ( _strlist->trace ) {
 					sieve_runtime_trace(_strlist->runenv, 0,
@@ -295,9 +295,9 @@ static int sieve_address_part_stringlist_next_item
 
 			if ( _strlist->trace ) {
 				sieve_runtime_trace(_strlist->runenv, 0,
-					"extracting `%s' part from address `%s'",
+					"extracting `%s' part from address %s",
 					sieve_address_part_name(strlist->addrp),
-					str_sanitize(sieve_address_to_string(&item), 80));
+					smtp_address_encode_path(&item));
 			}
 
 			if ( addrp->def != NULL && addrp->def->extract_from != NULL )
@@ -454,30 +454,25 @@ int sieve_addrmatch_opr_optional_read
 
 static const char *addrp_all_extract_from
 (const struct sieve_address_part *addrp ATTR_UNUSED,
-	const struct sieve_address *address)
+	const struct smtp_address *address)
 {
-	if ( address->domain == NULL ) {
-		return address->local_part;
-	}
-
-	if ( address->local_part == NULL )
+	if ( address->localpart == NULL )
 		return NULL;
-
-	return sieve_address_to_string(address);
+	return smtp_address_encode(address);
 }
 
 static const char *addrp_domain_extract_from
 (const struct sieve_address_part *addrp ATTR_UNUSED,
-	const struct sieve_address *address)
+	const struct smtp_address *address)
 {
 	return address->domain;
 }
 
 static const char *addrp_localpart_extract_from
 (const struct sieve_address_part *addrp ATTR_UNUSED,
-	const struct sieve_address *address)
+	const struct smtp_address *address)
 {
-	return address->local_part;
+	return address->localpart;
 }
 
 const struct sieve_address_part_def all_address_part = {

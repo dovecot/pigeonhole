@@ -27,7 +27,7 @@ test "Basic" {
         test_fail "to address incorrect";
     }
 
-    if not header :contains "from" "Mail Delivery Subsystem" {
+    if not header :contains "from" "Postmaster" {
         test_fail "from address incorrect";
     }
 

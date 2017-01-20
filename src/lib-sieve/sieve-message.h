@@ -43,20 +43,12 @@ const void *sieve_message_context_extension_get
 
 /* Envelope */
 
-const struct sieve_address *sieve_message_get_final_recipient_address
+const struct smtp_address *sieve_message_get_final_recipient
 	(struct sieve_message_context *msgctx);
-const struct sieve_address *sieve_message_get_orig_recipient_address
-	(struct sieve_message_context *msgctx);
-
-const struct sieve_address *sieve_message_get_sender_address
+const struct smtp_address *sieve_message_get_orig_recipient
 	(struct sieve_message_context *msgctx);
 
-const char *sieve_message_get_orig_recipient
-	(struct sieve_message_context *msgctx);
-const char *sieve_message_get_final_recipient
-	(struct sieve_message_context *msgctx);
-
-const char *sieve_message_get_sender
+const struct smtp_address *sieve_message_get_sender
 	(struct sieve_message_context *msgctx);
 
 /* Mail */

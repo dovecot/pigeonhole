@@ -9,6 +9,7 @@
 #include "unichar.h"
 #include "array.h"
 #include "eacces-error.h"
+#include "smtp-params.h"
 #include "istream.h"
 #include "istream-crlf.h"
 #include "istream-header-filter.h"
@@ -548,17 +549,20 @@ struct sieve_extprogram *sieve_extprogram_create
 		program_client_set_env(sprog->program_client, "HOME", svinst->home_dir);
 	if ( svinst->hostname != NULL )
 		program_client_set_env(sprog->program_client, "HOST", svinst->hostname);
-	if ( msgdata->return_path != NULL ) {
+	if ( !smtp_address_isnull(msgdata->envelope.mail_from) ) {
 		program_client_set_env
-			(sprog->program_client, "SENDER", msgdata->return_path);
+			(sprog->program_client, "SENDER",
+				smtp_address_encode(msgdata->envelope.mail_from));
 	}
-	if ( msgdata->final_envelope_to != NULL ) {
+	if ( !smtp_address_isnull(msgdata->envelope.rcpt_to) ) {
 		program_client_set_env
-			(sprog->program_client, "RECIPIENT", msgdata->final_envelope_to);
+			(sprog->program_client, "RECIPIENT",
+				smtp_address_encode(msgdata->envelope.rcpt_to));
 	}
-	if ( msgdata->orig_envelope_to != NULL ) {
+	if ( !smtp_address_isnull(msgdata->envelope.rcpt_params->orcpt.addr) ) {
 		program_client_set_env
-			(sprog->program_client, "ORIG_RECIPIENT", msgdata->orig_envelope_to);
+			(sprog->program_client, "ORIG_RECIPIENT",
+				smtp_address_encode(msgdata->envelope.rcpt_params->orcpt.addr));
 	}
 
 	return sprog;
