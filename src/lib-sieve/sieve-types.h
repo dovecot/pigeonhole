@@ -204,6 +204,9 @@ struct sieve_script_env {
 	   must already be added before calling this. */
 	struct ostream *(*smtp_send)
 		(const struct sieve_script_env *senv, void *handle);
+	/* Abort the SMTP transaction after smtp_send() is already issued */
+	void (*smtp_abort)
+		(const struct sieve_script_env *senv, void *handle);
 	/* Returns 1 on success, 0 on permanent failure, -1 on temporary failure. */
 	int (*smtp_finish)
 		(const struct sieve_script_env *senv, void *handle,

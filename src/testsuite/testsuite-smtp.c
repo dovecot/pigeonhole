@@ -120,6 +120,20 @@ struct ostream *testsuite_smtp_send
 	return smtp->output;
 }
 
+void testsuite_smtp_abort
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	void *handle)
+{
+	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
+
+	o_stream_ignore_last_errors(smtp->output);
+	o_stream_unref(&smtp->output);
+	i_unlink(smtp->msg_file);
+	i_free(smtp->msg_file);
+	i_free(smtp->return_path);
+	i_free(smtp);
+}
+
 int testsuite_smtp_finish
 (const struct sieve_script_env *senv ATTR_UNUSED,
 	void *handle, const char **error_r ATTR_UNUSED)

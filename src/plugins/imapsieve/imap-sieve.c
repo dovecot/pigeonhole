@@ -173,6 +173,14 @@ static struct ostream *imap_sieve_smtp_send
 	return smtp_client_send(smtp_client);
 }
 
+static void imap_sieve_smtp_abort
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
+{
+	struct smtp_client *smtp_client = (struct smtp_client *) handle;
+
+	smtp_client_abort(&smtp_client);
+}
+
 static int imap_sieve_smtp_finish
 (const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
 	const char **error_r)
@@ -723,6 +731,7 @@ int imap_sieve_run_mail
 		scriptenv.smtp_start = imap_sieve_smtp_start;
 		scriptenv.smtp_add_rcpt = imap_sieve_smtp_add_rcpt;
 		scriptenv.smtp_send = imap_sieve_smtp_send;
+		scriptenv.smtp_abort = imap_sieve_smtp_abort;
 		scriptenv.smtp_finish = imap_sieve_smtp_finish;
 		scriptenv.duplicate_mark = imap_sieve_duplicate_mark;
 		scriptenv.duplicate_check = imap_sieve_duplicate_check;

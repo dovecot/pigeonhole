@@ -186,6 +186,7 @@ int main(int argc, char **argv)
 		scriptenv.smtp_start = testsuite_smtp_start;
 		scriptenv.smtp_add_rcpt = testsuite_smtp_add_rcpt;
 		scriptenv.smtp_send = testsuite_smtp_send;
+		scriptenv.smtp_abort = testsuite_smtp_abort;
 		scriptenv.smtp_finish = testsuite_smtp_finish;
 		scriptenv.trace_log = trace_log;
 		scriptenv.trace_config = trace_config;

@@ -85,6 +85,16 @@ static struct ostream *sieve_smtp_send
 	return (struct ostream *)handle;
 }
 
+static void sieve_smtp_abort
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	void *handle)
+{
+	struct ostream *output = (struct ostream *)handle;
+
+	printf("#### ABORT MESSAGE ####\n\n");
+	o_stream_unref(&output);
+}
+
 static int sieve_smtp_finish
 (const struct sieve_script_env *senv ATTR_UNUSED,
 	void *handle, const char **error_r ATTR_UNUSED)
@@ -303,6 +313,7 @@ int main(int argc, char **argv)
 		scriptenv.smtp_start = sieve_smtp_start;
 		scriptenv.smtp_add_rcpt = sieve_smtp_add_rcpt;
 		scriptenv.smtp_send = sieve_smtp_send;
+		scriptenv.smtp_abort = sieve_smtp_abort;
 		scriptenv.smtp_finish = sieve_smtp_finish;
 		scriptenv.duplicate_mark = duplicate_mark;
 		scriptenv.duplicate_check = duplicate_check;

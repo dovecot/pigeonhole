@@ -21,6 +21,9 @@ void testsuite_smtp_add_rcpt
 struct ostream *testsuite_smtp_send
 	(const struct sieve_script_env *senv ATTR_UNUSED,
 		void *handle);
+void testsuite_smtp_abort
+	(const struct sieve_script_env *senv ATTR_UNUSED,
+		void *handle);
 int testsuite_smtp_finish
 	(const struct sieve_script_env *senv ATTR_UNUSED,
 		void *handle, const char **error_r);
