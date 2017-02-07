@@ -22,6 +22,8 @@ struct sieve_smtp_context *sieve_smtp_start_single
 	(const struct sieve_script_env *senv, const char *destination,
  		const char *return_path, struct ostream **output_r);
 
+void sieve_smtp_abort
+	(struct sieve_smtp_context *sctx);
 int sieve_smtp_finish
 	(struct sieve_smtp_context *sctx, const char **error_r);
 

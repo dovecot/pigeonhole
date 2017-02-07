@@ -94,6 +94,14 @@ static struct ostream *lda_sieve_smtp_send
 	return smtp_client_send(smtp_client);
 }
 
+static void lda_sieve_smtp_abort
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
+{
+	struct smtp_client *smtp_client = (struct smtp_client *) handle;
+
+	smtp_client_abort(&smtp_client);
+}
+
 static int lda_sieve_smtp_finish
 (const struct sieve_script_env *senv, void *handle,
 	const char **error_r)
@@ -815,6 +823,7 @@ static int lda_sieve_execute
 		scriptenv.smtp_start = lda_sieve_smtp_start;
 		scriptenv.smtp_add_rcpt = lda_sieve_smtp_add_rcpt;
 		scriptenv.smtp_send = lda_sieve_smtp_send;
+		scriptenv.smtp_abort = lda_sieve_smtp_abort;
 		scriptenv.smtp_finish = lda_sieve_smtp_finish;
 		scriptenv.duplicate_mark = lda_sieve_duplicate_mark;
 		scriptenv.duplicate_check = lda_sieve_duplicate_check;

@@ -67,6 +67,17 @@ struct sieve_smtp_context *sieve_smtp_start_single
 	return sctx;
 }
 
+void sieve_smtp_abort
+(struct sieve_smtp_context *sctx)
+{
+	const struct sieve_script_env *senv = sctx->senv;
+	void *handle = sctx->handle;
+
+	i_free(sctx);
+	i_assert(senv->smtp_abort != NULL);
+	senv->smtp_abort(senv, handle);
+}
+
 int sieve_smtp_finish
 (struct sieve_smtp_context *sctx, const char **error_r)
 {
