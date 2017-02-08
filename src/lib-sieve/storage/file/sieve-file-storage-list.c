@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "str.h"
+#include "eacces-error.h"
 
 #include "sieve-common.h"
 #include "sieve-script-private.h"
@@ -33,9 +34,26 @@ struct sieve_storage_list_context *sieve_file_storage_list_init
 
 	/* Open the directory */
 	if ( (dirp = opendir(fstorage->path)) == NULL ) {
-		sieve_storage_set_critical(storage,
-			"Failed to list scripts: "
-			"opendir(%s) failed: %m", fstorage->path);
+		switch ( errno ) {
+		case ENOENT:
+			sieve_storage_set_error(storage,
+				SIEVE_ERROR_NOT_FOUND,
+				"Script storage not found");
+			break;
+		case EACCES:
+			sieve_storage_set_error(storage,
+				SIEVE_ERROR_NO_PERMISSION,
+				"Script storage not accessible");
+			sieve_storage_sys_error(storage,
+				"Failed to list scripts: "
+				"%s", eacces_error_get("opendir", fstorage->path));
+			break;
+		default:
+			sieve_storage_set_critical(storage,
+				"Failed to list scripts: "
+				"opendir(%s) failed: %m", fstorage->path);
+			break;
+		}
 		return NULL;
 	}
 
