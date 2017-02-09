@@ -84,7 +84,6 @@ struct imap_sieve_mailbox_transaction {
 	pool_t pool;
 
 	union mailbox_transaction_module_context module_ctx;
-	struct mail *tmp_mail;
 	struct mailbox *src_box;
 
 	ARRAY_TYPE(imap_sieve_mailbox_event) events;
@@ -424,18 +423,6 @@ imap_sieve_mailbox_copy(struct mail_save_context *ctx, struct mail *mail)
 	struct imap_sieve_mailbox_transaction *ismt =
 		IMAP_SIEVE_CONTEXT(t);
 
-	if (ismt != NULL) {
-		if (ctx->dest_mail == NULL) {
-			/* Dest mail is required for our purposes */
-			if (ismt->tmp_mail == NULL) {
-				ismt->tmp_mail = mail_alloc(t,
-					MAIL_FETCH_STREAM_HEADER |
-				  MAIL_FETCH_STREAM_BODY, NULL);
-			}
-			ctx->dest_mail = ismt->tmp_mail;
-		}
-	}
-
 	if (lbox->super.copy(ctx, mail) < 0)
 		return -1;
 
@@ -450,29 +437,6 @@ imap_sieve_mailbox_copy(struct mail_save_context *ctx, struct mail *mail)
 	}
 
 	return 0;
-}
-
-static int
-imap_sieve_mailbox_save_begin(struct mail_save_context *ctx,
-	struct istream *input)
-{
-	struct imap_sieve_mailbox_transaction *ismt =
-		IMAP_SIEVE_CONTEXT(ctx->transaction);
-	union mailbox_module_context *lbox =
-		IMAP_SIEVE_CONTEXT(ctx->transaction->box);
-
-	if (ismt != NULL) {
-		if (ctx->dest_mail == NULL) {
-			/* Dest mail is required for our purposes */
-			if (ismt->tmp_mail == NULL) {
-				ismt->tmp_mail = mail_alloc(ctx->transaction,
-					MAIL_FETCH_STREAM_HEADER |
-				  MAIL_FETCH_STREAM_BODY, NULL);
-			}
-			ctx->dest_mail = ismt->tmp_mail;
-		}
-	}
-	return lbox->super.save_begin(ctx, input);
 }
 
 static int
@@ -535,7 +499,6 @@ static void
 imap_sieve_mailbox_transaction_free
 (struct imap_sieve_mailbox_transaction *ismt)
 {
-	i_assert(ismt->tmp_mail == NULL);
 	if (array_is_created(&ismt->events))
 		array_free(&ismt->events);
 	pool_unref(&ismt->pool);
@@ -706,9 +669,6 @@ imap_sieve_mailbox_transaction_commit(
 	struct imap_sieve_user *isuser = 	IMAP_SIEVE_USER_CONTEXT(user);
 	int ret = 0;
 
-	if (ismt != NULL && ismt->tmp_mail != NULL)
-		mail_free(&ismt->tmp_mail);
-
 	if ((lbox->super.transaction_commit(t, changes_r)) < 0)
 		ret = -1;
 	else if (ismt != NULL) {
@@ -730,9 +690,6 @@ imap_sieve_mailbox_transaction_rollback(
 {
 	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
 	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT(t->box);
-
-	if (ismt != NULL && ismt->tmp_mail != NULL)
-		mail_free(&ismt->tmp_mail);
 
 	lbox->super.transaction_rollback(t);
 
@@ -756,7 +713,6 @@ static void imap_sieve_mailbox_allocated(struct mailbox *box)
 	box->vlast = &lbox->super;
 
 	v->copy = imap_sieve_mailbox_copy;
-	v->save_begin = imap_sieve_mailbox_save_begin;
 	v->save_finish = imap_sieve_mailbox_save_finish;
 	v->transaction_begin = imap_sieve_mailbox_transaction_begin;
 	v->transaction_commit = imap_sieve_mailbox_transaction_commit;
