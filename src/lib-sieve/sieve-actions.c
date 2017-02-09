@@ -566,12 +566,8 @@ static int act_store_execute
 	trans->mail_trans = mailbox_transaction_begin
 		(trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
 
-	/* Create mail object for stored message */
-	trans->dest_mail = mail_alloc(trans->mail_trans, 0, NULL);
-
 	/* Store the message */
 	save_ctx = mailbox_save_alloc(trans->mail_trans);
-	mailbox_save_set_dest_mail(save_ctx, trans->dest_mail);
 
 	/* Apply keywords and flags that side-effects may have added */
 	if ( trans->flags_altered ) {
@@ -698,10 +694,6 @@ static int act_store_commit
 	 */
 	aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 
-	/* Free mail object for stored message */
-	if ( trans->dest_mail != NULL )
-		mail_free(&trans->dest_mail);
-
 	/* Commit mailbox transaction */
 	status = ( mailbox_transaction_commit(&trans->mail_trans) == 0 );
 
@@ -744,10 +736,6 @@ static void act_store_rollback
 
 	/* Log status */
 	act_store_log_status(trans, aenv, TRUE, success);
-
-	/* Free mailobject for stored message */
-	if ( trans->dest_mail != NULL )
-		mail_free(&trans->dest_mail);
 
 	/* Rollback mailbox transaction */
 	if ( trans->mail_trans != NULL )
