@@ -181,6 +181,13 @@ time_t sieve_binary_mtime
 	return sbin->file->st.st_mtime;
 }
 
+const struct stat *sieve_binary_stat
+(struct sieve_binary *sbin)
+{
+	i_assert(sbin->file != NULL);
+	return &sbin->file->st;
+}
+
 const char *sieve_binary_script_name(struct sieve_binary *sbin)
 {
 	return ( sbin->script == NULL ? NULL : sieve_script_name(sbin->script) );
