@@ -481,18 +481,29 @@ static int sieve_file_script_binary_read_metadata
 	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
 	struct sieve_instance *svinst = script->storage->svinst;
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
-	time_t bmtime = sieve_binary_mtime(sbin);
-	time_t smtime = ( fscript->st.st_mtime > fscript->lnk_st.st_mtime ?
-		fscript->st.st_mtime : fscript->lnk_st.st_mtime );
+	const struct stat *sstat, *bstat;
 
-	if ( bmtime <= smtime ) {
+	bstat = sieve_binary_stat(sbin);
+	if ( fscript->st.st_mtime > fscript->lnk_st.st_mtime ||
+		(fscript->st.st_mtime == fscript->lnk_st.st_mtime &&
+		 ST_MTIME_NSEC(fscript->st) >= ST_MTIME_NSEC(fscript->lnk_st)) ) {
+		sstat = &fscript->st;
+	} else {
+		sstat = &fscript->lnk_st;
+	}
+
+	if ( bstat->st_mtime < sstat->st_mtime ||
+		(bstat->st_mtime == sstat->st_mtime &&
+			ST_MTIME_NSEC(*bstat) <= ST_MTIME_NSEC(*sstat)) ) {
 		if ( svinst->debug ) {
 			sieve_script_sys_debug(script,
 				"Sieve binary `%s' is not newer "
-				"than the Sieve script `%s' (%s <= %s)",
+				"than the Sieve script `%s' (%s.%lu <= %s.%lu)",
 				sieve_binary_path(sbin), sieve_script_location(script),
-				t_strflocaltime("%Y-%m-%d %H:%M:%S", bmtime),
-				t_strflocaltime("%Y-%m-%d %H:%M:%S", smtime));
+				t_strflocaltime("%Y-%m-%d %H:%M:%S", bstat->st_mtime),
+				ST_MTIME_NSEC(*bstat),
+				t_strflocaltime("%Y-%m-%d %H:%M:%S", sstat->st_mtime),
+				ST_MTIME_NSEC(*sstat));
 		}
 		return 0;
 	}
