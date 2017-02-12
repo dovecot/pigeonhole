@@ -842,17 +842,23 @@ imap_sieve_mailbox_rules_init(struct mail_user *user)
 			(user, str_c(identifier));
 		if (setval == NULL || *setval == '\0')
 			break;
+		setval = ph_t_str_trim(setval, "\t ");
+		if (strcasecmp(setval, "INBOX") == 0)
+			setval = t_str_ucase(setval);
 
 		mbrule = p_new(user->pool,
 			struct imap_sieve_mailbox_rule, 1);
 		mbrule->index = i;
-		mbrule->mailbox = ph_p_str_trim(user->pool, setval, "\t ");
+		mbrule->mailbox = p_strdup(user->pool, setval);
 
 		str_truncate(identifier, id_len);
 		str_append(identifier, "_from");
 		setval = mail_user_plugin_getenv(user, str_c(identifier));
 		if (setval != NULL && *setval != '\0') {
-			mbrule->from = ph_p_str_trim(user->pool, setval, "\t ");
+			setval = ph_t_str_trim(setval, "\t ");
+			if (strcasecmp(setval, "INBOX") == 0)
+				setval = t_str_ucase(setval);
+			mbrule->from = p_strdup(user->pool, setval);
 			if (strcmp(mbrule->from, "*") == 0)
 				mbrule->from = NULL;
 		}
