@@ -92,8 +92,16 @@ static int sieve_file_storage_create_tmp
 		if (stat(str_c(path), &st) == 0) {
 			/* try another file name */
 		} else if (errno != ENOENT) {
-			sieve_storage_set_critical(storage, "save: "
-				"stat(%s) failed: %m", str_c(path));
+			switch ( errno ) {
+			case EACCES:
+				sieve_storage_set_critical(storage, "save: %s",
+					eacces_error_get("stat", fstorage->path));
+				break;
+			default:
+				sieve_storage_set_critical(storage, "save: "
+					"stat(%s) failed: %m", str_c(path));
+				break;
+			}
 			return -1;
 		} else {
 			/* doesn't exist */
@@ -116,8 +124,16 @@ static int sieve_file_storage_create_tmp
 				SIEVE_ERROR_NO_QUOTA,
 				"Not enough disk quota");
 		} else {
-			sieve_storage_set_critical(storage, "save: "
-				"open(%s) failed: %m", str_c(path));
+			switch ( errno ) {
+			case EACCES:
+				sieve_storage_set_critical(storage, "save: %s",
+					eacces_error_get("open", fstorage->path));
+				break;
+			default:
+				sieve_storage_set_critical(storage, "save: "
+					"open(%s) failed: %m", str_c(path));
+				break;
+			}
 		}
 	}
 
