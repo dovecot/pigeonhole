@@ -252,6 +252,18 @@ void sieve_act_store_get_storage_error
 	(const struct sieve_action_exec_env *aenv, struct act_store_transaction *trans);
 
 /*
+ * Redirect action
+ */
+
+struct act_redirect_context {
+	const char *to_address;
+};
+
+int sieve_act_redirect_add_to_result
+(const struct sieve_runtime_env *renv,
+	struct sieve_side_effects_list *seffects, const char *norm_address);
+
+/*
  * Action utility functions
  */
 

@@ -101,10 +101,6 @@ const struct sieve_action_def act_redirect = {
 	.commit = act_redirect_commit
 };
 
-struct act_redirect_context {
-	const char *to_address;
-};
-
 /*
  * Validation
  */
@@ -199,11 +195,9 @@ static int cmd_redirect_operation_execute
 {
 	struct sieve_instance *svinst = renv->svinst;
 	struct sieve_side_effects_list *slist = NULL;
-	struct act_redirect_context *act;
 	string_t *redirect;
 	bool literal_address;
 	const char *norm_address;
-	pool_t pool;
 	int ret;
 
 	/*
@@ -254,16 +248,8 @@ static int cmd_redirect_operation_execute
 
 	/* Add redirect action to the result */
 
-	pool = sieve_result_pool(renv->result);
-	act = p_new(pool, struct act_redirect_context, 1);
-	act->to_address = p_strdup(pool, norm_address);
-
-	if ( sieve_result_add_action
-		(renv, NULL, &act_redirect, slist, (void *) act,
-			svinst->max_redirects, TRUE) < 0 )
-		return SIEVE_EXEC_FAILURE;
-
-	return SIEVE_EXEC_OK;
+	return sieve_act_redirect_add_to_result
+		(renv, slist, norm_address);
 }
 
 /*

@@ -746,6 +746,30 @@ static void act_store_rollback
 }
 
 /*
+ * Redirect action
+ */
+
+int sieve_act_redirect_add_to_result
+(const struct sieve_runtime_env *renv,
+	struct sieve_side_effects_list *seffects, const char *norm_address)
+{
+	struct sieve_instance *svinst = renv->svinst;
+	struct act_redirect_context *act;
+	pool_t pool;
+
+	pool = sieve_result_pool(renv->result);
+	act = p_new(pool, struct act_redirect_context, 1);
+	act->to_address = p_strdup(pool, norm_address);
+
+	if ( sieve_result_add_action
+		(renv, NULL, &act_redirect, seffects, (void *) act,
+			svinst->max_redirects, TRUE) < 0 )
+		return SIEVE_EXEC_FAILURE;
+
+	return SIEVE_EXEC_OK;
+}
+
+/*
  * Action utility functions
  */
 
