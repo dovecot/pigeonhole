@@ -306,9 +306,9 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 		input = i_stream_create_from_data(value->value,
 						  strlen(value->value));
 		save_ctx = sieve_storage_save_init(svstorage, scriptname, input);
-		i_stream_unref(&input);
 	} else if (value->value_stream != NULL) {
 		input = value->value_stream;
+		i_stream_ref(input);
 		save_ctx = sieve_storage_save_init(svstorage, scriptname, input);
 	} else {
 		return sieve_attribute_unset_script(storage, svstorage, scriptname);
@@ -319,6 +319,7 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 		mail_storage_set_critical(storage,
 			"Failed to save sieve script '%s': %s", scriptname,
 			sieve_storage_get_last_error(svstorage, NULL));
+		i_stream_unref(&input);
 		return -1;
 	}
 
@@ -358,6 +359,7 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 			sieve_storage_get_last_error(svstorage, NULL));
 		ret = -1;
 	}
+	i_stream_unref(&input);
 	return ret;
 }
 
