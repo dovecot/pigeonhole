@@ -1,3 +1,33 @@
+v0.4.16 30-10-2016 Stephan Bosch <stephan@rename-it.nl>
+
+	* Part of the Sieve extprograms implementation was moved to Dovecot, which
+	  means that this release depends on Dovecot v2.2.26+.
+	* ManageSieve: The PUTSCRIPT command now allows uploading empty Sieve scripts.
+	  There was really no good reason to disallow doing that.
+	+ Sieve vnd.dovecot.report extension:
+	  + Added a Dovecot-Reporting-User field to the report body, which contains
+	    the e-mail address of the user sending the report.
+	  + Added support for configuring the "From:" address used in the report.
+	+ LDA sieve plugin: Implemented support for a "discard script" that is run
+	  when the message is going to be discarded. This allows doing something other
+	  than throwing the message away for good.
+	+ Sieve vnd.dovecot.environment extension: Added vnd.dovecot.config.*
+	  environment items. These environment items map to sieve_env_* settings from
+	  the plugin {} section in the configuration. Such values can of course also
+	  be returned from userdb.
+	+ Sieve vacation extension: Use the Microsoft X-Auto-Response-Suppress header
+	  to prevent unwanted responses from and to (older) Microsoft products.
+	+ ManageSieve: Added rawlog_dir setting to store ManageSieve traffic logs.
+	  This replaces at least partially the rawlog plugin (mimics similar IMAP/POP3
+	  change).
+	- doveadm sieve plugin: synchronization: Prevent setting file timestamps to
+	  unix epoch time. This occurred when Dovecot passed the timestamp as
+	  'unknown' during synchronization.
+	- Sieve exprograms plugin: Fixed spurious '+' sometimes returned at the end
+	  of socket-based program output.
+	- imapsieve plugin: Fixed crash occurring in specific situations.
+	- Performed various fixes based on static analysis and Clang warnings.
+
 v0.4.15 07-07-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	* vacation extension: The sieve_user_email setting is now used in the check
