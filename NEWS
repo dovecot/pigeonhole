@@ -1,3 +1,26 @@
+v0.4.17 20-02-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	- LDA Sieve plugin: Fixed handling of an early explicit keep during
+	  multiscript execution. Action side-effects and the message snapshot would be
+	  lost at the final stage where the implicit keep is evaluated. This could
+	  result in the IMAP flags assigned to the message to be forgotten or that
+	  headers modified by the "editheader" extension would revert to their
+	  original state.
+	- file script storage: Amended the up-to-date time stamp comparison for
+	  on-disk binaries to include nanoseconds. This will fix problems occurring
+	  when both binary and script are saved within the same second. This fix is
+	  ineffective on older systems that have no support for nanoseconds in stat()
+	  timestamps, which	should be pretty rare nowadays.
+	- file script storage: Improve saving and listing permission error to include
+	  more details.
+	- imapsieve plugin: Make sure "INBOX" is upper case in static mailbox rules.
+	  Otherwise, the mailbox name would never match, since matching is performed
+	  case-sensitively and Dovecot only returns the upper-cased "INBOX".
+	- imapsieve plugin: Fixed assert failure occurring when used with virtual
+	  mailboxes.
+	- doveadm sieve plugin: Fixed crash when setting Sieve script via attribute's
+	  string value.
+
 v0.4.16 30-10-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	* Part of the Sieve extprograms implementation was moved to Dovecot, which
