@@ -332,7 +332,7 @@ void sieve_tool_deinit(struct sieve_tool **_tool)
 	if ( tool->mail_user_dovecot != NULL )
 		mail_user_unref(&tool->mail_user_dovecot);
 
-	mail_storage_service_user_free(&tool->service_user);
+	mail_storage_service_user_unref(&tool->service_user);
 	mail_storage_service_deinit(&tool->storage_service);
 
 	/* Free sieve tool object */

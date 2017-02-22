@@ -278,7 +278,7 @@ void client_destroy(struct client *client, const char *reason)
 	sieve_deinit(&client->svinst);
 
 	pool_unref(&client->cmd.pool);
-	mail_storage_service_user_free(&client->service_user);
+	mail_storage_service_user_unref(&client->service_user);
 
 	managesieve_client_count--;
 	DLLIST_REMOVE(&managesieve_clients, client);
