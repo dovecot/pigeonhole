@@ -246,6 +246,8 @@ void sieve_act_store_add_flags
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *) tr_context;
 
+	i_assert(trans != NULL);
+
 	/* Assign mail keywords for subsequent mailbox_copy() */
 	if ( *keywords != NULL ) {
 		const char *const *kw;
