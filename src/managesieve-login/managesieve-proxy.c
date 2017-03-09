@@ -27,6 +27,10 @@ typedef enum {
 	MANAGESIEVE_RESPONSE_BYE
 } managesieve_response_t;
 
+static const char *managesieve_proxy_state_names[MSIEVE_PROXY_STATE_COUNT] = {
+	"none", "tls-start", "tls-ready", "xclient", "auth"
+};
+
 static void proxy_free_password(struct client *client)
 {
 	if (client->proxy_password == NULL)
@@ -548,4 +552,12 @@ void managesieve_proxy_reset(struct client *client)
 void managesieve_proxy_error(struct client *client, const char *text)
 {
 	client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO, "TRYLATER", text);
+}
+
+const char *managesieve_proxy_get_state(struct client *client)
+{
+	struct managesieve_client *msieve_client =
+		(struct managesieve_client *) client;
+
+	return managesieve_proxy_state_names[msieve_client->proxy_state];
 }

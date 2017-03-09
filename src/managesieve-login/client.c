@@ -510,7 +510,8 @@ static struct client_vfuncs managesieve_client_vfuncs = {
 	managesieve_client_auth_result,
 	managesieve_proxy_reset,
 	managesieve_proxy_parse_line,
-	managesieve_proxy_error
+	managesieve_proxy_error,
+	managesieve_proxy_get_state,
 };
 
 static const struct login_binary managesieve_login_binary = {
