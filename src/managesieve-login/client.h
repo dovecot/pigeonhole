@@ -16,6 +16,8 @@ enum managesieve_proxy_state {
 	MSIEVE_PROXY_STATE_TLS_READY,
 	MSIEVE_PROXY_STATE_XCLIENT,
 	MSIEVE_PROXY_STATE_AUTH,
+
+	MSIEVE_PROXY_STATE_COUNT
 };
 struct managesieve_command;
 
