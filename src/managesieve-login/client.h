@@ -10,6 +10,13 @@
 /* maximum length for managesieve command line. */
 #define MAX_MANAGESIEVE_LINE 8192
 
+enum managesieve_proxy_state {
+	MSIEVE_PROXY_STATE_NONE,
+	MSIEVE_PROXY_STATE_TLS_START,
+	MSIEVE_PROXY_STATE_TLS_READY,
+	MSIEVE_PROXY_STATE_XCLIENT,
+	MSIEVE_PROXY_STATE_AUTH,
+};
 struct managesieve_command;
 
 struct managesieve_client {
@@ -18,7 +25,7 @@ struct managesieve_client {
 	const struct managesieve_login_settings *set;
 	struct managesieve_parser *parser;
 
-	unsigned int proxy_state;
+	enum managesieve_proxy_state proxy_state;
 
 	const char *cmd_name;
 	struct managesieve_command *cmd;
