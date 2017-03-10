@@ -618,6 +618,7 @@ imap_sieve_mailbox_transaction_run(
 	sbox = mailbox_alloc(box->list, box->vname, 0);
 	if (mailbox_sync(sbox, 0) < 0) {
 		mailbox_free(&sbox);
+		imap_sieve_run_deinit(&isrun);
 		return -1;
 	}
 
