@@ -11,7 +11,7 @@ struct lda_settings;
  */
 
 struct imap_sieve_event {
-	struct mailbox *mailbox;
+	struct mailbox *dest_mailbox, *src_mailbox;
 	const char *cause;
 	const char *changed_flags;
 };
@@ -47,8 +47,8 @@ void imap_sieve_deinit(struct imap_sieve **_isieve);
 struct imap_sieve_run;
 
 int imap_sieve_run_init(struct imap_sieve *isieve,
-	struct mailbox *mailbox, const char *cause,
-	const char *script_name,
+	struct mailbox *dest_mailbox, struct mailbox *src_mailbox,
+	const char *cause, const char *script_name,
 	const char *const *scripts_before,
 	const char *const *scripts_after,
 	struct imap_sieve_run **isrun_r)

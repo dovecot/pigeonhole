@@ -30,6 +30,11 @@
 
 static bool ext_imapsieve_load
 	(const struct sieve_extension *ext, void **context);
+static bool ext_vnd_imapsieve_load
+	(const struct sieve_extension *ext, void **context);
+static bool ext_vnd_imapsieve_validator_load
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+
 static bool ext_imapsieve_interpreter_load
 	(const struct sieve_extension *ext,
 		const struct sieve_runtime_env *renv,
@@ -45,6 +50,17 @@ const struct sieve_extension_def imapsieve_extension = {
 	.interpreter_load = ext_imapsieve_interpreter_load
 };
 
+#ifdef __IMAPSIEVE_DUMMY
+const struct sieve_extension_def vnd_imapsieve_extension_dummy = {
+#else
+const struct sieve_extension_def vnd_imapsieve_extension = {
+#endif
+	.name = "vnd.dovecot.imapsieve",
+	.load = ext_vnd_imapsieve_load,
+	.interpreter_load = ext_imapsieve_interpreter_load,
+	.validator_load = ext_vnd_imapsieve_validator_load
+};
+
 /*
  * Context
  */
@@ -54,6 +70,42 @@ static bool ext_imapsieve_load
 {
 	*context = (void*)
 		sieve_ext_environment_require_extension(ext->svinst);
+	return TRUE;
+}
+
+static bool ext_vnd_imapsieve_load
+(const struct sieve_extension *ext, void **context)
+{
+	*context = (void*)sieve_extension_require
+#ifdef __IMAPSIEVE_DUMMY
+		(ext->svinst, &imapsieve_extension_dummy, TRUE);
+#else
+		(ext->svinst, &imapsieve_extension, TRUE);
+#endif
+	return TRUE;
+}
+
+/*
+ * Validator
+ */
+
+static bool ext_vnd_imapsieve_validator_load
+(const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_validator *valdtr)
+{
+	const struct sieve_extension *ims_ext;
+
+	/* Load environment extension implicitly */
+
+	ims_ext = sieve_validator_extension_load_implicit
+#ifdef __IMAPSIEVE_DUMMY
+		(valdtr, imapsieve_extension_dummy.name);
+#else
+		(valdtr, imapsieve_extension.name);
+#endif
+	if ( ims_ext == NULL )
+		return FALSE;
+
 	return TRUE;
 }
 
@@ -100,11 +152,17 @@ static int ext_imapsieve_interpreter_run
 }
 #else
 static int ext_imapsieve_interpreter_run
-(const struct sieve_extension *ext ATTR_UNUSED,
+(const struct sieve_extension *ext,
 	const struct sieve_runtime_env *renv,
 	void *context ATTR_UNUSED, bool deferred ATTR_UNUSED)
 {
-	ext_imapsieve_environment_items_register(ext, renv);
+	if (ext->def == &vnd_imapsieve_extension) {
+		const struct sieve_extension *ims_ext =
+			(const struct sieve_extension *)ext->context;
+		ext_imapsieve_environment_vendor_items_register(ims_ext, renv);
+	} else {
+		ext_imapsieve_environment_items_register(ext, renv);
+	}
 	return SIEVE_EXEC_OK;
 }
 #endif
