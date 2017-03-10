@@ -302,7 +302,8 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 
 	/* Get storage for user script */
 	storage = NULL;
-	if ((ret=imap_sieve_get_storage(isieve, &storage)) < 0)
+	if (script_name != NULL && *script_name != '\0' &&
+		(ret=imap_sieve_get_storage(isieve, &storage)) < 0)
 		return ret;
 
 	/* Open all scripts */
@@ -325,8 +326,7 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 
 	/* The user script */
 	user_script = NULL;
-	if (storage != NULL && script_name != NULL &&
-		*script_name != '\0') {
+	if (storage != NULL) {
 		i_assert(count < max_len);
 		scripts[count].script = sieve_storage_open_script
 			(storage, script_name, &error);
