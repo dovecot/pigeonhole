@@ -389,10 +389,13 @@ static void imap_sieve_mail_allocated(struct mail *_mail)
 	struct mail_private *mail = (struct mail_private *)_mail;
 	struct imap_sieve_mailbox_transaction *ismt =
 		IMAP_SIEVE_CONTEXT(_mail->transaction);
+	struct mail_user *user = _mail->box->storage->user;
+	struct imap_sieve_user *isuser =
+		IMAP_SIEVE_USER_CONTEXT(user);
 	struct mail_vfuncs *v = mail->vlast;
 	struct imap_sieve_mail *ismail;
 
-	if (ismt == NULL)
+	if (ismt == NULL || isuser->sieve_active)
 		return;
 
 	ismail = p_new(mail->pool, struct imap_sieve_mail, 1);
@@ -426,7 +429,8 @@ imap_sieve_mailbox_copy(struct mail_save_context *ctx, struct mail *mail)
 	if (lbox->super.copy(ctx, mail) < 0)
 		return -1;
 
-	if (ismt != NULL && !ctx->dest_mail->expunged &&
+	if (ismt != NULL && !isuser->sieve_active &&
+		!ctx->dest_mail->expunged &&
 		(isuser->cur_cmd == IMAP_SIEVE_CMD_COPY ||
 			isuser->cur_cmd == IMAP_SIEVE_CMD_MOVE)) {
 		imap_sieve_mailbox_debug(t->box, "%s event",
@@ -453,8 +457,8 @@ imap_sieve_mailbox_save_finish(struct mail_save_context *ctx)
 	if (lbox->super.save_finish(ctx) < 0)
 		return -1;
 
-	if (ismt != NULL && dest_mail != NULL &&
-		!dest_mail->expunged &&
+	if (ismt != NULL && !isuser->sieve_active &&
+		dest_mail != NULL && !dest_mail->expunged &&
 		isuser->cur_cmd == IMAP_SIEVE_CMD_APPEND) {
 
 		imap_sieve_mailbox_debug(t->box, "APPEND event");
