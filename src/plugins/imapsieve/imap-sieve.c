@@ -36,7 +36,9 @@ struct imap_sieve {
 
 	struct sieve_instance *svinst;
 	struct sieve_storage *storage;
+
 	const struct sieve_extension *ext_imapsieve;
+	const struct sieve_extension *ext_vnd_imapsieve;
 
 	struct duplicate_context *dup_ctx;
 
@@ -89,6 +91,8 @@ struct imap_sieve *imap_sieve_init(struct mail_user *user,
 
 	isieve->ext_imapsieve = sieve_extension_replace
 		(isieve->svinst, &imapsieve_extension, TRUE);
+	isieve->ext_vnd_imapsieve = sieve_extension_replace
+		(isieve->svinst, &vnd_imapsieve_extension, TRUE);
 
 	isieve->master_ehandler = sieve_master_ehandler_create
 		(isieve->svinst, NULL, 0); // FIXME: prefix?
@@ -110,6 +114,7 @@ void imap_sieve_deinit(struct imap_sieve **_isieve)
 	if (isieve->storage != NULL)
 		sieve_storage_unref(&isieve->storage);
 	sieve_extension_unregister(isieve->ext_imapsieve);
+	sieve_extension_unregister(isieve->ext_vnd_imapsieve);
 	sieve_deinit(&isieve->svinst);
 
 	duplicate_deinit(&isieve->dup_ctx);
@@ -244,7 +249,7 @@ struct imap_sieve_run_script {
 struct imap_sieve_run {
 	pool_t pool;
 	struct imap_sieve *isieve;
-	struct mailbox *mailbox;
+	struct mailbox *dest_mailbox, *src_mailbox;
 	char *cause;
 
 	struct sieve_error_handler *user_ehandler;
@@ -272,8 +277,8 @@ imap_sieve_run_init_user_log(struct imap_sieve_run *isrun)
 }
 
 int imap_sieve_run_init(struct imap_sieve *isieve,
-	struct mailbox *mailbox, const char *cause,
-	const char *script_name,
+	struct mailbox *dest_mailbox, struct mailbox *src_mailbox,
+	const char *cause, const char *script_name,
 	const char *const *scripts_before,
 	const char *const *scripts_after,
 	struct imap_sieve_run **isrun_r)
@@ -361,7 +366,8 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 	isrun = p_new(pool, struct imap_sieve_run, 1);
 	isrun->pool = pool;
 	isrun->isieve = isieve;
-	isrun->mailbox = mailbox;
+	isrun->dest_mailbox = dest_mailbox;
+	isrun->src_mailbox = src_mailbox;
 	isrun->cause = p_strdup(pool, cause);
 	isrun->user_script = user_script;
 	isrun->scripts = scripts;
@@ -696,7 +702,8 @@ int imap_sieve_run_mail
 	int ret;
 
 	i_zero(&context);
-	context.event.mailbox = isrun->mailbox;
+	context.event.dest_mailbox = isrun->dest_mailbox;
+	context.event.src_mailbox = isrun->src_mailbox;
 	context.event.cause = isrun->cause;
 	context.event.changed_flags = changed_flags;
 	context.isieve = isieve;
@@ -707,7 +714,7 @@ int imap_sieve_run_mail
 	if ( sieve_trace_config_get(svinst, &trace_config) >= 0) {
 		const char *tr_label = t_strdup_printf
 			("%s.%s.%u", isieve->user->username,
-				mailbox_get_vname(isrun->mailbox), mail->uid);
+				mailbox_get_vname(mail->box), mail->uid);
 		if ( sieve_trace_log_open(svinst, tr_label, &trace_log) < 0 )
 			i_zero(&trace_config);
 	}
@@ -725,7 +732,7 @@ int imap_sieve_run_mail
 
 		i_zero(&scriptenv);
 		i_zero(&estatus);
-		scriptenv.default_mailbox = mailbox_get_vname(isrun->mailbox);
+		scriptenv.default_mailbox = mailbox_get_vname(mail->box);
 		scriptenv.user = isieve->user;
 		scriptenv.postmaster_address = lda_set->postmaster_address;
 		scriptenv.smtp_start = imap_sieve_smtp_start;

@@ -23,6 +23,26 @@ Pigeonhole implementation also adds the ability for administrators to configure
 Sieve scripts outside the user's control, that are run either before or after a
 user's script if there is one.
 
+Dovecot-specific Environment Items
+==================================
+
+The "imapsieve" extension defined in RFC 6785 defines additional environment
+items for the "environment" extension defined in RFC 5183. Beyond those, Dovecot
+defines a few more. These are available when the Dovecot-specific
+"vnd.dovecot.imapsieve" extension is enabled using the "require" command. The
+"vnd.dovecot.imapsieve" extension implicitly uses the "imapsieve" extension, so
+that extension does not need to be enabled as well in that case. The following
+Dovecot-specific environment items are added:
+
+vnd.dovecot.mailbox-from
+  The mailbox where the message is being copied or moved from (the source
+  mailbox). This environment item is only set when the Sieve script is executed
+  from an IMAP COPY or MOVE command.
+
+vnd.dovecot.mailbox-to
+  The mailbox where the message is being copied to (the destination mailbox).
+  This environment item is currently always equal to the "imap.mailbox" item.
+
 Configuration
 =============
 

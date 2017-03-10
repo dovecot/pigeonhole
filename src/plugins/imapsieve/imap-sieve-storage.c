@@ -518,7 +518,7 @@ imap_sieve_mailbox_transaction_free
 static int
 imap_sieve_mailbox_transaction_run(
 	struct imap_sieve_mailbox_transaction *ismt,
-	struct mailbox *box,
+	struct mailbox *dest_box,
 	struct mail_transaction_commit_changes *changes)
 {
 	static const char *wanted_headers[] = {
@@ -526,7 +526,7 @@ imap_sieve_mailbox_transaction_run(
 		NULL
 	};
 	struct mailbox *src_box = ismt->src_box;
-	struct mail_user *user = box->storage->user;
+	struct mail_user *user = dest_box->storage->user;
 	struct imap_sieve_user *isuser = 	IMAP_SIEVE_USER_CONTEXT(user);
 	const struct imap_sieve_mailbox_event *mevent;
 	struct mailbox_header_lookup_ctx *headers_ctx;
@@ -548,7 +548,7 @@ imap_sieve_mailbox_transaction_run(
 
 	/* Get user script for this mailbox */
 	if (isuser->user_script && imap_sieve_mailbox_get_script
-		(box, &script_name) < 0) {
+		(dest_box, &script_name) < 0) {
 		return 0; // FIXME: some errors may warrant -1
 	}
 
@@ -586,7 +586,7 @@ imap_sieve_mailbox_transaction_run(
 		/* Find matching rules */
 		t_array_init(&mbrules, 16);
 		imap_sieve_mailbox_rules_get
-			(user, box, src_box, cause, &mbrules);
+			(user, dest_box, src_box, cause, &mbrules);
 
 		/* Apply all matched rules */
 		t_array_init(&scripts_before, 8);
@@ -604,7 +604,7 @@ imap_sieve_mailbox_transaction_run(
 
 		/* Initialize */
 		ret = imap_sieve_run_init
-			(isuser->isieve, box, cause, script_name,
+			(isuser->isieve, dest_box, src_box, cause, script_name,
 				array_idx(&scripts_before, 0),
 				array_idx(&scripts_after, 0), &isrun);
 	} T_END;
@@ -615,7 +615,7 @@ imap_sieve_mailbox_transaction_run(
 	}
 
 	/* Get synchronized view on the mailbox */
-	sbox = mailbox_alloc(box->list, box->vname, 0);
+	sbox = mailbox_alloc(dest_box->list, dest_box->vname, 0);
 	if (mailbox_sync(sbox, 0) < 0) {
 		mailbox_free(&sbox);
 		imap_sieve_run_deinit(&isrun);
