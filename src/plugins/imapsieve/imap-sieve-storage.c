@@ -59,6 +59,7 @@ struct imap_sieve_mailbox_rule {
 	const char *from;
 	const char *const *causes;
 	const char *before, *after;
+	const char *copy_source_after;
 };
 
 struct imap_sieve_user {
@@ -76,7 +77,7 @@ struct imap_sieve_user {
 };
 
 struct imap_sieve_mailbox_event {
-	uint32_t mail_uid;
+	uint32_t dest_mail_uid, src_mail_uid;
 	unsigned int save_seq;
 
 	const char *changed_flags;
@@ -86,7 +87,9 @@ struct imap_sieve_mailbox_transaction {
 	pool_t pool;
 
 	union mailbox_transaction_module_context module_ctx;
+
 	struct mailbox *src_box;
+	struct mailbox_transaction_context *src_mail_trans;
 
 	ARRAY_TYPE(imap_sieve_mailbox_event) events;
 };
@@ -162,6 +165,22 @@ imap_sieve_mailbox_debug(struct mailbox *box,
 			t_strdup_vprintf(format, args));
 		va_end(args);
 	}
+}
+
+static inline void
+imap_sieve_mailbox_warning(struct mailbox *box,
+	const char *format, ...) ATTR_FORMAT(2, 3);
+static inline void
+imap_sieve_mailbox_warning(struct mailbox *box,
+	const char *format, ...)
+{
+	va_list args;
+
+	va_start(args, format);
+	i_warning("imapsieve: mailbox %s: %s",
+		mailbox_get_vname(box),
+		t_strdup_vprintf(format, args));
+	va_end(args);
 }
 
 static inline void
@@ -274,9 +293,25 @@ static int imap_sieve_mailbox_get_script
 	return ret;
 }
 
+static struct imap_sieve_mailbox_event *
+imap_sieve_create_mailbox_event
+(struct mailbox_transaction_context *t, struct mail *dest_mail)
+{
+	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
+	struct imap_sieve_mailbox_event *event;
+
+	if (!array_is_created(&ismt->events))
+		i_array_init(&ismt->events, 64);
+
+	event = array_append_space(&ismt->events);
+	event->save_seq = t->save_count;
+	event->dest_mail_uid = dest_mail->uid;
+	return event;
+}
+
 static void imap_sieve_add_mailbox_event
 (struct mailbox_transaction_context *t,
-	struct mail *mail, struct mailbox *src_box,
+	struct mail *dest_mail, struct mailbox *src_box,
 	const char *changed_flags)
 {
 	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
@@ -285,13 +320,26 @@ static void imap_sieve_add_mailbox_event
 	i_assert(ismt->src_box == NULL || ismt->src_box == src_box);
 	ismt->src_box = src_box;
 
-	if (!array_is_created(&ismt->events))
-		i_array_init(&ismt->events, 64);
-
-	event = array_append_space(&ismt->events);
-	event->save_seq = t->save_count;
-	event->mail_uid = mail->uid;
+	event = imap_sieve_create_mailbox_event(t, dest_mail);
 	event->changed_flags = p_strdup(ismt->pool, changed_flags);
+}
+
+static void imap_sieve_add_mailbox_copy_event
+(struct mailbox_transaction_context *t,
+	struct mail *dest_mail, struct mail *src_mail)
+{
+	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
+	struct imap_sieve_mailbox_event *event;
+
+	i_assert(ismt->src_box == NULL || ismt->src_box == src_mail->box);
+	i_assert(ismt->src_mail_trans == NULL ||
+		ismt->src_mail_trans == src_mail->transaction);
+
+	ismt->src_box = src_mail->box;
+	ismt->src_mail_trans = src_mail->transaction;
+
+	event = imap_sieve_create_mailbox_event(t, dest_mail);
+	event->src_mail_uid = src_mail->uid;
 }
 
 /*
@@ -447,8 +495,7 @@ imap_sieve_mailbox_copy(struct mail_save_context *ctx, struct mail *mail)
 		imap_sieve_mailbox_debug(t->box, "%s event",
 			(isuser->cur_cmd == IMAP_SIEVE_CMD_COPY ?
 				"COPY" : "MOVE"));
-		imap_sieve_add_mailbox_event
-			(t, ctx->dest_mail, mail->box, NULL);
+		imap_sieve_add_mailbox_copy_event(t, ctx->dest_mail, mail);
 	}
 
 	return 0;
@@ -519,6 +566,44 @@ imap_sieve_mailbox_transaction_free
 	pool_unref(&ismt->pool);
 }
 
+static void
+imap_sieve_mailbox_run_copy_source(
+	struct imap_sieve_mailbox_transaction *ismt,
+	struct imap_sieve_run *isrun,
+	const struct imap_sieve_mailbox_event *mevent,
+	struct mail **src_mail)
+{
+	struct mailbox *src_box = ismt->src_box;
+	int ret;
+
+	if (isrun == NULL)
+		return;
+
+	i_assert(ismt->src_mail_trans->box == src_box);
+
+	if (*src_mail == NULL)
+		*src_mail = mail_alloc(ismt->src_mail_trans, 0, NULL);
+
+	/* Select source message */
+	if (!mail_set_uid(*src_mail, mevent->src_mail_uid)) {
+		imap_sieve_mailbox_warning(src_box,
+			"Failed to find source message for Sieve event "
+			"(UID=%llu)", (unsigned long long)mevent->src_mail_uid);
+		return;
+	}
+
+	imap_sieve_mailbox_debug(src_box,
+		"Running copy_source_after scripts.");
+
+	/* Run scripts for source mail */
+	ret = imap_sieve_run_mail
+		(isrun, *src_mail, NULL);
+	if (ret > 0) {
+		/* Discard */
+		mail_update_flags(*src_mail, MODIFY_ADD, MAIL_DELETED);
+	}
+}
+
 static int
 imap_sieve_mailbox_transaction_run(
 	struct imap_sieve_mailbox_transaction *ismt,
@@ -536,11 +621,11 @@ imap_sieve_mailbox_transaction_run(
 	struct mailbox_header_lookup_ctx *headers_ctx;
 	struct mailbox_transaction_context *st;
 	struct mailbox *sbox;
-	struct imap_sieve_run *isrun;
+	struct imap_sieve_run *isrun, *isrun_src;
 	struct seq_range_iter siter;
 	const char *cause, *script_name = NULL;
 	bool can_discard;
-	struct mail *mail;
+	struct mail *mail, *src_mail = NULL;
 	int ret;
 
 	if (ismt == NULL || !array_is_created(&ismt->events)) {
@@ -585,6 +670,7 @@ imap_sieve_mailbox_transaction_run(
 	T_BEGIN {
 		ARRAY_TYPE(imap_sieve_mailbox_rule) mbrules;
 		ARRAY_TYPE(const_string) scripts_before, scripts_after;
+		ARRAY_TYPE(const_string) scripts_copy_source;
 		struct imap_sieve_mailbox_rule *const *rule_idx;
 
 		/* Find matching rules */
@@ -595,6 +681,7 @@ imap_sieve_mailbox_transaction_run(
 		/* Apply all matched rules */
 		t_array_init(&scripts_before, 8);
 		t_array_init(&scripts_after, 8);
+		t_array_init(&scripts_copy_source, 4);
 		array_foreach(&mbrules, rule_idx) {
 			struct imap_sieve_mailbox_rule *rule = *rule_idx;
 
@@ -602,6 +689,8 @@ imap_sieve_mailbox_transaction_run(
 				array_append(&scripts_before, &rule->before, 1);
 			if (rule->after != NULL)
 				array_append(&scripts_after, &rule->after, 1);
+			if (rule->copy_source_after != NULL)
+				array_append(&scripts_copy_source, &rule->copy_source_after, 1);
 		}
 		(void)array_append_space(&scripts_before);
 		(void)array_append_space(&scripts_after);
@@ -611,6 +700,21 @@ imap_sieve_mailbox_transaction_run(
 			(isuser->isieve, dest_box, src_box, cause, script_name,
 				array_idx(&scripts_before, 0),
 				array_idx(&scripts_after, 0), &isrun);
+
+		/* Initialize source script execution */
+		isrun_src = NULL;
+		if (ret > 0 && ismt->src_mail_trans != NULL &&
+			isuser->cur_cmd == IMAP_SIEVE_CMD_COPY &&
+			array_count(&scripts_copy_source) > 0) {
+			const char *no_scripts = NULL;
+
+			(void)array_append_space(&scripts_copy_source);
+			if (imap_sieve_run_init(isuser->isieve,
+					dest_box, src_box, cause, NULL,
+					&no_scripts, array_idx(&scripts_copy_source, 0),
+					&isrun_src) <= 0)
+				isrun_src = NULL;
+		}
 	} T_END;
 
 	if (ret <= 0) {
@@ -618,11 +722,13 @@ imap_sieve_mailbox_transaction_run(
 		return 0;
 	}
 
-	/* Get synchronized view on the mailbox */
+	/* Get synchronized view on the destination mailbox */
 	sbox = mailbox_alloc(dest_box->list, dest_box->vname, 0);
 	if (mailbox_sync(sbox, 0) < 0) {
 		mailbox_free(&sbox);
 		imap_sieve_run_deinit(&isrun);
+		if (isrun_src != NULL)
+			imap_sieve_run_deinit(&isrun_src);
 		return -1;
 	}
 
@@ -638,9 +744,9 @@ imap_sieve_mailbox_transaction_run(
 		uint32_t uid;
 
 		/* Determine UID for saved message */
-		if (mevent->mail_uid > 0 ||
+		if (mevent->dest_mail_uid > 0 ||
 			!seq_range_array_iter_nth(&siter, mevent->save_seq, &uid))
-			uid = mevent->mail_uid;
+			uid = mevent->dest_mail_uid;
 
 		/* Select event message */
 		if (!mail_set_uid(mail, uid)) {
@@ -659,16 +765,25 @@ imap_sieve_mailbox_transaction_run(
 		/* Handle the result */
 		if (ret < 0) {
 			/* Sieve error; keep */
-		} else if (ret > 0 && can_discard) {
-			/* Discard */
-			mail_update_flags(mail, MODIFY_ADD, MAIL_DELETED);
+		} else {
+			if (ret > 0 && can_discard) {
+				/* Discard */
+				mail_update_flags(mail, MODIFY_ADD, MAIL_DELETED);
+			}
+
+			imap_sieve_mailbox_run_copy_source
+				(ismt, isrun_src, mevent, &src_mail);
 		}
 	}
 
 	/* Cleanup */
 	mail_free(&mail);
 	ret = mailbox_transaction_commit(&st);
+	if (src_mail != NULL)
+		mail_free(&src_mail);
 	imap_sieve_run_deinit(&isrun);
+	if (isrun_src != NULL)
+		imap_sieve_run_deinit(&isrun_src);
 	mailbox_free(&sbox);
 	return ret;
 }
@@ -866,17 +981,25 @@ imap_sieve_mailbox_rules_init(struct mail_user *user)
 		setval = mail_user_plugin_getenv(user, str_c(identifier));
 		mbrule->after = p_strdup_empty(user->pool, setval);
 
+		str_truncate(identifier, id_len);
+		str_append(identifier, "_copy_source_after");
+		setval = mail_user_plugin_getenv(user, str_c(identifier));
+		mbrule->copy_source_after = p_strdup_empty(user->pool, setval);
+
 		if (user->mail_debug) {
 			imap_sieve_debug(user, "Static mailbox rule [%u]: "
 				"mailbox=`%s' from=`%s' causes=(%s) => "
-				"before=%s after=%s",
+				"before=%s after=%s%s",
 				mbrule->index, mbrule->mailbox,
 				(mbrule->from == NULL ? "*" : mbrule->from),
 				t_strarray_join(mbrule->causes, " "),
 				(mbrule->before == NULL ? "(none)" :
 					t_strconcat("`", mbrule->before, "'", NULL)),
 				(mbrule->after == NULL ? "(none)" :
-					t_strconcat("`", mbrule->after, "'", NULL)));
+					t_strconcat("`", mbrule->after, "'", NULL)),
+				(mbrule->copy_source_after == NULL ? "":
+					t_strconcat(" copy_source_after=`",
+						mbrule->copy_source_after, "'", NULL)));
 		}
 
 		if ((strcmp(mbrule->mailbox, "*") == 0 ||

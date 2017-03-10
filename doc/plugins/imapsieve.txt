@@ -41,7 +41,11 @@ vnd.dovecot.mailbox-from
 
 vnd.dovecot.mailbox-to
   The mailbox where the message is being copied to (the destination mailbox).
-  This environment item is currently always equal to the "imap.mailbox" item.
+  If the Sieve script is not executed from an IMAP COPY or MOVE command, this
+  environment is always equal to the "imap.mailbox" environment item. Otherwise,
+  the "imap.mailbox" item points to the mailbox where the Sieve script is
+  executing for, which may actually be the source mailbox (see the
+  imapsieve_mailboxXXX_copy_source_after setting).
 
 Configuration
 =============
@@ -110,6 +114,13 @@ imapsieve_mailboxXXX_from =
   "imapsieve_mailboxXXX_name" when the message originates from the indicated
   mailbox. This setting supports wildcards with a syntax compatible with the
   IMAP LIST command
+
+imapsieve_mailboxXXX_copy_source_after =
+  When the cause is "COPY", run the specified Sieve script for the message in
+  the source mailbox after the Sieve script for the corresponding message in the
+  destination mailbox successfully finishes executing . This does not apply to
+  moved messages, since the message is removed from the source mailbox in that
+  case.
 
 Example
 -------
