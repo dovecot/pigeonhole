@@ -725,6 +725,7 @@ void sieve_multiscript_run_discard
 		(mscript->result, NULL, &act_store);
 
 	/* Run the discard script */
+	flags |= SIEVE_EXECUTE_FLAG_DEFER_KEEP;
 	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata,
 		mscript->scriptenv, exec_ehandler, flags);
 
