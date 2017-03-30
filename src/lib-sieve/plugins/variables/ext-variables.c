@@ -58,6 +58,8 @@ static bool ext_variables_validator_load
 
 const struct sieve_extension_def variables_extension = {
 	.name = "variables",
+	.load = ext_variables_load,
+	.unload = ext_variables_unload,
 	.validator_load = ext_variables_validator_load,
 	.generator_load = ext_variables_generator_load,
 	.interpreter_load = ext_variables_interpreter_load,

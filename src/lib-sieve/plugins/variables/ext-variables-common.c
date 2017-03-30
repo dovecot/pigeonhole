@@ -7,6 +7,7 @@
 #include "array.h"
 
 #include "sieve-common.h"
+#include "sieve-settings.h"
 
 #include "sieve-ast.h"
 #include "sieve-binary.h"
@@ -29,9 +30,81 @@
  * Limits
  */
 
-unsigned int sieve_variables_get_max_scope_size(void)
+unsigned int
+sieve_variables_get_max_scope_size(const struct sieve_extension *var_ext)
 {
-	return EXT_VARIABLES_MAX_SCOPE_SIZE;
+	const struct ext_variables_config *config =
+		ext_variables_get_config(var_ext);
+
+	return config->max_scope_size;
+}
+
+/*
+ * Extension configuration
+ */
+
+bool ext_variables_load
+(const struct sieve_extension *ext, void **context)
+{
+	struct sieve_instance *svinst = ext->svinst;
+	struct ext_variables_config *config;
+	unsigned long long int uint_setting;
+	size_t size_setting;
+
+	if ( *context != NULL )
+		ext_variables_unload(ext);
+
+	config = i_new(struct ext_variables_config, 1);
+
+	/* Get limits */
+	config->max_scope_size = EXT_VARIABLES_DEFAULT_MAX_SCOPE_SIZE;
+	config->max_variable_size = EXT_VARIABLES_DEFAULT_MAX_VARIABLE_SIZE;
+
+	if ( sieve_setting_get_uint_value(svinst,
+		"sieve_variables_max_scope_size", &uint_setting) ) {
+		if ( uint_setting < EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE ) {
+			sieve_sys_warning(svinst,
+				"variables: setting sieve_variables_max_scope_size "
+				"is lower than required by standards (>= %llu items)",
+				(unsigned long long)EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE);
+		} else {
+			config->max_scope_size = (unsigned int)uint_setting;
+		}
+	}
+
+	if ( sieve_setting_get_size_value(svinst,
+		"sieve_variables_max_variable_size", &size_setting) ) {
+		if ( size_setting < EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE ) {
+			sieve_sys_warning(svinst,
+				"variables: setting sieve_variables_max_variable_size "
+				"is lower than required by standards (>= %"PRIuSIZE_T" bytes)",
+				(size_t)EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE);
+		} else {
+			config->max_variable_size = size_setting;
+		}
+	}
+
+	*context = (void *)config;
+	return TRUE;
+}
+
+void ext_variables_unload
+(const struct sieve_extension *ext)
+{
+	struct ext_variables_config *config =
+		(struct ext_variables_config *) ext->context;
+
+	i_free(config);
+}
+
+const struct ext_variables_config *ext_variables_get_config
+(const struct sieve_extension *var_ext)
+{
+	const struct ext_variables_config *config =
+		(const struct ext_variables_config *)var_ext->context;
+	i_assert(var_ext->def == &variables_extension);
+
+	return config;
 }
 
 /*
@@ -43,6 +116,7 @@ struct sieve_variable_scope {
 	int refcount;
 
 	struct sieve_instance *svinst;
+	const struct sieve_extension *var_ext;
 	const struct sieve_extension *ext;
 
 	struct sieve_variable *error_var;
@@ -65,10 +139,14 @@ struct sieve_variable_scope_iter {
 };
 
 struct sieve_variable_scope *sieve_variable_scope_create
-(struct sieve_instance *svinst, const struct sieve_extension *ext)
+(struct sieve_instance *svinst,
+	const struct sieve_extension *var_ext,
+	const struct sieve_extension *ext)
 {
 	struct sieve_variable_scope *scope;
 	pool_t pool;
+
+	i_assert(var_ext->def == &variables_extension);
 
 	pool = pool_alloconly_create("sieve_variable_scope", 4096);
 	scope = p_new(pool, struct sieve_variable_scope, 1);
@@ -76,6 +154,7 @@ struct sieve_variable_scope *sieve_variable_scope_create
 	scope->refcount = 1;
 
 	scope->svinst = svinst;
+	scope->var_ext = var_ext;
 	scope->ext = ext;
 
 	hash_table_create(&scope->variables, pool, 0, strcase_hash, strcasecmp);
@@ -112,13 +191,15 @@ pool_t sieve_variable_scope_pool(struct sieve_variable_scope *scope)
 struct sieve_variable *sieve_variable_scope_declare
 (struct sieve_variable_scope *scope, const char *identifier)
 {
+	unsigned int max_scope_size;
 	struct sieve_variable *var;
 
 	var = hash_table_lookup(scope->variables, identifier);
 	if (var != NULL)
 		return var;
 
-	if ( array_count(&scope->variable_index) >= EXT_VARIABLES_MAX_SCOPE_SIZE ) {
+	max_scope_size = sieve_variables_get_max_scope_size(scope->var_ext);
+	if ( array_count(&scope->variable_index) >= max_scope_size ) {
 		if ( scope->error_var == NULL ) {
 			var = p_new(scope->pool, struct sieve_variable, 1);
 			var->identifier = "@ERROR@";
@@ -233,7 +314,9 @@ struct sieve_variable *sieve_variable_scope_get_indexed
 /* Scope binary */
 
 struct sieve_variable_scope *sieve_variable_scope_binary_dump
-(struct sieve_instance *svinst, const struct sieve_extension *ext,
+(struct sieve_instance *svinst,
+	const struct sieve_extension *var_ext,
+	const struct sieve_extension *ext,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	struct sieve_variable_scope *local_scope;
@@ -252,7 +335,7 @@ struct sieve_variable_scope *sieve_variable_scope_binary_dump
 		return NULL;
 
 	/* Create scope */
-	local_scope = sieve_variable_scope_create(svinst, ext);
+	local_scope = sieve_variable_scope_create(svinst, var_ext, ext);
 
 	/* Read and dump scope itself */
 
@@ -300,12 +383,14 @@ void sieve_variable_scope_binary_unref
 }
 
 struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
-(struct sieve_instance *svinst, const struct sieve_extension *ext,
+(struct sieve_instance *svinst,
+	const struct sieve_extension *var_ext,
+	const struct sieve_extension *ext,
 	struct sieve_binary_block *sblock, sieve_size_t *address)
 {
 	struct sieve_variable_scope *scope;
 	struct sieve_variable_scope_binary *scpbin;
-	unsigned int scope_size;
+	unsigned int scope_size, max_scope_size;
 	const char *ext_name =
 		( ext == NULL ? "variables" : sieve_extension_name(ext) );
 	sieve_size_t pc;
@@ -319,10 +404,11 @@ struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
 	}
 
 	/* Check size limit */
-	if ( scope_size > EXT_VARIABLES_MAX_SCOPE_SIZE ) {
+	max_scope_size = sieve_variables_get_max_scope_size(var_ext);
+	if ( scope_size > max_scope_size ) {
 		sieve_sys_error(svinst,
 			"%s: variable scope: size exceeds the limit (%u > %u)",
-			ext_name, scope_size, EXT_VARIABLES_MAX_SCOPE_SIZE );
+			ext_name, scope_size, max_scope_size );
 		return NULL;
 	}
 
@@ -335,7 +421,7 @@ struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
 	}
 
 	/* Create scope */
-	scope = sieve_variable_scope_create(svinst, ext);
+	scope = sieve_variable_scope_create(svinst, var_ext, ext);
 
 	scpbin = sieve_variable_scope_binary_create(scope);
 	scpbin->size = scope_size;
@@ -397,6 +483,7 @@ unsigned int sieve_variable_scope_binary_get_size
 
 struct sieve_variable_storage {
 	pool_t pool;
+	const struct sieve_extension *var_ext;
 	struct sieve_variable_scope *scope;
 	struct sieve_variable_scope_binary *scope_bin;
 	unsigned int max_size;
@@ -404,12 +491,14 @@ struct sieve_variable_storage {
 };
 
 struct sieve_variable_storage *sieve_variable_storage_create
-(pool_t pool, struct sieve_variable_scope_binary *scpbin)
+(const struct sieve_extension *var_ext, pool_t pool,
+	struct sieve_variable_scope_binary *scpbin)
 {
 	struct sieve_variable_storage *storage;
 
 	storage = p_new(pool, struct sieve_variable_storage, 1);
 	storage->pool = pool;
+	storage->var_ext = var_ext;
 	storage->scope_bin = scpbin;
 	storage->scope = NULL;
 
@@ -510,6 +599,8 @@ bool sieve_variable_assign
 (struct sieve_variable_storage *storage, unsigned int index,
 	const string_t *value)
 {
+	const struct ext_variables_config *config =
+		ext_variables_get_config(storage->var_ext);
 	string_t *varval;
 
 	if ( !sieve_variable_get_modifiable(storage, index, &varval) )
@@ -519,8 +610,8 @@ bool sieve_variable_assign
 	str_append_str(varval, value);
 
 	/* Just a precaution, caller should prevent this in the first place */
-	if ( str_len(varval) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
-		str_truncate(varval, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+	if ( str_len(varval) > config->max_variable_size )
+		str_truncate(varval, config->max_variable_size);
 
 	return TRUE;
 }
@@ -529,6 +620,8 @@ bool sieve_variable_assign_cstr
 (struct sieve_variable_storage *storage, unsigned int index,
 	const char *value)
 {
+	const struct ext_variables_config *config =
+		ext_variables_get_config(storage->var_ext);
 	string_t *varval;
 
 	if ( !sieve_variable_get_modifiable(storage, index, &varval) )
@@ -538,8 +631,8 @@ bool sieve_variable_assign_cstr
 	str_append(varval, value);
 
 	/* Just a precaution, caller should prevent this in the first place */
-	if ( str_len(varval) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
-		str_truncate(varval, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+	if ( str_len(varval) > config->max_variable_size )
+		str_truncate(varval, config->max_variable_size);
 
 	return TRUE;
 }
@@ -569,7 +662,8 @@ static struct sieve_variable_scope *ext_variables_create_local_scope
 {
 	struct sieve_variable_scope *scope;
 
-	scope = sieve_variable_scope_create(this_ext->svinst, NULL);
+	scope = sieve_variable_scope_create
+		(this_ext->svinst, this_ext, NULL);
 
 	sieve_ast_extension_register
 		(ast, this_ext, &variables_ast_extension, (void *) scope);
@@ -747,7 +841,8 @@ ext_variables_interpreter_context_create
 	ctx->pool = pool;
 	ctx->local_scope = NULL;
 	ctx->local_scope_bin = scpbin;
-	ctx->local_storage = sieve_variable_storage_create(pool, scpbin);
+	ctx->local_storage =
+		sieve_variable_storage_create(this_ext, pool, scpbin);
 	p_array_init(&ctx->ext_storages, pool,
 		sieve_extensions_get_count(this_ext->svinst));
 
@@ -764,7 +859,7 @@ bool ext_variables_interpreter_load
 	struct sieve_variable_scope_binary *scpbin;
 
 	scpbin = sieve_variable_scope_binary_read
-		(renv->svinst, NULL, renv->sblock, address);
+		(renv->svinst, ext, NULL, renv->sblock, address);
 	if ( scpbin == NULL )
 		return FALSE;
 

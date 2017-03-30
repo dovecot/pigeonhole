@@ -252,6 +252,9 @@ static int opr_match_value_read
 (const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
 	sieve_size_t *address, string_t **str_r)
 {
+	const struct sieve_extension *this_ext = oprnd->ext;
+	const struct ext_variables_config *config =
+		ext_variables_get_config(this_ext);
 	unsigned int index = 0;
 
 	if ( sieve_binary_read_unsigned(renv->sblock, address, &index) ) {
@@ -263,8 +266,8 @@ static int opr_match_value_read
 
 			if ( *str_r == NULL )
 				*str_r = t_str_new(0);
-			else if ( str_len(*str_r) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
-				str_truncate(*str_r, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+			else if ( str_len(*str_r) > config->max_variable_size )
+				str_truncate(*str_r, config->max_variable_size);
 		}
 
 		return SIEVE_EXEC_OK;

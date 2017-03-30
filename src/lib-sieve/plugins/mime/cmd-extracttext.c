@@ -163,7 +163,7 @@ static bool cmd_extracttext_validate(struct sieve_validator *valdtr,
 		return FALSE;
 	}
 	if ( !sieve_variable_argument_activate
-		(ectx->var_ext, valdtr, cmd, arg, TRUE) )
+		(ectx->var_ext, ectx->var_ext, valdtr, cmd, arg, TRUE) )
 		return FALSE;
 
 	/* Check foreverypart context */
@@ -256,6 +256,9 @@ static bool cmd_extracttext_operation_dump
 static int cmd_extracttext_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
+	struct ext_extracttext_context *ectx =
+		(struct ext_extracttext_context *)this_ext->context;
 	struct sieve_variable_storage *storage;
 	ARRAY_TYPE(sieve_variables_modifier) modifiers;
 	struct ext_foreverypart_runtime_loop *sfploop;
@@ -338,7 +341,7 @@ static int cmd_extracttext_operation_execute
 
 	/* Apply modifiers */
 	if ( (ret=sieve_variables_modifiers_apply
-		(renv, &modifiers, &value)) <= 0 )
+		(renv, ectx->var_ext, &modifiers, &value)) <= 0 )
 		return ret;
 
 	/* Actually assign the value if all is well */

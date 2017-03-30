@@ -111,7 +111,7 @@ static bool cmd_set_validate(struct sieve_validator *valdtr,
 		return FALSE;
 	}
 	if ( !sieve_variable_argument_activate
-		(this_ext, valdtr, cmd, arg, TRUE) ) {
+		(this_ext, this_ext, valdtr, cmd, arg, TRUE) ) {
 		return FALSE;
 	}
 	arg = sieve_ast_argument_next(arg);
@@ -175,6 +175,7 @@ static bool cmd_set_operation_dump
 static int cmd_set_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct sieve_variable_storage *storage;
 	ARRAY_TYPE(sieve_variables_modifier) modifiers;
 	unsigned int var_index;
@@ -205,7 +206,7 @@ static int cmd_set_operation_execute
 
 	/* Apply modifiers */
 	if ( (ret=sieve_variables_modifiers_apply
-		(renv, &modifiers, &value)) <= 0 )
+		(renv, this_ext, &modifiers, &value)) <= 0 )
 		return ret;
 
 	/* Actually assign the value if all is well */

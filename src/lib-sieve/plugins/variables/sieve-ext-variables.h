@@ -19,7 +19,8 @@
  * Limits
  */
 
-unsigned int sieve_variables_get_max_scope_size(void);
+unsigned int
+sieve_variables_get_max_scope_size(const struct sieve_extension *var_ext);
 
 /*
  * Variable extension
@@ -63,7 +64,8 @@ struct sieve_variable {
 struct sieve_variable_scope;
 
 struct sieve_variable_scope *sieve_variable_scope_create
-	(struct sieve_instance *svinst, const struct sieve_extension *ext);
+	(struct sieve_instance *svinst, const struct sieve_extension *var_ext,
+		const struct sieve_extension *ext);
 void sieve_variable_scope_ref
 	(struct sieve_variable_scope *scope);
 void sieve_variable_scope_unref
@@ -91,10 +93,14 @@ void sieve_variable_scope_binary_unref
 	(struct sieve_variable_scope_binary **scpbin);
 
 struct sieve_variable_scope *sieve_variable_scope_binary_dump
-	(struct sieve_instance *svinst, const struct sieve_extension *ext,
+	(struct sieve_instance *svinst,
+		const struct sieve_extension *var_ext,
+		const struct sieve_extension *ext,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
-	(struct sieve_instance *svinst, const struct sieve_extension *ext,
+	(struct sieve_instance *svinst,
+		const struct sieve_extension *var_ext,
+		const struct sieve_extension *ext,
 		struct sieve_binary_block *sblock, sieve_size_t *address);
 
 struct sieve_variable_scope *sieve_variable_scope_binary_get
@@ -184,7 +190,8 @@ struct sieve_variable * const *sieve_variable_scope_get_variables
 struct sieve_variable_storage;
 
 struct sieve_variable_storage *sieve_variable_storage_create
-	(pool_t pool, struct sieve_variable_scope_binary *scpbin);
+	(const struct sieve_extension *var_ext, pool_t pool,
+		struct sieve_variable_scope_binary *scpbin);
 bool sieve_variable_get
 	(struct sieve_variable_storage *storage, unsigned int index,
 		string_t **value);
@@ -240,8 +247,10 @@ const char *sieve_ext_variables_runtime_get_identifier
  */
 
 bool sieve_variable_argument_activate
-(const struct sieve_extension *this_ext, struct sieve_validator *valdtr,
-	struct sieve_command *cmd, struct sieve_ast_argument *arg, bool assignment);
+	(const struct sieve_extension *var_ext,
+		const struct sieve_extension *this_ext,
+		struct sieve_validator *valdtr, struct sieve_command *cmd,
+		struct sieve_ast_argument *arg, bool assignment);
 
 /*
  * Variable operands
@@ -337,6 +346,7 @@ int sieve_variables_modifiers_code_read
 
 int sieve_variables_modifiers_apply
 (const struct sieve_runtime_env *renv,
+	const struct sieve_extension *var_ext,
 	ARRAY_TYPE(sieve_variables_modifier) *modifiers,
 	string_t **value);
 

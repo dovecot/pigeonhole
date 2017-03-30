@@ -35,8 +35,10 @@ const struct sieve_argument_def variable_argument = {
 };
 
 static bool ext_variables_variable_argument_activate
-(const struct sieve_extension *this_ext, struct sieve_validator *valdtr,
-	struct sieve_ast_argument *arg, const char *variable)
+(const struct sieve_extension *var_ext,
+	const struct sieve_extension *this_ext,
+	struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
+	const char *variable)
 {
 	struct sieve_ast *ast = arg->ast;
 	struct sieve_variable *var;
@@ -47,7 +49,7 @@ static bool ext_variables_variable_argument_activate
 		sieve_argument_validate_error(valdtr, arg,
 			"(implicit) declaration of new variable '%s' exceeds the limit "
 			"(max variables: %u)", variable,
-			EXT_VARIABLES_MAX_SCOPE_SIZE);
+			sieve_variables_get_max_scope_size(var_ext));
 		return FALSE;
 	}
 
@@ -67,7 +69,7 @@ static struct sieve_ast_argument *ext_variables_variable_argument_create
 	new_arg->type = SAAT_STRING;
 
 	if ( !ext_variables_variable_argument_activate
-		(this_ext, valdtr, new_arg, variable) )
+		(this_ext, this_ext, valdtr, new_arg, variable) )
 		return NULL;
 
 	return new_arg;
@@ -329,8 +331,10 @@ static bool arg_variable_string_validate
  */
 
 static bool _sieve_variable_argument_activate
-(const struct sieve_extension *this_ext, struct sieve_validator *valdtr,
-	struct sieve_command *cmd, struct sieve_ast_argument *arg, bool assignment)
+(const struct sieve_extension *var_ext,
+	const struct sieve_extension *this_ext,
+	struct sieve_validator *valdtr, struct sieve_command *cmd,
+	struct sieve_ast_argument *arg, bool assignment)
 {
 	bool result = FALSE;
 	string_t *variable;
@@ -359,8 +363,8 @@ static bool _sieve_variable_argument_activate
 
 			if ( cur_element->num_variable < 0 ) {
 				/* Variable */
-				result = ext_variables_variable_argument_activate
-					(this_ext, valdtr, arg, str_c(cur_element->identifier));
+				result = ext_variables_variable_argument_activate(var_ext,
+					this_ext, valdtr, arg, str_c(cur_element->identifier));
 
 			} else {
 				/* Match value */
@@ -379,14 +383,15 @@ static bool _sieve_variable_argument_activate
 }
 
 bool sieve_variable_argument_activate
-(const struct sieve_extension *this_ext, struct sieve_validator *valdtr,
-	struct sieve_command *cmd, struct sieve_ast_argument *arg,
-	bool assignment)
+(const struct sieve_extension *var_ext,
+	const struct sieve_extension *this_ext,
+	struct sieve_validator *valdtr, struct sieve_command *cmd,
+	struct sieve_ast_argument *arg, bool assignment)
 {
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
-		return _sieve_variable_argument_activate
-			(this_ext, valdtr, cmd, arg, assignment);
+		return _sieve_variable_argument_activate(var_ext,
+			this_ext, valdtr, cmd, arg, assignment);
 
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
@@ -396,8 +401,8 @@ bool sieve_variable_argument_activate
 
 		stritem = sieve_ast_strlist_first(arg);
 		while ( stritem != NULL ) {
-			if ( !_sieve_variable_argument_activate
-				(this_ext, valdtr, cmd, stritem, assignment) )
+			if ( !_sieve_variable_argument_activate(var_ext,
+				this_ext, valdtr, cmd, stritem, assignment) )
 				return FALSE;
 
 			stritem = sieve_ast_strlist_next(stritem);

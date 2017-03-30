@@ -472,15 +472,18 @@ int sieve_variables_modifiers_code_read
 
 int sieve_variables_modifiers_apply
 (const struct sieve_runtime_env *renv,
+	const struct sieve_extension *var_ext,
 	ARRAY_TYPE(sieve_variables_modifier) *modifiers,
 	string_t **value)
 {	
+	const struct ext_variables_config *config =
+		ext_variables_get_config(var_ext);
 	const struct sieve_variables_modifier *modfs;
 	unsigned int i, modf_count;
 
 	/* Hold value within limits */
-	if ( str_len(*value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
-		str_truncate(*value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+	if ( str_len(*value) > config->max_variable_size )
+		str_truncate(*value, config->max_variable_size);
 	
 	if ( !array_is_created(modifiers) )
 		return SIEVE_EXEC_OK;
@@ -509,8 +512,8 @@ int sieve_variables_modifiers_apply
 					str_sanitize(str_c(new_value), 256));
 
 			/* Hold value within limits */
-			if ( str_len(*value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
-				str_truncate(*value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+			if ( str_len(*value) > config->max_variable_size )
+				str_truncate(*value, config->max_variable_size);
 		}
 	}
 	return SIEVE_EXEC_OK;

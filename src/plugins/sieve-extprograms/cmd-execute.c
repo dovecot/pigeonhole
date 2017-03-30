@@ -171,8 +171,8 @@ static bool cmd_execute_validate_output_tag
 	/* Detach the tag itself */
 	*arg = sieve_ast_arguments_detach(*arg, 1);
 	
-	if ( !sieve_variable_argument_activate
-		(ext_config->var_ext, valdtr, cmd, *arg, TRUE) )
+	if ( !sieve_variable_argument_activate(ext_config->var_ext,
+		ext_config->var_ext, valdtr, cmd, *arg, TRUE) )
 		return FALSE;
 
 	(*arg)->argument->id_code = tag->argument->id_code;

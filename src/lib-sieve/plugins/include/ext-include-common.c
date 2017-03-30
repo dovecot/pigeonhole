@@ -226,7 +226,10 @@ struct ext_include_ast_context *ext_include_create_ast_context
 
 		sieve_variable_scope_ref(actx->global_vars);
 	} else {
-		actx->global_vars = sieve_variable_scope_create(this_ext->svinst, this_ext);
+		struct ext_include_context *ectx =
+			ext_include_get_context(this_ext);
+		actx->global_vars = sieve_variable_scope_create
+			(this_ext->svinst, ectx->var_ext, this_ext);
 	}
 
 	sieve_ast_extension_register
@@ -344,7 +347,8 @@ static int ext_include_runtime_init
 		ctx->global->var_scope =
 			ext_include_binary_get_global_scope(this_ext, renv->sbin);
 		ctx->global->var_storage =
-			sieve_variable_storage_create(ctx->pool, ctx->global->var_scope);
+			sieve_variable_storage_create(ectx->var_ext,
+				ctx->pool, ctx->global->var_scope);
 	} else {
 		ctx->global = ctx->parent->global;
 	}

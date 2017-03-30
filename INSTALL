@@ -497,6 +497,15 @@ Sieve Interpreter - Extension Configuration
   configuration options. Refer to doc/extensions/vacation.txt for settings
   specific to the vacation extension.
 
+- Variables extension:
+
+  The Sieve variables extension [RFC5229] adds the concept of variables to the
+  Sieve language.
+
+  The variables extension is available by default, but it has its own specific
+  configuration options. Refer to doc/extensions/variables.txt for settings
+  specific to the variables extension.
+
 - Include extension:
 
   The Sieve include extension (draft) permits users to include one Sieve script
