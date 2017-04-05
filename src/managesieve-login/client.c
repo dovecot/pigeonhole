@@ -390,6 +390,8 @@ static void managesieve_client_notify_auth_ready(struct client *client)
 	client_send_ok(client, client->set->login_greeting);
 
 	o_stream_uncork(client->output);
+
+	client->banner_sent = TRUE;
 }
 
 static void managesieve_client_starttls(struct client *client)
