@@ -581,8 +581,7 @@ static int imap_sieve_run_scripts
 		struct sieve_binary *sbin = scripts[i].binary;
 
 		cpflags = 0;
-		exflags = SIEVE_EXECUTE_FLAG_DEFER_KEEP |
-			SIEVE_EXECUTE_FLAG_NO_ENVELOPE;
+		exflags = SIEVE_EXECUTE_FLAG_NO_ENVELOPE;
 
 		user_script = ( script == isrun->user_script );
 		last_script = script;
@@ -661,8 +660,7 @@ static int imap_sieve_run_scripts
 	}
 
 	/* Finish execution */
-	exflags = SIEVE_EXECUTE_FLAG_DEFER_KEEP |
-		SIEVE_EXECUTE_FLAG_NO_ENVELOPE;
+	exflags = SIEVE_EXECUTE_FLAG_NO_ENVELOPE;
 	ehandler = (isrun->user_ehandler != NULL ?
 		isrun->user_ehandler : isieve->master_ehandler);
 	if ( compile_error == SIEVE_ERROR_TEMP_FAILURE ) {
