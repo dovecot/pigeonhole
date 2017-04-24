@@ -25,8 +25,8 @@ static void imap_sieve_client_created(struct client **clientp)
 		url = mail_user_plugin_getenv(user, "imapsieve_url");
 		// FIXME: parse the URL and report error if it is bad
 		if (url != NULL && strncasecmp(url, "sieve:", 6) == 0) {
-			str_append(client->capability_string, " IMAPSIEVE=");
-			str_append(client->capability_string, url);
+			client_add_capability(client, t_strconcat(
+				"IMAPSIEVE=", url, NULL));
 		} else {
 			url = NULL;
 		}
