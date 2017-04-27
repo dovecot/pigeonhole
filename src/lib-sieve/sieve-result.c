@@ -969,7 +969,14 @@ static int _sieve_result_implicit_keep
 
 			rac = rac->next;
 		}
+	} else if ( !rollback ) {
+		act_keep.location = kac->action.location;
+		act_keep.mail = kac->action.mail;
+		if ( kac->seffects != NULL )
+			rsef_first = kac->seffects->first_effect;
+	}
 
+	if (rsef_first == NULL) {
 		/* Apply any implicit side effects if applicable */
 		if ( !rollback && hash_table_is_created(result->action_contexts) ) {
 			struct sieve_result_action_context *actctx;
@@ -980,11 +987,6 @@ static int _sieve_result_implicit_keep
 			if ( actctx != NULL && actctx->seffects != NULL )
 				rsef_first = actctx->seffects->first_effect;
 		}
-	} else if ( !rollback ) {
-		act_keep.location = kac->action.location;
-		act_keep.mail = kac->action.mail;
-		if ( kac->seffects != NULL )
-			rsef_first = kac->seffects->first_effect;
 	}
 
 	/* Start keep action */
