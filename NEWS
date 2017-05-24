@@ -1,3 +1,15 @@
+v0.4.18 12-04-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	+ imapsieve plugin: Implemented the copy_source_after rule action. When this
+	  is enabled for a mailbox rule, the specified Sieve script is executed for
+	  the message in the source mailbox during a "COPY" event. This happens only
+	  after the Sieve script that is executed for the corresponding message in the
+	  destination mailbox finishes running successfully.
+	+ imapsieve plugin: Added non-standard Sieve environment items for the source
+	  and destination mailbox.
+	- multiscript: The execution of the discard script had an implicit "keep",
+	  rather than an implicit "discard".
+
 v0.4.17 26-02-2017 Stephan Bosch <stephan@rename-it.nl>
 
 	- LDA Sieve plugin: Fixed handling of an early explicit keep during
