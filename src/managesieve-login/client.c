@@ -206,11 +206,6 @@ static struct managesieve_command commands[] = {
 
 static bool client_handle_input(struct managesieve_client *client)
 {
-	const struct managesieve_arg *args = NULL;
-	const char *msg;
-	int ret = 1;
-	bool fatal;
-
 	i_assert(!client->common.authenticating);
 
 	if (client->cmd_finished) {
@@ -251,6 +246,17 @@ static bool client_handle_input(struct managesieve_client *client)
 		else
 			client->skip_line = TRUE;
 	}
+	return client->common.v.input_next_cmd(&client->common);
+}
+
+static bool managesieve_client_input_next_cmd(struct client *_client)
+{
+	struct managesieve_client *client =
+		(struct managesieve_client *)_client;
+	const struct managesieve_arg *args = NULL;
+	const char *msg;
+	int ret = 1;
+	bool fatal;
 
 	if ( client->cmd != NULL && !client->cmd_parsed_args ) {
 		unsigned int arg_count =
@@ -515,6 +521,7 @@ static struct client_vfuncs managesieve_client_vfuncs = {
 	managesieve_proxy_error,
 	managesieve_proxy_get_state,
 	client_common_send_raw_data,
+	managesieve_client_input_next_cmd,
 };
 
 static const struct login_binary managesieve_login_binary = {
