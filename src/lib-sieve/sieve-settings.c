@@ -208,6 +208,7 @@ void sieve_settings_load
 	const char *str_setting;
 	unsigned long long int uint_setting;
 	size_t size_setting;
+	sieve_number_t period;
 
 	svinst->max_script_size = SIEVE_DEFAULT_MAX_SCRIPT_SIZE;
 	if ( sieve_setting_get_size_value
@@ -230,6 +231,15 @@ void sieve_settings_load
 	(void)sieve_address_source_parse_from_setting(svinst,
 		svinst->pool, "sieve_redirect_envelope_from",
 		&svinst->redirect_from);
+
+	svinst->redirect_duplicate_period = DEFAULT_REDIRECT_DUPLICATE_PERIOD;
+	if ( sieve_setting_get_duration_value
+		(svinst, "sieve_redirect_duplicate_period", &period) ) {
+		if (period > UINT_MAX)
+			svinst->redirect_duplicate_period = UINT_MAX;
+		else
+			svinst->redirect_duplicate_period = (unsigned int)period;
+	}
 
 	str_setting = sieve_setting_get(svinst, "sieve_user_email");
 	if ( str_setting != NULL && *str_setting != '\0' ) {

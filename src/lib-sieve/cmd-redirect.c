@@ -30,12 +30,6 @@
 #include <stdio.h>
 
 /*
- * Configuration
- */
-
-#define CMD_REDIRECT_DUPLICATE_KEEP (3600 * 24)
-
-/*
  * Redirect command
  *
  * Syntax
@@ -425,6 +419,7 @@ static int act_redirect_commit
 	const struct sieve_action_exec_env *aenv, void *tr_context ATTR_UNUSED,
 	bool *keep)
 {
+	struct sieve_instance *svinst = aenv->svinst;
 	struct act_redirect_context *ctx =
 		(struct act_redirect_context *) action->context;
 	struct sieve_message_context *msgctx = aenv->msgctx;
@@ -504,7 +499,7 @@ static int act_redirect_commit
 
 		/* Mark this message id as forwarded to the specified destination */
 		sieve_action_duplicate_mark(senv, dupeid, strlen(dupeid),
-			ioloop_time + CMD_REDIRECT_DUPLICATE_KEEP);
+			ioloop_time + svinst->redirect_duplicate_period);
 
 		sieve_result_global_log(aenv, "forwarded to <%s>",
 			str_sanitize(ctx->to_address, 128));

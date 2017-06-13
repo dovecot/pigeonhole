@@ -271,6 +271,16 @@ plugin section of the config file (default values are shown if applicable):
    the envelope sender of the redirected message is also always "<>",
    irrespective of what is configured for this setting. 
 
+ sieve_redirect_duplicate_period = 12h
+   In an effort to halt potential mail loops, the Sieve redirect action records
+   identifying information for messages it has forwarded. If a duplicate message
+   is seen, it is not redirected and the message is discarded; i.e., the
+   implicit keep is canceled. This setting configures the period during which
+   the identifying information is recorded. If an account forwards many
+   messages, it may be necessary to lower this setting to prevent the
+   ~/.dovecot.lda-dupes database file (in which these are recorded) from growing
+   to an impractical size.
+
 For example:
 
 plugin {

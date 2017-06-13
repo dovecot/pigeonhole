@@ -203,6 +203,7 @@ struct sieve_instance {
 	unsigned int max_redirects;
 	const struct sieve_address *user_email;
 	struct sieve_address_source redirect_from;
+	unsigned int redirect_duplicate_period;
 };
 
 /*
