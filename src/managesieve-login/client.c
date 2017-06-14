@@ -283,6 +283,7 @@ static bool managesieve_client_input_next_cmd(struct client *_client)
 			/* not enough data */
 			return FALSE;
 		}
+		i_assert(args != NULL);
 
 		if (arg_count == 0 ) {
 			/* we read the entire line - skip over the CRLF */
