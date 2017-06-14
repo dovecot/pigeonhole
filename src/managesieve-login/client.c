@@ -258,7 +258,10 @@ static bool managesieve_client_input_next_cmd(struct client *_client)
 	int ret = 1;
 	bool fatal;
 
-	if ( client->cmd != NULL && !client->cmd_parsed_args ) {
+	if (client->cmd == NULL) {
+		/* unknown command */
+		ret = -1;
+	} else if ( !client->cmd_parsed_args ) {
 		unsigned int arg_count =
 			( client->cmd->preparsed_args > 0 ? client->cmd->preparsed_args : 0 );
 		switch (managesieve_parser_read_args(client->parser, arg_count, 0, &args)) {
@@ -297,18 +300,12 @@ static bool managesieve_client_input_next_cmd(struct client *_client)
 			if ( args[0].type != MANAGESIEVE_ARG_EOL )
 				ret = -1;
 		}
-	}
-
-	if (client->cmd == NULL) {
-		ret = -1;
-		client->cmd_finished = TRUE;
-	} else {
 		if (ret > 0)
 			ret = client->cmd->func(client, args);
-		if (ret != 0)
-			client->cmd_finished = TRUE;
 	}
 
+	if (ret != 0)
+		client->cmd_finished = TRUE;
 	if (ret < 0) {
 		if (++client->common.bad_counter >= CLIENT_MAX_BAD_COMMANDS) {
 			client_send_bye(&client->common,
