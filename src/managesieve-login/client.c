@@ -520,6 +520,7 @@ static struct client_vfuncs managesieve_client_vfuncs = {
 	managesieve_proxy_get_state,
 	client_common_send_raw_data,
 	managesieve_client_input_next_cmd,
+	client_common_default_free,
 };
 
 static const struct login_binary managesieve_login_binary = {
