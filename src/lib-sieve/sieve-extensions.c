@@ -331,6 +331,7 @@ static void _sieve_extension_unload(struct sieve_extension *ext)
 	/* Call unload handler */
 	if ( ext->def != NULL && ext->def->unload != NULL )
 		ext->def->unload(ext);
+	ext->context = NULL;
 }
 
 static void sieve_extension_registry_init(struct sieve_instance *svinst)
