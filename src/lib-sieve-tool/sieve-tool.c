@@ -551,6 +551,7 @@ struct sieve_binary *sieve_tool_script_open
 
 	ehandler = sieve_stderr_ehandler_create(svinst, 0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
+	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
 	if ( (sbin = sieve_open
 		(svinst, filename, NULL, ehandler, 0, NULL)) == NULL ) {
