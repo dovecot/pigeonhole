@@ -160,7 +160,8 @@ struct sieve_storage *ext_include_get_script_storage
 			sieve_sys_info(svinst, "include: sieve_global is unconfigured; "
 				"include of `:global' script `%s' is therefore not possible",
 				str_sanitize(script_name, 80));
-			*error_r = SIEVE_ERROR_NOT_FOUND;
+			if ( error_r != NULL )
+				*error_r = SIEVE_ERROR_NOT_FOUND;
 			return NULL;
 		}
 		if ( ctx->global_storage == NULL ) {

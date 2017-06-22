@@ -316,7 +316,7 @@ static bool ext_include_binary_open
 
 		/* Can we find the script dependency ? */
 		storage = ext_include_get_script_storage
-			(ext, location, str_c(script_name), NULL);
+			(ext, location, str_c(script_name), &error);
 		if ( storage == NULL ) {
 			/* No, recompile */
 			// FIXME: handle ':optional' in this case
