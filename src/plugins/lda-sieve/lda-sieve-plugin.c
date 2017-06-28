@@ -748,6 +748,17 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	return ret;
 }
 
+static void
+lda_sieve_free_scripts(struct lda_sieve_run_context *srctx)
+{
+	unsigned int i;
+
+	for ( i = 0; i < srctx->script_count; i++ )
+		sieve_script_unref(&srctx->scripts[i]);
+	if ( srctx->discard_script != NULL )
+		sieve_script_unref(&srctx->discard_script);
+}
+
 static int lda_sieve_execute
 (struct lda_sieve_run_context *srctx, struct mail_storage **storage_r)
 {
@@ -858,7 +869,6 @@ static int lda_sieve_deliver_mail
 	struct lda_sieve_run_context srctx;
 	bool debug = mdctx->dest_user->mail_debug;
 	struct sieve_environment svenv;
-	unsigned int i;
 	int ret = 0;
 
 	/* Initialize run context */
@@ -899,12 +909,10 @@ static int lda_sieve_deliver_mail
 			ret = -1;
 		else if ( srctx.scripts == NULL )
 			ret = 0;
-		else {
+		else
 			ret = lda_sieve_execute(&srctx, storage_r);
-	
-			for ( i = 0; i < srctx.script_count; i++ )
-				sieve_script_unref(&srctx.scripts[i]);
-		}
+
+		lda_sieve_free_scripts(&srctx);
 	} T_END;
 
 	/* Clean up */
