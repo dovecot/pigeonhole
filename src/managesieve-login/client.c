@@ -301,8 +301,10 @@ static bool managesieve_client_input_next_cmd(struct client *_client)
 			if ( args[0].type != MANAGESIEVE_ARG_EOL )
 				ret = -1;
 		}
-		if (ret > 0)
-			ret = client->cmd->func(client, args);
+	}
+	if (ret > 0) {
+		i_assert(client->cmd != NULL);
+		ret = client->cmd->func(client, args);
 	}
 
 	if (ret != 0)
