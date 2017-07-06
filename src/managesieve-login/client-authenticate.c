@@ -299,8 +299,8 @@ int cmd_authenticate
 	msieve_client->skip_line = FALSE;
 	if ( (ret=managesieve_client_auth_read_response(msieve_client, TRUE, &error))
 		< 0 ) {
+		msieve_client->auth_mech_name_parsed = FALSE;
 		if ( error != NULL ) {
-			msieve_client->auth_mech_name_parsed = FALSE;
 			client_send_no(client, error);
 		}
 		return 1;
