@@ -581,6 +581,10 @@ int main(int argc, char **argv)
 	if ( move_box != NULL )
 		mailbox_free(&move_box);
 
+	/* Close the script binary */
+	if ( main_sbin != NULL )
+		sieve_close(&main_sbin);
+
 	/* Cleanup error handler */
 	sieve_error_handler_unref(&ehandler);
 
