@@ -536,7 +536,7 @@ struct sieve_binary *sieve_tool_script_compile
 
 	if ( (sbin = sieve_compile
 		(svinst, filename, name, ehandler, 0, NULL)) == NULL )
-		i_error("failed to compile sieve script '%s'", filename);
+		i_fatal("failed to compile sieve script '%s'", filename);
 
 	sieve_error_handler_unref(&ehandler);
 
