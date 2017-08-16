@@ -5,6 +5,89 @@ require "envelope";
 require "body";
 
 /*
+ * Subject
+ */
+
+test_set "message" text:
+From: stephan@example.org
+Subject: No subject of discussion
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_result_reset;
+test "Subject" {
+	vacation "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not header :is "subject" "Auto: No subject of discussion" {
+		test_fail "Subject header is incorrect";
+	}
+}
+
+/*
+ * Subject - explicit
+ */
+
+test_set "message" text:
+From: stephan@example.org
+Subject: No subject of discussion
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_result_reset;
+test "Subject - explicit" {
+	vacation :subject "Tulips" "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not header :is "subject" "Tulips" {
+		test_fail "Subject header is incorrect";
+	}
+}
+
+/*
+ * No subject
+ */
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_result_reset;
+test "No subject" {
+	vacation "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not exists "subject" {
+		test_fail "Subject header is missing";
+	}
+}
+
+/*
  * References
  */
 
@@ -20,6 +103,7 @@ Frop
 .
 ;
 
+test_result_reset;
 test "References" {
 	vacation "I am not in today!";
 
