@@ -1,3 +1,15 @@
+v0.4.19 26-06-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	* This release adjusts Pigeonhole to several changes in the Dovecot API,
+	  making it depend on Dovecot v2.2.31. Previous versions of Pigeonhole will
+	  produce compile warnings with the recent Dovecot releases (but still work
+	  ok).
+	- Fixed bug in handling of implicit keep in some cases. Implicit side-effects,
+	  such as assigned flags, were not always applied correctly. This is in
+	  essence a very old bug, but it was exposed by recent changes.
+	- include extension: Fixed segfault that (sometimes) occurred when the global
+	  script location was left unconfigured.
+
 v0.4.18 12-04-2017 Stephan Bosch <stephan@rename-it.nl>
 
 	+ imapsieve plugin: Implemented the copy_source_after rule action. When this
