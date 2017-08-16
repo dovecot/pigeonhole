@@ -897,8 +897,7 @@ static int act_vacation_send
 	struct sieve_smtp_context *sctx;
 	struct ostream *output;
 	string_t *msg;
- 	const char *const *headers;
-	const char *outmsgid, *subject, *error;
+ 	const char *header, *outmsgid, *subject, *error;
 	int ret;
 
 	/* Check smpt functions just to be sure */
@@ -912,14 +911,14 @@ static int act_vacation_send
 	/* Make sure we have a subject for our reply */
 
 	if ( ctx->subject == NULL || *(ctx->subject) == '\0' ) {
-		if ( (ret=mail_get_headers_utf8
-			(msgdata->mail, "subject", &headers)) < 0 ) {
+		if ( (ret=mail_get_first_header_utf8
+			(msgdata->mail, "subject", &header)) < 0 ) {
 			return sieve_result_mail_error(aenv, msgdata->mail,
 				"vacation action: "
 				"failed to read header field `subject'");
 		}
-		if ( ret > 0 && headers[0] != NULL ) {
-			subject = t_strconcat("Auto: ", headers[0], NULL);
+		if ( ret > 0 && header != NULL ) {
+			subject = t_strconcat("Auto: ", header, NULL);
 		}	else {
 			subject = "Automated reply";
 		}
@@ -961,8 +960,8 @@ static int act_vacation_send
 
 	/* Compose proper in-reply-to and references headers */
 
-	if ( (ret=mail_get_headers
-		(msgdata->mail, "references", &headers)) < 0 ) {
+	if ( (ret=mail_get_first_header
+		(msgdata->mail, "references", &header)) < 0 ) {
 		return sieve_result_mail_error(aenv, msgdata->mail,
 			"vacation action: "
 			"failed to read header field `references'");
@@ -971,14 +970,14 @@ static int act_vacation_send
 	if ( msgdata->id != NULL ) {
 		rfc2822_header_write(msg, "In-Reply-To", msgdata->id);
 
-		if ( ret > 0 && headers[0] != NULL ) {
+		if ( ret > 0 && header != NULL ) {
 			rfc2822_header_write(msg, "References",
-				t_strconcat(headers[0], " ", msgdata->id, NULL));
+				t_strconcat(header, " ", msgdata->id, NULL));
 		} else {
 			rfc2822_header_write(msg, "References", msgdata->id);
 		}
-	} else if ( ret > 0 && headers[0] != NULL ) {
-		rfc2822_header_write(msg, "References", headers[0]);
+	} else if ( ret > 0 && header != NULL ) {
+		rfc2822_header_write(msg, "References", header);
 	}
 
 	rfc2822_header_write(msg, "Auto-Submitted", "auto-replied (vacation)");
