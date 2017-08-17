@@ -88,6 +88,108 @@ test "No subject" {
 }
 
 /*
+ * Reply to
+ */
+
+test_set "message" text:
+From: "Stephan Bosch" <stephan@example.org>
+Subject: Reply to me
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_result_reset;
+test "Reply to" {
+	vacation "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not address :is "to" "stephan@example.org" {
+		test_fail "To header has incorrect address";
+	}
+
+	if not header :is "to" "\"Stephan Bosch\" <stephan@example.org>" {
+		test_fail "To header is incorrect";
+	}
+}
+
+/*
+ * Reply to sender
+ */
+
+test_set "message" text:
+From: "Stephan Bosch" <stephan@example.org>
+Sender: "Hendrik-Jan Tuinman" <h.j.tuinman@example.org>
+Subject: Reply to me
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_set "envelope.from" "h.j.tuinman@example.org";
+
+test_result_reset;
+test "Reply to sender" {
+	vacation "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not address :is "to" "h.j.tuinman@example.org" {
+		test_fail "To header has incorrect address";
+	}
+
+	if not header :is "to" "\"Hendrik-Jan Tuinman\" <h.j.tuinman@example.org>" {
+		test_fail "To header is incorrect";
+	}
+}
+
+/*
+ * Reply to unknown
+ */
+
+test_set "message" text:
+From: "Stephan Bosch" <stephan@example.org>
+Sender: "Hendrik-Jan Tuinman" <h.j.tuinman@example.org>
+Subject: Reply to me
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_set "envelope.from" "arie.aardappel@example.org";
+
+test_result_reset;
+test "Reply to unknown" {
+	vacation "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not address :is "to" "arie.aardappel@example.org" {
+		test_fail "To header has incorrect address";
+	}
+
+	if not header :is "to" "<arie.aardappel@example.org>" {
+		test_fail "To header is incorrect";
+	}
+}
+
+/*
  * References
  */
 
