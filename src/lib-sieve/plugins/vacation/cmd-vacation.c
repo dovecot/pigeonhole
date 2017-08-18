@@ -944,7 +944,7 @@ static int _get_full_reply_recipient
 						string_t *str = t_str_new(256);
 						message_address_write(str, &this_addr);
 						*reply_to_r = str_c(str);
-						return TRUE;
+						return SIEVE_EXEC_OK;
 					}
 				}
 
