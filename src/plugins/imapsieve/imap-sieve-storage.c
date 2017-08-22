@@ -219,7 +219,8 @@ static int imap_sieve_mailbox_get_script_real
 		imap_sieve_mailbox_error(t->box,
 			"Failed to read /shared/"
 			MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
-			"mailbox attribute"); // FIXME: details?
+			"mailbox attribute: %s",
+			mailbox_get_last_error(box, NULL));
 		return -1;
 	}
 
@@ -253,22 +254,24 @@ static int imap_sieve_mailbox_get_script_real
 				MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT, &value);
 			mailbox_transaction_rollback(&ibt);
 		}
-		mailbox_free(&inbox);
 
 		if (ret <= 0) {
 			if (ret < 0) {
 				imap_sieve_mailbox_error(t->box,
 					"Failed to read /shared/"
 					MAIL_SERVER_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
-					"server attribute"); // FIXME: details?
+					"server attribute: %s",
+					mailbox_get_last_error(inbox, NULL));
 			} else if (ret == 0) {
 				imap_sieve_mailbox_debug(t->box,
 					"Server attribute /shared/"
 					MAIL_SERVER_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
 					"not found");
 			}
+			mailbox_free(&inbox);
 			return ret;
 		}
+		mailbox_free(&inbox);
 
 		imap_sieve_mailbox_debug(t->box,
 			"Server attribute /shared/"
