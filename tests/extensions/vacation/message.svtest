@@ -190,6 +190,44 @@ test "Reply to unknown" {
 }
 
 /*
+ * Reply to (ignored envelope)
+ */
+
+test_set "message" text:
+From: "Stephan Bosch" <stephan@example.org>
+Sender: "Hendrik-Jan Tuinman" <h.j.tuinman@example.org>
+Subject: Reply to me
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_set "envelope.from" "srs0=hmc8=v7=example.com=arie@example.org";
+
+test_config_set "sieve_vacation_to_header_ignore_envelope" "yes";
+test_config_reload :extension "vacation";
+
+test_result_reset;
+test "Reply to (ignored envelope)" {
+	vacation "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not address :is "to" "h.j.tuinman@example.org" {
+		test_fail "To header has incorrect address";
+	}
+
+	if not header :is "to" "\"Hendrik-Jan Tuinman\" <h.j.tuinman@example.org>" {
+		test_fail "To header is incorrect";
+	}
+}
+
+/*
  * References
  */
 

@@ -21,6 +21,7 @@ struct ext_vacation_config {
 	bool use_original_recipient;
 	bool dont_check_recipient;
 	bool send_from_recipient;
+	bool to_header_ignore_envelope;
 };
 
 /*
