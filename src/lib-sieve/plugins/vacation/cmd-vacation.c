@@ -817,9 +817,9 @@ static const char * const _my_address_headers[] = {
  */
 
 static const char * const _sender_headers[] = {
-	"from",
 	"sender",
 	"resent-from",
+	"from",
 	NULL
 };
 
@@ -899,6 +899,7 @@ static bool _contains_8bit(const char *text)
 
 static int _get_full_reply_recipient
 (const struct sieve_action_exec_env *aenv,
+	const struct ext_vacation_config *config,
 	const char *smtp_to, const char **reply_to_r)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
@@ -926,16 +927,21 @@ static int _get_full_reply_recipient
 				if ( addr->domain != NULL && !addr->invalid_syntax ) {
 					struct sieve_address svaddr;
 					const char *hdr_address;
+					bool matched = config->to_header_ignore_envelope;
 
-					i_assert(addr->mailbox != NULL);
+					if (!matched) {
+						i_assert(addr->mailbox != NULL);
 
-					i_zero(&svaddr);
-					svaddr.local_part = addr->mailbox;
-					svaddr.domain = addr->domain;
+						i_zero(&svaddr);
+						svaddr.local_part = addr->mailbox;
+						svaddr.domain = addr->domain;
 
-					hdr_address = sieve_address_to_string(&svaddr);
-					if ( sieve_address_compare
-						(hdr_address, smtp_to, TRUE) == 0 ) {
+						hdr_address = sieve_address_to_string(&svaddr);
+						matched = ( sieve_address_compare
+							(hdr_address, smtp_to, TRUE) == 0 );
+					}
+
+					if (matched) {
 						struct message_address this_addr;
 
 						this_addr = *addr;
@@ -959,8 +965,11 @@ static int _get_full_reply_recipient
 }
 
 static int act_vacation_send
-(const struct sieve_action_exec_env *aenv, struct act_vacation_context *ctx,
-	const char *smtp_to, const char *smtp_from, const char *reply_from)
+(const struct sieve_action_exec_env *aenv,
+	const struct ext_vacation_config *config,
+	struct act_vacation_context *ctx,
+	const char *smtp_to, const char *smtp_from,
+	const char *reply_from)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
@@ -1001,7 +1010,7 @@ static int act_vacation_send
 	/* Obtain full To address for reply */
 
 	reply_to = smtp_to;
-	if ((ret=_get_full_reply_recipient(aenv,
+	if ((ret=_get_full_reply_recipient(aenv, config,
 		smtp_to, &reply_to)) <= 0)
 		return ret;
 
@@ -1381,7 +1390,7 @@ static int act_vacation_commit
 	/* Send the message */
 
 	T_BEGIN {
-		ret = act_vacation_send(aenv, ctx, sender,
+		ret = act_vacation_send(aenv, config, ctx, sender,
 			(config->send_from_recipient ? smtp_from : NULL),
 			reply_from);
 	} T_END;

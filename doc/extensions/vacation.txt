@@ -81,6 +81,18 @@ sieve_vacation_send_from_recipient = no
   situations for which a valid sender address is required and this setting can
   be used to accommodate for those.
 
+sieve_vacation_to_header_ignore_envelope = no
+  With this setting disabled (the default), the "To:" header in the composed
+  vacation reply is determined by finding the envelope sender address in the
+  first "Sender:", "Resent-From:", or "From:" headers (in that order). The
+  matching address is used in the "To:" header of the reply, which then includes
+  the "phrase" part of the address; i.e., usually the name of the person
+  associated with that address. If no match is found, the bare envelope sender
+  address is used instead. In contrast, with this setting enabled, the envelope
+  is completely ignored for this purpose and the first address found from the
+  mentioned headers is always used. This is useful when the envelope sender is
+  mangled somehow; e.g. by the Sender Rewriting Scheme (SRS).
+
 Invalid values for the settings above will make the Sieve interpreter log a
 warning and revert to the default values.
 
