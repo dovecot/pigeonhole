@@ -16,7 +16,8 @@ bool ext_vacation_load
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_vacation_config *config;
 	sieve_number_t min_period, max_period, default_period;
-	bool use_original_recipient, dont_check_recipient, send_from_recipient;
+	bool use_original_recipient, dont_check_recipient, send_from_recipient,
+		to_header_ignore_envelope;
 
 	if ( *context != NULL ) {
 		ext_vacation_unload(ext);
@@ -65,6 +66,12 @@ bool ext_vacation_load
 		send_from_recipient = FALSE;
 	}
 
+	if ( !sieve_setting_get_bool_value(svinst,
+		"sieve_vacation_to_header_ignore_envelope",
+		&to_header_ignore_envelope) ) {
+		to_header_ignore_envelope = FALSE;
+	}
+
 	config = i_new(struct ext_vacation_config, 1);
 	config->min_period = min_period;
 	config->max_period = max_period;
@@ -72,6 +79,7 @@ bool ext_vacation_load
 	config->use_original_recipient = use_original_recipient;
 	config->dont_check_recipient = dont_check_recipient;
 	config->send_from_recipient = send_from_recipient;
+	config->to_header_ignore_envelope = to_header_ignore_envelope;
 
 	*context = (void *) config;
 
