@@ -12,7 +12,6 @@
 #include "mail-namespace.h"
 #include "mail-storage.h"
 #include "mail-search-build.h"
-#include "imap-utf7.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
@@ -346,16 +345,6 @@ static int filter_mailbox
 	return ret;
 }
 
-static const char *mailbox_name_to_mutf7(const char *mailbox_utf8)
-{
-	string_t *str = t_str_new(128);
-
-	if (imap_utf8_to_utf7(mailbox_utf8, str) < 0)
-		return mailbox_utf8;
-	else
-		return str_c(str);
-}
-
 /*
  * Tool implementation
  */
@@ -518,7 +507,6 @@ int main(int argc, char **argv)
 
 	/* Open the source mailbox */
 
-	src_mailbox = mailbox_name_to_mutf7(src_mailbox);
 	ns = mail_namespace_find(mail_user->namespaces, src_mailbox);
 	if ( ns == NULL )
 		i_fatal("Unknown namespace for source mailbox '%s'", src_mailbox);
@@ -536,7 +524,6 @@ int main(int argc, char **argv)
 
 	if ( execute && discard_action == SIEVE_FILTER_DACT_MOVE &&
 		move_mailbox != NULL ) {
-		move_mailbox = mailbox_name_to_mutf7(move_mailbox);
 		ns = mail_namespace_find(mail_user->namespaces, move_mailbox);
 		if ( ns == NULL )
 			i_fatal("Unknown namespace for mailbox '%s'", move_mailbox);
