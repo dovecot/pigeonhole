@@ -12,14 +12,6 @@
 #include "sieve-ext-imap4flags.h"
 
 /*
- * Extension
- */
-
-extern const struct sieve_extension_def imap4flags_extension;
-extern const struct sieve_interpreter_extension
-	imap4flags_interpreter_extension;
-
-/*
  * Side effect
  */
 
