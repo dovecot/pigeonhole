@@ -13,6 +13,8 @@ struct sieve_variable_storage;
 /* FIXME: this is not suitable for future plugin support */
 
 extern const struct sieve_extension_def imap4flags_extension;
+extern const struct sieve_interpreter_extension
+	imap4flags_interpreter_extension;
 
 static inline const struct sieve_extension *
 sieve_ext_imap4flags_require_extension
@@ -21,6 +23,10 @@ sieve_ext_imap4flags_require_extension
 	return sieve_extension_require
 		(svinst, &imap4flags_extension, TRUE);
 }
+
+void sieve_ext_imap4flags_interpreter_load
+(const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv);
 
 /*
  * Action side-effect

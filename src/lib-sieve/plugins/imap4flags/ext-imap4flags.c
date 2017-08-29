@@ -76,13 +76,18 @@ static bool ext_imap4flags_validator_load
 	return TRUE;
 }
 
+void sieve_ext_imap4flags_interpreter_load
+(const struct sieve_extension *ext, const struct sieve_runtime_env *renv)
+{
+	sieve_interpreter_extension_register
+		(renv->interp, ext, &imap4flags_interpreter_extension, NULL);
+}
+
 static bool ext_imap4flags_interpreter_load
 (const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
 	sieve_size_t *address ATTR_UNUSED)
 {
-	sieve_interpreter_extension_register
-		(renv->interp, ext, &imap4flags_interpreter_extension, NULL);
-
+	sieve_ext_imap4flags_interpreter_load(ext, renv);
 	return TRUE;
 }
 

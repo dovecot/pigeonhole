@@ -186,9 +186,7 @@ static bool ext_imapflags_interpreter_load
 	const struct sieve_extension *master_ext =
 		(const struct sieve_extension *) ext->context;
 
-	sieve_interpreter_extension_register
-		(renv->interp, master_ext, &imap4flags_interpreter_extension, NULL);
-
+	sieve_ext_imap4flags_interpreter_load(master_ext, renv);
 	return TRUE;
 }
 
