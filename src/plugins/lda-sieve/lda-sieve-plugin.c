@@ -554,6 +554,10 @@ static int lda_sieve_execute_scripts
 
 		more = lda_sieve_execute_script(srctx, mscript,
 			script, i, discard_script, &error);
+		if ( error == SIEVE_ERROR_NOT_FOUND ) {
+			/* skip scripts which finally turn out not to exist */
+			more = TRUE;
+		}
 
 		if ( discard_script ) {
 			/* Executed discard script, which is always final */
