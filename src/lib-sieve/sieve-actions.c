@@ -11,7 +11,6 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 #include "ostream.h"
-#include "mail-deliver.h"
 #include "mail-storage.h"
 #include "message-date.h"
 #include "message-size.h"
@@ -363,10 +362,13 @@ static bool act_store_mailbox_open
 (const struct sieve_action_exec_env *aenv, const char *mailbox,
 	struct mailbox **box_r, enum mail_error *error_code_r, const char **error_r)
 {
+	struct mailbox *box;
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
-	struct mail_deliver_save_open_context save_ctx;
+	enum mailbox_flags flags = 0;
 
 	*box_r = NULL;
+	*error_code_r = MAIL_ERROR_NONE;
+	*error_r = NULL;
 
 	if ( !uni_utf8_str_is_valid(mailbox) ) {
 		/* Just a precaution; already (supposed to be) checked at
@@ -377,17 +379,18 @@ static bool act_store_mailbox_open
 		return FALSE;
 	}
 
-	i_zero(&save_ctx);
-	save_ctx.user = aenv->scriptenv->user;
-	save_ctx.lda_mailbox_autocreate = aenv->scriptenv->mailbox_autocreate;
-	save_ctx.lda_mailbox_autosubscribe = aenv->scriptenv->mailbox_autosubscribe;
+	if (aenv->scriptenv->mailbox_autocreate)
+		flags |= MAILBOX_FLAG_AUTO_CREATE;
+	if (aenv->scriptenv->mailbox_autosubscribe)
+		flags |= MAILBOX_FLAG_AUTO_SUBSCRIBE;
+	*box_r = box = mailbox_alloc_delivery(
+		aenv->scriptenv->user, mailbox, flags);
+	*storage = mailbox_get_storage(box);
 
-	if ( mail_deliver_save_open
-		(&save_ctx, mailbox, box_r, error_code_r, error_r) < 0 )
-		return FALSE;
-
-	*storage = mailbox_get_storage(*box_r);
-	return TRUE;
+	if (mailbox_open(box) == 0)
+		return TRUE;
+	*error_r = mailbox_get_last_error(box, error_code_r);
+	return FALSE;
 }
 
 static int act_store_start

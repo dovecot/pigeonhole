@@ -11,7 +11,6 @@
 #include "var-expand.h"
 #include "message-address.h"
 #include "mail-storage.h"
-#include "mail-deliver.h"
 
 #include "sieve-common.h"
 #include "sieve-limits.h"
