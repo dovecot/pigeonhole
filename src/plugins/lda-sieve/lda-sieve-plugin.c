@@ -9,7 +9,7 @@
 #include "mail-deliver.h"
 #include "mail-user.h"
 #include "mail-duplicate.h"
-#include "smtp-client.h"
+#include "smtp-submit.h"
 #include "mail-send.h"
 #include "lda-settings.h"
 
@@ -73,45 +73,45 @@ static void *lda_sieve_smtp_start
 {
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) senv->script_context;
-
-	return (void *)smtp_client_init(dctx->set, return_path);
+	
+	return (void *)smtp_submit_init_simple(dctx->smtp_set, return_path);
 }
 
 static void lda_sieve_smtp_add_rcpt
 (const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
 	const char *address)
 {
-	struct smtp_client *smtp_client = (struct smtp_client *) handle;
+	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
 
-	smtp_client_add_rcpt(smtp_client, address);
+	smtp_submit_add_rcpt(smtp_submit, address);
 }
 
 static struct ostream *lda_sieve_smtp_send
 (const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
 {
-	struct smtp_client *smtp_client = (struct smtp_client *) handle;
+	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
 
-	return smtp_client_send(smtp_client);
+	return smtp_submit_send(smtp_submit);
 }
 
 static void lda_sieve_smtp_abort
 (const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
 {
-	struct smtp_client *smtp_client = (struct smtp_client *) handle;
+	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
 
-	smtp_client_abort(&smtp_client);
+	smtp_submit_deinit(&smtp_submit);
 }
 
 static int lda_sieve_smtp_finish
-(const struct sieve_script_env *senv, void *handle,
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
 	const char **error_r)
 {
-	struct mail_deliver_context *dctx =
-		(struct mail_deliver_context *) senv->script_context;
-	struct smtp_client *smtp_client = (struct smtp_client *) handle;
+	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
+	int ret;
 
-	return smtp_client_deinit_timeout
-		(smtp_client, dctx->timeout_secs, error_r);
+	ret = smtp_submit_run(smtp_submit, error_r);
+	smtp_submit_deinit(&smtp_submit);
+	return ret;
 }
 
 static int lda_sieve_reject_mail
