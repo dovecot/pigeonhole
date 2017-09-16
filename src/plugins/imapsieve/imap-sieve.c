@@ -9,6 +9,7 @@
 #include "mail-deliver.h"
 #include "mail-duplicate.h"
 #include "smtp-client.h"
+#include "imap-client.h"
 
 #include "sieve.h"
 #include "sieve-script.h"
@@ -31,8 +32,7 @@
 
 struct imap_sieve {
 	pool_t pool;
-	struct mail_user *user;
-	const struct lda_settings *lda_set;
+	struct client *client;
 	const char *home_dir;
 
 	struct sieve_instance *svinst;
@@ -50,8 +50,9 @@ static const char *
 mail_sieve_get_setting(void *context, const char *identifier)
 {
 	struct imap_sieve *isieve = (struct imap_sieve *)context;
+	struct mail_user *user = isieve->client->user;
 
-	return mail_user_plugin_getenv(isieve->user, identifier);
+	return mail_user_plugin_getenv(user, identifier);
 }
 
 static const struct sieve_callbacks mail_sieve_callbacks = {
@@ -60,19 +61,19 @@ static const struct sieve_callbacks mail_sieve_callbacks = {
 };
 
 
-struct imap_sieve *imap_sieve_init(struct mail_user *user,
-	const struct lda_settings *lda_set)
+struct imap_sieve *imap_sieve_init(struct client *client)
 {
 	struct sieve_environment svenv;
 	struct imap_sieve *isieve;
+	struct mail_user *user = client->user;
+	const struct lda_settings *lda_set = client->lda_set;
 	bool debug = user->mail_debug;
 	pool_t pool;
 
 	pool = pool_alloconly_create("imap_sieve", 256);
 	isieve = p_new(pool, struct imap_sieve, 1);
 	isieve->pool = pool;
-	isieve->user = user;
-	isieve->lda_set = lda_set;
+	isieve->client = client;
 
 	isieve->dup_db = mail_duplicate_db_init(user, DUPLICATE_DB_NAME);
 
@@ -128,6 +129,7 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
 	struct sieve_storage **storage_r)
 {
 	enum sieve_storage_flags storage_flags = 0;
+	struct mail_user *user = isieve->client->user;
 	enum sieve_error error;
 
 	if (isieve->storage != NULL) {
@@ -138,7 +140,7 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
 	// FIXME: limit interval between retries
 
 	isieve->storage = sieve_storage_create_main
-		(isieve->svinst, isieve->user, storage_flags, &error);
+		(isieve->svinst, user, storage_flags, &error);
 	if (isieve->storage == NULL) {
 		if (error == SIEVE_ERROR_TEMP_FAILURE)
 			return -1;
@@ -157,9 +159,10 @@ static void *imap_sieve_smtp_start
 {
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
+	struct imap_sieve *isieve = isctx->isieve;
+	const struct lda_settings *lda_set = isieve->client->lda_set;
 
-	return (void *)smtp_client_init
-		(isctx->isieve->lda_set, return_path);
+	return (void *)smtp_client_init(lda_set, return_path);
 }
 
 static void imap_sieve_smtp_add_rcpt
@@ -408,10 +411,11 @@ imap_sieve_run_open_script(
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
+	struct mail_user *user = isieve->client->user;
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	const char *compile_name = "compile";
-	bool debug = isieve->user->mail_debug;
+	bool debug = user->mail_debug;
 
 	if ( recompile ) {
 		/* Warn */
@@ -559,13 +563,14 @@ static int imap_sieve_run_scripts
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
+	struct mail_user *user = isieve->client->user;
 	struct imap_sieve_run_script *scripts = isrun->scripts;
 	unsigned int count = isrun->scripts_count;
 	struct sieve_multiscript *mscript;
 	struct sieve_error_handler *ehandler;
 	struct sieve_script *last_script = NULL;
 	bool user_script = FALSE, more = TRUE;
-	bool debug = isieve->user->mail_debug, keep = TRUE;
+	bool debug = user->mail_debug, keep = TRUE;
 	enum sieve_compile_flags cpflags;
 	enum sieve_execute_flags exflags;
 	enum sieve_error compile_error = SIEVE_ERROR_NONE;
@@ -691,7 +696,8 @@ int imap_sieve_run_mail
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
-	const struct lda_settings *lda_set = isieve->lda_set;
+	struct mail_user *user = isieve->client->user;
+	const struct lda_settings *lda_set = isieve->client->lda_set;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
@@ -712,7 +718,7 @@ int imap_sieve_run_mail
 	trace_log = NULL;
 	if ( sieve_trace_config_get(svinst, &trace_config) >= 0) {
 		const char *tr_label = t_strdup_printf
-			("%s.%s.%u", isieve->user->username,
+			("%s.%s.%u", user->username,
 				mailbox_get_vname(mail->box), mail->uid);
 		if ( sieve_trace_log_open(svinst, tr_label, &trace_log) < 0 )
 			i_zero(&trace_config);
@@ -723,7 +729,7 @@ int imap_sieve_run_mail
 
 		i_zero(&msgdata);
 		msgdata.mail = mail;
-		msgdata.auth_user = isieve->user->username;
+		msgdata.auth_user = user->username;
 		(void)mail_get_first_header
 			(msgdata.mail, "Message-ID", &msgdata.id);
 
@@ -732,7 +738,7 @@ int imap_sieve_run_mail
 		i_zero(&scriptenv);
 		i_zero(&estatus);
 		scriptenv.default_mailbox = mailbox_get_vname(mail->box);
-		scriptenv.user = isieve->user;
+		scriptenv.user = user;
 		scriptenv.postmaster_address = lda_set->postmaster_address;
 		scriptenv.smtp_start = imap_sieve_smtp_start;
 		scriptenv.smtp_add_rcpt = imap_sieve_smtp_add_rcpt;

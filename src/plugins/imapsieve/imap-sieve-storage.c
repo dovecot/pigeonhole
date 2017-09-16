@@ -635,10 +635,8 @@ imap_sieve_mailbox_transaction_run(
 	}
 
 	/* Make sure IMAPSIEVE is initialized for this user */
-	if (isuser->isieve == NULL) {
-		isuser->isieve = imap_sieve_init
-			(user, isuser->client->lda_set);
-	}
+	if (isuser->isieve == NULL)
+		isuser->isieve = imap_sieve_init(isuser->client);
 
 	can_discard = FALSE;
 	switch (isuser->cur_cmd) {

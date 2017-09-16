@@ -4,7 +4,7 @@
 #ifndef __IMAP_SIEVE_H
 #define __IMAP_SIEVE_H
 
-struct lda_settings;
+struct client;
 
 /*
  * IMAP event
@@ -36,8 +36,7 @@ imap_sieve_event_cause_valid(const char *cause)
 
 struct imap_sieve;
 
-struct imap_sieve *imap_sieve_init(struct mail_user *user,
-	const struct lda_settings *lda_set);
+struct imap_sieve *imap_sieve_init(struct client *client);
 void imap_sieve_deinit(struct imap_sieve **_isieve);
 
 /*
