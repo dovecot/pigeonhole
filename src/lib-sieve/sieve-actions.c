@@ -566,7 +566,7 @@ static int act_store_execute
 
 	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin
-		(trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
+		(trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL, __func__);
 
 	/* Store the message */
 	save_ctx = mailbox_save_alloc(trans->mail_trans);

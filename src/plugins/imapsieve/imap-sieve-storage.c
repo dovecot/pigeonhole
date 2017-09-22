@@ -523,7 +523,8 @@ imap_sieve_mailbox_save_finish(struct mail_save_context *ctx)
 
 static struct mailbox_transaction_context *
 imap_sieve_mailbox_transaction_begin(struct mailbox *box,
-			 enum mailbox_transaction_flags flags)
+			 enum mailbox_transaction_flags flags,
+			 const char *reason)
 {
 	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT(box);
 	struct mail_user *user = box->storage->user;
@@ -533,7 +534,7 @@ imap_sieve_mailbox_transaction_begin(struct mailbox *box,
 	pool_t pool;
 
 	/* commence parent transaction */
-	t = lbox->super.transaction_begin(box, flags);
+	t = lbox->super.transaction_begin(box, flags, reason);
 
 	if (isuser == NULL || isuser->sieve_active ||
 		isuser->cur_cmd == IMAP_SIEVE_CMD_NONE)
@@ -725,7 +726,7 @@ imap_sieve_mailbox_transaction_run(
 	}
 
 	/* Create transaction for event messages */
-	st = mailbox_transaction_begin(sbox, 0);
+	st = mailbox_transaction_begin(sbox, 0, __func__);
 	headers_ctx = mailbox_header_lookup_init(sbox, wanted_headers);
 	mail = mail_alloc(st, 0, headers_ctx);
 	mailbox_header_lookup_unref(&headers_ctx);

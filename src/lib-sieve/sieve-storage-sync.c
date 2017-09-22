@@ -72,7 +72,9 @@ static int sieve_storage_sync_transaction_begin
 		return -1;
 	}
 
-	*trans_r = mailbox_transaction_begin(inbox, MAILBOX_TRANSACTION_FLAG_EXTERNAL);	
+	*trans_r = mailbox_transaction_begin(inbox,
+					     MAILBOX_TRANSACTION_FLAG_EXTERNAL,
+					     __func__);
 	return 1;
 }
 

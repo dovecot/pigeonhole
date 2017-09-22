@@ -211,7 +211,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 
 	/* Start transaction */
 
-	t = mailbox_transaction_begin(box, 0);
+	t = mailbox_transaction_begin(box, 0, __func__);
 
 	testsuite_mailstore_folder = i_strdup(folder);
 	testsuite_mailstore_box = box;

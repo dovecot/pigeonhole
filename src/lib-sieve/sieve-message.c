@@ -448,7 +448,7 @@ int sieve_message_substitute
 	}
 
 	version->box = box;
-	version->trans = mailbox_transaction_begin(box, 0);
+	version->trans = mailbox_transaction_begin(box, 0, __func__);
 	headers_ctx = mailbox_header_lookup_init(box, wanted_headers);
 	version->mail = mail_alloc(version->trans, 0, headers_ctx);
 	mailbox_header_lookup_unref(&headers_ctx);

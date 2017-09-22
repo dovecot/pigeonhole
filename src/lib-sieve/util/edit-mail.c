@@ -232,7 +232,7 @@ struct edit_mail *edit_mail_wrap(struct mail *mail)
 		return NULL;
 	}
 
-	raw_trans = mailbox_transaction_begin(raw_box, 0);
+	raw_trans = mailbox_transaction_begin(raw_box, 0, __func__);
 
 	/* Create the wrapper mail */
 

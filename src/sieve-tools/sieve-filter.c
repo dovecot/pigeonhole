@@ -296,7 +296,8 @@ static int filter_mailbox
 
 	if ( move_box != NULL ) {
 		sfctx.move_trans = mailbox_transaction_begin
-			(move_box, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
+			(move_box, MAILBOX_TRANSACTION_FLAG_EXTERNAL,
+			 "sieve_filter_data move_box");
 	}
 
 	/* Search non-deleted messages in the source folder */
@@ -304,7 +305,8 @@ static int filter_mailbox
 	search_args = mail_search_build_init();
 	mail_search_build_add_flags(search_args, MAIL_DELETED, TRUE);
 
-	t = mailbox_transaction_begin(src_box, 0);
+	t = mailbox_transaction_begin(src_box, 0,
+				      "sieve_filter_data src_box");
 	search_ctx = mailbox_search_init(t, search_args, NULL, 0, NULL);
 	mail_search_args_unref(&search_args);
 

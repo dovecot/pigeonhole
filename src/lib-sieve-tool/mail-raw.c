@@ -182,7 +182,7 @@ static struct mail_raw *mail_raw_create
 		}
 	}
 
-	mailr->trans = mailbox_transaction_begin(mailr->box, 0);
+	mailr->trans = mailbox_transaction_begin(mailr->box, 0, __func__);
 	headers_ctx = mailbox_header_lookup_init(mailr->box, wanted_headers);
 	mailr->mail = mail_alloc(mailr->trans, 0, headers_ctx);
 	mailbox_header_lookup_unref(&headers_ctx);
