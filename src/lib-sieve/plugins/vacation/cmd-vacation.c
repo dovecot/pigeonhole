@@ -1031,8 +1031,10 @@ static int act_vacation_send
 		rfc2822_header_utf8_printf(msg, "From", "%s", ctx->from);
 	else if ( reply_from != NULL )
 		rfc2822_header_printf(msg, "From", "<%s>", reply_from);
-	else
-		rfc2822_header_printf(msg, "From", "Postmaster <%s>", senv->postmaster_address);
+	else {
+		rfc2822_header_printf(msg, "From", "Postmaster <%s>",
+			sieve_get_postmaster_address(senv));
+	}
 
 	rfc2822_header_printf(msg, "To", "%s", reply_to);
 

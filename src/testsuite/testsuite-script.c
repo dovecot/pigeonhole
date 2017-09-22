@@ -108,7 +108,6 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	/* Compose script execution environment */
 	i_zero(&scriptenv);
 	scriptenv.default_mailbox = "INBOX";
-	scriptenv.postmaster_address = "postmaster@example.com";
 	scriptenv.smtp_start = NULL;
 	scriptenv.smtp_add_rcpt = NULL;
 	scriptenv.smtp_send = NULL;
@@ -181,7 +180,6 @@ bool testsuite_script_multiscript
 	/* Compose script execution environment */
 	i_zero(&scriptenv);
 	scriptenv.default_mailbox = "INBOX";
-	scriptenv.postmaster_address = "postmaster@example.com";
 	scriptenv.smtp_start = NULL;
 	scriptenv.smtp_add_rcpt = NULL;
 	scriptenv.smtp_send = NULL;

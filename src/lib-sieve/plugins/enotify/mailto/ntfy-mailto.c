@@ -497,7 +497,7 @@ static int ntfy_mailto_send
 		else if ( svinst->user_email != NULL )
 			from_smtp = sieve_address_to_string(svinst->user_email);
 		else
-			from_smtp = senv->postmaster_address;
+			from_smtp = sieve_get_postmaster_address(senv);
 	}
 
 	/* Determine message from address */
@@ -668,7 +668,7 @@ static int ntfy_mailto_action_execute
 		(nenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
 		owner_email = sieve_message_get_final_recipient(nenv->msgctx);
 	if ( owner_email == NULL )
-		owner_email = senv->postmaster_address;
+		owner_email = sieve_get_postmaster_address(senv);
 	i_assert( owner_email != NULL );
 
 	/* Is the message an automatic reply ? */

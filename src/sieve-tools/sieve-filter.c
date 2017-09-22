@@ -548,7 +548,6 @@ int main(int argc, char **argv)
 	scriptenv.mailbox_autocreate = FALSE;
 	scriptenv.default_mailbox = dst_mailbox;
 	scriptenv.user = mail_user;
-	scriptenv.postmaster_address = "postmaster@example.com";
 
 	/* Compose filter context */
 	i_zero(&sfdata);

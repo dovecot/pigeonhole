@@ -850,7 +850,6 @@ static int lda_sieve_execute
 		scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
 		scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;
 		scriptenv.user = mdctx->dest_user;
-		scriptenv.postmaster_address = mdctx->set->postmaster_address;
 		scriptenv.smtp_start = lda_sieve_smtp_start;
 		scriptenv.smtp_add_rcpt = lda_sieve_smtp_add_rcpt;
 		scriptenv.smtp_send = lda_sieve_smtp_send;
@@ -887,6 +886,8 @@ static int lda_sieve_deliver_mail
 (struct mail_deliver_context *mdctx, struct mail_storage **storage_r)
 {
 	struct lda_sieve_run_context srctx;
+	const struct mail_storage_settings *mail_set =
+		mail_user_set_get_storage_set(mdctx->dest_user);
 	bool debug = mdctx->dest_user->mail_debug;
 	struct sieve_environment svenv;
 	int ret = 0;
@@ -902,7 +903,7 @@ static int lda_sieve_deliver_mail
 	memset((void*)&svenv, 0, sizeof(svenv));
 	svenv.username = mdctx->dest_user->username;
 	svenv.home_dir = srctx.home_dir;
-	svenv.hostname = mdctx->set->hostname;
+	svenv.hostname = mail_set->hostname;
 	svenv.base_dir = mdctx->dest_user->set->base_dir;
 	svenv.temp_dir = mdctx->dest_user->set->mail_temp_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;

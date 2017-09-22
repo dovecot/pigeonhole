@@ -182,7 +182,6 @@ int main(int argc, char **argv)
 		i_zero(&scriptenv);
 		scriptenv.user = testsuite_mailstore_get_user();
 		scriptenv.default_mailbox = "INBOX";
-		scriptenv.postmaster_address = "postmaster@example.com";
 		scriptenv.smtp_start = testsuite_smtp_start;
 		scriptenv.smtp_add_rcpt = testsuite_smtp_add_rcpt;
 		scriptenv.smtp_send = testsuite_smtp_send;

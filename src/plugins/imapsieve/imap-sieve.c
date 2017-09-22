@@ -65,7 +65,8 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 	struct sieve_environment svenv;
 	struct imap_sieve *isieve;
 	struct mail_user *user = client->user;
-	const struct lda_settings *lda_set = client->lda_set;
+	const struct mail_storage_settings *mail_set =
+		mail_user_set_get_storage_set(user);
 	bool debug = user->mail_debug;
 	pool_t pool;
 
@@ -79,7 +80,7 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 	i_zero(&svenv);
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
-	svenv.hostname = lda_set->hostname;
+	svenv.hostname = mail_set->hostname;
 	svenv.base_dir = user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 	svenv.location = SIEVE_ENV_LOCATION_MS;
@@ -698,7 +699,6 @@ int imap_sieve_run_mail
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
 	struct mail_user *user = isieve->client->user;
-	const struct lda_settings *lda_set = isieve->client->lda_set;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
@@ -740,7 +740,6 @@ int imap_sieve_run_mail
 		i_zero(&estatus);
 		scriptenv.default_mailbox = mailbox_get_vname(mail->box);
 		scriptenv.user = user;
-		scriptenv.postmaster_address = lda_set->postmaster_address;
 		scriptenv.smtp_start = imap_sieve_smtp_start;
 		scriptenv.smtp_add_rcpt = imap_sieve_smtp_add_rcpt;
 		scriptenv.smtp_send = imap_sieve_smtp_send;

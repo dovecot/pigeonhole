@@ -849,7 +849,7 @@ static int sieve_action_do_reject_mail
 	rfc2822_header_write(hdr, "Message-ID", new_msgid);
 	rfc2822_header_write(hdr, "Date", message_date_create(ioloop_time));
 	rfc2822_header_printf(hdr, "From", "Mail Delivery Subsystem <%s>",
-		senv->postmaster_address);
+		sieve_get_postmaster_address(senv));
 	rfc2822_header_printf(hdr, "To", "<%s>", sender);
 	rfc2822_header_write(hdr, "Subject", "Automatically rejected mail");
 	rfc2822_header_write(hdr, "Auto-Submitted", "auto-replied (rejected)");

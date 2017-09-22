@@ -724,7 +724,7 @@ static bool act_notify_send
 	}
 
 	rfc2822_header_printf(msg, "From",
-		"Postmaster <%s>", senv->postmaster_address);
+		"Postmaster <%s>", sieve_get_postmaster_address(senv));
 
 	rfc2822_header_write(msg, "Subject", "[SIEVE] New mail notification");
 
@@ -746,10 +746,12 @@ static bool act_notify_send
 	rfc2822_header_write(msg, "Message-ID", outmsgid);
 
 	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 &&
-		sieve_message_get_sender(aenv->msgctx) != NULL )
-		sctx = sieve_smtp_start(senv, senv->postmaster_address);
-	else
+		sieve_message_get_sender(aenv->msgctx) != NULL ) {
+		sctx = sieve_smtp_start(senv,
+			sieve_get_postmaster_address(senv));
+	} else {
 		sctx = sieve_smtp_start(senv, NULL);
+	}
 
 	/* Add all recipients (and compose To header field) */
 	to = t_str_new(128);

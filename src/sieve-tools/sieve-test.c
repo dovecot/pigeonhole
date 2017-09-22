@@ -309,7 +309,6 @@ int main(int argc, char **argv)
 		i_zero(&scriptenv);
 		scriptenv.default_mailbox = mailbox;
 		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
-		scriptenv.postmaster_address = "postmaster@example.com";
 		scriptenv.smtp_start = sieve_smtp_start;
 		scriptenv.smtp_add_rcpt = sieve_smtp_add_rcpt;
 		scriptenv.smtp_send = sieve_smtp_send;

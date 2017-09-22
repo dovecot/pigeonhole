@@ -109,7 +109,7 @@ int sieve_address_source_get_address
 		*addr_r = sieve_address_to_string(svinst->user_email);
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_POSTMASTER:
-		*addr_r = senv->postmaster_address;
+		*addr_r = sieve_get_postmaster_address(senv);
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_EXPLICIT:
 		*addr_r = sieve_address_to_string(asrc->address);

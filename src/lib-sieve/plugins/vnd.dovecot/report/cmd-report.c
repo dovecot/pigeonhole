@@ -490,8 +490,8 @@ static int act_report_send
 	if ( (ret=sieve_address_source_get_address
 		(&report_from, svinst, senv, msgctx,
 			aenv->flags, &from)) <= 0 || from == NULL || *from == '\0') {
-		from = t_strdup_printf
-			("Postmaster <%s>", senv->postmaster_address);
+		from = t_strdup_printf("Postmaster <%s>",
+			sieve_get_postmaster_address(senv));
 	}
 
 	/* Start message */

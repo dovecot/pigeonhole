@@ -183,7 +183,6 @@ struct sieve_script_env {
 	/* Mail-related */
 	struct mail_user *user;
 	const char *default_mailbox;
-	const char *postmaster_address;
 	bool mailbox_autocreate;
 	bool mailbox_autosubscribe;
 

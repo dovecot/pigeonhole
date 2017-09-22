@@ -10,6 +10,7 @@
 #include "eacces-error.h"
 #include "home-expand.h"
 #include "hostpid.h"
+#include "mail-user.h"
 
 #include "sieve-settings.h"
 #include "sieve-extensions.h"
@@ -1071,3 +1072,19 @@ const char *sieve_get_user_email
 	}
 	return NULL;
 }
+
+/*
+ * Postmaster address
+ */
+
+const char *sieve_get_postmaster_address
+(const struct sieve_script_env *senv)
+{
+	const struct mail_storage_settings *mail_set =
+		mail_user_set_get_storage_set(senv->user);
+
+	i_assert(mail_set->postmaster_address != NULL &&
+		*mail_set->postmaster_address != '\0');
+	return mail_set->postmaster_address;
+}
+

@@ -221,4 +221,11 @@ void sieve_trace_log_write_line
 const char *sieve_get_user_email
 	(struct sieve_instance *svinst);
 
+/*
+ * Postmaster address 
+ */
+
+const char *sieve_get_postmaster_address
+(const struct sieve_script_env *senv);
+
 #endif /* __SIEVE_COMMON_H */
