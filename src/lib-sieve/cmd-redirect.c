@@ -362,7 +362,8 @@ static int act_redirect_send
 		/* Prepend sieve headers (should not affect signatures) */
 		rfc2822_header_append(hdr,
 			"X-Sieve", SIEVE_IMPLEMENTATION, FALSE, NULL);
-		if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
+		if ( svinst->user_email == NULL &&
+			(aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
 			user_email = sieve_message_get_final_recipient(msgctx);
 		else
 			user_email = sieve_get_user_email(aenv->svinst);

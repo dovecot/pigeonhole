@@ -36,6 +36,11 @@ test "Redirect" {
 	if not envelope :is "from" "sirius@example.org" {
 		test_fail "envelope sender incorrect";
 	}
+
+	if not header :contains "x-sieve-redirected-from"
+		"timo@example.net" {
+		test_fail "x-sieve-redirected-from header is incorrect";
+	}
 }
 
 test_result_reset;
@@ -65,6 +70,11 @@ test "Redirect from <>" {
 
 	if not envelope :is "from" "" {
 		test_fail "envelope sender incorrect";
+	}
+
+	if not header :contains "x-sieve-redirected-from"
+		"timo@example.net" {
+		test_fail "x-sieve-redirected-from header is incorrect";
 	}
 }
 
@@ -98,6 +108,11 @@ test "Redirect from [recipient]" {
 
 	if not envelope :is "from" "timo@example.net" {
 		test_fail "envelope sender incorrect";
+	}
+
+	if not header :contains "x-sieve-redirected-from"
+		"timo@example.net" {
+		test_fail "x-sieve-redirected-from header is incorrect";
 	}
 }
 
@@ -133,8 +148,12 @@ test "Redirect from [original recipient]" {
 	if not envelope :is "from" "tss@example.net" {
 		test_fail "envelope sender incorrect";
 	}
-}
 
+	if not header :contains "x-sieve-redirected-from"
+		"timo@example.net" {
+		test_fail "x-sieve-redirected-from header is incorrect";
+	}
+}
 
 test_result_reset;
 test_set "message" text:
@@ -168,6 +187,11 @@ test "Redirect from [<explicit>]" {
 	if not envelope :is "from" "backscatter@example.net" {
 		test_fail "envelope sender incorrect";
 	}
+
+	if not header :contains "x-sieve-redirected-from"
+		"timo@example.net" {
+		test_fail "x-sieve-redirected-from header is incorrect";
+	}
 }
 
 test_result_reset;
@@ -200,6 +224,11 @@ test "Redirect from [<>]" {
 
 	if not envelope :is "from" "" {
 		test_fail "envelope sender incorrect";
+	}
+
+	if not header :contains "x-sieve-redirected-from"
+		"timo@example.net" {
+		test_fail "x-sieve-redirected-from header is incorrect";
 	}
 }
 
@@ -235,6 +264,11 @@ test "Redirect from <> with [<explicit>]" {
 	if not envelope :is "from" "" {
 		test_fail "envelope sender incorrect";
 	}
+
+	if not header :contains "x-sieve-redirected-from"
+		"timo@example.net" {
+		test_fail "x-sieve-redirected-from header is incorrect";
+	}
 }
 
 test_result_reset;
@@ -264,6 +298,11 @@ test "Redirect from [user email - fallback default]" {
 
 	if not envelope :is "from" "timo@example.net" {
 		test_fail "envelope sender incorrect";
+	}
+
+	if not header :contains "x-sieve-redirected-from"
+		"timo@example.net" {
+		test_fail "x-sieve-redirected-from header is incorrect";
 	}
 }
 
@@ -299,6 +338,11 @@ test "Redirect from [user email]" {
 
 	if not envelope :is "from" "t.sirainen@example.net" {
 		test_fail "envelope sender incorrect";
+	}
+
+	if not header :contains "x-sieve-redirected-from"
+		"t.sirainen@example.net" {
+		test_fail "x-sieve-redirected-from header is incorrect";
 	}
 }
 
