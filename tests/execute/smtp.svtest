@@ -9,7 +9,6 @@ Subject: Frop!
 Frop!
 .
 ;
-
 test_set "envelope.from" "sirius@example.org";
 test_set "envelope.to" "timo@example.net";
 
@@ -40,7 +39,16 @@ test "Redirect" {
 }
 
 test_result_reset;
+test_set "message" text:
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
 test_set "envelope.from" "<>";
+test_set "envelope.to" "timo@example.net";
 
 test "Redirect from <>" {
 	redirect "cras@example.net";
@@ -61,6 +69,14 @@ test "Redirect from <>" {
 }
 
 test_result_reset;
+test_set "message" text:
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
 test_set "envelope.from" "sirius@example.org";
 test_set "envelope.to" "timo@example.net";
 
@@ -86,6 +102,14 @@ test "Redirect from [recipient]" {
 }
 
 test_result_reset;
+test_set "message" text:
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
 test_set "envelope.from" "sirius@example.org";
 test_set "envelope.to" "timo@example.net";
 test_set "envelope.orig_to" "tss@example.net";
@@ -113,6 +137,14 @@ test "Redirect from [original recipient]" {
 
 
 test_result_reset;
+test_set "message" text:
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
 test_set "envelope.from" "sirius@example.org";
 test_set "envelope.to" "timo@example.net";
 test_set "envelope.orig_to" "tss@example.net";
@@ -139,6 +171,14 @@ test "Redirect from [<explicit>]" {
 }
 
 test_result_reset;
+test_set "message" text:
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
 test_set "envelope.from" "sirius@example.org";
 test_set "envelope.to" "timo@example.net";
 
@@ -164,6 +204,14 @@ test "Redirect from [<>]" {
 }
 
 test_result_reset;
+test_set "message" text:
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
 test_set "envelope.from" "<>";
 test_set "envelope.to" "timo@example.net";
 test_set "envelope.orig_to" "tss@example.net";
@@ -190,6 +238,14 @@ test "Redirect from <> with [<explicit>]" {
 }
 
 test_result_reset;
+test_set "message" text:
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
 test_set "envelope.from" "sirius@example.org";
 test_set "envelope.to" "timo@example.net";
 test_set "envelope.orig_to" "tss@example.net";
@@ -212,6 +268,14 @@ test "Redirect from [user email - fallback default]" {
 }
 
 test_result_reset;
+test_set "message" text:
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
 test_set "envelope.from" "sirius@example.org";
 test_set "envelope.to" "timo@example.net";
 test_set "envelope.orig_to" "tss@example.net";
