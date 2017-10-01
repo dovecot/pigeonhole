@@ -441,7 +441,7 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 	trans->disabled = disabled;
 
 	if (open_failed) {
-		trans->error = error;
+		trans->error = p_strdup(pool, error);
 		trans->error_code = error_code;
 	} else {
 		trans->error_code = MAIL_ERROR_NONE;
