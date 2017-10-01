@@ -187,26 +187,13 @@ tst_mailboxexists_operation_execute(const struct sieve_runtime_env *renv,
 		mailbox_item = NULL;
 		while ((ret = sieve_stringlist_next_item(mailbox_names,
 							 &mailbox_item)) > 0) {
-			struct mail_namespace *ns;
 			const char *mailbox = str_c(mailbox_item);
 			struct mailbox *box;
 
-			/* Find the namespace */
-			ns = mail_namespace_find(
-				eenv->scriptenv->user->namespaces, mailbox);
-			if (ns == NULL) {
-				if (trace) {
-					sieve_runtime_trace(
-						renv, 0,
-						"mailbox `%s' not found",
-						str_sanitize(mailbox, 80));
-				}
-				all_exist = FALSE;
-				break;
-			}
-
 			/* Open the box */
-			box = mailbox_alloc(ns->list, mailbox, 0);
+			box = mailbox_alloc_for_user(eenv->scriptenv->user,
+						     mailbox,
+						     MAILBOX_FLAG_POST_SESSION);
 			if (mailbox_open(box) < 0) {
 				if (trace) {
 					sieve_runtime_trace(
