@@ -103,6 +103,10 @@ struct sieve_action {
 struct sieve_side_effect_def {
 	struct sieve_object_def obj_def;
 
+	/* Precedence (side effects with higher value are executed first) */
+
+	unsigned int precedence;
+
 	/* The action it is supposed to link to */
 	const struct sieve_action_def *to_action;
 

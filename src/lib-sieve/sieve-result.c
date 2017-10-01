@@ -1604,13 +1604,24 @@ sieve_side_effects_list_create(struct sieve_result *result)
 void sieve_side_effects_list_add(struct sieve_side_effects_list *list,
 				 const struct sieve_side_effect *seffect)
 {
-	struct sieve_result_side_effect *reffect;
+	struct sieve_result_side_effect *reffect, *reffect_pos;
 
 	/* Prevent duplicates */
 	reffect = list->first_effect;
+	reffect_pos = NULL;
 	while (reffect != NULL) {
-		if (reffect->seffect.def == seffect->def)
+		const struct sieve_side_effect_def *ref_def = reffect->seffect.def;
+		const struct sieve_side_effect_def *sef_def = seffect->def;
+
+		if (sef_def == ref_def) {
+			/* already listed */
+			i_assert(reffect_pos == NULL);
 			return;
+		}
+		if (sef_def->precedence > ref_def->precedence) {
+			/* insert it before this position */
+			reffect_pos = reffect;
+		}
 
 		reffect = reffect->next;
 	}
@@ -1619,17 +1630,25 @@ void sieve_side_effects_list_add(struct sieve_side_effects_list *list,
 	reffect = p_new(list->result->pool, struct sieve_result_side_effect, 1);
 	reffect->seffect = *seffect;
 
-	/* Add */
-	if (list->first_effect == NULL) {
-		list->first_effect = reffect;
-		list->last_effect = reffect;
-		reffect->prev = NULL;
-		reffect->next = NULL;
+	if (reffect_pos != NULL) {
+		/* Insert */
+		reffect->next = reffect_pos;
+		reffect_pos->prev = reffect;
+		if (list->first_effect == reffect_pos)
+			list->first_effect = reffect;
 	} else {
-		list->last_effect->next = reffect;
-		reffect->prev = list->last_effect;
-		list->last_effect = reffect;
-		reffect->next = NULL;
+		/* Add */
+		if ( list->first_effect == NULL ) {
+			list->first_effect = reffect;
+			list->last_effect = reffect;
+			reffect->prev = NULL;
+			reffect->next = NULL;
+		} else {
+			list->last_effect->next = reffect;
+			reffect->prev = list->last_effect;
+			list->last_effect = reffect;
+			reffect->next = NULL;
+		}
 	}
 }
 

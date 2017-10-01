@@ -50,6 +50,7 @@ seff_mailbox_create_pre_execute(const struct sieve_side_effect *seffect,
 
 const struct sieve_side_effect_def mailbox_create_side_effect = {
 	SIEVE_OBJECT("create", &mailbox_create_operand, 0),
+	.precedence = 100,
 	.to_action = &act_store,
 	.print = seff_mailbox_create_print,
 	.pre_execute = seff_mailbox_create_pre_execute
