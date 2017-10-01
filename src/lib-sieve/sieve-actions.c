@@ -553,6 +553,11 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 	if (trans->box == NULL)
 		return SIEVE_EXEC_FAILURE;
 
+	/* Mark attempt to use storage. Can only get here when all previous
+	   actions succeeded.
+	 */
+	eenv->exec_status->last_storage = mailbox_get_storage(trans->box);
+
 	/* Exit early if transaction already failed */
  	switch (trans->error_code) {
 	case MAIL_ERROR_NONE:
@@ -618,11 +623,6 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 	if (strcmp(trans->context->mailbox,
 		   SIEVE_SCRIPT_DEFAULT_MAILBOX(eenv->scriptenv)) == 0)
 		eenv->exec_status->tried_default_save = TRUE;
-
-	/* Mark attempt to use storage. Can only get here when all previous actions
-	 * succeeded.
-	 */
-	eenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 
 	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin(

@@ -124,11 +124,12 @@ seff_mailbox_create_pre_execute(
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *)tr_context;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
-	struct mail_storage **storage = &(eenv->exec_status->last_storage);
 
 	/* Check whether creation is necessary */
 	if (trans->box == NULL || trans->disabled)
 		return SIEVE_EXEC_OK;
+
+	eenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 
 	/* Check whether creation has a chance of working */
 	switch (trans->error_code) {
@@ -144,8 +145,6 @@ seff_mailbox_create_pre_execute(
 
 	trans->error = NULL;
 	trans->error_code = MAIL_ERROR_NONE;
-
-	*storage = mailbox_get_storage(trans->box);
 
 	/* Create mailbox */
 	if (mailbox_create(trans->box, NULL, FALSE) < 0) {
