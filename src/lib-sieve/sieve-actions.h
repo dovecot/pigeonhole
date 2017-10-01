@@ -213,6 +213,9 @@ struct act_store_transaction {
 	struct mailbox *box;
 	struct mailbox_transaction_context *mail_trans;
 
+	const char *mailbox_name;
+	const char *mailbox_identifier;
+
 	const char *error;
 	enum mail_error error_code;
 

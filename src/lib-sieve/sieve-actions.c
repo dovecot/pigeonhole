@@ -434,6 +434,10 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 	trans->box = box;
 	trans->flags = 0;
 
+	trans->mailbox_name = ctx->mailbox;
+	trans->mailbox_identifier = p_strdup_printf(pool,
+		"'%s'", str_sanitize(ctx->mailbox, 256));
+
 	trans->disabled = disabled;
 
 	if (open_failed) {
@@ -663,32 +667,27 @@ act_store_log_status(struct act_store_transaction *trans,
 		     const struct sieve_action_exec_env *aenv,
 		     bool rolled_back, bool status)
 {
-	const char *mailbox_name;
-
-	mailbox_name = str_sanitize(trans->context->mailbox, 128);
+	const char *mailbox_name = trans->mailbox_name;
+	const char *mailbox_identifier = trans->mailbox_identifier;
 
 	if (trans->box != NULL) {
 		const char *mailbox_vname = str_sanitize(mailbox_get_vname(trans->box), 128);
 
-		if (strcmp(mailbox_name, mailbox_vname) != 0) {
-			mailbox_name = t_strdup_printf("'%s' (%s)",
-						       mailbox_name,
-						       mailbox_vname);
-		} else {
-			mailbox_name = t_strdup_printf("'%s'", mailbox_name);
+		if (strcmp(trans->mailbox_name, mailbox_vname) != 0) {
+			mailbox_identifier = t_strdup_printf(
+				"%s (%s)", mailbox_identifier,
+				str_sanitize(mailbox_vname, 256));
 		}
-	} else {
-		mailbox_name = t_strdup_printf("'%s'", mailbox_name);
 	}
 
 	/* Store disabled? */
 	if (trans->disabled) {
 		sieve_result_global_log(aenv, "store into mailbox %s skipped",
-					mailbox_name);
+					mailbox_identifier);
 	/* Store redundant? */
 	} else if (trans->redundant) {
 		sieve_result_global_log(aenv, "left message in mailbox %s",
-					mailbox_name);
+					mailbox_identifier);
 	/* Store failed? */
 	} else if (!status) {
 		const char *errstr;
@@ -704,30 +703,31 @@ act_store_log_status(struct act_store_transaction *trans,
 			/* Never log quota problems as error in global log */
 			sieve_result_global_log_error(
 				aenv, "failed to store into mailbox %s: %s",
-				mailbox_name, errstr);
+				mailbox_identifier, errstr);
 		} else if (error_code == MAIL_ERROR_NOTFOUND ||
 			   error_code == MAIL_ERROR_PARAMS ||
 			   error_code == MAIL_ERROR_PERM) {
 			sieve_result_error(
 				aenv, "failed to store into mailbox %s: %s",
-				mailbox_name, errstr);
+				mailbox_identifier, errstr);
 		} else {
 			sieve_result_global_error(
 				aenv, "failed to store into mailbox %s: %s",
-				mailbox_name, errstr);
+				mailbox_identifier, errstr);
 		}
 	/* Store aborted? */
 	} else if (rolled_back) {
 		sieve_result_global_log(aenv, "store into mailbox %s aborted",
-					mailbox_name);
+					mailbox_identifier);
 	/* Succeeded */
 	} else {
 		struct event_passthrough *e =
 			sieve_action_create_finish_event(aenv)->
-			add_str("sieve_fileinto_mailbox", mailbox_name);
+			add_str("sieve_fileinto_mailbox_name", mailbox_name)->
+			add_str("sieve_fileinto_mailbox", mailbox_identifier);
 		sieve_result_event_log(aenv, e->event(),
 				       "stored mail into mailbox %s",
-				       mailbox_name);
+				       mailbox_identifier);
 	}
 }
 
