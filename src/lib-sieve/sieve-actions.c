@@ -268,21 +268,8 @@ void sieve_act_store_add_flags(const struct sieve_action_exec_env *aenv,
 		}
 
 		kw = keywords;
-		while (*kw != NULL) {
-			const char *error;
-
-			if (trans->box != NULL &&
-			    trans->error_code == MAIL_ERROR_NONE) {
-				if (mailbox_keyword_is_valid(trans->box, *kw, &error))
-					array_append(&trans->keywords, kw, 1);
-				else {
-					sieve_result_warning(aenv,
-						"specified IMAP keyword '%s' is invalid (ignored): %s",
-						str_sanitize(*kw, 64),
-						sieve_error_from_external(error));
-				}
-			}
-
+		while ( *kw != NULL ) {
+			array_append(&trans->keywords, kw, 1);
 			kw++;
 		}
 	}
@@ -477,22 +464,39 @@ act_store_keywords_create(const struct sieve_action_exec_env *aenv,
 			  struct mailbox *box, bool create_empty)
 {
 	struct mail_keywords *box_keywords = NULL;
-	bool has_keywords = array_is_created(keywords) &&
-			    array_count(keywords) > 0;
+	const char *const *kwds = NULL;
 
-	if (has_keywords || create_empty) {
-		const char *const *kwds = NULL;
-
-		if (has_keywords) {
-			(void)array_append_space(keywords);
-			kwds = array_idx(keywords, 0);
-		}
-
-		if (mailbox_keywords_create(box, kwds, &box_keywords) < 0) {
-			sieve_result_error(
-				aenv, "invalid keywords set for stored message");
+	if (!array_is_created(keywords) || array_count(keywords) == 0) {
+		if (!create_empty)
 			return NULL;
+	} else {
+		ARRAY_TYPE(const_string) valid_keywords;
+		const char *error;
+		unsigned int count, i;
+
+		kwds = array_get(keywords, &count);
+		t_array_init(&valid_keywords, count);
+
+		for (i = 0; i < count; i++) {
+			if (mailbox_keyword_is_valid(box, kwds[i], &error)) {
+				array_append(&valid_keywords, &kwds[i], 1);
+				continue;
+			}
+
+			sieve_result_warning(aenv,
+				"specified IMAP keyword '%s' is invalid "
+				"(ignored): %s",  str_sanitize(kwds[i], 64),
+				sieve_error_from_external(error));
 		}
+
+		array_append_zero(keywords);
+		kwds = array_idx(keywords, 0);
+	}
+
+	if (mailbox_keywords_create(box, kwds, &box_keywords) < 0) {
+		sieve_result_error(
+			aenv, "invalid keywords set for stored message");
+		return NULL;
 	}
 
 	return box_keywords;
