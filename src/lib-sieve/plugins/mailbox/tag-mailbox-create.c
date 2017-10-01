@@ -132,6 +132,12 @@ seff_mailbox_create_pre_execute(
 
 	eenv->exec_status->last_storage = mailbox_get_storage(box);
 
+	/* Open the mailbox (may already be open) */
+	if (trans->error_code == MAIL_ERROR_NONE) {
+		if (mailbox_open(box) < 0)
+			sieve_act_store_get_storage_error(aenv, trans);
+	}
+
 	/* Check whether creation has a chance of working */
 	switch (trans->error_code) {
 	case MAIL_ERROR_NONE:

@@ -356,9 +356,9 @@ void sieve_act_store_get_storage_error(const struct sieve_action_exec_env *aenv,
 }
 
 static bool
-act_store_mailbox_open(const struct sieve_action_exec_env *aenv,
-		       const char *mailbox, struct mailbox **box_r,
-		       enum mail_error *error_code_r, const char **error_r)
+act_store_mailbox_alloc(const struct sieve_action_exec_env *aenv,
+		        const char *mailbox, struct mailbox **box_r,
+			enum mail_error *error_code_r, const char **error_r)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct mailbox *box;
@@ -386,10 +386,7 @@ act_store_mailbox_open(const struct sieve_action_exec_env *aenv,
 					      MAILBOX_FLAG_POST_SESSION);
 	*storage = mailbox_get_storage(box);
 
-	if (mailbox_open(box) == 0)
-		return TRUE;
-	*error_r = mailbox_get_last_error(box, error_code_r);
-	return FALSE;
+	return TRUE;
 }
 
 static int
@@ -405,7 +402,7 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 	pool_t pool = sieve_result_pool(aenv->result);
 	const char *error = NULL;
 	enum mail_error error_code = MAIL_ERROR_NONE;
-	bool disabled = FALSE, open_failed = FALSE;
+	bool disabled = FALSE, alloc_failed = FALSE;
 
 	/* If context is NULL, the store action is the result of (implicit) keep */
 	if (ctx == NULL) {
@@ -420,9 +417,9 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 	 * to NULL. This implementation will then skip actually storing the message.
 	 */
 	if (senv->user != NULL) {
-		if (!act_store_mailbox_open(aenv, ctx->mailbox, &box,
-					    &error_code, &error))
-			open_failed = TRUE;
+		if (!act_store_mailbox_alloc(aenv, ctx->mailbox, &box,
+					     &error_code, &error))
+			alloc_failed = TRUE;
 	} else {
 		disabled = TRUE;
 	}
@@ -440,7 +437,7 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 
 	trans->disabled = disabled;
 
-	if (open_failed) {
+	if (alloc_failed) {
 		trans->error = p_strdup(pool, error);
 		trans->error_code = error_code;
 	} else {
@@ -563,6 +560,12 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 	   actions succeeded.
 	 */
 	eenv->exec_status->last_storage = mailbox_get_storage(box);
+
+	/* Open the mailbox (may already be open) */
+	if (trans->error_code == MAIL_ERROR_NONE) {
+		if (mailbox_open(box) < 0)
+			sieve_act_store_get_storage_error(aenv, trans);
+	}
 
 	/* Exit early if transaction already failed */
  	switch (trans->error_code) {
