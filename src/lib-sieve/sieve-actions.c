@@ -538,25 +538,27 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 			     action->mail : eenv->msgdata->mail);
 	struct mail_save_context *save_ctx;
 	struct mail_keywords *keywords = NULL;
+	struct mailbox *box;
 	bool backends_equal = FALSE;
 	int status = SIEVE_EXEC_OK;
 
 	/* Verify transaction */
 	if (trans == NULL)
 		return SIEVE_EXEC_FAILURE;
+	box = trans->box;
 
 	/* Check whether we need to do anything */
 	if (trans->disabled)
 		return SIEVE_EXEC_OK;
 
 	/* Exit early if mailbox is not available */
-	if (trans->box == NULL)
+	if (box == NULL)
 		return SIEVE_EXEC_FAILURE;
 
 	/* Mark attempt to use storage. Can only get here when all previous
 	   actions succeeded.
 	 */
-	eenv->exec_status->last_storage = mailbox_get_storage(trans->box);
+	eenv->exec_status->last_storage = mailbox_get_storage(box);
 
 	/* Exit early if transaction already failed */
  	switch (trans->error_code) {
@@ -572,7 +574,7 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 	/* If the message originates from the target mailbox, only update the flags
 	 * and keywords (if not read-only)
 	 */
-	if (mailbox_backends_equal(trans->box, mail->box)) {
+	if (mailbox_backends_equal(box, mail->box)) {
 		backends_equal = TRUE;
 	} else {
 		struct mail *real_mail;
@@ -580,7 +582,7 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 		if (mail_get_backend_mail(mail, &real_mail) < 0)
 			return SIEVE_EXEC_FAILURE;
 		if (real_mail != mail &&
-		    mailbox_backends_equal(trans->box, real_mail->box))
+		    mailbox_backends_equal(box, real_mail->box))
 			backends_equal = TRUE;
 	}
 	if (backends_equal) {
@@ -612,9 +614,7 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 	 */
 	} else if (mail != eenv->msgdata->mail &&
 		   mailbox_is_readonly(eenv->msgdata->mail->box) &&
-		   (mailbox_backends_equal(trans->box,
-					   eenv->msgdata->mail->box))) {
-
+		   (mailbox_backends_equal(box, eenv->msgdata->mail->box))) {
 		trans->redundant = TRUE;
 		return SIEVE_EXEC_OK;
 	}
@@ -626,7 +626,7 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 
 	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin(
-		trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL, __func__);
+		box, MAILBOX_TRANSACTION_FLAG_EXTERNAL, __func__);
 
 	/* Store the message */
 	save_ctx = mailbox_save_alloc(trans->mail_trans);
@@ -634,7 +634,7 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 	/* Apply keywords and flags that side-effects may have added */
 	if (trans->flags_altered) {
 		keywords = act_store_keywords_create(aenv, &trans->keywords,
-						     trans->box, FALSE);
+						     box, FALSE);
 
 		if (trans->flags != 0 || keywords != NULL) {
 			eenv->exec_status->significant_action_executed = TRUE;
