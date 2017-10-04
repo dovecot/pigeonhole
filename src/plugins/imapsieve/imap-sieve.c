@@ -7,7 +7,7 @@
 #include "mail-user.h"
 #include "lda-settings.h"
 #include "mail-deliver.h"
-#include "duplicate.h"
+#include "mail-duplicate.h"
 #include "smtp-client.h"
 
 #include "sieve.h"
@@ -22,6 +22,7 @@
  * Configuration
  */
 
+#define DUPLICATE_DB_NAME "lda-dupes"
 #define IMAP_SIEVE_MAX_USER_ERRORS 30
 
 /*
@@ -40,7 +41,7 @@ struct imap_sieve {
 	const struct sieve_extension *ext_imapsieve;
 	const struct sieve_extension *ext_vnd_imapsieve;
 
-	struct duplicate_context *dup_ctx;
+	struct mail_duplicate_db *dup_db;
 
 	struct sieve_error_handler *master_ehandler;
 };
@@ -73,7 +74,7 @@ struct imap_sieve *imap_sieve_init(struct mail_user *user,
 	isieve->user = user;
 	isieve->lda_set = lda_set;
 
-	isieve->dup_ctx = duplicate_init(user);
+	isieve->dup_db = mail_duplicate_db_init(user, DUPLICATE_DB_NAME);
 
 	i_zero(&svenv);
 	svenv.username = user->username;
@@ -117,7 +118,7 @@ void imap_sieve_deinit(struct imap_sieve **_isieve)
 	sieve_extension_unregister(isieve->ext_vnd_imapsieve);
 	sieve_deinit(&isieve->svinst);
 
-	duplicate_deinit(&isieve->dup_ctx);
+	mail_duplicate_db_deinit(&isieve->dup_db);
 
 	pool_unref(&isieve->pool);
 }
@@ -207,7 +208,7 @@ static bool imap_sieve_duplicate_check
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 
-	return duplicate_check(isctx->isieve->dup_ctx,
+	return mail_duplicate_check(isctx->isieve->dup_db,
 		id, id_size, senv->user->username);
 }
 
@@ -218,7 +219,7 @@ static void imap_sieve_duplicate_mark
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 
-	duplicate_mark(isctx->isieve->dup_ctx,
+	mail_duplicate_mark(isctx->isieve->dup_db,
 		id, id_size, senv->user->username, time);
 }
 
@@ -227,7 +228,7 @@ static void imap_sieve_duplicate_flush
 {
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
-	duplicate_flush(isctx->isieve->dup_ctx);
+	mail_duplicate_db_flush(isctx->isieve->dup_db);
 }
 
 /*

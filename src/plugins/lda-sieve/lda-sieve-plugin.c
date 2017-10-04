@@ -8,7 +8,7 @@
 #include "mail-storage.h"
 #include "mail-deliver.h"
 #include "mail-user.h"
-#include "duplicate.h"
+#include "mail-duplicate.h"
 #include "smtp-client.h"
 #include "mail-send.h"
 #include "lda-settings.h"
@@ -134,7 +134,8 @@ static bool lda_sieve_duplicate_check
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) senv->script_context;
 
-	return duplicate_check(dctx->dup_ctx, id, id_size, senv->user->username);
+	return mail_duplicate_check(dctx->dup_db,
+		id, id_size, senv->user->username);
 }
 
 static void lda_sieve_duplicate_mark
@@ -144,7 +145,8 @@ static void lda_sieve_duplicate_mark
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) senv->script_context;
 
-	duplicate_mark(dctx->dup_ctx, id, id_size, senv->user->username, time);
+	mail_duplicate_mark(dctx->dup_db,
+		id, id_size, senv->user->username, time);
 }
 
 static void lda_sieve_duplicate_flush
@@ -152,7 +154,7 @@ static void lda_sieve_duplicate_flush
 {
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) senv->script_context;
-	duplicate_flush(dctx->dup_ctx);
+	mail_duplicate_db_flush(dctx->dup_db);
 }
 
 /*
