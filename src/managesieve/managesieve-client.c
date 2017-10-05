@@ -616,7 +616,7 @@ static bool client_handle_input(struct client_command_context *cmd)
 		managesieve_refresh_proctitle();
 	}
 
-	if (cmd->name == '\0') {
+	if (cmd->name[0] == '\0') {
 		/* command not given - cmd_func is already NULL. */
 	} else {
 		/* find the command function */
