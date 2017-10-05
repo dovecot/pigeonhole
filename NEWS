@@ -1,3 +1,19 @@
+v0.4.20 27-08-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Made the retention period for redirect duplicate identifiers configurable.
+	  For accounts that perform many redirects, the lda-dupes database could grow
+	  to impractical sizes. Changed the default retention period from 24 to 12
+	  hours.
+	- sieve-filter: Fixed memory leak: forgot to clean up script binary at end of
+	  execution. Normally, this would merely be an inconsequential memory leak.
+	  However, when the script comes from an LDAP storage, this would cause io
+	  leak warnings.
+	- managesieve-login: Fixed handling of AUTHENTICATE command. A second
+	  authenticate command would be parsed wrong. This problem was caused by
+	  changes in the previous release.
+	- LDA Sieve plugin: Fixed minor memory leak caused by not cleaning up the
+	  sieve_discard script.
+
 v0.4.19 26-06-2017 Stephan Bosch <stephan@rename-it.nl>
 
 	* This release adjusts Pigeonhole to several changes in the Dovecot API,
