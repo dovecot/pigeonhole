@@ -1025,7 +1025,7 @@ imap_sieve_mailbox_rule_match_cause
 {
 	const char *const *cp;
 
-	if (rule->causes == NULL || *rule->causes == '\0')
+	if (rule->causes == NULL || *rule->causes == NULL)
 		return TRUE;
 
 	for (cp = rule->causes; *cp != NULL; cp++) {
