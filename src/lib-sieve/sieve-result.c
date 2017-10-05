@@ -1433,6 +1433,7 @@ int sieve_result_execute
 					result_status = ret;
 					break;
 				}
+				/* fall through */
 			default:
 				result_status = SIEVE_EXEC_KEEP_FAILED;
 			}
