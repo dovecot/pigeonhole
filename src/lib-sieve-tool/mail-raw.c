@@ -4,7 +4,6 @@
 #include "lib.h"
 #include "istream.h"
 #include "istream-seekable.h"
-#include "fd-set-nonblock.h"
 #include "str.h"
 #include "str-sanitize.h"
 #include "strescape.h"
