@@ -11,7 +11,6 @@
 #include "base64.h"
 #include "process-title.h"
 #include "restrict-access.h"
-#include "fd-close-on-exec.h"
 #include "settings-parser.h"
 #include "master-interface.h"
 #include "master-service.h"

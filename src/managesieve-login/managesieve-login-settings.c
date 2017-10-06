@@ -5,7 +5,6 @@
 #include "str.h"
 #include "buffer.h"
 #include "env-util.h"
-#include "fd-close-on-exec.h"
 #include "execv-const.h"
 #include "settings-parser.h"
 #include "service-settings.h"
