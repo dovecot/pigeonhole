@@ -1,4 +1,4 @@
-v0.4.21 08-10-2017 Stephan Bosch <stephan@rename-it.nl>
+v0.4.21 12-10-2017 Stephan Bosch <stephan@rename-it.nl>
 
 	* redirect action: Always set the X-Sieve-Redirected-From header to
 	  sieve_user_email if configured. Before, it would use the envelope recipient
