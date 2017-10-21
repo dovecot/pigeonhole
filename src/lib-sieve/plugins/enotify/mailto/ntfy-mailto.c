@@ -501,10 +501,13 @@ static int ntfy_mailto_send
 	}
 
 	/* Determine message from address */
-	if ( nact->from == NULL ) {
-		from = t_strdup_printf("<%s>", from_smtp);
-	} else {
+	if ( nact->from != NULL ) {
 		from = nact->from;
+	} else if ( from_smtp == NULL ) {
+		from = t_strdup_printf("<%s>",
+			sieve_get_postmaster_address(senv));
+	} else {
+		from = t_strdup_printf("<%s>", from_smtp);
 	}
 
 	/* Determine subject */
