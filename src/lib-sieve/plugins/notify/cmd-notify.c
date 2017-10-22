@@ -624,7 +624,7 @@ static void act_notify_print
 	unsigned int count, i;
 
 	sieve_result_action_printf
-		( rpenv, "send (depricated) notification with method 'mailto':");
+		( rpenv, "send (deprecated) notification with method 'mailto':");
 
 	/* Print main method parameters */
 

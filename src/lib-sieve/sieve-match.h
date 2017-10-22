@@ -61,7 +61,7 @@ enum sieve_match_opt_operand {
 };
 
 int sieve_match_opr_optional_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *addres, int *opt_code);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address, int *opt_code);
 
 int sieve_match_opr_optional_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, int *opt_code,
