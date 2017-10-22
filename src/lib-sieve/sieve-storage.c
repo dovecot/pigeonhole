@@ -23,7 +23,7 @@
 #include <utime.h>
 
 #define CRITICAL_MSG \
-  "Internal error occured. Refer to server log for more information."
+  "Internal error occurred. Refer to server log for more information."
 #define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
 
 /*
