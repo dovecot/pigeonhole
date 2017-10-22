@@ -504,8 +504,7 @@ static int ntfy_mailto_send
 	if ( nact->from != NULL ) {
 		from = nact->from;
 	} else if ( from_smtp == NULL ) {
-		from = t_strdup_printf("<%s>",
-			sieve_get_postmaster_address(senv));
+		from = t_strdup_printf("<%s>", senv->postmaster_address);
 	} else {
 		from = t_strdup_printf("<%s>", from_smtp);
 	}
