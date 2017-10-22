@@ -101,7 +101,7 @@ option may be specified multiple times.
 The final envelope recipient address. Some tests and actions will
 use this as the script owner\(aqs e\-mail address. For example, this is what is
 used by the vacation action to check whether a reply is appropriate. If the
-\fB\-r\fP option is omitted, the orignal envelope recipient address will be used
+\fB\-r\fP option is omitted, the original envelope recipient address will be used
 instead (see \fB\-a\fP option for more info).
 .TP
 .BI \-s\  script\-file
