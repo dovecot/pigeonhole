@@ -134,8 +134,7 @@ static bool _decode_unicode
 
 		if ( !_parse_hexint(in, inend, 0, &unicode_hex) ) break;
 
-		if ( (unicode_hex <= 0xD7FF) ||
-			(unicode_hex >= 0xE000 && unicode_hex <= 0x10FFFF)	)
+		if ( uni_is_valid_ucs4((unichar_t) unicode_hex) )
 			uni_ucs4_to_utf8_c((unichar_t) unicode_hex, result);
 		else {
 			if ( valid ) *error_hex = unicode_hex;
