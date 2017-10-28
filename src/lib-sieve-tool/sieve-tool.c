@@ -579,7 +579,7 @@ void sieve_tool_dump_binary_to
 			(void) sieve_hexdump(sbin, dumpstream);
 		else
 			(void) sieve_dump(sbin, dumpstream, FALSE);
-		if (o_stream_nfinish(dumpstream) < 0) {
+		if (o_stream_finish(dumpstream) < 0) {
 			i_fatal("write(%s) failed: %s", filename,
 				o_stream_get_error(dumpstream));
 		}

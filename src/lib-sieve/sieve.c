@@ -998,7 +998,7 @@ void sieve_trace_log_free(struct sieve_trace_log **_trace_log)
 
 	*_trace_log = NULL;
 
-	if (o_stream_nfinish(trace_log->output) < 0) {
+	if (o_stream_finish(trace_log->output) < 0) {
 		i_error("write(%s) failed: %s",
 			o_stream_get_name(trace_log->output),
 			o_stream_get_error(trace_log->output));

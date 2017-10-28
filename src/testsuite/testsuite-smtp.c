@@ -141,7 +141,7 @@ int testsuite_smtp_finish
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
 	int ret = 1;
 
-	if (o_stream_nfinish(smtp->output) < 0) {
+	if (o_stream_finish(smtp->output) < 0) {
 		i_error("write(%s) failed: %s", smtp->msg_file,
 			o_stream_get_error(smtp->output));
 		ret = -1;
