@@ -163,6 +163,9 @@ else
 fi
 AM_CONDITIONAL(LDAP_PLUGIN, test "$have_ldap_plugin" = "yes")
 
+CFLAGS="$CFLAGS $EXTRA_CFLAGS"
+LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
+
 AC_CONFIG_FILES([
 Makefile
 doc/Makefile
