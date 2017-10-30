@@ -328,7 +328,7 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 
 	ret = 0;
 	while (input->stream_errno == 0 &&
-		!i_stream_is_eof(input)) {
+		!i_stream_read_eof(input)) {
 		if (sieve_storage_save_continue(save_ctx) < 0) {
 			mail_storage_set_critical(storage,
 				"Failed to save sieve script '%s': %s", scriptname,
