@@ -156,8 +156,13 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 	/* <script literal> */
 	ret = managesieve_parser_read_args(ctx->save_parser, 0, 0, &args);
 	if (ret == -1 || client->output->closed) {
-		if (ctx->storage != NULL)
-			client_send_command_error(cmd, NULL);
+		if (ctx->storage != NULL) {
+			const char *msg;
+			bool fatal ATTR_UNUSED;
+
+			msg = managesieve_parser_get_error(ctx->save_parser, &fatal);
+			client_send_command_error(cmd, msg);
+		}
 		cmd_putscript_finish(ctx);
 		return TRUE;
 	}
