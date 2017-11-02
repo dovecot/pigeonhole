@@ -299,10 +299,27 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
+	if (t_abspath("auth-master", &login_set.auth_socket_path, &error) < 0)
+		i_fatal("t_abspath(%s) failed: %s", "auth-master", error);
+
+	if (argv[optind] != NULL &&
+	    t_abspath(argv[optind], &login_set.postlogin_socket_path, &error) < 0) {
+		i_fatal("t_abspath(%s) failed: %s",
+			argv[optind], error);
+	}
+
+	login_set.callback = login_client_connected;
+	login_set.failure_callback = login_client_failed;
+
+	if (!IS_STANDALONE())
+		master_login = master_login_init(master_service, &login_set);
+
 	storage_service =
 		mail_storage_service_init(master_service,
 					  set_roots, storage_service_flags);
 	master_service_init_finish(master_service);
+	/* NOTE: login_set.*_socket_path are now invalid due to data stack
+	   having been freed */
 
 	/* fake that we're running, so we know if client was destroyed
 		while handling its initial input */
@@ -313,22 +330,6 @@ int main(int argc, char *argv[])
 			main_stdio_run(username);
 		} T_END;
 	} else {
-		if (t_abspath("auth-master",
-			&login_set.auth_socket_path, &error) < 0) {
-			i_fatal("t_abspath(%s) failed: %s",
-				"auth-master", error);
-		}
-
-		if (argv[optind] != NULL && t_abspath(argv[optind],
-			&login_set.postlogin_socket_path, &error) < 0) {
-			i_fatal("t_abspath(%s) failed: %s",
-				argv[optind], error);
-		}
-
-		login_set.callback = login_client_connected;
-		login_set.failure_callback = login_client_failed;
-
-		master_login = master_login_init(master_service, &login_set);
 		io_loop_set_running(current_ioloop);
 	}
 
