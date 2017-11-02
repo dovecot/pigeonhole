@@ -74,7 +74,7 @@ static void client_send_capabilities(struct client *client)
 			(client, t_strconcat("\"SASL\" \"", saslcap, "\"\r\n", NULL));
 
 		/* STARTTLS */
-		if (ssl_initialized && !client->tls)
+		if (login_ssl_initialized && !client->tls)
 			client_send_raw(client, "\"STARTTLS\"\r\n" );
 
 		/* Protocol version */
