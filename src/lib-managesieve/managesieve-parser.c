@@ -754,7 +754,7 @@ static struct istream *quoted_string_istream_create
 	qsstream->istream.istream.blocking = parser->input->blocking;
 	qsstream->istream.istream.seekable = FALSE;
 	return i_stream_create(&qsstream->istream, parser->input,
-			       i_stream_get_fd(parser->input));
+			       i_stream_get_fd(parser->input), 0);
 }
 
 

@@ -2145,6 +2145,6 @@ struct istream *edit_mail_istream_create
 
 	i_stream_seek(wrapped, 0);
 
-	return i_stream_create(&edstream->istream, wrapped, -1);
+	return i_stream_create(&edstream->istream, wrapped, -1, 0);
 }
 
