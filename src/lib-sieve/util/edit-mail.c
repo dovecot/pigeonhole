@@ -1825,40 +1825,41 @@ static ssize_t merge_modified_headers(struct edit_mail_istream *edstream)
 	size_t pos;
 	ssize_t ret = 0;
 
-	if (edstream->cur_header != NULL) {
-		/* Merge remaining parent buffer, if any */
-		if (edstream->buffer->used == 0 && stream->skip < stream->pos ) {
-			buffer_append(edstream->buffer,
-				stream->buffer + stream->skip, stream->pos - stream->skip);
-		}
+	if (edstream->cur_header == NULL)
+		return 0;
 
-		/* Add modified headers to buffer */
-		while ( edstream->cur_header != NULL && edstream->buffer->used < 1024 ) {
-			buffer_append(edstream->buffer, edstream->cur_header->field->data,
-				edstream->cur_header->field->size);
+	/* Merge remaining parent buffer, if any */
+	if (edstream->buffer->used == 0 && stream->skip < stream->pos ) {
+		buffer_append(edstream->buffer,
+			stream->buffer + stream->skip, stream->pos - stream->skip);
+	}
 
-			edstream->cur_header = edstream->cur_header->next;
+	/* Add modified headers to buffer */
+	while ( edstream->cur_header != NULL && edstream->buffer->used < 1024 ) {
+		buffer_append(edstream->buffer, edstream->cur_header->field->data,
+			edstream->cur_header->field->size);
 
-			/* Stop at end of prepended headers if original header is left unparsed */
-			if ( !edmail->headers_parsed
-				&& edstream->cur_header == edmail->header_fields_appended )
-				edstream->cur_header = NULL;
-		}
+		edstream->cur_header = edstream->cur_header->next;
 
-		if ( edstream->buffer->used > 0 ) {
-			/* Output current buffer */
-			stream->buffer = buffer_get_data(edstream->buffer, &pos);
-			ret = (ssize_t)pos + stream->skip - stream->pos;
-			i_assert( ret >= 0 );
-			stream->pos = pos;
-			stream->skip = 0;
+		/* Stop at end of prepended headers if original header is left unparsed */
+		if ( !edmail->headers_parsed
+			&& edstream->cur_header == edmail->header_fields_appended )
+			edstream->cur_header = NULL;
+	}
 
-			if ( ret != 0 )
-				return ret;
+	if ( edstream->buffer->used > 0 ) {
+		/* Output current buffer */
+		stream->buffer = buffer_get_data(edstream->buffer, &pos);
+		ret = (ssize_t)pos + stream->skip - stream->pos;
+		i_assert( ret >= 0 );
+		stream->pos = pos;
+		stream->skip = 0;
 
-			if ( edstream->buffer->used >= 1024 )
-				return -2;
-		}
+		if ( ret != 0 )
+			return ret;
+
+		if ( edstream->buffer->used >= 1024 )
+			return -2;
 	}
 	return 0;
 }
