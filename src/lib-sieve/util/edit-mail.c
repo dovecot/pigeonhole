@@ -1716,6 +1716,7 @@ struct edit_mail_istream {
 	struct _header_field_index *cur_header;
 
 	bool header_read:1;
+	bool eof:1;
 };
 
 static void edit_mail_istream_destroy(struct iostream_private *stream)
@@ -1779,6 +1780,7 @@ static ssize_t merge_from_parent
 
 		stream->istream.stream_errno = stream->parent->stream_errno;
 		stream->istream.eof = stream->parent->eof;
+		edstream->eof = stream->parent->eof;
 		data = i_stream_get_data(stream->parent, &pos);
 		/* check again, in case the parent stream had been seeked
 		   backwards and the previous read() didn't get us far
@@ -1871,8 +1873,10 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 	uoff_t prep_hdr_size, hdr_size;
 	ssize_t ret = 0;
 
-	if (stream->istream.eof)
+	if (edstream->eof) {
+		stream->istream.eof = TRUE;
 		return -1;
+	}
 
 	if ( edstream->buffer->used > 0 ) {
 		if ( stream->skip > 0 ) {
@@ -1985,6 +1989,7 @@ stream_reset_to(struct edit_mail_istream *edstream, uoff_t v_offset)
 	edstream->istream.pos = 0;
 	edstream->istream.buffer = NULL;
 	buffer_set_used_size(edstream->buffer, 0);
+	edstream->eof = FALSE;
 	i_stream_seek(edstream->istream.parent, 0);
 }
 
