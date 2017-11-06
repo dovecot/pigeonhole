@@ -12,7 +12,6 @@
 #include "master-service.h"
 #include "master-auth.h"
 #include "auth-client.h"
-#include "ssl-proxy.h"
 
 #include "managesieve-parser.h"
 #include "managesieve-quote.h"
