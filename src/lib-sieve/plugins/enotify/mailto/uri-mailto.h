@@ -27,7 +27,6 @@ struct uri_mailto {
 	ARRAY_TYPE(headers) headers;
 	const char *subject;
 	const char *body;
-	const char *from_normalized;
 };
 
 bool uri_mailto_validate
