@@ -2109,7 +2109,7 @@ static void edit_mail_istream_seek
 			offset += cur_header->field->size;
 
 			while ( v_offset > offset ) {
-				cur_header = edstream->cur_header->next;
+				cur_header = cur_header->next;
 				i_assert( cur_header != NULL );
 
 				edstream->cur_header_v_offset = offset;
