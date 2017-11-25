@@ -699,8 +699,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 				io_stream_set_error(&stream->iostream,
 					"Escaped quoted-string character is not a QUOTED-SPECIAL");
 				stream->istream.stream_errno = EINVAL;
-				ret = -1;
-				break;
+				return -1;
 			}
 			stream->w_buffer[dest++] = data[i];
 			i++;
@@ -709,8 +708,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 				io_stream_set_error(&stream->iostream,
 					"Quoted string contains an invalid character");
 				stream->istream.stream_errno = EINVAL;
-				ret = -1;
-				break;
+				return -1;
 			}
 
 			stream->w_buffer[dest++] = data[i];
