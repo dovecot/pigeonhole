@@ -1970,7 +1970,8 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 
 			if ( append_v_offset == hdr_size - 1 ) {
 				/* Strip final CR too when it is present */
-				if ( stream->buffer[stream->pos-1] == '\r' ) {
+				if ( stream->buffer != NULL &&
+					stream->buffer[stream->pos-1] == '\r' ) {
 					stream->pos--;
 					ret--;
 				}
