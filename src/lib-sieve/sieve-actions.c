@@ -732,6 +732,8 @@ static void act_store_rollback
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *) tr_context;
 
+	if ( trans == NULL ) return;
+
 	i_assert( trans->box != NULL );
 
 	if (!success) {
