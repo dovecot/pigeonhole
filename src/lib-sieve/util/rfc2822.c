@@ -242,3 +242,23 @@ void rfc2822_header_utf8_printf
 	rfc2822_header_write(header, name, str_c(body));
 }
 
+
+void rfc2822_header_write_address(string_t *header,
+	const char *name, const char *address)
+{
+	bool has_8bit = FALSE;
+	const char *p;
+
+	for (p = address; *p != '\0'; p++) {
+		if ((*p & 0x80) != 0)
+			has_8bit = TRUE;
+	}
+
+	if (!has_8bit) {
+		rfc2822_header_write(header, name, address);
+	} else {
+		string_t *body = t_str_new(256);
+		message_header_encode(address, body);
+		rfc2822_header_write(header, name, str_c(body));
+	}
+}
