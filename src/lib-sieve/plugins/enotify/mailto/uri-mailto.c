@@ -261,8 +261,7 @@ static bool uri_mailto_parse_recipients
 		}
 	}
 
-	/* Skip '?' */
-	if ( *p != '\0' ) p++;
+	i_assert( *p == '\0' || *p == '?' );
 
 	/* Verify and add recipient */
 	if ( !uri_mailto_add_valid_recipient(parser, to, FALSE) )
@@ -528,6 +527,11 @@ static bool uri_mailto_parse_uri
 
 	if ( !uri_mailto_parse_recipients(parser, &p) )
 		return FALSE;
+
+	if ( *p == '\0' )
+		return TRUE;
+	i_assert( *p == '?' );
+	p++;
 
 	/* Extract hfield items */
 
