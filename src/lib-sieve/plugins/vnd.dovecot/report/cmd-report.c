@@ -560,17 +560,12 @@ static int act_report_send
 		sender = sieve_message_get_sender(msgctx);
 		orig_recipient = sieve_message_get_orig_recipient(msgctx);
 
-		if (sender == NULL) {
-			rfc2822_header_write(msg,
-				"Original-Mail-From", "<>");
-		} else {
-			rfc2822_header_printf(msg,
-				"Original-Mail-From", "<%s>",
-				smtp_address_encode_path(sender));
-		}
+		rfc2822_header_write(msg,
+			"Original-Mail-From",
+			smtp_address_encode_path(sender));
 		if (orig_recipient != NULL) {
-			rfc2822_header_printf(msg,
-				"Original-Rcpt-To", "<%s>",
+			rfc2822_header_write(msg,
+				"Original-Rcpt-To",
 				smtp_address_encode_path(orig_recipient));
 		}
 	}
