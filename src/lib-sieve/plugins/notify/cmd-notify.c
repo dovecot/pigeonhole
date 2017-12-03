@@ -770,7 +770,7 @@ static bool act_notify_send
 		}
 	}
 
-	rfc2822_header_write(msg, "To", str_c(to));
+	rfc2822_header_write_address(msg, "To", str_c(to));
 
 	/* Generate message body */
 	str_printfa(msg, "\r\n%s\r\n", act->message);

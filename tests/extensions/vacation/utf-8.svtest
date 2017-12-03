@@ -84,3 +84,85 @@ decoded: ${subject}
 ;
 	}
 }
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@example.org
+Subject: frop
+Message-ID: <432df324@example.org>
+To: <g.m.karotte@example.com>
+
+Frop
+.
+;
+
+
+test "MIME Encoded From" {
+	vacation :subject "Frop"
+		:from "=?utf-8?q?G=C3=BCnther?= M. Karotte <g.m.karotte@example.com>"
+		"I am not in today";
+
+	/* Execute Sieve result (sending message to dummy SMTP) */
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	/* Retrieve message from dummy SMTP and set it as the active message under
+	 * test.
+	 */
+	test_message :smtp 0;
+
+	set "expected" "Günther M. Karotte <g.m.karotte@example.com>";
+	if not header :is "from" "${expected}" {
+		if header :matches "from" "*" { set "decoded" "${1}"; }
+
+		test_fail text:
+from header is not encoded/decoded properly:
+expected: ${expected}
+decoded: ${decoded}
+.
+;
+	}
+}
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@example.org
+Subject: frop
+Message-ID: <432df324@example.org>
+To: <g.m.karotte@example.com>
+
+Frop
+.
+;
+
+
+test "MIME Encoded From - UTF-8 in phrase" {
+	vacation :subject "Frop"
+		:from "Günther M. Karotte <g.m.karotte@example.com>"
+		"I am not in today";
+
+	/* Execute Sieve result (sending message to dummy SMTP) */
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	/* Retrieve message from dummy SMTP and set it as the active message under
+	 * test.
+	 */
+	test_message :smtp 0;
+
+	set "expected" "Günther M. Karotte <g.m.karotte@example.com>";
+	if not header :is "from" "${expected}" {
+		if header :matches "from" "*" { set "decoded" "${1}"; }
+
+		test_fail text:
+from header is not encoded/decoded properly:
+expected: ${expected}
+decoded: ${decoded}
+.
+;
+	}
+}
