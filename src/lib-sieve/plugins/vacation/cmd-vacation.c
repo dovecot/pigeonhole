@@ -1015,7 +1015,7 @@ static int act_vacation_send
 	rfc2822_header_write(msg, "Date", message_date_create(ioloop_time));
 
 	if ( ctx->from != NULL && *(ctx->from) != '\0' ) {
-		rfc2822_header_utf8_printf(msg, "From", "%s", ctx->from);
+		rfc2822_header_write_address(msg, "From", ctx->from);
 	} else {
 		if ( reply_from == NULL || reply_from->mailbox == NULL ||
 			*reply_from->mailbox == '\0' )

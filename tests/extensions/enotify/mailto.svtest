@@ -2,6 +2,7 @@ require "vnd.dovecot.testsuite";
 require "enotify";
 require "relational";
 require "envelope";
+require "variables";
 require "comparator-i;ascii-numeric";
 
 /*
@@ -481,5 +482,61 @@ test "Envelope config - user_email" {
 
 	if not envelope :is "to" "timo@example.com" {
 		test_fail "envelope recipient set incorrectly";
+	}
+}
+
+/*
+ * UTF-8 addresses
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "UTF-8 address" {
+	set "to" "=?utf-8?q?G=C3=BCnther?= M. Karotte <g.m.karotte@example.com>";
+	set "cc" "Dieter T. =?utf-8?q?Stoppelr=C3=BCbe?= <d.t.stoppelruebe@example.com>";
+
+	set :encodeurl "to_enc" "${to}";
+	set :encodeurl "cc_enc" "${cc}";
+
+	notify "mailto:?to=${to_enc}&cc=${cc_enc}";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+	test_message_print;
+
+	set "expected" "Günther M. Karotte <g.m.karotte@example.com>";
+	if not header :is "to" "${expected}" {
+		if header :matches "to" "*" { set "decoded" "${1}"; }
+
+		test_fail text:
+to header is not encoded/decoded properly:
+expected: ${expected}
+decoded: ${decoded}
+.
+;
+	}
+
+	set "expected" "Dieter T. Stoppelrübe <d.t.stoppelruebe@example.com>";
+	if not header :is "cc" "${expected}" {
+		if header :matches "cc" "*" { set "decoded" "${1}"; }
+
+		test_fail text:
+to header is not encoded/decoded properly:
+expected: ${expected}
+decoded: ${decoded}
+.
+;
 	}
 }

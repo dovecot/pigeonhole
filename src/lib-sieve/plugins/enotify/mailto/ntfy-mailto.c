@@ -574,13 +574,12 @@ static int ntfy_mailto_send
 	rfc2822_header_write(msg, "Date", message_date_create(ioloop_time));
 	rfc2822_header_utf8_printf(msg, "Subject", "%s", subject);
 
-	rfc2822_header_utf8_printf(msg, "From", "%s", from);
+	rfc2822_header_write_address(msg, "From", from);
 
 	if ( to != NULL )
-		rfc2822_header_utf8_printf(msg, "To", "%s", str_c(to));
-
+		rfc2822_header_write_address(msg, "To", str_c(to));
 	if ( cc != NULL )
-		rfc2822_header_utf8_printf(msg, "Cc", "%s", str_c(cc));
+		rfc2822_header_write_address(msg, "Cc", str_c(cc));
 
 	rfc2822_header_printf(msg, "Auto-Submitted",
 		"auto-notified; owner-email=\"%s\"",
