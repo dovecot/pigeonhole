@@ -53,9 +53,10 @@ void managesieve_refresh_proctitle(void)
 	case 1:
 		client = managesieve_clients;
 		str_append(title, client->user->username);
-		if (client->user->remote_ip != NULL) {
+		if (client->user->conn.remote_ip != NULL) {
 			str_append_c(title, ' ');
-			str_append(title, net_ip2addr(client->user->remote_ip));
+			str_append(title,
+				   net_ip2addr(client->user->conn.remote_ip));
 		}
 
 		if ( client->cmd.name != NULL &&
@@ -189,6 +190,7 @@ login_client_connected(const struct master_login_client *client,
 {
 #define MSG_BYE_INTERNAL_ERROR "BYE \""CRITICAL_MSG"\"\r\n"
 	struct mail_storage_service_input input;
+	enum mail_auth_request_flags flags = client->auth_req.flags;
 	const char *error;
 	buffer_t input_buf;
 
@@ -197,9 +199,15 @@ login_client_connected(const struct master_login_client *client,
 	input.service = "sieve";
 	input.local_ip = client->auth_req.local_ip;
 	input.remote_ip = client->auth_req.remote_ip;
+	input.local_port = client->auth_req.local_port;
+	input.remote_port = client->auth_req.remote_port;
 	input.username = username;
 	input.userdb_fields = extra_fields;
 	input.session_id = client->session_id;
+	if ((flags & MAIL_AUTH_REQUEST_FLAG_CONN_SECURED) != 0)
+		input.conn_secured = TRUE;
+	if ((flags & MAIL_AUTH_REQUEST_FLAG_CONN_SSL_SECURED) != 0)
+		input.conn_ssl_secured = TRUE;
 
 	buffer_create_from_const_data(&input_buf, client->data,
 				 client->auth_req.data_size);
