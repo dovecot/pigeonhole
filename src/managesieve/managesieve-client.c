@@ -251,8 +251,7 @@ void client_destroy(struct client *client, const char *reason)
 	}
 
 	managesieve_parser_destroy(&client->parser);
-	if (client->io != NULL)
-		io_remove(&client->io);
+	io_remove(&client->io);
 	if (client->to_idle_output != NULL)
 		timeout_remove(&client->to_idle_output);
 	timeout_remove(&client->to_idle);
