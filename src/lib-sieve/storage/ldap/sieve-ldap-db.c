@@ -1339,8 +1339,7 @@ sieve_ldap_read_script_callback(struct ldap_connection *conn,
 		} else {
 			sieve_storage_sys_error(storage, "db: "
 				"Search returned more than one entry for Sieve script DN");
-			if (srequest->result != NULL)
-				i_stream_unref(&srequest->result);
+			i_stream_unref(&srequest->result);
 		}
 
 	} else {

@@ -350,10 +350,7 @@ void edit_mail_reset(struct edit_mail *edmail)
 	struct _header_index *header_idx;
 	struct _header_field_index *field_idx;
 
-	if ( edmail->stream != NULL ) {
-		i_stream_unref(&edmail->stream);
-		edmail->stream = NULL;
-	}
+	i_stream_unref(&edmail->stream);
 
 	field_idx = edmail->header_fields_head;
 	while ( field_idx != NULL ) {
@@ -387,11 +384,7 @@ void edit_mail_unwrap(struct edit_mail **edmail)
 		return;
 
 	edit_mail_reset(*edmail);
-
-	if ( (*edmail)->wrapped_stream != NULL ) {
-		i_stream_unref(&(*edmail)->wrapped_stream);
-		(*edmail)->wrapped_stream = NULL;
-	}
+	i_stream_unref(&(*edmail)->wrapped_stream);
 
 	parent = (*edmail)->parent;
 

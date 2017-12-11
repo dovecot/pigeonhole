@@ -220,9 +220,7 @@ struct mail_raw *mail_raw_open_file
 	}
 
 	mailr = mail_raw_create(ruser, input, path, sender, mtime);
-
-	if ( input != NULL )
-		i_stream_unref(&input);
+	i_stream_unref(&input);
 
 	return mailr;
 }

@@ -147,8 +147,7 @@ void sieve_script_unref(struct sieve_script **_script)
 	if ( --script->refcount != 0 )
 		return;
 
-	if ( script->stream != NULL )
-		i_stream_unref(&script->stream);
+	i_stream_unref(&script->stream);
 
 	if ( script->v.destroy != NULL )
 		script->v.destroy(script);

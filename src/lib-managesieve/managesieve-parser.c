@@ -70,8 +70,7 @@ managesieve_parser_create(struct istream *input, size_t max_line_size)
 
 void managesieve_parser_destroy(struct managesieve_parser **parser)
 {
-	if ((*parser)->str_stream != NULL)
-		i_stream_unref(&(*parser)->str_stream);
+	i_stream_unref(&(*parser)->str_stream);
 
 	pool_unref(&(*parser)->pool);
 	i_free(*parser);
@@ -99,9 +98,7 @@ void managesieve_parser_reset(struct managesieve_parser *parser)
 	parser->literal_skip_crlf = FALSE;
 	parser->eol = FALSE;
 
-	if ( parser->str_stream != NULL )
-		i_stream_unref(&parser->str_stream);
-	parser->str_stream = NULL;
+	i_stream_unref(&parser->str_stream);
 }
 
 const char *managesieve_parser_get_error
