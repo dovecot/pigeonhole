@@ -187,26 +187,31 @@ struct client *client_create
 
 static const char *client_stats(struct client *client)
 {
-	struct var_expand_table tab[] = {
-		{ 't', dec2str(client->put_bytes), "put_bytes" },
-		{ 'p', dec2str(client->put_count), "put_count" },
-		{ 'b', dec2str(client->get_bytes), "get_bytes" },
-		{ 'g', dec2str(client->get_count), "get_count" },
-		{ 'v', dec2str(client->check_bytes), "check_bytes" },
-		{ 'c', dec2str(client->check_count), "check_count" },
-		{ 'd', dec2str(client->deleted_count), "deleted_count" },
-		{ 'r', dec2str(client->renamed_count), "renamed_count" },
+	const struct var_expand_table logout_tab[] = {
 		{ 'i', dec2str(i_stream_get_absolute_offset(client->input)), "input" },
 		{ 'o', dec2str(client->output->offset), "output" },
+		{ '\0', dec2str(client->put_bytes), "put_bytes" },
+		{ '\0', dec2str(client->put_count), "put_count" },
+		{ '\0', dec2str(client->get_bytes), "get_bytes" },
+		{ '\0', dec2str(client->get_count), "get_count" },
+		{ '\0', dec2str(client->check_bytes), "check_bytes" },
+		{ '\0', dec2str(client->check_count), "check_count" },
+		{ '\0', dec2str(client->deleted_count), "deleted_count" },
+		{ '\0', dec2str(client->renamed_count), "renamed_count" },
 		{ '\0', client->session_id, "session" },
 		{ '\0', NULL, NULL }
 	};
+	const struct var_expand_table *user_tab =
+		mail_user_var_expand_table(client->user);
+	const struct var_expand_table *tab =
+		t_var_expand_merge_tables(logout_tab, user_tab);
 	string_t *str;
 	const char *error;
 
 	str = t_str_new(128);
-	if (var_expand(str, client->set->managesieve_logout_format,
-		tab, &error) <= 0) {
+	if (var_expand_with_funcs(str, client->set->managesieve_logout_format,
+				  tab, mail_user_var_expand_func_table,
+				  client->user, &error) < 0) {
 		i_error("Failed to expand managesieve_logout_format=%s: %s",
 			client->set->managesieve_logout_format, error);
 	}
