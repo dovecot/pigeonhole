@@ -341,8 +341,7 @@ static void managesieve_client_input(struct client *client)
 			/* FIXME: Can't do untagged responses with managesieve. Any other ways?
 			client_send_ok(client, AUTH_SERVER_WAITING_MSG);
 			*/
-			if (client->to_auth_waiting != NULL)
-				timeout_remove(&client->to_auth_waiting);
+			timeout_remove(&client->to_auth_waiting);
 
 			client->input_blocked = TRUE;
 			break;
