@@ -71,7 +71,7 @@ void testsuite_mailstore_init(void)
 	}
 	
 	mail_user_dovecot = sieve_tool_get_mail_user(sieve_tool);
-	mail_user = mail_user_alloc("testsuite-mail-user@example.org",
+	mail_user = mail_user_alloc(NULL, "testsuite-mail-user@example.org",
 		mail_user_dovecot->set_info, mail_user_dovecot->unexpanded_set);
 	mail_user->autocreated = TRUE;
 	if (t_get_working_dir(&cwd, &error) < 0)

@@ -359,7 +359,7 @@ void sieve_tool_init_mail_user
 	const char *home = NULL, *errstr = NULL;
 
 	tool->mail_user = mail_user_alloc
-		(username, mail_user_dovecot->set_info, mail_user_dovecot->unexpanded_set);
+		(NULL, username, mail_user_dovecot->set_info, mail_user_dovecot->unexpanded_set);
 
 	if ( (home=sieve_tool_get_homedir(sieve_tool)) != NULL ) {
 		mail_user_set_home(tool->mail_user, home);
