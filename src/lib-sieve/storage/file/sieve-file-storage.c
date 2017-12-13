@@ -602,18 +602,9 @@ static void sieve_file_storage_autodetect
 	 * It's $HOME/sieve or /sieve when (presumed to be) chrooted.
 	 */
 	if ( home != NULL && *home != '\0' ) {
-		if (access(home, mode) == 0) {
-			/* Use default ~/sieve */
-			sieve_storage_sys_debug(storage,
-				"Root exists (%s)", home);
-
-			*storage_path_r = t_strconcat(home, "/sieve", NULL);
-		} else {
-			/* Don't have required access on the home directory */
-
-			sieve_storage_sys_debug(storage,
-				"access(%s, rwx) failed: %m", home);
-		}
+		/* Use default ~/sieve */
+		sieve_storage_sys_debug(storage, "Use home (%s)", home);
+		*storage_path_r = t_strconcat(home, "/sieve", NULL);
 	} else {
 			sieve_storage_sys_debug(storage,
 				"HOME is not set");
