@@ -544,10 +544,23 @@ int sieve_test
  */
 
 int sieve_script_env_init(struct sieve_script_env *senv,
-	struct mail_user *user, const char **error_r ATTR_UNUSED)
+	struct mail_user *user, const char **error_r)
 {
+	const struct mail_storage_settings *mail_set =
+		mail_user_set_get_storage_set(user);
+	const struct message_address *postmaster;
+	const char *error;
+
+	if ( !mail_storage_get_postmaster_address(mail_set,
+		&postmaster, &error) ) {
+		*error_r = t_strdup_printf(
+			"Invalid postmaster_address: %s", error);
+		return -1;
+	}
+
 	i_zero(senv);
 	senv->user = user;
+	senv->postmaster_address = postmaster;
 	return 0;
 }
 
@@ -1093,11 +1106,8 @@ const struct smtp_address *sieve_get_user_email
 const struct message_address *
 sieve_get_postmaster(const struct sieve_script_env *senv)
 {
-	const struct mail_storage_settings *mail_set =
-		mail_user_set_get_storage_set(senv->user);
-
-	i_assert(mail_set->parsed_postmaster_address != NULL);
-	return mail_set->parsed_postmaster_address;
+	i_assert(senv->postmaster_address != NULL);
+	return senv->postmaster_address;
 }
 
 const char *

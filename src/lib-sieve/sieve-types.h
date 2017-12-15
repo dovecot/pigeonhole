@@ -192,6 +192,7 @@ struct sieve_trace_config {
 struct sieve_script_env {
 	/* Mail-related */
 	struct mail_user *user;
+	const struct message_address *postmaster_address;
 	const char *default_mailbox;
 	bool mailbox_autocreate;
 	bool mailbox_autosubscribe;
