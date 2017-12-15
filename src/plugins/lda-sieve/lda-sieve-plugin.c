@@ -816,79 +816,79 @@ static int lda_sieve_execute
 		 * will then attempt the default delivery. We return 0 to signify the lack
 		 * of a real error.
 		 */
-		ret = 0;
-	} else {
-		/* Initialize user error handler */
-
-		if ( srctx->user_script != NULL ) {
-			const char *log_path =
-				sieve_user_get_log_path(svinst, srctx->user_script);
-	
-			if ( log_path != NULL ) {
-				srctx->userlog = log_path;
-				srctx->user_ehandler = sieve_logfile_ehandler_create
-					(svinst, srctx->userlog, LDA_SIEVE_MAX_USER_ERRORS);
-			}
-		}
-
-		/* Initialize trace logging */
-
-		trace_log = NULL;
-		if ( sieve_trace_config_get(svinst, &trace_config) >= 0 &&
-			sieve_trace_log_open(svinst, NULL, &trace_log) < 0 )
-			i_zero(&trace_config);
-
-		/* Collect necessary message data */
-
-		i_zero(&msgdata);
-
-		msgdata.mail = mdctx->src_mail;
-		msgdata.auth_user = mdctx->rcpt_user->username;
-		msgdata.envelope.mail_from = mail_deliver_get_return_address(mdctx);
-		msgdata.envelope.mail_params = &mdctx->mail_params;
-		msgdata.envelope.rcpt_to = mdctx->rcpt_to;
-		msgdata.envelope.rcpt_params = &mdctx->rcpt_params;
-		(void)mail_get_first_header(msgdata.mail, "Message-ID", &msgdata.id);
-
-		srctx->msgdata = &msgdata;
-
-		/* Compose script execution environment */
-
-		i_zero(&scriptenv);
-		i_zero(&estatus);
-
-		scriptenv.default_mailbox = mdctx->rcpt_default_mailbox;
-		scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
-		scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;
-		scriptenv.user = mdctx->rcpt_user;
-		scriptenv.smtp_start = lda_sieve_smtp_start;
-		scriptenv.smtp_add_rcpt = lda_sieve_smtp_add_rcpt;
-		scriptenv.smtp_send = lda_sieve_smtp_send;
-		scriptenv.smtp_abort = lda_sieve_smtp_abort;
-		scriptenv.smtp_finish = lda_sieve_smtp_finish;
-		scriptenv.duplicate_mark = lda_sieve_duplicate_mark;
-		scriptenv.duplicate_check = lda_sieve_duplicate_check;
-		scriptenv.duplicate_flush = lda_sieve_duplicate_flush;
-		scriptenv.reject_mail = lda_sieve_reject_mail;
-		scriptenv.script_context = (void *) mdctx;
-		scriptenv.trace_log = trace_log;
-		scriptenv.trace_config = trace_config;
-		scriptenv.exec_status = &estatus;
-
-		srctx->scriptenv = &scriptenv;
-
-		/* Execute script(s) */
-
-		ret = lda_sieve_execute_scripts(srctx);
-
-		/* Record status */
-
-		mdctx->tried_default_save = estatus.tried_default_save;
-		*storage_r = estatus.last_storage;
-
-		if ( trace_log != NULL )
-			sieve_trace_log_free(&trace_log);
+		return 0;
 	}
+
+	/* Initialize user error handler */
+
+	if ( srctx->user_script != NULL ) {
+		const char *log_path =
+			sieve_user_get_log_path(svinst, srctx->user_script);
+
+		if ( log_path != NULL ) {
+			srctx->userlog = log_path;
+			srctx->user_ehandler = sieve_logfile_ehandler_create
+				(svinst, srctx->userlog, LDA_SIEVE_MAX_USER_ERRORS);
+		}
+	}
+
+	/* Initialize trace logging */
+
+	trace_log = NULL;
+	if ( sieve_trace_config_get(svinst, &trace_config) >= 0 &&
+		sieve_trace_log_open(svinst, NULL, &trace_log) < 0 )
+		i_zero(&trace_config);
+
+	/* Collect necessary message data */
+
+	i_zero(&msgdata);
+
+	msgdata.mail = mdctx->src_mail;
+	msgdata.auth_user = mdctx->rcpt_user->username;
+	msgdata.envelope.mail_from = mail_deliver_get_return_address(mdctx);
+	msgdata.envelope.mail_params = &mdctx->mail_params;
+	msgdata.envelope.rcpt_to = mdctx->rcpt_to;
+	msgdata.envelope.rcpt_params = &mdctx->rcpt_params;
+	(void)mail_get_first_header(msgdata.mail, "Message-ID", &msgdata.id);
+
+	srctx->msgdata = &msgdata;
+
+	/* Compose script execution environment */
+
+	i_zero(&scriptenv);
+	i_zero(&estatus);
+
+	scriptenv.default_mailbox = mdctx->rcpt_default_mailbox;
+	scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
+	scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;
+	scriptenv.user = mdctx->rcpt_user;
+	scriptenv.smtp_start = lda_sieve_smtp_start;
+	scriptenv.smtp_add_rcpt = lda_sieve_smtp_add_rcpt;
+	scriptenv.smtp_send = lda_sieve_smtp_send;
+	scriptenv.smtp_abort = lda_sieve_smtp_abort;
+	scriptenv.smtp_finish = lda_sieve_smtp_finish;
+	scriptenv.duplicate_mark = lda_sieve_duplicate_mark;
+	scriptenv.duplicate_check = lda_sieve_duplicate_check;
+	scriptenv.duplicate_flush = lda_sieve_duplicate_flush;
+	scriptenv.reject_mail = lda_sieve_reject_mail;
+	scriptenv.script_context = (void *) mdctx;
+	scriptenv.trace_log = trace_log;
+	scriptenv.trace_config = trace_config;
+	scriptenv.exec_status = &estatus;
+
+	srctx->scriptenv = &scriptenv;
+
+	/* Execute script(s) */
+
+	ret = lda_sieve_execute_scripts(srctx);
+
+	/* Record status */
+
+	mdctx->tried_default_save = estatus.tried_default_save;
+	*storage_r = estatus.last_storage;
+
+	if ( trace_log != NULL )
+		sieve_trace_log_free(&trace_log);
 
 	return ret;
 }
