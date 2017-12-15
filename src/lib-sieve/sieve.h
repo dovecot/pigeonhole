@@ -164,6 +164,13 @@ int sieve_test
  * Script execution
  */
 
+/* sieve_script_env_init:
+ *
+ *   Initializes the scirpt environment from the given mail_user.
+ */
+int sieve_script_env_init(struct sieve_script_env *senv,
+	struct mail_user *user, const char **error_r);
+
 /* sieve_execute:
  *
  *   Executes the binary, including the result.

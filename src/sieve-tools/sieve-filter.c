@@ -366,6 +366,7 @@ int main(int argc, char **argv)
 	struct mailbox *src_box = NULL, *move_box = NULL;
 	enum mailbox_flags open_flags = MAILBOX_FLAG_IGNORE_ACLS;
 	enum mail_error error;
+	const char *errstr;
 	int c;
 
 	sieve_tool = sieve_tool_init("sieve-filter", &argc, &argv,
@@ -541,10 +542,10 @@ int main(int argc, char **argv)
 	}
 
 	/* Compose script environment */
-	i_zero(&scriptenv);
+	if (sieve_script_env_init(&scriptenv, mail_user, &errstr) < 0)
+		i_fatal("Failed to initialize script execution: %s", errstr);
 	scriptenv.mailbox_autocreate = FALSE;
 	scriptenv.default_mailbox = dst_mailbox;
-	scriptenv.user = mail_user;
 
 	/* Compose filter context */
 	i_zero(&sfdata);

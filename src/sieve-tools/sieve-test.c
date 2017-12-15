@@ -316,9 +316,11 @@ int main(int argc, char **argv)
 		}
 
 		/* Compose script environment */
-		i_zero(&scriptenv);
+		if (sieve_script_env_init(&scriptenv,
+			sieve_tool_get_mail_user(sieve_tool), &errstr) < 0)
+			i_fatal("Failed to initialize script execution: %s", errstr);
+
 		scriptenv.default_mailbox = mailbox;
-		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
 		scriptenv.smtp_start = sieve_smtp_start;
 		scriptenv.smtp_add_rcpt = sieve_smtp_add_rcpt;
 		scriptenv.smtp_send = sieve_smtp_send;
@@ -328,6 +330,8 @@ int main(int argc, char **argv)
 		scriptenv.duplicate_check = duplicate_check;
 		scriptenv.trace_log = trace_log;
 		scriptenv.trace_config = trace_config;
+
+		i_zero(&estatus);
 		scriptenv.exec_status = &estatus;
 
 		/* Run the test */

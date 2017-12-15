@@ -543,6 +543,14 @@ int sieve_test
  * Script execution
  */
 
+int sieve_script_env_init(struct sieve_script_env *senv,
+	struct mail_user *user, const char **error_r ATTR_UNUSED)
+{
+	i_zero(senv);
+	senv->user = user;
+	return 0;
+}
+
 int sieve_execute
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv,

@@ -713,6 +713,7 @@ int imap_sieve_run_mail
 	struct imap_sieve_context context;
 	struct sieve_trace_config trace_config;
 	struct sieve_trace_log *trace_log;
+	const char *error;
 	int ret;
 
 	i_zero(&context);
@@ -744,26 +745,32 @@ int imap_sieve_run_mail
 
 		/* Compose script execution environment */
 
-		i_zero(&scriptenv);
-		i_zero(&estatus);
-		scriptenv.default_mailbox = mailbox_get_vname(mail->box);
-		scriptenv.user = user;
-		scriptenv.smtp_start = imap_sieve_smtp_start;
-		scriptenv.smtp_add_rcpt = imap_sieve_smtp_add_rcpt;
-		scriptenv.smtp_send = imap_sieve_smtp_send;
-		scriptenv.smtp_abort = imap_sieve_smtp_abort;
-		scriptenv.smtp_finish = imap_sieve_smtp_finish;
-		scriptenv.duplicate_mark = imap_sieve_duplicate_mark;
-		scriptenv.duplicate_check = imap_sieve_duplicate_check;
-		scriptenv.duplicate_flush = imap_sieve_duplicate_flush;
-		scriptenv.exec_status = &estatus;
-		scriptenv.trace_log = trace_log;
-		scriptenv.trace_config = trace_config;
-		scriptenv.script_context = (void *)&context;
+		if (sieve_script_env_init(&scriptenv, user, &error) < 0) {
+			sieve_sys_error(svinst,
+				"Failed to initialize script execution: %s",
+				error);
+			ret = -1;
+		} else {
+			scriptenv.default_mailbox = mailbox_get_vname(mail->box);
+			scriptenv.smtp_start = imap_sieve_smtp_start;
+			scriptenv.smtp_add_rcpt = imap_sieve_smtp_add_rcpt;
+			scriptenv.smtp_send = imap_sieve_smtp_send;
+			scriptenv.smtp_abort = imap_sieve_smtp_abort;
+			scriptenv.smtp_finish = imap_sieve_smtp_finish;
+			scriptenv.duplicate_mark = imap_sieve_duplicate_mark;
+			scriptenv.duplicate_check = imap_sieve_duplicate_check;
+			scriptenv.duplicate_flush = imap_sieve_duplicate_flush;
+			scriptenv.trace_log = trace_log;
+			scriptenv.trace_config = trace_config;
+			scriptenv.script_context = (void *)&context;
 
-		/* Execute script(s) */
+			i_zero(&estatus);
+			scriptenv.exec_status = &estatus;
 
-		ret = imap_sieve_run_scripts(isrun, &msgdata, &scriptenv);
+			/* Execute script(s) */
+
+			ret = imap_sieve_run_scripts(isrun, &msgdata, &scriptenv);
+		}
 	} T_END;
 
 	if ( trace_log != NULL )

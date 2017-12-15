@@ -800,6 +800,7 @@ static int lda_sieve_execute
 	struct sieve_trace_config trace_config;
 	struct sieve_trace_log *trace_log;
 	bool debug = mdctx->rcpt_user->mail_debug;
+	const char *error;
 	int ret;
 
 	/* Check whether there are any scripts to execute at all */
@@ -855,13 +856,17 @@ static int lda_sieve_execute
 
 	/* Compose script execution environment */
 
-	i_zero(&scriptenv);
-	i_zero(&estatus);
+	if (sieve_script_env_init(&scriptenv, mdctx->rcpt_user, &error) < 0) {
+		sieve_sys_error(svinst,
+			"Failed to initialize script execution: %s", error);
+		if ( trace_log != NULL )
+			sieve_trace_log_free(&trace_log);
+		return -1;
+	}
 
 	scriptenv.default_mailbox = mdctx->rcpt_default_mailbox;
 	scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
 	scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;
-	scriptenv.user = mdctx->rcpt_user;
 	scriptenv.smtp_start = lda_sieve_smtp_start;
 	scriptenv.smtp_add_rcpt = lda_sieve_smtp_add_rcpt;
 	scriptenv.smtp_send = lda_sieve_smtp_send;
@@ -874,6 +879,8 @@ static int lda_sieve_execute
 	scriptenv.script_context = (void *) mdctx;
 	scriptenv.trace_log = trace_log;
 	scriptenv.trace_config = trace_config;
+
+	i_zero(&estatus);
 	scriptenv.exec_status = &estatus;
 
 	srctx->scriptenv = &scriptenv;
