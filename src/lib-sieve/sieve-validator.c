@@ -563,7 +563,7 @@ static bool sieve_validator_extensions_check_conficts
 	if ( ext->id < 0 )
 		return TRUE;
 
-	ext_reg = array_idx_modifiable
+	ext_reg = array_idx_get_space
 		(&valdtr->extensions, (unsigned int) ext->id);
 
 	regs = array_get_modifiable(&valdtr->extensions, &count);
@@ -624,7 +624,7 @@ bool sieve_validator_extension_load
 	/* Register extension no matter what and store the
 	 * AST argument registering it */
 	if ( ext->id >= 0 ) {
-		reg = array_idx_modifiable
+		reg = array_idx_get_space
 			(&valdtr->extensions, (unsigned int) ext->id);
 		i_assert(reg->ext == NULL || reg->ext == ext);
 		reg->ext = ext;
@@ -728,7 +728,7 @@ void sieve_validator_extension_register
 
 	if ( ext->id < 0 ) return;
 
-	reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext->id);
+	reg = array_idx_get_space(&valdtr->extensions, (unsigned int) ext->id);
 	i_assert(reg->ext == NULL || reg->ext == ext);
 	reg->ext = ext;
 	reg->valext = valext;
@@ -756,7 +756,7 @@ void sieve_validator_extension_set_context
 
 	if ( ext->id < 0 ) return;
 
-	reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext->id);
+	reg = array_idx_get_space(&valdtr->extensions, (unsigned int) ext->id);
 	reg->context = context;
 }
 
