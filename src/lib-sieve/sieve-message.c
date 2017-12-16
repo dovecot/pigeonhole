@@ -1160,7 +1160,7 @@ static int sieve_message_parts_add_missing
 			}
 
 			/* Start processing next part */
-			body_part_idx = array_idx_modifiable
+			body_part_idx = array_idx_get_space
 				(&msgctx->cached_body_parts, idx);
 			if ( *body_part_idx == NULL )
 				*body_part_idx = p_new(pool, struct sieve_message_part, 1);

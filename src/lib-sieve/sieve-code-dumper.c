@@ -101,7 +101,7 @@ void sieve_dump_extension_register
 
 	if ( ext->id < 0 ) return;
 
-	reg = array_idx_modifiable(&cdumper->extensions, (unsigned int) ext->id);
+	reg = array_idx_get_space(&cdumper->extensions, (unsigned int) ext->id);
 	reg->cdmpext = cdmpext;
 	reg->ext = ext;
 	reg->context = context;
@@ -115,7 +115,7 @@ void sieve_dump_extension_set_context
 
 	if ( ext->id < 0 ) return;
 
-	reg = array_idx_modifiable(&cdumper->extensions, (unsigned int) ext->id);
+	reg = array_idx_get_space(&cdumper->extensions, (unsigned int) ext->id);
 	reg->context = context;
 }
 

@@ -202,7 +202,7 @@ static struct sieve_interpreter *_sieve_interpreter_create
 			}
 
 			if ( deferred > 0 && ext->id >= 0 ) {
-				reg = array_idx_modifiable
+				reg = array_idx_get_space
 					(&interp->extensions, (unsigned int)ext->id);
 				reg->deferred = TRUE;
 			}
@@ -488,7 +488,7 @@ void sieve_interpreter_extension_register
 
 	if ( ext->id < 0 ) return;
 
-	reg = array_idx_modifiable(&interp->extensions, (unsigned int) ext->id);
+	reg = array_idx_get_space(&interp->extensions, (unsigned int) ext->id);
 	reg->intext = intext;
 	reg->ext = ext;
 	reg->context = context;
@@ -502,7 +502,7 @@ void sieve_interpreter_extension_set_context
 
 	if ( ext->id < 0 ) return;
 
-	reg = array_idx_modifiable(&interp->extensions, (unsigned int) ext->id);
+	reg = array_idx_get_space(&interp->extensions, (unsigned int) ext->id);
 	reg->context = context;
 }
 

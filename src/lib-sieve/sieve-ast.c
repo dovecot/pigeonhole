@@ -142,7 +142,7 @@ void sieve_ast_extension_link
 	if ( ext->id < 0 ) return;
 
 	/* Initialize registration */
-	reg = array_idx_modifiable(&ast->extensions,
+	reg = array_idx_get_space(&ast->extensions,
 		(unsigned int) ext->id);
 	i_assert(reg->ext == NULL || reg->ext == ext);
 	reg->ext = ext;
@@ -174,7 +174,7 @@ void sieve_ast_extension_register
 	if ( ext->id < 0 ) return;
 
 	/* Initialize registration */
-	reg = array_idx_modifiable(&ast->extensions, (unsigned int) ext->id);
+	reg = array_idx_get_space(&ast->extensions, (unsigned int) ext->id);
 	i_assert(reg->ext == NULL || reg->ext == ext);
 	reg->ext = ext;
 	reg->ast_ext = ast_ext;
@@ -188,7 +188,7 @@ void sieve_ast_extension_set_context
 
 	if ( ext->id < 0 ) return;
 
-	reg = array_idx_modifiable(&ast->extensions, (unsigned int) ext->id);
+	reg = array_idx_get_space(&ast->extensions, (unsigned int) ext->id);
 	reg->context = context;
 }
 
