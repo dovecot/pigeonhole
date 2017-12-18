@@ -1324,7 +1324,7 @@ static int act_vacation_commit
 				_contains_my_address(headers, orig_recipient) ) {
 				smtp_from = orig_recipient;
 				message_address_init_from_smtp(&reply_from,
-					NULL, recipient);
+					NULL, orig_recipient);
 				break;
 			}
 
