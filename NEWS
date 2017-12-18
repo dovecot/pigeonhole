@@ -1,3 +1,29 @@
+v0.4.21 12-10-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	* redirect action: Always set the X-Sieve-Redirected-From header to
+	  sieve_user_email if configured. Before, it would use the envelope recipient
+	  instead if available, which makes no sense if the primary e-mail address is
+	  available.
+	+ vacation extension: Allow ignoring the envelope sender while composing the
+	  "To:" header for the reply. Normally, the "To:" header is composed from
+	  the address found in the "Sender", "Resent-From" or "From" headers that is
+	  equal to the envelope sender. If none is then found, the bare envelope
+	  sender is used. This change adds a new setting
+	  "sieve_vacation_to_header_ignore_envelope". With this setting enabled, the
+	  "To:" header is always composed from those headers in the source message.
+	  The new setting thus allows ignoring the envelope, which is useful e.g.
+	  when SRS is used.
+	+ vacation extension: Compose the "To:" header from the full sender address
+	  found in the first "Sender:", "From:" or "Resent-From:" header. Before, it
+	  would create a "To:" header without a phrase part. The new behavior is
+	  nicer, since the reply will be addressed to the sender by name if possible.
+	- LDA Sieve plugin: Fixed sequential execution of LDAP-based scripts. A
+	  missing LDAP-based script could cause the script sequence to exit earlier.
+	- sieve-filter: Removed the (now) duplicate utf8 to mutf7 mailbox name
+	  conversion. This caused problems with mailbox names containing UTF-8
+	  characters. The Dovecot API was changed years ago, but apparently
+	  sieve-filter was never updated.
+
 v0.4.20 27-08-2017 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Made the retention period for redirect duplicate identifiers configurable.
