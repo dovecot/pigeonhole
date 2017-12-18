@@ -1,3 +1,20 @@
+v0.5.0 xx-12-2017  Stephan Bosch <stephan@rename-it.nl>
+
+	* editheader extension: The implementation of header modifications is
+	  heavily updated. Although the functionality has not changed, the
+	  underlying code was updated to address several static analysis
+	  warnings, runtime integer arithmetic warnings (Clang), and to match
+	  updates in the Dovecot stream API.
+	+ variables extension: Made the maximum scope and variable size
+	  configurable.
+	+ subaddress: Support multiple recipient_delimiters.
+	- enotify extension: mailto method: Fixed parsing of mailto URI with
+	  only a header part.
+	- enotify plugin: mailto method: Make sure the "From:" header is set to
+	  a usable address and not "(null)".
+	- Fixed writing address headers to outgoing messages. Sometimes headers
+	  were MIME-encoded twice, yielding invalid results.
+
 v0.4.21 12-10-2017 Stephan Bosch <stephan@rename-it.nl>
 
 	* redirect action: Always set the X-Sieve-Redirected-From header to
