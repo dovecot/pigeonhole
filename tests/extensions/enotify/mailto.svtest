@@ -514,7 +514,6 @@ test "UTF-8 address" {
 	}
 
 	test_message :smtp 0;
-	test_message_print;
 
 	set "expected" "Günther M. Karotte <g.m.karotte@example.com>";
 	if not header :is "to" "${expected}" {
