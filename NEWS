@@ -1,4 +1,4 @@
-v0.5.0 xx-12-2017  Stephan Bosch <stephan@rename-it.nl>
+v0.5.0 24-12-2017  Stephan Bosch <stephan@rename-it.nl>
 
 	* editheader extension: The implementation of header modifications is
 	  heavily updated. Although the functionality has not changed, the
