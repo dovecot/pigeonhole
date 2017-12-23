@@ -933,7 +933,7 @@ static int lda_sieve_deliver_mail
 	/* Initialize master error handler */
 
 	srctx.master_ehandler =
-		sieve_master_ehandler_create(srctx.svinst, mdctx->session_id, 0);
+		sieve_master_ehandler_create(srctx.svinst, NULL, 0);
 	sieve_system_ehandler_set(srctx.master_ehandler);
 
 	sieve_error_handler_accept_infolog(srctx.master_ehandler, TRUE);
