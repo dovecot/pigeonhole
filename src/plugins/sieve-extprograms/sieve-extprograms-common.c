@@ -415,6 +415,7 @@ struct sieve_extprogram *sieve_extprogram_create
 	struct sieve_instance *svinst = ext->svinst;
 	struct sieve_extprograms_config *ext_config =
 		(struct sieve_extprograms_config *) ext->context;
+	const struct smtp_address *sender, *recipient, *orig_recipient;
 	struct sieve_extprogram *sprog;
 	const char *path = NULL;
 	struct stat st;
@@ -549,20 +550,24 @@ struct sieve_extprogram *sieve_extprogram_create
 		program_client_set_env(sprog->program_client, "HOME", svinst->home_dir);
 	if ( svinst->hostname != NULL )
 		program_client_set_env(sprog->program_client, "HOST", svinst->hostname);
-	if ( !smtp_address_isnull(msgdata->envelope.mail_from) ) {
-		program_client_set_env
-			(sprog->program_client, "SENDER",
-				smtp_address_encode(msgdata->envelope.mail_from));
+
+	sender = msgdata->envelope.mail_from;
+	recipient = msgdata->envelope.rcpt_to;
+	orig_recipient = NULL;
+	if ( msgdata->envelope.rcpt_params != NULL )
+		orig_recipient = msgdata->envelope.rcpt_params->orcpt.addr;
+
+	if ( !smtp_address_isnull(sender) ) {
+		program_client_set_env(sprog->program_client, "SENDER",
+				       smtp_address_encode(sender));
 	}
-	if ( !smtp_address_isnull(msgdata->envelope.rcpt_to) ) {
-		program_client_set_env
-			(sprog->program_client, "RECIPIENT",
-				smtp_address_encode(msgdata->envelope.rcpt_to));
+	if ( !smtp_address_isnull(recipient) ) {
+		program_client_set_env(sprog->program_client, "RECIPIENT",
+				       smtp_address_encode(recipient));
 	}
-	if ( !smtp_address_isnull(msgdata->envelope.rcpt_params->orcpt.addr) ) {
-		program_client_set_env
-			(sprog->program_client, "ORIG_RECIPIENT",
-				smtp_address_encode(msgdata->envelope.rcpt_params->orcpt.addr));
+	if ( !smtp_address_isnull(orig_recipient) ) {
+		program_client_set_env(sprog->program_client, "ORIG_RECIPIENT",
+				       smtp_address_encode(orig_recipient));
 	}
 
 	return sprog;
