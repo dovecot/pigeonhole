@@ -1,4 +1,4 @@
-.\" Copyright (c) 2010-2017 Pigeonhole authors, see the included COPYING file
+.\" Copyright (c) 2010-2018 Pigeonhole authors, see the included COPYING file
 .TH "PIGEONHOLE" 7 "2015-02-21" "Pigeonhole v0.4 for Dovecot v2.2" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
