@@ -1,4 +1,4 @@
-.\" Copyright (c) 2010-2017 Pigeonhole authors, see the included COPYING file
+.\" Copyright (c) 2010-2018 Pigeonhole authors, see the included COPYING file
 .TH "SIEVE\-TEST" 1 "2017-12-18" "Pigeonhole v0.5 for Dovecot v2.3" "Pigeonhole"
 .SH NAME
 sieve\-test \- Pigeonhole\(aqs Sieve script tester
