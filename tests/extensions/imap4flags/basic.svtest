@@ -102,6 +102,78 @@ test "Flag operations" {
 	if hasflag "D" {
 		test_fail "removed flag still present";
 	}
+
+	set "var" "G";
+	addflag "${var}";
+
+	if not hasflag "G" {
+		test_fail "flag \"G\" not added";
+	}
+
+	if not hasflag "A" {
+		test_fail "flag \"A\" not retained";
+	}
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "6" {
+		test_fail "hasflag sees something other than six flags";
+	}
+}
+
+test "Variable flag operations" {
+	setflag "frop" "A";
+
+	if not hasflag "frop" "A" {
+		test_fail "hasflag misses set flag";
+	}
+
+	if hasflag :comparator "i;ascii-numeric" :count "gt" "frop" "1" {
+		test_fail "hasflag sees more than one flag";
+	}
+
+	addflag "frop" "B";
+
+	if not hasflag "frop" "B" {
+		test_fail "flag \"B\" not added";
+	}
+
+	if not hasflag "frop" "A" {
+		test_fail "flag \"A\" not retained";
+	}
+
+	if hasflag :comparator "i;ascii-numeric" :count "gt" "frop" "2" {
+		test_fail "hasflag sees more than two flags";
+	}
+
+	addflag "frop" ["C", "D", "E F"];
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "frop" "6" {
+		test_fail "hasflag sees something other than six flags";
+	}
+
+	removeflag "frop" ["D"];
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "frop" "5" {
+		test_fail "hasflag sees something other than five flags";
+	}
+
+	if hasflag "frop" "D" {
+		test_fail "removed flag still present";
+	}
+
+	set "var" "G";
+	addflag "frop" "${var}";
+
+	if not hasflag "frop" "G" {
+		test_fail "flag \"G\" not added";
+	}
+
+	if not hasflag "frop" "A" {
+		test_fail "flag \"A\" not retained";
+	}
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "frop" "6" {
+		test_fail "hasflag sees something other than six flags";
+	}
 }
 
 test "Setflag; string list" {
