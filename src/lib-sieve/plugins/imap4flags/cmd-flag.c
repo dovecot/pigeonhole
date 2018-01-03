@@ -122,6 +122,8 @@ const struct sieve_operation_def removeflag_operation = {
 static bool cmd_flag_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
+	struct sieve_ast_argument *arg1, *arg2;
+
 	/* Emit operation */
 	if ( sieve_command_is(cmd, cmd_setflag) )
 		sieve_operation_emit(cgenv->sblock, cmd->ext, &setflag_operation);
@@ -130,10 +132,21 @@ static bool cmd_flag_generate
 	else if ( sieve_command_is(cmd, cmd_removeflag) )
 		sieve_operation_emit(cgenv->sblock, cmd->ext, &removeflag_operation);
 
-	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
-		return FALSE;
+	arg1 = cmd->first_positional;
+	arg2 = sieve_ast_argument_next(arg1);
 
+	if ( arg2 == NULL ) {
+		/* No variable */
+		sieve_opr_omitted_emit(cgenv->sblock);
+		if ( !sieve_generate_argument(cgenv, arg1, cmd) )
+			return FALSE;
+	} else {
+		/* Full command */
+		if ( !sieve_generate_argument(cgenv, arg1, cmd) )
+			return FALSE;
+		if ( !sieve_generate_argument(cgenv, arg2, cmd) )
+			return FALSE;
+	}
 	return TRUE;
 }
 
@@ -155,14 +168,14 @@ bool cmd_flag_operation_dump
 		return FALSE;
 	}
 
-	if ( sieve_operand_is_variable(&oprnd) ) {
+	if ( !sieve_operand_is_omitted(&oprnd) ) {
 		return
 			sieve_opr_string_dump_data(denv, &oprnd, address, "variable name") &&
 			sieve_opr_stringlist_dump(denv, address, "list of flags");
 	}
 
 	return
-		sieve_opr_stringlist_dump_data(denv, &oprnd, address, "list of flags");
+		sieve_opr_stringlist_dump(denv, address, "list of flags");
 }
 
 /*
@@ -190,10 +203,10 @@ static int cmd_flag_operation_execute
 		return ret;
 
 	/* Variable operand (optional) */
-	if ( sieve_operand_is_variable(&oprnd) ) {
+	if ( !sieve_operand_is_omitted(&oprnd) ) {
 		/* Read the variable operand */
 		if ( (ret=sieve_variable_operand_read_data
-				(renv, &oprnd, address, "variable", &storage, &var_index)) <= 0 )
+			(renv, &oprnd, address, "variable", &storage, &var_index)) <= 0 )
 			return ret;
 
 		/* Read flag list */
@@ -202,21 +215,14 @@ static int cmd_flag_operation_execute
 			return ret;
 
 	/* Flag-list operand */
-	} else if ( sieve_operand_is_stringlist(&oprnd) ) {
+	} else {
 		storage = NULL;
 		var_index = 0;
 
 		/* Read flag list */
-		if ( (ret=sieve_opr_stringlist_read_data
-			(renv, &oprnd, address, "flag-list", &flag_list)) <= 0 )
+		if ( (ret=sieve_opr_stringlist_read(renv, address,
+			"flag-list", &flag_list)) <= 0 )
 			return ret;
-
-	/* Invalid */
-	} else {
-		sieve_runtime_trace_operand_error
-			(renv, &oprnd, "expected variable or string-list (flag-list) operand "
-				"but found %s", sieve_operand_name(&oprnd));
-		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
 	/*
