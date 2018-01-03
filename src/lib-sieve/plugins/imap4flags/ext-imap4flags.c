@@ -50,6 +50,7 @@ static bool ext_imap4flags_interpreter_load
 
 const struct sieve_extension_def imap4flags_extension = {
 	.name = "imap4flags",
+	.version = 1,
 	.validator_load = ext_imap4flags_validator_load,
 	.interpreter_load = ext_imap4flags_interpreter_load,
 	SIEVE_EXT_DEFINE_OPERATIONS(imap4flags_operations),
