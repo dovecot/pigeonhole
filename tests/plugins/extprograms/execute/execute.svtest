@@ -156,3 +156,22 @@ test "Execute - LF" {
 		test_fail "wrong string returned: '${out}'";
 	}
 }
+
+set "D" "0123456701234567012345670123456701234567012345670123456701234567";
+set "D" "${D}${D}${D}${D}${D}${D}${D}${D}${D}${D}${D}${D}${D}${D}${D}${D}";
+set "data" "${D}${D}";
+
+test_config_set "sieve_execute_input_eol" "crlf";
+test_config_reload :extension "vnd.dovecot.execute";
+test_result_reset;
+set "out" "";
+
+test "Execute - big" {
+	execute
+		:output "out"
+		"big";
+
+	if not string "${out}" "${data}" {
+		test_fail "wrong string returned: '${out}'";
+	}
+}
