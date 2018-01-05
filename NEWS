@@ -1,3 +1,10 @@
+v0.5.0.1 05-01-2018  Stephan Bosch <stephan@rename-it.nl>
+
+	- imap4flags extension: Fix binary corruption occurring when
+	  setflag/addflag/removeflag flag-list is a variable.
+	- sieve-extprograms plugin: Fix segfault occurring when used in
+	  IMAPSieve context.
+
 v0.5.0 24-12-2017  Stephan Bosch <stephan@rename-it.nl>
 
 	* editheader extension: The implementation of header modifications is
