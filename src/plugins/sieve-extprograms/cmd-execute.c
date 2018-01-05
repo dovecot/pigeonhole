@@ -378,7 +378,7 @@ static int cmd_execute_operation_execute
 			// FIXME: limit output size
 			struct ostream *outdata;
 
-			outbuf = buffer_create_dynamic(pool_datastack_create(), 1024);
+			outbuf = buffer_create_dynamic(default_pool, 1024);
 			outdata = o_stream_create_buffer(outbuf);
 			sieve_extprogram_set_output(sprog, outdata);
 			o_stream_unref(&outdata);
@@ -389,6 +389,8 @@ static int cmd_execute_operation_execute
 
 			if ( sieve_extprogram_set_input_mail(sprog, mail) < 0 ) {
 				sieve_extprogram_destroy(&sprog);
+				if ( outbuf != NULL )
+					buffer_free(&outbuf);
 				return sieve_runtime_mail_error(renv, mail,
 					"execute action: failed to read input message");
 			}
