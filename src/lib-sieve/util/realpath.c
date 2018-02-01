@@ -82,8 +82,10 @@ static int path_normalize(const char *path, bool resolve_links,
 			}
 		} else {
 			/* make sure npath now ends in slash */
-			if (*(npath_pos-1) != '/')
+			if (*(npath_pos-1) != '/') {
+				i_assert(npath_pos + 1 < npath + asize);
 				*(npath_pos++) = '/';
+			}
 
 			/* allocate space if necessary */
 			if ((npath_pos + seglen + 1) >= (npath + asize)) {
@@ -94,6 +96,7 @@ static int path_normalize(const char *path, bool resolve_links,
 			}
 
 			/* copy segment to normalized path */
+			i_assert(p + seglen < npath + asize);
 			(void)memmove(npath_pos, p, seglen);
 			npath_pos += seglen;
 		}
@@ -141,6 +144,8 @@ static int path_normalize(const char *path, bool resolve_links,
 				for (;;) {
 					npath_link = (npath_pos + 1) + ltlen;
 
+					i_assert(npath_link + lsize < npath + asize);
+
 					/* attempt to read the link */
 					if ((ret=readlink(npath, npath_link, lsize)) < 0)
 						return -1;
@@ -169,10 +174,13 @@ static int path_normalize(const char *path, bool resolve_links,
 				}
 
 				/* add tail of previous path at end of symlink */
-				if (ltlen > 0)
+				if (ltlen > 0) {
+					i_assert(npath_pos + 1 + tlen < npath + asize);
 					(void)memcpy(npath_link + ret, npath_pos + 1, tlen);
-				else
+				} else {
+					i_assert(segend + tlen < npath + asize);
 					(void)memcpy(npath_link + ret, segend, tlen);
+				}
 				*(npath_link+ret+tlen) = '\0';
 
 				/* use as new source path */
@@ -199,6 +207,8 @@ static int path_normalize(const char *path, bool resolve_links,
 
 		p = segend;
 	}
+
+	i_assert(npath_pos < npath + asize);
 
 	/* remove any trailing slash */
 	if (npath_pos > npath + 1 && *(npath_pos-1) == '/')
