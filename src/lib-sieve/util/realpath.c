@@ -73,8 +73,8 @@ static int path_normalize(const char *path, bool resolve_links,
 		seglen = segend - p;
 		if (seglen == 1 && p[0] == '.') {
 			/* a reference to this segment; nothing to do */
-    } else if (seglen == 2 && p[0] == '.' && p[1] == '.') {
-  		/* a reference to parent segment; back up to previous slash */
+		} else if (seglen == 2 && p[0] == '.' && p[1] == '.') {
+			/* a reference to parent segment; back up to previous slash */
 			if (npath_pos > npath + 1) {
 				if (*(npath_pos-1) == '/')
 					npath_pos--;
@@ -201,9 +201,9 @@ static int path_normalize(const char *path, bool resolve_links,
 	}
 
 	/* remove any trailing slash */
- 	if (npath_pos > npath + 1 && *(npath_pos-1) == '/')
- 	  npath_pos--;
- 	*npath_pos = '\0';
+	if (npath_pos > npath + 1 && *(npath_pos-1) == '/')
+		npath_pos--;
+	*npath_pos = '\0';
 
 	t_buffer_alloc(npath_pos - npath + 1);
 	*npath_r = npath;
