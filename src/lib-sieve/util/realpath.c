@@ -61,7 +61,7 @@ static int path_normalize(const char *path, bool resolve_links,
 		ptrdiff_t seglen;
 		const char *segend;
 
-		/* skip duplicate shashes */
+		/* skip duplicate slashes */
 		while (*p == '/')
 			p++;
 
@@ -156,7 +156,7 @@ static int path_normalize(const char *path, bool resolve_links,
 					}
 
 					/* sum of new symlink content length and path tail length may not
-					   exeed maximum */
+					   exceed maximum */
 					if ((size_t)(ret + tlen) >= REALPATH_MAX_PATH) {
 						errno = ENAMETOOLONG;
 						return -1;
