@@ -747,7 +747,10 @@ imap_sieve_mailbox_transaction_run(
 			continue;
 		}
 
-		i_assert(!mail->expunged);
+		if (mail->expunged) {
+			/* already gone for some reason */
+			continue;
+		}
 
 		/* Run scripts for this mail */
 		ret = imap_sieve_run_mail
