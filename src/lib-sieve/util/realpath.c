@@ -97,7 +97,7 @@ static int path_normalize(const char *path, bool resolve_links,
 
 			/* copy segment to normalized path */
 			i_assert((npath_pos + seglen) < (npath + asize));
-			(void)memmove(npath_pos, p, seglen);
+			memmove(npath_pos, p, seglen);
 			npath_pos += seglen;
 		}
 
@@ -137,7 +137,7 @@ static int path_normalize(const char *path, bool resolve_links,
 
 				if (ltlen > 0) {
 					/* preserve tail just after end of npath */
-					(void)memmove(npath_pos + 1, segend, ltlen);
+					memmove(npath_pos + 1, segend, ltlen);
 				}
 
 				/* read the symlink after the preserved tail */
@@ -176,10 +176,10 @@ static int path_normalize(const char *path, bool resolve_links,
 				/* add tail of previous path at end of symlink */
 				if (ltlen > 0) {
 					i_assert(npath_pos + 1 + tlen < npath + asize);
-					(void)memcpy(npath_link + ret, npath_pos + 1, tlen);
+					memcpy(npath_link + ret, npath_pos + 1, tlen);
 				} else {
 					i_assert(segend + tlen < npath + asize);
-					(void)memcpy(npath_link + ret, segend, tlen);
+					memcpy(npath_link + ret, segend, tlen);
 				}
 				*(npath_link+ret+tlen) = '\0';
 
