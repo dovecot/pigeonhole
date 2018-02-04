@@ -494,7 +494,7 @@ static int sieve_file_script_binary_read_metadata
 
 	if ( bstat->st_mtime < sstat->st_mtime ||
 		(bstat->st_mtime == sstat->st_mtime &&
-			ST_MTIME_NSEC(*bstat) <= ST_MTIME_NSEC(*sstat)) ) {
+			ST_MTIME_NSEC(*bstat) < ST_MTIME_NSEC(*sstat)) ) {
 		if ( svinst->debug ) {
 			sieve_script_sys_debug(script,
 				"Sieve binary `%s' is not newer "
