@@ -16,9 +16,9 @@
 #include "doveadm-sieve-plugin.h"
 
 #define SIEVE_MAIL_CONTEXT(obj) \
-	MODULE_CONTEXT(obj, sieve_storage_module)
+	MODULE_CONTEXT_REQUIRE(obj, sieve_storage_module)
 #define SIEVE_USER_CONTEXT(obj) \
-	MODULE_CONTEXT(obj, sieve_user_module)
+	MODULE_CONTEXT_REQUIRE(obj, sieve_user_module)
 
 struct sieve_mail_user {
 	union mail_user_module_context module_ctx;
@@ -78,8 +78,6 @@ mail_sieve_user_init
 		SIEVE_STORAGE_FLAG_READWRITE |
 		SIEVE_STORAGE_FLAG_SYNCHRONIZING;
 	struct sieve_environment svenv;
-
-	i_assert( suser != NULL );
 
 	if ( suser->svinst != NULL ) {
 		*svstorage_r = suser->sieve_storage;
