@@ -21,3 +21,25 @@ headers = \
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 pkginc_lib_HEADERS = $(headers)
+
+test_programs = \
+	test-realpath
+
+noinst_PROGRAMS = $(test_programs)
+
+test_libs = \
+	libsieve_util.la \
+	$(LIBDOVECOT)
+test_deps = \
+	libsieve_util.la \
+	$(LIBDOVECOT_DEPS)
+
+test_realpath_SOURCES = test-realpath.c
+test_realpath_LDADD = $(test_libs)
+test_realpath_DEPENDENCIES = $(test_deps)
+
+check: check-am check-test
+check-test: all-am
+	for bin in $(test_programs); do \
+	  if ! $(RUN_TEST) ./$$bin; then exit 1; fi; \
+	done
