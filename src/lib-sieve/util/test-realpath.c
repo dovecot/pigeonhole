@@ -1,6 +1,7 @@
 /* Copyright (c) 2009-2018 Pigeonhole authors, see the included COPYING file */
 
-#include "test-lib.h"
+#include "lib.h"
+#include "test-common.h"
 #include "abspath.h"
 #include "realpath.h"
 #include "unlink-directory.h"
