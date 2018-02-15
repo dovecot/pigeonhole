@@ -477,7 +477,7 @@ imap_sieve_mailbox_copy(struct mail_save_context *ctx, struct mail *mail)
 	struct imap_sieve_user *isuser =
 		IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
 	union mailbox_module_context *lbox =
-		IMAP_SIEVE_CONTEXT(t->box);
+		IMAP_SIEVE_CONTEXT_REQUIRE(t->box);
 	struct imap_sieve_mailbox_transaction *ismt =
 		IMAP_SIEVE_CONTEXT(t);
 
@@ -503,7 +503,7 @@ imap_sieve_mailbox_save_finish(struct mail_save_context *ctx)
 	struct mailbox_transaction_context *t = ctx->transaction;
 	struct mailbox *box = t->box;
 	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
-	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT(box);
+	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT_REQUIRE(box);
 	struct mail_user *user = box->storage->user;
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
 	struct mail *dest_mail = ctx->copying_via_save ? NULL : ctx->dest_mail;
@@ -530,7 +530,7 @@ imap_sieve_mailbox_transaction_begin(struct mailbox *box,
 			 enum mailbox_transaction_flags flags,
 			 const char *reason)
 {
-	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT(box);
+	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT_REQUIRE(box);
 	struct mail_user *user = box->storage->user;
 	struct imap_sieve_user *isuser = 	IMAP_SIEVE_USER_CONTEXT(user);
 	struct mailbox_transaction_context *t;
@@ -794,7 +794,7 @@ imap_sieve_mailbox_transaction_commit(
 	struct mailbox *box = t->box;
 	struct mail_user *user = box->storage->user;
 	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
-	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT(t->box);
+	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT_REQUIRE(t->box);
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
 	int ret = 0;
 
@@ -818,7 +818,7 @@ imap_sieve_mailbox_transaction_rollback(
 	struct mailbox_transaction_context *t)
 {
 	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
-	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT(t->box);
+	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT_REQUIRE(t->box);
 
 	lbox->super.transaction_rollback(t);
 
