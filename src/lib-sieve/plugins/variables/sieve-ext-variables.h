@@ -299,7 +299,7 @@ struct sieve_variables_modifier {
 	( (smodf)->object.def->identifier )
 
 ARRAY_DEFINE_TYPE(sieve_variables_modifier,
-	const struct sieve_variables_modifier);
+	struct sieve_variables_modifier);
 
 /* Registry */
 
