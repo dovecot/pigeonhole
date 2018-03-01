@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __SIEVE_STORAGE_PRIVATE_H
 #define __SIEVE_STORAGE_PRIVATE_H
 

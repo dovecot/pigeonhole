@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __CLIENT_AUTHENTICATE_H
 #define __CLIENT_AUTHENTICATE_H
 

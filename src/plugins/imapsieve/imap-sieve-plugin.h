@@ -1,6 +1,3 @@
-/* Copyright (c) 2016-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef IMAP_SIEVE_PLUGIN_H
 #define IMAP_SIEVE_PLUGIN_H
 

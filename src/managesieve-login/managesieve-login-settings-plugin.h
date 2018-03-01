@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __MANAGESIEVE_LOGIN_SETTINGS_PLUGIN_H
 #define __MANAGESIEVE_LOGIN_SETTINGS_PLUGIN_H
 

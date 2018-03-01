@@ -1,6 +1,3 @@
-/* Copyright (c) 2016-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __EXT_IMAPSIEVE_COMMON_H
 #define __EXT_IMAPSIEVE_COMMON_H
 

@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __MAIL_RAW_H
 #define __MAIL_RAW_H
 
