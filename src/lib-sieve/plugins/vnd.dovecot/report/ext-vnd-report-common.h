@@ -1,6 +1,3 @@
-/* Copyright (c)2016 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __EXT_REPORT_COMMON_H
 #define __EXT_REPORT_COMMON_H
 

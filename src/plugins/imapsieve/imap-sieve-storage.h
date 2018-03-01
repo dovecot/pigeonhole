@@ -1,6 +1,3 @@
-/* Copyright (c) 2016-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __IMAP_SIEVE_STORAGE_H
 #define __IMAP_SIEVE_STORAGE_H
 

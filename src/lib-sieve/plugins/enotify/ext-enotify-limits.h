@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __EXT_ENOTIFY_LIMITS_H
 #define __EXT_ENOTIFY_LIMITS_H
 

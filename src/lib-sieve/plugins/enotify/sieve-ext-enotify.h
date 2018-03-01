@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __SIEVE_EXT_ENOTIFY_H
 #define __SIEVE_EXT_ENOTIFY_H
 

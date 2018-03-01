@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 /*
  * Public interface for other extensions to use
  */

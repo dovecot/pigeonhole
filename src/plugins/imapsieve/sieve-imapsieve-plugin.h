@@ -1,6 +1,3 @@
-/* Copyright (c) 2016-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __SIEVE_IMAPSIEVE_PLUGIN_H
 #define __SIEVE_IMAPSIEVE_PLUGIN_H
 

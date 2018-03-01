@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __SIEVE_CONFIG_H
 #define __SIEVE_CONFIG_H
 

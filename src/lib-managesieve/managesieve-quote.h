@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __IMAP_QUOTE_H
 #define __IMAP_QUOTE_H
 

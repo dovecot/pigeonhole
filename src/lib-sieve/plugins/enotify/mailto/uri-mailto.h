@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __URI_MAILTO_H
 #define __URI_MAILTO_H
 

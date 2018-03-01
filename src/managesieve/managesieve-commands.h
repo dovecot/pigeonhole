@@ -1,6 +1,3 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
-
 #ifndef __MANAGESIEVE_COMMANDS_H
 #define __MANAGESIEVE_COMMANDS_H
 
