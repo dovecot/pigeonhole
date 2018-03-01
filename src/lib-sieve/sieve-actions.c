@@ -607,7 +607,7 @@ static void act_store_log_status
 	mailbox_name = str_sanitize(trans->context->mailbox, 128);
 
 	if ( trans->box != NULL ) {
-		const char *mailbox_vname = mailbox_get_vname(trans->box);
+		const char *mailbox_vname = str_sanitize(mailbox_get_vname(trans->box), 128);
 
 		if ( strcmp(mailbox_name, mailbox_vname) != 0 )
 			mailbox_name =
