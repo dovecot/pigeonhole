@@ -94,7 +94,6 @@ void testsuite_mailstore_init(void)
 		(mail_user->pool, "maildir:", testsuite_mailstore_location, NULL);
 	mail_set->mail_attribute_dict = p_strconcat
 		(mail_user->pool, "file:", testsuite_mailstore_attrs, NULL);
-	mail_set->mail_full_filesystem_access = TRUE;
 	ns->mail_set = mail_set;
 
 	if (mail_storage_create(ns, "maildir", 0, &error) < 0)
