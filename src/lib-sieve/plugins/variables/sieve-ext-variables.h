@@ -1,7 +1,3 @@
-/*
- * Public interface for other extensions to use
- */
-
 #ifndef SIEVE_EXT_VARIABLES_H
 #define SIEVE_EXT_VARIABLES_H
 
@@ -11,6 +7,9 @@
 #include "sieve-extensions.h"
 #include "sieve-objects.h"
 #include "sieve-code.h"
+
+/* Public interface for other extensions to use
+ */
 
 /*
  * Limits
