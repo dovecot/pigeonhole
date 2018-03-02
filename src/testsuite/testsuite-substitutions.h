@@ -1,5 +1,5 @@
-#ifndef __TESTSUITE_SUBSTITUTIONS_H
-#define __TESTSUITE_SUBSTITUTIONS_H
+#ifndef TESTSUITE_SUBSTITUTIONS_H
+#define TESTSUITE_SUBSTITUTIONS_H
 
 #include "sieve-common.h"
 #include "sieve-objects.h"
@@ -20,4 +20,4 @@ struct sieve_ast_argument *testsuite_substitution_argument_create
 	(struct sieve_validator *valdtr, struct sieve_ast *ast,
 		unsigned int source_line, const char *substitution, const char *param);
 
-#endif /* __TESTSUITE_SUBSTITUTIONS_H */
+#endif

@@ -1,5 +1,5 @@
-#ifndef __TESTSUITE_MESSAGE_H
-#define __TESTSUITE_MESSAGE_H
+#ifndef TESTSUITE_MESSAGE_H
+#define TESTSUITE_MESSAGE_H
 
 #include "lib.h"
 #include "master-service.h"
@@ -40,4 +40,4 @@ void testsuite_envelope_set_orig_recipient
 void testsuite_envelope_set_auth_user
 	(const struct sieve_runtime_env *renv, const char *value);
 
-#endif /* __TESTSUITE_MESSAGE_H */
+#endif

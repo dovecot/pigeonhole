@@ -1,5 +1,5 @@
-#ifndef __SIEVE_ADDRESS_SOURCE_H
-#define __SIEVE_ADDRESS_SOURCE_H
+#ifndef SIEVE_ADDRESS_SOURCE_H
+#define SIEVE_ADDRESS_SOURCE_H
 
 #include "sieve-common.h"
 

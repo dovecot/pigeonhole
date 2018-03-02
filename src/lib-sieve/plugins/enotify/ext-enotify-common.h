@@ -1,5 +1,5 @@
-#ifndef __EXT_ENOTIFY_COMMON_H
-#define __EXT_ENOTIFY_COMMON_H
+#ifndef EXT_ENOTIFY_COMMON_H
+#define EXT_ENOTIFY_COMMON_H
 
 #include "lib.h"
 #include "array.h"
@@ -120,4 +120,4 @@ struct sieve_enotify_print_env {
 	const struct sieve_result_print_env *result_penv;
 };
 
-#endif /* __EXT_ENOTIFY_COMMON_H */
+#endif

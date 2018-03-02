@@ -1,5 +1,5 @@
-#ifndef __SIEVE_OBJECTS_H
-#define __SIEVE_OBJECTS_H
+#ifndef SIEVE_OBJECTS_H
+#define SIEVE_OBJECTS_H
 
 /*
  * Object definition
@@ -64,4 +64,4 @@ bool sieve_opr_object_dump
 		struct sieve_object *obj);
 
 
-#endif /* __SIEVE_OBJECTS_H */
+#endif

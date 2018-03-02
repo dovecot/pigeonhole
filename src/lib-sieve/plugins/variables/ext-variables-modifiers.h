@@ -1,5 +1,5 @@
-#ifndef __EXT_VARIABLES_MODIFIERS_H
-#define __EXT_VARIABLES_MODIFIERS_H
+#ifndef EXT_VARIABLES_MODIFIERS_H
+#define EXT_VARIABLES_MODIFIERS_H
 
 #include "sieve-common.h"
 #include "sieve-runtime-trace.h"
@@ -60,4 +60,4 @@ static inline bool ext_variables_opr_modifier_dump
 		(denv, &sieve_variables_modifier_operand_class, address, NULL);
 }
 
-#endif /* __EXT_VARIABLES_MODIFIERS_H */
+#endif

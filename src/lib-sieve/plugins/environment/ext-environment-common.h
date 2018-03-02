@@ -1,5 +1,5 @@
-#ifndef __EXT_ENVIRONMENT_COMMON_H
-#define __EXT_ENVIRONMENT_COMMON_H
+#ifndef EXT_ENVIRONMENT_COMMON_H
+#define EXT_ENVIRONMENT_COMMON_H
 
 #include "lib.h"
 
@@ -50,4 +50,4 @@ void ext_environment_deinit(const struct sieve_extension *ext);
 void ext_environment_interpreter_init
 (const struct sieve_extension *this_ext, struct sieve_interpreter *interp);
 
-#endif /* __EXT_VARIABLES_COMMON_H */
+#endif

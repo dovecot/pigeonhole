@@ -1,5 +1,5 @@
-#ifndef __MANAGESIEVE_CLIENT_H
-#define __MANAGESIEVE_CLIENT_H
+#ifndef MANAGESIEVE_CLIENT_H
+#define MANAGESIEVE_CLIENT_H
 
 #include "managesieve-commands.h"
 
@@ -142,4 +142,4 @@ int client_output(struct client *client);
 
 void clients_destroy_all(void);
 
-#endif /* __MANAGESIEVE_CLIENT_H */
+#endif

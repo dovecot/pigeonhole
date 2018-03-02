@@ -1,5 +1,5 @@
-#ifndef __EDIT_MAIL_H
-#define __EDIT_MAIL_H
+#ifndef EDIT_MAIL_H
+#define EDIT_MAIL_H
 
 struct edit_mail;
 
@@ -50,4 +50,4 @@ bool edit_mail_headers_iterate_replace
 
 
 
-#endif /* __edit_mail_H */
+#endif

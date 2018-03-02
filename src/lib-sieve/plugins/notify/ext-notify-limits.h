@@ -1,7 +1,7 @@
-#ifndef __EXT_NOTIFY_LIMITS_H
-#define __EXT_NOTIFY_LIMITS_H
+#ifndef EXT_NOTIFY_LIMITS_H
+#define EXT_NOTIFY_LIMITS_H
 
 #define EXT_NOTIFY_MAX_RECIPIENTS  8
 #define EXT_NOTIFY_MAX_MESSAGE     256
 
-#endif /* __EXT_NOTIFY_LIMITS_H */
+#endif

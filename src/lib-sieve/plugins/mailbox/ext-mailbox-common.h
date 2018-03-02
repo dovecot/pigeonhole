@@ -1,5 +1,5 @@
-#ifndef __EXT_MAILBOX_COMMON_H
-#define __EXT_MAILBOX_COMMON_H
+#ifndef EXT_MAILBOX_COMMON_H
+#define EXT_MAILBOX_COMMON_H
 
 #include "sieve-common.h"
 
@@ -35,5 +35,5 @@ extern const struct sieve_operation_def mailboxexists_operation;
 
 extern const struct sieve_extension_def mailbox_extension;
 
-#endif /* __EXT_MAILBOX_COMMON_H */
+#endif
 

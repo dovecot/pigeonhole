@@ -1,5 +1,5 @@
-#ifndef __MANAGESIEVE_COMMANDS_H
-#define __MANAGESIEVE_COMMANDS_H
+#ifndef MANAGESIEVE_COMMANDS_H
+#define MANAGESIEVE_COMMANDS_H
 
 struct client_command_context;
 
@@ -43,4 +43,4 @@ extern bool cmd_listscripts(struct client_command_context *cmd);
 extern bool cmd_havespace(struct client_command_context *cmd);
 extern bool cmd_renamescript(struct client_command_context *cmd);
 
-#endif /* __MANAGESIEVE_COMMANDS_H */
+#endif

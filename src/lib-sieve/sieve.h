@@ -1,5 +1,5 @@
-#ifndef __SIEVE_H
-#define __SIEVE_H
+#ifndef SIEVE_H
+#define SIEVE_H
 
 struct sieve_script;
 struct sieve_binary;

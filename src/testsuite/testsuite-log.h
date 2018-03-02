@@ -1,5 +1,5 @@
-#ifndef __TESTSUITE_LOG_H
-#define __TESTSUITE_LOG_H
+#ifndef TESTSUITE_LOG_H
+#define TESTSUITE_LOG_H
 
 #include "sieve-common.h"
 
@@ -22,4 +22,4 @@ void testsuite_log_clear_messages(void);
 struct sieve_stringlist *testsuite_log_stringlist_create
 	(const struct sieve_runtime_env *renv, int index);
 
-#endif /* __TESTSUITE_LOG_H */
+#endif

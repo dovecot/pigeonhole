@@ -1,5 +1,5 @@
-#ifndef __EXT_IHAVE_COMMON_H
-#define __EXT_IHAVE_COMMON_H
+#ifndef EXT_IHAVE_COMMON_H
+#define EXT_IHAVE_COMMON_H
 
 #include "sieve-common.h"
 
@@ -49,4 +49,4 @@ void ext_ihave_ast_add_missing_extension
 		const char *ext_name);
 
 
-#endif /* __EXT_IHAVE_COMMON_H */
+#endif

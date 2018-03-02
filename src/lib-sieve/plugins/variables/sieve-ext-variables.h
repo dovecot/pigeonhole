@@ -2,8 +2,8 @@
  * Public interface for other extensions to use
  */
 
-#ifndef __SIEVE_EXT_VARIABLES_H
-#define __SIEVE_EXT_VARIABLES_H
+#ifndef SIEVE_EXT_VARIABLES_H
+#define SIEVE_EXT_VARIABLES_H
 
 #include "lib.h"
 
@@ -355,4 +355,4 @@ void sieve_ext_variables_dump_set_scope
 (const struct sieve_extension *var_ext, const struct sieve_dumptime_env *denv,
 	const struct sieve_extension *ext, struct sieve_variable_scope *scope);
 
-#endif /* __SIEVE_EXT_VARIABLES_H */
+#endif

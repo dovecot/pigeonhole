@@ -1,5 +1,5 @@
-#ifndef __DOVEADM_SIEVE_CMD_H
-#define __DOVEADM_SIEVE_CMD_H
+#ifndef DOVEADM_SIEVE_CMD_H
+#define DOVEADM_SIEVE_CMD_H
 
 struct doveadm_sieve_cmd_context;
 

@@ -1,5 +1,5 @@
-#ifndef __MAIL_RAW_H
-#define __MAIL_RAW_H
+#ifndef MAIL_RAW_H
+#define MAIL_RAW_H
 
 #include "lib.h"
 #include "master-service.h"
@@ -22,4 +22,4 @@ struct mail_raw *mail_raw_open_data
 void mail_raw_close(struct mail_raw **mailr);
 
 
-#endif /* __MAIL_RAW_H */
+#endif

@@ -1,5 +1,5 @@
-#ifndef __SIEVE_ERROR_PRIVATE_H
-#define __SIEVE_ERROR_PRIVATE_H
+#ifndef SIEVE_ERROR_PRIVATE_H
+#define SIEVE_ERROR_PRIVATE_H
 
 #include "sieve-error.h"
 
@@ -133,4 +133,4 @@ static inline void ATTR_FORMAT(5, 6) sieve_direct_debug
 }
 
 
-#endif /* __SIEVE_ERROR_PRIVATE_H */
+#endif

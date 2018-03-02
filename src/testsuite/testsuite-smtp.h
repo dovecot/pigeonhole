@@ -1,5 +1,5 @@
-#ifndef __TESTSUITE_SMTP_H
-#define __TESTSUITE_SMTP_H
+#ifndef TESTSUITE_SMTP_H
+#define TESTSUITE_SMTP_H
 
 void testsuite_smtp_init(void);
 void testsuite_smtp_deinit(void);
@@ -32,4 +32,4 @@ int testsuite_smtp_finish
 bool testsuite_smtp_get
 	(const struct sieve_runtime_env *renv, unsigned int index);
 
-#endif /* __TESTSUITE_SMTP_H */
+#endif

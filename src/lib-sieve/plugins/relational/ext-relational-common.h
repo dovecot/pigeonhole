@@ -1,5 +1,5 @@
-#ifndef __EXT_RELATIONAL_COMMON_H
-#define __EXT_RELATIONAL_COMMON_H
+#ifndef EXT_RELATIONAL_COMMON_H
+#define EXT_RELATIONAL_COMMON_H
 
 #include "lib.h"
 #include "str.h"
@@ -87,4 +87,4 @@ int mcht_value_match_key
 		const char *key, size_t key_size);
 
 
-#endif /* __EXT_RELATIONAL_COMMON_H */
+#endif

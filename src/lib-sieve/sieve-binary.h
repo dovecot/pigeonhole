@@ -1,5 +1,5 @@
-#ifndef __SIEVE_BINARY_H
-#define __SIEVE_BINARY_H
+#ifndef SIEVE_BINARY_H
+#define SIEVE_BINARY_H
 
 #include "lib.h"
 

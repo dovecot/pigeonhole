@@ -1,5 +1,5 @@
-#ifndef __EXT_VND_ENVIRONMENT_COMMON_H
-#define __EXT_VND_ENVIRONMENT_COMMON_H
+#ifndef EXT_VND_ENVIRONMENT_COMMON_H
+#define EXT_VND_ENVIRONMENT_COMMON_H
 
 #include "sieve-ext-environment.h"
 

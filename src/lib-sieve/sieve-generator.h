@@ -1,5 +1,5 @@
-#ifndef __SIEVE_GENERATOR_H
-#define __SIEVE_GENERATOR_H
+#ifndef SIEVE_GENERATOR_H
+#define SIEVE_GENERATOR_H
 
 #include "sieve-common.h"
 
@@ -107,5 +107,5 @@ bool sieve_generate_test
 struct sieve_binary *sieve_generator_run
 	(struct sieve_generator *gentr, struct sieve_binary_block **sblock_r);
 
-#endif /* __SIEVE_GENERATOR_H */
+#endif
 

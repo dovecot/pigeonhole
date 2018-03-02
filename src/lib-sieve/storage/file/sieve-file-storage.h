@@ -1,5 +1,5 @@
-#ifndef __SIEVE_FILE_STORAGE_H
-#define __SIEVE_FILE_STORAGE_H
+#ifndef SIEVE_FILE_STORAGE_H
+#define SIEVE_FILE_STORAGE_H
 
 #include "lib.h"
 #include "mail-user.h"

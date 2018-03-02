@@ -1,6 +1,6 @@
-#ifndef __EXT_ENOTIFY_LIMITS_H
-#define __EXT_ENOTIFY_LIMITS_H
+#ifndef EXT_ENOTIFY_LIMITS_H
+#define EXT_ENOTIFY_LIMITS_H
 
 #define EXT_ENOTIFY_MAX_SCHEME_LEN  32
 
-#endif /* __EXT_ENOTIFY_LIMITS_H */
+#endif

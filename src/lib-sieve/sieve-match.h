@@ -1,5 +1,5 @@
-#ifndef __SIEVE_MATCH_H
-#define __SIEVE_MATCH_H
+#ifndef SIEVE_MATCH_H
+#define SIEVE_MATCH_H
 
 #include "sieve-common.h"
 
@@ -65,4 +65,4 @@ int sieve_match_opr_optional_read
 		int *exec_status, struct sieve_comparator *cmp,
 		struct sieve_match_type *mcht);
 
-#endif /* __SIEVE_MATCH_H */
+#endif

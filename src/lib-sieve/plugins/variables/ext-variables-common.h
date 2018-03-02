@@ -1,5 +1,5 @@
-#ifndef __EXT_VARIABLES_COMMON_H
-#define __EXT_VARIABLES_COMMON_H
+#ifndef EXT_VARIABLES_COMMON_H
+#define EXT_VARIABLES_COMMON_H
 
 #include "sieve-common.h"
 #include "sieve-validator.h"
@@ -98,4 +98,4 @@ bool ext_variables_interpreter_load
 	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
 		sieve_size_t *address);
 
-#endif /* __EXT_VARIABLES_COMMON_H */
+#endif

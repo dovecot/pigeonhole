@@ -1,5 +1,5 @@
-#ifndef __SIEVE_COMPARATORS_H
-#define __SIEVE_COMPARATORS_H
+#ifndef SIEVE_COMPARATORS_H
+#define SIEVE_COMPARATORS_H
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
@@ -150,4 +150,4 @@ bool sieve_comparator_octet_skip
 	(const struct sieve_comparator *cmp ATTR_UNUSED,
 		const char **val, const char *val_end);
 
-#endif /* __SIEVE_COMPARATORS_H */
+#endif

@@ -1,5 +1,5 @@
-#ifndef __MANAGESIEVE_SETTINGS_H
-#define __MANAGESIEVE_SETTINGS_H
+#ifndef MANAGESIEVE_SETTINGS_H
+#define MANAGESIEVE_SETTINGS_H
 
 struct mail_user_settings;
 
@@ -26,4 +26,4 @@ struct managesieve_settings {
 
 extern const struct setting_parser_info managesieve_setting_parser_info;
 
-#endif /* __MANAGESIEVE_SETTINGS_H */
+#endif

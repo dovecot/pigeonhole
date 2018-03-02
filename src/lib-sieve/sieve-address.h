@@ -1,5 +1,5 @@
-#ifndef __SIEVE_ADDRESS_H
-#define __SIEVE_ADDRESS_H
+#ifndef SIEVE_ADDRESS_H
+#define SIEVE_ADDRESS_H
 
 #include "lib.h"
 #include "strfuncs.h"

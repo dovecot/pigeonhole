@@ -1,5 +1,5 @@
-#ifndef __SIEVE_EXT_ENOTIFY_H
-#define __SIEVE_EXT_ENOTIFY_H
+#ifndef SIEVE_EXT_ENOTIFY_H
+#define SIEVE_EXT_ENOTIFY_H
 
 #include "lib.h"
 #include "compat.h"
@@ -173,5 +173,5 @@ struct sieve_enotify_action {
 #define sieve_enotify_global_log_error(ENV, ...) \
 	sieve_global_info_error((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
 
-#endif /* __SIEVE_EXT_ENOTIFY_H */
+#endif
 

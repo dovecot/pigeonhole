@@ -1,5 +1,5 @@
-#ifndef __EXT_VARIABLES_NAMESPACES_H
-#define __EXT_VARIABLES_NAMESPACES_H
+#ifndef EXT_VARIABLES_NAMESPACES_H
+#define EXT_VARIABLES_NAMESPACES_H
 
 #include "sieve-common.h"
 
@@ -40,4 +40,4 @@ bool ext_variables_namespace_argument_activate
 
 extern const struct sieve_operand_def namespace_variable_operand;
 
-#endif /* __EXT_VARIABLES_NAMESPACES_H */
+#endif

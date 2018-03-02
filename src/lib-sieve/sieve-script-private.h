@@ -1,5 +1,5 @@
-#ifndef __SIEVE_SCRIPT_PRIVATE_H
-#define __SIEVE_SCRIPT_PRIVATE_H
+#ifndef SIEVE_SCRIPT_PRIVATE_H
+#define SIEVE_SCRIPT_PRIVATE_H
 
 #include "sieve-common.h"
 #include "sieve-script.h"
@@ -115,4 +115,4 @@ void sieve_script_sys_debug
 void sieve_script_sequence_init
 (struct sieve_script_sequence *seq, struct sieve_storage *storage);
 
-#endif /* __SIEVE_SCRIPT_PRIVATE_H */
+#endif
