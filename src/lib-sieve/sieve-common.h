@@ -1,5 +1,5 @@
-#ifndef __SIEVE_COMMON_H
-#define __SIEVE_COMMON_H
+#ifndef SIEVE_COMMON_H
+#define SIEVE_COMMON_H
 
 #include "lib.h"
 
@@ -226,4 +226,4 @@ sieve_get_postmaster(const struct sieve_script_env *senv);
 const char *
 sieve_get_postmaster_address(const struct sieve_script_env *senv);
 
-#endif /* __SIEVE_COMMON_H */
+#endif

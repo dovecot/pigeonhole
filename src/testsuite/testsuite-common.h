@@ -1,5 +1,5 @@
-#ifndef __TESTSUITE_COMMON_H
-#define __TESTSUITE_COMMON_H
+#ifndef TESTSUITE_COMMON_H
+#define TESTSUITE_COMMON_H
 
 #include "sieve-common.h"
 
@@ -183,4 +183,4 @@ void testsuite_init
 	(struct sieve_instance *svinst, const char *test_path, bool log_stdout);
 void testsuite_deinit(void);
 
-#endif /* __TESTSUITE_COMMON_H */
+#endif

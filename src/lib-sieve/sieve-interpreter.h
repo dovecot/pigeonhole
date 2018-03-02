@@ -1,5 +1,5 @@
-#ifndef __SIEVE_INTERPRETER_H
-#define __SIEVE_INTERPRETER_H
+#ifndef SIEVE_INTERPRETER_H
+#define SIEVE_INTERPRETER_H
 
 #include "lib.h"
 #include "array.h"
@@ -193,4 +193,4 @@ int sieve_interpreter_start
 int sieve_interpreter_run
 	(struct sieve_interpreter *interp, struct sieve_result *result);
 
-#endif /* __SIEVE_INTERPRETER_H */
+#endif

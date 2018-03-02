@@ -1,5 +1,5 @@
-#ifndef __SIEVE_RESULT_H
-#define __SIEVE_RESULT_H
+#ifndef SIEVE_RESULT_H
+#define SIEVE_RESULT_H
 
 #include "sieve-common.h"
 #include "sieve-error.h"

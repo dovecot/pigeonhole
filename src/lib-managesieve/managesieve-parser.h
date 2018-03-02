@@ -1,5 +1,5 @@
-#ifndef __MANAGESIEVE_PARSER_H
-#define __MANAGESIEVE_PARSER_H
+#ifndef MANAGESIEVE_PARSER_H
+#define MANAGESIEVE_PARSER_H
 
 #include "managesieve-arg.h"
 

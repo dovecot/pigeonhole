@@ -1,5 +1,5 @@
-#ifndef __MANAGESIEVE_LOGIN_SETTINGS_H
-#define __MANAGESIEVE_LOGIN_SETTINGS_H
+#ifndef MANAGESIEVE_LOGIN_SETTINGS_H
+#define MANAGESIEVE_LOGIN_SETTINGS_H
 
 struct managesieve_login_settings {
 	const char *managesieve_implementation_string;
@@ -14,4 +14,4 @@ void managesieve_login_settings_init(void);
 void managesieve_login_settings_deinit(void);
 #endif
 
-#endif /* __MANAGESIEVE_LOGIN_SETTINGS_H */
+#endif

@@ -1,5 +1,5 @@
-#ifndef __EXT_BODY_COMMON_H
-#define __EXT_BODY_COMMON_H
+#ifndef EXT_BODY_COMMON_H
+#define EXT_BODY_COMMON_H
 
 /*
  * Types
@@ -37,4 +37,4 @@ int ext_body_get_part_list
 	(const struct sieve_runtime_env *renv, enum tst_body_transform transform,
 		const char * const *content_types, struct sieve_stringlist **strlist_r);
 
-#endif /* __EXT_BODY_COMMON_H */
+#endif

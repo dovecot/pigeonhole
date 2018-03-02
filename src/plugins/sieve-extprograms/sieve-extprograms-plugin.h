@@ -1,5 +1,5 @@
-#ifndef __SIEVE_EXTPROGRAMS_PLUGIN_H
-#define __SIEVE_EXTPROGRAMS_PLUGIN_H
+#ifndef SIEVE_EXTPROGRAMS_PLUGIN_H
+#define SIEVE_EXTPROGRAMS_PLUGIN_H
 
 /*
  * Plugin interface
@@ -17,4 +17,4 @@ void sieve_extprograms_plugin_unload
 void sieve_extprograms_plugin_init(void);
 void sieve_extprograms_plugin_deinit(void);
 
-#endif /* __SIEVE_EXTPROGRAMS_PLUGIN_H */
+#endif

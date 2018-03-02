@@ -1,5 +1,5 @@
-#ifndef __EXT_INCLUDE_COMMON_H
-#define __EXT_INCLUDE_COMMON_H
+#ifndef EXT_INCLUDE_COMMON_H
+#define EXT_INCLUDE_COMMON_H
 
 #include "lib.h"
 #include "hash.h"
@@ -166,4 +166,4 @@ void ext_include_execute_return(const struct sieve_runtime_env *renv);
 struct sieve_variable_storage *ext_include_interpreter_get_global_variables
 	(const struct sieve_extension *this_ext, struct sieve_interpreter *interp);
 
-#endif /* __EXT_INCLUDE_COMMON_H */
+#endif

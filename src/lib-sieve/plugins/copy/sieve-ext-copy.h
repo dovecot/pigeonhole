@@ -1,5 +1,5 @@
-#ifndef __SIEVE_EXT_COPY_H
-#define __SIEVE_EXT_COPY_H
+#ifndef SIEVE_EXT_COPY_H
+#define SIEVE_EXT_COPY_H
 
 /* sieve_ext_copy_get_extension():
  *   Get the extension struct for the copy extension.
@@ -18,4 +18,4 @@ void sieve_ext_copy_register_tag
 	(struct sieve_validator *valdtr, const struct sieve_extension *copy_ext,
 		const char *command);
 
-#endif /* __SIEVE_EXT_COPY_H */
+#endif

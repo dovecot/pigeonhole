@@ -1,5 +1,5 @@
-#ifndef __EXT_VACATION_COMMON_H
-#define __EXT_VACATION_COMMON_H
+#ifndef EXT_VACATION_COMMON_H
+#define EXT_VACATION_COMMON_H
 
 #include "sieve-common.h"
 
@@ -53,4 +53,4 @@ extern const struct sieve_extension_def vacation_seconds_extension;
 bool ext_vacation_register_seconds_tag
 	(struct sieve_validator *valdtr, const struct sieve_extension *vacation_ext);
 
-#endif /* __EXT_VACATION_COMMON_H */
+#endif

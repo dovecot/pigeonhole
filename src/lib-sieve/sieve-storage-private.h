@@ -1,5 +1,5 @@
-#ifndef __SIEVE_STORAGE_PRIVATE_H
-#define __SIEVE_STORAGE_PRIVATE_H
+#ifndef SIEVE_STORAGE_PRIVATE_H
+#define SIEVE_STORAGE_PRIVATE_H
 
 #include "sieve.h"
 #include "sieve-error-private.h"

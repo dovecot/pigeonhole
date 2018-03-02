@@ -1,5 +1,5 @@
-#ifndef __EXT_VARIABLES_ARGUMENTS_H
-#define __EXT_VARIABLES_ARGUMENTS_H
+#ifndef EXT_VARIABLES_ARGUMENTS_H
+#define EXT_VARIABLES_ARGUMENTS_H
 
 #include "sieve-common.h"
 
@@ -21,4 +21,4 @@ extern const struct sieve_argument_def match_value_argument;
 
 extern const struct sieve_argument_def variable_string_argument;
 
-#endif /* __EXT_VARIABLES_ARGUMENTS_H */
+#endif

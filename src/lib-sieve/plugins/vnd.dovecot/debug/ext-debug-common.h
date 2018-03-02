@@ -1,5 +1,5 @@
-#ifndef __EXT_DEBUG_COMMON_H
-#define __EXT_DEBUG_COMMON_H
+#ifndef EXT_DEBUG_COMMON_H
+#define EXT_DEBUG_COMMON_H
 
 /*
  * Extensions
@@ -19,4 +19,4 @@ extern const struct sieve_command_def debug_log_command;
 
 extern const struct sieve_operation_def debug_log_operation;
 
-#endif /* __EXT_DEBUG_COMMON_H */
+#endif

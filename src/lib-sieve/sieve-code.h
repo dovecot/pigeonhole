@@ -1,5 +1,5 @@
-#ifndef __SIEVE_CODE_H
-#define __SIEVE_CODE_H
+#ifndef SIEVE_CODE_H
+#define SIEVE_CODE_H
 
 #include "lib.h"
 #include "buffer.h"

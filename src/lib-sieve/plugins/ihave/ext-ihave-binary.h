@@ -1,5 +1,5 @@
-#ifndef __EXT_IHAVE_BINARY_H
-#define __EXT_IHAVE_BINARY_H
+#ifndef EXT_IHAVE_BINARY_H
+#define EXT_IHAVE_BINARY_H
 
 /*
  * Binary context management
@@ -29,5 +29,5 @@ bool ext_ihave_binary_load
 bool ext_ihave_binary_dump
 	(const struct sieve_extension *ext, struct sieve_dumptime_env *denv);
 
-#endif /* __EXT_IHAVE_BINARY_H */
+#endif
 

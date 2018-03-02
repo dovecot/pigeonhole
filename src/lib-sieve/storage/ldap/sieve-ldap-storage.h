@@ -1,5 +1,5 @@
-#ifndef __SIEVE_LDAP_STORAGE_H
-#define __SIEVE_LDAP_STORAGE_H
+#ifndef SIEVE_LDAP_STORAGE_H
+#define SIEVE_LDAP_STORAGE_H
 
 #include "sieve.h"
 #include "sieve-script-private.h"

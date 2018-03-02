@@ -1,5 +1,5 @@
-#ifndef __EXT_SPAMVIRUSTEST_COMMON_H
-#define __EXT_SPAMVIRUSTEST_COMMON_H
+#ifndef EXT_SPAMVIRUSTEST_COMMON_H
+#define EXT_SPAMVIRUSTEST_COMMON_H
 
 #include "sieve-common.h"
 
@@ -32,4 +32,4 @@ int ext_spamvirustest_get_value
 extern const struct sieve_operation_def spamtest_operation;
 extern const struct sieve_operation_def virustest_operation;
 
-#endif /* __EXT_SPAMVIRUSTEST_COMMON_H */
+#endif

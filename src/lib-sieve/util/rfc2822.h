@@ -1,5 +1,5 @@
-#ifndef __RFC2822_H
-#define __RFC2822_H
+#ifndef RFC2822_H
+#define RFC2822_H
 
 #include "lib.h"
 
@@ -43,4 +43,4 @@ void rfc2822_header_write_address(string_t *header,
 	const char *name, const char *address);
 
 
-#endif /* __RFC2822_H */
+#endif

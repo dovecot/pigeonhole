@@ -1,5 +1,5 @@
-#ifndef __MANAGESIEVE_PROXY_H
-#define __MANAGESIEVE_PROXY_H
+#ifndef MANAGESIEVE_PROXY_H
+#define MANAGESIEVE_PROXY_H
 
 void managesieve_proxy_reset(struct client *client);
 int managesieve_proxy_parse_line(struct client *client, const char *line);

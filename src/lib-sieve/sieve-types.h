@@ -1,5 +1,5 @@
-#ifndef __SIEVE_TYPES_H
-#define __SIEVE_TYPES_H
+#ifndef SIEVE_TYPES_H
+#define SIEVE_TYPES_H
 
 #include "lib.h"
 #include "smtp-address.h"
@@ -270,4 +270,4 @@ enum sieve_execution_exitcode {
 	SIEVE_EXEC_KEEP_FAILED  = -3
 };
 
-#endif /* __SIEVE_TYPES_H */
+#endif

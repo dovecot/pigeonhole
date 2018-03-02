@@ -1,5 +1,5 @@
-#ifndef __SIEVE_MESSAGE_H
-#define __SIEVE_MESSAGE_H
+#ifndef SIEVE_MESSAGE_H
+#define SIEVE_MESSAGE_H
 
 #include "sieve-common.h"
 #include "sieve-stringlist.h"
@@ -277,4 +277,4 @@ struct sieve_header_list *sieve_mime_header_list_create
 	struct sieve_message_part_iter *part_iter,
 	bool mime_decode, bool children);
 
-#endif /* __SIEVE_MESSAGE_H */
+#endif

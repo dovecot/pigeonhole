@@ -1,5 +1,5 @@
-#ifndef __EXT_IMAPSIEVE_COMMON_H
-#define __EXT_IMAPSIEVE_COMMON_H
+#ifndef EXT_IMAPSIEVE_COMMON_H
+#define EXT_IMAPSIEVE_COMMON_H
 
 #include "sieve-extensions.h"
 
@@ -26,4 +26,4 @@ void ext_imapsieve_environment_vendor_items_register
 	(const struct sieve_extension *ext,
 		const struct sieve_runtime_env *renv);
 
-#endif /* __EXT_IMAPSIEVE_COMMON_H */
+#endif

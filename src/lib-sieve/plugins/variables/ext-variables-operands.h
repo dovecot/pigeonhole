@@ -1,5 +1,5 @@
-#ifndef __EXT_VARIABLES_OPERANDS_H
-#define __EXT_VARIABLES_OPERANDS_H
+#ifndef EXT_VARIABLES_OPERANDS_H
+#define EXT_VARIABLES_OPERANDS_H
 
 #include "lib.h"
 #include "hash.h"
@@ -33,5 +33,5 @@ void ext_variables_opr_variable_string_emit
 	(struct sieve_binary *sbin, unsigned int elements);
 
 
-#endif /* __EXT_VARIABLES_OPERANDS_H */
+#endif
 

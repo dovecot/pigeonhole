@@ -1,5 +1,5 @@
-#ifndef __SIEVE_EXT_ENVIRONMENT_H
-#define __SIEVE_EXT_ENVIRONMENT_H
+#ifndef SIEVE_EXT_ENVIRONMENT_H
+#define SIEVE_EXT_ENVIRONMENT_H
 
 #include "sieve-common.h"
 

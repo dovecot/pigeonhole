@@ -1,5 +1,5 @@
-#ifndef __IMAP_SIEVE_H
-#define __IMAP_SIEVE_H
+#ifndef IMAP_SIEVE_H
+#define IMAP_SIEVE_H
 
 struct client;
 

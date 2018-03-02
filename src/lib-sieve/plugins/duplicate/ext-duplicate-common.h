@@ -1,5 +1,5 @@
-#ifndef __EXT_DUPLICATE_COMMON_H
-#define __EXT_DUPLICATE_COMMON_H
+#ifndef EXT_DUPLICATE_COMMON_H
+#define EXT_DUPLICATE_COMMON_H
 
 #include "sieve-common.h"
 
@@ -40,4 +40,4 @@ int ext_duplicate_check
 	(const struct sieve_runtime_env *renv, string_t *handle,
 		const char *value, size_t value_len, sieve_number_t period, bool last);
 
-#endif /* EXT_DUPLICATE_COMMON_H */
+#endif

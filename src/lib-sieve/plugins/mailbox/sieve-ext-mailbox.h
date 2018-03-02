@@ -1,5 +1,5 @@
-#ifndef __SIEVE_EXT_MAILBOX_H
-#define __SIEVE_EXT_MAILBOX_H
+#ifndef SIEVE_EXT_MAILBOX_H
+#define SIEVE_EXT_MAILBOX_H
 
 /* sieve_ext_mailbox_get_extension():
  *   Get the extension struct for the mailbox extension.
@@ -18,4 +18,4 @@ void sieve_ext_mailbox_register_create_tag
 	(struct sieve_validator *valdtr, const struct sieve_extension *mailbox_ext,
 		const char *command);
 
-#endif /* __SIEVE_EXT_MAILBOX_H */
+#endif

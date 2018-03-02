@@ -1,5 +1,5 @@
-#ifndef __EXT_INCLUDE_BINARY_H
-#define __EXT_INCLUDE_BINARY_H
+#ifndef EXT_INCLUDE_BINARY_H
+#define EXT_INCLUDE_BINARY_H
 
 #include "sieve-common.h"
 
@@ -60,5 +60,5 @@ bool ext_include_code_dump
 	(const struct sieve_extension *ext, const struct sieve_dumptime_env *denv,
 		sieve_size_t *address ATTR_UNUSED);
 
-#endif /* __EXT_INCLUDE_BINARY_H */
+#endif
 

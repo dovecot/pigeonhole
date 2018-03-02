@@ -1,5 +1,5 @@
-#ifndef __SIEVE_STRINGLIST_H
-#define __SIEVE_STRINGLIST_H
+#ifndef SIEVE_STRINGLIST_H
+#define SIEVE_STRINGLIST_H
 
 /*
  * Stringlist API
@@ -71,4 +71,4 @@ struct sieve_stringlist *sieve_index_stringlist_create
 	(const struct sieve_runtime_env *renv, struct sieve_stringlist *source,
 		int index);
 
-#endif /* __SIEVE_STRINGLIST_H */
+#endif

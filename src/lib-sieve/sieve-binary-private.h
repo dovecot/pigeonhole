@@ -1,5 +1,5 @@
-#ifndef __SIEVE_BINARY_PRIVATE_H
-#define __SIEVE_BINARY_PRIVATE_H
+#ifndef SIEVE_BINARY_PRIVATE_H
+#define SIEVE_BINARY_PRIVATE_H
 
 #include "sieve-common.h"
 #include "sieve-binary.h"
@@ -203,4 +203,4 @@ static inline int sieve_binary_extension_register
 
 bool sieve_binary_load_block(struct sieve_binary_block *);
 
-#endif /* __SIEVE_BINARY_PRIVATE_H */
+#endif
