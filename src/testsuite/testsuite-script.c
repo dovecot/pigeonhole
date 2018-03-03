@@ -14,6 +14,7 @@
 #include "testsuite-common.h"
 #include "testsuite-settings.h"
 #include "testsuite-log.h"
+#include "testsuite-smtp.h"
 #include "testsuite-result.h"
 
 #include "testsuite-script.h"
@@ -115,10 +116,11 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 		return FALSE;
 	}
 	scriptenv.default_mailbox = "INBOX";
-	scriptenv.smtp_start = NULL;
-	scriptenv.smtp_add_rcpt = NULL;
-	scriptenv.smtp_send = NULL;
-	scriptenv.smtp_finish = NULL;
+	scriptenv.smtp_start = testsuite_smtp_start;
+	scriptenv.smtp_add_rcpt = testsuite_smtp_add_rcpt;
+	scriptenv.smtp_send = testsuite_smtp_send;
+	scriptenv.smtp_abort = testsuite_smtp_abort;
+	scriptenv.smtp_finish = testsuite_smtp_finish;
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
 	scriptenv.trace_log = renv->scriptenv->trace_log;
@@ -193,10 +195,11 @@ bool testsuite_script_multiscript
 		return FALSE;
 	}
 	scriptenv.default_mailbox = "INBOX";
-	scriptenv.smtp_start = NULL;
-	scriptenv.smtp_add_rcpt = NULL;
-	scriptenv.smtp_send = NULL;
-	scriptenv.smtp_finish = NULL;
+	scriptenv.smtp_start = testsuite_smtp_start;
+	scriptenv.smtp_add_rcpt = testsuite_smtp_add_rcpt;
+	scriptenv.smtp_send = testsuite_smtp_send;
+	scriptenv.smtp_abort = testsuite_smtp_abort;
+	scriptenv.smtp_finish = testsuite_smtp_finish;
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
 	scriptenv.trace_log = renv->scriptenv->trace_log;
