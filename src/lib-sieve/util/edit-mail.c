@@ -1749,13 +1749,10 @@ static ssize_t merge_from_parent
 	/* Determine where we are appending more data to the stream */
 	append_v_offset = v_offset + (stream->pos - stream->skip);
 
-	if (parent_buffer) {
+	if (v_offset >= copy_v_offset) {
 		/* Parent buffer used */
-		stream->pos -= stream->skip;
-		stream->skip = 0;
-		cur_pos = stream->pos;
-		if (v_offset > copy_v_offset)
-			parent_v_offset += (v_offset - copy_v_offset);
+		cur_pos = (stream->pos - stream->skip);
+		parent_v_offset += (v_offset - copy_v_offset);
 	} else {
 		cur_pos = 0;
 		i_assert(append_v_offset >= copy_v_offset);
@@ -1818,12 +1815,8 @@ static ssize_t merge_from_parent
 		}
 	} else {
 		/* Just passing buffers from parent; no copying */
-		if (parent_buffer) {
-			ret = (pos > stream->pos ? (ssize_t)(pos - stream->pos) :
-				(ret == 0 ? 0 : -1));
-		} else {
-			ret = (pos > 0 ? (ssize_t)pos : (ret == 0 ? 0 : -1));
-		}
+		ret = (pos > cur_pos ? (ssize_t)(pos - cur_pos) :
+			(ret == 0 ? 0 : -1));
 		stream->buffer = data;
 		stream->pos = pos;
 		stream->skip = 0;
