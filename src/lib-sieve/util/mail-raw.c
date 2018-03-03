@@ -190,6 +190,18 @@ static struct mail_raw *mail_raw_create
 	return mailr;
 }
 
+struct mail_raw *mail_raw_open_stream
+(struct mail_user *ruser, struct istream *input)
+{
+	struct mail_raw *mailr;
+
+	i_assert(input->seekable);
+	i_stream_set_name(input, "data");
+	mailr = mail_raw_create(ruser, input, NULL, NULL, (time_t)-1);
+
+	return mailr;
+}
+
 struct mail_raw *mail_raw_open_data
 (struct mail_user *ruser, string_t *mail_data)
 {
@@ -197,12 +209,10 @@ struct mail_raw *mail_raw_open_data
 	struct istream *input;
 
 	input = i_stream_create_from_data(str_data(mail_data), str_len(mail_data));
-	i_stream_set_name(input, "data");
 
-	mailr = mail_raw_create(ruser, input, NULL, NULL, (time_t)-1);
+	mailr = mail_raw_open_stream(ruser, input);
 
 	i_stream_unref(&input);
-
 	return mailr;
 }
 
