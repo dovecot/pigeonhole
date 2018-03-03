@@ -2,6 +2,7 @@ noinst_PROGRAMS = testsuite
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
+	-I$(top_srcdir)/src/lib-sieve/util \
 	-I$(top_srcdir)/src/lib-sieve/plugins/variables \
 	-I$(top_srcdir)/src/lib-sieve-tool \
 	$(LIBDOVECOT_INCLUDE) \
