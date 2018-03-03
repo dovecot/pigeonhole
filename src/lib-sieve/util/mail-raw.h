@@ -18,6 +18,8 @@ struct mail_raw {
 struct mail_user *mail_raw_user_create
 	(struct master_service *service, struct mail_user *mail_user);
 
+struct mail_raw *mail_raw_open_stream
+	(struct mail_user *ruser, struct istream *input);
 struct mail_raw *mail_raw_open_file
 	(struct mail_user *ruser, const char *path);
 struct mail_raw *mail_raw_open_data
