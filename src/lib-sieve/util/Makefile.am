@@ -8,12 +8,14 @@ AM_CPPFLAGS = \
 libsieve_util_la_DEPENDENCIES = $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
 
 libsieve_util_la_SOURCES = \
+	mail-raw.c \
 	edit-mail.c \
 	rfc2822.c \
 	realpath.c \
 	strtrim.c
 
 headers = \
+	mail-raw.h \
 	edit-mail.h \
 	rfc2822.h \
 	realpath.h \
