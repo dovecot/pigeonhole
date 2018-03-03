@@ -1774,8 +1774,7 @@ static ssize_t merge_from_parent
 	} else {
 		cur_pos = 0;
 		i_assert(append_v_offset >= copy_v_offset);
-		if (append_v_offset > copy_v_offset)
-			parent_v_offset += (append_v_offset - copy_v_offset);
+		parent_v_offset += (append_v_offset - copy_v_offset);
 	}
 
 	/* Seek parent to required position */
