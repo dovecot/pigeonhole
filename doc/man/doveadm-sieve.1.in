@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2018 Pigeonhole authors, see the included COPYING file
-.TH DOVEADM\-SIEVE 1 "2016-02-29" "Pigeonhole v0.4 for Dovecot v2.2" "Pigeonhole"
+.TH DOVEADM\-SIEVE 1 "2016-02-29" "Pigeonhole for Dovecot v2.4" "Pigeonhole"
 .SH NAME
 doveadm\-sieve \- Commands related to handling Sieve scripts
 .\"------------------------------------------------------------------------
