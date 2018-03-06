@@ -223,6 +223,8 @@ const struct smtp_address *sieve_get_user_email
 
 const struct message_address *
 sieve_get_postmaster(const struct sieve_script_env *senv);
+const struct smtp_address *
+sieve_get_postmaster_smtp(const struct sieve_script_env *senv);
 const char *
 sieve_get_postmaster_address(const struct sieve_script_env *senv);
 

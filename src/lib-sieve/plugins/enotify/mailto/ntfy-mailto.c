@@ -501,8 +501,7 @@ static int ntfy_mailto_send
 		else if ( svinst->user_email != NULL )
 			from_smtp = svinst->user_email;
 		else {
-			from_smtp = smtp_address_create_from_msg_temp(
-				sieve_get_postmaster(senv));
+			from_smtp = sieve_get_postmaster_smtp(senv);
 			if (from == NULL)
 				from = sieve_get_postmaster_address(senv);
 		}
@@ -678,8 +677,7 @@ static int ntfy_mailto_action_execute
 		(nenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
 		owner_email = sieve_message_get_final_recipient(nenv->msgctx);
 	if ( owner_email == NULL ) {
-		owner_email = smtp_address_create_from_msg_temp(
-			sieve_get_postmaster(senv));
+		owner_email = sieve_get_postmaster_smtp(senv);
 	}
 	i_assert( owner_email != NULL );
 
