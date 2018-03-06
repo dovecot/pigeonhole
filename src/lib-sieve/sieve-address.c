@@ -265,6 +265,20 @@ static inline void sieve_address_error
  *          MERGE!
  */
 
+static int check_local_part(struct sieve_message_address_parser *ctx)
+{
+	const unsigned char *p, *pend;
+
+	p = str_data(ctx->local_part);
+	pend = p + str_len(ctx->local_part);
+	while (p < pend) {
+		if (*p < 0x20 || *p > 0x7e)
+			return -1;
+		p++;
+	}
+	return 0;
+}
+
 static int parse_local_part(struct sieve_message_address_parser *ctx)
 {
 	int ret;
@@ -302,7 +316,7 @@ static int parse_local_part(struct sieve_message_address_parser *ctx)
 		} while (ret > 0 && *ctx->parser.data == '.');
 	}
 
-	if (ret < 0) {
+	if (ret < 0 || check_local_part(ctx) < 0) {
 		sieve_address_error(ctx, "invalid local part");
 		return -1;
 	}

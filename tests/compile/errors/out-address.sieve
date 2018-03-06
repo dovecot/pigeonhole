@@ -15,6 +15,7 @@ redirect "Error <stephan";
 redirect "Error <stephan@";
 redirect "stephan@example.org,tss@example.net";
 redirect "stephan@example.org,%&^&!!~";
+redirect "rüdiger@example.com";
 
 vacation :from "Error" "Ik ben er niet.";
 
