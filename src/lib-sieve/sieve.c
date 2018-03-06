@@ -1110,6 +1110,18 @@ sieve_get_postmaster(const struct sieve_script_env *senv)
 	return senv->postmaster_address;
 }
 
+const struct smtp_address *
+sieve_get_postmaster_smtp(const struct sieve_script_env *senv)
+{
+	struct smtp_address *addr;
+	int ret;
+
+	ret = smtp_address_create_from_msg_temp(
+		sieve_get_postmaster(senv), &addr);
+	i_assert(ret >= 0);
+	return addr;
+}
+
 const char *
 sieve_get_postmaster_address(const struct sieve_script_env *senv)
 {

@@ -108,8 +108,7 @@ int sieve_address_source_get_address
 		*addr_r = svinst->user_email;
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_POSTMASTER:
-		*addr_r = smtp_address_create_from_msg_temp(
-			sieve_get_postmaster(senv));
+		*addr_r = sieve_get_postmaster_smtp(senv);
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_EXPLICIT:
 		*addr_r = asrc->address;
