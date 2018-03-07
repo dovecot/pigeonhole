@@ -752,15 +752,11 @@ imap_sieve_mailbox_transaction_run(
 			uid = mevent->dest_mail_uid;
 
 		/* Select event message */
-		if (!mail_set_uid(mail, uid)) {
-			imap_sieve_mailbox_error(sbox,
-				"Failed to find message for Sieve event (UID=%llu)",
-				(unsigned long long)uid);
-			continue;
-		}
-
-		if (mail->expunged) {
+		if (!mail_set_uid(mail, uid) || mail->expunged) {
 			/* already gone for some reason */
+			imap_sieve_mailbox_debug(sbox,
+				"Message for Sieve event gone (UID=%llu)",
+				(unsigned long long)uid);
 			continue;
 		}
 
