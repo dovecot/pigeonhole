@@ -1,3 +1,19 @@
+v0.4.23 20-03-2018  Stephan Bosch <stephan@rename-it.nl>
+
+	- editheader extension: Corrected the stream position calculations
+	  performed while making the modified message available as a stream.
+	  Pigeonhole Sieve crashed in LMTP with an assertion panic when the
+	  Sieve editheader extension was used before the message was redirected.
+	  Experiments indicate that the problem occurred only with LMTP and that
+	  LDA is not affected.
+	- fileinto extension: Fix assert panic occurring when fileinto is used
+	  without being listed in the require line, while the copy extension is
+	  listed there. This is a very old bug.
+	- imapsieve plugin: Do not log an error for messages that disappear
+	  concurrently while applying Sieve scripts. This is a further
+	  improvement on the imapsieve fix in the previous release (which fixed
+	  a panic). This event is now logged as a debug message.
+
 v0.4.22 01-03-2018  Stephan Bosch <stephan@rename-it.nl>
 
 	- Fixed filesystem path handling problem: sieve plugin could have
