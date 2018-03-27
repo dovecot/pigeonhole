@@ -1,3 +1,23 @@
+v0.5.1 28-03-2018  Stephan Bosch <stephan@rename-it.nl>
+
+	- Explicitly disallow UTF-8 in localpart in addresses parsed from Sieve
+	  script.
+	- editheader extension: Corrected the stream position calculations
+	  performed while making the modified message available as a stream.
+	  Pigeonhole Sieve crashed in LMTP with an assertion panic when the
+	  Sieve editheader extension was used before the message was redirected.
+	  Experiments indicate that the problem occurred only with LMTP and that
+	  LDA is not affected.
+	- fileinto extension: Fix assert panic occurring when fileinto is used
+	  without being listed in the require line, while the copy extension is
+	  listed there. This is a very old bug.
+	- imapsieve plugin: Do not assert crash or log an error for messages
+	  that disappear concurrently while applying Sieve scripts. This event
+	  is now logged as a debug message.
+	- Sieve extprograms plugin: Large output from "execute" command crashed
+	  delivery. Fixed buffering issue in code that handles output from the
+	  external program.
+
 v0.5.0.1 05-01-2018  Stephan Bosch <stephan@rename-it.nl>
 
 	- imap4flags extension: Fix binary corruption occurring when
