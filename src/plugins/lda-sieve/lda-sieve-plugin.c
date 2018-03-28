@@ -424,6 +424,8 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 	bool debug = srctx->mdctx->dest_user->mail_debug;
 	bool user_script, more;
 
+	*error_r = SIEVE_ERROR_NONE;
+
 	user_script = ( script == srctx->user_script );
 
 	if ( user_script ) {
@@ -569,6 +571,8 @@ static int lda_sieve_execute_scripts
 				/* End of normal script sequence */
 				break;
 			}
+		} else if ( error != SIEVE_ERROR_NONE ) {
+			break;
 		} else if ( sieve_multiscript_will_discard(mscript) &&
 			srctx->discard_script != NULL ) {
 			/* Mail is set to be discarded, but we have a discard script. */
