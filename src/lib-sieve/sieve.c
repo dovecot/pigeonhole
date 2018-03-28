@@ -730,7 +730,7 @@ bool sieve_multiscript_run
 bool sieve_multiscript_will_discard
 (struct sieve_multiscript *mscript)
 {
-	return ( !mscript->active &&
+	return ( !mscript->active && mscript->status == SIEVE_EXEC_OK &&
 		!sieve_result_executed_delivery(mscript->result) );
 }
 
