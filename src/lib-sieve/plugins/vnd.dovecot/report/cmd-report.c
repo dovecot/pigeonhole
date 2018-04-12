@@ -617,9 +617,6 @@ static int act_report_send
 
 	ret = o_stream_send_istream(output, input);
 
-	/* blocking i/o required */
-	i_assert( ret != 0 );
-
 	if ( ret < 0 && input->stream_errno != 0 ) {
 		/* Error; clean up */
 		sieve_result_critical(aenv,

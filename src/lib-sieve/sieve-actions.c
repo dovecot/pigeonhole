@@ -921,8 +921,6 @@ static int sieve_action_do_reject_mail
 			return SIEVE_EXEC_TEMP_FAILURE;
 		}
 		i_stream_unref(&input);
-
-		i_assert(ret != 0);
 	}
 
 	str_truncate(hdr, 0);

@@ -381,9 +381,6 @@ static int act_redirect_send
 
 	ret = o_stream_send_istream(output, input);
 
-	/* blocking i/o required */
-	i_assert( ret != 0 );
-
 	if (ret < 0 && input->stream_errno != 0) {
 		sieve_result_critical(aenv,
 			"redirect action: failed to read input message",
