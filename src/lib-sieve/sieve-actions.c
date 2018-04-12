@@ -828,7 +828,7 @@ static int sieve_action_do_reject_mail
 	const char *new_msgid, *boundary, *error;
 	const char *orig_recipient =
 		sieve_message_get_orig_recipient(aenv->msgctx);
-  string_t *hdr;
+	string_t *hdr;
 	int ret;
 
 	sctx = sieve_smtp_start_single(senv, sender, NULL, &output);
@@ -843,7 +843,7 @@ static int sieve_action_do_reject_mail
 	new_msgid = sieve_message_get_new_id(svinst);
 	boundary = t_strdup_printf("%s/%s", my_pid, svinst->hostname);
 
-  hdr = t_str_new(512);
+	hdr = t_str_new(512);
 	rfc2822_header_write(hdr, "X-Sieve", SIEVE_IMPLEMENTATION);
 	rfc2822_header_write(hdr, "Message-ID", new_msgid);
 	rfc2822_header_write(hdr, "Date", message_date_create(ioloop_time));
@@ -895,29 +895,30 @@ static int sieve_action_do_reject_mail
 	o_stream_send(output, str_data(hdr), str_len(hdr));
 
 	if (mail_get_hdr_stream(msgdata->mail, NULL, &input) == 0) {
-    /* Note: If you add more headers, they need to be sorted.
-       We'll drop Content-Type because we're not including the message
-       body, and having a multipart Content-Type may confuse some
-       MIME parsers when they don't see the message boundaries. */
-    static const char *const exclude_headers[] = {
-	    "Content-Type"
-    };
+		/* Note: If you add more headers, they need to be sorted.
+		   We'll drop Content-Type because we're not including the
+		   message body, and having a multipart Content-Type may confuse
+		   some MIME parsers when they don't see the message boundaries.
+		 */
+		static const char *const exclude_headers[] = {
+			"Content-Type"
+		};
 
-    input = i_stream_create_header_filter(input,
-    		HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR |
-		HEADER_FILTER_HIDE_BODY, exclude_headers,
-		N_ELEMENTS(exclude_headers),
-		*null_header_filter_callback, (void *)NULL);
+		input = i_stream_create_header_filter(input,
+			HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR |
+			HEADER_FILTER_HIDE_BODY, exclude_headers,
+			N_ELEMENTS(exclude_headers),
+			*null_header_filter_callback, (void *)NULL);
 
-    ret = o_stream_send_istream(output, input);
-    i_stream_unref(&input);
+		ret = o_stream_send_istream(output, input);
+		i_stream_unref(&input);
 
-    i_assert(ret != 0);
-  }
+		i_assert(ret != 0);
+	}
 
-  str_truncate(hdr, 0);
-  str_printfa(hdr, "\r\n\r\n--%s--\r\n", boundary);
-  o_stream_send(output, str_data(hdr), str_len(hdr));
+	str_truncate(hdr, 0);
+	str_printfa(hdr, "\r\n\r\n--%s--\r\n", boundary);
+	o_stream_send(output, str_data(hdr), str_len(hdr));
 
 	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if ( ret < 0 ) {
