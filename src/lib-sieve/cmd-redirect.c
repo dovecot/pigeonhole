@@ -393,7 +393,7 @@ static int act_redirect_send
 		i_stream_unref(&input);
 		return SIEVE_EXEC_TEMP_FAILURE;
 	}
-  i_stream_unref(&input);
+	i_stream_unref(&input);
 
 	/* Close SMTP transport */
 	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
