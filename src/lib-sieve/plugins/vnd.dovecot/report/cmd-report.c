@@ -541,7 +541,7 @@ static int act_report_send
 	o_stream_send(output, str_data(msg), str_len(msg));
 
 	/* Machine-readable report */
-  str_truncate(msg, 0);
+	str_truncate(msg, 0);
 	str_printfa(msg, "--%s\r\n", boundary);
 	rfc2822_header_write(msg,
 		"Content-Type", "message/feedback-report");
@@ -586,7 +586,7 @@ static int act_report_send
 	o_stream_send(output, str_data(msg), str_len(msg));
 
 	/* Original message */
-  str_truncate(msg, 0);
+	str_truncate(msg, 0);
 	str_printfa(msg, "--%s\r\n", boundary);
 	if (act->headers_only) {
 		rfc2822_header_write(msg,
@@ -615,7 +615,7 @@ static int act_report_send
 			"report action: failed to read input message");
 	}
 
-  ret = o_stream_send_istream(output, input);
+	ret = o_stream_send_istream(output, input);
 
 	/* blocking i/o required */
 	i_assert( ret != 0 );
@@ -632,11 +632,11 @@ static int act_report_send
 	}
 	i_stream_unref(&input);
 
-  str_truncate(msg, 0);
+	str_truncate(msg, 0);
 	if (!act->headers_only)
 		str_printfa(msg, "\r\n");
 	str_printfa(msg, "\r\n--%s--\r\n", boundary);
-  o_stream_send(output, str_data(msg), str_len(msg));
+	o_stream_send(output, str_data(msg), str_len(msg));
 
 	/* Finish sending message */
 	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
