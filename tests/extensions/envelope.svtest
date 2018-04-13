@@ -138,12 +138,6 @@ test "Envelope - source route" {
 	if not envelope :localpart :is "from" "stephan" {
 		test_fail "parsing path with source route (multiple) failed";
 	}
-
-	/* Bare */
-	test_set "envelope.from" "@cola.example.org,@mx.utwente.nl,@smtp.example.net:stephan@example.org";
-	if not envelope :domain :is "from" "example.org" {
-		test_fail "parsing path with source route (bare) failed";
-	}
 }
 
 test "Envelope - source route errors" {
