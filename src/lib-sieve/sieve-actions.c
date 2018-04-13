@@ -911,6 +911,15 @@ static int sieve_action_do_reject_mail
 			*null_header_filter_callback, (void *)NULL);
 
 		ret = o_stream_send_istream(output, input);
+		if (ret < 0 && input->stream_errno != 0) {
+			sieve_result_critical(aenv,
+				"reject action: failed to read input message",
+				"reject action: read(%s) failed: %s",
+				i_stream_get_name(input),
+				i_stream_get_error(input));
+			i_stream_unref(&input);
+			return SIEVE_EXEC_TEMP_FAILURE;
+		}
 		i_stream_unref(&input);
 
 		i_assert(ret != 0);
