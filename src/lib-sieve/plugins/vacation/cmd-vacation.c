@@ -1006,7 +1006,7 @@ static int act_vacation_send
 		subject = ctx->subject;
 	}
 
-	subject = str_sanitize_utf8(subject, 256);
+	subject = str_sanitize_utf8(subject, config->max_subject_codepoints);
 
 	/* Obtain full To address for reply */
 
