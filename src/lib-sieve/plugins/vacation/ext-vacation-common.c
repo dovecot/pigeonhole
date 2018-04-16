@@ -18,6 +18,7 @@ bool ext_vacation_load
 	sieve_number_t min_period, max_period, default_period;
 	bool use_original_recipient, dont_check_recipient, send_from_recipient,
 		to_header_ignore_envelope;
+	unsigned long long max_subject_codepoints;
 
 	if ( *context != NULL ) {
 		ext_vacation_unload(ext);
@@ -51,6 +52,11 @@ bool ext_vacation_load
 			"sieve_vacation_max_period");
 	}
 
+	if ( !sieve_setting_get_uint_value
+		(svinst, "sieve_vacation_max_subject_codepoints", &max_subject_codepoints) ) {
+		max_subject_codepoints = EXT_VACATION_DEFAULT_MAX_SUBJECT_CODEPOINTS;
+	}
+
 	if ( !sieve_setting_get_bool_value
 		(svinst, "sieve_vacation_use_original_recipient", &use_original_recipient) ) {
 		use_original_recipient = FALSE;
@@ -76,6 +82,7 @@ bool ext_vacation_load
 	config->min_period = min_period;
 	config->max_period = max_period;
 	config->default_period = default_period;
+	config->max_subject_codepoints = max_subject_codepoints;
 	config->use_original_recipient = use_original_recipient;
 	config->dont_check_recipient = dont_check_recipient;
 	config->send_from_recipient = send_from_recipient;
