@@ -990,7 +990,7 @@ static int act_vacation_send
 		subject = ctx->subject;
 	}
 
-	subject = str_sanitize(subject, 256);
+	subject = str_sanitize_utf8(subject, 256);
 
 	/* Obtain full To address for reply */
 
