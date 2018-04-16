@@ -53,6 +53,13 @@ sieve_vacation_default_period = 7d
   is specified. The configured value must lie between the
   sieve_vacation_min_period and sieve_vacation_max_period.
 
+sieve_vacation_max_subject_codepoints = 256
+  The maximum number of Unicode codepoints used in the Subject header generated
+  for the outgoing vacation message. When composite characters are involved,
+  the number of actual charactes in the Subject text can be less than this
+  number, otherwise it is equal. When the subject text exceeds the limit, it is
+  truncated and the removed part is replaced with an ellipsis character ('...').
+
 sieve_vacation_use_original_recipient = no
   This specifies whether the original envelope recipient should be used in the
   check for implicit delivery.  The vacation command checks headers of the
