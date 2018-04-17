@@ -863,8 +863,8 @@ static inline bool _contains_my_address
 					struct smtp_address addr;
 
 					i_assert(msg_addr->mailbox != NULL);
-					smtp_address_init_from_msg(&addr, msg_addr);
-					if ( smtp_address_equals(&addr, my_address) ) {
+					if ( smtp_address_init_from_msg(&addr, msg_addr) >= 0 &&
+						smtp_address_equals(&addr, my_address) ) {
 						result = TRUE;
 						break;
 					}
@@ -926,8 +926,8 @@ static int _get_full_reply_recipient
 					if (!matched) {
 						i_assert(addr->mailbox != NULL);
 
-						smtp_address_init_from_msg(&saddr, addr);
-						matched = smtp_address_equals(smtp_to, &saddr);
+						matched = ( smtp_address_init_from_msg(&saddr, addr) >= 0 &&
+							smtp_address_equals(smtp_to, &saddr) );
 					}
 
 					if (matched) {
