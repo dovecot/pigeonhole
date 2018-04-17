@@ -747,11 +747,7 @@ static bool act_notify_send
 
 	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 &&
 		sieve_message_get_sender(aenv->msgctx) != NULL ) {
-		struct smtp_address postmaster;
-		
-		smtp_address_init_from_msg(&postmaster, 
-			sieve_get_postmaster(senv));
-		sctx = sieve_smtp_start(senv, &postmaster);
+		sctx = sieve_smtp_start(senv, sieve_get_postmaster_smtp(senv));
 	} else {
 		sctx = sieve_smtp_start(senv, NULL);
 	}
