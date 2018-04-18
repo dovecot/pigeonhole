@@ -1848,7 +1848,7 @@ static ssize_t merge_modified_headers(struct edit_mail_istream *edstream)
 	struct istream_private *stream = &edstream->istream;
 	struct edit_mail *edmail = edstream->mail;
 	uoff_t v_offset = stream->istream.v_offset, append_v_offset;
-	size_t init_pos = stream->pos, appended, avail, size;
+	size_t appended, written, avail, size;
 
 	if (edstream->cur_header == NULL) {
 		/* No (more) headers */
@@ -1860,33 +1860,38 @@ static ssize_t merge_modified_headers(struct edit_mail_istream *edstream)
 	i_assert(!edstream->parent_buffer);
 
 	/* Add modified headers to buffer */
+	written = 0;
 	while ( edstream->cur_header != NULL) {
 		size_t wsize;
 
 		/* Determine what part of the header was already buffered */
 		append_v_offset = v_offset + (stream->pos - stream->skip);
 		i_assert(append_v_offset >= edstream->cur_header_v_offset);
-		if (append_v_offset == edstream->cur_header_v_offset)
+		if (append_v_offset >= edstream->cur_header_v_offset)
 			appended = (size_t)(append_v_offset - edstream->cur_header_v_offset);
 		else
 			appended = 0;
-		i_assert(appended < edstream->cur_header->field->size);
+		i_assert(appended <= edstream->cur_header->field->size);
 
-		/* Determine how much we can write */
+		/* Determine how much we want to write */
 		size = edstream->cur_header->field->size - appended;
-		if (!i_stream_try_alloc(stream, size, &avail))
-			return -2;
-		wsize = (size >= avail ? avail : size);
+		if (size > 0) {
+			/* Determine how much we can write */
+			if (!i_stream_try_alloc(stream, size, &avail))
+				return -2;
+			wsize = (size >= avail ? avail : size);
 
-		/* Write (part of) the header to buffer */
-		memcpy(stream->w_buffer + stream->pos,
-			edstream->cur_header->field->data + appended, wsize);
-		stream->pos += wsize;
-		stream->buffer = stream->w_buffer;
+			/* Write (part of) the header to buffer */
+			memcpy(stream->w_buffer + stream->pos,
+				edstream->cur_header->field->data + appended, wsize);
+			stream->pos += wsize;
+			stream->buffer = stream->w_buffer;
+			written += wsize;
 
-		if (wsize < size) {
-			/* Could not write whole header; finish here */
-			break;
+			if (wsize < size) {
+				/* Could not write whole header; finish here */
+				break;
+			}
 		}
 
 		/* Skip to next header */
@@ -1905,8 +1910,8 @@ static ssize_t merge_modified_headers(struct edit_mail_istream *edstream)
 		edstream->cur_header_v_offset = 0;
 	}
 
-	i_assert(stream->pos >= init_pos);
-	return (ssize_t)(stream->pos - init_pos);
+	i_assert(written > 0);
+	return (ssize_t)written;
 }
 
 static ssize_t edit_mail_istream_read(struct istream_private *stream)
@@ -1973,11 +1978,13 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 				if ( stream->buffer != NULL &&
 					stream->buffer[stream->pos-1] == '\r' ) {
 					stream->pos--;
+					append_v_offset--;
 					ret--;
 				}
 
 				i_assert(ret >= 0);
 				edstream->cur_header = edmail->header_fields_appended;
+				edstream->cur_header_v_offset = append_v_offset;
 				if (!edstream->parent_buffer)
 					edstream->header_read = TRUE;
 			}
