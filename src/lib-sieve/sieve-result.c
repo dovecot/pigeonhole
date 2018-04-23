@@ -1058,6 +1058,8 @@ static int _sieve_result_implicit_keep
 			(&act_keep, aenv, tr_context, status);
 	}
 
+	if (status == SIEVE_EXEC_FAILURE)
+		status = SIEVE_EXEC_KEEP_FAILED;
 	return status;
 }
 
@@ -1284,6 +1286,13 @@ static int sieve_result_action_commit_or_rollback
 			return status;
 
 		sieve_result_action_rollback(result, rac);
+	}
+
+	if (rac->keep) {
+		if (status == SIEVE_EXEC_FAILURE)
+			status = SIEVE_EXEC_KEEP_FAILED;
+		if (*commit_status == SIEVE_EXEC_FAILURE)
+			*commit_status = SIEVE_EXEC_KEEP_FAILED;
 	}
 
 	return status;
