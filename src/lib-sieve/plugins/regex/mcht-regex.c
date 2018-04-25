@@ -238,7 +238,7 @@ static int mcht_regex_match_key
 						skipped = 0;
 					}
 
-					str_append_n(subst, val + ctx->pmatch[i].rm_so,
+					str_append_data(subst, val + ctx->pmatch[i].rm_so,
 						ctx->pmatch[i].rm_eo - ctx->pmatch[i].rm_so);
 					sieve_match_values_add(mvalues, subst);
 				} else

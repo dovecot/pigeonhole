@@ -438,7 +438,7 @@ static inline char *_header_value_unfold
 	}
 
 	out = t_str_new(i + strlen(value+i) + 10);
-	str_append_n(out, value, i);
+	str_append_data(out, value, i);
 	for ( ; value[i] != '\0'; i++ ) {
 		if (value[i] == '\n') {
 			i++;
