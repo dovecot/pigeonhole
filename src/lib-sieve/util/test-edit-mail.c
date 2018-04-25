@@ -692,7 +692,7 @@ static const char *big_header =
 
 static void test_edit_mail_big_header(void)
 {
-	struct istream *input_msg, *input_mail, *input;
+	struct istream *input_msg, *input_mail;
 	buffer_t *buffer;
 	struct mail_raw *rawmail;
 	struct edit_mail *edmail;
@@ -733,7 +733,6 @@ static void test_edit_mail_big_header(void)
 
 	i_stream_seek(input_mail, 0);
 	buffer_set_used_size(buffer, 0);
-	input = input_mail;
 
 	test_stream_data(input_mail, buffer);
 
