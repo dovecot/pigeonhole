@@ -37,12 +37,12 @@ static void str_append_no_cr(string_t *str, const char *cstr)
 	poff = p = cstr;
 	while (*p != '\0') {
 		if (*p == '\r') {
-			str_append_n(str, poff, (p - poff));
+			str_append_data(str, poff, (p - poff));
 			poff = p+1;
 		}
 		p++;
 	}
-	str_append_n(str, poff, (p - poff));
+	str_append_data(str, poff, (p - poff));
 }
 
 static int test_init_mail_user(void)

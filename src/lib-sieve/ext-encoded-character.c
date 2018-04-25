@@ -229,7 +229,7 @@ bool arg_encoded_string_validate
 						newstr = str_new(sieve_ast_pool((*arg)->ast), str_len(str)*2);
 					}
 
-					str_append_n(newstr, strstart, substart-strstart);
+					str_append_data(newstr, strstart, substart-strstart);
 					str_append_str(newstr, tmpstr);
 
 					strstart = p + 1;
@@ -246,7 +246,7 @@ bool arg_encoded_string_validate
 
 	if ( newstr != NULL ) {
 		if ( strstart != strend )
-			str_append_n(newstr, strstart, strend-strstart);
+			str_append_data(newstr, strstart, strend-strstart);
 
 		sieve_ast_argument_string_set(*arg, newstr);
 	}

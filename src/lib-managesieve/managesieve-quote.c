@@ -65,7 +65,7 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 
 	tmp = t_str_new(value_len+escape+4);
 	if (!modify && (literal || escape == 0))
-		str_append_n(tmp, value, value_len);
+		str_append_data(tmp, value, value_len);
 	else {
 		last_lwsp = TRUE;
 		for (i = 0; i < value_len; i++) {

@@ -120,7 +120,7 @@ static bool arg_testsuite_string_validate
 					 */
 					if ( substart > strstart ) {
 						string_t *newstr = str_new(pool, substart - strstart);
-						str_append_n(newstr, strstart, substart - strstart);
+						str_append_data(newstr, strstart, substart - strstart);
 
 						strarg = sieve_ast_argument_string_create_raw
 							((*arg)->ast, newstr, (*arg)->source_line);
@@ -174,7 +174,7 @@ static bool arg_testsuite_string_validate
 	if ( strend > strstart ) {
 		struct sieve_ast_argument *strarg;
 		string_t *newstr = str_new(pool, strend - strstart);
-		str_append_n(newstr, strstart, strend - strstart);
+		str_append_data(newstr, strstart, strend - strstart);
 
 		strarg = sieve_ast_argument_string_create_raw
 			((*arg)->ast, newstr, (*arg)->source_line);

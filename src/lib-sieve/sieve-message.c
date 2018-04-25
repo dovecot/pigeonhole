@@ -482,7 +482,7 @@ static inline string_t *_header_right_trim(const char *raw)
 			if ( *p != ' ' && *p != '\t' ) break;
 		}
 		result = t_str_new(p - raw + 1);
-		str_append_n(result, raw, p - raw + 1);
+		str_append_data(result, raw, p - raw + 1);
 	}
 	return result;
 }

@@ -351,7 +351,7 @@ static string_t *ext_imap4flags_iter_get_flag_str
 			if ( fp > fstart ) {
 				/* Return flag */
 				string_t *flag = t_str_new(fp-fstart+1);
-				str_append_n(flag, fstart, fp-fstart);
+				str_append_data(flag, fstart, fp-fstart);
 
 				iter->last = fstart - fbegin;
 				iter->offset = fp - fbegin;
