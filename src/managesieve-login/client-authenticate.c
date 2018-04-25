@@ -209,7 +209,7 @@ static int managesieve_client_auth_read_response
 			return -1;
 		}
 
-		str_append_n(client->auth_response, data, size);
+		str_append_data(client->auth_response, data, size);
 		i_stream_skip(msieve_client->auth_response_input, size);
 	}
 

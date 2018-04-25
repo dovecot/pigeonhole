@@ -336,7 +336,7 @@ static int cmd_extracttext_operation_execute
 		value = t_str_new_const(mpart_data.content, mpart_data.size);
 	} else {
 		value = t_str_new((size_t)first);
-		str_append_n(value, mpart_data.content, (size_t)first);
+		str_append_data(value, mpart_data.content, (size_t)first);
 	}
 
 	/* Apply modifiers */

@@ -213,7 +213,7 @@ static int mcht_matches_match_key
 				qp = vp - key_offset;
 
 				if ( mvalues != NULL )
-					str_append_n(mvalue, pvp, qp-pvp);
+					str_append_data(mvalue, pvp, qp-pvp);
 
 				/* Compare needle to end of value string */
 				if ( !cmp->def->char_match(cmp, &vp, vend, &needle, nend) ) {
@@ -283,7 +283,7 @@ static int mcht_matches_match_key
 					const char *qp = qend - key_offset;
 
 					/* Append '*' match value */
-					str_append_n(mvalue, pvp, qp-pvp);
+					str_append_data(mvalue, pvp, qp-pvp);
 
 					/* Append any initial '?' match values (those that caused the key
 					 * offset.
@@ -393,7 +393,7 @@ static int mcht_matches_match_key
 			/* Add the rest of the string as match value */
 			if ( mvalues != NULL ) {
 				str_truncate(mvalue, 0);
-				str_append_n(mvalue, vp, vend-vp);
+				str_append_data(mvalue, vp, vend-vp);
 				sieve_match_values_add(mvalues, mvalue);
 			}
 

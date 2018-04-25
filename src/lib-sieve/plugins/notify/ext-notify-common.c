@@ -307,7 +307,7 @@ int ext_notify_construct_message
 				}
 
 				if ( *p++ != ']' || *p++ != '$' ) {
-					str_append_n(out_msg, begin, p-begin);
+					str_append_data(out_msg, begin, p-begin);
 					valid = FALSE;
 				}
 			} else {
@@ -324,9 +324,9 @@ int ext_notify_construct_message
 				}
 
 				if ( num > 0 && num < body_size)
-					str_append_n(out_msg, body_text, num);
+					str_append_data(out_msg, body_text, num);
 				else
-					str_append_n(out_msg, body_text, body_size);
+					str_append_data(out_msg, body_text, body_size);
 			}
 		} else {
 			size_t len;
@@ -335,7 +335,7 @@ int ext_notify_construct_message
 			len = strcspn(p + 1, "$") + 1;
 
 			/* Copy normal text */
-			str_append_n(out_msg, p, len);
+			str_append_data(out_msg, p, len);
 			p += len;
 		}
   }
