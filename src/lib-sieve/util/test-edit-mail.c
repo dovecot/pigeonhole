@@ -26,6 +26,7 @@ static struct mail_storage_service_ctx *mail_storage_service = NULL;
 static struct mail_user *test_mail_user = NULL;
 static struct mail_storage_service_user *test_service_user = NULL;
 static const char *mail_home;
+static char *test_dir;
 
 static struct mail_user *test_raw_mail_user = NULL;
 
@@ -46,13 +47,10 @@ static void str_append_no_cr(string_t *str, const char *cstr)
 
 static int test_init_mail_user(void)
 {
-	const char *cwd, *error;
-
-	if (t_get_working_dir(&cwd, &error) < 0)
-		i_fatal("getcwd() failed: %s", error);
+	const char *error;
 
 	mail_home = p_strdup_printf(test_pool, "%s/test_user.%ld.%ld",
-				    cwd, (long)time(NULL), (long)getpid());
+				    test_dir, (long)time(NULL), (long)getpid());
 
 	struct mail_storage_service_input input = {
 		.userdb_fields = (const char*const[]){
@@ -753,14 +751,20 @@ int main(int argc, char *argv[])
 		test_edit_mail_big_header,
 		NULL
 	};
+	const char *cwd, *error;
 
 	master_service = master_service_init("test-edit-header",
 		MASTER_SERVICE_FLAG_STANDALONE |
 		MASTER_SERVICE_FLAG_NO_CONFIG_SETTINGS,	&argc, &argv, "");
 	master_service_init_finish(master_service);
 
+	if (t_get_working_dir(&cwd, &error) < 0)
+		i_fatal("getcwd() failed: %s", error);
+	test_dir = i_strdup(cwd);
+
 	test_run(test_functions);
 
+	i_free(test_dir);
 	master_service_deinit(&master_service);
 }
 
