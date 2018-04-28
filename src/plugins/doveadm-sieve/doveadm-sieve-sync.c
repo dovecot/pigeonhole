@@ -292,8 +292,7 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 
 	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT) == 0)
 		return sieve_attribute_set_default(storage, svstorage, value);
-	if (strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES,
-		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES)) != 0) {
+	if (!str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES)) {
 		mail_storage_set_error(storage, MAIL_ERROR_NOTFOUND,
 				       "Nonexistent sieve attribute");
 		return -1;
@@ -371,8 +370,7 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 
 	if (t->box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
-	    strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE,
-		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0) {
+	    str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
 		time_t ts =
 			(value->last_change != 0 ? value->last_change : ioloop_time);
 
@@ -518,8 +516,7 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 
 	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT) == 0)
 		return sieve_attribute_get_default(storage, svstorage, value_r);
-	if (strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES,
-		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES)) != 0)
+	if (!str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES))
 		return 0;
 	if ((value_r->flags & MAIL_ATTRIBUTE_VALUE_FLAG_INT_STREAMS) == 0) {
 		mail_storage_set_error(storage, MAIL_ERROR_PARAMS,
@@ -548,8 +545,7 @@ sieve_attribute_get(struct mailbox *box,
 
 	if (box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
-	    strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE,
-		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0) {
+	    str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
 
 		ret = sieve_attribute_get_sieve(box->storage, key, value_r);
 		if (ret >= 0 && user->mail_debug) {
@@ -612,8 +608,7 @@ sieve_attribute_iter_init(struct mailbox *box, enum mail_attribute_type type,
 
 	if (box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
-	    strncmp(prefix, MAILBOX_ATTRIBUTE_PREFIX_SIEVE,
-		    strlen(prefix)) == 0) {
+	    str_begins(prefix, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
 		if (sieve_attribute_iter_script_init(siter) < 0)
 			siter->failed = TRUE;
 	}

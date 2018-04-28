@@ -629,7 +629,7 @@ void sieve_tool_dump_binary_to
 void sieve_tool_parse_trace_option
 (struct sieve_trace_config *tr_config, const char *tr_option)
 {
-    if ( strncmp(tr_option, "level=", 6) == 0 ) {
+    if ( str_begins(tr_option, "level=")) {
         const char *lvl = &tr_option[6];
 
         if ( strcmp(lvl, "none") == 0 ) {
