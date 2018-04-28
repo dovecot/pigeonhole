@@ -169,7 +169,7 @@ ext_environment_item_lookup
 		i_assert(item->prefix);
 		prefix_len = strlen(item->name);
 
-		if ( strncmp(name, item->name, prefix_len) == 0 ) {
+		if ( str_begins(name, item->name)) {
 			if ( name[prefix_len] == '.' ) {
 				*_name = &name[prefix_len+1];
 				return item;

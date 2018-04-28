@@ -136,7 +136,7 @@ static bool _is_text_content(const struct message_header_line *hdr)
 
 	/* Success */
 	data = str_c(content_type);
-	if ( strncmp(data, "text", 4) == 0 && data[4] == '/' ) {
+	if (str_begins(data, "text/")) {
 		return TRUE;
 	}
 
