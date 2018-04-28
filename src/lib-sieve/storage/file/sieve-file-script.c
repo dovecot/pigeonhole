@@ -98,7 +98,7 @@ static struct sieve_file_script *sieve_file_script_alloc(void)
 	struct sieve_file_script *fscript;
 	pool_t pool;
 
-	pool = pool_alloconly_create("sieve_file_script", 1024);
+	pool = pool_alloconly_create("sieve_file_script", 2048);
 	fscript = p_new(pool, struct sieve_file_script, 1);
 	fscript->script = sieve_file_script;
 	fscript->script.pool = pool;

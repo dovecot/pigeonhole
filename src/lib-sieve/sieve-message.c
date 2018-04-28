@@ -227,7 +227,7 @@ static void sieve_message_context_flush(struct sieve_message_context *msgctx)
 		pool_unref(&(msgctx->context_pool));
 
 	msgctx->context_pool = pool =
-		pool_alloconly_create("sieve_message_context_data", 1024);
+		pool_alloconly_create("sieve_message_context_data", 2048);
 
 	p_array_init(&msgctx->ext_contexts, pool,
 		sieve_extensions_get_count(msgctx->svinst));
