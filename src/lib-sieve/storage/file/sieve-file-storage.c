@@ -110,7 +110,7 @@ static const char *sieve_storage_get_relative_link_path
 	} else {
 		pathlen = p - active_path;
 
-		if ( strncmp( active_path, storage_dir, pathlen ) == 0 &&
+		if ( strncmp( storage_dir, active_path, pathlen ) == 0 &&
 			(storage_dir[pathlen] == '/' || storage_dir[pathlen] == '\0') )
 		{
 			if ( storage_dir[pathlen] == '\0' )

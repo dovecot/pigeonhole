@@ -838,7 +838,7 @@ static inline bool _is_system_address
 	if ( strstr(address->localpart, "-request") != NULL )
 		return TRUE;
 
-	if ( strncmp(address->localpart, "owner-", 6) == 0 )
+	if ( str_begins(address->localpart, "owner-") )
 		return TRUE;
 
 	return FALSE;
