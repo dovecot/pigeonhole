@@ -180,6 +180,7 @@ src/Makefile
 src/lib-sieve/Makefile
 src/lib-sieve/util/Makefile
 src/lib-sieve/storage/Makefile
+src/lib-sieve/storage/data/Makefile
 src/lib-sieve/storage/file/Makefile
 src/lib-sieve/storage/dict/Makefile
 src/lib-sieve/storage/ldap/Makefile
