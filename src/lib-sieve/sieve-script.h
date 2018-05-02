@@ -80,7 +80,7 @@ struct sieve_binary *sieve_script_binary_load
 	(struct sieve_script *script, enum sieve_error *error_r);
 int sieve_script_binary_save
 	(struct sieve_script *script, struct sieve_binary *sbin, bool update,
-		enum sieve_error *error_r);
+		enum sieve_error *error_r) ATTR_NULL(4);
 
 const char *sieve_script_binary_get_prefix
 	(struct sieve_script *script);
