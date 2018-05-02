@@ -60,6 +60,14 @@ int sieve_script_check
 		ATTR_NULL(3, 4);
 
 /*
+ * Data script
+ */
+
+struct sieve_script *sieve_data_script_create_from_input
+	(struct sieve_instance *svinst, const char *name,
+		struct istream *input);
+
+/*
  * Binary
  */
 
