@@ -81,6 +81,7 @@ void sieve_script_init
  * Built-in script drivers
  */
 
+extern const struct sieve_script sieve_data_script;
 extern const struct sieve_script sieve_file_script;
 extern const struct sieve_script sieve_dict_script;
 extern const struct sieve_script sieve_ldap_script;

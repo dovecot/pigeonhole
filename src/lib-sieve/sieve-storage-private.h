@@ -201,6 +201,12 @@ const struct sieve_storage *sieve_storage_find_class
  * Built-in storage drivers
  */
 
+/* data (currently only for internal use) */
+
+#define SIEVE_DATA_STORAGE_DRIVER_NAME "data"
+
+extern const struct sieve_storage sieve_data_storage;
+
 /* file */
 
 #define SIEVE_FILE_STORAGE_DRIVER_NAME "file"
