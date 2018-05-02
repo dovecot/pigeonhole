@@ -504,7 +504,12 @@ int sieve_script_binary_save
 	enum sieve_error *error_r)
 {
 	struct sieve_script *bin_script = sieve_binary_script(sbin);
+	enum sieve_error error;
 
+	if ( error_r != NULL )
+		*error_r = SIEVE_ERROR_NONE;
+	else
+		error_r = &error;
 
 	i_assert(bin_script == NULL || sieve_script_equals(bin_script, script));
 
