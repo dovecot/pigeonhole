@@ -88,9 +88,6 @@ Low priority items:
   within Dovecot)
 * Warn during compile if using non-existent folders.
 
-* Implement support for manually running a script on a set of messages through
-  IMAP (no specification for something like this is available; we will have to
-  provide our own)
 * Variables extension: implement compile time evaluation of constant values
 	- Detect assignment of too large constant values to variables at compile
 	  time.

@@ -558,6 +558,13 @@ Sieve Interpreter - Extension Configuration
 
   Refer to doc/plugins/imapsieve.txt for more information.
 
+- IMAP Filter Sieve plugin
+
+  The "imap_filter_sieve" plugin adds the ability to manually invoke Sieve
+  filtering in IMAP.
+
+  Refer to doc/plugins/imap_filter_sieve.txt for more information.
+
 Sieve Interpreter - Trace Debugging
 -----------------------------------
 
