@@ -1,0 +1,952 @@
+
+
+
+
+Network Working Group                                           S. Bosch
+Internet-Draft                                                Dovecot Oy
+Intended status: Standards Track                             May 8, 2018
+Expires: November 9, 2018
+
+
+    Internet Message Access Protocol (IMAP) - FILTER=SIEVE Extension
+                    draft-bosch-imap-filter-sieve-00
+
+Abstract
+
+   This document adds a new capability called "FILTER=SIEVE" to the
+   Internet Message Access Protocol (IMAP).  [FIXME]
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on November 9, 2018.
+
+Copyright Notice
+
+   Copyright (c) 2018 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
+
+
+
+
+Bosch                   Expires November 9, 2018                [Page 1]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+   2.  Conventions Used in This Document . . . . . . . . . . . . . .   3
+   3.  IMAP Protocol Changes . . . . . . . . . . . . . . . . . . . .   3
+     3.1.  General Considerations  . . . . . . . . . . . . . . . . .   3
+     3.2.  FILTER and UID FILTER Commands  . . . . . . . . . . . . .   3
+     3.3.  FILTERED Untagged Response  . . . . . . . . . . . . . . .   6
+     3.4.  FILTER Untagged Response  . . . . . . . . . . . . . . . .   8
+   4.  Semantics of Sieve Actions  . . . . . . . . . . . . . . . . .   9
+     4.1.  The "keep" Action . . . . . . . . . . . . . . . . . . . .   9
+     4.2.  The "fileinto" Action . . . . . . . . . . . . . . . . . .  10
+     4.3.  The "redirect" Action . . . . . . . . . . . . . . . . . .  10
+     4.4.  The "discard" Action  . . . . . . . . . . . . . . . . . .  10
+     4.5.  The "notify" Action . . . . . . . . . . . . . . . . . . .  11
+     4.6.  The "addheader" and "deleteheader" Actions  . . . . . . .  11
+     4.7.  The "setflag", "deleteflag", and "removeflag" Actions . .  11
+     4.8.  MIME Part Tests and Replacement . . . . . . . . . . . . .  11
+     4.9.  The "imapsieve" extension . . . . . . . . . . . . . . . .  11
+     4.10. Ignored Actions . . . . . . . . . . . . . . . . . . . . .  12
+     4.11. Future Sieve Actions  . . . . . . . . . . . . . . . . . .  12
+   5.  Semantics of Sieve Tests  . . . . . . . . . . . . . . . . . .  12
+     5.1.  The "hasflag" Test  . . . . . . . . . . . . . . . . . . .  13
+     5.2.  The "spamtest" and "virustest" tests  . . . . . . . . . .  13
+     5.3.  The "duplicate" test  . . . . . . . . . . . . . . . . . .  13
+     5.4.  Future Sieve Tests  . . . . . . . . . . . . . . . . . . .  13
+   6.  Interaction with Sieve Environment  . . . . . . . . . . . . .  13
+     6.1.  Base Sieve Environment Items: location and phase  . . . .  13
+   7.  Formal Syntax . . . . . . . . . . . . . . . . . . . . . . . .  14
+   8.  Security Considerations . . . . . . . . . . . . . . . . . . .  14
+   9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  15
+   10. Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .  15
+   11. Normative References  . . . . . . . . . . . . . . . . . . . .  15
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  17
+
+1.  Introduction
+
+   Currently, Sieve filters [SIEVE] can either be applied at initial
+   mail delivery [SIEVE] or triggered by certain events in the Internet
+   Message Access Protocol (IMAP) [IMAPSIEVE].  The user can configure
+   which Sieve scripts to run at these instances, but it is not possible
+   to trigger the execution of Sieve scripts manually.  However, this
+   could be very useful; e.g, to test new Sieve rules and to re-filter
+   messages that were erroneously handled by an earlier version of the
+   Sieve scripts involved.
+
+   This document extends IMAP [IMAP4rev1] with a new capability called
+   "FILTER=SIEVE".  This adds a new generic "FILTER" command that allows
+
+
+
+Bosch                   Expires November 9, 2018                [Page 2]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+   applying a mail filter on a set of messages that match the specified
+   searching criteria.  Although this command is defined such that it
+   can be extended for use with any (future) mail filter language, this
+   specification only adds support for invoking the "FILTER" command
+   with Sieve filters.
+
+2.  Conventions Used in This Document
+
+   In examples, "C:" indicates lines sent by a client that is connected
+   to a server.  "S:" indicates lines sent by the server to the client.
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in [KEYWORDS].
+
+3.  IMAP Protocol Changes
+
+3.1.  General Considerations
+
+   [FIXME]
+
+3.2.  FILTER and UID FILTER Commands
+
+   The FILTER=SIEVE extension adds the FILTER and UID FILTER commands.
+   These allow clients to apply message filters to messages in the
+   selected mailbox that match the given searching criteria.  These
+   commands are only available in the selected state [IMAP4rev1].
+
+   Arguments:  filter specification
+               OPTIONAL [CHARSET] specification
+               searching criteria (one or more)
+
+   Responses:  REQUIRED untagged response: FILTERED
+
+   Result:     OK - filter completed
+               NO - command failure: can't search that [CHARSET] or
+               criteria, or filter failed
+               BAD - command arguments invalid
+
+   The filter specification describes the filter that is to be applied
+   to all matching messages.  It consists of an identifier for the
+   filter type, followed by arguments specific to that filter type.
+
+   This specification defines only the "SIEVE" filter type, which uses
+   the Sieve Email Filtering Language [SIEVE].  The arguments of this
+   filter are one of the following.  Refer to the Formal Syntax section
+   for the precise syntactic definitions of the arguments.
+
+
+
+
+Bosch                   Expires November 9, 2018                [Page 3]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+   DELIVERY
+      The Sieve filtering normally applied at delivery is applied to the
+      matching messages.  This allows e.g. re-filtering messages that
+      were handled wrong at actual delivery.  This at least means that
+      the "active script" as configured through [MANAGESIEVE] is run for
+      the matching messages.  Some installations apply certain Sieve
+      rules in addition to (before or after) the user's active script
+      which are outside the user's control.  These MAY also be applied
+      for DELIVERY filtering.
+
+   PERSONAL <script-name>
+      The Sieve script with the specified name that is stored in the
+      user's own personal (private) Sieve repository is applied to the
+      matching messages.  Implementations that support ManageSieve
+      [MANAGESIEVE] can use the PUTSCRIPT command to store named scripts
+      in the personal repository.  This is the same repository from
+      which the Sieve "include" control structure [SIEVE-INCLUDE]
+      retrieves ":personal" scripts.  Implementations MUST restrict
+      script names according to [MANAGESIEVE], Section 1.6.
+
+   GLOBAL <script-name>
+      The Sieve script with the specified name that is stored in the
+      global (site-wide) Sieve repository is applied to the matching
+      messages.  This the same repository from which the Sieve "include"
+      control structure [SIEVE-INCLUDE] retrieves ":global" scripts.
+      Implementations MUST restrict script names according to
+      [MANAGESIEVE], Section 1.6.
+
+   SCRIPT <script>
+      The Sieve script provided in the string argument is compiled and
+      executed for all the matching messages.  This is e.g. useful to
+      test an individual Sieve rule, or apply a new rule to already
+      delivered messages.  The argument MUST be a valid Sieve script
+      [SIEVE].
+
+   The server MAY refuse support for any of these filter specification
+   types by returning a tagged "NO" response, which MAY include an
+   appropriate response code, such as "NOPERM" [IMAP-RESPCODES].
+
+   The purpose of the [CHARSET] specification and the searching criteria
+   is essentially identical to corresponding arguments of the IMAP
+   SEARCH command [IMAP4rev1].  The specified message filter is applied
+   to all messages that match the provided searching criteria.
+
+   The server first checks whether it can initialize the specified
+   filter.  For the "SIEVE" filter type, the initialization would
+   typically consist of retrieving and compiling the specified or
+   implied Sieve script or scripts.  If this process fails, the FILTER
+
+
+
+Bosch                   Expires November 9, 2018                [Page 4]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+   command returns a tagged NO response.  In that case, the server
+   SHOULD issue an untagged FILTER response first to provide a human-
+   readable description of the filter problem.  Refer to Section 3.4 for
+   details.
+
+   Same as for the SEARCH command, if the server does not support the
+   specified [CHARSET], it MUST return a tagged NO response (not a BAD).
+   This response SHOULD contain the BADCHARSET response code, which MAY
+   list the [CHARSET]s supported by theserver.  Note that the server
+   MUST NOT send an untagged FILTER response in this case, because this
+   failure is not related to filter processing.
+
+   Once the filter is initialized successfully, the filter is applied to
+   each matching message.  An untagged FILTERED response is sent by the
+   server for each of those messages.  This response indicates the
+   result of applying the filter to the corresponding message.  Refer to
+   Section 3.3 for details.
+
+   The (implicit) "keep" action of the Sieve filter [SIEVE] leaves the
+   message in the mailbox it currently resides (the source mailbox).
+   When the implicit keep is canceled (e.g., "discard", "redirect" or
+   "fileinto" is executed) and the message is not explicitly stored into
+   the source mailbox, it is marked with the \Deleted flag in the source
+   mailbox.  Refer to Section 4 for details.
+
+   [FIXME: Describe UID FILTER command
+
+   [FIXME: Describe untagged FETCH responses
+
+      Example:
+            C: A001 FILTER SIEVE DELIVERY
+                SINCE 1-Mar-2017 TO "hendrik@example.com"
+            S: * 3 FILTERED (TAG "A001") OK
+            S: * 16 FILTERED (TAG "A001") OK
+            S: * 21 FILTERED (TAG "A001") ERRORS {54}
+            S: line 15: number of actions exceeds the limit.
+            S:
+            S: * 35 FILTERED (TAG "A001") OK
+            S: * 39 FILTERED (TAG "A001") ERRORS {56}
+            S: line 36: mailbox does not exist: lists/ietf/art
+            S:
+            S: A001 OK FILTER completed
+
+
+
+
+
+
+
+
+
+Bosch                   Expires November 9, 2018                [Page 5]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+      Example:
+            C: A002 UID FILTER SIEVE PERSONAL "new" NEW
+            S: * 116 FILTERED (TAG "A002") UID 3321 OK
+            S: * 117 FILTERED (TAG "A002") UID 3322 OK
+            S: * 118 FILTERED (TAG "A002") UID 3323 WARNINGS {57}
+            S: line 113: saved to unsubscribed mailbox: Info
+            S:
+            S: A002 OK FILTER completed
+
+      Example:
+            C: A003 UID FILTER SIEVE SCRIPT {73+}
+            C: if subject :contains "Male Enhancement" {
+            C:   discard;
+            C:   stop;
+            C: }
+            C:
+            C:
+            C: ALL
+            S: * FILTER (TAG "A003")
+                 ERROR "line 1: unknown test command `subject'"
+            S: A003 NO Sieve filter failed to compile
+
+      Example:
+            C: A004 UID FILTER SIEVE SCRIPT {85+}
+            C: if header :contains "subject"
+            C:   "Male Enhancement" {
+            C:   discard;
+            C:   stop;
+            C: }
+            C:
+            C:
+            C: ALL
+            S: * 1 FETCH (UID 41 FLAGS (\Deleted \Seen))
+            S: * 1 FILTERED (TAG "A004") UID 41 OK
+            S: * 2 FETCH (UID 45 FLAGS (\Deleted))
+            S: * 2 FILTERED (TAG "A004") UID 45 OK
+            S: * 3 FILTERED (TAG "A004") UID 80 OK
+            S: * 4 FILTERED (TAG "A004") UID 81 OK
+            S: * 5 FETCH (UID 94 FLAGS (\Deleted \Seen))
+            S: * 5 FILTERED (TAG "A004") UID 94 OK
+            S: * 6 FILTERED (TAG "A004") UID 116 OK
+            S: A004 OK FILTER completed
+
+3.3.  FILTERED Untagged Response
+
+   Contents:   filter command correlator
+               OPTIONAL message unique identifier (required for UID
+               FILTER)
+
+
+
+Bosch                   Expires November 9, 2018                [Page 6]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+               per-message filter result
+
+   The untagged FILTERED response may be sent as a result of a
+   successful, partially successful, or unsuccessful FILTER or UID
+   FILTER command specified in Section 3.2.  It is sent for each message
+   that matched the searching criteria of the corresponding FILTER
+   command and it indicates the success/failure result of applying the
+   filter to that message.
+
+   The FILTERED response starts with a message number.  Just like the
+   untagged FETCH response, the message number is always a message
+   sequence number, not a unique identifier [IMAP4rev1], even when the
+   response is sent for a UID FILTER command.
+
+   The message number is followed by the "FILTERED" label, which in turn
+   is followed by a filter command correlator.  This contains the tag of
+   the command that caused the response to be returned.  This can be
+   used by a client to match a FILTERED response against a corresponding
+   FILTER/UID FILTER command.
+
+   When the FILTERED response is sent by the server in response to a UID
+   FILTER command, the filter command correlator MUST be followed by the
+   word "UID" followed by the unique identifier of the filtered message.
+   This part of the response is optional when responding to a FILTER
+   command.
+
+   The FILTERED response ends with the filter result.  This indicates
+   whether the filter was successfully applied to the message.  This
+   specification defines the following results.
+
+   OK
+      The filter was applied successfully.
+
+   WARNINGS <warnings>
+      The filter was applied successfully, but there were one or more
+      warnings produced by the filter, which likely indicates behavior
+      not intended by the script writer.  The word "WARNINGS" is
+      followed by a human-readable descriptive text listing the produced
+      warnings.  A client seeing this filter result SHOULD present the
+      returned warning text to the user.
+
+   ERRORS <errors>
+      Application of the filter failed for some reason.  The message is
+      left in its original state (as if only the "keep" action was
+      executed).  The word "ERRORS" is followed by a human-readable
+      descriptive text listing the encountered errors.
+
+
+
+
+
+Bosch                   Expires November 9, 2018                [Page 7]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+3.4.  FILTER Untagged Response
+
+   Contents:   filter command correlator
+               general filter problem
+
+   The untagged FILTER response may be sent as the result of a
+   successful, partially successful, or unsuccessful FILTER or UID
+   FILTER command specified in Section 3.2.  This response is used to
+   provide filter error or warning details that are not specific to a
+   particular message being filtered; e.g., errors or warnings occurring
+   while the Sieve script is being compiled.  Implementations SHOULD
+   avoid duplicating such output across all per-message FILTERED
+   responses and issue a single FILTER response instead.  The server
+   MUST NOT send more than a single FILTER response.  This untagged
+   response MUST only be sent for problems that concern the filter
+   processing.
+
+   The FILTER response starts with the "FILTER" label, which is followed
+   by a filter command correlator.  This contains the tag of the command
+   that caused the response to be returned.  This can be used by a
+   client to match a FILTER response against a corresponding FILTER/UID
+   FILTER command.
+
+   The FILTER response ends with a description of the problem that the
+   filter encountered.  This specification defines the following
+   problems.
+
+   WARNINGS <warnings>
+      The filter can be applied successfully (individual FILTERED
+      responses provide per-message details), but there were one or more
+      general warnings produced by the filter, which likely indicates
+      behavior not intended by the script writer.  The word "WARNINGS"
+      is followed by a human-readable descriptive text listing the
+      produced warnings.  A client seeing this FILTER response SHOULD
+      present the returned warning text to the user.
+
+   ERRORS <errors>
+      Application of the filter failed completely for some reason.  This
+      MUST mean that no messages are affected by this filter command,
+      which implies that no FILTERED responses are issued for this
+      command.  Since filtering failed, the FILTER command MUST end in
+      an tagged NO response when a FILTER ERROR response is issued.  The
+      word "ERRORS" is followed by a human-readable descriptive text
+      listing the encountered errors.
+
+
+
+
+
+
+
+Bosch                   Expires November 9, 2018                [Page 8]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+4.  Semantics of Sieve Actions
+
+   Sieve is normally executed during message delivery and some Sieve
+   actions therefore relate specifically to this context.  Much like the
+   IMAPSIEVE capability [IMAPSIEVE], the FILTER=SIEVE capability allows
+   executing Sieve scripts in IMAP for messages that are already
+   delivered.  However, unlike the IMAPSIEVE capability, these are
+   (parts of) the same Sieve scripts that are run at delivery, meaning
+   that the execution of Sieve scripts for the FILTER=SIEVE capability
+   needs to be very similar to execution during message delivery.  This
+   means that Sieve scripts that are successfully executed during
+   message delivery MUST also finish successfully when executed in the
+   context of FILTER=SIEVE.
+
+   One problem is that the SMTP envelope information required for some
+   of the actions and tests is not or only partially available in IMAP.
+   This will need to be reconstructed from the message and any envelope
+   metadata that may be available in the message store.
+
+   Additionally, it makes no sense to send response messages to the
+   original sender when Sieve scripts are executed in IMAP, which may
+   happen a long time after the message was originally delivered.
+   Therefore, Sieve scripts executed by the FILTER=SIEVE script MUST NOT
+   send any such responses.  Instead, the execution of such actions MUST
+   silently be ignored or at least the submission of the response
+   message MUST be inhibited.  Note that this explicitly MUST NOT
+   trigger a runtime error, as explained above.
+
+   This section describes how actions in the base Sieve specification,
+   and those in extensions known at the time of this writing, relate to
+   this specification.
+
+   In addition to what is specified here, interactions noted in the
+   individual specifications apply and must be considered.
+
+4.1.  The "keep" Action
+
+   Much like what normally happens during Sieve execution at delivery,
+   the (implicit) "keep" action means that the message is treated as it
+   would have been if no Sieve script were run.  For FILTER=SIEVE, this
+   means that the message is left in the mailbox.  If actions have been
+   taken that change the message, those changes are considered transient
+   and MUST NOT be retained for any "keep" action (because IMAP messages
+   are immutable).  No error is generated, but the original message,
+   without the changes, is kept.
+
+
+
+
+
+
+Bosch                   Expires November 9, 2018                [Page 9]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+4.2.  The "fileinto" Action
+
+   If the Sieve implementation supports the "fileinto" action, that
+   action is executed in FILTER=SIEVE context very much like it normally
+   would be during message delivery.  The message is COPIED into the
+   fileinto mailbox, without removing the original.  In all cases,
+   fileinto always creates a new message, separate from the original.
+   If the "copy" extension [SIEVE-COPY] is available and the ":copy"
+   option is specified, the implicit keep is retained; otherwise,
+   "fileinto" cancels the implicit keep, as specified in the base Sieve
+   specification [IMAPSIEVE].
+
+   If a "keep" action is not also in effect, the original message is
+   then marked with the \Deleted flag.
+
+4.3.  The "redirect" Action
+
+   The "redirect" action is executed in FILTER=SIEVE context very much
+   like it normally would be during message delivery.  It causes the
+   message to be sent, as specified in the base Sieve specification
+   [IMAPSIEVE], to the designated address.  If the "copy" extension
+   [SIEVE-COPY] is available and the ":copy" option is specified, the
+   implicit keep is retained; otherwise, redirect cancels the implicit
+   keep, as specified in the base Sieve specification.
+
+   It is possible that a message processed in this way does not have the
+   information necessary to be redirected properly.  It may lack
+   necessary header information, and there may not be appropriate
+   information for the MAIL FROM command.  In such cases, the "redirect"
+   action uses message submission [SUBMISSION], and it is up to the
+   Sieve engine to supply the missing information.  The redirect address
+   is, of course, used for the "RCPT TO", and the "MAIL FROM" SHOULD be
+   set to the address of the owner of the mailbox.  The message
+   submission server is allowed, according to the message submission
+   protocol, to perform necessary fix-up to the message (see Section 8
+   of RFC 6409).  It can also reject the submission attempt if the
+   message is too ill-formed for submission.
+
+   If a "keep" action is not also in effect, the original message is
+   then marked with the \Deleted flag.
+
+4.4.  The "discard" Action
+
+   The "discard" action is executed in FILTER=SIEVE context very much
+   like it normally would be during message delivery.  If an explicit
+   "keep" action is also in effect, the "discard" action does nothing.
+   Otherwise, the original message is marked with the \Deleted flag.
+
+
+
+
+Bosch                   Expires November 9, 2018               [Page 10]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+4.5.  The "notify" Action
+
+   If the Sieve "enotify" extension [SIEVE-ENOTIFY] is available, the
+   "notify" action is executed as normal in FILTER=SIEVE context.  The
+   result is that the requested notification is sent and that the
+   message is otherwise handled as it would normally have been.
+
+4.6.  The "addheader" and "deleteheader" Actions
+
+   If the "editheader" extension [SIEVE-EDITHEADER] is available, it can
+   be used to make transient changes to header fields, which aren't
+   saved in place, such as for "redirect" or "fileinto" actions.
+   Because messages in IMAP mailboxes are immutable, such changes are
+   not applicable for the "keep" action (explicit or implicit).  See
+   Section 4.1.
+
+4.7.  The "setflag", "deleteflag", and "removeflag" Actions
+
+   If the "imap4flags" extension [SIEVE-IMAP4FLAGS] is available, its
+   actions are executed in FILTER=SIEVE context very much like these
+   normally would be executed during message delivery.  However, since
+   the message is already stored in a mailbox, the initial state of the
+   internal flags variable is the list of currently assigned flags
+   rather than the empty string.
+
+4.8.  MIME Part Tests and Replacement
+
+   If the MIME Part Tests extension [SIEVE-MIME] is available, all of
+   its functions can be used in scripts executed in FILTER=SIEVE
+   context, but any changes made to the message, using the "replace" or
+   "enclose" action, MUST be considered transient and are only
+   applicable with actions such as "redirect" and "fileinto".  Because
+   messages in IMAP mailboxes are immutable, such changes are not
+   applicable for the "keep" action (explicit or implicit).  See
+   Section 4.1.
+
+4.9.  The "imapsieve" extension
+
+   Since the Sieve scripts for FILTER=SIEVE are not triggered as part of
+   an IMAP event, the "imapsieve" extension [IMAPSIEVE] MUST not be
+   available in FILTER=SIEVE context.  Using this extension in the
+   "require" command MUST cause a compile error in FILTER=SIEVE context,
+   just like it would for scripts compiled for message delivery.
+
+
+
+
+
+
+
+
+Bosch                   Expires November 9, 2018               [Page 11]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+4.10.  Ignored Actions
+
+   The following actions are always ignored when the Sieve script is
+   executed in FILTER=SIEVE context, because they are specifically
+   designed to respond to delivery of a new email message:
+
+         reject [IMAPSIEVE]
+
+         ereject [SIEVE-REJECT]
+
+         vacation [SIEVE-VACATION]
+
+   Future extensions that are specifically designed to respond to
+   delivery of a new email message will likewise need to be ignored.
+
+4.11.  Future Sieve Actions
+
+   As noted above, future extensions that are specifically designed to
+   respond to delivery of a new email message will be ignored, because
+   the FILTER=SIEVE capability does not involve acting at new-message
+   delivery time.
+
+   In general, future extensions to Sieve that define new actions MUST
+   specify what behavioral differences there are when executing in
+   FILTER=SIEVE context (if any).
+
+5.  Semantics of Sieve Tests
+
+   Any tests against message envelope information, including the
+   "envelope" test in the Sieve base specification, as well as any such
+   test defined in extensions, can have serious interoperability issues
+   when performed at other than message delivery time.  Therefore,
+   envelope information SHOULD be reconstructed as good as possible, so
+   that the tests yield the same results in FILTER=SIEVE context as
+   these would during message delivery.  Since this cannot be guaranteed
+   for all implementations of FILTER=SIEVE, the Sieve script author
+   SHOULD account for possible differences explicitly using the
+   "environment" extension (See Section 6).
+
+   Executing in FILTER=SIEVE context does not affect the operation of
+   other tests or comparisons in the Sieve base specification.
+
+   The remainder of this section describes how tests in extensions known
+   at the time of this writing relate to this specification.
+
+
+
+
+
+
+
+Bosch                   Expires November 9, 2018               [Page 12]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+5.1.  The "hasflag" Test
+
+   If the "imap4flags" extension [SIEVE-IMAP4FLAGS] is available, its
+   "hasflag" test is executed in FILTER=SIEVE context very much like it
+   normally would be executed during message delivery.  However, since
+   the message is already stored in a mailbox, the initial state of the
+   internal flags variable is the list of currently assigned flags
+   rather than the empty string.
+
+5.2.  The "spamtest" and "virustest" tests
+
+   If the "spamtest" and "virustest" extensions [SIEVE-SPAMVIRUSTEST]
+   are available, the associated tests are executed in FILTER=SIEVE
+   context exactly as these normally would be executed during message
+   delivery.
+
+5.3.  The "duplicate" test
+
+   If the "duplicate" extension [SIEVE-DUPLICATE] is available, the
+   associated test is executed in FILTER=SIEVE context exactly as it
+   normally would be executed during message delivery.
+
+5.4.  Future Sieve Tests
+
+   Future extensions to Sieve that define new tests MUST specify what
+   behavioral differences there are when executing in FILTER=SIEVE
+   context (if any).
+
+6.  Interaction with Sieve Environment
+
+   The Sieve "environment" extension [SIEVE-ENVIRONMENT] can be used to
+   evaluate properties of the environment in which the Sieve script is
+   executing.  When the FILTER=SIEVE capability is involved, this can be
+   used by the script author to detect whether the script is executing
+   at message delivery or at some later time in FILTER=SIEVE context.
+
+6.1.  Base Sieve Environment Items: location and phase
+
+   The Sieve Environment extension defines a set of standard environment
+   items ([SIEVE-ENVIRONMENT], Section 4.1).  Two of those items are
+   affected when the script is invoked in FILTER=SIEVE context.
+
+   The value of "location" is set to "MS" -- evaluation is being
+   performed by a Message Store.
+
+   The value of "phase" is set to "post" -- processing is taking place
+   after final delivery.
+
+
+
+
+Bosch                   Expires November 9, 2018               [Page 13]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+7.  Formal Syntax
+
+   The following syntax specification augments the grammar specified in
+   [IMAP4rev1].  It uses the Augmented Backus-Naur Form (ABNF) notation
+   as specified in [ABNF].  Non-terminals not defined in this document
+   can be found in [IMAP4rev1] and [IMAPABNF].
+
+   capability         =/ "FILTER=SIEVE"
+
+   command-select     =/ filter
+
+   filter             = "FILTER" SP filter-spec
+                          [SP "CHARSET" SP astring] 1*(SP search-key)
+                         ; CHARSET argument MUST be registered with IANA
+
+   filter-spec        = "SIEVE" SP "DELIVERY" /
+                        "SIEVE" SP "PERSONAL" sieve-name /
+                        "SIEVE" SP "GLOBAL" sieve-name /
+                        "SIEVE" SP "SCRIPT" sieve-literal
+
+   filter-correlator  = "(" "TAG" SP tag-string ")"
+
+   filter-problem     = "WARNINGS" string /
+                        "ERRORS" string
+
+   filter-result      = "OK" / filter-problem
+
+   filter-data        = "FILTER" SP filter-correlator SP filter-problem
+
+   message-data       =/ nz-number SP "FILTERED" SP filter-correlator
+                           [SP "UID" SP uniqueid] SP filter-result
+
+   response-payload   =/ filter-data
+
+   sieve-literal      = string
+                         ; value conforms to Sieve script syntax defined
+                         ; in [SIEVE], Section 8.2
+
+   sieve-name         = astring
+                         ; value conforms to Sieve script name syntax
+                         ; defined in [IMAPSIEVE], Section 1.6
+
+
+8.  Security Considerations
+
+   The FILTER=SIEVE capability offers the means to execute named or
+   literal Sieve scripts directly, without there being a trigger of some
+   kind.  If users already have ManageSieve access, this does not add
+
+
+
+Bosch                   Expires November 9, 2018               [Page 14]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+   any obvious security concerns.  However, when ManageSieve is not
+   available to users, the literal script could be used to access
+   functionality that is normally not accessible by users.  For example,
+   users could run a literal Sieve script that executes actions that are
+   not available using the (web) UI that the user normally uses to
+   configure mail filtering.  When this is a concern, the server MUST
+   either refuse filter specification types other than "SIEVE DELIVERY"
+   or limit the available Sieve functionality within the context of the
+   FILTER command.
+
+   Other security considerations are discussed in IMAP [IMAP4rev1] and
+   Sieve [SIEVE], as well as in some of the other extension documents.
+
+9.  IANA Considerations
+
+   The IANA is requested to add "FILTER=SIEVE" to the "IMAP
+   Capabilities" registry located at <http://www.iana.org/assignments/
+   imap-capabilities>.
+
+10.  Acknowledgements
+
+   Thanks to Timo Sirainen for reviews and suggestions.
+
+   [FIXME: acknowledge text borrowed from other documents: IMAPSIEVE,
+   CONVERT]
+
+   More reviews are appreciated.
+
+11.  Normative References
+
+   [ABNF]     Crocker, D. and P. Overell, "Augmented BNF for Syntax
+              Specifications: ABNF", STD 68, RFC 5234, January 2008.
+
+   [CHARSET]  Freed, N. and J. Postel, "IANA Charset Registration
+              Procedures", BCP 19, RFC 2978, October 2000.
+
+   [IMAP-RESPCODES]
+              Gulbrandsen, A., "IMAP Response Codes", RFC 5530, May
+              2009.
+
+   [IMAP4rev1]
+              Crispin, M., "INTERNET MESSAGE ACCESS PROTOCOL - VERSION
+              4rev1", RFC 3501, March 2003.
+
+   [IMAPABNF]
+              Melnikov, A. and C. Daboo, "Collected Extensions to IMAP4
+              ABNF", RFC 4466, April 2006.
+
+
+
+
+Bosch                   Expires November 9, 2018               [Page 15]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+   [IMAPSIEVE]
+              Leiba, B., "Support for Internet Message Access Protocol
+              (IMAP) Events in Sieve", RFC 6785, November 2012.
+
+   [KEYWORDS]
+              Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [MANAGESIEVE]
+              Melnikov, A., Ed. and T. Martin, "A Protocol for Remotely
+              Managing Sieve Scripts", RFC 5804, DOI 10.17487/RFC5804,
+              July 2010, <https://www.rfc-editor.org/info/rfc5804>.
+
+   [SIEVE]    Guenther, P., Ed. and T. Showalter, Ed., "Sieve: An Email
+              Filtering Language", RFC 5228, DOI 10.17487/RFC5228,
+              January 2008, <https://www.rfc-editor.org/info/rfc5228>.
+
+   [SIEVE-COPY]
+              Degener, J., "Sieve Extension: Copying Without Side
+              Effects", RFC 3894, DOI 10.17487/RFC3894, October 2004,
+              <https://www.rfc-editor.org/info/rfc3894>.
+
+   [SIEVE-DUPLICATE]
+              Bosch, S., "Sieve Email Filtering: Detecting Duplicate
+              Deliveries", RFC 7352, DOI 10.17487/RFC7352, September
+              2014, <https://www.rfc-editor.org/info/rfc7352>.
+
+   [SIEVE-EDITHEADER]
+              Degener, J. and P. Guenther, "Sieve Email Filtering:
+              Editheader Extension", RFC 5293, DOI 10.17487/RFC5293,
+              August 2008, <https://www.rfc-editor.org/info/rfc5293>.
+
+   [SIEVE-ENOTIFY]
+              Melnikov, A., Ed., Leiba, B., Ed., Segmuller, W., and T.
+              Martin, "Sieve Email Filtering: Extension for
+              Notifications", RFC 5435, DOI 10.17487/RFC5435, January
+              2009, <https://www.rfc-editor.org/info/rfc5435>.
+
+   [SIEVE-ENVIRONMENT]
+              Freed, N., "Sieve Email Filtering: Environment Extension",
+              RFC 5183, DOI 10.17487/RFC5183, May 2008,
+              <https://www.rfc-editor.org/info/rfc5183>.
+
+   [SIEVE-IMAP4FLAGS]
+              Melnikov, A., "Sieve Email Filtering: Imap4flags
+              Extension", RFC 5232, DOI 10.17487/RFC5232, January 2008,
+              <https://www.rfc-editor.org/info/rfc5232>.
+
+
+
+
+Bosch                   Expires November 9, 2018               [Page 16]
+
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+
+
+   [SIEVE-INCLUDE]
+              Daboo, C. and A. Stone, "Sieve Email Filtering: Include
+              Extension", RFC 6609, May 2012.
+
+   [SIEVE-MIME]
+              Hansen, T. and C. Daboo, "Sieve Email Filtering: MIME Part
+              Tests, Iteration, Extraction, Replacement, and Enclosure",
+              RFC 5703, DOI 10.17487/RFC5703, October 2009,
+              <https://www.rfc-editor.org/info/rfc5703>.
+
+   [SIEVE-REJECT]
+              Stone, A., Ed., "Sieve Email Filtering: Reject and
+              Extended Reject Extensions", RFC 5429,
+              DOI 10.17487/RFC5429, March 2009, <https://www.rfc-
+              editor.org/info/rfc5429>.
+
+   [SIEVE-SPAMVIRUSTEST]
+              Daboo, C., "Sieve Email Filtering: Spamtest and Virustest
+              Extensions", RFC 5235, DOI 10.17487/RFC5235, January 2008,
+              <https://www.rfc-editor.org/info/rfc5235>.
+
+   [SIEVE-VACATION]
+              Showalter, T. and N. Freed, "Sieve Email Filtering:
+              Vacation Extension", RFC 5230, January 2008.
+
+   [SUBMISSION]
+              Gellens, R. and J. Klensin, "Message Submission for Mail",
+              STD 72, RFC 6409, DOI 10.17487/RFC6409, November 2011,
+              <https://www.rfc-editor.org/info/rfc6409>.
+
+Author's Address
+
+   Stephan Bosch
+   Dovecot Oy
+   Lars Sonckin Kaari 16
+   Espoo  02600
+   Finland
+
+   Email: stephan.bosch@dovecot.fi
+
+
+
+
+
+
+
+
+
+
+
+
+Bosch                   Expires November 9, 2018               [Page 17]
