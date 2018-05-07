@@ -155,7 +155,9 @@ enum sieve_execute_flags {
 	/* Do not execute (implicit keep) at the end */
 	SIEVE_EXECUTE_FLAG_DEFER_KEEP = (1<<1),
 	/* There is no envelope */
-	SIEVE_EXECUTE_FLAG_NO_ENVELOPE = (1<<2)
+	SIEVE_EXECUTE_FLAG_NO_ENVELOPE = (1<<2),
+	/* Skip sending responses */
+	SIEVE_EXECUTE_FLAG_SKIP_RESPONSES = (1<<3),
 };
 
 /*

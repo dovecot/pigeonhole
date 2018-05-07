@@ -1127,6 +1127,12 @@ static int act_vacation_commit
 	const char *const *hdsp, *const *headers;
 	int ret;
 
+	if ((aenv->flags & SIEVE_EXECUTE_FLAG_SKIP_RESPONSES) != 0) {
+		sieve_result_global_log(aenv,
+			"not sending vacation reply (skipped)");
+		return SIEVE_EXEC_OK;
+	}
+
 	sender = sieve_message_get_sender(aenv->msgctx);
 	recipient = sieve_message_get_final_recipient(aenv->msgctx);
 
