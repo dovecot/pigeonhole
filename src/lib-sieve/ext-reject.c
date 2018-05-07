@@ -486,6 +486,12 @@ static int act_reject_commit
 	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
 	int ret;
 
+	if ((aenv->flags & SIEVE_EXECUTE_FLAG_SKIP_RESPONSES) != 0) {
+		sieve_result_global_log(aenv,
+			"not sending reject message (skipped)");
+		return SIEVE_EXEC_OK;
+	}
+
 	if ( recipient == NULL ) {
 		sieve_result_global_warning(aenv,
 			"reject action aborted: envelope recipient is <>");
