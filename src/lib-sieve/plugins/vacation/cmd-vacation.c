@@ -1132,6 +1132,12 @@ static int act_vacation_commit
 	const char *reply_from, *orig_recipient, *smtp_from, *user_email;
 	int ret;
 
+	if ((aenv->flags & SIEVE_EXECUTE_FLAG_SKIP_RESPONSES) != 0) {
+		sieve_result_global_log(aenv,
+			"not sending vacation reply (skipped)");
+		return SIEVE_EXEC_OK;
+	}
+
 	reply_from = orig_recipient = smtp_from = user_email = NULL;
 
 	/* Is the recipient unset?
