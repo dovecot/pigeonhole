@@ -1,3 +1,23 @@
+v0.4.24 2018-05-xx  Stephan Bosch <stephan@rename-it.nl>
+
+	- Fix assert panics triggered by empty messages that are being forwarded
+	  using redirect or vnd.dovecot.report. This does not likely normally
+	  occur, but this is seen as a result of certain benign failures in
+	  object storage.
+	- Make the length of the subject header for the vacation response
+	  configurable and enforce the limit in UTF-8 codepoints rather than
+	  bytes. The subject header for a vacation response was statically
+	  truncated to 256 bytes, which is too limited for multi-byte UTF-8
+	  characters.
+	- Sieve editheader extension: Fix assertion panic occurring when it is
+	  used to manipulate a message header with a very large header field.
+	- Properly abort execution of the sieve_discard script upon error.
+	  Before, the LDA Sieve plugin attempted to execute the sieve_discard
+	  script when an error occurs. This can lead to the message being lost.
+	- Fix the interaction between quota and the sieve_discard script. When
+	  quota was used together with a sieve_discard script, the message
+	  delivery did not bounce when the quota was exceeded.
+
 v0.4.23 20-03-2018  Stephan Bosch <stephan@rename-it.nl>
 
 	- editheader extension: Corrected the stream position calculations
