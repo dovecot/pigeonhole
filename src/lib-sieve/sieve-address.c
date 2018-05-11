@@ -86,7 +86,9 @@ static int sieve_header_address_list_next_item
 {
 	struct sieve_header_address_list *addrlist =
 		(struct sieve_header_address_list *) _addrlist;
+	const struct sieve_runtime_env *runenv = _addrlist->strlist.runenv;
 	string_t *value_item = NULL;
+	bool trace = _addrlist->strlist.trace;
 
 	if ( addr_r != NULL )
 		smtp_address_init(addr_r, NULL, NULL);
@@ -98,11 +100,22 @@ static int sieve_header_address_list_next_item
 		if ((ret=sieve_header_address_list_next_address(addrlist, addr_r)) < 0 &&
 		    value_item != NULL) {
 			/* completely invalid address list is returned as-is */
+			if (trace) {
+				sieve_runtime_trace(runenv, 0,
+					"invalid address value `%s'",
+					str_sanitize(str_c(value_item), 80));
+			}
 			if ( unparsed_r != NULL ) *unparsed_r = value_item;
 			return 1;
 		}
-		if (ret > 0)
+		if (ret > 0) {
+			if (trace) {
+				sieve_runtime_trace(runenv, 0,
+					"address value `%s'",
+					str_sanitize(smtp_address_encode(addr_r), 80));
+			}
 			return 1;
+		}
 
 		/* Read next header value from source list */
 		if ( (ret=sieve_stringlist_next_item(addrlist->field_values,
@@ -110,13 +123,17 @@ static int sieve_header_address_list_next_item
 			return ret;
 		if (str_len(value_item) == 0) {
 			/* empty header value is returned as-is */
+			if (trace) {
+				sieve_runtime_trace(runenv, 0,
+					"empty address value");
+			}
 			addrlist->cur_address = NULL;
 			if ( unparsed_r != NULL ) *unparsed_r = value_item;
 			return 1;
 		}
 
-		if (_addrlist->strlist.trace) {
-			sieve_runtime_trace(_addrlist->strlist.runenv, 0,
+		if (trace) {
+			sieve_runtime_trace(runenv, 0,
 				"parsing address header value `%s'",
 				str_sanitize(str_c(value_item), 80));
 		}
