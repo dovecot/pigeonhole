@@ -57,81 +57,76 @@ struct sieve_address_list *sieve_header_address_list_create
 	return &addrlist->addrlist;
 }
 
+static int
+sieve_header_address_list_next_address(
+	struct sieve_header_address_list *addrlist, struct smtp_address *addr_r)
+{
+	int ret = 0;
+
+	while (addrlist->cur_address != NULL) {
+		const struct message_address *aitem = addrlist->cur_address;
+
+		addrlist->cur_address = addrlist->cur_address->next;
+
+		if (!aitem->invalid_syntax && aitem->domain != NULL) {
+			if ( addr_r != NULL ) {
+				smtp_address_init(addr_r,
+					aitem->mailbox, aitem->domain);
+			}
+			return 1;
+		}
+		ret = -1;
+	}
+	return ret;
+}
+
 static int sieve_header_address_list_next_item
 (struct sieve_address_list *_addrlist, struct smtp_address *addr_r,
 	string_t **unparsed_r)
 {
 	struct sieve_header_address_list *addrlist =
 		(struct sieve_header_address_list *) _addrlist;
-	const struct message_address *aitem;
-	bool valid = TRUE;
+	string_t *value_item = NULL;
 
 	if ( addr_r != NULL )
 		smtp_address_init(addr_r, NULL, NULL);
 	if ( unparsed_r != NULL ) *unparsed_r = NULL;
 
-	/* Parse next header field value if necessary */
-	while ( addrlist->cur_address == NULL ) {
-		string_t *value_item = NULL;
+	for (;;) {
 		int ret;
 
-		/* Read next header value from source list */
-		if ( (ret=sieve_stringlist_next_item(addrlist->field_values, &value_item))
-			<= 0 )
-			return ret;
+		if ((ret=sieve_header_address_list_next_address(addrlist, addr_r)) < 0 &&
+		    value_item != NULL) {
+			/* completely invalid address list is returned as-is */
+			if ( unparsed_r != NULL ) *unparsed_r = value_item;
+			return 1;
+		}
+		if (ret > 0)
+			return 1;
 
-		if ( _addrlist->strlist.trace ) {
+		/* Read next header value from source list */
+		if ( (ret=sieve_stringlist_next_item(addrlist->field_values,
+						     &value_item)) <= 0 )
+			return ret;
+		if (str_len(value_item) == 0) {
+			/* empty header value is returned as-is */
+			addrlist->cur_address = NULL;
+			if ( unparsed_r != NULL ) *unparsed_r = value_item;
+			return 1;
+		}
+
+		if (_addrlist->strlist.trace) {
 			sieve_runtime_trace(_addrlist->strlist.runenv, 0,
 				"parsing address header value `%s'",
 				str_sanitize(str_c(value_item), 80));
 		}
 
-		addrlist->cur_address = message_address_parse
-			(pool_datastack_create(), (const unsigned char *) str_data(value_item),
-				str_len(value_item), 256, FALSE);
-
-		/* Check validity of all addresses simultaneously. Unfortunately,
-		 * errorneous addresses cannot be extracted from the address list.
-		 */
-		aitem = addrlist->cur_address;
-		while ( aitem != NULL) {
-			if ( aitem->invalid_syntax )
-				valid = FALSE;
-			aitem = aitem->next;
-		}
-
-		if ( addrlist->cur_address == NULL || !valid ) {
-			addrlist->cur_address = NULL;
-
-			if ( unparsed_r != NULL) *unparsed_r = value_item;
-			return 1;
-		}
-
-		/* Find first usable address */
-		aitem = addrlist->cur_address;
-		while ( aitem != NULL && aitem->domain == NULL ) {
-			aitem = aitem->next;
-		}
-
-		addrlist->cur_address = aitem;
+		addrlist->cur_address = message_address_parse(
+			pool_datastack_create(),
+			(const unsigned char *) str_data(value_item),
+			str_len(value_item), 256, FALSE);
 	}
-
-	/* Return next item */
-
-	if ( addr_r != NULL ) {
-		smtp_address_init(addr_r,
-			addrlist->cur_address->mailbox,
-			addrlist->cur_address->domain);
-	}
-
-	/* Find next usable address */
-	aitem = addrlist->cur_address->next;
-	while ( aitem != NULL && aitem->domain == NULL ) {
-		aitem = aitem->next;
-	}
-	addrlist->cur_address = aitem;
-
-	return 1;
+	i_unreached();
 }
 
 static int sieve_header_address_list_next_string_item
