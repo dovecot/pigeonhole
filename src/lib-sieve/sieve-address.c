@@ -61,20 +61,20 @@ static int
 sieve_header_address_list_next_address(
 	struct sieve_header_address_list *addrlist, struct smtp_address *addr_r)
 {
+	struct smtp_address adummy;
 	int ret = 0;
+
+	if (addr_r == NULL)
+		addr_r = &adummy;
 
 	while (addrlist->cur_address != NULL) {
 		const struct message_address *aitem = addrlist->cur_address;
 
 		addrlist->cur_address = addrlist->cur_address->next;
 
-		if (!aitem->invalid_syntax && aitem->domain != NULL) {
-			if ( addr_r != NULL ) {
-				smtp_address_init(addr_r,
-					aitem->mailbox, aitem->domain);
-			}
+		if (!aitem->invalid_syntax && aitem->domain != NULL &&
+		    smtp_address_init_from_msg(addr_r, aitem) >= 0)
 			return 1;
-		}
 		ret = -1;
 	}
 	return ret;
