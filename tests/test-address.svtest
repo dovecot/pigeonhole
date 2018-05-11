@@ -310,6 +310,7 @@ To: @example.org
 Cc: nonsense
 Resent-To:
 Bcc: nico@frop.example.com, @example.org
+Resent-Cc:<jürgen@example.com>
 Subject: Invalid addresses
 
 Test.
@@ -321,8 +322,16 @@ test "Invalid addresses" {
 		test_fail ":localpart matched invalid address";
 	}
 
+	if address :localpart "resent-cc" "jürgen" {
+		test_fail ":localpart matched invalid UTF-8 address";
+	}
+
 	if address :domain "to" "example.org" {
 		test_fail ":domain matched invalid address";
+	}
+
+	if address :domain "resent-cc" "example.com" {
+		test_fail ":domain matched invalid UTF-8 address";
 	}
 
 	if not address :is :all "resent-to" "" {
@@ -331,6 +340,10 @@ test "Invalid addresses" {
 
 	if not address :is :all "cc" "nonsense" {
 		test_fail ":all failed to match invalid address";
+	}
+
+	if not address :is :all "resent-cc" "<jürgen@example.com>" {
+		test_fail ":all failed to match invalid UTF-8 address";
 	}
 
 	if address :is :localpart "bcc" "" {
