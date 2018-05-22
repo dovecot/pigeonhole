@@ -248,7 +248,8 @@ void imap_filter_sieve_context_free(struct imap_filter_sieve_context **_sctx)
 			sieve_script_unref(&scripts[i].script);
 	}
 
-	str_free(&sctx->errors);
+	if (sctx->errors != NULL)
+		str_free(&sctx->errors);
 }
 
 /*
