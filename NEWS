@@ -1,5 +1,9 @@
-v0.4.24 2018-05-xx  Stephan Bosch <stephan@rename-it.nl>
+v0.4.24 2018-05-24  Stephan Bosch <stephan@rename-it.nl>
 
+	+ Implement plugin for the a vendor-defined IMAP capability called
+	  "FILTER=SIEVE". It adds the ability to manually invoke Sieve filtering
+	  in IMAP. More information can be found in
+	  doc/plugins/imap_filter_sieve.txt.
 	- Fix assert panics triggered by empty messages that are being forwarded
 	  using redirect or vnd.dovecot.report. This does not likely normally
 	  occur, but this is seen as a result of certain benign failures in
