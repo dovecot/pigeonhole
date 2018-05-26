@@ -37,7 +37,7 @@ const char imap_filter_sieve_plugin_binary_dependency[] = "imap";
 
 void imap_filter_sieve_plugin_init(struct module *module)
 {
-	command_register("FILTER", cmd_filter, 0);
+	command_register("FILTER", cmd_filter, COMMAND_FLAG_USES_SEQS);
 
 	imap_filter_sieve_module = module;
 	next_hook_client_created = imap_client_created_hook_set(
