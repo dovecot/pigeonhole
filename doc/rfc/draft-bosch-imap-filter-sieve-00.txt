@@ -4,8 +4,8 @@
 
 Network Working Group                                           S. Bosch
 Internet-Draft                                                Dovecot Oy
-Intended status: Standards Track                             May 8, 2018
-Expires: November 9, 2018
+Intended status: Standards Track                            May 26, 2018
+Expires: November 27, 2018
 
 
     Internet Message Access Protocol (IMAP) - FILTER=SIEVE Extension
@@ -31,7 +31,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on November 9, 2018.
+   This Internet-Draft will expire on November 27, 2018.
 
 Copyright Notice
 
@@ -53,7 +53,7 @@ Copyright Notice
 
 
 
-Bosch                   Expires November 9, 2018                [Page 1]
+Bosch                   Expires November 27, 2018               [Page 1]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -109,7 +109,7 @@ Table of Contents
 
 
 
-Bosch                   Expires November 9, 2018                [Page 2]
+Bosch                   Expires November 27, 2018               [Page 2]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -165,7 +165,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018                [Page 3]
+Bosch                   Expires November 27, 2018               [Page 3]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -221,7 +221,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018                [Page 4]
+Bosch                   Expires November 27, 2018               [Page 4]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -277,7 +277,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018                [Page 5]
+Bosch                   Expires November 27, 2018               [Page 5]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -333,7 +333,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018                [Page 6]
+Bosch                   Expires November 27, 2018               [Page 6]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -389,7 +389,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018                [Page 7]
+Bosch                   Expires November 27, 2018               [Page 7]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -445,7 +445,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018                [Page 8]
+Bosch                   Expires November 27, 2018               [Page 8]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -501,7 +501,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018                [Page 9]
+Bosch                   Expires November 27, 2018               [Page 9]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -557,7 +557,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018               [Page 10]
+Bosch                   Expires November 27, 2018              [Page 10]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -613,7 +613,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018               [Page 11]
+Bosch                   Expires November 27, 2018              [Page 11]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -669,7 +669,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018               [Page 12]
+Bosch                   Expires November 27, 2018              [Page 12]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -725,7 +725,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018               [Page 13]
+Bosch                   Expires November 27, 2018              [Page 13]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -781,7 +781,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018               [Page 14]
+Bosch                   Expires November 27, 2018              [Page 14]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -837,7 +837,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018               [Page 15]
+Bosch                   Expires November 27, 2018              [Page 15]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -893,7 +893,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 9, 2018               [Page 16]
+Bosch                   Expires November 27, 2018              [Page 16]
 
 Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
@@ -932,7 +932,7 @@ Author's Address
 
    Stephan Bosch
    Dovecot Oy
-   Lars Sonckin Kaari 16
+   Lars Sonckin Kaari 12
    Espoo  02600
    Finland
 
@@ -949,4 +949,4 @@ Author's Address
 
 
 
-Bosch                   Expires November 9, 2018               [Page 17]
+Bosch                   Expires November 27, 2018              [Page 17]
