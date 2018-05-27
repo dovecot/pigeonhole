@@ -38,6 +38,7 @@ const char imap_filter_sieve_plugin_binary_dependency[] = "imap";
 void imap_filter_sieve_plugin_init(struct module *module)
 {
 	command_register("FILTER", cmd_filter, COMMAND_FLAG_USES_SEQS);
+	command_register("UID FILTER", cmd_filter, COMMAND_FLAG_BREAKS_SEQS);
 
 	imap_filter_sieve_module = module;
 	next_hook_client_created = imap_client_created_hook_set(
@@ -48,6 +49,7 @@ void imap_filter_sieve_plugin_init(struct module *module)
 void imap_filter_sieve_plugin_deinit(void)
 {
 	command_unregister("FILTER");
+	command_unregister("UID FILTER");
 
 	imap_filter_sieve_deinit();
 	imap_client_created_hook_set(next_hook_client_created);
