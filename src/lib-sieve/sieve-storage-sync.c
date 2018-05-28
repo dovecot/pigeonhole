@@ -69,6 +69,7 @@ static int sieve_storage_sync_transaction_begin
 		sieve_storage_sys_warning(storage, "sync: "
 			"Failed to open user INBOX for attribute modifications: %s",
 			mailbox_get_last_error(inbox, &error));
+		mailbox_free(&inbox);
 		return -1;
 	}
 
