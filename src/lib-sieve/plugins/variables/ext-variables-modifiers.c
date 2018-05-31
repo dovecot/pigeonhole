@@ -482,8 +482,13 @@ int sieve_variables_modifiers_apply
 	unsigned int i, modf_count;
 
 	/* Hold value within limits */
-	if ( str_len(*value) > config->max_variable_size )
-		str_truncate(*value, config->max_variable_size);
+	if ( str_len(*value) > config->max_variable_size ) {
+		/* assume variable originates from code, so copy it first */
+		string_t *new_value = t_str_new(config->max_variable_size+3);
+		str_append_str(new_value, *value);
+		*value = new_value;
+		str_truncate_utf8(*value, config->max_variable_size);
+	}
 	
 	if ( !array_is_created(modifiers) )
 		return SIEVE_EXEC_OK;
@@ -513,7 +518,7 @@ int sieve_variables_modifiers_apply
 
 			/* Hold value within limits */
 			if ( str_len(*value) > config->max_variable_size )
-				str_truncate(*value, config->max_variable_size);
+				str_truncate_utf8(*value, config->max_variable_size);
 		}
 	}
 	return SIEVE_EXEC_OK;
