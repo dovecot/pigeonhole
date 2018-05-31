@@ -611,7 +611,7 @@ bool sieve_variable_assign
 
 	/* Just a precaution, caller should prevent this in the first place */
 	if ( str_len(varval) > config->max_variable_size )
-		str_truncate(varval, config->max_variable_size);
+		str_truncate_utf8(varval, config->max_variable_size);
 
 	return TRUE;
 }
@@ -632,7 +632,7 @@ bool sieve_variable_assign_cstr
 
 	/* Just a precaution, caller should prevent this in the first place */
 	if ( str_len(varval) > config->max_variable_size )
-		str_truncate(varval, config->max_variable_size);
+		str_truncate_utf8(varval, config->max_variable_size);
 
 	return TRUE;
 }
