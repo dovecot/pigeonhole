@@ -14,6 +14,7 @@
 #include "mail-storage-private.h"
 #include "iostream-ssl.h"
 #include "sieve.h"
+#include "sieve-address.h"
 #include "sieve-storage.h"
 #include "sieve-script.h"
 
@@ -821,6 +822,22 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 		sieve_sys_info(svinst,
 			"Failed to parse Delivered-To header");
 	}
+	if (rcpt_to == NULL) {
+		if (svinst->user_email != NULL)
+			rcpt_to = sieve_address_to_string(svinst->user_email);
+		else if (strchr(user->username, '@') != NULL ||
+			 svinst->domainname == NULL)
+			rcpt_to = user->username;
+		else {
+			struct sieve_address svaddr;
+
+			i_zero(&svaddr);
+			svaddr.local_part = user->username;
+			svaddr.domain = svinst->domainname;
+			rcpt_to = sieve_address_to_string(&svaddr);
+		}
+	}
+
 
 	// FIXME: maybe parse top Received header.
 
