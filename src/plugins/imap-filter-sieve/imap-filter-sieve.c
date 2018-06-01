@@ -772,9 +772,10 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 }
 
 static int
-parse_address(const char *address, struct smtp_address **addr_r)
+parse_address(const char *address, const struct smtp_address **addr_r)
 {
 	struct message_address *msg_addr;
+	struct smtp_address *smtp_addr;
 
 	if (message_address_parse_path(pool_datastack_create(),
 				       (const unsigned char *)address,
@@ -782,11 +783,12 @@ parse_address(const char *address, struct smtp_address **addr_r)
 		*addr_r = NULL;
 		return -1;
 	}
-	if (smtp_address_create_from_msg_temp(msg_addr, addr_r) < 0) {
+	if (smtp_address_create_from_msg_temp(msg_addr, &smtp_addr) < 0) {
 		*addr_r = NULL;
 		return -1;
 	}
 
+	*addr_r = smtp_addr;
 	return 1;
 }
 
@@ -797,8 +799,9 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 {
 	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
 	struct mail_user *user = sctx->user;
-	const char *address;
-	struct smtp_address *mail_from, *rcpt_to;
+	const char *address, *error;
+	const struct smtp_address *mail_from, *rcpt_to;
+	struct smtp_address *user_addr;
 	int ret;
 
 	mail_from = NULL;
@@ -822,6 +825,20 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 	    parse_address(address, &rcpt_to) < 0) {
 		sieve_sys_info(svinst,
 			"Failed to parse Delivered-To header");
+	}
+	if (rcpt_to == NULL) {
+		if (svinst->user_email != NULL)
+			rcpt_to = svinst->user_email;
+		else if (smtp_address_parse_username(sctx->pool, user->username,
+						     &user_addr, &error) < 0) {
+			sieve_sys_warning(svinst,
+				"Cannot obtain SMTP address from username `%s': %s",
+				user->username, error);
+		} else {
+			if (user_addr->domain == NULL)
+				user_addr->domain = svinst->domainname;
+			rcpt_to = user_addr;
+		}
 	}
 
 	// FIXME: maybe parse top Received header.
