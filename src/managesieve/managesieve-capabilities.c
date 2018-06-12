@@ -133,4 +133,6 @@ void managesieve_capabilities_dump(void)
 	else
 		printf("SIEVE: %s, NOTIFY: %s\n", sieve_get_capabilities(svinst, NULL),
 			sieve_get_capabilities(svinst, "notify"));
+
+	sieve_deinit(&svinst);
 }
