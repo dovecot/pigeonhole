@@ -100,6 +100,7 @@ const struct sieve_variables_modifier *ext_variables_modifier_create_instance
 	pool = sieve_command_pool(cmd);
 	modf = p_new(pool, struct sieve_variables_modifier, 1);
 	modf->object = object;
+	modf->var_ext = var_ext;
 	modf->def = (const struct sieve_variables_modifier_def *) object.def;
 
   return modf;
@@ -456,8 +457,9 @@ bool sieve_variables_modifiers_code_dump
 	return TRUE;
 }
 
-int sieve_variables_modifiers_code_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
+int sieve_variables_modifiers_code_read(
+	const struct sieve_runtime_env *renv,
+	const struct sieve_extension *var_ext, sieve_size_t *address,
 	ARRAY_TYPE(sieve_variables_modifier) *modifiers)
 {
 	unsigned int lprec, mdfs, i;
@@ -473,7 +475,8 @@ int sieve_variables_modifiers_code_read
 	for ( i = 0; i < mdfs; i++ ) {
 		struct sieve_variables_modifier modf;
 
-		if ( !ext_variables_opr_modifier_read(renv, address, &modf) )
+		if ( !ext_variables_opr_modifier_read(renv, var_ext,
+						      address, &modf) )
 			return SIEVE_EXEC_BIN_CORRUPT;
 		if ( modf.def != NULL ) {
 			if ( modf.def->precedence >= lprec ) {

@@ -39,9 +39,11 @@ static inline void ext_variables_opr_modifier_emit
 	sieve_opr_object_emit(sblock, ext, &modf_def->obj_def);
 }
 
-static inline bool ext_variables_opr_modifier_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
-	struct sieve_variables_modifier *modf)
+static inline bool
+ext_variables_opr_modifier_read(const struct sieve_runtime_env *renv,
+				const struct sieve_extension *var_ext,
+				sieve_size_t *address,
+				struct sieve_variables_modifier *modf)
 {
 	if ( !sieve_opr_object_read
 		(renv, &sieve_variables_modifier_operand_class, address, &modf->object) ) {
@@ -50,6 +52,7 @@ static inline bool ext_variables_opr_modifier_read
 	}
 
 	modf->def = (const struct sieve_variables_modifier_def *) modf->object.def;
+	modf->var_ext = var_ext;
 	return TRUE;
 }
 

@@ -307,7 +307,7 @@ static int cmd_extracttext_operation_execute
 	/* Modifiers */
 
 	if ( (ret=sieve_variables_modifiers_code_read
-		(renv, address, &modifiers)) <= 0 )
+		(renv, ectx->var_ext, address, &modifiers)) <= 0 )
 		return ret;
 
 	/*
