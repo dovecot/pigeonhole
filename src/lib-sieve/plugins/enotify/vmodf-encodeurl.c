@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "unichar.h"
 #include "str.h"
 
 #include "sieve-common.h"
@@ -64,28 +65,54 @@ static const char _uri_reserved_lookup[256] = {
 };
 
 static bool
-mod_encodeurl_modify(const struct sieve_variables_modifier *modf ATTR_UNUSED,
+mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 		     string_t *in, string_t **result)
 {
-	unsigned int i;
-	const unsigned char *c;
+	size_t max_var_size =
+		sieve_variables_get_max_variable_size(modf->var_ext);
+	const unsigned char *p, *poff, *pend;
+	size_t new_size;
 
 	if ( str_len(in) == 0 ) {
 		*result = in;
 		return TRUE;
 	}
 
-	*result = t_str_new(2*str_len(in));
-	c = str_data(in);
+	/* allocate new string */
+	new_size = str_len(in) + 32;
+	if (new_size > max_var_size)
+		new_size = max_var_size;
+	*result = t_str_new(new_size + 1);
 
-	for ( i = 0; i < str_len(in); i++, c++ ) {
-		if ( (_uri_reserved_lookup[*c] & 0x01) != 0 ) {
-			str_printfa(*result, "%%%02X", *c);
-		} else {
-			str_append_c(*result, *c);
+	/* escape string */
+	p = str_data(in);
+	pend = p + str_len(in);
+	poff = p;
+	while (p < pend) {
+		unsigned int i, n = uni_utf8_char_bytes((char)*p);
+
+		if (n > 1 || (_uri_reserved_lookup[*p] & 0x01) != 0) {
+			str_append_data(*result, poff, p - poff);
+			poff = p;
+
+			if (str_len(*result) + 3 * n > max_var_size)
+				break;
+
+			str_printfa(*result, "%%%02X", *p);
+			for (i = 1; i < n && p < pend; i++) {
+				p++;
+				poff++;
+				str_printfa(*result, "%%%02X", *p);
+			}
+
+			poff++;
+		} else if ((str_len(*result) + (p - poff) + 1) > max_var_size) {
+			break;
 		}
+		p++;
 	}
 
+	str_append_data(*result, poff, p - poff);
 	return TRUE;
 }
 
