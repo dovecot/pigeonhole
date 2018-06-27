@@ -277,26 +277,52 @@ mod_length_modify(const struct sieve_variables_modifier *modf ATTR_UNUSED,
 }
 
 static bool
-mod_quotewildcard_modify(const struct sieve_variables_modifier *modf ATTR_UNUSED,
+mod_quotewildcard_modify(const struct sieve_variables_modifier *modf,
 			 string_t *in, string_t **result)
 {
-	unsigned int i;
-	const char *content;
+	size_t max_var_size =
+		sieve_variables_get_max_variable_size(modf->var_ext);
+	const unsigned char *p, *poff, *pend;
+	size_t new_size;
 
 	if ( str_len(in) == 0 ) {
+		/* empty string */
 		*result = in;
 		return TRUE;
 	}
 
-	*result = t_str_new(str_len(in) * 2);
-	content = (const char *) str_data(in);
+	/* allocate new string */
+	new_size = str_len(in) + 16;
+	if (new_size > max_var_size)
+		new_size = max_var_size;
+	*result = t_str_new(new_size + 1);
 
-	for ( i = 0; i < str_len(in); i++ ) {
-		if ( content[i] == '*' || content[i] == '?' || content[i] == '\\' ) {
+	/* escape string */
+	p = str_data(in);
+	pend = p + str_len(in);
+	poff = p;
+	while (p < pend) {
+		unsigned int n = uni_utf8_char_bytes((char)*p);
+
+		if (n == 1 && (*p == '*' || *p == '?' || *p == '\\')) {
+			str_append_data(*result, poff, p - poff);
+			poff = p;
+
+			if (str_len(*result) + 2 > max_var_size)
+				break;
+
 			str_append_c(*result, '\\');
+		} else if ((str_len(*result) + (p - poff) + n) > max_var_size) {
+			break;
 		}
-		str_append_c(*result, content[i]);
+		if (p + n > pend) {
+			p = pend;
+			break;
+		}
+		p += n;
 	}
+
+	str_append_data(*result, poff, p - poff);
 
 	return TRUE;
 }
