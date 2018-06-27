@@ -15,7 +15,7 @@
  * Encodeurl modifier
  */
 
-bool mod_encodeurl_modify(string_t *in, string_t **result);
+static bool mod_encodeurl_modify(string_t *in, string_t **result);
 
 const struct sieve_variables_modifier_def encodeurl_modifier = {
 	SIEVE_OBJECT("encodeurl", &encodeurl_operand, 0),
@@ -61,7 +61,7 @@ static const char _uri_reserved_lookup[256] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  // F0
 };
 
-bool mod_encodeurl_modify(string_t *in, string_t **result)
+static bool mod_encodeurl_modify(string_t *in, string_t **result)
 {
 	unsigned int i;
 	const unsigned char *c;
