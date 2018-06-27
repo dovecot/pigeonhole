@@ -194,7 +194,7 @@ static int cmd_set_operation_execute
 		return ret;
 
 	if ( (ret=sieve_variables_modifiers_code_read
-		(renv, address, &modifiers)) <= 0 )
+		(renv, this_ext, address, &modifiers)) <= 0 )
 		return ret;
 
 	/*
