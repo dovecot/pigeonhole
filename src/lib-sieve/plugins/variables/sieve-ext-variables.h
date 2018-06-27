@@ -285,12 +285,15 @@ static inline bool sieve_operand_is_variable
 
 /* Definition */
 
+struct sieve_variables_modifier;
+
 struct sieve_variables_modifier_def {
 	struct sieve_object_def obj_def;
 
 	unsigned int precedence;
 
-	bool (*modify)(string_t *in, string_t **result);
+	bool (*modify)(const struct sieve_variables_modifier *modf,
+		       string_t *in, string_t **result);
 };
 
 struct sieve_variables_modifier {
