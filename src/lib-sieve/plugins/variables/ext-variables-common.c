@@ -39,6 +39,15 @@ sieve_variables_get_max_scope_size(const struct sieve_extension *var_ext)
 	return config->max_scope_size;
 }
 
+size_t
+sieve_variables_get_max_variable_size(const struct sieve_extension *var_ext)
+{
+	const struct ext_variables_config *config =
+		ext_variables_get_config(var_ext);
+
+	return config->max_variable_size;
+}
+
 /*
  * Extension configuration
  */

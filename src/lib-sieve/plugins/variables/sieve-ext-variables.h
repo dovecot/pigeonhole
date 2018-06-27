@@ -17,6 +17,8 @@
 
 unsigned int
 sieve_variables_get_max_scope_size(const struct sieve_extension *var_ext);
+size_t
+sieve_variables_get_max_variable_size(const struct sieve_extension *var_ext);
 
 /*
  * Variable extension
