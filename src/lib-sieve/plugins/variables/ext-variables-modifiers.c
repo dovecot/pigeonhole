@@ -123,12 +123,24 @@ void ext_variables_register_core_modifiers
 
 /* Forward declarations */
 
-static bool mod_lower_modify(string_t *in, string_t **result);
-static bool mod_upper_modify(string_t *in, string_t **result);
-static bool mod_lowerfirst_modify(string_t *in, string_t **result);
-static bool mod_upperfirst_modify(string_t *in, string_t **result);
-static bool mod_length_modify(string_t *in, string_t **result);
-static bool mod_quotewildcard_modify(string_t *in, string_t **result);
+static bool
+mod_lower_modify(const struct sieve_variables_modifier *modf,
+		 string_t *in, string_t **result);
+static bool
+mod_upper_modify(const struct sieve_variables_modifier *modf,
+		 string_t *in, string_t **result);
+static bool
+mod_lowerfirst_modify(const struct sieve_variables_modifier *modf,
+		      string_t *in, string_t **result);
+static bool
+mod_upperfirst_modify(const struct sieve_variables_modifier *modf,
+		      string_t *in, string_t **result);
+static bool
+mod_length_modify(const struct sieve_variables_modifier *modf,
+		  string_t *in, string_t **result);
+static bool
+mod_quotewildcard_modify(const struct sieve_variables_modifier *modf,
+			 string_t *in, string_t **result);
 
 /* Modifier objects */
 
@@ -173,7 +185,9 @@ const struct sieve_variables_modifier_def length_modifier = {
 
 /* Modifier implementations */
 
-static bool mod_upperfirst_modify(string_t *in, string_t **result)
+static bool
+mod_upperfirst_modify(const struct sieve_variables_modifier *modf ATTR_UNUSED,
+		      string_t *in, string_t **result)
 {
 	char *content;
 
@@ -191,7 +205,9 @@ static bool mod_upperfirst_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-static bool mod_lowerfirst_modify(string_t *in, string_t **result)
+static bool
+mod_lowerfirst_modify(const struct sieve_variables_modifier *modf ATTR_UNUSED,
+		      string_t *in, string_t **result)
 {
 	char *content;
 
@@ -209,7 +225,9 @@ static bool mod_lowerfirst_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-static bool mod_upper_modify(string_t *in, string_t **result)
+static bool
+mod_upper_modify(const struct sieve_variables_modifier *modf ATTR_UNUSED,
+		 string_t *in, string_t **result)
 {
 	char *content;
 
@@ -227,7 +245,9 @@ static bool mod_upper_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-static bool mod_lower_modify(string_t *in, string_t **result)
+static bool
+mod_lower_modify(const struct sieve_variables_modifier *modf ATTR_UNUSED,
+		 string_t *in, string_t **result)
 {
 	char *content;
 
@@ -245,7 +265,9 @@ static bool mod_lower_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-static bool mod_length_modify(string_t *in, string_t **result)
+static bool
+mod_length_modify(const struct sieve_variables_modifier *modf ATTR_UNUSED,
+		  string_t *in, string_t **result)
 {
 	*result = t_str_new(64);
 	str_printfa(*result, "%llu", (unsigned long long)
@@ -253,7 +275,9 @@ static bool mod_length_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-static bool mod_quotewildcard_modify(string_t *in, string_t **result)
+static bool
+mod_quotewildcard_modify(const struct sieve_variables_modifier *modf ATTR_UNUSED,
+			 string_t *in, string_t **result)
 {
 	unsigned int i;
 	const char *content;
@@ -502,7 +526,7 @@ int sieve_variables_modifiers_apply
 		const struct sieve_variables_modifier *modf = &modfs[i];
 
 		if ( modf->def != NULL && modf->def->modify != NULL ) {
-			if ( !modf->def->modify(*value, &new_value) )
+			if ( !modf->def->modify(modf, *value, &new_value) )
 				return SIEVE_EXEC_FAILURE;
 
 			*value = new_value;
