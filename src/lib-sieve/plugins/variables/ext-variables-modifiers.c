@@ -123,12 +123,12 @@ void ext_variables_register_core_modifiers
 
 /* Forward declarations */
 
-bool mod_lower_modify(string_t *in, string_t **result);
-bool mod_upper_modify(string_t *in, string_t **result);
-bool mod_lowerfirst_modify(string_t *in, string_t **result);
-bool mod_upperfirst_modify(string_t *in, string_t **result);
-bool mod_length_modify(string_t *in, string_t **result);
-bool mod_quotewildcard_modify(string_t *in, string_t **result);
+static bool mod_lower_modify(string_t *in, string_t **result);
+static bool mod_upper_modify(string_t *in, string_t **result);
+static bool mod_lowerfirst_modify(string_t *in, string_t **result);
+static bool mod_upperfirst_modify(string_t *in, string_t **result);
+static bool mod_length_modify(string_t *in, string_t **result);
+static bool mod_quotewildcard_modify(string_t *in, string_t **result);
 
 /* Modifier objects */
 
@@ -173,7 +173,7 @@ const struct sieve_variables_modifier_def length_modifier = {
 
 /* Modifier implementations */
 
-bool mod_upperfirst_modify(string_t *in, string_t **result)
+static bool mod_upperfirst_modify(string_t *in, string_t **result)
 {
 	char *content;
 
@@ -191,7 +191,7 @@ bool mod_upperfirst_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-bool mod_lowerfirst_modify(string_t *in, string_t **result)
+static bool mod_lowerfirst_modify(string_t *in, string_t **result)
 {
 	char *content;
 
@@ -209,7 +209,7 @@ bool mod_lowerfirst_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-bool mod_upper_modify(string_t *in, string_t **result)
+static bool mod_upper_modify(string_t *in, string_t **result)
 {
 	char *content;
 
@@ -227,7 +227,7 @@ bool mod_upper_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-bool mod_lower_modify(string_t *in, string_t **result)
+static bool mod_lower_modify(string_t *in, string_t **result)
 {
 	char *content;
 
@@ -245,7 +245,7 @@ bool mod_lower_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-bool mod_length_modify(string_t *in, string_t **result)
+static bool mod_length_modify(string_t *in, string_t **result)
 {
 	*result = t_str_new(64);
 	str_printfa(*result, "%llu", (unsigned long long)
@@ -253,7 +253,7 @@ bool mod_length_modify(string_t *in, string_t **result)
 	return TRUE;
 }
 
-bool mod_quotewildcard_modify(string_t *in, string_t **result)
+static bool mod_quotewildcard_modify(string_t *in, string_t **result)
 {
 	unsigned int i;
 	const char *content;
