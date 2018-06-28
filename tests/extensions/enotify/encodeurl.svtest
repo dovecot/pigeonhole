@@ -1,11 +1,359 @@
 require "vnd.dovecot.testsuite";
+require "encoded-character";
 require "variables";
 require "enotify";
 
-test "Encode Simple" {
+/*
+ * :encodeurl simple
+ */
+
+test ":encodeurl simple" {
 	set :encodeurl "url_data" "\\frop\\&fruts/^@";
 
 	if not string :is :comparator "i;octet" "${url_data}" "%5Cfrop%5C%26fruts%2F%5E%40" {
 		test_fail "url data encoded incorrectly '${url_data}'";
+	}
+}
+
+/*
+ * :encodeurl variable size limit
+ */
+
+test_config_set "sieve_variables_max_variable_size" "4000";
+test_config_reload :extension "variables";
+
+set "a" text:
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@
+.
+;
+
+test ":encodeurl variable size limit" {
+	set :length "alen" "${a}";
+
+	if not string "${alen}" "4000" {
+		test_fail "variable 'a' not 4000 bytes long (${alen})";
+	}
+
+	set :encodeurl "b" "${a}";
+	set :length "blen" "${b}";
+
+	if not string "${blen}" "3999" {
+		test_fail "variable 'b' not 3999 bytes long (${blen})";
+	}
+
+	set :encodeurl "c" "0${a}";
+	set :length "clen" "${c}";
+
+	if not string "${clen}" "4000" {
+		test_fail "variable 'c' not 4000 bytes long (${clen})";
+	}
+
+	set "cmt" "%40%40%40%40%40%40%40%40%40%40%40%40";
+	set "cmt" "${cmt}%40%40%40%40%40%40%40%40%40%40%40%0D%0A";
+	set "cmh" "${cmt}${cmt}${cmt}${cmt}";
+	set "cm" "${cmh}${cmh}${cmh}${cmh}${cmh}${cmh}${cmh}${cmh}${cmh}${cmh}";
+	set "cm" "${cm}${cmh}${cmh}${cmh}";
+	set "cm" "0${cm}${cmt}%40%40%40%40%40%40%40%40";
+
+	if not string :is "${c}" "${cm}" {
+		test_fail "variable 'c' has unexpected value";
+	}
+
+	set :encodeurl "d" "00${a}";
+	set :length "dlen" "${d}";
+
+	if not string "${dlen}" "3998" {
+		test_fail "variable 'd' not 3998 bytes long (${dlen})";
+	}
+}
+
+/*
+ * :encodeurl variable size limit UTF-8
+ */
+
+test_config_set "sieve_variables_max_variable_size" "4000";
+test_config_reload :extension "variables";
+
+set "a" text:
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}${unicode:4e03}
+.
+;
+
+test ":encodeurl variable size limit UTF-8" {
+	set :length "alen" "${a}";
+
+	if not string "${alen}" "546" {
+		test_fail "variable 'a' not 549 characters long (${alen})";
+	}
+
+	set :encodeurl "b" "${a}";
+	set :length "blen" "${b}";
+
+	if not string "${blen}" "3978" {
+		test_fail "variable 'b' not 3978 bytes long (${blen})";
+	}
+
+	set :encodeurl "c" "${a}${unicode:4e00}${unicode:4e00}";
+	set :length "clen" "${c}";
+
+	if not string "${clen}" "3996" {
+		test_fail "variable 'c' not 3996 bytes long (${clen})";
+	}
+
+	set :encodeurl "d" "${a}${unicode:4e00}${unicode:4e00}${unicode:4e00}";
+	set :length "dlen" "${d}";
+
+	if not string "${dlen}" "3996" {
+		test_fail "variable 'd' not 3996 bytes long (${dlen})";
+	}
+
+	set :encodeurl "e" "0000${a}${unicode:4e00}${unicode:4e00}";
+	set :length "elen" "${e}";
+
+	if not string "${elen}" "4000" {
+		test_fail "variable 'e' not 4000 bytes long (${elen})";
+	}
+
+	set :encodeurl "f" "00000${a}${unicode:4e00}${unicode:4e00}";
+	set :length "flen" "${f}";
+
+	if not string "${flen}" "3992" {
+		test_fail "variable 'f' not 3992 bytes long (${flen})";
 	}
 }
