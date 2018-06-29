@@ -1,4 +1,4 @@
-v0.5.2 2018-06-xx  Stephan Bosch <stephan@rename-it.nl>
+v0.5.2 2018-06-29  Stephan Bosch <stephan@rename-it.nl>
 
 	+ Implement plugin for the a vendor-defined IMAP capability called
 	  "FILTER=SIEVE". It adds the ability to manually invoke Sieve filtering
