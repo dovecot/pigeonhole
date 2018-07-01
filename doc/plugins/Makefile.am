@@ -1,4 +1,5 @@
 docfiles = \
+	imap_filter_sieve.txt \
 	imapsieve.txt \
 	sieve_extprograms.txt
 

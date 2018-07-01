@@ -3,6 +3,7 @@ docfiles = \
 	collation.rfc4790.txt \
 	copy.rfc3894.txt \
 	date-index.rfc5260.txt \
+	draft-bosch-imap-filter-sieve-00.txt \
 	draft-degener-sieve-multiscript-00.txt \
 	draft-duerst-mailto-bis-05.txt \
 	draft-murchison-sieve-regex-07.txt \
