@@ -19,6 +19,7 @@ bool ext_vacation_load
 	bool use_original_recipient, dont_check_recipient, send_from_recipient,
 		to_header_ignore_envelope;
 	unsigned long long max_subject_codepoints;
+	const char *default_subject, *default_subject_template;
 
 	if ( *context != NULL ) {
 		ext_vacation_unload(ext);
@@ -52,6 +53,11 @@ bool ext_vacation_load
 			"sieve_vacation_max_period");
 	}
 
+	default_subject = sieve_setting_get(
+		svinst, "sieve_vacation_default_subject");
+	default_subject_template = sieve_setting_get(
+		svinst, "sieve_vacation_default_subject_template");
+
 	if ( !sieve_setting_get_uint_value
 		(svinst, "sieve_vacation_max_subject_codepoints", &max_subject_codepoints) ) {
 		max_subject_codepoints = EXT_VACATION_DEFAULT_MAX_SUBJECT_CODEPOINTS;
@@ -83,6 +89,8 @@ bool ext_vacation_load
 	config->max_period = max_period;
 	config->default_period = default_period;
 	config->max_subject_codepoints = max_subject_codepoints;
+	config->default_subject = i_strdup_empty(default_subject);
+	config->default_subject_template = i_strdup_empty(default_subject_template);
 	config->use_original_recipient = use_original_recipient;
 	config->dont_check_recipient = dont_check_recipient;
 	config->send_from_recipient = send_from_recipient;
@@ -99,5 +107,7 @@ void ext_vacation_unload
 	struct ext_vacation_config *config =
 		(struct ext_vacation_config *) ext->context;
 
+	i_free(config->default_subject);
+	i_free(config->default_subject_template);
 	i_free(config);
 }

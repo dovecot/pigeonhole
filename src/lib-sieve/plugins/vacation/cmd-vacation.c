@@ -10,6 +10,7 @@
 #include "ostream.h"
 #include "message-address.h"
 #include "message-date.h"
+#include "var-expand.h"
 #include "ioloop.h"
 #include "mail-storage.h"
 
@@ -947,23 +948,54 @@ static int _get_full_reply_recipient
 	return SIEVE_EXEC_OK;
 }
 
+static const struct var_expand_table *
+_get_var_expand_table(const struct sieve_action_exec_env *aenv ATTR_UNUSED,
+		      const char *subject)
+{
+	const struct var_expand_table stack_tab[] = {
+		{ '$', subject, "subject" },
+		{ '\0', NULL, NULL }
+	};
+	return p_memdup(unsafe_data_stack_pool, stack_tab, sizeof(stack_tab));
+}
+
 static int
 act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
+				 const struct ext_vacation_config *config,
 				 const char **subject_r)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const char *header;
+	const char *header, *error;
+	string_t *str;
+	const struct var_expand_table *tab;
 	int ret;
 
-	*subject_r = "Automated reply";
+	*subject_r = (config->default_subject == NULL ?
+		      "Automated reply" : config->default_subject);
 	if ((ret=mail_get_first_header_utf8(msgdata->mail, "subject",
 					    &header)) < 0 ) {
 		return sieve_result_mail_error(
 			aenv, msgdata->mail, "vacation action: "
 			"failed to read header field `subject'");
 	}
-	if (ret >= 0)
+	if (ret == 0)
+		return SIEVE_EXEC_OK;
+	if (config->default_subject_template == NULL) {
 		*subject_r = t_strconcat("Auto: ", header, NULL);
+		return SIEVE_EXEC_OK;
+	}
+
+	str = t_str_new(256);
+	tab = _get_var_expand_table(aenv, header);
+	if (var_expand(str, config->default_subject_template,
+		       tab, &error) <= 0) {
+		i_error("Failed to expand deliver_log_format=%s: %s",
+			config->default_subject_template, error);
+		*subject_r = t_strconcat("Auto: ", header, NULL);
+		return SIEVE_EXEC_OK;
+	}
+
+	*subject_r = str_c(str);
 	return SIEVE_EXEC_OK;
 }
 
@@ -995,7 +1027,8 @@ static int act_vacation_send
 	/* Make sure we have a subject for our reply */
 
 	if ( ctx->subject == NULL || *(ctx->subject) == '\0' ) {
-		if ((ret=act_vacation_get_default_subject(aenv, &subject)) <= 0)
+		if ((ret=act_vacation_get_default_subject(aenv, config,
+							  &subject)) <= 0)
 			return ret;
 	}	else {
 		subject = ctx->subject;
