@@ -62,6 +62,100 @@ test "Subject - explicit" {
 }
 
 /*
+ * Subject - configured, no subject
+ */
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_config_set "sieve_vacation_default_subject" "Something colorful";
+test_config_reload :extension "vacation";
+
+test_result_reset;
+test "Subject - configured, no subject" {
+	vacation "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not header :is "subject" "Something colorful" {
+		test_fail "Subject header is incorrect";
+	}
+}
+
+/*
+ * Subject - configured
+ */
+
+test_set "message" text:
+From: stephan@example.org
+Subject: Bloemetjes
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_config_set "sieve_vacation_default_subject_template"
+	"Automatisch bericht: %$";
+test_config_reload :extension "vacation";
+
+test_result_reset;
+test "Subject - configured" {
+	vacation "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not header :is "subject" "Automatisch bericht: Bloemetjes" {
+		test_fail "Subject header is incorrect";
+	}
+}
+
+/*
+ * Subject - configured, full variable
+ */
+
+test_set "message" text:
+From: stephan@example.org
+Subject: Bloemetjes
+To: nico@frop.example.org
+
+Frop
+.
+;
+
+test_config_set "sieve_vacation_default_subject_template"
+	"Automatisch bericht: %{subject}";
+test_config_reload :extension "vacation";
+
+test_result_reset;
+test "Subject - configured, full variable" {
+	vacation "I am not in today!";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	test_message :smtp 0;
+
+	if not header :is "subject" "Automatisch bericht: Bloemetjes" {
+		test_fail "Subject header is incorrect";
+	}
+}
+
+/*
  * No subject
  */
 
@@ -107,6 +201,10 @@ Subject: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam tempor a
 Frop
 .
 ;
+
+test_config_set "sieve_vacation_default_subject_template" "";
+test_config_set "sieve_vacation_default_subject" "";
+test_config_reload :extension "vacation";
 
 test_result_reset;
 test "Extremely long subject" {
@@ -166,6 +264,10 @@ Subject: =?UTF-8?B?5Lul44Gk44KP44Gl6IGeNjXntbXjgZLjgb7lhazlrZjjgofmhJvnm4o=?=
 Frop
 .
 ;
+
+test_config_set "sieve_vacation_default_subject_template" "";
+test_config_set "sieve_vacation_default_subject" "";
+test_config_reload :extension "vacation";
 
 test_result_reset;
 test "Extremely long japanese subject" {
@@ -227,6 +329,9 @@ Frop
 .
 ;
 
+
+test_config_set "sieve_vacation_default_subject_template" "";
+test_config_set "sieve_vacation_default_subject" "";
 test_config_set "sieve_vacation_max_subject_codepoints" "20";
 test_config_reload :extension "vacation";
 
