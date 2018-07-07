@@ -947,6 +947,26 @@ static int _get_full_reply_recipient
 	return SIEVE_EXEC_OK;
 }
 
+static int
+act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
+				 const char **subject_r)
+{
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const char *header;
+	int ret;
+
+	*subject_r = "Automated reply";
+	if ((ret=mail_get_first_header_utf8(msgdata->mail, "subject",
+					    &header)) < 0 ) {
+		return sieve_result_mail_error(
+			aenv, msgdata->mail, "vacation action: "
+			"failed to read header field `subject'");
+	}
+	if (ret >= 0)
+		*subject_r = t_strconcat("Auto: ", header, NULL);
+	return SIEVE_EXEC_OK;
+}
+
 static int act_vacation_send
 (const struct sieve_action_exec_env *aenv,
 	const struct ext_vacation_config *config,
@@ -975,17 +995,8 @@ static int act_vacation_send
 	/* Make sure we have a subject for our reply */
 
 	if ( ctx->subject == NULL || *(ctx->subject) == '\0' ) {
-		if ( (ret=mail_get_first_header_utf8
-			(msgdata->mail, "subject", &header)) < 0 ) {
-			return sieve_result_mail_error(aenv, msgdata->mail,
-				"vacation action: "
-				"failed to read header field `subject'");
-		}
-		if ( ret > 0 && header != NULL ) {
-			subject = t_strconcat("Auto: ", header, NULL);
-		}	else {
-			subject = "Automated reply";
-		}
+		if ((ret=act_vacation_get_default_subject(aenv, &subject)) <= 0)
+			return ret;
 	}	else {
 		subject = ctx->subject;
 	}
