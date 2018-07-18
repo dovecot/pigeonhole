@@ -857,7 +857,7 @@ static inline bool _contains_my_address
 		T_BEGIN {
 			msg_addr = message_address_parse
 				(pool_datastack_create(), (const unsigned char *) *hdsp,
-					strlen(*hdsp), 256, FALSE);
+					strlen(*hdsp), 256, 0);
 			while ( msg_addr != NULL && !result ) {
 				if (msg_addr->domain != NULL) {
 					struct smtp_address addr;
@@ -916,7 +916,7 @@ static int _get_full_reply_recipient
 
 			addr = message_address_parse
 				(pool_datastack_create(), (const unsigned char *) header,
-					strlen(header), 256, FALSE);
+					strlen(header), 256, 0);
 
 			while ( addr != NULL ) {
 				if ( addr->domain != NULL && !addr->invalid_syntax ) {
