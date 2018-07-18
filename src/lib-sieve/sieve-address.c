@@ -141,7 +141,7 @@ static int sieve_header_address_list_next_item
 		addrlist->cur_address = message_address_parse(
 			pool_datastack_create(),
 			(const unsigned char *) str_data(value_item),
-			str_len(value_item), 256, FALSE);
+			str_len(value_item), 256, 0);
 	}
 	i_unreached();
 }
