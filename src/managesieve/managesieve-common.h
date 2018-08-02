@@ -24,6 +24,7 @@
 #include "managesieve-settings.h"
 
 extern void (*hook_client_created)(struct client **client);
+extern struct event_category event_category_managesieve;
 
 void managesieve_refresh_proctitle(void);
 

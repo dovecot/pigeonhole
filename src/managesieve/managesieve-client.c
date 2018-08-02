@@ -103,7 +103,7 @@ client_get_storage(struct sieve_instance *svinst, struct mail_user *user,
 
 struct client *
 client_create(int fd_in, int fd_out, const char *session_id,
-	      struct mail_user *user,
+	      struct event *event, struct mail_user *user,
 	      struct mail_storage_service_user *service_user,
 	      const struct managesieve_settings *set)
 {
@@ -136,6 +136,8 @@ client_create(int fd_in, int fd_out, const char *session_id,
 	pool = pool_alloconly_create("managesieve client", 1024);
 	client = p_new(pool, struct client, 1);
 	client->pool = pool;
+	client->event = event;
+	event_ref(client->event);
 	client->set = set;
 	client->service_user = service_user;
 	client->session_id = p_strdup(pool, session_id);
@@ -289,6 +291,7 @@ void client_destroy(struct client *client, const char *reason)
 
 	managesieve_client_count--;
 	DLLIST_REMOVE(&managesieve_clients, client);
+	event_unref(&client->event);
 	pool_unref(&client->pool);
 
 	master_service_client_connection_destroyed(master_service);
