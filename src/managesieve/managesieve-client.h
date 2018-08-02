@@ -10,6 +10,7 @@ struct managesieve_arg;
 
 struct client_command_context {
 	struct client *client;
+	struct event *event;
 
 	pool_t pool;
 	/* Name of this command */

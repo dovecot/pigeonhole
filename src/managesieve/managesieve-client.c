@@ -161,6 +161,7 @@ client_create(int fd_in, int fd_out, const char *session_id,
 	client->cmd.pool = pool_alloconly_create(
 		MEMPOOL_GROWING"client command", 1024*12);
 	client->cmd.client = client;
+	client->cmd.event = event_create(client->event);
 	client->user = user;
 
 	if (set->rawlog_dir[0] != '\0') {
@@ -286,6 +287,7 @@ void client_destroy(struct client *client, const char *reason)
 	sieve_storage_unref(&client->storage);
 	sieve_deinit(&client->svinst);
 
+	event_unref(&client->cmd.event);
 	pool_unref(&client->cmd.pool);
 	mail_storage_service_user_unref(&client->service_user);
 
@@ -475,6 +477,8 @@ bool client_read_args(struct client_command_context *cmd, unsigned int count,
 		managesieve_write_args(str, *args_r);
 		cmd->args = p_strdup(cmd->pool, str_c(str));
 
+		event_add_str(cmd->event, "args", cmd->args);
+
 		/* all parameters read successfully */
 		return TRUE;
 	} else if (ret == -2) {
@@ -545,12 +549,16 @@ void _client_reset_command(struct client *client)
 	}
 	o_stream_set_flush_callback(client->output, client_output, client);
 
+	event_unref(&client->cmd.event);
+
 	pool = client->cmd.pool;
 	i_zero(&client->cmd);
 
 	p_clear(pool);
 	client->cmd.pool = pool;
 	client->cmd.client = client;
+
+	client->cmd.event = event_create(client->event);
 
 	managesieve_parser_reset(client->parser);
 
@@ -588,8 +596,14 @@ static bool client_handle_input(struct client_command_context *cmd)
 	struct client *client = cmd->client;
 
 	if (cmd->func != NULL) {
+		bool finished;
+
+		event_push_global(cmd->event);
+		finished = cmd->func(cmd);
+		event_pop_global(cmd->event);
+
 		/* command is being executed - continue it */
-		if (cmd->func(cmd) || cmd->param_error) {
+		if (finished || cmd->param_error) {
 			/* command execution was finished */
 			if (!cmd->param_error)
 				client->bad_counter = 0;
@@ -640,6 +654,8 @@ static bool client_handle_input(struct client_command_context *cmd)
 	} else {
 		i_assert(!client->disconnected);
 
+		event_add_str(cmd->event, "managesieve_command_name",
+			      t_str_ucase(cmd->name));
 		client_handle_input(cmd);
 	}
 
