@@ -491,7 +491,8 @@ imap_sieve_mailbox_copy(struct mail_save_context *ctx, struct mail *mail)
 		imap_sieve_mailbox_debug(t->box, "%s event",
 			(isuser->cur_cmd == IMAP_SIEVE_CMD_COPY ?
 				"COPY" : "MOVE"));
-		imap_sieve_add_mailbox_copy_event(t, ctx->dest_mail, mail);
+		imap_sieve_add_mailbox_copy_event(t, ctx->dest_mail,
+						  ctx->copy_src_mail);
 	}
 
 	return 0;
