@@ -1,3 +1,28 @@
+v0.5.2 2018-06-29  Stephan Bosch <stephan@rename-it.nl>
+
+	+ Implement plugin for the a vendor-defined IMAP capability called
+	  "FILTER=SIEVE". It adds the ability to manually invoke Sieve filtering
+	  in IMAP. More information can be found in
+	  doc/plugins/imap_filter_sieve.txt.
+	- The Sieve addess test caused an assertion panic for invalid addresses
+	  with UTF-8 codepoints in the localpart. Fixed by properly detecting
+	  invalid addresses with UTF-8 codepoints in the localpart and skipping
+	  these like other invalid addresses while iterating addresses for the
+	  address test.
+	- Make the length of the subject header for the vacation response
+	  configurable and enforce the limit in UTF-8 codepoints rather than
+	  bytes. The subject header for a vacation response was statically
+	  truncated to 256 bytes, which is too limited for multi-byte UTF-8
+	  characters.
+	- Sieve editheader extension: Fix assertion panic occurring when it is
+	  used to manipulate a message header with a very large header field.
+	- Properly abort execution of the sieve_discard script upon error.
+	  Before, the LDA Sieve plugin attempted to execute the sieve_discard
+	  script when an error occurs. This can lead to the message being lost.
+	- Fix the interaction between quota and the sieve_discard script. When
+	  quota was used together with a sieve_discard script, the message
+	  delivery did not bounce when the quota was exceeded.
+
 v0.5.1 28-03-2018  Stephan Bosch <stephan@rename-it.nl>
 
 	- Explicitly disallow UTF-8 in localpart in addresses parsed from Sieve
