@@ -756,6 +756,7 @@ int main(int argc, char *argv[])
 		MASTER_SERVICE_FLAG_DONT_SEND_STATS |
 		MASTER_SERVICE_FLAG_NO_CONFIG_SETTINGS;
 	const char *cwd, *error;
+	int ret;
 
 	master_service = master_service_init("test-edit-header", service_flags,
 					     &argc, &argv, "");
@@ -765,9 +766,11 @@ int main(int argc, char *argv[])
 		i_fatal("getcwd() failed: %s", error);
 	test_dir = i_strdup(cwd);
 
-	test_run(test_functions);
+	ret = test_run(test_functions);
 
 	i_free(test_dir);
 	master_service_deinit(&master_service);
+
+	return ret;
 }
 
