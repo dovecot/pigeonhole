@@ -320,6 +320,10 @@ cmd_filter_sieve_script_parse_value(struct client_command_context *cmd)
 			imap_filter_deinit(ctx);
 			return TRUE;
 		}
+
+		imap_parser_reset(ctx->parser);
+		cmd->func = imap_filter_search;
+		return imap_filter_search(cmd);
 	}
 
 	if ((ret=cmd_filter_sieve_script_parse_value_arg(ctx)) == 0)
