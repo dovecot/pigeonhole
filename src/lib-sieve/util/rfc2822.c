@@ -143,13 +143,22 @@ unsigned int rfc2822_header_append
 
 	/* Add field body; fold it if necessary and account for existing folding */
 	while ( *bp != '\0' ) {
+		bool ws_first = TRUE;
+
 		while ( *bp != '\0' && nlp == NULL &&
 			(wp == NULL || line_len < max_line) ) {
 			if ( *bp == ' ' || *bp == '\t' ) {
-			 	wp = bp;
+				if (ws_first)
+					wp = bp;
+				ws_first = FALSE;
 			} else if ( *bp == '\r' || *bp == '\n' ) {
-				nlp = bp;
+				if (ws_first)
+					nlp = bp;
+				else
+					nlp = wp;
 				break;
+			} else {
+				ws_first = TRUE;
 			}
 
 			bp++; line_len++;
@@ -159,8 +168,9 @@ unsigned int rfc2822_header_append
 
 		/* Existing newline ? */
 		if ( nlp != NULL ) {			
-			/* Replace any sort of newline for consistency */
-			while ( *bp == '\r' || *bp == '\n' )
+			/* Replace any consecutive newline and whitespace for
+			   consistency */
+			while ( *bp == ' ' || *bp == '\t' || *bp == '\r' || *bp == '\n' )
 				bp++;
 
 			str_append_data(header, sp, nlp-sp);
