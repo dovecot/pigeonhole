@@ -21,7 +21,8 @@ pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 pkginc_lib_HEADERS = $(headers)
 
 test_programs = \
-	test-edit-mail
+	test-edit-mail \
+	test-rfc2822
 
 noinst_PROGRAMS = $(test_programs)
 
@@ -37,6 +38,10 @@ test_deps = \
 test_edit_mail_SOURCES = test-edit-mail.c
 test_edit_mail_LDADD = $(test_libs)
 test_edit_mail_DEPENDENCIES = $(test_deps)
+
+test_rfc2822_SOURCES = test-rfc2822.c
+test_rfc2822_LDADD = $(test_libs)
+test_rfc2822_DEPENDENCIES = $(test_deps)
 
 check: check-am check-test
 check-test: all-am
