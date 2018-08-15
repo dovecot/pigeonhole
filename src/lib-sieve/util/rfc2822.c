@@ -180,6 +180,7 @@ unsigned int rfc2822_header_append
 			sp = bp;
 		} else {
 			/* Insert newline at last whitespace within the max_line limit */
+			i_assert(wp >= sp);
 			str_append_data(header, sp, wp-sp);
 
 			/* Force continued line; drop any existing whitespace */
@@ -195,6 +196,8 @@ unsigned int rfc2822_header_append
 			str_append_c(header, '\t');
 
 			sp = wp;
+			if (sp > bp)
+				bp = sp;
 		}
 
 		lines++;
