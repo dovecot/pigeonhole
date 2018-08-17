@@ -134,11 +134,13 @@ struct ext_duplicate_handle {
 	bool duplicate:1;
 };
 
-struct ext_duplicate_context {
+struct ext_duplicate_hash {
+	unsigned char hash[MD5_RESULTLEN];
 	ARRAY(struct ext_duplicate_handle) handles;
+};
 
-	bool nohandle_duplicate:1;
-	bool nohandle_checked:1;
+struct ext_duplicate_context {
+	ARRAY(struct ext_duplicate_hash) hashes;
 };
 
 static void
@@ -174,6 +176,9 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	struct ext_duplicate_context *rctx;
 	bool duplicate = FALSE;
 	pool_t msg_pool = NULL, result_pool = NULL;
+	unsigned char hash[MD5_RESULTLEN];
+	struct ext_duplicate_hash *hash_record = NULL;
+	struct ext_duplicate_handle *handle_record = NULL;
 	struct act_duplicate_mark_data *act;
 
 	if (!sieve_action_duplicate_check_available(senv)) {
@@ -186,6 +191,9 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	if (value == NULL)
 		return 0;
 
+	/* Create hash */
+	ext_duplicate_hash(handle, value, value_len, last, hash);
+
 	/* Get context; find out whether duplicate was checked earlier */
 	rctx = (struct ext_duplicate_context *)
 		sieve_message_context_extension_get(renv->msgctx, this_ext);
@@ -196,20 +204,24 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 		rctx = p_new(msg_pool, struct ext_duplicate_context, 1);
 		sieve_message_context_extension_set(renv->msgctx, this_ext,
 						    (void *)rctx);
-	} else {
-		if (handle == NULL) {
-			if (rctx->nohandle_checked) {
-				/* Already checked for duplicate */
-				return (rctx->nohandle_duplicate ? 1 : 0);
+	} else if (array_is_created(&rctx->hashes)) {
+		struct ext_duplicate_hash *record;
+
+		array_foreach_modifiable(&rctx->hashes, record) {
+			if (memcmp(record->hash, hash, MD5_RESULTLEN) == 0) {
+				hash_record = record;
+				break;
 			}
-		} else if (array_is_created(&rctx->handles)) {
-			const struct ext_duplicate_handle *record;
-			array_foreach(&rctx->handles, record) {
-				if (strcmp(record->handle,
-					   str_c(handle)) == 0 &&
-				    record->last == last)
-					return (record->duplicate ? 1 : 0);
-			}
+		}
+	}
+	if (hash_record != NULL) {
+		const struct ext_duplicate_handle *rhandle;
+		array_foreach(&hash_record->handles, rhandle) {
+			const char *handle_str =
+				(handle == NULL ? NULL : str_c(handle));
+			if (null_strcmp(rhandle->handle, handle_str) == 0 &&
+			    rhandle->last == last)
+				return (rhandle->duplicate ? 1 : 0);
 		}
 	}
 
@@ -218,15 +230,11 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	if (handle != NULL)
 		act->handle = p_strdup(result_pool, str_c(handle));
 	act->period = period;
+	memcpy(act->hash, hash, MD5_RESULTLEN);
 	act->last = last;
 
-	/* Create hash */
-	ext_duplicate_hash(handle, value, value_len, last, act->hash);
-
 	/* Check duplicate */
-	duplicate = sieve_action_duplicate_check(senv, act->hash,
-						 sizeof(act->hash));
-
+	duplicate = sieve_action_duplicate_check(senv, hash, sizeof(hash));
 	if (!duplicate && last) {
 		unsigned char no_last_hash[MD5_RESULTLEN];
 
@@ -249,22 +257,22 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	}
 
 	/* Cache result */
-	if (handle == NULL) {
-		rctx->nohandle_duplicate = duplicate;
-		rctx->nohandle_checked = TRUE;
-	} else {
-		struct ext_duplicate_handle *record;
-
-		if (msg_pool == NULL)
-			msg_pool = sieve_message_context_pool(renv->msgctx);
-		if (!array_is_created(&rctx->handles))
-			p_array_init(&rctx->handles, msg_pool, 64);
-		record = array_append_space(&rctx->handles);
-		record->handle = p_strdup(msg_pool, str_c(handle));
-		record->last = last;
-		record->duplicate = duplicate;
+	if (msg_pool == NULL)
+		msg_pool = sieve_message_context_pool(renv->msgctx);
+	if (hash_record == NULL) {
+		if (!array_is_created(&rctx->hashes))
+			p_array_init(&rctx->hashes, msg_pool, 64);
+		hash_record = array_append_space(&rctx->hashes);
+		memcpy(hash_record->hash, hash, MD5_RESULTLEN);
+		p_array_init(&hash_record->handles, msg_pool, 64);
 	}
 
-	return (duplicate ? 1 : 0);
+	handle_record = array_append_space(&hash_record->handles);
+	if (handle != NULL)
+		handle_record->handle = p_strdup(msg_pool, str_c(handle));
+	handle_record->last = last;
+	handle_record->duplicate = duplicate;
+
+	return ( duplicate ? 1 : 0 );
 }
 
