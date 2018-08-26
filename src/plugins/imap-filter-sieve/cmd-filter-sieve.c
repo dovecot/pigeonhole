@@ -316,18 +316,11 @@ cmd_filter_sieve_script_parse_value(struct client_command_context *cmd)
 	if (ctx->script_input != NULL) {
 		if ((ret=cmd_filter_sieve_script_read_stream(ctx)) == 0)
 			return FALSE;
-		if (ret < 0) {
-			imap_filter_deinit(ctx);
-			return TRUE;
-		}
-
-		imap_parser_reset(ctx->parser);
-		cmd->func = imap_filter_search;
-		return imap_filter_search(cmd);
+	} else {
+		if ((ret=cmd_filter_sieve_script_parse_value_arg(ctx)) == 0)
+			return FALSE;
 	}
 
-	if ((ret=cmd_filter_sieve_script_parse_value_arg(ctx)) == 0)
-		return FALSE;
 	if (ret < 0) {
 		/* already sent the error to client */ ;
 		imap_filter_deinit(ctx);
