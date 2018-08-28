@@ -253,11 +253,10 @@ struct sieve_trace_log;
 int sieve_trace_log_create(struct sieve_instance *svinst, const char *path,
 			   struct sieve_trace_log **trace_log_r) ATTR_NULL(2);
 int sieve_trace_log_create_dir(struct sieve_instance *svinst, const char *dir,
-			       const char *label,
 			       struct sieve_trace_log **trace_log_r)
 			       ATTR_NULL(3);
 
-int sieve_trace_log_open(struct sieve_instance *svinst, const char *label,
+int sieve_trace_log_open(struct sieve_instance *svinst,
 			 struct sieve_trace_log **trace_log_r) ATTR_NULL(2);
 
 void sieve_trace_log_free(struct sieve_trace_log **_trace_log);

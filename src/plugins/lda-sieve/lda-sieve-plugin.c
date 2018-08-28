@@ -891,7 +891,7 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 
 	trace_log = NULL;
 	if (sieve_trace_config_get(svinst, &trace_config) >= 0 &&
-	    sieve_trace_log_open(svinst, NULL, &trace_log) < 0)
+	    sieve_trace_log_open(svinst, &trace_log) < 0)
 		i_zero(&trace_config);
 
 	/* Collect necessary message data */

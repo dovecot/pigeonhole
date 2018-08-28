@@ -721,10 +721,7 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 
 	trace_log = NULL;
 	if (sieve_trace_config_get(svinst, &trace_config) >= 0) {
-		const char *tr_label = t_strdup_printf(
-			"%s.%s.%u", user->username,
-			mailbox_get_vname(mail->box), mail->uid);
-		if (sieve_trace_log_open(svinst, tr_label, &trace_log) < 0)
+		if (sieve_trace_log_open(svinst, &trace_log) < 0)
 			i_zero(&trace_config);
 	}
 

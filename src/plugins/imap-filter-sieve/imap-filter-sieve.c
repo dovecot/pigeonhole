@@ -891,7 +891,6 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 			       bool *have_warnings_r, bool *have_changes_r)
 {
 	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
-	struct mail_user *user = sctx->user;
 	struct sieve_error_handler *user_ehandler;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env *scriptenv = &sctx->scriptenv;
@@ -912,10 +911,7 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 
 	trace_log = NULL;
 	if (sieve_trace_config_get(svinst, &trace_config) >= 0) {
-		const char *tr_label = t_strdup_printf(
-			"%s.%s.%u", user->username,
-			mailbox_get_vname(mail->box), mail->uid);
-		if (sieve_trace_log_open(svinst, tr_label, &trace_log) < 0)
+		if (sieve_trace_log_open(svinst, &trace_log) < 0)
 			i_zero(&trace_config);
 	}
 
