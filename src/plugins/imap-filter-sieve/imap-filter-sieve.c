@@ -114,6 +114,8 @@ imap_filter_sieve_init_trace_log(struct imap_filter_sieve_context *sctx,
 				 struct sieve_trace_log **trace_log_r)
 {
 	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
+	struct client_command_context *cmd = sctx->filter_context->cmd;
+	struct mail_user *user = sctx->user;
 
 	if (sctx->trace_log_initialized) {
 		*trace_config_r = sctx->trace_config;
@@ -131,6 +133,22 @@ imap_filter_sieve_init_trace_log(struct imap_filter_sieve_context *sctx,
 		*trace_log_r = NULL;
 		return;
 	}
+
+	/* Write header for trace file */
+	sieve_trace_log_printf(sctx->trace_log,
+		"Sieve trace log for IMAP FILTER=SIEVE:\n"
+		"\n"
+		"  Username: %s\n", user->username);
+	if (user->session_id != NULL) {
+		sieve_trace_log_printf(sctx->trace_log,
+			"  Session ID: %s\n", user->session_id);
+	}
+	sieve_trace_log_printf(sctx->trace_log,
+		"  Mailbox: %s\n"
+		"  Command: %s %s %s\n\n",
+		mailbox_get_vname(sctx->filter_context->box),
+		cmd->tag, cmd->name,
+		cmd->human_args != NULL ? cmd->human_args : "");
 
 	*trace_config_r = sctx->trace_config;
 	*trace_log_r = sctx->trace_log;
@@ -942,6 +960,14 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 	imap_filter_sieve_init_trace_log(sctx, &trace_config, &trace_log);
 
 	T_BEGIN {
+		if (trace_log != NULL) {
+			/* Write trace header for message */
+			sieve_trace_log_printf(trace_log,
+				"Filtering message:\n"
+				"\n"
+				"  UID: %u\n", mail->uid);
+		}
+
 		/* Collect necessary message data */
 
 		imap_sieve_filter_get_msgdata(sctx, mail, &msgdata);
