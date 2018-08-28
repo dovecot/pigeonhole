@@ -226,6 +226,7 @@ imap_filter_sieve_context_create(struct imap_filter_context *ctx,
 
 	sctx = p_new(cmd->pool, struct imap_filter_sieve_context, 1);
 	sctx->pool = cmd->pool;
+	sctx->filter_context = ctx;
 	sctx->filter_type = type;
 	sctx->user = ctx->cmd->client->user;
 

@@ -17,6 +17,7 @@ enum imap_filter_sieve_type {
 struct imap_filter_sieve_context {
 	pool_t pool;
 
+	struct imap_filter_context *filter_context;
 	enum imap_filter_sieve_type filter_type;
 
 	struct mail_user *user;
