@@ -271,9 +271,14 @@ struct imap_sieve_run {
 	struct sieve_error_handler *user_ehandler;
 	char *userlog;
 
+	struct sieve_trace_config trace_config;
+	struct sieve_trace_log *trace_log;
+
 	struct sieve_script *user_script;
 	struct imap_sieve_run_script *scripts;
 	unsigned int scripts_count;
+
+	bool trace_log_initialized:1;
 };
 
 static void
@@ -289,6 +294,30 @@ imap_sieve_run_init_user_log(struct imap_sieve_run *isrun)
 		isrun->user_ehandler = sieve_logfile_ehandler_create(
 			svinst, log_path, IMAP_SIEVE_MAX_USER_ERRORS);
 	}
+}
+
+static void
+imap_sieve_run_init_trace_log(struct imap_sieve_run *isrun,
+			      struct sieve_trace_config *trace_config_r,
+			      struct sieve_trace_log **trace_log_r)
+{
+	struct imap_sieve *isieve = isrun->isieve;
+	struct sieve_instance *svinst = isieve->svinst;
+
+	if (isrun->trace_log_initialized) {
+		*trace_config_r = isrun->trace_config;
+		*trace_log_r = isrun->trace_log;
+		return;
+	}
+
+	if (sieve_trace_config_get(svinst, &isrun->trace_config) >= 0) {
+		if (sieve_trace_log_open(svinst, &isrun->trace_log) < 0)
+			i_zero(&isrun->trace_config);
+	}
+
+	*trace_config_r = isrun->trace_config;
+	*trace_log_r = isrun->trace_log;
+	isrun->trace_log_initialized = TRUE;
 }
 
 int imap_sieve_run_init(struct imap_sieve *isieve,
@@ -412,6 +441,8 @@ void imap_sieve_run_deinit(struct imap_sieve_run **_isrun)
 	}
 	if (isrun->user_ehandler != NULL)
 		sieve_error_handler_unref(&isrun->user_ehandler);
+	if (isrun->trace_log != NULL)
+		sieve_trace_log_free(&isrun->trace_log);
 
 	pool_unref(&isrun->pool);
 }
@@ -718,12 +749,7 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 	context.isieve = isieve;
 
 	/* Initialize trace logging */
-
-	trace_log = NULL;
-	if (sieve_trace_config_get(svinst, &trace_config) >= 0) {
-		if (sieve_trace_log_open(svinst, &trace_log) < 0)
-			i_zero(&trace_config);
-	}
+	imap_sieve_run_init_trace_log(isrun, &trace_config, &trace_log);
 
 	T_BEGIN {
 		/* Collect necessary message data */
@@ -765,9 +791,6 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 						     &scriptenv);
 		}
 	} T_END;
-
-	if (trace_log != NULL)
-		sieve_trace_log_free(&trace_log);
 
 	return ret;
 }
