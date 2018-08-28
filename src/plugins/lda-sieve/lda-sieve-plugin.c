@@ -844,17 +844,41 @@ lda_sieve_free_scripts(struct lda_sieve_run_context *srctx)
 
 static void
 lda_sieve_init_trace_log(struct lda_sieve_run_context *srctx,
+			 const struct smtp_address *mail_from,
 			 struct sieve_trace_config *trace_config_r,
 			 struct sieve_trace_log **trace_log_r)
 {
+	struct mail_deliver_context *mdctx = srctx->mdctx;
 	struct sieve_instance *svinst = srctx->svinst;
+	struct sieve_trace_log *trace_log = NULL;
 
 	if (sieve_trace_config_get(svinst, trace_config_r) < 0 ||
-	    sieve_trace_log_open(svinst, trace_log_r) < 0) {
+	    sieve_trace_log_open(svinst, &trace_log) < 0) {
 		i_zero(trace_config_r);
 		*trace_log_r = NULL;
 		return;
 	}
+
+	/* Write header for trace file */
+	sieve_trace_log_printf(trace_log,
+		"Sieve trace log for message delivery:\n"
+		"\n"
+		"  Username: %s\n", mdctx->rcpt_user->username);
+	if (mdctx->rcpt_user->session_id != NULL) {
+		sieve_trace_log_printf(trace_log,
+			"  Session ID: %s\n",
+			mdctx->rcpt_user->session_id);
+	}
+	sieve_trace_log_printf(trace_log,
+		"  Sender: %s\n"
+		"  Final recipient: %s\n"
+		"  Default mailbox: %s\n\n",
+		smtp_address_encode_path(mail_from),
+		smtp_address_encode_path(mdctx->rcpt_to),
+		(mdctx->rcpt_default_mailbox != NULL ?
+		 mdctx->rcpt_default_mailbox : "INBOX"));
+
+	*trace_log_r = trace_log;
 }
 
 static int
@@ -867,6 +891,7 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
 	struct sieve_trace_config trace_config;
+	const struct smtp_address *mail_from;
 	struct sieve_trace_log *trace_log;
 	const char *error;
 	int ret;
@@ -902,9 +927,13 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 		}
 	}
 
+	/* Determine return address */
+
+	mail_from = mail_deliver_get_return_address(mdctx);
+
 	/* Initialize trace logging */
 
-	lda_sieve_init_trace_log(srctx, &trace_config, &trace_log);
+	lda_sieve_init_trace_log(srctx, mail_from, &trace_config, &trace_log);
 
 	/* Collect necessary message data */
 
@@ -912,7 +941,7 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 
 	msgdata.mail = mdctx->src_mail;
 	msgdata.auth_user = mdctx->rcpt_user->username;
-	msgdata.envelope.mail_from = mail_deliver_get_return_address(mdctx);
+	msgdata.envelope.mail_from = mail_from;
 	msgdata.envelope.mail_params = &mdctx->mail_params;
 	msgdata.envelope.rcpt_to = mdctx->rcpt_to;
 	msgdata.envelope.rcpt_params = &mdctx->rcpt_params;
