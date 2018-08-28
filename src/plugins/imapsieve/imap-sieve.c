@@ -303,6 +303,7 @@ imap_sieve_run_init_trace_log(struct imap_sieve_run *isrun,
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
+	struct mail_user *user = isieve->client->user;
 
 	if (isrun->trace_log_initialized) {
 		*trace_config_r = isrun->trace_config;
@@ -320,6 +321,27 @@ imap_sieve_run_init_trace_log(struct imap_sieve_run *isrun,
 		*trace_log_r = NULL;
 		return;
 	}
+
+	/* Write header for trace file */
+	sieve_trace_log_printf(isrun->trace_log,
+		"Sieve trace log for IMAPSIEVE:\n"
+		"\n"
+		"  Username: %s\n", user->username);
+	if (user->session_id != NULL) {
+		sieve_trace_log_printf(isrun->trace_log,
+			"  Session ID: %s\n", user->session_id);
+	}
+	if (isrun->src_mailbox != NULL) {
+		sieve_trace_log_printf(isrun->trace_log,
+				       "  Source mailbox: %s\n",
+				       mailbox_get_vname(isrun->src_mailbox));
+	}
+
+	sieve_trace_log_printf(isrun->trace_log,
+		"  Destination mailbox: %s\n"
+		"  Cause: %s\n\n",
+		mailbox_get_vname(isrun->dest_mailbox),
+		isrun->cause);
 
 	*trace_config_r = isrun->trace_config;
 	*trace_log_r = isrun->trace_log;
@@ -757,6 +779,18 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 	imap_sieve_run_init_trace_log(isrun, &trace_config, &trace_log);
 
 	T_BEGIN {
+		if (trace_log != NULL) {
+			/* Write trace header for message */
+			sieve_trace_log_printf(trace_log,
+				"Filtering message:\n"
+				"\n"
+				"  UID: %u\n", mail->uid);
+			if (changed_flags != NULL && *changed_flags != '\0') {
+				sieve_trace_log_printf(trace_log,
+					"  Changed flags: %s\n", changed_flags);
+			}
+		}
+
 		/* Collect necessary message data */
 
 		i_zero(&msgdata);
