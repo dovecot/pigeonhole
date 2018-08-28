@@ -1050,6 +1050,19 @@ void sieve_trace_log_write_line(struct sieve_trace_log *trace_log,
 	o_stream_nsendv(trace_log->output, iov, 2);
 }
 
+void sieve_trace_log_printf(struct sieve_trace_log *trace_log,
+			    const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	T_BEGIN {
+		o_stream_nsend_str(trace_log->output,
+				   t_strdup_vprintf(fmt, args));
+	} T_END;
+	va_end(args);
+}
+
 void sieve_trace_log_free(struct sieve_trace_log **_trace_log)
 {
 	struct sieve_trace_log *trace_log = *_trace_log;

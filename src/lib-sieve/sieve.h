@@ -259,6 +259,9 @@ int sieve_trace_log_create_dir(struct sieve_instance *svinst, const char *dir,
 int sieve_trace_log_open(struct sieve_instance *svinst,
 			 struct sieve_trace_log **trace_log_r) ATTR_NULL(2);
 
+void sieve_trace_log_printf(struct sieve_trace_log *trace_log,
+			    const char *fmt, ...) ATTR_FORMAT(2, 3);
+
 void sieve_trace_log_free(struct sieve_trace_log **_trace_log);
 
 int sieve_trace_config_get(struct sieve_instance *svinst,
