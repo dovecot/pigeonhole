@@ -1,7 +1,7 @@
 #ifndef IMAP_FILTER_SIEVE_H
 #define IMAP_FILTER_SIEVE_H
 
-#include "sieve-types.h"
+#include "sieve.h"
 #include "imap-filter.h"
 
 struct imap_filter_sieve_script;
@@ -27,10 +27,13 @@ struct imap_filter_sieve_context {
 	unsigned int scripts_count;
 
 	struct sieve_script_env scriptenv;
+	struct sieve_trace_config trace_config;
+	struct sieve_trace_log *trace_log;
 
 	string_t *errors;
 
 	bool warnings:1;
+	bool trace_log_initialized:1;
 };
 
 /*

@@ -108,6 +108,29 @@ imap_filter_sieve_get_svinst(struct imap_filter_sieve_context *sctx)
 	return ifsuser->svinst;
 }
 
+static void
+imap_filter_sieve_init_trace_log(struct imap_filter_sieve_context *sctx,
+				 struct sieve_trace_config *trace_config_r,
+				 struct sieve_trace_log **trace_log_r)
+{
+	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
+
+	if (sctx->trace_log_initialized) {
+		*trace_config_r = sctx->trace_config;
+		*trace_log_r = sctx->trace_log;
+		return;
+	}
+
+	if (sieve_trace_config_get(svinst, &sctx->trace_config) >= 0) {
+		if (sieve_trace_log_open(svinst, &sctx->trace_log) < 0)
+			i_zero(&sctx->trace_config);
+	}
+
+	*trace_config_r = sctx->trace_config;
+	*trace_log_r = sctx->trace_log;
+	sctx->trace_log_initialized = TRUE;
+}
+
 static int
 imap_filter_sieve_get_personal_storage(struct imap_filter_sieve_context *sctx,
 				       struct sieve_storage **storage_r,
@@ -251,6 +274,9 @@ void imap_filter_sieve_context_free(struct imap_filter_sieve_context **_sctx)
 		if (scripts[i].script != NULL)
 			sieve_script_unref(&scripts[i].script);
 	}
+
+	if (sctx->trace_log != NULL)
+		sieve_trace_log_free(&sctx->trace_log);
 
 	str_free(&sctx->errors);
 }
@@ -891,7 +917,6 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 			       struct mail *mail, string_t **errors_r,
 			       bool *have_warnings_r, bool *have_changes_r)
 {
-	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
 	struct sieve_error_handler *user_ehandler;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env *scriptenv = &sctx->scriptenv;
@@ -909,12 +934,7 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 	user_ehandler = imap_filter_sieve_create_error_handler(sctx);
 
 	/* Initialize trace logging */
-
-	trace_log = NULL;
-	if (sieve_trace_config_get(svinst, &trace_config) >= 0) {
-		if (sieve_trace_log_open(svinst, &trace_log) < 0)
-			i_zero(&trace_config);
-	}
+	imap_filter_sieve_init_trace_log(sctx, &trace_config, &trace_log);
 
 	T_BEGIN {
 		/* Collect necessary message data */
@@ -935,9 +955,6 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 		ret = imap_sieve_filter_run_scripts(sctx, user_ehandler,
 						    &msgdata, scriptenv);
 	} T_END;
-
-	if (trace_log != NULL)
-		sieve_trace_log_free(&trace_log);
 
 	if (ret < 0 || str_len(sctx->errors) == 0) {
 		/* Failed, but no user error was logged: log a generic internal
