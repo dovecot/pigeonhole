@@ -773,6 +773,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 		return 1;
 	}
 
+	i_assert(last_script != NULL); /* at least one script is executed */
 	return imap_sieve_filter_handle_exec_status(sctx,
 		last_script, ret, keep, scriptenv->exec_status);
 }
