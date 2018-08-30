@@ -691,7 +691,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 			if (debug) {
 				sieve_sys_debug(svinst,
 					"Skipping script from `%s'",
-					sieve_get_source(sbin));
+					sieve_script_location(script));
 			}
 			continue;
 		}
