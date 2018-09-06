@@ -274,6 +274,8 @@ int main(int argc, char *argv[])
 	} else {
 		service_flags |= MASTER_SERVICE_FLAG_KEEP_CONFIG_OPEN;
 	}
+	if ( getenv("DUMP_CAPABILITY") != NULL )
+		service_flags |= MASTER_SERVICE_FLAG_DONT_SEND_STATS;
 
 	master_service = master_service_init("managesieve", service_flags,
 					     &argc, &argv, "t:u:");
