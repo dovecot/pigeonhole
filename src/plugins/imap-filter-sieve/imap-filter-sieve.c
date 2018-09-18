@@ -801,6 +801,32 @@ parse_address(const char *address, const struct smtp_address **addr_r)
 	return 1;
 }
 
+int imap_sieve_filter_run_init(struct imap_filter_sieve_context *sctx)
+{
+	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
+	struct sieve_script_env *scriptenv = &sctx->scriptenv;
+	struct mail_user *user = sctx->user;
+	const char *error;
+
+	if (sieve_script_env_init(scriptenv, user, &error) < 0) {
+		e_error(sieve_get_event(svinst),
+			"Failed to initialize script execution: %s",
+			error);
+		return -1;
+	}
+
+	scriptenv->smtp_start = imap_filter_sieve_smtp_start;
+	scriptenv->smtp_add_rcpt = imap_filter_sieve_smtp_add_rcpt;
+	scriptenv->smtp_send = imap_filter_sieve_smtp_send;
+	scriptenv->smtp_abort = imap_filter_sieve_smtp_abort;
+	scriptenv->smtp_finish = imap_filter_sieve_smtp_finish;
+	scriptenv->duplicate_mark = imap_filter_sieve_duplicate_mark;
+	scriptenv->duplicate_check = imap_filter_sieve_duplicate_check;
+	scriptenv->duplicate_flush = imap_filter_sieve_duplicate_flush;
+	scriptenv->script_context = sctx;
+	return 0;
+}
+
 static void
 imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 			      struct mail *mail,
@@ -868,11 +894,10 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 	struct mail_user *user = sctx->user;
 	struct sieve_error_handler *user_ehandler;
 	struct sieve_message_data msgdata;
-	struct sieve_script_env scriptenv;
+	struct sieve_script_env *scriptenv = &sctx->scriptenv;
 	struct sieve_exec_status estatus;
 	struct sieve_trace_config trace_config;
 	struct sieve_trace_log *trace_log;
-	const char *error;
 	int ret;
 
 	*errors_r = NULL;
@@ -899,39 +924,19 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 
 		imap_sieve_filter_get_msgdata(sctx, mail, &msgdata);
 
-		/* Compose script execution environment */
+		/* Complete script execution environment */
 
-		if (sieve_script_env_init(&scriptenv, user, &error) < 0) {
-			e_error(sieve_get_event(svinst),
-				"Failed to initialize script execution: %s",
-				error);
-			ret = -1;
-		} else {
-			scriptenv.default_mailbox =
-				mailbox_get_vname(mail->box);
-			scriptenv.smtp_start = imap_filter_sieve_smtp_start;
-			scriptenv.smtp_add_rcpt =
-				imap_filter_sieve_smtp_add_rcpt;
-			scriptenv.smtp_send = imap_filter_sieve_smtp_send;
-			scriptenv.smtp_abort = imap_filter_sieve_smtp_abort;
-			scriptenv.smtp_finish = imap_filter_sieve_smtp_finish;
-			scriptenv.duplicate_mark =
-				imap_filter_sieve_duplicate_mark;
-			scriptenv.duplicate_check =
-				imap_filter_sieve_duplicate_check;
-			scriptenv.duplicate_flush =
-				imap_filter_sieve_duplicate_flush;
-			scriptenv.trace_log = trace_log;
-			scriptenv.trace_config = trace_config;
-			scriptenv.script_context = sctx;
+		scriptenv->default_mailbox = mailbox_get_vname(mail->box);
+		scriptenv->trace_log = trace_log;
+		scriptenv->trace_config = trace_config;
+		scriptenv->script_context = sctx;
 
-			scriptenv.exec_status = &estatus;
+		scriptenv->exec_status = &estatus;
 
-			/* Execute script(s) */
+		/* Execute script(s) */
 
-			ret = imap_sieve_filter_run_scripts(
-				sctx, user_ehandler, &msgdata, &scriptenv);
-		}
+		ret = imap_sieve_filter_run_scripts(sctx, user_ehandler,
+						    &msgdata, scriptenv);
 	} T_END;
 
 	if (trace_log != NULL)

@@ -1,6 +1,7 @@
 #ifndef IMAP_FILTER_SIEVE_H
 #define IMAP_FILTER_SIEVE_H
 
+#include "sieve-types.h"
 #include "imap-filter.h"
 
 struct imap_filter_sieve_script;
@@ -23,6 +24,8 @@ struct imap_filter_sieve_context {
 	struct sieve_script *user_script;
 	struct imap_filter_sieve_script *scripts;
 	unsigned int scripts_count;
+
+	struct sieve_script_env scriptenv;
 
 	string_t *errors;
 
@@ -70,6 +73,7 @@ int imap_filter_sieve_open_global(struct imap_filter_sieve_context *sctx,
  * Run
  */
 
+int imap_sieve_filter_run_init(struct imap_filter_sieve_context *sctx);
 int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 			       struct mail *mail, string_t **errors_r,
 			       bool *have_warnings_r, bool *have_changes_r);

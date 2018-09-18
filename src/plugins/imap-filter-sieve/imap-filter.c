@@ -3,6 +3,7 @@
 #include "imap-common.h"
 #include "str.h"
 #include "ostream.h"
+#include "time-util.h"
 #include "imap-resp-code.h"
 #include "imap-search-args.h"
 
@@ -151,6 +152,20 @@ imap_filter_start(struct imap_filter_context *ctx,
 					       imap_client_command_get_reason(cmd));
 	ctx->sargs = sargs;
 	ctx->search_ctx = mailbox_search_init(ctx->trans, sargs, NULL, 0, NULL);
+
+	if (imap_sieve_filter_run_init(ctx->sieve) < 0) {
+		const char *error = t_strflocaltime(
+			MAIL_ERRSTR_CRITICAL_MSG_STAMP, ioloop_time);
+
+		o_stream_nsend_str(cmd->client->output,
+			t_strdup_printf("* FILTER (TAG %s) "
+				"ERRORS {%"PRIuSIZE_T"}\r\n%s\r\n",
+				cmd->tag, strlen(error), error));
+		client_send_tagline(cmd,
+			"NO Failed to initialize script execution");
+		(void)imap_filter_deinit(ctx);
+		return TRUE;
+	}
 
 	cmd->func = imap_filter_more;
 	cmd->context = ctx;
