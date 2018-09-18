@@ -937,6 +937,12 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 	if (trace_log != NULL)
 		sieve_trace_log_free(&trace_log);
 
+	if (ret < 0 || str_len(sctx->errors) == 0) {
+		/* Failed, but no user error was logged: log a generic internal
+		   error instead. */
+		sieve_internal_error(user_ehandler, NULL, NULL);
+	}
+
 	*have_warnings_r = (sieve_get_warnings(user_ehandler) > 0);
 	*have_changes_r = estatus.significant_action_executed;
 	*errors_r = sctx->errors;
