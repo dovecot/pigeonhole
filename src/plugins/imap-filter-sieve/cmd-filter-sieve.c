@@ -29,8 +29,8 @@ cmd_filter_sieve_compile_script(struct imap_filter_context *ctx)
 	o_stream_nsend_str(client->output,
 		t_strdup_printf("* FILTER (TAG %s) "
 				"%s {%"PRIuSIZE_T"}\r\n",
-				(ret < 0 ? "ERRORS" : "WARNINGS"),
-				cmd->tag, str_len(errors)));
+				cmd->tag, (ret < 0 ? "ERRORS" : "WARNINGS"),
+				str_len(errors)));
 	o_stream_nsend(client->output,
 		       str_data(errors), str_len(errors));
 	o_stream_nsend_str(client->output, "\r\n");
