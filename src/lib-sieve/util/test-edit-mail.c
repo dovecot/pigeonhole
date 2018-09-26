@@ -751,11 +751,14 @@ int main(int argc, char *argv[])
 		test_edit_mail_big_header,
 		NULL
 	};
+	const enum master_service_flags service_flags =
+		MASTER_SERVICE_FLAG_STANDALONE |
+		MASTER_SERVICE_FLAG_DONT_SEND_STATS |
+		MASTER_SERVICE_FLAG_NO_CONFIG_SETTINGS;
 	const char *cwd, *error;
 
-	master_service = master_service_init("test-edit-header",
-		MASTER_SERVICE_FLAG_STANDALONE |
-		MASTER_SERVICE_FLAG_NO_CONFIG_SETTINGS,	&argc, &argv, "");
+	master_service = master_service_init("test-edit-header", service_flags,
+					     &argc, &argv, "");
 	master_service_init_finish(master_service);
 
 	if (t_get_working_dir(&cwd, &error) < 0)
