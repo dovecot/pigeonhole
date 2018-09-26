@@ -139,6 +139,7 @@ struct sieve_tool *sieve_tool_init
 	struct sieve_tool *tool;
 	enum master_service_flags service_flags =
 		MASTER_SERVICE_FLAG_STANDALONE |
+		MASTER_SERVICE_FLAG_DONT_SEND_STATS |
 		MASTER_SERVICE_FLAG_NO_INIT_DATASTACK_FRAME;
 
 	if ( no_config )
