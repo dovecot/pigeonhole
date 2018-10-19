@@ -340,7 +340,7 @@ static int act_redirect_send
 
 	/* Remove unwanted headers */
 	input = i_stream_create_header_filter
-		(input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR, hide_headers,
+		(input, HEADER_FILTER_EXCLUDE, hide_headers,
 			N_ELEMENTS(hide_headers), *null_header_filter_callback, (void *)NULL);
 
 	T_BEGIN {
@@ -349,7 +349,7 @@ static int act_redirect_send
 
 		/* Prepend sieve headers (should not affect signatures) */
 		rfc2822_header_append(hdr,
-			"X-Sieve", SIEVE_IMPLEMENTATION, FALSE, NULL);
+			"X-Sieve", SIEVE_IMPLEMENTATION, TRUE, NULL);
 		if ( svinst->user_email == NULL &&
 			(aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
 			user_email = sieve_message_get_final_recipient(msgctx);
@@ -357,7 +357,7 @@ static int act_redirect_send
 			user_email = sieve_get_user_email(aenv->svinst);
 		if ( user_email != NULL ) {
 			rfc2822_header_append(hdr, "X-Sieve-Redirected-From",
-				smtp_address_encode(user_email), FALSE, NULL);
+				smtp_address_encode(user_email), TRUE, NULL);
 		}
 
 		/* Add new Message-ID if message doesn't have one */
