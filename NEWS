@@ -1,3 +1,31 @@
+v0.5.4 2018-11-23  Stephan Bosch <stephan@rename-it.nl>
+
+	* Adjustments to several changes in Dovecot v2.3.4 make this Pigeonhole
+	  release dependent on that Dovecot release; it will not compile against
+	  older Dovecot versions. And, conversely, you need to upgrade
+	  Pigeonhole when upgrading Dovecot to v2.3.4.
+	* The changes regarding the default postmaster_address in Dovecot v2.3.4
+	  mainly apply to Pigeonhole. The new default should work for all
+	  existing installations, thereby fixing several reported v2.3/v0.5
+	  migration problems.
+	- IMAP FILTER=SIEVE capability: Fix assert crash occurring when running
+	  UID FILTER on a Sieve script with errors.
+
+v0.5.3 2018-10-01  Stephan Bosch <stephan@rename-it.nl>
+
+	- Fix assertion panic occurring when managesieve service fails to open
+	  INBOX while saving a Sieve script. This was caused by a lack of
+	  cleanup after failure.
+	- Fix specific messages causing an assert panic with actions that
+	  compose a reply (e.g. vacation). With some rather weird input from the
+	  original message, the header folding algorithm (as used for composing
+	  the References header for the reply) got confused, causing the panic.
+	- IMAP FILTER=SIEVE capability: Fix FILTER SIEVE SCRIPT command parsing.
+	  After finishing reading the Sieve script, the command parsing
+	  sometimes didn't continue with the search arguments. This is a time-
+	  critical bug that likely only occurs when the Sieve script is sent in
+	  the next TCP frame.
+
 v0.5.2 2018-06-29  Stephan Bosch <stephan@rename-it.nl>
 
 	+ Implement plugin for the a vendor-defined IMAP capability called
