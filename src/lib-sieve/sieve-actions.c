@@ -460,16 +460,18 @@ static int act_store_start
 
 static struct mail_keywords *act_store_keywords_create
 (const struct sieve_action_exec_env *aenv, ARRAY_TYPE(const_string) *keywords,
-	struct mailbox *box)
+ struct mailbox *box, bool create_empty)
 {
 	struct mail_keywords *box_keywords = NULL;
-
-	if ( array_is_created(keywords) && array_count(keywords) > 0 )
+	bool has_keywords = array_is_created(keywords) && array_count(keywords) > 0;
+	if ( has_keywords || create_empty )
 	{
-		const char *const *kwds;
+		const char *const *kwds = NULL;
 
-		(void)array_append_space(keywords);
-		kwds = array_idx(keywords, 0);
+		if (has_keywords) {
+			(void)array_append_space(keywords);
+			kwds = array_idx(keywords, 0);
+		}
 
 		if ( mailbox_keywords_create(box, kwds, &box_keywords) < 0) {
 			sieve_result_error(aenv, "invalid keywords set for stored message");
@@ -533,7 +535,7 @@ static int act_store_execute
 
 		if ( trans->flags_altered && !mailbox_is_readonly(mail->box) ) {
 			keywords = act_store_keywords_create
-				(aenv, &trans->keywords, mail->box);
+				(aenv, &trans->keywords, mail->box, TRUE);
 
 			if ( keywords != NULL ) {
 				mail_update_keywords(mail, MODIFY_REPLACE, keywords);
@@ -577,7 +579,7 @@ static int act_store_execute
 
 	/* Apply keywords and flags that side-effects may have added */
 	if ( trans->flags_altered ) {
-		keywords = act_store_keywords_create(aenv, &trans->keywords, trans->box);
+		keywords = act_store_keywords_create(aenv, &trans->keywords, trans->box, FALSE);
 
 		mailbox_save_set_flags(save_ctx, trans->flags, keywords);
 	} else {
