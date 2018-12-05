@@ -76,6 +76,7 @@ struct imap_sieve_user {
 
 	bool sieve_active:1;
 	bool user_script:1;
+	bool expunge_discarded:1;
 };
 
 struct imap_sieve_mailbox_event {
@@ -761,9 +762,15 @@ imap_sieve_mailbox_transaction_run(
 		if (ret < 0) {
 			/* Sieve error; keep */
 		} else {
-			if (ret > 0 && can_discard) {
-				/* Discard */
-				mail_update_flags(mail, MODIFY_ADD, MAIL_DELETED);
+			if (ret <= 0 || !can_discard) {
+				/* Keep */
+			} else if (!isuser->expunge_discarded) {
+				/* Mark as \Deleted */
+				mail_update_flags(mail,
+						  MODIFY_ADD, MAIL_DELETED);
+			} else {
+				/* Expunge */
+				mail_expunge(mail);
 			}
 
 			imap_sieve_mailbox_run_copy_source
@@ -1227,10 +1234,16 @@ static void imap_sieve_command_post(struct client_command_context *cmd)
 void imap_sieve_storage_client_created(struct client *client,
 	bool user_script)
 {
-	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(client->user);
+	struct mail_user *user = client->user;
+	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
+	const char *set;
 
 	isuser->client = client;
 	isuser->user_script = user_script;
+
+	set = mail_user_plugin_getenv(user, "imapsieve_expunge_discarded");
+	isuser->expunge_discarded =
+		(set != NULL && strcasecmp(set, "yes") == 0);
 }
 
 /*
