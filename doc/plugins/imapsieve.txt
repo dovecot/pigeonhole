@@ -122,6 +122,13 @@ imapsieve_mailboxXXX_copy_source_after =
   moved messages, since the message is removed from the source mailbox in that
   case.
 
+imapsieve_expunge_discarded=no
+  When enabled, discarded messages (for which no keep action is in effect) will
+  be expunged immediately when the Sieve script execution is succcessful.
+  Normally, such messages are only marked with the "\Deleted" flag and will be
+  expunged only when the client explicitly issues an IMAP EXPUNGE command on the
+  mailbox at a later time.
+
 Example
 -------
 
