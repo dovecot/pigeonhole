@@ -432,17 +432,17 @@ act_redirect_commit(const struct sieve_action *action,
 	/* Read identifying headers */
 	if (mail_get_first_header(msgdata->mail, "resent-message-id",
 				  &resent_id) < 0) {
-		return sieve_result_mail_error(aenv, mail,
+		return sieve_result_mail_error(aenv, msgdata->mail,
 			"failed to read header field `resent-message-id'");
 	}
 	if (resent_id == NULL &&
 	    mail_get_first_header(msgdata->mail, "resent-from",
 				  &resent_id) < 0) {
-		return sieve_result_mail_error(aenv, mail,
+		return sieve_result_mail_error(aenv, msgdata->mail,
 			"failed to read header field `resent-from'");
 	}
 	if (mail_get_first_header(msgdata->mail, "list-id", &list_id) < 0) {
-		return sieve_result_mail_error(aenv, mail,
+		return sieve_result_mail_error(aenv, msgdata->mail,
 			"failed to read header field `list-id'");
 	}
 
