@@ -417,26 +417,25 @@ act_redirect_get_duplicate_id(struct act_redirect_context *ctx,
 {
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
+	struct mail *mail = msgdata->mail;
 	const struct smtp_address *recipient;
 	const char *resent_id = NULL, *list_id = NULL;
 
 	/* Read identifying headers */
-	if (mail_get_first_header(msgdata->mail, "resent-message-id",
-				  &resent_id) < 0) {
+	if (mail_get_first_header(mail, "resent-message-id", &resent_id) < 0) {
 		return sieve_result_mail_error(
-			aenv, msgdata->mail, "redirect action: "
+			aenv, mail, "redirect action: "
 			"failed to read header field `resent-message-id'");
 	}
 	if (resent_id == NULL &&
-	    mail_get_first_header(msgdata->mail, "resent-from",
-				  &resent_id) < 0) {
+	    mail_get_first_header(mail, "resent-from", &resent_id) < 0) {
 		return sieve_result_mail_error(
-			aenv, msgdata->mail, "redirect action: "
+			aenv, mail, "redirect action: "
 			"failed to read header field `resent-from'");
 	}
-	if (mail_get_first_header(msgdata->mail, "list-id", &list_id) < 0) {
+	if (mail_get_first_header(mail, "list-id", &list_id) < 0) {
 		return sieve_result_mail_error(
-			aenv, msgdata->mail, "redirect action: "
+			aenv, mail, "redirect action: "
 			"failed to read header field `list-id'");
 	}
 
