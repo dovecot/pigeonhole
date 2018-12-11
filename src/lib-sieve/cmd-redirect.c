@@ -411,27 +411,14 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 }
 
 static int
-act_redirect_commit(const struct sieve_action *action,
-		    const struct sieve_action_exec_env *aenv,
-		    void *tr_context ATTR_UNUSED, bool *keep)
+act_redirect_get_duplicate_id(struct act_redirect_context *ctx,
+			      const struct sieve_action_exec_env *aenv,
+			      const char *msg_id, const char **dupeid_r)
 {
-	struct sieve_instance *svinst = aenv->svinst;
-	struct act_redirect_context *ctx =
-		(struct act_redirect_context *) action->context;
 	struct sieve_message_context *msgctx = aenv->msgctx;
-	struct mail *mail = (action->mail != NULL ?
-			     action->mail : sieve_message_get_mail(msgctx));
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct smtp_address *recipient;
-	const char *msg_id = msgdata->id, *new_msg_id = NULL;
-	const char *dupeid, *resent_id = NULL;
-	const char *list_id = NULL;
-	int ret;
-
-	/*
-	 * Prevent mail loops
-	 */
+	const char *resent_id = NULL, *list_id = NULL;
 
 	/* Read identifying headers */
 	if (mail_get_first_header(msgdata->mail, "resent-message-id",
@@ -453,10 +440,6 @@ act_redirect_commit(const struct sieve_action *action,
 			"failed to read header field `list-id'");
 	}
 
-	/* Create Message-ID for the message if it has none */
-	if (msg_id == NULL)
-		msg_id = new_msg_id = sieve_message_get_new_id(aenv->svinst);
-
 	if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
 		recipient = sieve_message_get_orig_recipient(msgctx);
 	else
@@ -470,11 +453,43 @@ act_redirect_commit(const struct sieve_action *action,
 		   the original message
 	   - if the message came through a mailing list: the mailinglist ID
 	 */
-	dupeid = t_strdup_printf("%s-%s-%s-%s-%s", msg_id,
+	*dupeid_r = t_strdup_printf("%s-%s-%s-%s-%s", msg_id,
 		(recipient != NULL ? smtp_address_encode(recipient) : ""),
 		smtp_address_encode(ctx->to_address),
 		(resent_id != NULL ? resent_id : ""),
 		(list_id != NULL ? list_id : ""));
+	return SIEVE_EXEC_OK;
+}
+
+static int
+act_redirect_commit(const struct sieve_action *action,
+		    const struct sieve_action_exec_env *aenv,
+		    void *tr_context ATTR_UNUSED, bool *keep)
+{
+	struct sieve_instance *svinst = aenv->svinst;
+	struct act_redirect_context *ctx =
+		(struct act_redirect_context *) action->context;
+	struct sieve_message_context *msgctx = aenv->msgctx;
+	struct mail *mail = (action->mail != NULL ?
+			     action->mail : sieve_message_get_mail(msgctx));
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_script_env *senv = aenv->scriptenv;
+	const char *msg_id = msgdata->id, *new_msg_id = NULL;
+	const char *dupeid = NULL;
+	int ret;
+
+	/*
+	 * Prevent mail loops
+	 */
+
+	/* Create Message-ID for the message if it has none */
+	if (msg_id == NULL)
+		msg_id = new_msg_id = sieve_message_get_new_id(aenv->svinst);
+
+	/* Create ID for duplicate database lookup */
+	ret = act_redirect_get_duplicate_id(ctx, aenv, msg_id, &dupeid);
+	if (ret != SIEVE_EXEC_OK)
+		return ret;
 
 	/* Check whether we've seen this message before */
 	if (sieve_action_duplicate_check(senv, dupeid, strlen(dupeid))) {
