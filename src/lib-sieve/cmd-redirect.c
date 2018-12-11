@@ -275,9 +275,9 @@ static void act_redirect_print
 	*keep = FALSE;
 }
 
-static int act_redirect_send
-(const struct sieve_action_exec_env *aenv, struct mail *mail,
-	struct act_redirect_context *ctx, const char *new_msg_id)
+static int
+act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
+		  struct act_redirect_context *ctx, const char *new_msg_id)
 	ATTR_NULL(4)
 {
 	static const char *hide_headers[] =
@@ -294,7 +294,7 @@ static int act_redirect_send
 	int ret;
 
 	/* Just to be sure */
-	if ( !sieve_smtp_available(senv) ) {
+	if (!sieve_smtp_available(senv)) {
 		sieve_result_global_warning
 			(aenv, "redirect action has no means to send mail.");
 		return SIEVE_EXEC_FAILURE;
@@ -309,28 +309,30 @@ static int act_redirect_send
 
 	   From RFC 5228, Section 4.2:
 
-		 The envelope sender address on the outgoing message is chosen by the
-		 sieve implementation.  It MAY be copied from the message being
-		 processed.  However, if the message being processed has an empty
-		 envelope sender address the outgoing message MUST also have an empty
-		 envelope sender address.  This last requirement is imposed to prevent
-		 loops in the case where a message is redirected to an invalid address
-		 when then returns a delivery status notification that also ends up
-		 being redirected to the same invalid address.
+	   The envelope sender address on the outgoing message is chosen by the
+	   sieve implementation. It MAY be copied from the message being
+	   processed. However, if the message being processed has an empty
+	   envelope sender address the outgoing message MUST also have an empty
+	   envelope sender address. This last requirement is imposed to prevent
+	   loops in the case where a message is redirected to an invalid address
+	   when then returns a delivery status notification that also ends up
+	   being redirected to the same invalid address.
 	 */
-	if ( (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 ) {
+	if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
 		/* Envelope available */
 		sender = sieve_message_get_sender(msgctx);
-		if ( sender != NULL &&
-			sieve_address_source_get_address(&env_from, svinst,
-				senv, msgctx, aenv->flags, &sender) < 0 )
+		if (sender != NULL &&
+		    sieve_address_source_get_address(
+			&env_from, svinst, senv, msgctx, aenv->flags,
+			&sender) < 0)
 			sender = NULL;
 	} else {
 		/* No envelope available */
-		if ( (ret=sieve_address_source_get_address(&env_from, svinst,
-			senv, msgctx, aenv->flags, &sender)) < 0 ) {
+		ret = sieve_address_source_get_address(
+			&env_from, svinst, senv, msgctx, aenv->flags, &sender);
+		if (ret < 0) {
 			sender = NULL;
-		} else if ( ret == 0 ) {
+		} else if (ret == 0) {
 			sender = svinst->user_email;
 		}
 	}
@@ -339,29 +341,31 @@ static int act_redirect_send
 	sctx = sieve_smtp_start_single(senv, ctx->to_address, sender, &output);
 
 	/* Remove unwanted headers */
-	input = i_stream_create_header_filter
-		(input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR, hide_headers,
-			N_ELEMENTS(hide_headers), *null_header_filter_callback, (void *)NULL);
+	input = i_stream_create_header_filter(
+		input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR,
+		hide_headers, N_ELEMENTS(hide_headers),
+		*null_header_filter_callback, (void *)NULL);
 
 	T_BEGIN {
 		string_t *hdr = t_str_new(256);
 		const struct smtp_address *user_email;
 
 		/* Prepend sieve headers (should not affect signatures) */
-		rfc2822_header_append(hdr,
-			"X-Sieve", SIEVE_IMPLEMENTATION, FALSE, NULL);
-		if ( svinst->user_email == NULL &&
-			(aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 )
+		rfc2822_header_append(hdr, "X-Sieve", SIEVE_IMPLEMENTATION,
+				      FALSE, NULL);
+		if (svinst->user_email == NULL &&
+		    (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
 			user_email = sieve_message_get_final_recipient(msgctx);
 		else
 			user_email = sieve_get_user_email(aenv->svinst);
-		if ( user_email != NULL ) {
+		if (user_email != NULL) {
 			rfc2822_header_append(hdr, "X-Sieve-Redirected-From",
-				smtp_address_encode(user_email), FALSE, NULL);
+					      smtp_address_encode(user_email),
+					      FALSE, NULL);
 		}
 
 		/* Add new Message-ID if message doesn't have one */
-		if ( new_msg_id != NULL )
+		if (new_msg_id != NULL)
 			rfc2822_header_write(hdr, "Message-ID", new_msg_id);
 
 		o_stream_nsend(output, str_data(hdr), str_len(hdr));
@@ -378,11 +382,11 @@ static int act_redirect_send
 		i_stream_unref(&input);
 		return SIEVE_EXEC_TEMP_FAILURE;
 	}
-  i_stream_unref(&input);
+	i_stream_unref(&input);
 
 	/* Close SMTP transport */
-	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
-		if ( ret < 0 ) {
+	if ((ret = sieve_smtp_finish(sctx, &error)) <= 0) {
+		if (ret < 0) {
 			sieve_result_global_error(aenv,
 				"failed to redirect message to <%s>: %s "
 				"(temporary failure)",
