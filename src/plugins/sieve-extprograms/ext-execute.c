@@ -33,12 +33,12 @@ static void ext_execute_unload(const struct sieve_extension *ext);
 static bool ext_execute_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-const struct sieve_extension_def vnd_execute_extension = { 
+const struct sieve_extension_def sieve_ext_vnd_execute = {
 	.name = "vnd.dovecot.execute",
 	.load = ext_execute_load,
 	.unload = ext_execute_unload,
 	.validator_load = ext_execute_validator_load,
-	SIEVE_EXT_DEFINE_OPERATION(cmd_execute_operation)
+	SIEVE_EXT_DEFINE_OPERATION(sieve_opr_execute)
 };
 
 /*
@@ -74,7 +74,7 @@ static bool ext_execute_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register commands */
-	sieve_validator_register_command(valdtr, ext, &cmd_execute);
+	sieve_validator_register_command(valdtr, ext, &sieve_cmd_execute);
 
 	return TRUE;
 }

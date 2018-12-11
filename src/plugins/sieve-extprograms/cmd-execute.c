@@ -43,7 +43,7 @@ static bool cmd_execute_generate
 	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command *ctx);
 
-const struct sieve_command_def cmd_execute = {
+const struct sieve_command_def sieve_cmd_execute = {
 	.identifier = "execute",
 	.type = SCT_HYBRID,
 	.positional_args = -1, /* We check positional arguments ourselves */
@@ -97,9 +97,9 @@ static bool cmd_execute_operation_dump
 static int cmd_execute_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def cmd_execute_operation = { 
+const struct sieve_operation_def sieve_opr_execute = {
 	.mnemonic = "EXECUTE",
-	.ext_def = &vnd_execute_extension, 
+	.ext_def = &sieve_ext_vnd_execute,
 	.dump = cmd_execute_operation_dump, 
 	.execute = cmd_execute_operation_execute
 };
@@ -219,7 +219,7 @@ static bool cmd_execute_generate_input_tag
 static bool cmd_execute_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	sieve_operation_emit(cgenv->sblock, cmd->ext, &cmd_execute_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &sieve_opr_execute);
 
 	/* Emit is_test flag */
 	sieve_binary_emit_byte(cgenv->sblock,
