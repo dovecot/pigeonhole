@@ -156,6 +156,8 @@ bool ext_editheader_header_allow_add
 
 	if ( strcasecmp(hname, "subject") == 0 )
 		return TRUE;
+	if ( strcasecmp(hname, "x-sieve-redirected-from") == 0 )
+		return FALSE;
 
 	if ( (header=ext_editheader_config_header_find
 		(ext_config, hname)) == NULL )
@@ -173,6 +175,8 @@ bool ext_editheader_header_allow_delete
 
 	if ( strcasecmp(hname, "received") == 0
 		|| strcasecmp(hname, "auto-submitted") == 0 )
+		return FALSE;
+	if ( strcasecmp(hname, "x-sieve-redirected-from") == 0 )
 		return FALSE;
 
 	if ( strcasecmp(hname, "subject") == 0 )
