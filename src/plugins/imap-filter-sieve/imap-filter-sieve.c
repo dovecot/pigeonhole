@@ -607,8 +607,7 @@ imap_sieve_filter_handle_exec_status(struct imap_filter_sieve_context *sctx,
 
 	error_func = user_error_func = sieve_sys_error;
 
-	if (estatus != NULL && estatus->last_storage != NULL &&
-	    estatus->store_failed) {
+	if (estatus->last_storage != NULL && estatus->store_failed) {
 		(void)mail_storage_get_last_error(estatus->last_storage,
 						  &mail_error);
 
