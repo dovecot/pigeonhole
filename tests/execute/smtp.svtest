@@ -346,3 +346,104 @@ test "Redirect from [user email]" {
 	}
 }
 
+/*
+ * Redirect mail loop (sieve_user_email)
+ */
+
+test_result_reset;
+test_set "message" text:
+X-Sieve-Redirected-From: t.sirainen@example.net
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
+test_set "envelope.orig_to" "tss@example.net";
+
+test_config_set "sieve_redirect_envelope_from" "user_email";
+test_config_set "sieve_user_email" "t.sirainen@example.net";
+test_config_reload;
+
+test "Redirect mail loop (sieve_user_email)" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	if test_message :smtp 0 {
+		test_fail "failed to recognize mail loop";
+	}
+}
+
+/*
+ * Redirect mail loop (final recipient)
+ */
+
+test_result_reset;
+test_set "message" text:
+X-Sieve-Redirected-From: timo@example.net
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+
+Frop!
+.
+;
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
+test_set "envelope.orig_to" "tss@example.net";
+
+test_config_reload;
+
+test "Redirect mail loop (final recipient)" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	if test_message :smtp 0 {
+		test_fail "failed to recognize mail loop";
+	}
+}
+
+/*
+ * Redirect mail loop (multiple headers)
+ */
+
+test_result_reset;
+test_set "message" text:
+X-Sieve-Redirected-From: stephan@example.net
+From: stephan@example.org
+To: tss@example.net
+Subject: Frop!
+X-Sieve-Redirected-From: t.sirainen@example.net
+X-Sieve-Redirected-From: t.sirainen@example.com
+
+Frop!
+.
+;
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
+test_set "envelope.orig_to" "tss@example.net";
+
+test_config_set "sieve_redirect_envelope_from" "user_email";
+test_config_set "sieve_user_email" "t.sirainen@example.net";
+test_config_reload;
+
+test "Redirect mail loop (sieve_user_email)" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	if test_message :smtp 0 {
+		test_fail "failed to recognize mail loop";
+	}
+}
