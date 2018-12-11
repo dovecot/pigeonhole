@@ -281,7 +281,7 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 	ATTR_NULL(4)
 {
 	static const char *hide_headers[] =
-		{ "Return-Path", "X-Sieve", "X-Sieve-Redirected-From" };
+		{ "Return-Path" };
 	struct sieve_instance *svinst = aenv->svinst;
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = aenv->scriptenv;
@@ -461,6 +461,55 @@ act_redirect_get_duplicate_id(struct act_redirect_context *ctx,
 }
 
 static int
+act_redirect_check_loop_header(const struct sieve_action_exec_env *aenv,
+			       struct mail *mail, bool *loop_detected_r)
+{
+	struct sieve_message_context *msgctx = aenv->msgctx;
+	const char *const *headers;
+	const char *recipient, *user_email;
+	const struct smtp_address *addr;
+	int ret;
+
+	*loop_detected_r = FALSE;
+
+	ret = mail_get_headers(mail, "x-sieve-redirected-from", &headers);
+	if (ret < 0 ) {
+		return sieve_result_mail_error(
+			aenv, mail, "redirect action: "
+			"failed to read header field "
+			"`x-sieve-redirected-from'");
+	}
+
+	if (ret == 0)
+		return SIEVE_EXEC_OK;
+
+	recipient = user_email = NULL;
+	if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
+		addr = sieve_message_get_final_recipient(msgctx);
+		if (addr != NULL)
+			recipient = smtp_address_encode(addr);
+	}
+	addr = sieve_get_user_email(aenv->svinst);
+	if (addr != NULL)
+		user_email = smtp_address_encode(addr);
+
+	while (*headers != NULL) {
+		const char *header = t_str_trim(*headers, " \t\r\n");
+		if (strcmp(header, recipient) == 0) {
+			*loop_detected_r = TRUE;
+			break;
+		}
+		if (strcmp(header, user_email) == 0) {
+			*loop_detected_r = TRUE;
+			break;
+		}
+		headers++;
+	}
+
+	return SIEVE_EXEC_OK;
+}
+
+static int
 act_redirect_commit(const struct sieve_action *action,
 		    const struct sieve_action_exec_env *aenv,
 		    void *tr_context ATTR_UNUSED, bool *keep)
@@ -475,6 +524,7 @@ act_redirect_commit(const struct sieve_action *action,
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *msg_id = msgdata->id, *new_msg_id = NULL;
 	const char *dupeid = NULL;
+	bool loop_detected = FALSE;
 	int ret;
 
 	/*
@@ -497,6 +547,20 @@ act_redirect_commit(const struct sieve_action *action,
 			"discarded duplicate forward to <%s>",
 			smtp_address_encode(ctx->to_address));
 		*keep = FALSE;
+		return SIEVE_EXEC_OK;
+	}
+
+	/* Check whether we've seen this message before based on added headers
+	 */
+	ret = act_redirect_check_loop_header(aenv, mail, &loop_detected);
+	if (ret != SIEVE_EXEC_OK)
+		return ret;
+	if (loop_detected) {
+		sieve_result_global_log(
+			aenv, "redirect action: "
+			"not forwarding message to <%s>: "
+			"the `x-sieve-redirected-from' header indicates a mail loop",
+			smtp_address_encode(ctx->to_address));
 		return SIEVE_EXEC_OK;
 	}
 
