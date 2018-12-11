@@ -295,14 +295,15 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 
 	/* Just to be sure */
 	if (!sieve_smtp_available(senv)) {
-		sieve_result_global_warning
-			(aenv, "redirect action has no means to send mail.");
+		sieve_result_global_warning(
+			aenv, "redirect action: no means to send mail");
 		return SIEVE_EXEC_FAILURE;
 	}
 
 	if (mail_get_stream(mail, NULL, NULL, &input) < 0) {
-		return sieve_result_mail_error(aenv, mail,
-			"redirect action: failed to read input message");
+		return sieve_result_mail_error(
+			aenv, mail, "redirect action: "
+			"failed to read input message");
 	}
 
 	/* Determine which sender to use
@@ -374,8 +375,9 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 	o_stream_nsend_istream(output, input);
 
 	if (input->stream_errno != 0) {
-		sieve_result_critical(aenv,
-			"redirect action: failed to read input message",
+		sieve_result_critical(
+			aenv, "redirect action: "
+			"failed to read input message",
 			"redirect action: read(%s) failed: %s",
 			i_stream_get_name(input),
 			i_stream_get_error(input));
@@ -387,7 +389,8 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 	/* Close SMTP transport */
 	if ((ret = sieve_smtp_finish(sctx, &error)) <= 0) {
 		if (ret < 0) {
-			sieve_result_global_error(aenv,
+			sieve_result_global_error(
+				aenv, "redirect action: "
 				"failed to redirect message to <%s>: %s "
 				"(temporary failure)",
 				smtp_address_encode(ctx->to_address),
@@ -395,7 +398,8 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 			return SIEVE_EXEC_TEMP_FAILURE;
 		}
 
-		sieve_result_global_log_error(aenv,
+		sieve_result_global_log_error(
+			aenv, "redirect action: "
 			"failed to redirect message to <%s>: %s "
 			"(permanent failure)",
 			smtp_address_encode(ctx->to_address),
@@ -432,17 +436,20 @@ act_redirect_commit(const struct sieve_action *action,
 	/* Read identifying headers */
 	if (mail_get_first_header(msgdata->mail, "resent-message-id",
 				  &resent_id) < 0) {
-		return sieve_result_mail_error(aenv, msgdata->mail,
+		return sieve_result_mail_error(
+			aenv, msgdata->mail, "redirect action: "
 			"failed to read header field `resent-message-id'");
 	}
 	if (resent_id == NULL &&
 	    mail_get_first_header(msgdata->mail, "resent-from",
 				  &resent_id) < 0) {
-		return sieve_result_mail_error(aenv, msgdata->mail,
+		return sieve_result_mail_error(
+			aenv, msgdata->mail, "redirect action: "
 			"failed to read header field `resent-from'");
 	}
 	if (mail_get_first_header(msgdata->mail, "list-id", &list_id) < 0) {
-		return sieve_result_mail_error(aenv, msgdata->mail,
+		return sieve_result_mail_error(
+			aenv, msgdata->mail, "redirect action: "
 			"failed to read header field `list-id'");
 	}
 
@@ -471,7 +478,8 @@ act_redirect_commit(const struct sieve_action *action,
 
 	/* Check whether we've seen this message before */
 	if (sieve_action_duplicate_check(senv, dupeid, strlen(dupeid))) {
-		sieve_result_global_log(aenv,
+		sieve_result_global_log(
+			aenv, "redirect action: "
 			"discarded duplicate forward to <%s>",
 			smtp_address_encode(ctx->to_address));
 		*keep = FALSE;
@@ -489,7 +497,8 @@ act_redirect_commit(const struct sieve_action *action,
 		sieve_action_duplicate_mark(senv, dupeid, strlen(dupeid),
 			ioloop_time + svinst->redirect_duplicate_period);
 
-		sieve_result_global_log(aenv, "forwarded to <%s>",
+		sieve_result_global_log(
+			aenv, "redirect action: forwarded to <%s>",
 			smtp_address_encode(ctx->to_address));
 
 		/* Indicate that message was successfully forwarded */
