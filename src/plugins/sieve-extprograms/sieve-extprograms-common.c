@@ -102,9 +102,9 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 			ext_config->default_input_eol = SIEVE_EXTPROGRAMS_EOL_LF;
 	}
 
-	if ( sieve_extension_is(ext, vnd_pipe_extension) ) 
+	if ( sieve_extension_is(ext, sieve_ext_vnd_pipe) ) 
 		ext_config->copy_ext = sieve_ext_copy_get_extension(ext->svinst);
-	if ( sieve_extension_is(ext, vnd_execute_extension) ) 
+	if ( sieve_extension_is(ext, sieve_ext_vnd_execute) ) 
 		ext_config->var_ext = sieve_ext_variables_get_extension(ext->svinst);
 	return ext_config;
 }

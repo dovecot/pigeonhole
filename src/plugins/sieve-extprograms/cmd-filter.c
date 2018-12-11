@@ -40,7 +40,7 @@ static bool cmd_filter_generate
 	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command *ctx);
 
-const struct sieve_command_def cmd_filter = {
+const struct sieve_command_def sieve_cmd_filter = {
 	.identifier = "filter",
 	.type = SCT_HYBRID,
 	.positional_args = -1, /* We check positional arguments ourselves */
@@ -60,9 +60,9 @@ static bool cmd_filter_operation_dump
 static int cmd_filter_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def cmd_filter_operation = { 
+const struct sieve_operation_def sieve_opr_filter = {
 	.mnemonic = "FILTER",
-	.ext_def = &vnd_filter_extension, 
+	.ext_def = &sieve_ext_vnd_filter,
 	.dump = cmd_filter_operation_dump, 
 	.execute = cmd_filter_operation_execute
 };
@@ -74,7 +74,7 @@ const struct sieve_operation_def cmd_filter_operation = {
 static bool cmd_filter_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	sieve_operation_emit(cgenv->sblock, cmd->ext, &cmd_filter_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &sieve_opr_filter);
 
 	/* Emit is_test flag */
 	sieve_binary_emit_byte(cgenv->sblock,
