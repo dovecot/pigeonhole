@@ -33,12 +33,12 @@ static void ext_filter_unload(const struct sieve_extension *ext);
 static bool ext_filter_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-const struct sieve_extension_def vnd_filter_extension = { 
+const struct sieve_extension_def sieve_ext_vnd_filter = {
 	.name = "vnd.dovecot.filter",
 	.load = ext_filter_load,
 	.unload = ext_filter_unload,
 	.validator_load = ext_filter_validator_load,
-	SIEVE_EXT_DEFINE_OPERATION(cmd_filter_operation),
+	SIEVE_EXT_DEFINE_OPERATION(sieve_opr_filter),
 };
 
 /*
@@ -74,7 +74,7 @@ static bool ext_filter_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register commands */
-	sieve_validator_register_command(valdtr, ext, &cmd_filter);
+	sieve_validator_register_command(valdtr, ext, &sieve_cmd_filter);
 
 	return TRUE;
 }

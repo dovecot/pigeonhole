@@ -33,25 +33,25 @@ void sieve_extprograms_config_deinit
  * Extensions
  */
 
-extern const struct sieve_extension_def vnd_pipe_extension;
-extern const struct sieve_extension_def vnd_filter_extension;
-extern const struct sieve_extension_def vnd_execute_extension;
+extern const struct sieve_extension_def sieve_ext_vnd_pipe;
+extern const struct sieve_extension_def sieve_ext_vnd_filter;
+extern const struct sieve_extension_def sieve_ext_vnd_execute;
 
 /* 
  * Commands 
  */
 
-extern const struct sieve_command_def cmd_pipe;
-extern const struct sieve_command_def cmd_filter;
-extern const struct sieve_command_def cmd_execute;
+extern const struct sieve_command_def sieve_cmd_pipe;
+extern const struct sieve_command_def sieve_cmd_filter;
+extern const struct sieve_command_def sieve_cmd_execute;
 
 /*
  * Operations
  */
 
-extern const struct sieve_operation_def cmd_pipe_operation;
-extern const struct sieve_operation_def cmd_filter_operation;
-extern const struct sieve_operation_def cmd_execute_operation;
+extern const struct sieve_operation_def sieve_opr_pipe;
+extern const struct sieve_operation_def sieve_opr_filter;
+extern const struct sieve_operation_def sieve_opr_execute;
 
 /*
  * Program name and arguments

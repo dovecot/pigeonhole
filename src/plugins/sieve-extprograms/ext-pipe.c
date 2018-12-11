@@ -33,12 +33,12 @@ static void ext_pipe_unload(const struct sieve_extension *ext);
 static bool ext_pipe_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-const struct sieve_extension_def vnd_pipe_extension = { 
+const struct sieve_extension_def sieve_ext_vnd_pipe = {
 	.name = "vnd.dovecot.pipe",
 	.load = ext_pipe_load,
 	.unload = ext_pipe_unload,
 	.validator_load = ext_pipe_validator_load,
-	SIEVE_EXT_DEFINE_OPERATION(cmd_pipe_operation),
+	SIEVE_EXT_DEFINE_OPERATION(sieve_opr_pipe),
 };
 
 /*
@@ -76,8 +76,8 @@ static bool ext_pipe_validator_validate
 		struct sieve_ast_argument *require_arg,
 		bool required);
 
-const struct sieve_validator_extension pipe_validator_extension = {
-	.ext = &vnd_pipe_extension,
+static const struct sieve_validator_extension pipe_validator_extension = {
+	.ext = &sieve_ext_vnd_pipe,
 	.validate = ext_pipe_validator_validate
 };
 
@@ -85,7 +85,7 @@ static bool ext_pipe_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register commands */
-	sieve_validator_register_command(valdtr, ext, &cmd_pipe);
+	sieve_validator_register_command(valdtr, ext, &sieve_cmd_pipe);
 
 	/* Register extension to validator */
 	sieve_validator_extension_register
@@ -106,7 +106,7 @@ static bool ext_pipe_validator_validate
 	if ( ext_config != NULL && ext_config->copy_ext != NULL ) {
 		/* Register :copy command tag */
 		sieve_ext_copy_register_tag(valdtr,
-			ext_config->copy_ext, cmd_pipe.identifier);
+			ext_config->copy_ext, sieve_cmd_pipe.identifier);
 	}
 	return TRUE;
 }
