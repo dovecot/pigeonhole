@@ -495,11 +495,11 @@ act_redirect_check_loop_header(const struct sieve_action_exec_env *aenv,
 
 	while (*headers != NULL) {
 		const char *header = t_str_trim(*headers, " \t\r\n");
-		if (strcmp(header, recipient) == 0) {
+		if (recipient != NULL && strcmp(header, recipient) == 0) {
 			*loop_detected_r = TRUE;
 			break;
 		}
-		if (strcmp(header, user_email) == 0) {
+		if (user_email != NULL && strcmp(header, user_email) == 0) {
 			*loop_detected_r = TRUE;
 			break;
 		}
