@@ -539,6 +539,7 @@ act_redirect_commit(const struct sieve_action *action,
 	ret = act_redirect_get_duplicate_id(ctx, aenv, msg_id, &dupeid);
 	if (ret != SIEVE_EXEC_OK)
 		return ret;
+	i_assert(dupeid != NULL);
 
 	/* Check whether we've seen this message before */
 	if (sieve_action_duplicate_check(senv, dupeid, strlen(dupeid))) {
