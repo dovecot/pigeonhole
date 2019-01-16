@@ -139,8 +139,7 @@ void sieve_result_unref(struct sieve_result **result)
 
 	sieve_message_context_unref(&(*result)->action_env.msgctx);
 
-	if ( hash_table_is_created((*result)->action_contexts) )
-        hash_table_destroy(&(*result)->action_contexts);
+	hash_table_destroy(&(*result)->action_contexts);
 
 	if ( (*result)->action_env.ehandler != NULL )
 		sieve_error_handler_unref(&(*result)->action_env.ehandler);

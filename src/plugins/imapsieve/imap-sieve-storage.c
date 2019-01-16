@@ -1157,8 +1157,7 @@ static void imap_sieve_user_deinit(struct mail_user *user)
 	if (isuser->isieve != NULL)
 		imap_sieve_deinit(&isuser->isieve);
 
-	if (hash_table_is_created(isuser->mbox_rules))
-		hash_table_destroy(&isuser->mbox_rules);
+	hash_table_destroy(&isuser->mbox_rules);
 	if (array_is_created(&isuser->mbox_patterns))
 		array_free(&isuser->mbox_patterns);
 
