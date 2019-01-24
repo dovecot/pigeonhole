@@ -714,14 +714,16 @@ bool sieve_multiscript_run
 			sieve_multiscript_execute(mscript,
 				action_ehandler, flags, &mscript->keep);
 		}
-		mscript->active =
-			( mscript->active && mscript->keep && mscript->status > 0 );
+		if ( !mscript->keep )
+			mscript->active = FALSE;
 	}
 
-	if ( mscript->status <= 0 )
+	if ( !mscript->active || mscript->status <= 0 ) {
+		mscript->active = FALSE;
 		return FALSE;
+	}
 
-	return mscript->active;
+	return TRUE;
 }
 
 bool sieve_multiscript_will_discard
