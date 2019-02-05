@@ -1,3 +1,15 @@
+v0.4.24.1 2019-02-05  Stephan Bosch <stephan@rename-it.nl>
+
+	+ imapsieve: Added imapsieve_expunge_discarded setting which causes
+	  discarded messages to be expunged immediately.
+	- Sieve scripts running in IMAPSIEVE or IMAP FILTER=SIEVE context that
+	  modify the message, store the message a second time, rather than
+	  replacing the originally stored unmodified message.
+	- imapsieve: Fix crash when COPYing mails from a virtual mailbox when
+	  the source messages originate from more than a single real mailbox
+	- imap_filter_sieve plugin: Implement the missing UID FILTER command.
+	- imap_filter_sieve plugin: Fix FILTER to work with pipelining
+
 v0.4.24 2018-05-24  Stephan Bosch <stephan@rename-it.nl>
 
 	+ Implement plugin for the a vendor-defined IMAP capability called
