@@ -166,11 +166,16 @@ static void *imap_sieve_smtp_start
 	struct mail_user *user = isieve->client->user;
 	const struct smtp_submit_settings *smtp_set = isieve->client->smtp_set;
 	struct ssl_iostream_settings ssl_set;
+	struct smtp_submit_input submit_input;
 	
 	i_zero(&ssl_set);
 	mail_user_init_ssl_client_settings(user, &ssl_set);
 
-	return (void *)smtp_submit_init_simple(smtp_set, &ssl_set, mail_from);
+	i_zero(&submit_input);
+	submit_input.ssl = &ssl_set;
+
+	return (void *)smtp_submit_init_simple(&submit_input, smtp_set,
+					       mail_from);
 }
 
 static void imap_sieve_smtp_add_rcpt
