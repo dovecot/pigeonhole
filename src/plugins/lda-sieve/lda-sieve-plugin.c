@@ -79,12 +79,16 @@ static void *lda_sieve_smtp_start
 		(struct mail_deliver_context *) senv->script_context;
 	struct mail_user *user = dctx->rcpt_user;
 	struct ssl_iostream_settings ssl_set;
+	struct smtp_submit_input submit_input;
 	
 	i_zero(&ssl_set);
 	mail_user_init_ssl_client_settings(user, &ssl_set);
 
-	return (void *)smtp_submit_init_simple(dctx->smtp_set,
-		&ssl_set, mail_from);
+	i_zero(&submit_input);
+	submit_input.ssl = &ssl_set;
+
+	return (void *)smtp_submit_init_simple(&submit_input, dctx->smtp_set,
+					       mail_from);
 }
 
 static void lda_sieve_smtp_add_rcpt
