@@ -64,6 +64,8 @@ struct sieve_environment {
 	const char *home_dir;
 	const char *temp_dir;
 
+	struct event *event_parent;
+
 	enum sieve_flag flags;
 	enum sieve_env_location location;
 	enum sieve_delivery_phase delivery_phase;

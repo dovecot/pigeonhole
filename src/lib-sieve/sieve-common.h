@@ -176,7 +176,8 @@ struct sieve_instance {
 	const struct sieve_callbacks *callbacks;
 	void *context;
 
-	/* Engine debug */
+	/* Logging, events, and debug */
+	struct event *event;
 	bool debug;
 
 	/* Extension registry */

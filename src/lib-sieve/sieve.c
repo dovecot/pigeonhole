@@ -69,6 +69,10 @@ struct sieve_instance *sieve_init(const struct sieve_environment *env,
 	svinst->env_location = env->location;
 	svinst->delivery_phase = env->delivery_phase;
 
+	svinst->event = event_create(env->event_parent);
+	event_set_forced_debug(svinst->event, debug);
+	event_set_append_log_prefix(svinst->event, "sieve: ");
+
 	/* Determine domain */
 	if (env->domainname != NULL && *(env->domainname) != '\0')
 		domain = env->domainname;
@@ -131,6 +135,8 @@ void sieve_deinit(struct sieve_instance **_svinst)
 	sieve_storages_deinit(svinst);
 	sieve_extensions_deinit(svinst);
 	sieve_errors_deinit(svinst);
+
+	event_unref(&svinst->event);
 
 	pool_unref(&(svinst)->pool);
 	*_svinst = NULL;
