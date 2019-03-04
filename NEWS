@@ -1,3 +1,32 @@
+v0.5.5 2019-03-05  Stephan Bosch <stephan@rename-it.nl>
+
+	+ IMAPSieve: Add new plugin/imapsieve_expunge_discarded setting which
+	  causes messages discarded by an IMAPSieve script to be expunged
+	  immediately, rather than only being marked as "\Deleted" (which is
+	  still the default behavior).
+	- IMAPSieve: Fix panic crash occurring when a COPY command copies
+	  messages from a virtual mailbox where the source messages originate
+	  from more than a single real mailbox.
+	- imap4flags extension: Fix deleting all keywords. When the action
+	  resulted in all keywords being removed, no changes were actually
+	  applied.
+	- variables extension: Fix truncation of UTF-8 variable content. The
+	  maximum size of Sieve variables was enforced by truncating the
+	  variable string content bluntly at the limit, but this does not
+	  consider UTF-8 code point boundaries. This resulted in broken UTF-8
+	  strings. This problem also surfaced for variable modifiers, such as
+	  the ":encodeurl" modifier provided by the Sieve "enotify" extension.
+	  In that case, the resulting URI escaping could also be truncated
+	  inappropriately.
+	- IMAPSieve, IMAP FILTER=SIEVE: Fix replacing a modified message. Sieve
+	  scripts running in IMAPSIEVE or IMAP FILTER=SIEVE context that
+	  modify the message, stored the message a second time, rather than
+	  replacing the originally stored unmodified message.
+	- Fix segmentation fault occurring when both the sieve_extprograms
+	  plugin (for the Sieve interpreter) and the imap_filter_sieve plugin
+	  (for IMAP) are loaded at the same time. A symbol was defined by both
+	  plugins, causing a clash when both were loaded.
+
 v0.5.4 2018-11-23  Stephan Bosch <stephan@rename-it.nl>
 
 	* Adjustments to several changes in Dovecot v2.3.4 make this Pigeonhole
