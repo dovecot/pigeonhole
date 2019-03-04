@@ -1,3 +1,334 @@
+v0.5.5 2019-03-05  Stephan Bosch <stephan@rename-it.nl>
+
+	+ IMAPSieve: Add new plugin/imapsieve_expunge_discarded setting which
+	  causes messages discarded by an IMAPSieve script to be expunged
+	  immediately, rather than only being marked as "\Deleted" (which is
+	  still the default behavior).
+	- IMAPSieve: Fix panic crash occurring when a COPY command copies
+	  messages from a virtual mailbox where the source messages originate
+	  from more than a single real mailbox.
+	- imap4flags extension: Fix deleting all keywords. When the action
+	  resulted in all keywords being removed, no changes were actually
+	  applied.
+	- variables extension: Fix truncation of UTF-8 variable content. The
+	  maximum size of Sieve variables was enforced by truncating the
+	  variable string content bluntly at the limit, but this does not
+	  consider UTF-8 code point boundaries. This resulted in broken UTF-8
+	  strings. This problem also surfaced for variable modifiers, such as
+	  the ":encodeurl" modifier provided by the Sieve "enotify" extension.
+	  In that case, the resulting URI escaping could also be truncated
+	  inappropriately.
+	- IMAPSieve, IMAP FILTER=SIEVE: Fix replacing a modified message. Sieve
+	  scripts running in IMAPSIEVE or IMAP FILTER=SIEVE context that
+	  modify the message, stored the message a second time, rather than
+	  replacing the originally stored unmodified message.
+	- Fix segmentation fault occurring when both the sieve_extprograms
+	  plugin (for the Sieve interpreter) and the imap_filter_sieve plugin
+	  (for IMAP) are loaded at the same time. A symbol was defined by both
+	  plugins, causing a clash when both were loaded.
+
+v0.5.4 2018-11-23  Stephan Bosch <stephan@rename-it.nl>
+
+	* Adjustments to several changes in Dovecot v2.3.4 make this Pigeonhole
+	  release dependent on that Dovecot release; it will not compile against
+	  older Dovecot versions. And, conversely, you need to upgrade
+	  Pigeonhole when upgrading Dovecot to v2.3.4.
+	* The changes regarding the default postmaster_address in Dovecot v2.3.4
+	  mainly apply to Pigeonhole. The new default should work for all
+	  existing installations, thereby fixing several reported v2.3/v0.5
+	  migration problems.
+	- IMAP FILTER=SIEVE capability: Fix assert crash occurring when running
+	  UID FILTER on a Sieve script with errors.
+
+v0.5.3 2018-10-01  Stephan Bosch <stephan@rename-it.nl>
+
+	- Fix assertion panic occurring when managesieve service fails to open
+	  INBOX while saving a Sieve script. This was caused by a lack of
+	  cleanup after failure.
+	- Fix specific messages causing an assert panic with actions that
+	  compose a reply (e.g. vacation). With some rather weird input from the
+	  original message, the header folding algorithm (as used for composing
+	  the References header for the reply) got confused, causing the panic.
+	- IMAP FILTER=SIEVE capability: Fix FILTER SIEVE SCRIPT command parsing.
+	  After finishing reading the Sieve script, the command parsing
+	  sometimes didn't continue with the search arguments. This is a time-
+	  critical bug that likely only occurs when the Sieve script is sent in
+	  the next TCP frame.
+
+v0.5.2 2018-06-29  Stephan Bosch <stephan@rename-it.nl>
+
+	+ Implement plugin for the a vendor-defined IMAP capability called
+	  "FILTER=SIEVE". It adds the ability to manually invoke Sieve filtering
+	  in IMAP. More information can be found in
+	  doc/plugins/imap_filter_sieve.txt.
+	- The Sieve addess test caused an assertion panic for invalid addresses
+	  with UTF-8 codepoints in the localpart. Fixed by properly detecting
+	  invalid addresses with UTF-8 codepoints in the localpart and skipping
+	  these like other invalid addresses while iterating addresses for the
+	  address test.
+	- Make the length of the subject header for the vacation response
+	  configurable and enforce the limit in UTF-8 codepoints rather than
+	  bytes. The subject header for a vacation response was statically
+	  truncated to 256 bytes, which is too limited for multi-byte UTF-8
+	  characters.
+	- Sieve editheader extension: Fix assertion panic occurring when it is
+	  used to manipulate a message header with a very large header field.
+	- Properly abort execution of the sieve_discard script upon error.
+	  Before, the LDA Sieve plugin attempted to execute the sieve_discard
+	  script when an error occurs. This can lead to the message being lost.
+	- Fix the interaction between quota and the sieve_discard script. When
+	  quota was used together with a sieve_discard script, the message
+	  delivery did not bounce when the quota was exceeded.
+
+v0.5.1 28-03-2018  Stephan Bosch <stephan@rename-it.nl>
+
+	- Explicitly disallow UTF-8 in localpart in addresses parsed from Sieve
+	  script.
+	- editheader extension: Corrected the stream position calculations
+	  performed while making the modified message available as a stream.
+	  Pigeonhole Sieve crashed in LMTP with an assertion panic when the
+	  Sieve editheader extension was used before the message was redirected.
+	  Experiments indicate that the problem occurred only with LMTP and that
+	  LDA is not affected.
+	- fileinto extension: Fix assert panic occurring when fileinto is used
+	  without being listed in the require line, while the copy extension is
+	  listed there. This is a very old bug.
+	- imapsieve plugin: Do not assert crash or log an error for messages
+	  that disappear concurrently while applying Sieve scripts. This event
+	  is now logged as a debug message.
+	- Sieve extprograms plugin: Large output from "execute" command crashed
+	  delivery. Fixed buffering issue in code that handles output from the
+	  external program.
+
+v0.5.0.1 05-01-2018  Stephan Bosch <stephan@rename-it.nl>
+
+	- imap4flags extension: Fix binary corruption occurring when
+	  setflag/addflag/removeflag flag-list is a variable.
+	- sieve-extprograms plugin: Fix segfault occurring when used in
+	  IMAPSieve context.
+
+v0.5.0 24-12-2017  Stephan Bosch <stephan@rename-it.nl>
+
+	* editheader extension: The implementation of header modifications is
+	  heavily updated. Although the functionality has not changed, the
+	  underlying code was updated to address several static analysis
+	  warnings, runtime integer arithmetic warnings (Clang), and to match
+	  updates in the Dovecot stream API.
+	+ variables extension: Made the maximum scope and variable size
+	  configurable.
+	+ subaddress: Support multiple recipient_delimiters.
+	- enotify extension: mailto method: Fixed parsing of mailto URI with
+	  only a header part.
+	- enotify plugin: mailto method: Make sure the "From:" header is set to
+	  a usable address and not "(null)".
+	- Fixed writing address headers to outgoing messages. Sometimes headers
+	  were MIME-encoded twice, yielding invalid results.
+
+v0.4.23 20-03-2018  Stephan Bosch <stephan@rename-it.nl>
+
+	- editheader extension: Corrected the stream position calculations
+	  performed while making the modified message available as a stream.
+	  Pigeonhole Sieve crashed in LMTP with an assertion panic when the
+	  Sieve editheader extension was used before the message was redirected.
+	  Experiments indicate that the problem occurred only with LMTP and that
+	  LDA is not affected.
+	- fileinto extension: Fix assert panic occurring when fileinto is used
+	  without being listed in the require line, while the copy extension is
+	  listed there. This is a very old bug.
+	- imapsieve plugin: Do not log an error for messages that disappear
+	  concurrently while applying Sieve scripts. This is a further
+	  improvement on the imapsieve fix in the previous release (which fixed
+	  a panic). This event is now logged as a debug message.
+
+v0.4.22 01-03-2018  Stephan Bosch <stephan@rename-it.nl>
+
+	- Fixed filesystem path handling problem: sieve plugin could have
+	  assert-crashed with specific path lengths with: "Panic: file
+	  realpath.c: line 86 (path_normalize): assertion failed: (npath_pos +
+	  1 < npath + asize)".
+	- Sieve extprograms plugin: Large output from "execute" command crashed
+	  delivery. Fixed buffering issue in code that handles output from the
+	  external program.
+	- editheader extension: Extensively reworked the low-level
+	  implementation of adding and removing headers. This solves a few
+	  integer arithmetic problems reported by Clang runtime checks, but also
+	  improves code structure and reliability in general.
+	- imapsieve: Fix assert crash occurring when selected messages are
+	  expunged concurrently by the time Sieve filter is to be applied.
+	- imap4flags extension: Fix binary byte-code corruption occurring when
+	  the setflag, addflag, or removeflag command's flag-list is a variable.
+	- enotify extension: mailto method: Fixed parsing of mailto URI with
+	  only a header part.
+	- enotify extension: mailto method: Make sure "From:" header is set to a
+	  usable address and not "(null)".
+	- Fixed writing address headers to outgoing messages. It sometimes
+	  erroneously applied another layer of MIME header encoding.
+
+v0.4.21 12-10-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	* redirect action: Always set the X-Sieve-Redirected-From header to
+	  sieve_user_email if configured. Before, it would use the envelope recipient
+	  instead if available, which makes no sense if the primary e-mail address is
+	  available.
+	+ vacation extension: Allow ignoring the envelope sender while composing the
+	  "To:" header for the reply. Normally, the "To:" header is composed from
+	  the address found in the "Sender", "Resent-From" or "From" headers that is
+	  equal to the envelope sender. If none is then found, the bare envelope
+	  sender is used. This change adds a new setting
+	  "sieve_vacation_to_header_ignore_envelope". With this setting enabled, the
+	  "To:" header is always composed from those headers in the source message.
+	  The new setting thus allows ignoring the envelope, which is useful e.g.
+	  when SRS is used.
+	+ vacation extension: Compose the "To:" header from the full sender address
+	  found in the first "Sender:", "From:" or "Resent-From:" header. Before, it
+	  would create a "To:" header without a phrase part. The new behavior is
+	  nicer, since the reply will be addressed to the sender by name if possible.
+	- LDA Sieve plugin: Fixed sequential execution of LDAP-based scripts. A
+	  missing LDAP-based script could cause the script sequence to exit earlier.
+	- sieve-filter: Removed the (now) duplicate utf8 to mutf7 mailbox name
+	  conversion. This caused problems with mailbox names containing UTF-8
+	  characters. The Dovecot API was changed years ago, but apparently
+	  sieve-filter was never updated.
+
+v0.4.20 27-08-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Made the retention period for redirect duplicate identifiers configurable.
+	  For accounts that perform many redirects, the lda-dupes database could grow
+	  to impractical sizes. Changed the default retention period from 24 to 12
+	  hours.
+	- sieve-filter: Fixed memory leak: forgot to clean up script binary at end of
+	  execution. Normally, this would merely be an inconsequential memory leak.
+	  However, when the script comes from an LDAP storage, this would cause io
+	  leak warnings.
+	- managesieve-login: Fixed handling of AUTHENTICATE command. A second
+	  authenticate command would be parsed wrong. This problem was caused by
+	  changes in the previous release.
+	- LDA Sieve plugin: Fixed minor memory leak caused by not cleaning up the
+	  sieve_discard script.
+
+v0.4.19 26-06-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	* This release adjusts Pigeonhole to several changes in the Dovecot API,
+	  making it depend on Dovecot v2.2.31. Previous versions of Pigeonhole will
+	  produce compile warnings with the recent Dovecot releases (but still work
+	  ok).
+	- Fixed bug in handling of implicit keep in some cases. Implicit side-effects,
+	  such as assigned flags, were not always applied correctly. This is in
+	  essence a very old bug, but it was exposed by recent changes.
+	- include extension: Fixed segfault that (sometimes) occurred when the global
+	  script location was left unconfigured.
+
+v0.4.18 12-04-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	+ imapsieve plugin: Implemented the copy_source_after rule action. When this
+	  is enabled for a mailbox rule, the specified Sieve script is executed for
+	  the message in the source mailbox during a "COPY" event. This happens only
+	  after the Sieve script that is executed for the corresponding message in the
+	  destination mailbox finishes running successfully.
+	+ imapsieve plugin: Added non-standard Sieve environment items for the source
+	  and destination mailbox.
+	- multiscript: The execution of the discard script had an implicit "keep",
+	  rather than an implicit "discard".
+
+v0.4.17 26-02-2017 Stephan Bosch <stephan@rename-it.nl>
+
+	- LDA Sieve plugin: Fixed handling of an early explicit keep during
+	  multiscript execution. Action side-effects and the message snapshot would be
+	  lost at the final stage where the implicit keep is evaluated. This could
+	  result in the IMAP flags assigned to the message to be forgotten or that
+	  headers modified by the "editheader" extension would revert to their
+	  original state.
+	- file script storage: Amended the up-to-date time stamp comparison for
+	  on-disk binaries to include nanoseconds. This will fix problems occurring
+	  when both binary and script are saved within the same second. This fix is
+	  ineffective on older systems that have no support for nanoseconds in stat()
+	  timestamps, which	should be pretty rare nowadays.
+	- file script storage: Improve saving and listing permission error to include
+	  more details.
+	- imapsieve plugin: Make sure "INBOX" is upper case in static mailbox rules.
+	  Otherwise, the mailbox name would never match, since matching is performed
+	  case-sensitively and Dovecot only returns the upper-cased "INBOX".
+	- imapsieve plugin: Fixed assert failure occurring when used with virtual
+	  mailboxes.
+	- doveadm sieve plugin: Fixed crash when setting Sieve script via attribute's
+	  string value.
+
+v0.4.16 30-10-2016 Stephan Bosch <stephan@rename-it.nl>
+
+	* Part of the Sieve extprograms implementation was moved to Dovecot, which
+	  means that this release depends on Dovecot v2.2.26+.
+	* ManageSieve: The PUTSCRIPT command now allows uploading empty Sieve scripts.
+	  There was really no good reason to disallow doing that.
+	+ Sieve vnd.dovecot.report extension:
+	  + Added a Dovecot-Reporting-User field to the report body, which contains
+	    the e-mail address of the user sending the report.
+	  + Added support for configuring the "From:" address used in the report.
+	+ LDA sieve plugin: Implemented support for a "discard script" that is run
+	  when the message is going to be discarded. This allows doing something other
+	  than throwing the message away for good.
+	+ Sieve vnd.dovecot.environment extension: Added vnd.dovecot.config.*
+	  environment items. These environment items map to sieve_env_* settings from
+	  the plugin {} section in the configuration. Such values can of course also
+	  be returned from userdb.
+	+ Sieve vacation extension: Use the Microsoft X-Auto-Response-Suppress header
+	  to prevent unwanted responses from and to (older) Microsoft products.
+	+ ManageSieve: Added rawlog_dir setting to store ManageSieve traffic logs.
+	  This replaces at least partially the rawlog plugin (mimics similar IMAP/POP3
+	  change).
+	- doveadm sieve plugin: synchronization: Prevent setting file timestamps to
+	  unix epoch time. This occurred when Dovecot passed the timestamp as
+	  'unknown' during synchronization.
+	- Sieve exprograms plugin: Fixed spurious '+' sometimes returned at the end
+	  of socket-based program output.
+	- imapsieve plugin: Fixed crash occurring in specific situations.
+	- Performed various fixes based on static analysis and Clang warnings.
+
+v0.4.15 07-07-2016 Stephan Bosch <stephan@rename-it.nl>
+
+	* vacation extension: The sieve_user_email setting is now used in the check
+	  for implicit delivery.
+	- imapsieve plugin: For any mail transaction, the mailbox was opened a second
+	  time, even if no mailbox rule matched. This was unintentional, useless and
+	  caused problems when the imapsieve plugin was used with other plugins like
+	  acl.
+	- extprograms plugin: Significantly improved error handling. No stream errors
+	  were logged.
+	- extprograms plugin: Fixed bug in handling of result code from remote program
+	  (script service).
+	- extprograms plugin: Connection to remote program service was not retried.
+	- Several small fixes based on static analysis.
+	- Fixed handling of quoted string localparts in email addresses.
+
+v0.4.14 26-04-2016 Stephan Bosch <stephan@rename-it.nl>
+
+	* The address test now allows specifying the X-Original-To header.
+	+ Implemented the Sieve imapsieve extension and its IMAP counterpart
+	  (RFC 6785) as a set of plugins. This allows running Sieve scripts at IMAP
+	  activity, rather than at delivery. There are also facilities for the
+	  familiar sieve_before/sieve_after administrator scripts. A user script is
+	  defined for a mailbox using an IMAP METADATA entry, whereas administrator
+	  scripts are configured using mailbox matching rules defined in the plugin
+	  settings.
+	+ Adjusted the Sieve ihave extension to allow capability tests to be performed
+	  at runtime. This way, scripts can be written that work both at delivery and
+	  from IMAP.
+	+ Implemented support for runtime trace debugging. This means that detailed
+	  information about which commands, actions and tests are performed is written
+	  to a file. That file is created in the configured directory, but only if
+	  that directory exists. This way, a particular user can be easily singled out
+	  for debugging. This works much like the Dovecot rawlog facility. The trace
+	  output is identical to what is produced using sieve-test with its "-t"
+	  command line option.
+	+ Added a "sieve_user_email" setting that configures the user's primary email
+	  address. This is mainly useful to have a user email address available in
+	  IMAP, where envelope data is unavailable.
+	+ Implemented the dovecot-specific "vnd.dovecot.report" extension. This allows
+	  sending report messages in the Message Abuse Reporting Format (RFC 5965).
+	- extprograms plugin: Fixed epoll() panic caused by closing the output FD
+	  before the output stream.
+	- Made sure that the local part of a mail address is encoded properly using
+	  quoted string syntax when it is not a dot-atom.
+
 v0.4.13 18-03-2016 Stephan Bosch <stephan@rename-it.nl>
 
 	* redirect action: Added the list-id header to the duplicate ID for mail loop
