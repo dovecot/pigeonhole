@@ -60,7 +60,7 @@ sieve_error_script_location(const struct sieve_script *script,
 
 void sieve_errors_init(struct sieve_instance *svinst)
 {
-	svinst->system_ehandler = sieve_master_ehandler_create(svinst, NULL, 0);
+	svinst->system_ehandler = sieve_master_ehandler_create(svinst, 0);
 }
 
 void sieve_errors_deinit(struct sieve_instance *svinst)
@@ -580,22 +580,14 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler)
  * - Output errors directly to Dovecot master log
  */
 
-struct sieve_master_ehandler {
-	struct sieve_error_handler handler;
-
-	const char *prefix;
-};
-
 typedef void (*master_log_func_t)(const char *fmt, ...) ATTR_FORMAT(1, 2);
 
 static void ATTR_FORMAT(4, 0)
-sieve_master_logv(struct sieve_error_handler *_ehandler,
+sieve_master_logv(struct sieve_error_handler *ehandler ATTR_UNUSED,
 		  const struct sieve_error_params *params,
 		  enum sieve_error_flags flags ATTR_UNUSED,
 		  const char *fmt, va_list args)
 {
-	struct sieve_master_ehandler *ehandler =
-		(struct sieve_master_ehandler *) _ehandler;
 	master_log_func_t log_func;
 	string_t *str;
 
@@ -617,38 +609,30 @@ sieve_master_logv(struct sieve_error_handler *_ehandler,
 	}
 
 	str = t_str_new(256);
-	if (ehandler->prefix != NULL)
-		str_printfa(str, "%s: ", ehandler->prefix);
-
 	str_append(str, "sieve: ");
 
 	if (params->location != NULL && *params->location != '\0')
 		str_printfa(str, "%s: ", params->location);
-
 	str_vprintfa(str, fmt, args);
 
 	log_func("%s", str_c(str));
 }
 
 struct sieve_error_handler *
-sieve_master_ehandler_create(struct sieve_instance *svinst, const char *prefix,
+sieve_master_ehandler_create(struct sieve_instance *svinst,
 			     unsigned int max_errors)
 {
+	struct sieve_error_handler *ehandler;
 	pool_t pool;
-	struct sieve_master_ehandler *ehandler;
 
 	pool = pool_alloconly_create("master_error_handler", 256);
-	ehandler = p_new(pool, struct sieve_master_ehandler, 1);
-	sieve_error_handler_init(&ehandler->handler, svinst, pool, max_errors);
+	ehandler = p_new(pool, struct sieve_error_handler, 1);
+	sieve_error_handler_init(ehandler, svinst, pool, max_errors);
+	ehandler->log_debug = svinst->debug;
 
-	ehandler->handler.logv = sieve_master_logv;
+	ehandler->logv = sieve_master_logv;
 
-	if (prefix != NULL)
-		ehandler->prefix = p_strdup(pool, prefix);
-
-	ehandler->handler.log_debug = svinst->debug;
-
-	return &ehandler->handler;
+	return ehandler;
 }
 
 /*

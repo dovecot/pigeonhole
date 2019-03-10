@@ -89,7 +89,7 @@ static int cmd_sieve_put_run
 				cpflags |= SIEVE_COMPILE_FLAG_ACTIVATED;
 
 			/* Compile */
-			ehandler = sieve_master_ehandler_create(ctx->ctx.svinst, NULL, 0);
+			ehandler = sieve_master_ehandler_create(ctx->ctx.svinst, 0);
 			if ( (sbin=sieve_compile_script
 				(script, ehandler, cpflags, &error)) == NULL ) {
 				doveadm_sieve_cmd_failed_error(_ctx, error);

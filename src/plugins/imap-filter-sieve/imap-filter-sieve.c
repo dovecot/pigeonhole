@@ -100,7 +100,7 @@ imap_filter_sieve_get_svinst(struct imap_filter_sieve_context *sctx)
 				     ifsuser, debug);
 
 	ifsuser->master_ehandler =
-		sieve_master_ehandler_create(ifsuser->svinst, NULL, 0); // FIXME: prefix?
+		sieve_master_ehandler_create(ifsuser->svinst, 0);
 	sieve_system_ehandler_set(ifsuser->master_ehandler);
 	sieve_error_handler_accept_infolog(ifsuser->master_ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ifsuser->master_ehandler, debug);

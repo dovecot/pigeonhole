@@ -188,7 +188,7 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler);
 
 /* Write errors to dovecot master log */
 struct sieve_error_handler *
-sieve_master_ehandler_create(struct sieve_instance *svinst, const char *prefix,
+sieve_master_ehandler_create(struct sieve_instance *svinst,
 			     unsigned int max_errors);
 
 /* Write errors to stderr */
