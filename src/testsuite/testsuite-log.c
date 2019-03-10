@@ -160,6 +160,42 @@ static struct sieve_error_handler *_testsuite_log_main_ehandler_create(void)
 	return ehandler;
 }
 
+static void ATTR_FORMAT(2, 0)
+testsuite_error_handler(const struct failure_context *ctx, const char *fmt,
+			va_list args)
+{
+	pool_t pool = _testsuite_logmsg_pool;
+	struct _testsuite_log_message msg;
+
+	i_zero(&msg);
+	switch (ctx->type) {
+	case LOG_TYPE_DEBUG:
+		_testsuite_stdout_vlog("debug", NULL, fmt, args);
+		break;
+	case LOG_TYPE_INFO:
+		_testsuite_stdout_vlog("info", NULL, fmt, args);
+
+		msg.message = p_strdup_vprintf(pool, fmt, args);
+		array_append(&_testsuite_log_messages, &msg, 1);
+		break;
+	case LOG_TYPE_WARNING:
+		_testsuite_stdout_vlog("warning", NULL, fmt, args);
+
+		msg.message = p_strdup_vprintf(pool, fmt, args);
+		array_append(&_testsuite_log_warnings, &msg, 1);
+		break;
+	case LOG_TYPE_ERROR:
+		_testsuite_stdout_vlog("error", NULL, fmt, args);
+
+		msg.message = p_strdup_vprintf(pool, fmt, args);
+		array_append(&_testsuite_log_errors, &msg, 1);
+		break;
+	default:
+		default_error_handler(ctx, fmt, args);
+		break;
+	}
+}
+
 /*
  *
  */
@@ -199,6 +235,9 @@ void testsuite_log_init(bool log_stdout)
 	sieve_error_handler_accept_debuglog(testsuite_log_main_ehandler, TRUE);
 
 	sieve_system_ehandler_set(testsuite_log_ehandler);
+	i_set_error_handler(testsuite_error_handler);
+	i_set_info_handler(testsuite_error_handler);
+	i_set_debug_handler(testsuite_error_handler);
 
 	testsuite_log_clear_messages();
 }
