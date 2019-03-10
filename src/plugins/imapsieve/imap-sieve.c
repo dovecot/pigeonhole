@@ -429,20 +429,18 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
-	struct mail_user *user = isieve->client->user;
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	const char *compile_name = "compile";
-	bool debug = user->mail_debug;
 
 	if (recompile) {
 		/* Warn */
-		sieve_sys_warning(svinst,
-			"Encountered corrupt binary: re-compiling script %s",
-			sieve_script_location(script));
+		e_warning(sieve_get_event(svinst),
+			  "Encountered corrupt binary: re-compiling script %s",
+			  sieve_script_location(script));
 		compile_name = "re-compile";
-	} else if (debug) {
-		sieve_sys_debug(svinst,
+	} else {
+		e_debug(sieve_get_event(svinst),
 			"Loading script %s", sieve_script_location(script));
 	}
 
@@ -464,16 +462,13 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 		switch (*error_r) {
 		/* Script not found */
 		case SIEVE_ERROR_NOT_FOUND:
-			if (debug) {
-				sieve_sys_debug(svinst,
-					"Script `%s' is missing for %s",
-					sieve_script_location(script),
-					compile_name);
-			}
+			e_debug(sieve_get_event(svinst),
+				"Script `%s' is missing for %s",
+				sieve_script_location(script), compile_name);
 			break;
 		/* Temporary failure */
 		case SIEVE_ERROR_TEMP_FAILURE:
-			sieve_sys_error(svinst,
+			e_error(sieve_get_event(svinst),
 				"Failed to open script `%s' for %s "
 				"(temporary failure)",
 				sieve_script_location(script), compile_name);
@@ -481,21 +476,21 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 		/* Compile failed */
 		case SIEVE_ERROR_NOT_VALID:
 			if (script == isrun->user_script &&
-			    isrun->userlog != NULL) {
-				sieve_sys_info(svinst,
-					"Failed to %s script `%s' "
-					"(view user logfile `%s' for more information)",
-					compile_name, sieve_script_location(script),
-					isrun->userlog);
+			   isrun->userlog != NULL ) {
+				e_info(sieve_get_event(svinst),
+				       "Failed to %s script `%s' "
+				       "(view user logfile `%s' for more information)",
+				       compile_name, sieve_script_location(script),
+				       isrun->userlog);
 				break;
 			}
-			sieve_sys_error(svinst,
+			e_error(sieve_get_event(svinst),
 				"Failed to %s script `%s'",
 				compile_name, sieve_script_location(script));
 			break;
 		/* Something else */
 		default:
-			sieve_sys_error(svinst,
+			e_error(sieve_get_event(svinst),
 				"Failed to open script `%s' for %s",
 				sieve_script_location(script), compile_name);
 			break;
@@ -517,19 +512,19 @@ imap_sieve_handle_exec_status(struct imap_sieve_run *isrun,
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
 	const char *userlog_notice = "";
-	sieve_sys_error_func_t error_func, user_error_func;
+	enum log_type log_level, user_log_level;
 	enum mail_error mail_error = MAIL_ERROR_NONE;
 	int ret = -1;
 
-	error_func = user_error_func = sieve_sys_error;
+	log_level = user_log_level = LOG_TYPE_ERROR;
 
 	if (estatus->last_storage != NULL && estatus->store_failed) {
 		mail_storage_get_last_error(estatus->last_storage, &mail_error);
 
 		/* Don't bother administrator too much with benign errors */
 		if (mail_error == MAIL_ERROR_NOQUOTA) {
-			error_func = sieve_sys_info;
-			user_error_func = sieve_sys_info;
+			log_level = LOG_TYPE_INFO;
+			user_log_level = LOG_TYPE_INFO;
 		}
 	}
 
@@ -537,35 +532,35 @@ imap_sieve_handle_exec_status(struct imap_sieve_run *isrun,
 		userlog_notice = t_strdup_printf(
 			" (user logfile %s may reveal additional details)",
 			isrun->userlog);
-		user_error_func = sieve_sys_info;
+		user_log_level = LOG_TYPE_INFO;
 	}
 
 	switch (status) {
 	case SIEVE_EXEC_FAILURE:
-		user_error_func(svinst,
+		e_log(sieve_get_event(svinst), user_log_level,
 			"Execution of script %s failed%s",
 			sieve_script_location(script), userlog_notice);
 		ret = 0;
 		break;
 	case SIEVE_EXEC_TEMP_FAILURE:
-		error_func(svinst,
-			"Execution of script %s was aborted "
-			"due to temporary failure%s",
-			sieve_script_location(script), userlog_notice);
+		e_log(sieve_get_event(svinst), log_level,
+		      "Execution of script %s was aborted "
+		      "due to temporary failure%s",
+		      sieve_script_location(script), userlog_notice);
 		ret = -1;
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:
-		sieve_sys_error(svinst,
+		e_error(sieve_get_event(svinst),
 			"!!BUG!!: Binary compiled from %s is still corrupt; "
 			"bailing out and reverting to default action",
 			sieve_script_location(script));
 		ret = 0;
 		break;
 	case SIEVE_EXEC_KEEP_FAILED:
-		error_func(svinst,
-			"Execution of script %s failed "
-			"with unsuccessful implicit keep%s",
-			sieve_script_location(script), userlog_notice);
+		e_log(sieve_get_event(svinst), log_level,
+		      "Execution of script %s failed "
+		      "with unsuccessful implicit keep%s",
+		      sieve_script_location(script), userlog_notice);
 		ret = 0;
 		break;
 	case SIEVE_EXEC_OK:
@@ -583,14 +578,12 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
-	struct mail_user *user = isieve->client->user;
 	struct imap_sieve_run_script *scripts = isrun->scripts;
 	unsigned int count = isrun->scripts_count;
 	struct sieve_multiscript *mscript;
 	struct sieve_error_handler *ehandler;
 	struct sieve_script *last_script = NULL;
 	bool user_script = FALSE, more = TRUE;
-	bool debug = user->mail_debug;
 	enum sieve_compile_flags cpflags;
 	enum sieve_execute_flags exflags;
 	enum sieve_error compile_error = SIEVE_ERROR_NONE;
@@ -623,12 +616,9 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 
 		/* Open */
 		if (sbin == NULL) {
-			if (debug) {
-				sieve_sys_debug(svinst,
-					"Opening script %d of %d from `%s'",
-					i+1, count,
-					sieve_script_location(script));
-			}
+			e_debug(sieve_get_event(svinst),
+				"Opening script %d of %d from `%s'",
+				i+1, count, sieve_script_location(script));
 
 			/* Already known to fail */
 			if (scripts[i].compile_error != SIEVE_ERROR_NONE) {
@@ -646,13 +636,11 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 		}
 
 		/* Execute */
-		if (debug) {
-			sieve_sys_debug(svinst,
-				"Executing script from `%s'",
-				sieve_get_source(sbin));
-		}
-		more = sieve_multiscript_run(mscript, sbin, ehandler,
-					     ehandler, exflags);
+		e_debug(sieve_get_event(svinst),
+			"Executing script from `%s'",
+			sieve_get_source(sbin));
+		more = sieve_multiscript_run(mscript,
+			sbin, ehandler, ehandler, exflags);
 
 		if (!more) {
 			if (!scripts[i].binary_corrupt &&
@@ -702,9 +690,9 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 
 	/* Don't log additional messages about compile failure */
 	if (compile_error != SIEVE_ERROR_NONE && ret == SIEVE_EXEC_FAILURE) {
-		sieve_sys_info(svinst,
-			"Aborted script execution sequence "
-			"with successful implicit keep");
+		e_info(sieve_get_event(svinst),
+		       "Aborted script execution sequence "
+		       "with successful implicit keep");
 		return 1;
 	}
 
@@ -757,7 +745,7 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 		/* Compose script execution environment */
 
 		if (sieve_script_env_init(&scriptenv, user, &error) < 0) {
-			sieve_sys_error(svinst,
+			e_error(sieve_get_event(svinst),
 				"Failed to initialize script execution: %s",
 				error);
 			ret = -1;

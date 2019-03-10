@@ -1,7 +1,7 @@
 /* Copyright (c) 2016-2018 Pigeonhole authors, see the included COPYING file
  */
 
-#include "sieve-common.h"
+#include "sieve.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
 
@@ -30,11 +30,9 @@ void sieve_imapsieve_plugin_load
 	pctx->ext_vnd_imapsieve = sieve_extension_register
 		(svinst, &vnd_imapsieve_extension_dummy, TRUE);
 
-	if ( svinst->debug ) {
-		sieve_sys_debug(svinst,
-			"Sieve imapsieve plugin for %s version %s loaded",
-			PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
-	}
+	e_debug(sieve_get_event(svinst),
+		"Sieve imapsieve plugin for %s version %s loaded",
+		PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 
 	*context = (void *)pctx;
 }
