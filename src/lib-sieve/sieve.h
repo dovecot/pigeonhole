@@ -37,6 +37,12 @@ const char *sieve_get_capabilities(struct sieve_instance *svinst,
 void sieve_set_extensions(struct sieve_instance *svinst,
 			  const char *extensions);
 
+
+/* sieve_get_event():
+ *
+ */
+struct event *sieve_get_event(struct sieve_instance *svinst) ATTR_PURE;
+
 /*
  * Script compilation
  */

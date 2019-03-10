@@ -156,6 +156,11 @@ const char *sieve_get_capabilities(struct sieve_instance *svinst,
 	return sieve_extension_capabilities_get_string(svinst, name);
 }
 
+struct event *sieve_get_event(struct sieve_instance *svinst)
+{
+	return svinst->event;
+}
+
 /*
  * Low-level compiler functions
  */
