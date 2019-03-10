@@ -16,9 +16,9 @@ struct sieve_binary;
  *   Initializes the sieve engine. Must be called before any sieve functionality
  *   is used.
  */
-struct sieve_instance *sieve_init
-	(const struct sieve_environment *env, const struct sieve_callbacks *callbacks,
-		void *context, bool debug);
+struct sieve_instance *sieve_init(const struct sieve_environment *env,
+				  const struct sieve_callbacks *callbacks,
+				  void *context, bool debug);
 
 /* sieve_deinit():
  *   Frees all memory allocated by the sieve engine.
@@ -28,14 +28,14 @@ void sieve_deinit(struct sieve_instance **_svinst);
 /* sieve_get_capabilities():
  *
  */
-const char *sieve_get_capabilities
-	(struct sieve_instance *svinst, const char *name);
+const char *sieve_get_capabilities(struct sieve_instance *svinst,
+				   const char *name);
 
 /* sieve_set_extensions():
  *
  */
-void sieve_set_extensions
-	(struct sieve_instance *svinst, const char *extensions);
+void sieve_set_extensions(struct sieve_instance *svinst,
+			  const char *extensions);
 
 /*
  * Script compilation
@@ -43,20 +43,23 @@ void sieve_set_extensions
 
 /* sieve_compile_script:
  */
-struct sieve_binary *sieve_compile_script
-	(struct sieve_script *script, struct sieve_error_handler *ehandler,
-		enum sieve_compile_flags flags, enum sieve_error *error_r)
-		ATTR_NULL(2, 4);
+struct sieve_binary *sieve_compile_script(struct sieve_script *script,
+					  struct sieve_error_handler *ehandler,
+					  enum sieve_compile_flags flags,
+					  enum sieve_error *error_r)
+					  ATTR_NULL(2, 4);
 
 /* sieve_compile:
  *
  *   Compiles the script into a binary.
  */
-struct sieve_binary *sieve_compile
-	(struct sieve_instance *svinst, const char *script_location,
-		const char *script_name, struct sieve_error_handler *ehandler,
-		enum sieve_compile_flags flags, enum sieve_error *error_r)
-		ATTR_NULL(3, 4, 6);
+struct sieve_binary *sieve_compile(struct sieve_instance *svinst,
+				   const char *script_location,
+				   const char *script_name,
+				   struct sieve_error_handler *ehandler,
+				   enum sieve_compile_flags flags,
+				   enum sieve_error *error_r)
+				   ATTR_NULL(3, 4, 6);
 
 /*
  * Reading/writing Sieve binaries
@@ -66,9 +69,9 @@ struct sieve_binary *sieve_compile
  *
  *  Loads the sieve binary indicated by the provided path.
  */
-struct sieve_binary *sieve_load
-	(struct sieve_instance *svinst, const char *bin_path,
-		enum sieve_error *error_r);
+struct sieve_binary *sieve_load(struct sieve_instance *svinst,
+				const char *bin_path,
+				enum sieve_error *error_r);
 
 /* sieve_open_script:
  *
@@ -76,9 +79,10 @@ struct sieve_binary *sieve_load
  *   does not exist or if it contains errors, the script is (re-)compiled. Note
  *   that errors in the bytecode are caught only at runtime.
  */
-struct sieve_binary *sieve_open_script
-	(struct sieve_script *script, struct sieve_error_handler *ehandler,
-		enum sieve_compile_flags flags, enum sieve_error *error_r);
+struct sieve_binary *sieve_open_script(struct sieve_script *script,
+				       struct sieve_error_handler *ehandler,
+				       enum sieve_compile_flags flags,
+				       enum sieve_error *error_r);
 
 /* sieve_open:
  *
@@ -86,10 +90,12 @@ struct sieve_binary *sieve_open_script
  *   does not exist or if it contains errors, the script is (re-)compiled. Note
  *   that errors in the bytecode are caught only at runtime.
  */
-struct sieve_binary *sieve_open
-	(struct sieve_instance *svinst, const char *script_location,
-		const char *script_name, struct sieve_error_handler *ehandler,
-		enum sieve_compile_flags flags, enum sieve_error *error_r);
+struct sieve_binary *sieve_open(struct sieve_instance *svinst,
+				const char *script_location,
+				const char *script_name,
+				struct sieve_error_handler *ehandler,
+				enum sieve_compile_flags flags,
+				enum sieve_error *error_r);
 
 /* sieve_save_as:
  *
@@ -97,9 +103,8 @@ struct sieve_binary *sieve_open
  *  will not write the binary to disk when it was loaded from the indicated
  *  bin_path, unless update is TRUE.
  */
-int sieve_save_as
-	(struct sieve_binary *sbin, const char *bin_path, bool update,
-		mode_t save_mode, enum sieve_error *error_r);
+int sieve_save_as(struct sieve_binary *sbin, const char *bin_path, bool update,
+		  mode_t save_mode, enum sieve_error *error_r);
 
 /* sieve_save:
  *
@@ -107,8 +112,8 @@ int sieve_save_as
  *  the binary it was loaded earlier from the default location, unless update
  *  is TRUE.
  */
-int sieve_save
-	(struct sieve_binary *sbin, bool update, enum sieve_error *error_r);
+int sieve_save(struct sieve_binary *sbin, bool update,
+	       enum sieve_error *error_r);
 
 /* sieve_close:
  *
@@ -137,25 +142,25 @@ bool sieve_is_loaded(struct sieve_binary *sbin);
  *
  *   Dumps the byte code in human-readable form to the specified ostream.
  */
-void sieve_dump
-	(struct sieve_binary *sbin, struct ostream *stream, bool verbose);
+void sieve_dump(struct sieve_binary *sbin,
+		struct ostream *stream, bool verbose);
 
 /* sieve_hexdump:
  *
  *   Dumps the byte code in hexdump form to the specified ostream.
  */
 
-void sieve_hexdump
-	(struct sieve_binary *sbin, struct ostream *stream);
+void sieve_hexdump(struct sieve_binary *sbin, struct ostream *stream);
 
 /* sieve_test:
  *
  *   Executes the bytecode, but only prints the result to the given stream.
  */
-int sieve_test
-	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-		struct ostream *stream, enum sieve_execute_flags flags, bool *keep);
+int sieve_test(struct sieve_binary *sbin,
+	       const struct sieve_message_data *msgdata,
+	       const struct sieve_script_env *senv,
+	       struct sieve_error_handler *ehandler, struct ostream *stream,
+	       enum sieve_execute_flags flags, bool *keep);
 
 /*
  * Script execution
@@ -165,19 +170,19 @@ int sieve_test
  *
  *   Initializes the scirpt environment from the given mail_user.
  */
-int sieve_script_env_init(struct sieve_script_env *senv,
-	struct mail_user *user, const char **error_r);
+int sieve_script_env_init(struct sieve_script_env *senv, struct mail_user *user,
+			  const char **error_r);
 
 /* sieve_execute:
  *
  *   Executes the binary, including the result.
  */
-int sieve_execute
-	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv,
-		struct sieve_error_handler *exec_ehandler,
-		struct sieve_error_handler *action_ehandler,
-		enum sieve_execute_flags flags, bool *keep);
+int sieve_execute(struct sieve_binary *sbin,
+		  const struct sieve_message_data *msgdata,
+		  const struct sieve_script_env *senv,
+		  struct sieve_error_handler *exec_ehandler,
+		  struct sieve_error_handler *action_ehandler,
+		  enum sieve_execute_flags flags, bool *keep);
 
 /*
  * Multiscript support
@@ -185,37 +190,37 @@ int sieve_execute
 
 struct sieve_multiscript;
 
-struct sieve_multiscript *sieve_multiscript_start_execute
-	(struct sieve_instance *svinst, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv);
-struct sieve_multiscript *sieve_multiscript_start_test
-	(struct sieve_instance *svinst, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct ostream *stream);
+struct sieve_multiscript *
+sieve_multiscript_start_execute(struct sieve_instance *svinst,
+				const struct sieve_message_data *msgdata,
+				const struct sieve_script_env *senv);
+struct sieve_multiscript *
+sieve_multiscript_start_test(struct sieve_instance *svinst,
+			     const struct sieve_message_data *msgdata,
+			     const struct sieve_script_env *senv,
+			     struct ostream *stream);
 
-bool sieve_multiscript_run
-	(struct sieve_multiscript *mscript, struct sieve_binary *sbin,
-		struct sieve_error_handler *exec_ehandler,
-		struct sieve_error_handler *action_ehandler,
-		enum sieve_execute_flags flags);
+bool sieve_multiscript_run(struct sieve_multiscript *mscript,
+			   struct sieve_binary *sbin,
+			   struct sieve_error_handler *exec_ehandler,
+			   struct sieve_error_handler *action_ehandler,
+			   enum sieve_execute_flags flags);
 
-bool sieve_multiscript_will_discard
-	(struct sieve_multiscript *mscript);
-void sieve_multiscript_run_discard
-	(struct sieve_multiscript *mscript, struct sieve_binary *sbin,
-		struct sieve_error_handler *exec_ehandler,
-		struct sieve_error_handler *action_ehandler,
-		enum sieve_execute_flags flags);
+bool sieve_multiscript_will_discard(struct sieve_multiscript *mscript);
+void sieve_multiscript_run_discard(struct sieve_multiscript *mscript,
+				   struct sieve_binary *sbin,
+				   struct sieve_error_handler *exec_ehandler,
+				   struct sieve_error_handler *action_ehandler,
+				   enum sieve_execute_flags flags);
 
 int sieve_multiscript_status(struct sieve_multiscript *mscript);
 
-int sieve_multiscript_tempfail
-	(struct sieve_multiscript **_mscript,
-		struct sieve_error_handler *action_ehandler,
-		enum sieve_execute_flags flags);
-int sieve_multiscript_finish
-	(struct sieve_multiscript **_mscript,
-		struct sieve_error_handler *action_ehandler,
-		enum sieve_execute_flags flags, bool *keep);
+int sieve_multiscript_tempfail(struct sieve_multiscript **_mscript,
+			       struct sieve_error_handler *action_ehandler,
+			       enum sieve_execute_flags flags);
+int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
+			     struct sieve_error_handler *action_ehandler,
+			     enum sieve_execute_flags flags, bool *keep);
 
 /*
  * Configured limits
@@ -229,10 +234,9 @@ size_t sieve_max_script_size(struct sieve_instance *svinst);
  * User log
  */
 
-const char *sieve_user_get_log_path
-	(struct sieve_instance *svinst,
-		struct sieve_script *user_script)
-	ATTR_NULL(2);
+const char *sieve_user_get_log_path(struct sieve_instance *svinst,
+				    struct sieve_script *user_script)
+				    ATTR_NULL(2);
 
 /*
  * Script trace log
@@ -240,23 +244,19 @@ const char *sieve_user_get_log_path
 
 struct sieve_trace_log;
 
-int sieve_trace_log_create
-	(struct sieve_instance *svinst, const char *path,
-		struct sieve_trace_log **trace_log_r)
-	ATTR_NULL(2);
-int sieve_trace_log_create_dir
-	(struct sieve_instance *svinst, const char *dir,
-		const char *label, struct sieve_trace_log **trace_log_r)
-	ATTR_NULL(3);
+int sieve_trace_log_create(struct sieve_instance *svinst, const char *path,
+			   struct sieve_trace_log **trace_log_r) ATTR_NULL(2);
+int sieve_trace_log_create_dir(struct sieve_instance *svinst, const char *dir,
+			       const char *label,
+			       struct sieve_trace_log **trace_log_r)
+			       ATTR_NULL(3);
 
-int sieve_trace_log_open
-	(struct sieve_instance *svinst, const char *label,
-		struct sieve_trace_log **trace_log_r)
-	ATTR_NULL(2);
+int sieve_trace_log_open(struct sieve_instance *svinst, const char *label,
+			 struct sieve_trace_log **trace_log_r) ATTR_NULL(2);
 
 void sieve_trace_log_free(struct sieve_trace_log **_trace_log);
 
 int sieve_trace_config_get(struct sieve_instance *svinst,
-	struct sieve_trace_config *tr_config);
+			   struct sieve_trace_config *tr_config);
 
 #endif
