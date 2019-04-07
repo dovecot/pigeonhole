@@ -99,7 +99,6 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 
 	isieve->master_ehandler =
 		sieve_master_ehandler_create(isieve->svinst, 0);
-	sieve_system_ehandler_set(isieve->master_ehandler);
 	sieve_error_handler_accept_infolog(isieve->master_ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(isieve->master_ehandler, debug);
 

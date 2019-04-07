@@ -58,14 +58,14 @@ sieve_error_script_location(const struct sieve_script *script,
  * Initialization
  */
 
-void sieve_errors_init(struct sieve_instance *svinst)
+void sieve_errors_init(struct sieve_instance *svinst ATTR_UNUSED)
 {
-	svinst->system_ehandler = sieve_master_ehandler_create(svinst, 0);
+	/* nothing */
 }
 
-void sieve_errors_deinit(struct sieve_instance *svinst)
+void sieve_errors_deinit(struct sieve_instance *svinst ATTR_UNUSED)
 {
-	sieve_error_handler_unref(&svinst->system_ehandler);
+	/* nothing */
 }
 
 /*
@@ -162,25 +162,6 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 			}
 		}
 	}
-}
-
-/*
- * System errors
- */
-
-void sieve_system_ehandler_set(struct sieve_error_handler *ehandler)
-{
-	struct sieve_instance *svinst = ehandler->svinst;
-
-	sieve_error_handler_unref(&svinst->system_ehandler);
-	svinst->system_ehandler = ehandler;
-	sieve_error_handler_ref(ehandler);
-}
-
-struct sieve_error_handler *
-sieve_system_ehandler_get(struct sieve_instance *svinst)
-{
-	return svinst->system_ehandler;
 }
 
 /*

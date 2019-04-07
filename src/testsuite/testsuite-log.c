@@ -229,7 +229,6 @@ void testsuite_log_init(bool log_stdout)
 	sieve_error_handler_accept_infolog(testsuite_log_main_ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(testsuite_log_main_ehandler, TRUE);
 
-	sieve_system_ehandler_set(testsuite_log_ehandler);
 	i_set_error_handler(testsuite_error_handler);
 	i_set_info_handler(testsuite_error_handler);
 	i_set_debug_handler(testsuite_error_handler);

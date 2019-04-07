@@ -186,9 +186,6 @@ struct sieve_instance {
 	/* Storage class registry */
 	struct sieve_storage_class_registry *storage_reg;
 
-	/* System error handler */
-	struct sieve_error_handler *system_ehandler;
-
 	/* Plugin modules */
 	struct sieve_plugin *plugins;
 	enum sieve_env_location env_location;

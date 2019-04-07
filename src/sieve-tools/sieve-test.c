@@ -258,7 +258,6 @@ int main(int argc, char **argv)
 
 	/* Create error handler */
 	ehandler = sieve_stderr_ehandler_create(svinst, 0);
-	sieve_system_ehandler_set(ehandler);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 

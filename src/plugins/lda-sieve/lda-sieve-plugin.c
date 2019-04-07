@@ -967,7 +967,6 @@ lda_sieve_deliver_mail(struct mail_deliver_context *mdctx,
 	/* Initialize master error handler */
 
 	srctx.master_ehandler = sieve_master_ehandler_create(srctx.svinst, 0);
-	sieve_system_ehandler_set(srctx.master_ehandler);
 
 	sieve_error_handler_accept_infolog(srctx.master_ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(srctx.master_ehandler, debug);

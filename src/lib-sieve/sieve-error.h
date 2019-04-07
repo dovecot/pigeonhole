@@ -34,14 +34,6 @@ struct sieve_error_params {
 };
 
 /*
- * System errors
- */
-
-void sieve_system_ehandler_set(struct sieve_error_handler *ehandler);
-struct sieve_error_handler *
-sieve_system_ehandler_get(struct sieve_instance *svinst);
-
-/*
  * Global (user+system) errors
  */
 
