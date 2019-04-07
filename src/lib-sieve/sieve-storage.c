@@ -1193,8 +1193,9 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 			/* Failed to activate; roll back */
 			ret = -1;
 			(void)sieve_script_delete(script, TRUE);
-			sieve_script_unref(&script);
 		}
+		if (script != NULL)
+			sieve_script_unref(&script);
 
 		if (ret < 0) {
 			sieve_storage_sys_error(storage,
