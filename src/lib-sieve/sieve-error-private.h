@@ -36,18 +36,15 @@ struct sieve_error_handler {
 	unsigned int errors;
 	unsigned int warnings;
 
-	/* Should the errorhandler handle or discard info/debug log?
-	 * (This does not influence the previous setting)
-	 */
-	bool log_info;
-	bool log_debug;
-
 	void (*logv)(struct sieve_error_handler *ehandler,
 		     const struct sieve_error_params *params,
 		     enum sieve_error_flags flags,
 		     const char *fmt, va_list args) ATTR_FORMAT(4, 0);
 
 	void (*free)(struct sieve_error_handler *ehandler);
+
+	bool log_info:1;   /* handle or discard info log */
+	bool log_debug:1;  /* handle or discard debug log */
 };
 
 void sieve_error_handler_init(struct sieve_error_handler *ehandler,
