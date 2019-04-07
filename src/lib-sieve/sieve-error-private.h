@@ -43,8 +43,9 @@ struct sieve_error_handler {
 
 	void (*free)(struct sieve_error_handler *ehandler);
 
-	bool log_info:1;   /* handle or discard info log */
-	bool log_debug:1;  /* handle or discard debug log */
+	bool master_log:1;   /* this logs through master log facility */
+	bool log_info:1;     /* handle or discard info log */
+	bool log_debug:1;    /* handle or discard debug log */
 };
 
 void sieve_error_handler_init(struct sieve_error_handler *ehandler,

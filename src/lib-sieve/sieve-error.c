@@ -534,6 +534,7 @@ void sieve_error_handler_init_from_parent(struct sieve_error_handler *ehandler,
 	ehandler->parent = parent;
 	sieve_error_handler_ref(parent);
 
+	ehandler->master_log = parent->master_log;
 	ehandler->log_info = parent->log_info;
 	ehandler->log_debug = parent->log_debug;
 }
@@ -628,6 +629,7 @@ sieve_master_ehandler_create(struct sieve_instance *svinst,
 	pool = pool_alloconly_create("master_error_handler", 256);
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
 	sieve_error_handler_init(ehandler, svinst, pool, max_errors);
+	ehandler->master_log = TRUE;
 	ehandler->log_debug = svinst->debug;
 
 	ehandler->logv = sieve_master_logv;
