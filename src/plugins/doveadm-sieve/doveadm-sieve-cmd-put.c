@@ -123,6 +123,8 @@ static int cmd_sieve_put_run
 			doveadm_sieve_cmd_failed_error(_ctx, error);
 			ret = -1;
 		}
+		if (script != NULL)
+			sieve_script_unref(&script);
 	}
 
 	i_assert(input->eof);
