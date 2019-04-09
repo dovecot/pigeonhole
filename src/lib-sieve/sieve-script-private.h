@@ -51,6 +51,7 @@ struct sieve_script {
 	pool_t pool;
 	unsigned int refcount;
 	struct sieve_storage *storage;
+	struct event *event;
 
 	const char *driver_name;
 	const struct sieve_script *script_class;

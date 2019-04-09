@@ -101,6 +101,11 @@ void sieve_script_init(struct sieve_script *script,
 	script->location = p_strdup_empty(script->pool, location);
 	script->name = p_strdup(script->pool, name);
 
+	script->event = event_create(storage->svinst->event);
+	event_set_append_log_prefix(
+		script->event,
+		t_strdup_printf("%s script: ", script_class->driver_name));
+
 	sieve_storage_ref(storage);
 }
 
@@ -147,6 +152,7 @@ void sieve_script_unref(struct sieve_script **_script)
 		script->v.destroy(script);
 
 	sieve_storage_unref(&script->storage);
+	event_unref(&script->event);
 	pool_unref(&script->pool);
 	*_script = NULL;
 }
