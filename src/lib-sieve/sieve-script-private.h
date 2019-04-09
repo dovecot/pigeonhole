@@ -90,15 +90,6 @@ void sieve_script_set_internal_error(struct sieve_script *script);
 void sieve_script_set_critical(struct sieve_script *script,
 			       const char *fmt, ...) ATTR_FORMAT(2, 3);
 
-void sieve_script_sys_error(struct sieve_script *script, const char *fmt, ...)
-			    ATTR_FORMAT(2, 3);
-void sieve_script_sys_warning(struct sieve_script *script, const char *fmt, ...)
-			      ATTR_FORMAT(2, 3);
-void sieve_script_sys_info(struct sieve_script *script, const char *fmt, ...)
-			   ATTR_FORMAT(2, 3);
-void sieve_script_sys_debug(struct sieve_script *script, const char *fmt, ...)
-			    ATTR_FORMAT(2, 3);
-
 /*
  * Script sequence
  */

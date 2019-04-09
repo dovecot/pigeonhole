@@ -781,50 +781,6 @@ const char *sieve_script_get_last_error_lcase(struct sieve_script *script)
 	return errormsg;
 }
 
-void sieve_script_sys_error(struct sieve_script *script, const char *fmt, ...)
-{
-	struct sieve_instance *svinst = script->storage->svinst;
-	va_list va;
-
-	va_start(va, fmt);
-	e_error(svinst->event, "%s script: %s",
-		script->driver_name, t_strdup_vprintf(fmt, va));
-	va_end(va);
-}
-
-void sieve_script_sys_warning(struct sieve_script *script, const char *fmt, ...)
-{
-	struct sieve_instance *svinst = script->storage->svinst;
-	va_list va;
-
-	va_start(va, fmt);
-	e_warning(svinst->event, "%s script: %s",
-		  script->driver_name, t_strdup_vprintf(fmt, va));
-	va_end(va);	
-}
-
-void sieve_script_sys_info(struct sieve_script *script, const char *fmt, ...)
-{
-	struct sieve_instance *svinst = script->storage->svinst;
-	va_list va;
-
-	va_start(va, fmt);
-	e_info(svinst->event, "%s script: %s",
-	       script->driver_name, t_strdup_vprintf(fmt, va));
-	va_end(va);	
-}
-
-void sieve_script_sys_debug(struct sieve_script *script, const char *fmt, ...)
-{
-	struct sieve_instance *svinst = script->storage->svinst;
-	va_list va;
-
-	va_start(va, fmt);
-	e_debug(svinst->event, "%s script: %s",
-		script->driver_name, t_strdup_vprintf(fmt, va));
-	va_end(va);
-}
-
 /*
  * Script sequence
  */
