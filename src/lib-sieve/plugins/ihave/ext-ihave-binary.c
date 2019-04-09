@@ -161,9 +161,10 @@ static bool ext_ihave_binary_open
 
 		/* Read number of missing extensions to read subsequently */
 		if ( !sieve_binary_read_unsigned(sblock, &offset, &count) ) {
-			sieve_sys_error(svinst,
-				"ihave: failed to read missing extension count "
-				"from block %d of binary %s", block_id, sieve_binary_path(sbin));
+			e_error(svinst->event, "ihave: "
+				"failed to read missing extension count "
+				"from block %d of binary %s",
+				block_id, sieve_binary_path(sbin));
 			return FALSE;
 		}
 
@@ -174,9 +175,10 @@ static bool ext_ihave_binary_open
 
 			if ( !sieve_binary_read_string(sblock, &offset, &ext_name) ) {
 				/* Binary is corrupt, recompile */
-				sieve_sys_error(svinst,
-					"ihave: failed to read missing extension name "
-					"from block %d of binary %s", block_id, sieve_binary_path(sbin));
+				e_error(svinst->event, "ihave: "
+					"failed to read missing extension name "
+					"from block %d of binary %s",
+					block_id, sieve_binary_path(sbin));
 				return FALSE;
 			}
 

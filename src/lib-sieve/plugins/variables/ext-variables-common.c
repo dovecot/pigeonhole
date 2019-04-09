@@ -407,16 +407,16 @@ struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
 
 	/* Read scope size */
 	if ( !sieve_binary_read_unsigned(sblock, address, &scope_size) ) {
-		sieve_sys_error
-			(svinst, "%s: variable scope: failed to read size", ext_name);
+		e_error(svinst->event, "%s: "
+			"variable scope: failed to read size", ext_name);
 		return NULL;
 	}
 
 	/* Check size limit */
 	max_scope_size = sieve_variables_get_max_scope_size(var_ext);
 	if ( scope_size > max_scope_size ) {
-		sieve_sys_error(svinst,
-			"%s: variable scope: size exceeds the limit (%u > %u)",
+		e_error(svinst->event, "%s: "
+			"variable scope: size exceeds the limit (%u > %u)",
 			ext_name, scope_size, max_scope_size );
 		return NULL;
 	}
@@ -424,8 +424,8 @@ struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
 	/* Read offset */
 	pc = *address;
 	if ( !sieve_binary_read_offset(sblock, address, &end_offset) ) {
-		sieve_sys_error(svinst,
-			"%s: variable scope: failed to read end offset", ext_name);
+		e_error(svinst->event, "%s: "
+			"variable scope: failed to read end offset", ext_name);
 		return NULL;
 	}
 
@@ -460,8 +460,9 @@ struct sieve_variable_scope *sieve_variable_scope_binary_get
 			string_t *identifier;
 
 			if (!sieve_binary_read_string(scpbin->sblock, address, &identifier) ) {
-				sieve_sys_error(svinst,
-					"%s: variable scope: failed to read variable name", ext_name);
+				e_error(svinst->event, "%s: "
+					"variable scope: failed to read variable name",
+					ext_name);
 				return NULL;
 			}
 

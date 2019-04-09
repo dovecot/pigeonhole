@@ -950,8 +950,8 @@ int sieve_trace_log_create(struct sieve_instance *svinst, const char *path,
 	else {
 		fd = open(path, O_CREAT | O_APPEND | O_WRONLY, 0600);
 		if (fd == -1) {
-			sieve_sys_error(svinst, "trace: "
-					"creat(%s) failed: %m", path);
+			e_error(svinst->event, "trace: "
+				"creat(%s) failed: %m", path);
 			return -1;
 		}
 		output = o_stream_create_fd_autoclose(&fd, 0);
@@ -977,8 +977,8 @@ int sieve_trace_log_create_dir(struct sieve_instance *svinst, const char *dir,
 
 	if (stat(dir, &st) < 0) {
 		if (errno != ENOENT && errno != EACCES) {
-			sieve_sys_error(svinst, "trace: "
-					"stat(%s) failed: %m", dir);
+			e_error(svinst->event, "trace: "
+				"stat(%s) failed: %m", dir);
 		}
 		return -1;
 	}
@@ -1077,7 +1077,7 @@ int sieve_trace_config_get(struct sieve_instance *svinst,
 	else if (strcasecmp(tr_level, "matching") == 0)
 		tr_config->level = SIEVE_TRLVL_MATCHING;
 	else {
-		sieve_sys_error(svinst, "Unknown trace level: %s", tr_level);
+		e_error(svinst->event, "Unknown trace level: %s", tr_level);
 		return -1;
 	}
 

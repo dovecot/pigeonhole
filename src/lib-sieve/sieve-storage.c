@@ -151,11 +151,11 @@ sieve_storage_driver_parse(struct sieve_instance *svinst, const char **data,
 
 		storage_class = sieve_storage_find_class(svinst, driver);
 		if (storage_class == NULL) {
-			sieve_sys_error(svinst,
+			e_error(svinst->event,
 				"Unknown storage driver module `%s'",
 				driver);
 		} else if (storage_class->v.alloc == NULL) {
-			sieve_sys_error(svinst,
+			e_error(svinst->event,
 				"Support not compiled in for storage driver `%s'",
 				driver);
 			storage_class = NULL;
@@ -322,7 +322,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 
 	if ((flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 &&
 	    storage_class->v.save_init == NULL) {
-		sieve_sys_error(svinst, "%s storage: "
+		e_error(svinst->event, "%s storage: "
 			"Storage does not support write access",
 			storage_class->driver_name);
 		*error_r = SIEVE_ERROR_TEMP_FAILURE;
@@ -458,7 +458,7 @@ sieve_storage_do_create_main(struct sieve_instance *svinst,
 			}
 
 			if (ret > 0 && sieve_dir_class != &sieve_file_storage) {
-				sieve_sys_error(svinst, "storage: "
+				e_error(svinst->event, "storage: "
 					"Cannot use deprecated sieve_dir= setting "
 					"with `%s' driver for main Sieve storage",
 					sieve_dir_class->driver_name);
@@ -597,13 +597,13 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 					}
 					break;
 				case SIEVE_ERROR_TEMP_FAILURE:
-					sieve_sys_error(svinst, "storage: "
+					e_error(svinst->event, "storage: "
 						"Failed to access default script location `%s' "
 						"(temporary failure)",
 						set_default);
 					break;
 				default:
-					sieve_sys_error(svinst, "storage: "
+					e_error(svinst->event, "storage: "
 						"Failed to access default script location `%s'",
 						set_default);
 					break;
@@ -1401,8 +1401,9 @@ void sieve_storage_set_critical(struct sieve_storage *storage,
 	if (fmt != NULL) {
 		if ((storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0) {
 			va_start(va, fmt);
-			sieve_sys_error(storage->svinst, "%s storage: %s",
-				storage->driver_name, t_strdup_vprintf(fmt, va));
+			e_error(storage->svinst->event, "%s storage: %s",
+				storage->driver_name,
+				t_strdup_vprintf(fmt, va));
 			va_end(va);
 
 			sieve_storage_set_internal_error(storage);
@@ -1443,7 +1444,7 @@ void sieve_storage_sys_error(struct sieve_storage *storage,
 	va_list va;
 
 	va_start(va, fmt);
-	sieve_sys_error(svinst, "%s storage: %s",
+	e_error(svinst->event, "%s storage: %s",
 		storage->driver_name, t_strdup_vprintf(fmt, va));
 	va_end(va);
 }

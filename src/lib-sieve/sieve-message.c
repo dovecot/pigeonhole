@@ -352,7 +352,8 @@ int sieve_message_substitute
 		smtp_address_encode(sender), &box);
 
 	if ( ret < 0 ) {
-		sieve_sys_error(msgctx->svinst, "can't open substituted mail as raw: %s",
+		e_error(msgctx->svinst->event,
+			"can't open substituted mail as raw: %s",
 			mailbox_get_last_error(box, NULL));
 		return -1;
 	}

@@ -749,7 +749,7 @@ void sieve_script_set_critical(struct sieve_script *script,
 	if (fmt != NULL) {
 		if ((storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0) {
 			va_start(va, fmt);
-			sieve_sys_error(storage->svinst, "%s script: %s",
+			e_error(storage->svinst->event, "%s script: %s",
 				storage->driver_name, t_strdup_vprintf(fmt, va));
 			va_end(va);
 
@@ -789,7 +789,7 @@ void sieve_script_sys_error(struct sieve_script *script, const char *fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	sieve_sys_error(svinst, "%s script: %s",
+	e_error(svinst->event, "%s script: %s",
 		script->driver_name, t_strdup_vprintf(fmt, va));
 	va_end(va);
 }

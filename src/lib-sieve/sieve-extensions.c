@@ -318,8 +318,9 @@ static bool _sieve_extension_load(struct sieve_extension *ext)
 	/* Call load handler */
 	if ( ext->def != NULL && ext->def->load != NULL &&
 		!ext->def->load(ext, &ext->context) ) {
-		sieve_sys_error(ext->svinst,
-			"failed to load '%s' extension support.", ext->def->name);
+		e_error(ext->svinst->event,
+			"failed to load '%s' extension support.",
+			ext->def->name);
 		return FALSE;
 	}
 

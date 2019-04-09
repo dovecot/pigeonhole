@@ -193,7 +193,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 
 	box = mailbox_alloc(ns->list, folder, flags);
 	if ( mailbox_open(box) < 0 ) {
-		sieve_sys_error(testsuite_sieve_instance,
+		e_error(testsuite_sieve_instance->event,
 			"testsuite: failed to open mailbox '%s'", folder);
 		mailbox_free(&box);
 		return NULL;
@@ -202,7 +202,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	/* Sync mailbox */
 
 	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {
-		sieve_sys_error(testsuite_sieve_instance,
+		e_error(testsuite_sieve_instance->event,
 			"testsuite: failed to sync mailbox '%s'", folder);
 		mailbox_free(&box);
 		return NULL;
@@ -249,7 +249,7 @@ int testsuite_mailstore_set_imap_metadata
 	int ret;
 
 	if ( !imap_metadata_verify_entry_name(annotation, &error) ) {
-		sieve_sys_error(testsuite_sieve_instance,
+		e_error(testsuite_sieve_instance->event,
 			"testsuite: imap metadata: "
 			"specified annotation name `%s' is invalid: %s",
 			str_sanitize(annotation, 256), error);
@@ -282,7 +282,7 @@ int testsuite_mailstore_set_imap_metadata
 		mailbox_free(&box);
 
 	if ( ret < 0 ) {
-		sieve_sys_error(testsuite_sieve_instance,
+		e_error(testsuite_sieve_instance->event,
 			"testsuite: imap metadata: "
 			"failed to assign annotation `%s': %s",
 			str_sanitize(annotation, 256), error);

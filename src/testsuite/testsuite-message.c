@@ -178,7 +178,7 @@ void testsuite_envelope_set_sender
 		SMTP_ADDRESS_PARSE_FLAG_ALLOW_EMPTY |
 		SMTP_ADDRESS_PARSE_FLAG_BRACKETS_OPTIONAL,
 		&address, &error) < 0) {
-		sieve_sys_error(testsuite_sieve_instance,
+		e_error(testsuite_sieve_instance->event,
 			"testsuite: envelope sender address "
 			"`%s' is invalid: %s", value, error);
 	}
@@ -210,7 +210,7 @@ void testsuite_envelope_set_recipient
 		SMTP_ADDRESS_PARSE_FLAG_ALLOW_LOCALPART |
 		SMTP_ADDRESS_PARSE_FLAG_BRACKETS_OPTIONAL,
 		&address, &error) < 0) {
-		sieve_sys_error(testsuite_sieve_instance,
+		e_error(testsuite_sieve_instance->event,
 			"testsuite: envelope recipient address "
 			"`%s' is invalid: %s", value, error);
 	}
@@ -239,7 +239,7 @@ void testsuite_envelope_set_orig_recipient
 		SMTP_ADDRESS_PARSE_FLAG_ALLOW_LOCALPART |
 		SMTP_ADDRESS_PARSE_FLAG_BRACKETS_OPTIONAL,
 		&address, &error) < 0) {
-		sieve_sys_error(testsuite_sieve_instance,
+		e_error(testsuite_sieve_instance->event,
 			"testsuite: envelope recipient address "
 			"`%s' is invalid: %s", value, error);
 	}
