@@ -44,9 +44,8 @@ struct sieve_storage_list_context *sieve_file_storage_list_init
 			sieve_storage_set_error(storage,
 				SIEVE_ERROR_NO_PERMISSION,
 				"Script storage not accessible");
-			sieve_storage_sys_error(storage,
-				"Failed to list scripts: "
-				"%s", eacces_error_get("opendir", fstorage->path));
+			e_error(storage->event, "Failed to list scripts: %s",
+				eacces_error_get("opendir", fstorage->path));
 			break;
 		default:
 			sieve_storage_set_critical(storage,
@@ -72,7 +71,7 @@ struct sieve_storage_list_context *sieve_file_storage_list_init
 
 	if ( flctx == NULL ) {
 		if ( closedir(dirp) < 0) {
-			sieve_storage_sys_error(storage,
+			e_error(storage->event,
 				"closedir(%s) failed: %m", fstorage->path);	
 		}
 		return NULL;
@@ -126,7 +125,7 @@ int sieve_file_storage_list_deinit(struct sieve_storage_list_context *lctx)
 		(const struct sieve_file_storage *)lctx->storage;
 
 	if (closedir(flctx->dirp) < 0) {
-		sieve_storage_sys_error(lctx->storage,
+		e_error(lctx->storage->event,
 			"closedir(%s) failed: %m", fstorage->path);
 	}
 

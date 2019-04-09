@@ -47,9 +47,9 @@ static int sieve_file_script_sequence_read_dir
 			sieve_storage_set_error(storage,
 				SIEVE_ERROR_NO_PERMISSION,
 				"Script sequence location not accessible");
-			sieve_storage_sys_error(storage,
-				"Failed to open sieve sequence: "
-				"%s",	eacces_error_get("stat", path));
+			e_error(storage->event,
+				"Failed to open sieve sequence: %s",
+				eacces_error_get("stat", path));
 			break;
 		default:
 			sieve_storage_set_critical(storage,
@@ -113,7 +113,7 @@ static int sieve_file_script_sequence_read_dir
 
 	/* Close the directory */
 	if ( dirp != NULL && closedir(dirp) < 0 ) {
-		sieve_storage_sys_error(storage,
+		e_error(storage->event,
 			"Failed to close sequence directory: "
 			"closedir(%s) failed: %m", path);
 	}
@@ -143,9 +143,9 @@ struct sieve_script_sequence *sieve_file_storage_get_script_sequence
 			sieve_storage_set_error(storage,
 				SIEVE_ERROR_NO_PERMISSION,
 				"Script sequence location not accessible");
-			sieve_storage_sys_error(storage,
-				"Failed to open sieve sequence: "
-				"%s",	eacces_error_get("stat", fstorage->path));
+			e_error(storage->event,
+				"Failed to open sieve sequence: %s",
+				eacces_error_get("stat", fstorage->path));
 			break;
 		default:
 			sieve_storage_set_critical(storage,

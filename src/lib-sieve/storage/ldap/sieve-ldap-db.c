@@ -115,7 +115,7 @@ static int ldap_get_errno(struct ldap_connection *conn)
 
 	ret = ldap_get_option(conn->ld, LDAP_OPT_ERROR_NUMBER, (void *) &err);
 	if (ret != LDAP_SUCCESS) {
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"Can't get error number: %s",
 			ldap_err2string(ret));
 		return LDAP_UNAVAILABLE;
@@ -200,7 +200,7 @@ static int db_ldap_request_search(struct ldap_connection *conn,
 			    request->base, request->scope,
 			    request->filter, request->attributes, 0);
 	if (request->msgid == -1) {
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"ldap_search(%s) parsing failed: %s",
 			request->filter, ldap_get_error(conn));
 		if (ldap_handle_error(conn) < 0) {
@@ -279,7 +279,7 @@ db_ldap_check_limits(struct ldap_connection *conn)
 				   aqueue_idx(conn->request_queue, 0));
 	secs_diff = ioloop_time - (*first_requestp)->create_time;
 	if (secs_diff > DB_LDAP_REQUEST_LOST_TIMEOUT_SECS) {
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"Connection appears to be hanging, reconnecting");
 		ldap_conn_reconnect(conn);
 		return TRUE;
@@ -308,14 +308,14 @@ static int db_ldap_connect_finish(struct ldap_connection *conn, int ret)
 	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
 
 	if (ret == LDAP_SERVER_DOWN) {
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"Can't connect to server: %s",
 			set->uris != NULL ?
 			set->uris : set->hosts);
 		return -1;
 	}
 	if (ret != LDAP_SUCCESS) {
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"binding failed (dn %s): %s",
 			set->dn == NULL ? "(none)" : set->dn,
 			ldap_get_error(conn));
@@ -372,10 +372,9 @@ static void db_ldap_abort_requests(struct ldap_connection *conn,
 			i_assert(conn->pending_count > 0);
 			conn->pending_count--;
 		}
-		if (error) {
-			sieve_storage_sys_error(storage, "db: "
-				"%s", reason);
-		} else {
+		if (error)
+			e_error(storage->event, "db: %s", reason);
+		else {
 			sieve_storage_sys_debug(storage, "db: "
 				"%s", reason);
 		}
@@ -427,8 +426,7 @@ db_ldap_handle_request_result(struct ldap_connection *conn,
 		/* we're going to ignore this */
 		return FALSE;
 	default:
-		sieve_storage_sys_error(storage, "db: "
-			"Reply with unexpected type %d",
+		e_error(storage->event, "db: Reply with unexpected type %d",
 			ldap_msgtype(res->msg));
 		return TRUE;
 	}
@@ -442,7 +440,7 @@ db_ldap_handle_request_result(struct ldap_connection *conn,
 	}
 	if (ret != LDAP_SUCCESS) {
 		/* handle search failures here */
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"ldap_search(base=%s filter=%s) failed: %s",
 			request->base, request->filter,
 			ldap_err2string(ret));
@@ -515,8 +513,8 @@ db_ldap_handle_result(struct ldap_connection *conn, struct db_ldap_result *res)
 
 	request = db_ldap_find_request(conn, msgid, &idx);
 	if (request == NULL) {
-		sieve_storage_sys_error(storage, "db: "
-			"Reply with unknown msgid %d", msgid);
+		e_error(storage->event,
+			"db: Reply with unknown msgid %d", msgid);
 		return;
 	}
 
@@ -567,13 +565,13 @@ static void ldap_input(struct ldap_connection *conn)
 		while (db_ldap_request_queue_next(conn))
 			;
 	} else if (ldap_get_errno(conn) != LDAP_SERVER_DOWN) {
-		sieve_storage_sys_error(storage, "db: "
-			"ldap_result() failed: %s", ldap_get_error(conn));
+		e_error(storage->event, "db: ldap_result() failed: %s",
+			ldap_get_error(conn));
 		ldap_conn_reconnect(conn);
 	} else if (aqueue_count(conn->request_queue) > 0 ||
 		   prev_reply_diff < DB_LDAP_IDLE_RECONNECT_SECS) {
-		sieve_storage_sys_error(storage, "db: "
-			"Connection lost to LDAP server, reconnecting");
+		e_error(storage->event,
+			"db: Connection lost to LDAP server, reconnecting");
 		ldap_conn_reconnect(conn);
 	} else {
 		/* server probably disconnected an idle connection. don't
@@ -624,8 +622,7 @@ static void ldap_connection_timeout(struct ldap_connection *conn)
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	i_assert(conn->conn_state == LDAP_CONN_STATE_BINDING);
 
-	sieve_storage_sys_error(storage, "db: "
-		"Initial binding to LDAP server timed out");
+	e_error(storage->event, "db: Initial binding to LDAP server timed out");
 	db_ldap_conn_close(conn);
 }
 
@@ -666,14 +663,15 @@ static int db_ldap_get_fd(struct ldap_connection *conn)
 	/* get the connection's fd */
 	ret = ldap_get_option(conn->ld, LDAP_OPT_DESC, (void *)&conn->fd);
 	if (ret != LDAP_SUCCESS) {
-		sieve_storage_sys_error(storage, "db: "
-			"Can't get connection fd: %s", ldap_err2string(ret));
+		e_error(storage->event, "db: Can't get connection fd: %s",
+			ldap_err2string(ret));
 		return -1;
 	}
 	if (conn->fd <= STDERR_FILENO) {
 		/* Solaris LDAP library seems to be broken */
-		sieve_storage_sys_error(storage, "db: "
-			"Buggy LDAP library returned wrong fd: %d",	conn->fd);
+		e_error(storage->event,
+			"db: Buggy LDAP library returned wrong fd: %d",
+			conn->fd);
 		return -1;
 	}
 	i_assert(conn->fd != -1);
@@ -690,8 +688,7 @@ db_ldap_set_opt(struct ldap_connection *conn, int opt, const void *value,
 
 	ret = ldap_set_option(conn->ld, opt, value);
 	if (ret != LDAP_SUCCESS) {
-		sieve_storage_sys_error(storage, "db: "
-			"Can't set option %s to %s: %s",
+		e_error(storage->event, "db: Can't set option %s to %s: %s",
 			optname, value_str, ldap_err2string(ret));
 		return -1;
 	}
@@ -770,13 +767,13 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 
 	if (set->ldap_version < 3) {
 		if (set->sasl_bind) {
-			sieve_storage_sys_error(storage, "db: "
-				"sasl_bind=yes requires ldap_version=3");
+			e_error(storage->event,
+				"db: sasl_bind=yes requires ldap_version=3");
 			return -1;
 		}
 		if (set->tls) {
-			sieve_storage_sys_error(storage, "db: "
-			"tls=yes requires ldap_version=3");
+			e_error(storage->event,
+				"db: tls=yes requires ldap_version=3");
 			return -1;
 		}
 	}
@@ -819,7 +816,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 			if (ldap_initialize(&conn->ld, set->uris) != LDAP_SUCCESS)
 				conn->ld = NULL;
 #else
-			sieve_storage_sys_error(storage, "db: "
+			e_error(storage->event, "db: "
 				"Your LDAP library doesn't support "
 				"'uris' setting, use 'hosts' instead.");
 			return -1;
@@ -828,7 +825,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 			conn->ld = ldap_init(set->hosts, LDAP_PORT);
 
 		if (conn->ld == NULL) {
-			sieve_storage_sys_error(storage, "db: "
+			e_error(storage->event, "db: "
 				"ldap_init() failed with hosts: %s",	set->hosts);
 			return -1;
 		}
@@ -844,15 +841,16 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 			if (ret == LDAP_OPERATIONS_ERROR &&
 			    set->uris != NULL &&
 			    str_begins(set->uris, "ldaps:")) {
-				sieve_storage_sys_error(storage, "db: "
+				e_error(storage->event, "db: "
 					"Don't use both tls=yes and ldaps URI");
 			}
-			sieve_storage_sys_error(storage, "db: "
-				"ldap_start_tls_s() failed: %s", ldap_err2string(ret));
+			e_error(storage->event, "db: "
+				"ldap_start_tls_s() failed: %s",
+				ldap_err2string(ret));
 			return -1;
 		}
 #else
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"Your LDAP library doesn't support TLS");
 		return -1;
 #endif
@@ -877,7 +875,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 		if (db_ldap_connect_finish(conn, ret) < 0)
 			return -1;
 #else
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"sasl_bind=yes but no SASL support compiled in");
 		return -1;
 #endif
@@ -1274,7 +1272,7 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 
 	str = t_str_new(512);
 	if (var_expand(str, set->base, tab, &error) <= 0) {
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"Failed to expand base=%s: %s",
 			set->base, error);
 		return -1;
@@ -1286,7 +1284,7 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 
 	str_truncate(str, 0);
 	if (var_expand(str, set->sieve_ldap_filter, tab, &error) <= 0) {
-		sieve_storage_sys_error(storage, "db: "
+		e_error(storage->event, "db: "
 			"Failed to expand sieve_ldap_filter=%s: %s",
 			set->sieve_ldap_filter, error);
 		return -1;
@@ -1337,7 +1335,7 @@ sieve_ldap_read_script_callback(struct ldap_connection *conn,
 		if (srequest->result == NULL) {
 			(void)sieve_ldap_db_get_script(conn, res, &srequest->result);
 		} else {
-			sieve_storage_sys_error(storage, "db: "
+			e_error(storage->event, "db: "
 				"Search returned more than one entry for Sieve script DN");
 			i_stream_unref(&srequest->result);
 		}

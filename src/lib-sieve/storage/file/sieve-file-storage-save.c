@@ -368,12 +368,12 @@ static void sieve_file_storage_update_mtime
 		case ENOENT:
 			break;
 		case EACCES:
-			sieve_storage_sys_error(storage, "save: "
-				"%s", eacces_error_get("utime", path));
+			e_error(storage->event, "save: %s",
+				eacces_error_get("utime", path));
 			break;
 		default:
-			sieve_storage_sys_error(storage, "save: "
-				"utime(%s) failed: %m", path);
+			e_error(storage->event,
+				"save: utime(%s) failed: %m", path);
 		}
 	}
 }

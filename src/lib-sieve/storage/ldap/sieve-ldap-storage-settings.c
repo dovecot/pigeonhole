@@ -94,7 +94,7 @@ int sieve_ldap_storage_read_settings
 	struct stat st;
 
 	if ( stat(config_path, &st) < 0 ) {
-		sieve_storage_sys_error(storage,
+		e_error(storage->event,
 			"Failed to read LDAP storage config: "
 			"stat(%s) failed: %m", config_path);
 		return -1;

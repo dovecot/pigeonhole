@@ -192,7 +192,7 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 
 			if (strncasecmp(option, "name=", 5) == 0) {
 				if (option[5] == '\0') {
-					sieve_storage_sys_error(storage,
+					e_error(storage->event,
 						"Failed to parse storage location: "
 						"Empty name not allowed");
 					return -1;
@@ -200,7 +200,7 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 
 				if (storage->script_name == NULL) {
 					if (!sieve_script_name_is_valid(option+5)) {
-						sieve_storage_sys_error(storage,
+						e_error(storage->event,
 							"Failed to parse storage location: "
 							"Invalid script name `%s'.",
 							str_sanitize(option+5, 80));
@@ -213,7 +213,7 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 				const char *bin_dir = option+7;
 
 				if (bin_dir[0] == '\0') {
-					sieve_storage_sys_error(storage,
+					e_error(storage->event,
 						"Failed to parse storage location: "
 						"Empty bindir not allowed");
 					return -1;
@@ -226,7 +226,7 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 					if (home != NULL) {
 						bin_dir = home_expand_tilde(bin_dir, home);
 					} else if (bin_dir[1] == '/' || bin_dir[1] == '\0') {
-						sieve_storage_sys_error(storage,
+						e_error(storage->event,
 							"Failed to parse storage location: "
 							"bindir is relative to home directory (~/), "
 							"but home directory cannot be determined");
@@ -322,9 +322,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 
 	if ((flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 &&
 	    storage_class->v.save_init == NULL) {
-		e_error(svinst->event, "%s storage: "
-			"Storage does not support write access",
-			storage_class->driver_name);
+		e_error(event, "Storage does not support write access");
 		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		event_unref(&event);
 		return NULL;
@@ -548,7 +546,7 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 			sieve_setting_get(svinst, "sieve_default_name");
 		if (set_default_name != NULL && *set_default_name != '\0' &&
 		    !sieve_script_name_is_valid(set_default_name)) {
-			sieve_storage_sys_error(storage,
+			e_error(storage->event,
 				"Invalid script name `%s' for `sieve_default_name' setting.",
 				str_sanitize(set_default_name, 80));
 			set_default_name = NULL;
@@ -648,12 +646,12 @@ int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
 		return 0;
 
 	if (errno == EACCES) {
-		sieve_storage_sys_error(storage,
+		e_error(storage->event,
 			"Failed to setup directory for binaries: "
 			"%s",	eacces_error_get("stat", bin_dir));
 		return -1;
 	} else if (errno != ENOENT) {
-		sieve_storage_sys_error(storage,
+		e_error(storage->event,
 			"Failed to setup directory for binaries: "
 			"stat(%s) failed: %m",
 			bin_dir);
@@ -671,15 +669,15 @@ int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
 	case EEXIST:
 		return 0;
 	case ENOENT:
-		sieve_storage_sys_error(storage,
+		e_error(storage->event,
 			"Directory for binaries was deleted while it was being created");
 		break;
 	case EACCES:
-		sieve_storage_sys_error(storage,
+		e_error(storage->event,
 			"%s",	eacces_error_get_creating("mkdir_parents_chgrp", bin_dir));
 		break;
 	default:
-		sieve_storage_sys_error(storage,
+		e_error(storage->event,
 			"mkdir_parents_chgrp(%s) failed: %m", bin_dir);
 		break;
 	}
@@ -1220,7 +1218,7 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 			sieve_script_unref(&script);
 
 		if (ret < 0) {
-			sieve_storage_sys_error(storage,
+			e_error(storage->event,
 				"Failed to implicitly activate script `%s' "
 				"while replacing the default active script",
 				scriptname);

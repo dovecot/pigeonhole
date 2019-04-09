@@ -151,12 +151,12 @@ static int mkdir_verify
 		return 0;
 
 	if ( errno == EACCES ) {
-		sieve_storage_sys_error(storage,
-			"mkdir_verify: %s", eacces_error_get("stat", dir));
+		e_error(storage->event,	"mkdir_verify: %s",
+			eacces_error_get("stat", dir));
 		return -1;
 	} else if ( errno != ENOENT ) {
-		sieve_storage_sys_error(storage,
-			"mkdir_verify: stat(%s) failed: %m", dir);
+		e_error(storage->event, "mkdir_verify: "
+			"stat(%s) failed: %m", dir);
 		return -1;
 	}
 
@@ -170,15 +170,15 @@ static int mkdir_verify
 	case EEXIST:
 		return 0;
 	case ENOENT:
-		sieve_storage_sys_error(storage,
+		e_error(storage->event,
 			"Storage was deleted while it was being created");
 		break;
 	case EACCES:
-		sieve_storage_sys_error(storage,
-			"%s",	eacces_error_get_creating("mkdir_parents_chgrp", dir));
+		e_error(storage->event, "%s",
+			eacces_error_get_creating("mkdir_parents_chgrp", dir));
 		break;
 	default:
-		sieve_storage_sys_error(storage,
+		e_error(storage->event,
 			"mkdir_parents_chgrp(%s) failed: %m", dir);
 		break;
 	}
@@ -195,12 +195,11 @@ static int check_tmp(struct sieve_storage *storage, const char *path)
 		if ( errno == ENOENT )
 			return 0;
 		if ( errno == EACCES ) {
-			sieve_storage_sys_error(storage,
-				"check_tmp: %s", eacces_error_get("stat", path));
+			e_error(storage->event, "check_tmp: %s",
+				eacces_error_get("stat", path));
 			return -1;
 		}
-		sieve_storage_sys_error(storage,
-			"check_tmp: stat(%s) failed: %m", path);
+		e_error(storage->event, "check_tmp: stat(%s) failed: %m", path);
 		return -1;
 	}
 
@@ -340,9 +339,9 @@ static int sieve_file_storage_init_common
 
 		if (t_realpath(active_dir, &active_dir, &error) < 0) {
 			if (errno != ENOENT) {
-				sieve_storage_sys_error(storage,
-					"Failed to normalize active script directory (path=%s): %s",
-					active_dir, error);
+				e_error(storage->event,
+					"Failed to normalize active script directory "
+					"(path=%s): %s", active_dir, error);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			} 
@@ -461,7 +460,7 @@ static int sieve_file_storage_init_common
 
 	if ( have_link ) {
 		if ( t_realpath(storage_path, &storage_path, &error) < 0 ) {
-			sieve_storage_sys_error(storage,
+			e_error(storage->event,
 				"Failed to normalize storage path (path=%s): %s",
 				storage_path, error);
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
@@ -796,8 +795,9 @@ static int sieve_file_storage_get_last_change
 		/* Get the storage mtime before we modify it ourself */
 		if ( stat(fstorage->path, &st) < 0 ) {
 			if ( errno != ENOENT ) {
-				sieve_storage_sys_error(storage,
-					"stat(%s) failed: %m", fstorage->path);
+				e_error(storage->event,
+					"stat(%s) failed: %m",
+					fstorage->path);
 				return -1;
 			}
 			st.st_mtime = 0;
@@ -842,11 +842,11 @@ static void sieve_file_storage_set_modified
 		case ENOENT:
 			break;
 		case EACCES:
-			sieve_storage_sys_error(storage,
-				"%s", eacces_error_get("utime", fstorage->path));
+			e_error(storage->event, "%s",
+				eacces_error_get("utime", fstorage->path));
 			break;
 		default:
-			sieve_storage_sys_error(storage,
+			e_error(storage->event,
 				"utime(%s) failed: %m", fstorage->path);
 		}
 	} else {

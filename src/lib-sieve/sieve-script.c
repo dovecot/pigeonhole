@@ -608,7 +608,7 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 					sieve_script_unref(&newscript);
 
 				if (ret < 0) {
-					sieve_storage_sys_error(storage,
+					e_error(storage->event,
 						"Failed to implicitly activate script `%s' "
 						"after rename",	newname);
 					sieve_storage_copy_error(
