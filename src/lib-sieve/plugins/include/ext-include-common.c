@@ -157,7 +157,8 @@ struct sieve_storage *ext_include_get_script_storage
 
 	case EXT_INCLUDE_LOCATION_GLOBAL:
 		if ( ctx->global_location == NULL ) {
-			sieve_sys_info(svinst, "include: sieve_global is unconfigured; "
+			e_info(svinst->event, "include: "
+				"sieve_global is unconfigured; "
 				"include of `:global' script `%s' is therefore not possible",
 				str_sanitize(script_name, 80));
 			if ( error_r != NULL )

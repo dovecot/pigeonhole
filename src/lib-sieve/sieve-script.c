@@ -811,9 +811,9 @@ void sieve_script_sys_info(struct sieve_script *script, const char *fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	sieve_sys_info(svinst, "%s script: %s",
-		script->driver_name, t_strdup_vprintf(fmt, va));
-	va_end(va);
+	e_info(svinst->event, "%s script: %s",
+	       script->driver_name, t_strdup_vprintf(fmt, va));
+	va_end(va);	
 }
 
 void sieve_script_sys_debug(struct sieve_script *script, const char *fmt, ...)
