@@ -233,15 +233,6 @@ void sieve_storage_set_internal_error(struct sieve_storage *storage);
 void sieve_storage_copy_error(struct sieve_storage *storage,
 			      const struct sieve_storage *source);
 
-void sieve_storage_sys_error(struct sieve_storage *storage,
-			     const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_storage_sys_warning(struct sieve_storage *storage,
-			       const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_storage_sys_info(struct sieve_storage *storage,
-			    const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_storage_sys_debug(struct sieve_storage *storage,
-			     const char *fmt, ...) ATTR_FORMAT(2, 3);
-
 /*
  * Synchronization
  */
