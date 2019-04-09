@@ -177,12 +177,10 @@ int sieve_script_open(struct sieve_script *script, enum sieve_error *error_r)
 	script->open = TRUE;
 
 	if (*script->name != '\0') {
-		sieve_script_sys_debug(script,
-			"Opened script `%s' from `%s'",
+		e_debug(script->event, "Opened script `%s' from `%s'",
 			script->name, script->location);
 	} else {
-		sieve_script_sys_debug(script,
-			"Opened nameless script from `%s'",
+		e_debug(script->event, "Opened nameless script from `%s'",
 			script->location);
 	}
 	return 0;
@@ -377,7 +375,7 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 		return -1;
 	}
 	if (strcmp(str_c(storage_class), script->driver_name) != 0) {
-		sieve_script_sys_debug(script,
+		e_debug(script->event,
 			"Binary `%s' reports unexpected driver name for script `%s' "
 			"(`%s' rather than `%s')",
 			sieve_binary_path(sbin), script->location,
@@ -394,7 +392,7 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 		return -1;
 	}
 	if (script->storage->version != version) {
-		sieve_script_sys_debug(script,
+		e_debug(script->event,
 			"Binary `%s' was compiled with "
 			"a different version of the `%s' script storage class "
 			"(compiled v%d, expected v%d; "
@@ -414,10 +412,11 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 	}
 	i_assert(script->location != NULL);
 	if (strcmp(str_c(location), script->location) != 0) {
-		sieve_script_sys_debug(script,
+		e_debug(script->event,
 			"Binary `%s' reports different location "
 			"for script `%s' (binary points to `%s')",
-			sieve_binary_path(sbin), script->location, str_c(location));
+			sieve_binary_path(sbin), script->location,
+			str_c(location));
 		return 0;
 	}
 

@@ -89,7 +89,7 @@ static int sieve_dict_script_open
 				"Failed to lookup script id from path %s: %s", path, error);
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		} else {
-			sieve_script_sys_debug(script,
+			e_debug(script->event,
 				"Script `%s' not found at path %s", name, path);
 			sieve_script_set_error(script,
 				SIEVE_ERROR_NOT_FOUND,
@@ -163,7 +163,7 @@ static int sieve_dict_script_binary_read_metadata
 	}
 	i_assert( dscript->data_id != NULL );
 	if ( strcmp(str_c(data_id), dscript->data_id) != 0 ) {
-		sieve_script_sys_debug(script,
+		e_debug(script->event,
 			"Binary `%s' reports different data ID for script `%s' "
 			"(`%s' rather than `%s')",
 			sieve_binary_path(sbin), sieve_script_location(script),

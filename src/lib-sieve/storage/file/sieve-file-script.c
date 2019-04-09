@@ -67,8 +67,7 @@ static void sieve_file_script_handle_error
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			break;
 		}
-		sieve_script_sys_debug(script, "File `%s' not found",
-				       abspath);
+		e_debug(script->event, "File `%s' not found", abspath);
 		sieve_script_set_error(script,
 			SIEVE_ERROR_NOT_FOUND,
 			"Sieve script `%s' not found", name);
@@ -496,7 +495,7 @@ static int sieve_file_script_binary_read_metadata
 		(bstat->st_mtime == sstat->st_mtime &&
 			ST_MTIME_NSEC(*bstat) <= ST_MTIME_NSEC(*sstat)) ) {
 		if ( svinst->debug ) {
-			sieve_script_sys_debug(script,
+			e_debug(script->event,
 				"Sieve binary `%s' is not newer "
 				"than the Sieve script `%s' (%s.%lu <= %s.%lu)",
 				sieve_binary_path(sbin), sieve_script_location(script),
