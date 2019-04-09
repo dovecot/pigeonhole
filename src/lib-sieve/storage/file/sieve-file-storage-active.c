@@ -358,10 +358,10 @@ bool sieve_file_storage_active_rescue_regular
 					fstorage->active_path, dstpath);
 				result = FALSE;
 			} else {
-				sieve_storage_sys_info(storage,
-					"Moved active sieve script file '%s' "
-					"to script storage as '%s'.",
-					fstorage->active_path, dstpath);
+				e_info(storage->event,
+				       "Moved active sieve script file '%s' "
+				       "to script storage as '%s'.",
+				       fstorage->active_path, dstpath);
 			}
 		} T_END;
 
