@@ -28,9 +28,9 @@ bool sieve_setting_get_uint_value
 		return FALSE;
 
 	if ( str_to_ullong(str_value, value_r) < 0 ) {
-		sieve_sys_warning(svinst,
-			"invalid unsigned integer value for setting '%s': '%s'",
-			setting, str_value);
+		e_warning(svinst->event,
+			  "invalid unsigned integer value for setting '%s': "
+			  "'%s'", setting, str_value);
 		return FALSE;
 	}
 
@@ -49,9 +49,9 @@ bool sieve_setting_get_int_value
 		return FALSE;
 
 	if ( str_to_llong(str_value, value_r) < 0 ) {
-		sieve_sys_warning(svinst,
-			"invalid integer value for setting '%s': '%s'",
-			setting, str_value);
+		e_warning(svinst->event,
+			  "invalid integer value for setting '%s': '%s'",
+			  setting, str_value);
 		return FALSE;
 	}
 
@@ -72,9 +72,9 @@ bool sieve_setting_get_size_value
 		return FALSE;
 
 	if ( str_parse_uintmax(str_value, &value, &endp) < 0 ) {
-		sieve_sys_warning(svinst,
-			"invalid size value for setting '%s': '%s'",
-			setting, str_value);
+		e_warning(svinst->event,
+			  "invalid size value for setting '%s': '%s'",
+			  setting, str_value);
 		return FALSE;
 	}
 	switch (i_toupper(*endp)) {
@@ -95,16 +95,16 @@ bool sieve_setting_get_size_value
 		multiply = 1024ULL*1024*1024*1024;
 		break;
 	default:
-		sieve_sys_warning(svinst,
-			"invalid size value for setting '%s': '%s'",
-			setting, str_value);
+		e_warning(svinst->event,
+			  "invalid size value for setting '%s': '%s'",
+			  setting, str_value);
 		return FALSE;
 	}
 
 	if ( value > SSIZE_T_MAX / multiply ) {
-		sieve_sys_warning(svinst,
-			"overflowing size value for setting '%s': '%s'",
-			setting, str_value);
+		e_warning(svinst->event,
+			  "overflowing size value for setting '%s': '%s'",
+			  setting, str_value);
 		return FALSE;
 	}
 
@@ -136,9 +136,8 @@ bool sieve_setting_get_bool_value
 		return TRUE;
 	}
 
-	sieve_sys_warning(svinst,
-		"invalid boolean value for setting '%s': '%s'",
-		setting, str_value);
+	e_warning(svinst->event, "invalid boolean value for setting '%s': '%s'",
+		  setting, str_value);
 	return FALSE;
 }
 
@@ -159,9 +158,9 @@ bool sieve_setting_get_duration_value
 		return FALSE;
 
 	if ( str_parse_uintmax(str_value, &value, &endp) < 0 ) {
-		sieve_sys_warning(svinst,
-			"invalid duration value for setting '%s': '%s'",
-			setting, str_value);
+		e_warning(svinst->event,
+			  "invalid duration value for setting '%s': '%s'",
+			  setting, str_value);
 		return FALSE;
 	}
 	switch (i_tolower(*endp)) {
@@ -179,16 +178,16 @@ bool sieve_setting_get_duration_value
 		multiply = 24*60*60;
 		break;
 	default:
-		sieve_sys_warning(svinst,
-			"invalid duration value for setting '%s': '%s'",
-			setting, str_value);
+		e_warning(svinst->event,
+			  "invalid duration value for setting '%s': '%s'",
+			  setting, str_value);
 		return FALSE;
 	}
 
 	if ( value > SIEVE_MAX_NUMBER / multiply ) {
-		sieve_sys_warning(svinst,
-			"overflowing duration value for setting '%s': '%s'",
-			setting, str_value);
+		e_warning(svinst->event,
+			  "overflowing duration value for setting '%s': '%s'",
+			  setting, str_value);
 		return FALSE;
 	}
 
@@ -245,9 +244,9 @@ void sieve_settings_load
 		if (smtp_address_parse_path(svinst->pool, str_setting,
 			SMTP_ADDRESS_PARSE_FLAG_BRACKETS_OPTIONAL,
 			&address, &error) < 0) {
-			sieve_sys_warning(svinst,
-				"Invalid address value for setting "
-				"`sieve_user_email': %s", error);
+			e_warning(svinst->event,
+				  "Invalid address value for setting "
+				  "`sieve_user_email': %s", error);
 		} else {
 			svinst->user_email = address;
 		}

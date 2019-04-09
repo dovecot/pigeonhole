@@ -65,9 +65,9 @@ static void ext_editheader_config_headers
 
 			if ( !rfc2822_header_field_name_verify
 				(*headers, strlen(*headers)) ) {
-				sieve_sys_warning(svinst, "editheader: "
-					"setting %s contains invalid header field name "
-					"`%s' (ignored)", setting, *headers);
+				e_warning(svinst->event, "editheader: "
+					  "setting %s contains invalid header field name "
+					  "`%s' (ignored)", setting, *headers);
 				continue;
 			}
 
@@ -118,11 +118,11 @@ bool ext_editheader_load
 		if ( sieve_setting_get_size_value
 			(svinst, "sieve_editheader_max_header_size", &max_header_size) ) {
 			if ( max_header_size < EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE ) {
-				sieve_sys_warning(svinst,
-					"editheader: value of sieve_editheader_max_header_size setting "
-					"(=%"PRIuSIZE_T") is less than the minimum (=%"PRIuSIZE_T") "
-					"(ignored)", max_header_size,
-					(size_t) EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE);
+				e_warning(svinst->event, "editheader: "
+					  "value of sieve_editheader_max_header_size setting "
+					  "(=%"PRIuSIZE_T") is less than the minimum (=%"PRIuSIZE_T") "
+					  "(ignored)", max_header_size,
+					  (size_t) EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE);
 			} else {
 				ext_config->max_header_size = max_header_size;
 			}

@@ -59,9 +59,8 @@ bool sieve_address_source_parse_from_setting
 		return FALSE;
 
 	if ( !sieve_address_source_parse(pool, value, asrc) ) {
-		sieve_sys_warning(svinst,
-			"Invalid value for setting '%s': '%s'",
-			setting, value);
+		e_warning(svinst->event, "Invalid value for setting '%s': '%s'",
+			  setting, value);
 		return FALSE;
 	}
 	return TRUE;

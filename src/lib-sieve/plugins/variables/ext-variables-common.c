@@ -72,8 +72,8 @@ bool ext_variables_load
 	if ( sieve_setting_get_uint_value(svinst,
 		"sieve_variables_max_scope_size", &uint_setting) ) {
 		if ( uint_setting < EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE ) {
-			sieve_sys_warning(svinst,
-				"variables: setting sieve_variables_max_scope_size "
+			e_warning(svinst->event, "variables: "
+				"setting sieve_variables_max_scope_size "
 				"is lower than required by standards (>= %llu items)",
 				(unsigned long long)EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE);
 		} else {
@@ -84,10 +84,10 @@ bool ext_variables_load
 	if ( sieve_setting_get_size_value(svinst,
 		"sieve_variables_max_variable_size", &size_setting) ) {
 		if ( size_setting < EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE ) {
-			sieve_sys_warning(svinst,
-				"variables: setting sieve_variables_max_variable_size "
-				"is lower than required by standards (>= %"PRIuSIZE_T" bytes)",
-				(size_t)EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE);
+			e_warning(svinst->event, "variables: "
+				  "setting sieve_variables_max_variable_size "
+				  "is lower than required by standards (>= %"PRIuSIZE_T" bytes)",
+				  (size_t)EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE);
 		} else {
 			config->max_variable_size = size_setting;
 		}

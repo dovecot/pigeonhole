@@ -800,9 +800,9 @@ void sieve_script_sys_warning(struct sieve_script *script, const char *fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	sieve_sys_warning(svinst, "%s script: %s",
-		script->driver_name, t_strdup_vprintf(fmt, va));
-	va_end(va);
+	e_warning(svinst->event, "%s script: %s",
+		  script->driver_name, t_strdup_vprintf(fmt, va));
+	va_end(va);	
 }
 
 void sieve_script_sys_info(struct sieve_script *script, const char *fmt, ...)

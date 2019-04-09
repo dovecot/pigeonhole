@@ -1456,9 +1456,9 @@ void sieve_storage_sys_warning(struct sieve_storage *storage,
 	va_list va;
 
 	va_start(va, fmt);
-	sieve_sys_warning(svinst, "%s storage: %s",
-		storage->driver_name, t_strdup_vprintf(fmt, va));
-	va_end(va);
+	e_warning(svinst->event, "%s storage: %s",
+		  storage->driver_name, t_strdup_vprintf(fmt, va));
+	va_end(va);	
 }
 
 void sieve_storage_sys_info(struct sieve_storage *storage,
