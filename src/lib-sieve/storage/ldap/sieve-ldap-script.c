@@ -153,7 +153,7 @@ static int sieve_ldap_script_binary_read_metadata
 
 	/* if modattr not found, recompile always */
 	if ( lscript->modattr == NULL || *lscript->modattr == '\0' ) {
-		sieve_script_sys_error(script,
+		e_error(script->event,
 			"LDAP entry for script `%s' "
 			"has no modified attribute `%s'",
 			sieve_script_location(script),
@@ -163,7 +163,7 @@ static int sieve_ldap_script_binary_read_metadata
 
 	/* compare DN in binary and from search result */
 	if ( !sieve_binary_read_string(sblock, offset, &dn) ) {
-		sieve_script_sys_error(script,
+		e_error(script->event,
 			"Binary `%s' has invalid metadata for script `%s': "
 			"Invalid DN",
 			sieve_binary_path(sbin), sieve_script_location(script));
@@ -181,7 +181,7 @@ static int sieve_ldap_script_binary_read_metadata
 
 	/* compare modattr in binary and from search result */
 	if ( !sieve_binary_read_string(sblock, offset, &modattr) ) {
-		sieve_script_sys_error(script,
+		e_error(script->event,
 			"Binary `%s' has invalid metadata for script `%s': "
 			"Invalid modified attribute",
 			sieve_binary_path(sbin), sieve_script_location(script));

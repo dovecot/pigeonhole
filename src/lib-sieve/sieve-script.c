@@ -370,7 +370,7 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 
 	/* storage class */
 	if (!sieve_binary_read_string(sblock, offset, &storage_class)) {
-		sieve_script_sys_error(script,
+		e_error(script->event,
 			"Binary `%s' has invalid metadata for script `%s': "
 			"Invalid storage class",
 			sieve_binary_path(sbin), script->location);
@@ -387,7 +387,7 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 
 	/* version */
 	if (!sieve_binary_read_unsigned(sblock, offset, &version)) {
-		sieve_script_sys_error(script,
+		e_error(script->event,
 			"Binary `%s' has invalid metadata for script `%s': "
 			"Invalid version",
 			sieve_binary_path(sbin), script->location);
@@ -406,7 +406,7 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 
 	/* location */
 	if (!sieve_binary_read_string(sblock, offset, &location)) {
-		sieve_script_sys_error(script,
+		e_error(script->event,
 			"Binary `%s' has invalid metadata for script `%s': "
 			"Invalid location",
 			sieve_binary_path(sbin), script->location);
@@ -749,8 +749,7 @@ void sieve_script_set_critical(struct sieve_script *script,
 	if (fmt != NULL) {
 		if ((storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0) {
 			va_start(va, fmt);
-			e_error(storage->svinst->event, "%s script: %s",
-				storage->driver_name, t_strdup_vprintf(fmt, va));
+			e_error(script->event, "%s", t_strdup_vprintf(fmt, va));
 			va_end(va);
 
 			sieve_storage_set_internal_error(storage);

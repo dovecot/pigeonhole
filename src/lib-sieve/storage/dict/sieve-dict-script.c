@@ -156,7 +156,7 @@ static int sieve_dict_script_binary_read_metadata
 		return 0;
 
 	if ( !sieve_binary_read_string(sblock, offset, &data_id) ) {
-		sieve_script_sys_error(script,
+		e_error(script->event,
 			"Binary `%s' has invalid metadata for script `%s'",
 			sieve_binary_path(sbin), sieve_script_location(script));
 		return -1;
