@@ -336,7 +336,7 @@ bool sieve_file_storage_active_rescue_regular
 	}
 
 	if ( S_ISLNK( st.st_mode ) ) {
-		sieve_storage_sys_debug(storage,
+		e_debug(storage->event,
 			"Nothing to rescue %s.", fstorage->active_path);
 		return TRUE; /* Nothing to rescue */
 	}

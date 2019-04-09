@@ -71,8 +71,7 @@ static int sieve_file_storage_stat
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			break;
 		}
-		sieve_storage_sys_debug(storage,
-			"Storage path `%s' not found", abspath);
+		e_debug(storage->event, "Storage path `%s' not found", abspath);
 		sieve_storage_set_internal_error(storage); // should be overriden
 		*error_r = SIEVE_ERROR_NOT_FOUND;
 		break;
@@ -161,8 +160,7 @@ static int mkdir_verify
 	}
 
 	if ( mkdir_parents_chgrp(dir, mode, gid, gid_origin) == 0 ) {
-		sieve_storage_sys_debug(storage,
-			"Created storage directory %s", dir);
+		e_debug(storage->event, "Created storage directory %s", dir);
 		return 0;
 	}
 
@@ -345,18 +343,17 @@ static int sieve_file_storage_init_common
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			} 
-			sieve_storage_sys_debug(storage,
-				"Failed to normalize active script directory (path=%s): "
+			e_debug(storage->event,
+				"Failed to normalize active script directory "
+				"(path=%s): "
 				"Part of the path does not exist (yet)",
 				active_dir);			
 		} else {
 			active_path = t_abspath_to(active_fname, active_dir);
 		}
 
-		sieve_storage_sys_debug(storage,
-			"Using %sSieve script path: %s",
-			( storage_path != NULL ? "active " : "" ),
-			active_path);
+		e_debug(storage->event, "Using %sSieve script path: %s",
+			(storage_path != NULL ? "active " : ""), active_path);
 
 		fstorage->active_path = p_strdup(storage->pool, active_path);
 		fstorage->active_fname = p_strdup(storage->pool, active_fname);
@@ -366,8 +363,8 @@ static int sieve_file_storage_init_common
 
 	storage_dir = storage_path;
 	if ( storage_path != NULL && *storage_path != '\0' ) {
-		sieve_storage_sys_debug(storage,
-			"Using script storage path: %s", storage_path);
+		e_debug(storage->event, "Using script storage path: %s",
+			storage_path);
 		have_link = TRUE;
 
 	} else {
@@ -424,10 +421,11 @@ static int sieve_file_storage_init_common
 			}
 		}
 
-		sieve_storage_sys_debug(storage,
+		e_debug(storage->event,
 			"Using permissions from %s: mode=0%o gid=%ld",
 			file_create_gid_origin, (int)dir_create_mode,
-			file_create_gid == (gid_t)-1 ? -1L : (long)file_create_gid);
+			file_create_gid == (gid_t)-1 ?
+				-1L : (long)file_create_gid);
 
 		/*
 		 * Ensure sieve local directory structure exists (full autocreate):
@@ -473,7 +471,7 @@ static int sieve_file_storage_init_common
 			link_path = sieve_storage_get_relative_link_path
 				(fstorage->active_path, storage_path);
 
-			sieve_storage_sys_debug(storage,
+			e_debug(storage->event,
 				"Relative path to sieve storage in active link: %s",
 				link_path);
 
@@ -540,7 +538,7 @@ static int sieve_file_storage_init
 					return -1;
 				if ( !S_ISREG(fstorage->lnk_st.st_mode) )
 					return -1;
-				sieve_storage_sys_debug(storage,
+				e_debug(storage->event,
 					"Sieve storage path `%s' not found, "
 					"but the active script `%s' is a regular file, "
 					"so this is used for backwards compatibility.",
@@ -573,10 +571,11 @@ static int sieve_file_storage_init
 	if ( active_path == NULL || *active_path == '\0' ) {
 		if ( storage->main_storage ||
 			(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
-			sieve_storage_sys_debug(storage,
+			e_debug(storage->event,
 				"Active script path is unconfigured; "
-				"using default (path=%s)", SIEVE_FILE_DEFAULT_PATH);
-				active_path = SIEVE_FILE_DEFAULT_PATH;
+				"using default (path=%s)",
+				SIEVE_FILE_DEFAULT_PATH);
+			active_path = SIEVE_FILE_DEFAULT_PATH;
 		}
 	}
 
@@ -593,8 +592,7 @@ static void sieve_file_storage_autodetect
 	int mode = ( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ?
 		R_OK|W_OK|X_OK : R_OK|X_OK );
 
-	sieve_storage_sys_debug(storage,
-		"Performing auto-detection");
+	e_debug(storage->event, "Performing auto-detection");
 
 	/* We'll need to figure out the storage location ourself.
 	 *
@@ -602,15 +600,14 @@ static void sieve_file_storage_autodetect
 	 */
 	if ( home != NULL && *home != '\0' ) {
 		/* Use default ~/sieve */
-		sieve_storage_sys_debug(storage, "Use home (%s)", home);
+		e_debug(storage->event, "Use home (%s)", home);
 		*storage_path_r = t_strconcat(home, "/sieve", NULL);
 	} else {
-			sieve_storage_sys_debug(storage,
-				"HOME is not set");
+		e_debug(storage->event, "HOME is not set");
 
 		if (access("/sieve", mode) == 0) {
 			*storage_path_r = "/sieve";
-			sieve_storage_sys_debug(storage,
+			e_debug(storage->event,
 				"Directory `/sieve' exists, assuming chroot");
 		}
 	}
@@ -681,9 +678,10 @@ static int sieve_file_storage_do_init_legacy
 	if ( (active_path == NULL || *active_path == '\0') ) {
 		if ( storage->main_storage ||
 		(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
-			sieve_storage_sys_debug(storage,
+			e_debug(storage->event,
 				"Active script path is unconfigured; "
-				"using default (path=%s)", SIEVE_FILE_DEFAULT_PATH);
+				"using default (path=%s)",
+				SIEVE_FILE_DEFAULT_PATH);
 			active_path = SIEVE_FILE_DEFAULT_PATH;
 		} else {
 			return -1;

@@ -36,8 +36,7 @@ int sieve_storage_sync_init
 		return 0;
 	}
 
-	sieve_storage_sys_debug(storage, "sync: "
-		"Synchronization active");
+	e_debug(storage->event, "sync: Synchronization active");
 
 	storage->sync_inbox_ns = mail_namespace_find_inbox(user->namespaces);
 	return 0;

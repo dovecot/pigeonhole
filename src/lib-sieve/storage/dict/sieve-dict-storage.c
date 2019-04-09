@@ -69,8 +69,7 @@ static int sieve_dict_storage_init
 		return -1;
 	}
 
-	sieve_storage_sys_debug(storage,
-		"user=%s, uri=%s", username, uri);
+	e_debug(storage->event, "user=%s, uri=%s", username, uri);
 
 	dstorage->uri = p_strdup(storage->pool, uri);
 	dstorage->username = p_strdup(storage->pool, username);

@@ -312,9 +312,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 
 	if ((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
 	    !storage_class->allows_synchronization) {
-		e_debug(svinst->event, "%s storage: "
-			"Storage does not support synchronization",
-			storage_class->driver_name);
+		e_debug(event, "Storage does not support synchronization");
 		*error_r = SIEVE_ERROR_NOT_POSSIBLE;
 		event_unref(&event);
 		return NULL;
@@ -389,7 +387,6 @@ sieve_storage_do_create_main(struct sieve_instance *svinst,
 			     enum sieve_storage_flags flags,
 			     enum sieve_error *error_r)
 {
-	bool debug = svinst->debug;
 	struct sieve_storage *storage = NULL;
 	const struct sieve_storage
 		*sieve_class = NULL,
@@ -490,17 +487,15 @@ sieve_storage_do_create_main(struct sieve_instance *svinst,
 		storage->max_scripts = uint_setting;
 	}
 
-	if (debug) {
-		if (storage->max_storage > 0) {
-			sieve_storage_sys_debug(storage, "quota: "
-				"Storage limit: %llu bytes",
-				(unsigned long long int) storage->max_storage);
-		}
-		if (storage->max_scripts > 0) {
-			sieve_storage_sys_debug(storage, "quota: "
-				"Script count limit: %llu scripts",
-				(unsigned long long int) storage->max_scripts);
-		}
+	if (storage->max_storage > 0) {
+		e_debug(storage->event, "quota: "
+			"Storage limit: %llu bytes",
+			(unsigned long long int) storage->max_storage);
+	}
+	if (storage->max_scripts > 0) {
+		e_debug(storage->event, "quota: "
+			"Script count limit: %llu scripts",
+			(unsigned long long int) storage->max_scripts);
 	}
 	return storage;
 }
@@ -556,7 +551,7 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 
 		if (storage->default_location != NULL &&
 			storage->default_name != NULL) {
-			sieve_storage_sys_debug(storage,
+			e_debug(storage->event,
 				"Default script at `%s' is visible by name `%s'",
 				storage->default_location, storage->default_name);
 		}
@@ -635,7 +630,6 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 
 int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
 {
-	struct sieve_instance *svinst = storage->svinst;
 	const char *bin_dir = storage->bin_dir;
 	struct stat st;
 
@@ -659,9 +653,8 @@ int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
 	}
 
 	if (mkdir_parents(bin_dir, mode) == 0) {
-		if (svinst->debug)
-			sieve_storage_sys_debug(storage,
-				"Created directory for binaries: %s", bin_dir);
+		e_debug(storage->event,
+			"Created directory for binaries: %s", bin_dir);
 		return 1;
 	}
 
@@ -756,7 +749,7 @@ sieve_storage_get_script(struct sieve_storage *storage, const char *name,
 			   try to access that instead */
 			i_assert(*storage->default_location != '\0');
 
-			sieve_storage_sys_debug(storage,
+			e_debug(storage->event,
 				"Trying default script instead");
 
 			script = sieve_script_create(
@@ -802,8 +795,7 @@ sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 		   try to open that instead */
 		i_assert(*storage->default_location != '\0');
 
-		sieve_storage_sys_debug(storage,
-			"Trying default script instead");
+		e_debug(storage->event, "Trying default script instead");
 
 		script = sieve_script_create_open(
 			svinst, storage->default_location, NULL, error_r);

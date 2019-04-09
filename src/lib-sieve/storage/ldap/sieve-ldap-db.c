@@ -324,9 +324,9 @@ static int db_ldap_connect_finish(struct ldap_connection *conn, int ret)
 
 	timeout_remove(&conn->to);
 	conn->conn_state = LDAP_CONN_STATE_BOUND;
-	sieve_storage_sys_debug(storage, "db: "
+	e_debug(storage->event, "db: "
 		"Successfully bound (dn %s)",
-			set->dn == NULL ? "(none)" : set->dn);
+		set->dn == NULL ? "(none)" : set->dn);
 	while (db_ldap_request_queue_next(conn))
 		;
 	return 0;
@@ -374,10 +374,8 @@ static void db_ldap_abort_requests(struct ldap_connection *conn,
 		}
 		if (error)
 			e_error(storage->event, "db: %s", reason);
-		else {
-			sieve_storage_sys_debug(storage, "db: "
-				"%s", reason);
-		}
+		else
+			e_debug(storage->event, "db: %s", reason);
 		request->callback(conn, request, NULL);
 		max_count--;
 	}
@@ -447,8 +445,8 @@ db_ldap_handle_request_result(struct ldap_connection *conn,
 		res = NULL;
 	} else {
 		if (!final_result && storage->svinst->debug) {
-			sieve_storage_sys_debug(storage, "db: "
-				"ldap_search(base=%s filter=%s) returned entry: %s",
+			e_debug(storage->event,
+				"db: ldap_search(base=%s filter=%s) returned entry: %s",
 				request->base, request->filter,
 				ldap_get_dn(conn->ld, res->msg));
 		}
@@ -887,7 +885,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 	if (debug) {
 		if (gettimeofday(&end, NULL) == 0) {
 			int msecs = timeval_diff_msecs(&end, &start);
-			sieve_storage_sys_debug(storage, "db: "
+			e_debug(storage->event, "db: "
 				"Initialization took %d msecs", msecs);
 		}
 	}
@@ -1069,14 +1067,13 @@ static void db_ldap_wait(struct ldap_connection *conn)
 		 io_loop_have_immediate_timeouts(conn->ioloop));
 
 	do {
-		sieve_storage_sys_debug(storage, "db: "
+		e_debug(storage->event, "db: "
 			"Waiting for %d requests to finish",
 			aqueue_count(conn->request_queue) );
 		io_loop_run(conn->ioloop);
 	} while (aqueue_count(conn->request_queue) > 0);
 
-	sieve_storage_sys_debug(storage, "db: "
-		"All requests finished");
+	e_debug(storage->event, "db: All requests finished");
 
 	current_ioloop = prev_ioloop;
 	db_ldap_switch_ioloop(conn);
@@ -1155,7 +1152,7 @@ sieve_ldap_db_get_script(struct ldap_connection *conn,
 			size = vals[0]->bv_len;
 			data = i_malloc(size);
 
-			sieve_storage_sys_debug(storage, "db: "
+			e_debug(storage->event, "db: "
 				"Found script with length %"PRIuSIZE_T, size);
 
 			memcpy(data, vals[0]->bv_val, size);
@@ -1294,11 +1291,10 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	request->request.filter = p_strdup(pool, str_c(str));
 	request->request.attributes = attr_names;
 
-	sieve_storage_sys_debug(storage,
-			       "base=%s scope=%s filter=%s fields=%s",
-			       request->request.base, lstorage->set.scope,
-			       request->request.filter,
-			       t_strarray_join((const char **)attr_names, ","));
+	e_debug(storage->event, "base=%s scope=%s filter=%s fields=%s",
+		request->request.base, lstorage->set.scope,
+		request->request.filter,
+		t_strarray_join((const char **)attr_names, ","));
 
 	request->request.callback = sieve_ldap_lookup_script_callback;
 	db_ldap_request(conn, &request->request);
@@ -1368,10 +1364,9 @@ int sieve_ldap_db_read_script(struct ldap_connection *conn,
 	request->request.filter = "(objectClass=*)";
 	request->request.attributes = attr_names;
 
-	sieve_storage_sys_debug(storage,
-			       "base=%s scope=base filter=%s fields=%s",
-			       request->request.base, request->request.filter,
-			       t_strarray_join((const char **)attr_names, ","));
+	e_debug(storage->event, "base=%s scope=base filter=%s fields=%s",
+		request->request.base, request->request.filter,
+		t_strarray_join((const char **)attr_names, ","));
 
 	request->request.callback = sieve_ldap_read_script_callback;
 	db_ldap_request(conn, &request->request);

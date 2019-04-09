@@ -75,8 +75,8 @@ static int sieve_ldap_storage_init
 		username = svinst->username;
 	}
 
-	sieve_storage_sys_debug(storage,
-		"user=%s, config=%s", username, storage->location);
+	e_debug(storage->event, "user=%s, config=%s",
+		username, storage->location);
 
 	if ( sieve_ldap_storage_read_settings(lstorage, storage->location) < 0 )
 		return -1;
