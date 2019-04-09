@@ -36,7 +36,8 @@ struct sieve_script *sieve_data_script_create_from_input
 	struct sieve_storage *storage;
 	struct sieve_data_script *dscript = NULL;
 
-	storage = sieve_storage_alloc(svinst, &sieve_data_storage, "", 0, FALSE);
+	storage = sieve_storage_alloc(svinst, NULL, &sieve_data_storage,
+				      "", 0, FALSE);
 
 	dscript = sieve_data_script_alloc();
 	sieve_script_init(&dscript->script,

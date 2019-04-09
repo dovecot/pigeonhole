@@ -710,8 +710,8 @@ struct sieve_storage *sieve_file_storage_init_legacy
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
 
-	storage = sieve_storage_alloc
-		(svinst, &sieve_file_storage, "", flags, TRUE);
+	storage = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
+				      "", flags, TRUE);
 	fstorage = (struct sieve_file_storage *)storage;
 
 	T_BEGIN {
@@ -734,8 +734,8 @@ struct sieve_file_storage *sieve_file_storage_init_from_path
 
 	i_assert( path != NULL );
 
-	storage = sieve_storage_alloc
-		(svinst, &sieve_file_storage, "", flags, FALSE);
+	storage = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
+				      "", flags, FALSE);
 	fstorage = (struct sieve_file_storage *)storage;
 	
 	T_BEGIN {

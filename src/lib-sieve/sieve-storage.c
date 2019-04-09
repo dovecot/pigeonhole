@@ -247,8 +247,22 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 	return 0;
 }
 
+struct event *
+sieve_storage_event_create(struct sieve_instance *svinst,
+			   const struct sieve_storage *storage_class)
+{
+	struct event *event;
+
+	event = event_create(svinst->event);
+	event_set_append_log_prefix(
+		event, t_strdup_printf("%s storage: ",
+				       storage_class->driver_name));
+
+	return event;
+}
+
 struct sieve_storage *
-sieve_storage_alloc(struct sieve_instance *svinst,
+sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 		    const struct sieve_storage *storage_class, const char *data,
 		    enum sieve_storage_flags flags, bool main)
 {
@@ -264,6 +278,14 @@ sieve_storage_alloc(struct sieve_instance *svinst,
 	storage->data = p_strdup_empty(storage->pool, data);
 	storage->main_storage = main;
 
+	if (event != NULL) {
+		storage->event = event;
+		event_ref(storage->event);
+	} else {
+		storage->event =
+			sieve_storage_event_create(svinst, storage_class);
+	}
+
 	return storage;
 }
 
@@ -276,6 +298,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 	struct sieve_storage *storage;
 	const char *const *options;
 	const char *location;
+	struct event *event;
 	enum sieve_error error;
 
 	if (error_r != NULL)
@@ -285,12 +308,15 @@ sieve_storage_init(struct sieve_instance *svinst,
 
 	i_assert(storage_class->v.init != NULL);
 
+	event = sieve_storage_event_create(svinst, storage_class);
+
 	if ((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
-	    !storage_class->allows_synchronization) {
+	    !storage_class->allows_synchronization ) {
 		sieve_sys_debug(svinst, "%s storage: "
 			"Storage does not support synchronization",
 			storage_class->driver_name);
 		*error_r = SIEVE_ERROR_NOT_POSSIBLE;
+		event_unref(&event);
 		return NULL;
 	}
 
@@ -300,12 +326,13 @@ sieve_storage_init(struct sieve_instance *svinst,
 			"Storage does not support write access",
 			storage_class->driver_name);
 		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		event_unref(&event);
 		return NULL;
 	}
 
-	T_BEGIN {
-		storage = sieve_storage_alloc(svinst, storage_class, data,
-					      flags, main);
+	T_BEGIN {	
+		storage = sieve_storage_alloc(svinst, event, storage_class,
+					      data, flags, main);
 
 		if (sieve_storage_data_parse(storage, data,
 					     &location, &options) < 0) {
@@ -323,6 +350,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 		}
 	} T_END;
 
+	event_unref(&event);
 	return storage;
 }
 
@@ -613,6 +641,7 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 		storage->v.destroy(storage);
 
 	i_free(storage->error);
+	event_unref(&storage->event);
 	pool_unref(&storage->pool);
 	*_storage = NULL;
 }
