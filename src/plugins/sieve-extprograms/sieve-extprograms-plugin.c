@@ -33,7 +33,8 @@ void sieve_extprograms_plugin_load
 		(svinst, &sieve_ext_vnd_execute, FALSE);
 
 	if ( svinst->debug ) {
-		sieve_sys_debug(svinst, "Sieve Extprograms plugin for %s version %s loaded",
+		e_debug(svinst->event,
+			"Sieve Extprograms plugin for %s version %s loaded",
 			PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 	}
 

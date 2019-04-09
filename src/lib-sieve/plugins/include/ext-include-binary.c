@@ -340,9 +340,11 @@ static bool ext_include_binary_open
 			if ( (flags & EXT_INCLUDE_FLAG_OPTIONAL) == 0 ) {
 				/* Not supposed to be missing, recompile */
 				if ( svinst->debug ) {
-					sieve_sys_debug(svinst,
-						"include: script '%s' included in binary %s is missing, "
-						"so recompile", str_c(script_name), sieve_binary_path(sbin));
+					e_debug(svinst->event, "include: "
+						"script '%s' included in binary %s is missing, "
+						"so recompile",
+						str_c(script_name),
+						sieve_binary_path(sbin));
 				}
 				return FALSE;
 			}
@@ -352,8 +354,8 @@ static bool ext_include_binary_open
 			 * what.
 			 */
 			if ( svinst->debug ) {
-				sieve_sys_debug(svinst,
-					"include: script '%s' is missing in binary %s, but is now available, "
+				e_debug(svinst->event, "include: "
+					"script '%s' is missing in binary %s, but is now available, "
 					"so recompile", str_c(script_name), sieve_binary_path(sbin));
 			}
 			sieve_script_unref(&script);

@@ -100,10 +100,8 @@ struct sieve_instance *sieve_init(const struct sieve_environment *env,
 
 	sieve_errors_init(svinst);
 
-	if (debug) {
-		sieve_sys_debug(svinst, "%s version %s initializing",
-			PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
-	}
+	e_debug(svinst->event, "%s version %s initializing",
+		PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 
 	/* Read configuration */
 
@@ -320,11 +318,11 @@ struct sieve_binary *sieve_compile(struct sieve_instance *svinst,
 
 	sbin = sieve_compile_script(script, ehandler, flags, error_r);
 
-	if (svinst->debug && sbin != NULL) {
-		sieve_sys_debug(svinst,
-				"Script `%s' from %s successfully compiled",
-				sieve_script_name(script),
-				sieve_script_location(script));
+	if (sbin != NULL) {
+		e_debug(svinst->event,
+			"Script `%s' from %s successfully compiled",
+			sieve_script_name(script),
+			sieve_script_location(script));
 	}
 
 	sieve_script_unref(&script);
@@ -395,11 +393,9 @@ struct sieve_binary *sieve_open_script(struct sieve_script *script,
 			/* Ok, it exists; now let's see if it is up to date */
 			if (!sieve_binary_up_to_date(sbin, flags)) {
 				/* Not up to date */
-				if (svinst->debug) {
-					sieve_sys_debug(svinst,
-						"Script binary %s is not up-to-date",
-						sieve_binary_path(sbin));
-				}
+				e_debug(svinst->event,
+					"Script binary %s is not up-to-date",
+					sieve_binary_path(sbin));
 
 				sieve_binary_unref(&sbin);
 				sbin = NULL;
@@ -410,22 +406,18 @@ struct sieve_binary *sieve_open_script(struct sieve_script *script,
 		 * to (re-)compile.
 		 */
 		if (sbin != NULL) {
-			if (svinst->debug) {
-				sieve_sys_debug(svinst,
-					"Script binary %s successfully loaded",
-					sieve_binary_path(sbin));
-			}
-
+			e_debug(svinst->event,
+				"Script binary %s successfully loaded",
+				sieve_binary_path(sbin));
 		} else {
-			sbin = sieve_compile_script(script, ehandler, flags, error_r);
+			sbin = sieve_compile_script(script, ehandler,
+						    flags, error_r);
 
 			if (sbin != NULL) {
-				if (svinst->debug) {
-					sieve_sys_debug(svinst,
-						"Script `%s' from %s successfully compiled",
-						sieve_script_name(script),
-						sieve_script_location(script));
-				}
+				e_debug(svinst->event,
+					"Script `%s' from %s successfully compiled",
+					sieve_script_name(script),
+					sieve_script_location(script));
 			}
 		}
 	} T_END;

@@ -311,8 +311,8 @@ sieve_storage_init(struct sieve_instance *svinst,
 	event = sieve_storage_event_create(svinst, storage_class);
 
 	if ((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
-	    !storage_class->allows_synchronization ) {
-		sieve_sys_debug(svinst, "%s storage: "
+	    !storage_class->allows_synchronization) {
+		e_debug(svinst->event, "%s storage: "
 			"Storage does not support synchronization",
 			storage_class->driver_name);
 		*error_r = SIEVE_ERROR_NOT_POSSIBLE;
@@ -409,10 +409,8 @@ sieve_storage_do_create_main(struct sieve_instance *svinst,
 	if (set_sieve != NULL) {
 		if (*set_sieve == '\0') {
 			/* disabled */
-			if (debug) {
-				sieve_sys_debug(svinst,	"storage: "
-					"Personal storage is disabled (sieve=\"\")");
-			}
+			e_debug(svinst->event, "storage: "
+				"Personal storage is disabled (sieve=\"\")");
 			*error_r = SIEVE_ERROR_NOT_FOUND;
 			return NULL;
 		}
@@ -516,7 +514,6 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 {
 	struct sieve_storage *storage;
 	const char *set_enabled, *set_default, *set_default_name;
-	bool debug = svinst->debug;
 	enum sieve_error error;
 
 	if (error_r != NULL)
@@ -527,10 +524,8 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 	/* Check whether Sieve is disabled for this user */
 	if ((set_enabled = sieve_setting_get(svinst, "sieve_enabled")) != NULL &&
 	    strcasecmp(set_enabled, "no") == 0) {
-		if (debug) {
-			sieve_sys_debug(svinst,
-				"Sieve is disabled for this user");
-		}
+		e_debug(svinst->event,
+			"Sieve is disabled for this user");
 		*error_r = SIEVE_ERROR_NOT_POSSIBLE;
 		return NULL;
 	}
@@ -574,27 +569,21 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 		/* Failed; try using default script location
 		   (not for temporary failures, read/write access, or dsync) */
 		if (set_default == NULL) {
-			if (debug) {
-				sieve_sys_debug(svinst, "storage: "
-					"No default script location configured");
-			}
+			e_debug(svinst->event, "storage: "
+				"No default script location configured");
 		} else {
-			if (debug) {
-				sieve_sys_debug(svinst, "storage: "
-					"Trying default script location `%s'",
-					set_default);
-			}
+			e_debug(svinst->event, "storage: "
+				"Trying default script location `%s'",
+				set_default);
 
 			storage = sieve_storage_create(svinst, set_default, 0,
 						       error_r);
 			if (storage == NULL) {
 				switch (*error_r) {
 				case SIEVE_ERROR_NOT_FOUND:
-					if (debug) {
-						sieve_sys_debug(svinst, "storage: "
-							"Default script location `%s' not found",
-							set_default);
-					}
+					e_debug(svinst->event, "storage: "
+						"Default script location `%s' not found",
+						set_default);
 					break;
 				case SIEVE_ERROR_TEMP_FAILURE:
 					e_error(svinst->event, "storage: "
@@ -1483,7 +1472,7 @@ void sieve_storage_sys_debug(struct sieve_storage *storage,
 		return;
 
 	va_start(va, fmt);
-	sieve_sys_debug(svinst, "%s storage: %s",
+	e_debug(svinst->event, "%s storage: %s",
 		storage->driver_name, t_strdup_vprintf(fmt, va));
 	va_end(va);
 }

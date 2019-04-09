@@ -90,8 +90,9 @@ bool ext_include_load
 	if ( location == NULL )
 		location = sieve_setting_get(svinst, "sieve_global_dir");
 
-	if ( location == NULL && svinst->debug ) {
-		sieve_sys_debug(svinst, "include: sieve_global is not set; "
+	if (location == NULL) {
+		e_debug(svinst->event, "include: "
+			"sieve_global is not set; "
 			"it is currently not possible to include `:global' scripts.");
 	}
 

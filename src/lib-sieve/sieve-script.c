@@ -821,11 +821,8 @@ void sieve_script_sys_debug(struct sieve_script *script, const char *fmt, ...)
 	struct sieve_instance *svinst = script->storage->svinst;
 	va_list va;
 
-	if (!svinst->debug)
-		return;
-
 	va_start(va, fmt);
-	sieve_sys_debug(svinst, "%s script: %s",
+	e_debug(svinst->event, "%s script: %s",
 		script->driver_name, t_strdup_vprintf(fmt, va));
 	va_end(va);
 }

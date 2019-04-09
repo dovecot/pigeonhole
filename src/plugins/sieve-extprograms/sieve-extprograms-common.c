@@ -81,12 +81,10 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 		SIEVE_EXTPROGRAMS_DEFAULT_EXEC_TIMEOUT_SECS;
 
 	if ( bin_dir == NULL && socket_dir == NULL ) {
-		if ( svinst->debug ) {
-			sieve_sys_debug(svinst, "%s extension: "
-				"no bin or socket directory specified; extension is unconfigured "
-				"(both sieve_%s_bin_dir and sieve_%s_socket_dir are not set)",
-				sieve_extension_name(ext), extname, extname);
-		}
+		e_debug(svinst->event, "%s extension: "
+			"no bin or socket directory specified; extension is unconfigured "
+			"(both sieve_%s_bin_dir and sieve_%s_socket_dir are not set)",
+			sieve_extension_name(ext), extname, extname);
 	} else {
 		ext_config->bin_dir = i_strdup(bin_dir);
 		ext_config->socket_dir = i_strdup(socket_dir);
@@ -422,10 +420,8 @@ struct sieve_extprogram *sieve_extprogram_create
 	bool fork = FALSE;
 	int ret;
 
-	if ( svinst->debug ) {
-		sieve_sys_debug(svinst, "action %s: "
-			"running program: %s", action, program_name);
-	}
+	e_debug(svinst->event, "action %s: "
+		"running program: %s", action, program_name);
 
 	if ( ext_config == NULL ||
 		(ext_config->bin_dir == NULL && ext_config->socket_dir == NULL) ) {
@@ -444,11 +440,9 @@ struct sieve_extprogram *sieve_extprogram_create
 		if ( (ret=stat(path, &st)) < 0 ) {
 			switch ( errno ) {
 			case ENOENT:
-				if ( svinst->debug ) {
-					sieve_sys_debug(svinst, "action %s: "
-						"socket path `%s' for program `%s' not found",
-						action, path, program_name);
-				}
+				e_debug(svinst->event, "action %s: "
+					"socket path `%s' for program `%s' not found",
+					action, path, program_name);
 				break;
 			case EACCES:
 				e_error(svinst->event, "action %s: "
@@ -480,11 +474,9 @@ struct sieve_extprogram *sieve_extprogram_create
 		if ( (ret=stat(path, &st)) < 0 ) {
 			switch ( errno ) {
 			case ENOENT:
-				if ( svinst->debug ) {
-					sieve_sys_debug(svinst, "action %s: "
-						"executable path `%s' for program `%s' not found",
-						action, path, program_name);
-				}
+				e_debug(svinst->event, "action %s: "
+					"executable path `%s' for program `%s' not found",
+					action, path, program_name);
 				*error_r = SIEVE_ERROR_NOT_FOUND;
 				break;
 			case EACCES:
