@@ -89,8 +89,8 @@ int sieve_file_storage_quota_havespace
 			path = t_strconcat(fstorage->path, "/", dp->d_name, NULL);
 
 			if ( stat(path, &st) < 0 ) {
-				sieve_storage_sys_warning(storage,
-					"quota: stat(%s) failed: %m", path);
+				e_warning(storage->event,
+					  "quota: stat(%s) failed: %m", path);
 				continue;
 			}
 

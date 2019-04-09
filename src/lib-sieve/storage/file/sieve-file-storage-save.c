@@ -174,8 +174,8 @@ static int sieve_file_storage_script_move
 
 		/* Always destroy temp file */
 		if (unlink(fsctx->tmp_path) < 0 && errno != ENOENT) {
-			sieve_storage_sys_warning(storage, "save: "
-				"unlink(%s) failed: %m", fsctx->tmp_path);
+			e_warning(storage->event, "save: "
+				  "unlink(%s) failed: %m", fsctx->tmp_path);
 		}
 	} T_END;
 
@@ -298,8 +298,9 @@ int sieve_file_storage_save_finish
 		if ( sctx->failed ) {
 			/* delete the tmp file */
 			if (unlink(fsctx->tmp_path) < 0 && errno != ENOENT) {
-				sieve_storage_sys_warning(storage, "save: "
-					"unlink(%s) failed: %m", fsctx->tmp_path);
+				e_warning(storage->event, "save: "
+					  "unlink(%s) failed: %m",
+					  fsctx->tmp_path);
 			}
 
 			fsctx->tmp_path = NULL;
@@ -413,8 +414,8 @@ void sieve_file_storage_save_cancel(struct sieve_storage_save_context *sctx)
 
 	if (fsctx->tmp_path != NULL &&
 		unlink(fsctx->tmp_path) < 0 && errno != ENOENT) {
-		sieve_storage_sys_warning(storage, "save: "
-			"unlink(%s) failed: %m", fsctx->tmp_path);
+		e_warning(storage->event, "save: unlink(%s) failed: %m",
+			  fsctx->tmp_path);
 	}
 
 	i_assert(fsctx->output == NULL);

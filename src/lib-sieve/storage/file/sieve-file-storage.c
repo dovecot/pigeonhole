@@ -559,10 +559,10 @@ static int sieve_file_storage_init
 					return -1;
 				}
 				if ( active_path != NULL && *active_path != '\0' ) {
-					sieve_storage_sys_warning(storage,
-						"Explicitly specified active script path `%s' is ignored; "
-						"storage path `%s' is not a directory",
-						active_path, storage_path);
+					e_warning(storage->event,
+						  "Explicitly specified active script path `%s' is ignored; "
+						  "storage path `%s' is not a directory",
+						  active_path, storage_path);
 				}
 				active_path = storage_path;
 				storage_path = NULL;

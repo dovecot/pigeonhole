@@ -739,9 +739,9 @@ static int db_ldap_set_tls_options(struct ldap_connection *conn)
 	    set->tls_cert_file != NULL ||
 	    set->tls_key_file != NULL ||
 	    set->tls_cipher_suite != NULL) {
-		sieve_storage_sys_warning(&conn->lstorage->storage, "db: "
-			"tls_* settings ignored, "
-			"your LDAP library doesn't seem to support them");
+		e_warning(&conn->lstorage->storage, "db: "
+			  "tls_* settings ignored, "
+			  "your LDAP library doesn't seem to support them");
 	}
 #endif
 	return 0;
@@ -1108,9 +1108,9 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 				return 0;
 
 			if (vals[1] != NULL) {
-				sieve_storage_sys_warning(storage, "db: "
-					"Search returned more than one Sieve modified attribute `%s'; "
-					"using only the first one.", set->sieve_ldap_mod_attr);
+				e_warning(storage->event, "db: "
+					  "Search returned more than one Sieve modified attribute `%s'; "
+					  "using only the first one.", set->sieve_ldap_mod_attr);
 			} 
 
 			*modattr_r = p_strdup(pool, vals[0]);
@@ -1147,9 +1147,9 @@ sieve_ldap_db_get_script(struct ldap_connection *conn,
 				return 0;
 
 			if (vals[1] != NULL) {
-				sieve_storage_sys_warning(storage, "db: "
-					"Search returned more than one Sieve script attribute `%s'; "
-					"using only the first one.", set->sieve_ldap_script_attr);
+				e_warning(storage->event, "db: "
+					  "Search returned more than one Sieve script attribute `%s'; "
+					  "using only the first one.", set->sieve_ldap_script_attr);
 			} 
 
 			size = vals[0]->bv_len;
@@ -1241,9 +1241,9 @@ sieve_ldap_lookup_script_callback(struct ldap_connection *conn,
 			(void)sieve_ldap_db_get_script_modattr
 				(conn, res, request->pool, &srequest->result_modattr);
 		} else if (srequest->entries++ == 0) {
-			sieve_storage_sys_warning(storage, "db: "
-				"Search returned more than one entry for Sieve script; "
-				"using only the first one.");
+			e_warning(storage->event, "db: "
+				  "Search returned more than one entry for Sieve script; "
+				  "using only the first one.");
 		}
 	} else {
 		io_loop_stop(conn->ioloop);
