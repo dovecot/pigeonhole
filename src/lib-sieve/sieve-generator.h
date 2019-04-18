@@ -41,20 +41,6 @@ struct sieve_binary_block *
 sieve_generator_get_block(struct sieve_generator *gentr);
 
 /*
- * Error handling
- */
-
-void sieve_generator_warning(struct sieve_generator *gentr,
-			     unsigned int source_line,
-			     const char *fmt, ...) ATTR_FORMAT(3, 4);
-void sieve_generator_error(struct sieve_generator *gentr,
-			   unsigned int source_line,
-			   const char *fmt, ...) ATTR_FORMAT(3, 4);
-void sieve_generator_critical(struct sieve_generator *gentr,
-			      unsigned int source_line,
-			      const char *fmt, ...) ATTR_FORMAT(3, 4);
-
-/*
  * Extension support
  */
 
@@ -105,6 +91,20 @@ bool sieve_generate_test(const struct sieve_codegen_env *cgenv,
 struct sieve_binary *
 sieve_generator_run(struct sieve_generator *gentr,
 		    struct sieve_binary_block **sblock_r);
+
+/*
+ * Error handling
+ */
+
+void sieve_generator_warning(struct sieve_generator *gentr,
+			     unsigned int source_line,
+			     const char *fmt, ...) ATTR_FORMAT(3, 4);
+void sieve_generator_error(struct sieve_generator *gentr,
+			   unsigned int source_line,
+			   const char *fmt, ...) ATTR_FORMAT(3, 4);
+void sieve_generator_critical(struct sieve_generator *gentr,
+			      unsigned int source_line,
+			      const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 #endif
 
