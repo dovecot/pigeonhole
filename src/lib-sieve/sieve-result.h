@@ -73,34 +73,6 @@ bool sieve_result_print(struct sieve_result *result,
 			struct ostream *stream, bool *keep);
 
 /*
- * Error handling
- */
-
-void sieve_result_error(const struct sieve_action_exec_env *aenv,
-			const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_result_global_error(const struct sieve_action_exec_env *aenv,
-			       const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_result_warning(const struct sieve_action_exec_env *aenv,
-			  const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_result_global_warning(const struct sieve_action_exec_env *aenv,
-				 const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_result_log(const struct sieve_action_exec_env *aenv,
-		      const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_result_global_log(const struct sieve_action_exec_env *aenv,
-			     const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_result_global_log_error(const struct sieve_action_exec_env *aenv,
-				   const char *fmt, ...) ATTR_FORMAT(2, 3);
-void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
-				     const char *fmt, ...) ATTR_FORMAT(2, 3);
-
-void sieve_result_critical(const struct sieve_action_exec_env *aenv,
-			   const char *user_prefix, const char *fmt, ...)
-			   ATTR_FORMAT(3, 4);
-int sieve_result_mail_error(const struct sieve_action_exec_env *aenv,
-			    struct mail *mail, const char *fmt, ...)
-			    ATTR_FORMAT(3, 4);
-
-/*
  * Result composition
  */
 
@@ -164,5 +136,33 @@ struct sieve_side_effects_list *
 sieve_side_effects_list_create(struct sieve_result *result);
 void sieve_side_effects_list_add(struct sieve_side_effects_list *list,
 				 const struct sieve_side_effect *seffect);
+
+/*
+ * Error handling
+ */
+
+void sieve_result_error(const struct sieve_action_exec_env *aenv,
+			const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_result_global_error(const struct sieve_action_exec_env *aenv,
+			       const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_result_warning(const struct sieve_action_exec_env *aenv,
+			  const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_result_global_warning(const struct sieve_action_exec_env *aenv,
+				 const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_result_log(const struct sieve_action_exec_env *aenv,
+		      const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_result_global_log(const struct sieve_action_exec_env *aenv,
+			     const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_result_global_log_error(const struct sieve_action_exec_env *aenv,
+				   const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
+				     const char *fmt, ...) ATTR_FORMAT(2, 3);
+
+void sieve_result_critical(const struct sieve_action_exec_env *aenv,
+			   const char *user_prefix, const char *fmt, ...)
+			   ATTR_FORMAT(3, 4);
+int sieve_result_mail_error(const struct sieve_action_exec_env *aenv,
+			    struct mail *mail, const char *fmt, ...)
+			    ATTR_FORMAT(3, 4);
 
 #endif
