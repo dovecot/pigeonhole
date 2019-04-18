@@ -361,89 +361,6 @@ void sieve_interpreter_set_result(struct sieve_interpreter *interp,
 }
 
 /*
- * Error handling
- */
-
-static inline void
-sieve_runtime_vmsg(const struct sieve_runtime_env *renv,
-		   sieve_error_vfunc_t msg_func, const char *location,
-		   const char *fmt, va_list args)
-{
-	T_BEGIN {
-		if (location == NULL)
-			location = sieve_runtime_get_full_command_location(renv);
-
-		msg_func(renv->ehandler, location, fmt, args);
-	} T_END;
-}
-
-void sieve_runtime_error(const struct sieve_runtime_env *renv,
-			 const char *location, const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	sieve_runtime_vmsg(renv, sieve_verror, location, fmt, args);
-	va_end(args);
-}
-
-void sieve_runtime_warning(const struct sieve_runtime_env *renv,
-			   const char *location, const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	sieve_runtime_vmsg(renv, sieve_vwarning, location, fmt, args);
-	va_end(args);
-}
-
-void sieve_runtime_log(const struct sieve_runtime_env *renv,
-		       const char *location, const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	sieve_runtime_vmsg(renv, sieve_vinfo, location, fmt, args);
-	va_end(args);
-}
-
-void sieve_runtime_critical(const struct sieve_runtime_env *renv,
-			    const char *location, const char *user_prefix,
-			    const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-
-	T_BEGIN {
-		if (location == NULL)
-			location = sieve_runtime_get_full_command_location(renv);
-
-		sieve_vcritical(renv->svinst, renv->ehandler, location,
-				user_prefix, fmt, args);
-	} T_END;
-
-	va_end(args);
-}
-
-int sieve_runtime_mail_error(const struct sieve_runtime_env *renv,
-			     struct mail *mail, const char *fmt, ...)
-{
-	const char *error_msg, *user_prefix;
-	va_list args;
-
-	error_msg = mailbox_get_last_error(mail->box, NULL);
-
-	va_start(args, fmt);
-	user_prefix = t_strdup_vprintf(fmt, args);
-	sieve_runtime_critical(renv, NULL, user_prefix, "%s: %s",
-			       user_prefix, error_msg);
-	va_end(args);
-
-	return 	SIEVE_EXEC_TEMP_FAILURE;
-}
-
-/*
  * Source location
  */
 
@@ -1026,4 +943,85 @@ int sieve_interpreter_run(struct sieve_interpreter *interp,
 	return ret;
 }
 
+/*
+ * Error handling
+ */
 
+static inline void
+sieve_runtime_vmsg(const struct sieve_runtime_env *renv,
+		   sieve_error_vfunc_t msg_func, const char *location,
+		   const char *fmt, va_list args)
+{
+	T_BEGIN {
+		if (location == NULL)
+			location = sieve_runtime_get_full_command_location(renv);
+
+		msg_func(renv->ehandler, location, fmt, args);
+	} T_END;
+}
+
+void sieve_runtime_error(const struct sieve_runtime_env *renv,
+			 const char *location, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sieve_runtime_vmsg(renv, sieve_verror, location, fmt, args);
+	va_end(args);
+}
+
+void sieve_runtime_warning(const struct sieve_runtime_env *renv,
+			   const char *location, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sieve_runtime_vmsg(renv, sieve_vwarning, location, fmt, args);
+	va_end(args);
+}
+
+void sieve_runtime_log(const struct sieve_runtime_env *renv,
+		       const char *location, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sieve_runtime_vmsg(renv, sieve_vinfo, location, fmt, args);
+	va_end(args);
+}
+
+void sieve_runtime_critical(const struct sieve_runtime_env *renv,
+			    const char *location, const char *user_prefix,
+			    const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+
+	T_BEGIN {
+		if (location == NULL)
+			location = sieve_runtime_get_full_command_location(renv);
+
+		sieve_vcritical(renv->svinst, renv->ehandler, location,
+				user_prefix, fmt, args);
+	} T_END;
+
+	va_end(args);
+}
+
+int sieve_runtime_mail_error(const struct sieve_runtime_env *renv,
+			     struct mail *mail, const char *fmt, ...)
+{
+	const char *error_msg, *user_prefix;
+	va_list args;
+
+	error_msg = mailbox_get_last_error(mail->box, NULL);
+
+	va_start(args, fmt);
+	user_prefix = t_strdup_vprintf(fmt, args);
+	sieve_runtime_critical(renv, NULL, user_prefix, "%s: %s",
+			       user_prefix, error_msg);
+	va_end(args);
+
+	return 	SIEVE_EXEC_TEMP_FAILURE;
+}

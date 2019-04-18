@@ -121,26 +121,6 @@ const char *
 sieve_runtime_get_full_command_location(const struct sieve_runtime_env *renv);
 
 /*
- * Error handling
- */
-
-void sieve_runtime_error(const struct sieve_runtime_env *renv,
-			 const char *location, const char *fmt, ...)
-			 ATTR_FORMAT(3, 4);
-void sieve_runtime_warning(const struct sieve_runtime_env *renv,
-			   const char *location, const char *fmt, ...)
-			   ATTR_FORMAT(3, 4);
-void sieve_runtime_log(const struct sieve_runtime_env *renv,
-		       const char *location, const char *fmt, ...)
-		       ATTR_FORMAT(3, 4);
-void sieve_runtime_critical(const struct sieve_runtime_env *renv,
-			    const char *location, const char *user_prefix,
-			    const char *fmt, ...) ATTR_FORMAT(4, 5);
-int sieve_runtime_mail_error(const struct sieve_runtime_env *renv,
-			     struct mail *mail, const char *fmt, ...)
-			     ATTR_FORMAT(3, 4);
-
-/*
  * Extension support
  */
 
@@ -184,5 +164,25 @@ int sieve_interpreter_start(struct sieve_interpreter *interp,
 			    struct sieve_result *result, bool *interrupted);
 int sieve_interpreter_run(struct sieve_interpreter *interp,
 			  struct sieve_result *result);
+
+/*
+ * Error handling
+ */
+
+void sieve_runtime_error(const struct sieve_runtime_env *renv,
+			 const char *location, const char *fmt, ...)
+			 ATTR_FORMAT(3, 4);
+void sieve_runtime_warning(const struct sieve_runtime_env *renv,
+			   const char *location, const char *fmt, ...)
+			   ATTR_FORMAT(3, 4);
+void sieve_runtime_log(const struct sieve_runtime_env *renv,
+		       const char *location, const char *fmt, ...)
+		       ATTR_FORMAT(3, 4);
+void sieve_runtime_critical(const struct sieve_runtime_env *renv,
+			    const char *location, const char *user_prefix,
+			    const char *fmt, ...) ATTR_FORMAT(4, 5);
+int sieve_runtime_mail_error(const struct sieve_runtime_env *renv,
+			     struct mail *mail, const char *fmt, ...)
+			     ATTR_FORMAT(3, 4);
 
 #endif
