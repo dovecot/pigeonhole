@@ -964,11 +964,15 @@ sieve_runtime_logv(const struct sieve_runtime_env *renv,
 	} T_END;
 }
 
+#undef sieve_runtime_error
 void sieve_runtime_error(const struct sieve_runtime_env *renv,
+			 const char *csrc_filename, unsigned int csrc_linenum,
 			 const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -978,11 +982,15 @@ void sieve_runtime_error(const struct sieve_runtime_env *renv,
 	va_end(args);
 }
 
+#undef sieve_runtime_warning
 void sieve_runtime_warning(const struct sieve_runtime_env *renv,
+			   const char *csrc_filename, unsigned int csrc_linenum,
 			   const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -992,11 +1000,15 @@ void sieve_runtime_warning(const struct sieve_runtime_env *renv,
 	va_end(args);
 }
 
+#undef sieve_runtime_log
 void sieve_runtime_log(const struct sieve_runtime_env *renv,
+		       const char *csrc_filename, unsigned int csrc_linenum,
 		       const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -1006,12 +1018,17 @@ void sieve_runtime_log(const struct sieve_runtime_env *renv,
 	va_end(args);
 }
 
+#undef sieve_runtime_critical
 void sieve_runtime_critical(const struct sieve_runtime_env *renv,
+			    const char *csrc_filename,
+			    unsigned int csrc_linenum,
 			    const char *location, const char *user_prefix,
 			    const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -1031,8 +1048,12 @@ void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 	va_end(args);
 }
 
+#undef sieve_runtime_mail_error
 int sieve_runtime_mail_error(const struct sieve_runtime_env *renv,
-			     struct mail *mail, const char *fmt, ...)
+			     struct mail *mail,
+			     const char *csrc_filename,
+			     unsigned int csrc_linenum,
+			     const char *fmt, ...)
 {
 	const char *error_msg, *user_prefix;
 	va_list args;
@@ -1041,7 +1062,8 @@ int sieve_runtime_mail_error(const struct sieve_runtime_env *renv,
 
 	va_start(args, fmt);
 	user_prefix = t_strdup_vprintf(fmt, args);
-	sieve_runtime_critical(renv, NULL, user_prefix, "%s: %s",
+	sieve_runtime_critical(renv, csrc_filename, csrc_linenum,
+			       NULL, user_prefix, "%s: %s",
 			       user_prefix, error_msg);
 	va_end(args);
 

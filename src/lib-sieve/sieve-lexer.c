@@ -120,12 +120,16 @@ void sieve_lexer_free(const struct sieve_lexer **_lexer)
  * Internal error handling
  */
 
-inline static void ATTR_FORMAT(2, 3)
-sieve_lexer_error(const struct sieve_lexer *lexer, const char *fmt, ...)
+inline static void ATTR_FORMAT(4, 5)
+sieve_lexer_error(const struct sieve_lexer *lexer,
+		  const char *csrc_filename, unsigned int csrc_linenum,
+		  const char *fmt, ...)
 {
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 	};
 	va_list args;
 
@@ -140,13 +144,19 @@ sieve_lexer_error(const struct sieve_lexer *lexer, const char *fmt, ...)
 
 	va_end(args);
 }
+#define sieve_lexer_error(lexer, ...) \
+	sieve_lexer_error(lexer, __FILE__, __LINE__, __VA_ARGS__)
 
-inline static void ATTR_FORMAT(2, 3)
-sieve_lexer_warning(const struct sieve_lexer *lexer, const char *fmt, ...)
+inline static void ATTR_FORMAT(4, 5)
+sieve_lexer_warning(const struct sieve_lexer *lexer,
+		    const char *csrc_filename, unsigned int csrc_linenum,
+		    const char *fmt, ...)
 {
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 	};
 	va_list args;
 
@@ -161,6 +171,8 @@ sieve_lexer_warning(const struct sieve_lexer *lexer, const char *fmt, ...)
 
 	va_end(args);
 }
+#define sieve_lexer_warning(lexer, ...) \
+	sieve_lexer_warning(lexer, __FILE__, __LINE__, __VA_ARGS__)
 
 const char *sieve_lexer_token_description(const struct sieve_lexer *lexer)
 {

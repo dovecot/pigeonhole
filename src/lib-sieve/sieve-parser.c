@@ -88,11 +88,15 @@ void sieve_parser_free(struct sieve_parser **parser)
  * Internal error handling
  */
 
-inline static void ATTR_FORMAT(2, 3)
-sieve_parser_error(struct sieve_parser *parser, const char *fmt, ...)
+inline static void ATTR_FORMAT(4, 5)
+sieve_parser_error(struct sieve_parser *parser,
+		   const char *csrc_filename, unsigned int csrc_linenum,
+		   const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 	};
 	va_list args;
 
@@ -112,6 +116,8 @@ sieve_parser_error(struct sieve_parser *parser, const char *fmt, ...)
 
 	va_end(args);
 }
+#define sieve_parser_error(parser, ...) \
+	sieve_parser_error(parser, __FILE__, __LINE__, __VA_ARGS__)
 
 /*
  * Sieve grammar parsing

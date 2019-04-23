@@ -1659,11 +1659,15 @@ sieve_validator_object_registry_init(struct sieve_validator *valdtr,
  * Error handling
  */
 
+#undef sieve_validator_error
 void sieve_validator_error(struct sieve_validator *valdtr,
+			   const char *csrc_filename, unsigned int csrc_linenum,
 			   unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 	};
 	va_list args;
 
@@ -1675,11 +1679,16 @@ void sieve_validator_error(struct sieve_validator *valdtr,
 	va_end(args);
 }
 
+#undef sieve_validator_warning
 void sieve_validator_warning(struct sieve_validator *valdtr,
+			     const char *csrc_filename,
+			     unsigned int csrc_linenum,
 			     unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 	};
 	va_list args;
 

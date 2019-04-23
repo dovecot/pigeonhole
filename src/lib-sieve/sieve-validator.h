@@ -181,10 +181,17 @@ sieve_validator_object_registry_init(struct sieve_validator *valdtr,
  */
 
 void sieve_validator_error(struct sieve_validator *valdtr,
+			   const char *csrc_filename, unsigned int csrc_linenum,
 			   unsigned int source_line, const char *fmt, ...)
-			   ATTR_FORMAT(3, 4);
+			   ATTR_FORMAT(5, 6);
+#define sieve_validator_error(valdtr, ...) \
+	sieve_validator_error(valdtr, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_validator_warning(struct sieve_validator *valdtr,
+			     const char *csrc_filename,
+			     unsigned int csrc_linenum,
 			     unsigned int source_line, const char *fmt, ...)
-			     ATTR_FORMAT(3, 4);
+			     ATTR_FORMAT(5, 6);
+#define sieve_validator_warning(valdtr, ...) \
+	sieve_validator_warning(valdtr, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif

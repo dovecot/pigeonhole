@@ -170,19 +170,36 @@ int sieve_interpreter_run(struct sieve_interpreter *interp,
  */
 
 void sieve_runtime_error(const struct sieve_runtime_env *renv,
+			 const char *csrc_filename, unsigned int csrc_linenum,
 			 const char *location, const char *fmt, ...)
-			 ATTR_FORMAT(3, 4);
+			 ATTR_FORMAT(5, 6);
+#define sieve_runtime_error(renv, ...) \
+	sieve_runtime_error(renv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_runtime_warning(const struct sieve_runtime_env *renv,
+			   const char *csrc_filename, unsigned int csrc_linenum,
 			   const char *location, const char *fmt, ...)
-			   ATTR_FORMAT(3, 4);
+			   ATTR_FORMAT(5, 6);
+#define sieve_runtime_warning(renv, ...) \
+	sieve_runtime_warning(renv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_runtime_log(const struct sieve_runtime_env *renv,
+		       const char *csrc_filename, unsigned int csrc_linenum,
 		       const char *location, const char *fmt, ...)
-		       ATTR_FORMAT(3, 4);
+		       ATTR_FORMAT(5, 6);
+#define sieve_runtime_log(renv, ...) \
+	sieve_runtime_log(renv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_runtime_critical(const struct sieve_runtime_env *renv,
+			    const char *csrc_filename,
+			    unsigned int csrc_linenum,
 			    const char *location, const char *user_prefix,
-			    const char *fmt, ...) ATTR_FORMAT(4, 5);
+			    const char *fmt, ...) ATTR_FORMAT(6, 7);
+#define sieve_runtime_critical(renv, ...) \
+	sieve_runtime_critical(renv, __FILE__, __LINE__, __VA_ARGS__)
 int sieve_runtime_mail_error(const struct sieve_runtime_env *renv,
-			     struct mail *mail, const char *fmt, ...)
-			     ATTR_FORMAT(3, 4);
+			     struct mail *mail, 
+			     const char *csrc_filename,
+			     unsigned int csrc_linenum,
+			     const char *fmt, ...) ATTR_FORMAT(5, 6);
+#define sieve_runtime_mail_error(renv, mail, ...) \
+	sieve_runtime_mail_error(renv, mail, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif

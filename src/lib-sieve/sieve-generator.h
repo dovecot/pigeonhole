@@ -97,14 +97,25 @@ sieve_generator_run(struct sieve_generator *gentr,
  */
 
 void sieve_generator_error(struct sieve_generator *gentr,
-			   unsigned int source_line,
-			   const char *fmt, ...) ATTR_FORMAT(3, 4);
+			   const char *csrc_filename, unsigned int csrc_linenum,
+			   unsigned int source_line, const char *fmt, ...)
+			   ATTR_FORMAT(5, 6);
+#define sieve_generator_error(gentr, ...) \
+	sieve_generator_error(gentr, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_generator_warning(struct sieve_generator *gentr,
-			     unsigned int source_line,
-			     const char *fmt, ...) ATTR_FORMAT(3, 4);
+			     const char *csrc_filename,
+			     unsigned int csrc_linenum,
+			     unsigned int source_line, const char *fmt, ...)
+			     ATTR_FORMAT(5, 6);
+#define sieve_generator_warning(gentr, ...) \
+	sieve_generator_warning(gentr, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_generator_critical(struct sieve_generator *gentr,
-			      unsigned int source_line,
-			      const char *fmt, ...) ATTR_FORMAT(3, 4);
+			      const char *csrc_filename,
+			      unsigned int csrc_linenum,
+			      unsigned int source_line, const char *fmt, ...)
+			      ATTR_FORMAT(5, 6);
+#define sieve_generator_critical(gentr, ...) \
+	sieve_generator_critical(gentr, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif
 

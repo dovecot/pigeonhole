@@ -510,11 +510,15 @@ sieve_generator_run(struct sieve_generator *gentr,
  * Error handling
  */
 
+#undef sieve_generator_error
 void sieve_generator_error(struct sieve_generator *gentr,
+			   const char *csrc_filename, unsigned int csrc_linenum,
 			   unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 	};
 	va_list args;
 
@@ -526,11 +530,16 @@ void sieve_generator_error(struct sieve_generator *gentr,
 	va_end(args);
 }
 
+#undef sieve_generator_warning
 void sieve_generator_warning(struct sieve_generator *gentr,
+			     const char *csrc_filename,
+			     unsigned int csrc_linenum,
 			     unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 	};
 	va_list args;
 
@@ -542,11 +551,16 @@ void sieve_generator_warning(struct sieve_generator *gentr,
 	va_end(args);
 }
 
+#undef sieve_generator_critical
 void sieve_generator_critical(struct sieve_generator *gentr,
+			      const char *csrc_filename,
+			      unsigned int csrc_linenum,
 			      unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 	};
 	va_list args;
 

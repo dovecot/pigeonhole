@@ -173,12 +173,16 @@ void sieve_global_info_logv(struct sieve_instance *svinst,
 			   SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO), fmt, args);
 }
 
+#undef sieve_global_error
 void sieve_global_error(struct sieve_instance *svinst,
 			struct sieve_error_handler *ehandler,
+			const char *csrc_filename, unsigned int csrc_linenum,
 			const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -191,12 +195,16 @@ void sieve_global_error(struct sieve_instance *svinst,
 	va_end(args);
 }
 
+#undef sieve_global_warning
 void sieve_global_warning(struct sieve_instance *svinst,
 			  struct sieve_error_handler *ehandler,
+			  const char *csrc_filename, unsigned int csrc_linenum,
 			  const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -209,12 +217,16 @@ void sieve_global_warning(struct sieve_instance *svinst,
 	va_end(args);
 }
 
+#undef sieve_global_info
 void sieve_global_info(struct sieve_instance *svinst,
 		       struct sieve_error_handler *ehandler,
+		       const char *csrc_filename, unsigned int csrc_linenum,
 		       const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -227,12 +239,17 @@ void sieve_global_info(struct sieve_instance *svinst,
 	va_end(args);
 }
 
+#undef sieve_global_info_error
 void sieve_global_info_error(struct sieve_instance *svinst,
 			     struct sieve_error_handler *ehandler,
+			     const char *csrc_filename,
+			     unsigned int csrc_linenum,
 			     const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -245,12 +262,17 @@ void sieve_global_info_error(struct sieve_instance *svinst,
 	va_end(args);
 }
 
+#undef sieve_global_info_warning
 void sieve_global_info_warning(struct sieve_instance *svinst,
 			       struct sieve_error_handler *ehandler,
+			       const char *csrc_filename,
+			       unsigned int csrc_linenum,
 			       const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -267,11 +289,15 @@ void sieve_global_info_warning(struct sieve_instance *svinst,
  * Default (user) error functions
  */
 
+#undef sieve_internal_error
 void sieve_internal_error(struct sieve_error_handler *ehandler,
+			  const char *csrc_filename, unsigned int csrc_linenum,
 			  const char *location, const char *user_prefix)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	char str[256];
@@ -314,14 +340,20 @@ void sieve_criticalv(struct sieve_instance *svinst,
 
 	sieve_direct_logv(svinst, svinst->system_ehandler, &new_params, 0,
 			  fmt, args);
-	sieve_internal_error(ehandler, params->location, user_prefix);
+	sieve_internal_error(ehandler,
+			     params->csrc.filename, params->csrc.linenum,
+			     params->location, user_prefix);
 }
 
-void sieve_error(struct sieve_error_handler *ehandler, const char *location,
-		 const char *fmt, ...)
+#undef sieve_error
+void sieve_error(struct sieve_error_handler *ehandler,
+		 const char *csrc_filename, unsigned int csrc_linenum,
+		 const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -334,11 +366,15 @@ void sieve_error(struct sieve_error_handler *ehandler, const char *location,
 	va_end(args);
 }
 
-void sieve_warning(struct sieve_error_handler *ehandler, const char *location,
-		   const char *fmt, ...)
+#undef sieve_warning
+void sieve_warning(struct sieve_error_handler *ehandler,
+		   const char *csrc_filename, unsigned int csrc_linenum,
+		   const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -351,11 +387,15 @@ void sieve_warning(struct sieve_error_handler *ehandler, const char *location,
 	va_end(args);
 }
 
-void sieve_info(struct sieve_error_handler *ehandler, const char *location,
-		const char *fmt, ...)
+#undef sieve_info
+void sieve_info(struct sieve_error_handler *ehandler,
+		const char *csrc_filename, unsigned int csrc_linenum,
+		const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -368,11 +408,15 @@ void sieve_info(struct sieve_error_handler *ehandler, const char *location,
 	va_end(args);
 }
 
-void sieve_debug(struct sieve_error_handler *ehandler, const char *location,
-		 const char *fmt, ...)
+#undef sieve_debug
+void sieve_debug(struct sieve_error_handler *ehandler,
+		 const char *csrc_filename, unsigned int csrc_linenum,
+		 const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_DEBUG,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -385,12 +429,17 @@ void sieve_debug(struct sieve_error_handler *ehandler, const char *location,
 	va_end(args);
 }
 
+#undef sieve_critical
 void sieve_critical(struct sieve_instance *svinst,
-		    struct sieve_error_handler *ehandler, const char *location,
-		    const char *user_prefix, const char *fmt, ...)
+		    struct sieve_error_handler *ehandler,
+		    const char *csrc_filename, unsigned int csrc_linenum,
+		    const char *location, const char *user_prefix,
+		    const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -786,13 +835,16 @@ sieve_logfile_vprintf(struct sieve_logfile_ehandler *ehandler,
 	}
 }
 
-inline static void ATTR_FORMAT(4, 5)
+inline static void ATTR_FORMAT(6, 7)
 sieve_logfile_printf(struct sieve_logfile_ehandler *ehandler,
+		     const char *csrc_filename, unsigned int csrc_linenum,
 		     const char *location, const char *prefix,
 		     const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
+		.csrc.filename = csrc_filename,
+		.csrc.linenum = csrc_linenum,
 		.location = location,
 	};
 	va_list args;
@@ -921,7 +973,8 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 		tm = localtime(&now);
 
 		if (strftime(buf, sizeof(buf), "%b %d %H:%M:%S", tm) > 0) {
-			sieve_logfile_printf(ehandler, "sieve", "info",
+			sieve_logfile_printf(ehandler, __FILE__, __LINE__,
+					     "sieve", "info",
 					     "started log at %s", buf);
 		}
 	}

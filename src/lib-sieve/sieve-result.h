@@ -142,27 +142,69 @@ void sieve_side_effects_list_add(struct sieve_side_effects_list *list,
  */
 
 void sieve_result_error(const struct sieve_action_exec_env *aenv,
-			const char *fmt, ...) ATTR_FORMAT(2, 3);
+			const char *csrc_filename, unsigned int csrc_linenum,
+			const char *fmt, ...)
+			ATTR_FORMAT(4, 5);
+#define sieve_result_error(aenv, ...) \
+	sieve_result_error(aenv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_result_global_error(const struct sieve_action_exec_env *aenv,
-			       const char *fmt, ...) ATTR_FORMAT(2, 3);
+			       const char *csrc_filename,
+			       unsigned int csrc_linenum, const char *fmt, ...)
+			       ATTR_FORMAT(4, 5);
+#define sieve_result_global_error(aenv, ...) \
+	sieve_result_global_error(aenv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_result_warning(const struct sieve_action_exec_env *aenv,
-			  const char *fmt, ...) ATTR_FORMAT(2, 3);
+			  const char *csrc_filename, unsigned int csrc_linenum,
+			  const char *fmt, ...)
+			  ATTR_FORMAT(4, 5);
+#define sieve_result_warning(aenv, ...) \
+	sieve_result_warning(aenv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_result_global_warning(const struct sieve_action_exec_env *aenv,
-				 const char *fmt, ...) ATTR_FORMAT(2, 3);
+				 const char *csrc_filename,
+				 unsigned int csrc_linenum,
+				 const char *fmt, ...)
+				 ATTR_FORMAT(4, 5);
+#define sieve_result_global_warning(aenv, ...) \
+	sieve_result_global_warning(aenv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_result_log(const struct sieve_action_exec_env *aenv,
-		      const char *fmt, ...) ATTR_FORMAT(2, 3);
+		      const char *csrc_filename, unsigned int csrc_linenum,
+		      const char *fmt, ...)
+		      ATTR_FORMAT(4, 5);
+#define sieve_result_log(aenv, ...) \
+	sieve_result_log(aenv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_result_global_log(const struct sieve_action_exec_env *aenv,
-			     const char *fmt, ...) ATTR_FORMAT(2, 3);
+			     const char *csrc_filename,
+			     unsigned int csrc_linenum, const char *fmt, ...)
+			     ATTR_FORMAT(4, 5);
+#define sieve_result_global_log(aenv, ...) \
+	sieve_result_global_log(aenv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_result_global_log_error(const struct sieve_action_exec_env *aenv,
-				   const char *fmt, ...) ATTR_FORMAT(2, 3);
+				   const char *csrc_filename,
+				   unsigned int csrc_linenum,
+				   const char *fmt, ...)
+				   ATTR_FORMAT(4, 5);
+#define sieve_result_global_log_error(aenv, ...) \
+	sieve_result_global_log_error(aenv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
-				     const char *fmt, ...) ATTR_FORMAT(2, 3);
+				     const char *csrc_filename,
+				     unsigned int csrc_linenum,
+				     const char *fmt, ...)
+				     ATTR_FORMAT(4, 5);
+#define sieve_result_global_log_warning(aenv, ...) \
+	sieve_result_global_log_warning(aenv, __FILE__, __LINE__, __VA_ARGS__)
 
 void sieve_result_critical(const struct sieve_action_exec_env *aenv,
+			   const char *csrc_filename, unsigned int csrc_linenum,
 			   const char *user_prefix, const char *fmt, ...)
-			   ATTR_FORMAT(3, 4);
+			   ATTR_FORMAT(5, 6);
+#define sieve_result_critical(aenv, ...) \
+	sieve_result_critical(aenv, __FILE__, __LINE__, __VA_ARGS__)
 int sieve_result_mail_error(const struct sieve_action_exec_env *aenv,
-			    struct mail *mail, const char *fmt, ...)
-			    ATTR_FORMAT(3, 4);
+			    struct mail *mail,
+			    const char *csrc_filename,
+			    unsigned int csrc_linenum, const char *fmt, ...)
+			    ATTR_FORMAT(5, 6);
+#define sieve_result_mail_error(aenv, mail, ...) \
+	sieve_result_mail_error(aenv, mail, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif

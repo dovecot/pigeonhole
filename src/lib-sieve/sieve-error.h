@@ -23,6 +23,12 @@ struct sieve_error_handler;
 struct sieve_error_params {
 	enum log_type log_type;
 
+	/* Location log command in C source code */
+	struct {
+		const char *filename;
+		unsigned int linenum;
+	} csrc;
+
 	/* Location in Sieve source script */
 	const char *location;
 };
@@ -50,24 +56,46 @@ void sieve_global_info_logv(struct sieve_instance *svinst,
 
 void sieve_global_error(struct sieve_instance *svinst,
 			struct sieve_error_handler *ehandler,
+			const char *csrc_filename,
+			unsigned int csrc_linenum,
 			const char *location, const char *fmt, ...)
-			ATTR_FORMAT(4, 5);
+			ATTR_FORMAT(6, 7);
+#define sieve_global_error(svinst, ehandler, ...) \
+	sieve_global_error(svinst, ehandler, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_global_warning(struct sieve_instance *svinst,
 			  struct sieve_error_handler *ehandler,
+			  const char *csrc_filename,
+			  unsigned int csrc_linenum,
 			  const char *location, const char *fmt, ...)
-			  ATTR_FORMAT(4, 5);
+			  ATTR_FORMAT(6, 7);
+#define sieve_global_warning(svinst, ehandler, ...) \
+	sieve_global_warning(svinst, ehandler, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_global_info(struct sieve_instance *svinst,
 		       struct sieve_error_handler *ehandler,
+		       const char *csrc_filename,
+		       unsigned int csrc_linenum,
 		       const char *location, const char *fmt, ...)
-		       ATTR_FORMAT(4, 5);
+		       ATTR_FORMAT(6, 7);
+#define sieve_global_info(svinst, ehandler, ...) \
+	sieve_global_info(svinst, ehandler, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_global_info_error(struct sieve_instance *svinst,
 			     struct sieve_error_handler *ehandler,
+			     const char *csrc_filename,
+			     unsigned int csrc_linenum,
 			     const char *location, const char *fmt, ...)
-			     ATTR_FORMAT(4, 5);
+			     ATTR_FORMAT(6, 7);
+#define sieve_global_info_error(svinst, ehandler, ...) \
+	sieve_global_info_error(svinst, ehandler, __FILE__, __LINE__, \
+				__VA_ARGS__)
 void sieve_global_info_warning(struct sieve_instance *svinst,
 			       struct sieve_error_handler *ehandler,
+			       const char *csrc_filename,
+			       unsigned int csrc_linenum,
 			       const char *location, const char *fmt, ...)
-			       ATTR_FORMAT(4, 5);
+			       ATTR_FORMAT(6, 7);
+#define sieve_global_info_warning(svinst, ehandler, ...) \
+	sieve_global_info_warning(svinst, ehandler, __FILE__, __LINE__, \
+				  __VA_ARGS__)
 
 /*
  * Main (user) error functions
@@ -91,22 +119,41 @@ void sieve_criticalv(struct sieve_instance *svinst,
 		     ATTR_FORMAT(5, 0);
 
 void sieve_error(struct sieve_error_handler *ehandler,
-		 const char *location, const char *fmt, ...) ATTR_FORMAT(3, 4);
+		 const char *csrc_filename, unsigned int csrc_linenum,
+		 const char *location, const char *fmt, ...) ATTR_FORMAT(5, 6);
+#define sieve_error(ehandler, ...) \
+	sieve_error(ehandler, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_warning(struct sieve_error_handler *ehandler,
+		   const char *csrc_filename, unsigned int csrc_linenum,
 		   const char *location, const char *fmt, ...)
-		   ATTR_FORMAT(3, 4);
+		   ATTR_FORMAT(5, 6);
+#define sieve_warning(ehandler, ...) \
+	sieve_warning(ehandler, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_info(struct sieve_error_handler *ehandler,
-		const char *location, const char *fmt, ...) ATTR_FORMAT(3, 4);
+		const char *csrc_filename, unsigned int csrc_linenum,
+		const char *location, const char *fmt, ...) ATTR_FORMAT(5, 6);
+#define sieve_info(ehandler, ...) \
+	sieve_info(ehandler, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_debug(struct sieve_error_handler *ehandler,
-		 const char *location, const char *fmt, ...) ATTR_FORMAT(3, 4);
+		 const char *csrc_filename, unsigned int csrc_linenum,
+		 const char *location, const char *fmt, ...) ATTR_FORMAT(5, 6);
+#define sieve_debug(ehandler, ...) \
+	sieve_debug(ehandler, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_critical(struct sieve_instance *svinst,
-		    struct sieve_error_handler *ehandler, const char *location,
-		    const char *user_prefix, const char *fmt, ...)
-		    ATTR_FORMAT(5, 6);
+		    struct sieve_error_handler *ehandler,
+		    const char *csrc_filename, unsigned int csrc_linenum,
+		    const char *location, const char *user_prefix,
+		    const char *fmt, ...) ATTR_FORMAT(7, 8);
+#define sieve_critical(svinst, ehandler, ...) \
+	sieve_critical(svinst, ehandler, __FILE__, __LINE__, __VA_ARGS__)
+
 
 void sieve_internal_error(struct sieve_error_handler *ehandler,
+			  const char *csrc_filename, unsigned int csrc_linenum,
 			  const char *location, const char *user_prefix)
-			  ATTR_NULL(1, 2, 3);
+			  ATTR_NULL(1, 4, 5);
+#define sieve_internal_error(ehandler, ...) \
+	sieve_internal_error(ehandler, __FILE__, __LINE__, __VA_ARGS__)
 
 /*
  * Error handler configuration
