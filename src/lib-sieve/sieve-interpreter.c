@@ -947,10 +947,10 @@ int sieve_interpreter_run(struct sieve_interpreter *interp,
  * Error handling
  */
 
-static inline void ATTR_FORMAT(4, 0)
+static inline void ATTR_FORMAT(3, 0)
 sieve_runtime_logv(const struct sieve_runtime_env *renv,
 		   const struct sieve_error_params *params,
-		   sieve_error_vfunc_t msg_func, const char *fmt, va_list args)
+		   const char *fmt, va_list args)
 {
 	struct sieve_error_params new_params = *params;
 
@@ -960,7 +960,7 @@ sieve_runtime_logv(const struct sieve_runtime_env *renv,
 				sieve_runtime_get_full_command_location(renv);
 		}
 
-		msg_func(renv->ehandler, params, fmt, args);
+		sieve_logv(renv->ehandler, params, fmt, args);
 	} T_END;
 }
 
@@ -968,12 +968,13 @@ void sieve_runtime_error(const struct sieve_runtime_env *renv,
 			 const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
+		.log_type = LOG_TYPE_ERROR,
 		.location = location,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_runtime_logv(renv, &params, sieve_verror, fmt, args);
+	sieve_runtime_logv(renv, &params, fmt, args);
 	va_end(args);
 }
 
@@ -981,12 +982,13 @@ void sieve_runtime_warning(const struct sieve_runtime_env *renv,
 			   const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
+		.log_type = LOG_TYPE_WARNING,
 		.location = location,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_runtime_logv(renv, &params, sieve_vwarning, fmt, args);
+	sieve_runtime_logv(renv, &params, fmt, args);
 	va_end(args);
 }
 
@@ -994,12 +996,13 @@ void sieve_runtime_log(const struct sieve_runtime_env *renv,
 		       const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
+		.log_type = LOG_TYPE_INFO,
 		.location = location,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_runtime_logv(renv, &params, sieve_vinfo, fmt, args);
+	sieve_runtime_logv(renv, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1008,6 +1011,7 @@ void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 			    const char *fmt, ...)
 {
 	struct sieve_error_params params = {
+		.log_type = LOG_TYPE_ERROR,
 		.location = location,
 	};
 	va_list args;

@@ -1663,7 +1663,7 @@ void sieve_validator_error(struct sieve_validator *valdtr,
 			   unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_ERROR,
 	};
 	va_list args;
 
@@ -1671,7 +1671,7 @@ void sieve_validator_error(struct sieve_validator *valdtr,
 		sieve_error_script_location(valdtr->script, source_line);
 
 	va_start(args, fmt);
-	sieve_verror(valdtr->ehandler, &params, fmt, args);
+	sieve_logv(valdtr->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1679,7 +1679,7 @@ void sieve_validator_warning(struct sieve_validator *valdtr,
 			     unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_WARNING,
 	};
 	va_list args;
 
@@ -1687,7 +1687,7 @@ void sieve_validator_warning(struct sieve_validator *valdtr,
 		sieve_error_script_location(valdtr->script, source_line);
 
 	va_start(args, fmt);
-	sieve_vwarning(valdtr->ehandler, &params, fmt, args);
+	sieve_logv(valdtr->ehandler, &params, fmt, args);
 	va_end(args);
 
 }

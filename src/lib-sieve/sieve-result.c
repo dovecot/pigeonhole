@@ -1534,12 +1534,12 @@ void sieve_result_error(const struct sieve_action_exec_env *aenv,
 			const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_ERROR,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_verror(aenv->ehandler, &params, fmt, args);
+	sieve_logv(aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1547,12 +1547,12 @@ void sieve_result_global_error(const struct sieve_action_exec_env *aenv,
 			       const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_ERROR,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_verror(aenv->svinst, aenv->ehandler, &params, fmt, args);
+	sieve_global_logv(aenv->svinst, aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1560,12 +1560,12 @@ void sieve_result_warning(const struct sieve_action_exec_env *aenv,
 			  const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_WARNING,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_vwarning(aenv->ehandler, &params, fmt, args);
+	sieve_logv(aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1573,12 +1573,12 @@ void sieve_result_global_warning(const struct sieve_action_exec_env *aenv,
 				 const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_WARNING,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_vwarning(aenv->svinst, aenv->ehandler, &params, fmt, args);
+	sieve_global_logv(aenv->svinst, aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1586,12 +1586,12 @@ void sieve_result_log(const struct sieve_action_exec_env *aenv,
 		      const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_INFO,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_vinfo(aenv->ehandler, &params, fmt, args);
+	sieve_logv(aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1599,12 +1599,12 @@ void sieve_result_global_log(const struct sieve_action_exec_env *aenv,
 			     const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_INFO,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_vinfo(aenv->svinst, aenv->ehandler, &params, fmt, args);
+	sieve_global_logv(aenv->svinst, aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1612,13 +1612,13 @@ void sieve_result_global_log_error(const struct sieve_action_exec_env *aenv,
 				   const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_ERROR,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_info_verror(aenv->svinst, aenv->ehandler, &params,
-				 fmt, args);
+	sieve_global_info_logv(aenv->svinst, aenv->ehandler, &params,
+			       fmt, args);
 	va_end(args);
 }
 
@@ -1626,25 +1626,28 @@ void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
 				     const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_WARNING,
 	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_info_vwarning(aenv->svinst, aenv->ehandler, &params,
-				   fmt, args);
+	sieve_global_info_logv(aenv->svinst, aenv->ehandler, &params,
+			       fmt, args);
 	va_end(args);
 }
 
 void sieve_result_critical(const struct sieve_action_exec_env *aenv,
 			   const char *user_prefix, const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.log_type = LOG_TYPE_ERROR,
+	};
 	va_list args;
 
 	va_start(args, fmt);
 
 	T_BEGIN {
-		sieve_vcritical(aenv->svinst, aenv->ehandler, NULL,
+		sieve_vcritical(aenv->svinst, aenv->ehandler, &params,
 				user_prefix, fmt, args);
 	} T_END;
 

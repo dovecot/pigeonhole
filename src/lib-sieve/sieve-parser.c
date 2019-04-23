@@ -92,7 +92,7 @@ inline static void ATTR_FORMAT(2, 3)
 sieve_parser_error(struct sieve_parser *parser, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_ERROR,
 	};
 	va_list args;
 
@@ -104,7 +104,7 @@ sieve_parser_error(struct sieve_parser *parser, const char *fmt, ...)
 			params.location = sieve_error_script_location(
 				parser->script,
 				sieve_lexer_token_line(parser->lexer));
-			sieve_verror(parser->ehandler, &params, fmt, args);
+			sieve_logv(parser->ehandler, &params, fmt, args);
 		} T_END;
 	}
 

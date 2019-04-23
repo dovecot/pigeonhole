@@ -42,22 +42,10 @@ struct sieve_error_handler {
 	bool log_info;
 	bool log_debug;
 
-	void (*verror)(struct sieve_error_handler *ehandler,
-		       const struct sieve_error_params *params,
-		       unsigned int flags, const char *fmt, va_list args)
-		       ATTR_FORMAT(4, 0);
-	void (*vwarning)(struct sieve_error_handler *ehandler,
-			 const struct sieve_error_params *params,
-			 unsigned int flags, const char *fmt, va_list args)
-			 ATTR_FORMAT(4, 0);
-	void (*vinfo)(struct sieve_error_handler *ehandler,
-		      const struct sieve_error_params *params,
-		      unsigned int flags, const char *fmt, va_list args)
-		      ATTR_FORMAT(4, 0);
-	void (*vdebug)(struct sieve_error_handler *ehandler,
-		       const struct sieve_error_params *params,
-		       unsigned int flags, const char *fmt, va_list args)
-		       ATTR_FORMAT(4, 0);
+	void (*logv)(struct sieve_error_handler *ehandler,
+		     const struct sieve_error_params *params,
+		     enum sieve_error_flags flags,
+		     const char *fmt, va_list args) ATTR_FORMAT(4, 0);
 
 	void (*free)(struct sieve_error_handler *ehandler);
 };
@@ -74,76 +62,22 @@ void sieve_error_handler_init_from_parent(struct sieve_error_handler *ehandler,
  * Direct handler calls
  */
 
-void sieve_direct_verror(struct sieve_instance *svinst,
-			 struct sieve_error_handler *ehandler,
-			 const struct sieve_error_params *params,
-			 unsigned int flags, const char *fmt, va_list args)
-			 ATTR_FORMAT(5, 0);
-void sieve_direct_vwarning(struct sieve_instance *svinst,
-			   struct sieve_error_handler *ehandler,
-			   const struct sieve_error_params *params,
-			   unsigned int flags, const char *fmt, va_list args)
-			   ATTR_FORMAT(5, 0);
-void sieve_direct_vinfo(struct sieve_instance *svinst,
-			struct sieve_error_handler *ehandler,
-			const struct sieve_error_params *params,
-			unsigned int flags, const char *fmt, va_list args)
-			ATTR_FORMAT(5, 0);
-void sieve_direct_vdebug(struct sieve_instance *svinst,
-			 struct sieve_error_handler *ehandler,
-			 const struct sieve_error_params *params,
-			 unsigned int flags, const char *fmt, va_list args)
-			 ATTR_FORMAT(5, 0);
+void sieve_direct_logv(struct sieve_instance *svinst,
+		       struct sieve_error_handler *ehandler,
+		       const struct sieve_error_params *params,
+		       enum sieve_error_flags flags,
+		       const char *fmt, va_list args) ATTR_FORMAT(5, 0);
 
 static inline void ATTR_FORMAT(5, 6)
-sieve_direct_error(struct sieve_instance *svinst,
-		   struct sieve_error_handler *ehandler,
-		   const struct sieve_error_params *params,
-		   unsigned int flags, const char *fmt, ...)
+sieve_direct_log(struct sieve_instance *svinst,
+		 struct sieve_error_handler *ehandler,
+		 const struct sieve_error_params *params,
+		 enum sieve_error_flags flags, const char *fmt, ...)
 {
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_direct_verror(svinst, ehandler, params, flags, fmt, args);
-	va_end(args);
-}
-
-static inline void ATTR_FORMAT(5, 6)
-sieve_direct_warning(struct sieve_instance *svinst,
-		     struct sieve_error_handler *ehandler,
-		     const struct sieve_error_params *params,
-		     unsigned int flags, const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	sieve_direct_vwarning(svinst, ehandler, params, flags, fmt, args);
-	va_end(args);
-}
-
-static inline void ATTR_FORMAT(5, 6)
-sieve_direct_info(struct sieve_instance *svinst,
-		  struct sieve_error_handler *ehandler,
-		  const struct sieve_error_params *params,
-		  unsigned int flags, const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	sieve_direct_vinfo(svinst, ehandler, params, flags, fmt, args);
-	va_end(args);
-}
-
-static inline void ATTR_FORMAT(5, 6)
-sieve_direct_debug(struct sieve_instance *svinst,
-		   struct sieve_error_handler *ehandler,
-		   const struct sieve_error_params *params,
-		   unsigned int flags, const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	sieve_direct_vdebug(svinst, ehandler, params, flags, fmt, args);
+	sieve_direct_logv(svinst, ehandler, params, flags, fmt, args);
 	va_end(args);
 }
 

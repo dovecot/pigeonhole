@@ -41,43 +41,13 @@ lda_sieve_log_expand_message(struct sieve_error_handler *_ehandler,
 }
 
 static void ATTR_FORMAT(4, 0)
-lda_sieve_log_verror(struct sieve_error_handler *ehandler,
-		     const struct sieve_error_params *params,
-		     unsigned int flags, const char *fmt, va_list args)
+lda_sieve_logv(struct sieve_error_handler *ehandler,
+	       const struct sieve_error_params *params,
+	       enum sieve_error_flags flags, const char *fmt, va_list args)
 {
-	sieve_direct_error(ehandler->svinst, ehandler->parent,
-			   params, flags, "%s",
-			   lda_sieve_log_expand_message(ehandler, fmt, args));
-}
-
-static void ATTR_FORMAT(4, 0)
-lda_sieve_log_vwarning(struct sieve_error_handler *ehandler,
-		       const struct sieve_error_params *params,
-		       unsigned int flags, const char *fmt, va_list args)
-{
-	sieve_direct_warning(ehandler->svinst, ehandler->parent,
-			     params, flags, "%s",
-			     lda_sieve_log_expand_message(ehandler, fmt, args));
-}
-
-static void ATTR_FORMAT(4, 0)
-lda_sieve_log_vinfo(struct sieve_error_handler *ehandler,
-		    const struct sieve_error_params *params,
-		    unsigned int flags, const char *fmt, va_list args)
-{
-	sieve_direct_info(ehandler->svinst, ehandler->parent,
-			  params, flags, "%s",
-			  lda_sieve_log_expand_message(ehandler, fmt, args));
-}
-
-static void ATTR_FORMAT(4, 0)
-lda_sieve_log_vdebug(struct sieve_error_handler *ehandler,
-		     const struct sieve_error_params *params,
-		     unsigned int flags, const char *fmt, va_list args)
-{
-	sieve_direct_debug(ehandler->svinst, ehandler->parent,
-			   params, flags, "%s",
-			   lda_sieve_log_expand_message(ehandler, fmt, args));
+	sieve_direct_log(ehandler->svinst, ehandler->parent,
+			 params, flags, "%s",
+			 lda_sieve_log_expand_message(ehandler, fmt, args));
 }
 
 struct sieve_error_handler *
@@ -95,11 +65,7 @@ lda_sieve_log_ehandler_create(struct sieve_error_handler *parent,
 	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
 
 	ehandler->mdctx = mdctx;
-
-	ehandler->handler.verror = lda_sieve_log_verror;
-	ehandler->handler.vwarning = lda_sieve_log_vwarning;
-	ehandler->handler.vinfo = lda_sieve_log_vinfo;
-	ehandler->handler.vdebug = lda_sieve_log_vdebug;
+	ehandler->handler.logv = lda_sieve_logv;
 
 	return &(ehandler->handler);
 }

@@ -514,7 +514,7 @@ void sieve_generator_error(struct sieve_generator *gentr,
 			   unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_ERROR,
 	};
 	va_list args;
 
@@ -522,7 +522,7 @@ void sieve_generator_error(struct sieve_generator *gentr,
 		sieve_error_script_location(gentr->genenv.script, source_line);
 
 	va_start(args, fmt);
-	sieve_verror(gentr->ehandler, &params, fmt, args);
+	sieve_logv(gentr->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -530,7 +530,7 @@ void sieve_generator_warning(struct sieve_generator *gentr,
 			     unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_WARNING,
 	};
 	va_list args;
 
@@ -538,7 +538,7 @@ void sieve_generator_warning(struct sieve_generator *gentr,
 		sieve_error_script_location(gentr->genenv.script, source_line);
 
 	va_start(args, fmt);
-	sieve_vwarning(gentr->ehandler, &params, fmt, args);
+	sieve_logv(gentr->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -546,7 +546,7 @@ void sieve_generator_critical(struct sieve_generator *gentr,
 			      unsigned int source_line, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_ERROR,
 	};
 	va_list args;
 
@@ -554,6 +554,7 @@ void sieve_generator_critical(struct sieve_generator *gentr,
 		sieve_error_script_location(gentr->genenv.script, source_line);
 
 	va_start(args, fmt);
-	sieve_vwarning(gentr->ehandler, &params, fmt, args);
+	sieve_vcritical(gentr->genenv.svinst, gentr->ehandler, &params,
+			"Code generation failed", fmt, args);
 	va_end(args);
 }

@@ -125,7 +125,7 @@ sieve_lexer_error(const struct sieve_lexer *lexer, const char *fmt, ...)
 {
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_ERROR,
 	};
 	va_list args;
 
@@ -135,7 +135,7 @@ sieve_lexer_error(const struct sieve_lexer *lexer, const char *fmt, ...)
 		params.location =
 			sieve_error_script_location(scanner->script,
 						    scanner->current_line);
-		sieve_verror(scanner->ehandler, &params, fmt, args);
+		sieve_logv(scanner->ehandler, &params, fmt, args);
 	} T_END;
 
 	va_end(args);
@@ -146,7 +146,7 @@ sieve_lexer_warning(const struct sieve_lexer *lexer, const char *fmt, ...)
 {
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
 	struct sieve_error_params params = {
-		.location = NULL,
+		.log_type = LOG_TYPE_WARNING,
 	};
 	va_list args;
 
@@ -156,7 +156,7 @@ sieve_lexer_warning(const struct sieve_lexer *lexer, const char *fmt, ...)
 		params.location =
 			sieve_error_script_location(scanner->script,
 						    scanner->current_line);
-		sieve_vwarning(scanner->ehandler, &params, fmt, args);
+		sieve_logv(scanner->ehandler, &params, fmt, args);
 	} T_END;
 
 	va_end(args);
