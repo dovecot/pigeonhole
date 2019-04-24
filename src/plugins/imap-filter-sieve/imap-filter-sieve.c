@@ -99,8 +99,8 @@ imap_filter_sieve_get_svinst(struct imap_filter_sieve_context *sctx)
 	ifsuser->svinst = sieve_init(&svenv, &imap_filter_sieve_callbacks,
 				     ifsuser, debug);
 
-	ifsuser->master_ehandler = sieve_master_ehandler_create(
-		ifsuser->svinst, NULL, 0); // FIXME: prefix?
+	ifsuser->master_ehandler =
+		sieve_master_ehandler_create(ifsuser->svinst, NULL, 0); // FIXME: prefix?
 	sieve_system_ehandler_set(ifsuser->master_ehandler);
 	sieve_error_handler_accept_infolog(ifsuser->master_ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ifsuser->master_ehandler, debug);
@@ -183,7 +183,8 @@ imap_filter_sieve_get_global_storage(struct imap_filter_sieve_context *sctx,
 
 	location = mail_user_plugin_getenv(user, "sieve_global");
 	if (location == NULL) {
-		sieve_sys_info(svinst, "include: sieve_global is unconfigured; "
+		sieve_sys_info(svinst,
+			"include: sieve_global is unconfigured; "
 			"include of `:global' script is therefore not possible");
 		*error_code_r = MAIL_ERROR_NOTFOUND;
 		*error_r = "No global Sieve scripts available";
@@ -321,26 +322,31 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 		/* Script not found */
 		case SIEVE_ERROR_NOT_FOUND:
 			if (debug) {
-				sieve_sys_debug(svinst, "Script `%s' is missing for %s",
-					sieve_script_location(script), compile_name);
+				sieve_sys_debug(svinst,
+					"Script `%s' is missing for %s",
+					sieve_script_location(script),
+					compile_name);
 			}
 			break;
 		/* Temporary failure */
 		case SIEVE_ERROR_TEMP_FAILURE:
 			sieve_sys_error(svinst,
-				"Failed to open script `%s' for %s (temporary failure)",
+				"Failed to open script `%s' for %s "
+				"(temporary failure)",
 				sieve_script_location(script), compile_name);
 			break;
 		/* Compile failed */
 		case SIEVE_ERROR_NOT_VALID:
 			if (script == sctx->user_script)
 				break;
-			sieve_sys_error(svinst,	"Failed to %s script `%s'",
+			sieve_sys_error(svinst,
+				"Failed to %s script `%s'",
 				compile_name, sieve_script_location(script));
 			break;
 		/* Something else */
 		default:
-			sieve_sys_error(svinst,	"Failed to open script `%s' for %s",
+			sieve_sys_error(svinst,
+				"Failed to open script `%s' for %s",
 				sieve_script_location(script), compile_name);
 			break;
 		}
@@ -379,7 +385,8 @@ int imap_filter_sieve_compile(struct imap_filter_sieve_context *sctx,
 		if (scripts[i].binary == NULL) {
 			if (error != SIEVE_ERROR_NOT_VALID) {
 				const char *errormsg =
-					sieve_script_get_last_error(script, &error);
+					sieve_script_get_last_error(
+						script, &error);
 
 				if (error != SIEVE_ERROR_NONE) {
 					str_truncate(sctx->errors, 0);
@@ -623,7 +630,7 @@ imap_sieve_filter_handle_exec_status(struct imap_filter_sieve_context *sctx,
 		}
 	}
 
-	switch ( status ) {
+	switch (status) {
 	case SIEVE_EXEC_FAILURE:
 		user_error_func(svinst,
 			"Execution of script %s failed",
@@ -702,7 +709,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 		cpflags = 0;
 		exflags = SIEVE_EXECUTE_FLAG_SKIP_RESPONSES;
 
-		user_script = ( script == sctx->user_script );
+		user_script = (script == sctx->user_script);
 		last_script = script;
 
 		if (user_script) {
@@ -736,8 +743,9 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 					imap_sieve_filter_open_script(sctx,
 						script, cpflags, user_ehandler,
 						FALSE, &compile_error);
-				if ( sbin == NULL ) {
-					scripts[i].compile_error = compile_error;
+				if (sbin == NULL) {
+					scripts[i].compile_error =
+						compile_error;
 					break;
 				}
 
@@ -815,9 +823,9 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 	int ret;
 
 	mail_from = NULL;
-	if ((ret=mail_get_special(mail, MAIL_FETCH_FROM_ENVELOPE,
-				  &address)) > 0 &&
-	    (ret=parse_address(address, &mail_from)) < 0) {
+	if ((ret = mail_get_special(mail, MAIL_FETCH_FROM_ENVELOPE,
+				    &address)) > 0 &&
+	    (ret = parse_address(address, &mail_from)) < 0) {
 		sieve_sys_warning(svinst,
 			"Failed to parse message FROM_ENVELOPE");
 	}
@@ -886,9 +894,9 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 
 	trace_log = NULL;
 	if (sieve_trace_config_get(svinst, &trace_config) >= 0) {
-		const char *tr_label = t_strdup_printf
-			("%s.%s.%u", user->username,
-				mailbox_get_vname(mail->box), mail->uid);
+		const char *tr_label = t_strdup_printf(
+			"%s.%s.%u", user->username,
+			mailbox_get_vname(mail->box), mail->uid);
 		if (sieve_trace_log_open(svinst, tr_label, &trace_log) < 0)
 			i_zero(&trace_config);
 	}
@@ -906,15 +914,20 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 				error);
 			ret = -1;
 		} else {
-			scriptenv.default_mailbox = mailbox_get_vname(mail->box);
+			scriptenv.default_mailbox =
+				mailbox_get_vname(mail->box);
 			scriptenv.smtp_start = imap_filter_sieve_smtp_start;
-			scriptenv.smtp_add_rcpt = imap_filter_sieve_smtp_add_rcpt;
+			scriptenv.smtp_add_rcpt =
+				imap_filter_sieve_smtp_add_rcpt;
 			scriptenv.smtp_send = imap_filter_sieve_smtp_send;
 			scriptenv.smtp_abort = imap_filter_sieve_smtp_abort;
 			scriptenv.smtp_finish = imap_filter_sieve_smtp_finish;
-			scriptenv.duplicate_mark = imap_filter_sieve_duplicate_mark;
-			scriptenv.duplicate_check = imap_filter_sieve_duplicate_check;
-			scriptenv.duplicate_flush = imap_filter_sieve_duplicate_flush;
+			scriptenv.duplicate_mark =
+				imap_filter_sieve_duplicate_mark;
+			scriptenv.duplicate_check =
+				imap_filter_sieve_duplicate_check;
+			scriptenv.duplicate_flush =
+				imap_filter_sieve_duplicate_flush;
 			scriptenv.trace_log = trace_log;
 			scriptenv.trace_config = trace_config;
 			scriptenv.script_context = sctx;
@@ -924,12 +937,12 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 
 			/* Execute script(s) */
 
-			ret = imap_sieve_filter_run_scripts(sctx, user_ehandler,
-							    &msgdata, &scriptenv);
+			ret = imap_sieve_filter_run_scripts(
+				sctx, user_ehandler, &msgdata, &scriptenv);
 		}
 	} T_END;
 
-	if ( trace_log != NULL )
+	if (trace_log != NULL)
 		sieve_trace_log_free(&trace_log);
 
 	*have_warnings_r = (sieve_get_warnings(user_ehandler) > 0);
