@@ -28,17 +28,6 @@
 #define DIGIT_VAL(c) (c - '0')
 
 /*
- * Forward declarations
- */
-
-inline static void
-sieve_lexer_error(const struct sieve_lexer *lexer, const char *fmt, ...)
-		  ATTR_FORMAT(2, 3);
-inline static void
-sieve_lexer_warning(const struct sieve_lexer *lexer, const char *fmt, ...)
-		    ATTR_FORMAT(2, 3);
-
-/*
  * Lexer object
  */
 
@@ -131,7 +120,7 @@ void sieve_lexer_free(const struct sieve_lexer **_lexer)
  * Internal error handling
  */
 
-inline static void
+inline static void ATTR_FORMAT(2, 3)
 sieve_lexer_error(const struct sieve_lexer *lexer, const char *fmt, ...)
 {
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
@@ -149,7 +138,7 @@ sieve_lexer_error(const struct sieve_lexer *lexer, const char *fmt, ...)
 	va_end(args);
 }
 
-inline static void
+inline static void ATTR_FORMAT(2, 3)
 sieve_lexer_warning(const struct sieve_lexer *lexer, const char *fmt, ...)
 {
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
