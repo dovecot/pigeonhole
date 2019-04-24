@@ -17,10 +17,6 @@
  * Forward declarations
  */
 
-inline static void
-sieve_parser_error(struct sieve_parser *parser, const char *fmt, ...)
-		   ATTR_FORMAT(2, 3);
-
 static int
 sieve_parser_recover(struct sieve_parser *parser,
 		     enum sieve_token_type end_token);
@@ -92,7 +88,7 @@ void sieve_parser_free(struct sieve_parser **parser)
  * Internal error handling
  */
 
-inline static void
+inline static void ATTR_FORMAT(2, 3)
 sieve_parser_error(struct sieve_parser *parser, const char *fmt, ...)
 {
 	va_list args;
