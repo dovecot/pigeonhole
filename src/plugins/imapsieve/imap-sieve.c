@@ -61,7 +61,6 @@ static const struct sieve_callbacks mail_sieve_callbacks = {
 	mail_sieve_get_setting
 };
 
-
 struct imap_sieve *imap_sieve_init(struct client *client)
 {
 	struct sieve_environment svenv;
@@ -90,16 +89,16 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 
 	isieve->home_dir = p_strdup(pool, svenv.home_dir);
 
-	isieve->svinst = sieve_init
-		(&svenv, &mail_sieve_callbacks, isieve, debug);
+	isieve->svinst = sieve_init(&svenv, &mail_sieve_callbacks, isieve,
+				    debug);
 
-	isieve->ext_imapsieve = sieve_extension_replace
-		(isieve->svinst, &imapsieve_extension, TRUE);
-	isieve->ext_vnd_imapsieve = sieve_extension_replace
-		(isieve->svinst, &vnd_imapsieve_extension, TRUE);
+	isieve->ext_imapsieve = sieve_extension_replace(
+		isieve->svinst, &imapsieve_extension, TRUE);
+	isieve->ext_vnd_imapsieve = sieve_extension_replace(
+		isieve->svinst, &vnd_imapsieve_extension, TRUE);
 
-	isieve->master_ehandler = sieve_master_ehandler_create
-		(isieve->svinst, NULL, 0); // FIXME: prefix?
+	isieve->master_ehandler =
+		sieve_master_ehandler_create(isieve->svinst, NULL, 0); // FIXME: prefix?
 	sieve_system_ehandler_set(isieve->master_ehandler);
 	sieve_error_handler_accept_infolog(isieve->master_ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(isieve->master_ehandler, debug);
@@ -128,7 +127,7 @@ void imap_sieve_deinit(struct imap_sieve **_isieve)
 
 static int
 imap_sieve_get_storage(struct imap_sieve *isieve,
-	struct sieve_storage **storage_r)
+		       struct sieve_storage **storage_r)
 {
 	enum sieve_storage_flags storage_flags = 0;
 	struct mail_user *user = isieve->client->user;
@@ -141,8 +140,8 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
 
 	// FIXME: limit interval between retries
 
-	isieve->storage = sieve_storage_create_main
-		(isieve->svinst, user, storage_flags, &error);
+	isieve->storage = sieve_storage_create_main(isieve->svinst, user,
+						    storage_flags, &error);
 	if (isieve->storage == NULL) {
 		if (error == SIEVE_ERROR_TEMP_FAILURE)
 			return -1;
@@ -156,9 +155,9 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
  * Mail transmission
  */
 
-static void *imap_sieve_smtp_start
-(const struct sieve_script_env *senv,
-	const struct smtp_address *mail_from)
+static void *
+imap_sieve_smtp_start(const struct sieve_script_env *senv,
+		      const struct smtp_address *mail_from)
 {
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
@@ -178,36 +177,38 @@ static void *imap_sieve_smtp_start
 					       mail_from);
 }
 
-static void imap_sieve_smtp_add_rcpt
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
-	const struct smtp_address *rcpt_to)
+static void
+imap_sieve_smtp_add_rcpt(const struct sieve_script_env *senv ATTR_UNUSED,
+			 void *handle, const struct smtp_address *rcpt_to)
 {
-	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
+	struct smtp_submit *smtp_submit = (struct smtp_submit *)handle;
 
 	smtp_submit_add_rcpt(smtp_submit, rcpt_to);
 }
 
-static struct ostream *imap_sieve_smtp_send
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
+static struct ostream *
+imap_sieve_smtp_send(const struct sieve_script_env *senv ATTR_UNUSED,
+		     void *handle)
 {
-	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
+	struct smtp_submit *smtp_submit = (struct smtp_submit *)handle;
 
 	return smtp_submit_send(smtp_submit);
 }
 
-static void imap_sieve_smtp_abort
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
+static void
+imap_sieve_smtp_abort(const struct sieve_script_env *senv ATTR_UNUSED,
+		      void *handle)
 {
-	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
+	struct smtp_submit *smtp_submit = (struct smtp_submit *)handle;
 
 	smtp_submit_deinit(&smtp_submit);
 }
 
-static int imap_sieve_smtp_finish
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
-	const char **error_r)
+static int
+imap_sieve_smtp_finish(const struct sieve_script_env *senv ATTR_UNUSED,
+		       void *handle, const char **error_r)
 {
-	struct smtp_submit *smtp_submit = (struct smtp_submit *) handle;
+	struct smtp_submit *smtp_submit = (struct smtp_submit *)handle;
 	int ret;
 
 	ret = smtp_submit_run(smtp_submit, error_r);
@@ -219,33 +220,34 @@ static int imap_sieve_smtp_finish
  * Duplicate checking
  */
 
-static bool imap_sieve_duplicate_check
-(const struct sieve_script_env *senv, const void *id,
-	size_t id_size)
+static bool
+imap_sieve_duplicate_check(const struct sieve_script_env *senv, const void *id,
+			   size_t id_size)
 {
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 
-	return mail_duplicate_check(isctx->isieve->dup_db,
-		id, id_size, senv->user->username);
+	return mail_duplicate_check(isctx->isieve->dup_db, id, id_size,
+				    senv->user->username);
 }
 
-static void imap_sieve_duplicate_mark
-(const struct sieve_script_env *senv, const void *id,
-	size_t id_size, time_t time)
+static void
+imap_sieve_duplicate_mark(const struct sieve_script_env *senv, const void *id,
+			  size_t id_size, time_t time)
 {
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 
-	mail_duplicate_mark(isctx->isieve->dup_db,
-		id, id_size, senv->user->username, time);
+	mail_duplicate_mark(isctx->isieve->dup_db, id, id_size,
+			    senv->user->username, time);
 }
 
-static void imap_sieve_duplicate_flush
-(const struct sieve_script_env *senv)
+static void
+imap_sieve_duplicate_flush(const struct sieve_script_env *senv)
 {
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
+
 	mail_duplicate_db_flush(isctx->isieve->dup_db);
 }
 
@@ -286,21 +288,21 @@ imap_sieve_run_init_user_log(struct imap_sieve_run *isrun)
 	struct sieve_instance *svinst = isieve->svinst;
 	const char *log_path;
 
-	log_path = sieve_user_get_log_path
-		(svinst, isrun->user_script);
-	if ( log_path != NULL ) {
+	log_path = sieve_user_get_log_path(svinst, isrun->user_script);
+	if (log_path != NULL) {
 		isrun->userlog = p_strdup(isrun->pool, log_path);
-		isrun->user_ehandler = sieve_logfile_ehandler_create
-			(svinst, log_path, IMAP_SIEVE_MAX_USER_ERRORS);
+		isrun->user_ehandler = sieve_logfile_ehandler_create(
+			svinst, log_path, IMAP_SIEVE_MAX_USER_ERRORS);
 	}
 }
 
 int imap_sieve_run_init(struct imap_sieve *isieve,
-	struct mailbox *dest_mailbox, struct mailbox *src_mailbox,
-	const char *cause, const char *script_name,
-	const char *const *scripts_before,
-	const char *const *scripts_after,
-	struct imap_sieve_run **isrun_r)
+			struct mailbox *dest_mailbox,
+			struct mailbox *src_mailbox,
+			const char *cause, const char *script_name,
+			const char *const *scripts_before,
+			const char *const *scripts_after,
+			struct imap_sieve_run **isrun_r)
 {
 	struct sieve_instance *svinst = isieve->svinst;
 	struct imap_sieve_run *isrun;
@@ -327,7 +329,7 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 	/* Get storage for user script */
 	storage = NULL;
 	if (script_name != NULL && *script_name != '\0' &&
-		(ret=imap_sieve_get_storage(isieve, &storage)) < 0)
+	    (ret=imap_sieve_get_storage(isieve, &storage)) < 0)
 		return ret;
 
 	/* Open all scripts */
@@ -339,8 +341,9 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 	if (scripts_before != NULL) {
 		for (sp = scripts_before; *sp != NULL; sp++) {
 			i_assert(count < max_len);
-			scripts[count].script = sieve_script_create_open
-				(svinst, *sp, NULL, &error);
+			scripts[count].script =
+				sieve_script_create_open(svinst, *sp, NULL,
+							 &error);
 			if (scripts[count].script != NULL)
 				count++;
 			else if (error == SIEVE_ERROR_TEMP_FAILURE)
@@ -352,8 +355,8 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 	user_script = NULL;
 	if (storage != NULL) {
 		i_assert(count < max_len);
-		scripts[count].script = sieve_storage_open_script
-			(storage, script_name, &error);
+		scripts[count].script =
+			sieve_storage_open_script(storage, script_name, &error);
 		if (scripts[count].script != NULL) {
 			user_script = scripts[count].script;
 			count++;
@@ -366,8 +369,9 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 	if (scripts_after != NULL) {
 		for (sp = scripts_after; *sp != NULL; sp++) {
 			i_assert(count < max_len);
-			scripts[count].script = sieve_script_create_open
-				(svinst, *sp, NULL, &error);
+			scripts[count].script =
+				sieve_script_create_open(svinst, *sp, NULL,
+							 &error);
 			if (scripts[count].script != NULL)
 				count++;
 			else if (error == SIEVE_ERROR_TEMP_FAILURE)
@@ -418,11 +422,10 @@ void imap_sieve_run_deinit(struct imap_sieve_run **_isrun)
 }
 
 static struct sieve_binary *
-imap_sieve_run_open_script(
-	struct imap_sieve_run *isrun,
-	struct sieve_script *script,
-	enum sieve_compile_flags cpflags,
-	bool recompile, enum sieve_error *error_r)
+imap_sieve_run_open_script(struct imap_sieve_run *isrun,
+			   struct sieve_script *script,
+			   enum sieve_compile_flags cpflags,
+			   bool recompile, enum sieve_error *error_r)
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
@@ -432,51 +435,53 @@ imap_sieve_run_open_script(
 	const char *compile_name = "compile";
 	bool debug = user->mail_debug;
 
-	if ( recompile ) {
+	if (recompile) {
 		/* Warn */
 		sieve_sys_warning(svinst,
 			"Encountered corrupt binary: re-compiling script %s",
 			sieve_script_location(script));
 		compile_name = "re-compile";
-	} else 	if ( debug ) {
+	} else if (debug) {
 		sieve_sys_debug(svinst,
 			"Loading script %s", sieve_script_location(script));
 	}
 
-	if ( script == isrun->user_script )
+	if (script == isrun->user_script)
 		ehandler = isrun->user_ehandler;
 	else
 		ehandler = isieve->master_ehandler;
 	sieve_error_handler_reset(ehandler);
 
 	/* Load or compile the sieve script */
-	if ( recompile ) {
-		sbin = sieve_compile_script
-			(script, ehandler, cpflags, error_r);
+	if (recompile) {
+		sbin = sieve_compile_script(script, ehandler, cpflags, error_r);
 	} else {
-		sbin = sieve_open_script
-			(script, ehandler, cpflags, error_r);
+		sbin = sieve_open_script(script, ehandler, cpflags, error_r);
 	}
 
 	/* Handle error */
-	if ( sbin == NULL ) {
-		switch ( *error_r ) {
+	if (sbin == NULL) {
+		switch (*error_r) {
 		/* Script not found */
 		case SIEVE_ERROR_NOT_FOUND:
-			if ( debug ) {
-				sieve_sys_debug(svinst, "Script `%s' is missing for %s",
-					sieve_script_location(script), compile_name);
+			if (debug) {
+				sieve_sys_debug(svinst,
+					"Script `%s' is missing for %s",
+					sieve_script_location(script),
+					compile_name);
 			}
 			break;
 		/* Temporary failure */
 		case SIEVE_ERROR_TEMP_FAILURE:
 			sieve_sys_error(svinst,
-				"Failed to open script `%s' for %s (temporary failure)",
+				"Failed to open script `%s' for %s "
+				"(temporary failure)",
 				sieve_script_location(script), compile_name);
 			break;
 		/* Compile failed */
 		case SIEVE_ERROR_NOT_VALID:
-			if (script == isrun->user_script && isrun->userlog != NULL ) {
+			if (script == isrun->user_script &&
+			    isrun->userlog != NULL) {
 				sieve_sys_info(svinst,
 					"Failed to %s script `%s' "
 					"(view user logfile `%s' for more information)",
@@ -484,12 +489,14 @@ imap_sieve_run_open_script(
 					isrun->userlog);
 				break;
 			}
-			sieve_sys_error(svinst,	"Failed to %s script `%s'",
+			sieve_sys_error(svinst,
+				"Failed to %s script `%s'",
 				compile_name, sieve_script_location(script));
 			break;
 		/* Something else */
 		default:
-			sieve_sys_error(svinst,	"Failed to open script `%s' for %s",
+			sieve_sys_error(svinst,
+				"Failed to open script `%s' for %s",
 				sieve_script_location(script), compile_name);
 			break;
 		}
@@ -502,11 +509,10 @@ imap_sieve_run_open_script(
 	return sbin;
 }
 
-static int imap_sieve_handle_exec_status
-(struct imap_sieve_run *isrun,
-	struct sieve_script *script, int status,
-	struct sieve_exec_status *estatus)
-	ATTR_NULL(2)
+static int
+imap_sieve_handle_exec_status(struct imap_sieve_run *isrun,
+			      struct sieve_script *script, int status,
+			      struct sieve_exec_status *estatus) ATTR_NULL(2)
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
@@ -521,20 +527,20 @@ static int imap_sieve_handle_exec_status
 		mail_storage_get_last_error(estatus->last_storage, &mail_error);
 
 		/* Don't bother administrator too much with benign errors */
-		if ( mail_error == MAIL_ERROR_NOQUOTA ) {
+		if (mail_error == MAIL_ERROR_NOQUOTA) {
 			error_func = sieve_sys_info;
 			user_error_func = sieve_sys_info;
 		}
 	}
 
-	if ( script == isrun->user_script && isrun->userlog != NULL ) {
-		userlog_notice = t_strdup_printf
-			(" (user logfile %s may reveal additional details)",
-				isrun->userlog);
+	if (script == isrun->user_script && isrun->userlog != NULL) {
+		userlog_notice = t_strdup_printf(
+			" (user logfile %s may reveal additional details)",
+			isrun->userlog);
 		user_error_func = sieve_sys_info;
 	}
 
-	switch ( status ) {
+	switch (status) {
 	case SIEVE_EXEC_FAILURE:
 		user_error_func(svinst,
 			"Execution of script %s failed%s",
@@ -570,10 +576,10 @@ static int imap_sieve_handle_exec_status
 	return ret;
 }
 
-static int imap_sieve_run_scripts
-(struct imap_sieve_run *isrun,
-	const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *scriptenv)
+static int
+imap_sieve_run_scripts(struct imap_sieve_run *isrun,
+		       const struct sieve_message_data *msgdata,
+		       const struct sieve_script_env *scriptenv)
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
@@ -592,11 +598,10 @@ static int imap_sieve_run_scripts
 	int ret;
 
 	/* Start execution */
-	mscript = sieve_multiscript_start_execute
-		(svinst, msgdata, scriptenv);
+	mscript = sieve_multiscript_start_execute(svinst, msgdata, scriptenv);
 
 	/* Execute scripts */
-	for ( i = 0; i < count && more; i++ ) {
+	for (i = 0; i < count && more; i++) {
 		struct sieve_script *script = scripts[i].script;
 		struct sieve_binary *sbin = scripts[i].binary;
 
@@ -604,10 +609,10 @@ static int imap_sieve_run_scripts
 		exflags = SIEVE_EXECUTE_FLAG_NO_ENVELOPE |
 			  SIEVE_EXECUTE_FLAG_SKIP_RESPONSES;
 
-		user_script = ( script == isrun->user_script );
+		user_script = (script == isrun->user_script);
 		last_script = script;
 
-		if ( user_script ) {
+		if (user_script) {
 			cpflags |= SIEVE_COMPILE_FLAG_NOGLOBAL;
 			exflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
 			ehandler = isrun->user_ehandler;
@@ -618,10 +623,11 @@ static int imap_sieve_run_scripts
 
 		/* Open */
 		if (sbin == NULL) {
-			if ( debug ) {
+			if (debug) {
 				sieve_sys_debug(svinst,
 					"Opening script %d of %d from `%s'",
-					i+1, count, sieve_script_location(script));
+					i+1, count,
+					sieve_script_location(script));
 			}
 
 			/* Already known to fail */
@@ -631,50 +637,52 @@ static int imap_sieve_run_scripts
 			}
 
 			/* Try to open/compile binary */
-			scripts[i].binary = sbin = imap_sieve_run_open_script
-				(isrun, script, cpflags, FALSE, &compile_error);
-			if ( sbin == NULL ) {
+			scripts[i].binary = sbin = imap_sieve_run_open_script(
+				isrun, script, cpflags, FALSE, &compile_error);
+			if (sbin == NULL) {
 				scripts[i].compile_error = compile_error;
 				break;
 			}
 		}
 
 		/* Execute */
-		if ( debug ) {
+		if (debug) {
 			sieve_sys_debug(svinst,
 				"Executing script from `%s'",
 				sieve_get_source(sbin));
 		}
-		more = sieve_multiscript_run(mscript,
-			sbin, ehandler, ehandler, exflags);
+		more = sieve_multiscript_run(mscript, sbin, ehandler,
+					     ehandler, exflags);
 
-		if ( !more ) {
-			if ( !scripts[i].binary_corrupt &&
-				sieve_multiscript_status(mscript)
-					== SIEVE_EXEC_BIN_CORRUPT &&
-				sieve_is_loaded(sbin) ) {
-
+		if (!more) {
+			if (!scripts[i].binary_corrupt &&
+			    sieve_multiscript_status(mscript)
+				== SIEVE_EXEC_BIN_CORRUPT &&
+			    sieve_is_loaded(sbin)) {
 				/* Close corrupt script */
 				sieve_close(&sbin);
 
 				/* Recompile */
-				scripts[i].binary = sbin = imap_sieve_run_open_script
-					(isrun, script, cpflags, FALSE, &compile_error);
-				if ( sbin == NULL ) {
+				scripts[i].binary = sbin =
+					imap_sieve_run_open_script(
+						isrun, script, cpflags, FALSE,
+						&compile_error);
+				if (sbin == NULL) {
 					scripts[i].compile_error = compile_error;
 					break;
 				}
 
 				/* Execute again */
 				more = sieve_multiscript_run(mscript, sbin,
-					ehandler, ehandler, exflags);
+							     ehandler, ehandler,
+							     exflags);
 
 				/* Save new version */
 
-				if ( sieve_multiscript_status(mscript)
-					== SIEVE_EXEC_BIN_CORRUPT )
+				if (sieve_multiscript_status(mscript)
+					== SIEVE_EXEC_BIN_CORRUPT)
 					scripts[i].binary_corrupt = TRUE;
-				else if ( more )
+				else if (more)
 					(void)sieve_save(sbin, FALSE, NULL);
 			}
 		}
@@ -684,31 +692,28 @@ static int imap_sieve_run_scripts
 	exflags = SIEVE_EXECUTE_FLAG_NO_ENVELOPE |
 		  SIEVE_EXECUTE_FLAG_SKIP_RESPONSES;
 	ehandler = (isrun->user_ehandler != NULL ?
-		isrun->user_ehandler : isieve->master_ehandler);
-	if ( compile_error == SIEVE_ERROR_TEMP_FAILURE ) {
-		ret = sieve_multiscript_tempfail
-			(&mscript, ehandler, exflags);
+		    isrun->user_ehandler : isieve->master_ehandler);
+	if (compile_error == SIEVE_ERROR_TEMP_FAILURE) {
+		ret = sieve_multiscript_tempfail(&mscript, ehandler, exflags);
 	} else {
-		ret = sieve_multiscript_finish
-			(&mscript, ehandler, exflags, NULL);
+		ret = sieve_multiscript_finish(&mscript, ehandler, exflags,
+					       NULL);
 	}
 
 	/* Don't log additional messages about compile failure */
-	if ( compile_error != SIEVE_ERROR_NONE &&
-		ret == SIEVE_EXEC_FAILURE ) {
+	if (compile_error != SIEVE_ERROR_NONE && ret == SIEVE_EXEC_FAILURE) {
 		sieve_sys_info(svinst,
 			"Aborted script execution sequence "
 			"with successful implicit keep");
 		return 1;
 	}
 
-	return imap_sieve_handle_exec_status
-		(isrun, last_script, ret, scriptenv->exec_status);
+	return imap_sieve_handle_exec_status(isrun, last_script, ret,
+					     scriptenv->exec_status);
 }
 
-int imap_sieve_run_mail
-(struct imap_sieve_run *isrun, struct mail *mail,
-	const char *changed_flags)
+int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
+			const char *changed_flags)
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
@@ -732,11 +737,11 @@ int imap_sieve_run_mail
 	/* Initialize trace logging */
 
 	trace_log = NULL;
-	if ( sieve_trace_config_get(svinst, &trace_config) >= 0) {
-		const char *tr_label = t_strdup_printf
-			("%s.%s.%u", user->username,
-				mailbox_get_vname(mail->box), mail->uid);
-		if ( sieve_trace_log_open(svinst, tr_label, &trace_log) < 0 )
+	if (sieve_trace_config_get(svinst, &trace_config) >= 0) {
+		const char *tr_label = t_strdup_printf(
+			"%s.%s.%u", user->username,
+			mailbox_get_vname(mail->box), mail->uid);
+		if (sieve_trace_log_open(svinst, tr_label, &trace_log) < 0)
 			i_zero(&trace_config);
 	}
 
@@ -746,8 +751,8 @@ int imap_sieve_run_mail
 		i_zero(&msgdata);
 		msgdata.mail = mail;
 		msgdata.auth_user = user->username;
-		(void)mail_get_first_header
-			(msgdata.mail, "Message-ID", &msgdata.id);
+		(void)mail_get_first_header(msgdata.mail, "Message-ID",
+					    &msgdata.id);
 
 		/* Compose script execution environment */
 
@@ -757,7 +762,8 @@ int imap_sieve_run_mail
 				error);
 			ret = -1;
 		} else {
-			scriptenv.default_mailbox = mailbox_get_vname(mail->box);
+			scriptenv.default_mailbox =
+				mailbox_get_vname(mail->box);
 			scriptenv.smtp_start = imap_sieve_smtp_start;
 			scriptenv.smtp_add_rcpt = imap_sieve_smtp_add_rcpt;
 			scriptenv.smtp_send = imap_sieve_smtp_send;
@@ -775,11 +781,12 @@ int imap_sieve_run_mail
 
 			/* Execute script(s) */
 
-			ret = imap_sieve_run_scripts(isrun, &msgdata, &scriptenv);
+			ret = imap_sieve_run_scripts(isrun, &msgdata,
+						     &scriptenv);
 		}
 	} T_END;
 
-	if ( trace_log != NULL )
+	if (trace_log != NULL)
 		sieve_trace_log_free(&trace_log);
 
 	return ret;
