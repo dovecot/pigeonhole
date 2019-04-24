@@ -19,7 +19,8 @@ void testsuite_log_deinit(void);
 
 void testsuite_log_clear_messages(void);
 
-struct sieve_stringlist *testsuite_log_stringlist_create
-	(const struct sieve_runtime_env *renv, int index);
+struct sieve_stringlist *
+testsuite_log_stringlist_create(const struct sieve_runtime_env *renv,
+				int index);
 
 #endif
