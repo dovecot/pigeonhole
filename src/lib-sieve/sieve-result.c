@@ -1533,80 +1533,106 @@ void sieve_side_effects_list_add(struct sieve_side_effects_list *list,
 void sieve_result_error(const struct sieve_action_exec_env *aenv,
 			const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_verror(aenv->ehandler, NULL, fmt, args);
+	sieve_verror(aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
 void sieve_result_global_error(const struct sieve_action_exec_env *aenv,
 			       const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_verror(aenv->svinst, aenv->ehandler, NULL, fmt, args);
+	sieve_global_verror(aenv->svinst, aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
 void sieve_result_warning(const struct sieve_action_exec_env *aenv,
 			  const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_vwarning(aenv->ehandler, NULL, fmt, args);
+	sieve_vwarning(aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
 void sieve_result_global_warning(const struct sieve_action_exec_env *aenv,
 				 const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_vwarning(aenv->svinst, aenv->ehandler, NULL, fmt, args);
+	sieve_global_vwarning(aenv->svinst, aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
 void sieve_result_log(const struct sieve_action_exec_env *aenv,
 		      const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_vinfo(aenv->ehandler, NULL, fmt, args);
+	sieve_vinfo(aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
 void sieve_result_global_log(const struct sieve_action_exec_env *aenv,
 			     const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_vinfo(aenv->svinst, aenv->ehandler, NULL, fmt, args);
+	sieve_global_vinfo(aenv->svinst, aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
 void sieve_result_global_log_error(const struct sieve_action_exec_env *aenv,
 				   const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_info_verror(aenv->svinst, aenv->ehandler, NULL, fmt, args);
+	sieve_global_info_verror(aenv->svinst, aenv->ehandler, &params,
+				 fmt, args);
 	va_end(args);
 }
 
 void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
 				     const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_info_vwarning(aenv->svinst, aenv->ehandler, NULL, fmt, args);
+	sieve_global_info_vwarning(aenv->svinst, aenv->ehandler, &params,
+				   fmt, args);
 	va_end(args);
 }
 

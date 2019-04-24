@@ -91,6 +91,9 @@ void sieve_parser_free(struct sieve_parser **parser)
 inline static void ATTR_FORMAT(2, 3)
 sieve_parser_error(struct sieve_parser *parser, const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
@@ -98,10 +101,10 @@ sieve_parser_error(struct sieve_parser *parser, const char *fmt, ...)
 	/* Don't report a parse error if the lexer complained already */
 	if (sieve_lexer_token_type(parser->lexer) != STT_ERROR) {
 		T_BEGIN {
-			sieve_verror(parser->ehandler,
-				sieve_error_script_location(parser->script,
-					sieve_lexer_token_line(parser->lexer)),
-				fmt, args);
+			params.location = sieve_error_script_location(
+				parser->script,
+				sieve_lexer_token_line(parser->lexer));
+			sieve_verror(parser->ehandler, &params, fmt, args);
 		} T_END;
 	}
 

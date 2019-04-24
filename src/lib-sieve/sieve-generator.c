@@ -513,35 +513,47 @@ sieve_generator_run(struct sieve_generator *gentr,
 void sieve_generator_error(struct sieve_generator *gentr,
 			   unsigned int source_line, const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
+	params.location =
+		sieve_error_script_location(gentr->genenv.script, source_line);
+
 	va_start(args, fmt);
-	sieve_verror(gentr->ehandler,
-        sieve_error_script_location(gentr->genenv.script, source_line),
-        fmt, args);
+	sieve_verror(gentr->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
 void sieve_generator_warning(struct sieve_generator *gentr,
 			     unsigned int source_line, const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
+	params.location =
+		sieve_error_script_location(gentr->genenv.script, source_line);
+
 	va_start(args, fmt);
-	sieve_vwarning(gentr->ehandler,
-        sieve_error_script_location(gentr->genenv.script, source_line),
-        fmt, args);
+	sieve_vwarning(gentr->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
 void sieve_generator_critical(struct sieve_generator *gentr,
 			      unsigned int source_line, const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
+	params.location =
+		sieve_error_script_location(gentr->genenv.script, source_line);
+
 	va_start(args, fmt);
-	sieve_vwarning(gentr->ehandler,
-        sieve_error_script_location(gentr->genenv.script, source_line),
-        fmt, args);
+	sieve_vwarning(gentr->ehandler, &params, fmt, args);
 	va_end(args);
 }

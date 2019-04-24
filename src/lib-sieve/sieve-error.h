@@ -20,8 +20,13 @@ struct sieve_error_handler;
  * Types
  */
 
+struct sieve_error_params {
+	/* Location in Sieve source script */
+	const char *location;
+};
+
 typedef void (*sieve_error_vfunc_t)(struct sieve_error_handler *ehandler,
-				    const char *location,
+				    const struct sieve_error_params *params,
 				    const char *fmt, va_list args)
 				    ATTR_FORMAT(3, 0);;
 typedef void (*sieve_error_func_t)(struct sieve_error_handler *ehandler,
@@ -42,23 +47,23 @@ sieve_system_ehandler_get(struct sieve_instance *svinst);
 
 void sieve_global_verror(struct sieve_instance *svinst,
 			 struct sieve_error_handler *ehandler,
-			 const char *location,
+			 const struct sieve_error_params *params,
 			 const char *fmt, va_list args) ATTR_FORMAT(4, 0);
 void sieve_global_vwarning(struct sieve_instance *svinst,
 			   struct sieve_error_handler *ehandler,
-			   const char *location,
+			   const struct sieve_error_params *params,
 			   const char *fmt, va_list args) ATTR_FORMAT(4, 0);
 void sieve_global_vinfo(struct sieve_instance *svinst,
 			struct sieve_error_handler *ehandler,
-			const char *location,
+			const struct sieve_error_params *params,
 			const char *fmt, va_list args) ATTR_FORMAT(4, 0);
 void sieve_global_info_verror(struct sieve_instance *svinst,
 			      struct sieve_error_handler *ehandler,
-			      const char *location,
+			      const struct sieve_error_params *params,
 			      const char *fmt, va_list args) ATTR_FORMAT(4, 0);
 void sieve_global_info_vwarning(struct sieve_instance *svinst,
 				struct sieve_error_handler *ehandler,
-				const char *location,
+				const struct sieve_error_params *params,
 				const char *fmt, va_list args)
 				ATTR_FORMAT(4, 0);
 
@@ -95,16 +100,21 @@ const char *
 sieve_error_script_location(const struct sieve_script *script,
 			    unsigned int source_line);
 
-void sieve_verror(struct sieve_error_handler *ehandler, const char *location,
+void sieve_verror(struct sieve_error_handler *ehandler,
+		  const struct sieve_error_params *params,
 		  const char *fmt, va_list args) ATTR_FORMAT(3, 0);
-void sieve_vwarning(struct sieve_error_handler *ehandler, const char *location,
+void sieve_vwarning(struct sieve_error_handler *ehandler,
+		    const struct sieve_error_params *params,
 		    const char *fmt, va_list args) ATTR_FORMAT(3, 0);
-void sieve_vinfo(struct sieve_error_handler *ehandler, const char *location,
+void sieve_vinfo(struct sieve_error_handler *ehandler,
+		 const struct sieve_error_params *params,
 		 const char *fmt, va_list args) ATTR_FORMAT(3, 0);
-void sieve_vdebug(struct sieve_error_handler *ehandler, const char *location,
+void sieve_vdebug(struct sieve_error_handler *ehandler,
+		  const struct sieve_error_params *params,
 		  const char *fmt, va_list args) ATTR_FORMAT(3, 0);
 void sieve_vcritical(struct sieve_instance *svinst,
-		     struct sieve_error_handler *ehandler, const char *location,
+		     struct sieve_error_handler *ehandler,
+		     const struct sieve_error_params *params,
 		     const char *user_prefix, const char *fmt, va_list args)
 		     ATTR_FORMAT(5, 0);
 

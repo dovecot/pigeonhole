@@ -124,15 +124,18 @@ inline static void ATTR_FORMAT(2, 3)
 sieve_lexer_error(const struct sieve_lexer *lexer, const char *fmt, ...)
 {
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
 
 	T_BEGIN {
-		sieve_verror(scanner->ehandler,
-			     sieve_error_script_location(
-					scanner->script, scanner->current_line),
-			     fmt, args);
+		params.location =
+			sieve_error_script_location(scanner->script,
+						    scanner->current_line);
+		sieve_verror(scanner->ehandler, &params, fmt, args);
 	} T_END;
 
 	va_end(args);
@@ -142,15 +145,18 @@ inline static void ATTR_FORMAT(2, 3)
 sieve_lexer_warning(const struct sieve_lexer *lexer, const char *fmt, ...)
 {
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
+	struct sieve_error_params params = {
+		.location = NULL,
+	};
 	va_list args;
 
 	va_start(args, fmt);
 
 	T_BEGIN {
-		sieve_vwarning(scanner->ehandler,
-			       sieve_error_script_location(
-					scanner->script, scanner->current_line),
-			       fmt, args);
+		params.location =
+			sieve_error_script_location(scanner->script,
+						    scanner->current_line);
+		sieve_vwarning(scanner->ehandler, &params, fmt, args);
 	} T_END;
 
 	va_end(args);

@@ -947,46 +947,59 @@ int sieve_interpreter_run(struct sieve_interpreter *interp,
  * Error handling
  */
 
-static inline void
-sieve_runtime_vmsg(const struct sieve_runtime_env *renv,
-		   sieve_error_vfunc_t msg_func, const char *location,
-		   const char *fmt, va_list args)
+static inline void ATTR_FORMAT(4, 0)
+sieve_runtime_logv(const struct sieve_runtime_env *renv,
+		   const struct sieve_error_params *params,
+		   sieve_error_vfunc_t msg_func, const char *fmt, va_list args)
 {
-	T_BEGIN {
-		if (location == NULL)
-			location = sieve_runtime_get_full_command_location(renv);
+	struct sieve_error_params new_params = *params;
 
-		msg_func(renv->ehandler, location, fmt, args);
+	T_BEGIN {
+		if (new_params.location == NULL) {
+			new_params.location =
+				sieve_runtime_get_full_command_location(renv);
+		}
+
+		msg_func(renv->ehandler, params, fmt, args);
 	} T_END;
 }
 
 void sieve_runtime_error(const struct sieve_runtime_env *renv,
 			 const char *location, const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = location,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_runtime_vmsg(renv, sieve_verror, location, fmt, args);
+	sieve_runtime_logv(renv, &params, sieve_verror, fmt, args);
 	va_end(args);
 }
 
 void sieve_runtime_warning(const struct sieve_runtime_env *renv,
 			   const char *location, const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = location,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_runtime_vmsg(renv, sieve_vwarning, location, fmt, args);
+	sieve_runtime_logv(renv, &params, sieve_vwarning, fmt, args);
 	va_end(args);
 }
 
 void sieve_runtime_log(const struct sieve_runtime_env *renv,
 		       const char *location, const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = location,
+	};
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_runtime_vmsg(renv, sieve_vinfo, location, fmt, args);
+	sieve_runtime_logv(renv, &params, sieve_vinfo, fmt, args);
 	va_end(args);
 }
 
@@ -994,15 +1007,20 @@ void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 			    const char *location, const char *user_prefix,
 			    const char *fmt, ...)
 {
+	struct sieve_error_params params = {
+		.location = location,
+	};
 	va_list args;
 
 	va_start(args, fmt);
 
 	T_BEGIN {
-		if (location == NULL)
-			location = sieve_runtime_get_full_command_location(renv);
+		if (params.location == NULL) {
+			params.location =
+				sieve_runtime_get_full_command_location(renv);
+		}
 
-		sieve_vcritical(renv->svinst, renv->ehandler, location,
+		sieve_vcritical(renv->svinst, renv->ehandler, &params,
 				user_prefix, fmt, args);
 	} T_END;
 

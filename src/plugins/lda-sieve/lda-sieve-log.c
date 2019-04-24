@@ -41,38 +41,42 @@ lda_sieve_log_expand_message(struct sieve_error_handler *_ehandler,
 }
 
 static void ATTR_FORMAT(4, 0)
-lda_sieve_log_verror(struct sieve_error_handler *ehandler, unsigned int flags,
-		     const char *location, const char *fmt, va_list args)
+lda_sieve_log_verror(struct sieve_error_handler *ehandler,
+		     const struct sieve_error_params *params,
+		     unsigned int flags, const char *fmt, va_list args)
 {
 	sieve_direct_error(ehandler->svinst, ehandler->parent,
-			   flags, location, "%s",
+			   params, flags, "%s",
 			   lda_sieve_log_expand_message(ehandler, fmt, args));
 }
 
 static void ATTR_FORMAT(4, 0)
-lda_sieve_log_vwarning(struct sieve_error_handler *ehandler, unsigned int flags,
-		       const char *location, const char *fmt, va_list args)
+lda_sieve_log_vwarning(struct sieve_error_handler *ehandler,
+		       const struct sieve_error_params *params,
+		       unsigned int flags, const char *fmt, va_list args)
 {
 	sieve_direct_warning(ehandler->svinst, ehandler->parent,
-			    flags, location, "%s",
-			    lda_sieve_log_expand_message(ehandler, fmt, args));
+			     params, flags, "%s",
+			     lda_sieve_log_expand_message(ehandler, fmt, args));
 }
 
 static void ATTR_FORMAT(4, 0)
-lda_sieve_log_vinfo(struct sieve_error_handler *ehandler, unsigned int flags,
-		    const char *location, const char *fmt, va_list args)
+lda_sieve_log_vinfo(struct sieve_error_handler *ehandler,
+		    const struct sieve_error_params *params,
+		    unsigned int flags, const char *fmt, va_list args)
 {
 	sieve_direct_info(ehandler->svinst, ehandler->parent,
-			  flags, location, "%s",
+			  params, flags, "%s",
 			  lda_sieve_log_expand_message(ehandler, fmt, args));
 }
 
 static void ATTR_FORMAT(4, 0)
-lda_sieve_log_vdebug(struct sieve_error_handler *ehandler, unsigned int flags,
-		     const char *location, const char *fmt, va_list args)
+lda_sieve_log_vdebug(struct sieve_error_handler *ehandler,
+		     const struct sieve_error_params *params,
+		     unsigned int flags, const char *fmt, va_list args)
 {
 	sieve_direct_debug(ehandler->svinst, ehandler->parent,
-			   flags, location, "%s",
+			   params, flags, "%s",
 			   lda_sieve_log_expand_message(ehandler, fmt, args));
 }
 
