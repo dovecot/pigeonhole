@@ -17,9 +17,9 @@ struct lda_sieve_log_ehandler {
 	struct mail_deliver_context *mdctx;
 };
 
-static const char *ATTR_FORMAT(2, 0) lda_sieve_log_expand_message
-(struct sieve_error_handler *_ehandler,
-	const char *fmt, va_list args)
+static const char *ATTR_FORMAT(2, 0)
+lda_sieve_log_expand_message(struct sieve_error_handler *_ehandler,
+			     const char *fmt, va_list args)
 {
 	struct lda_sieve_log_ehandler *ehandler =
 		(struct lda_sieve_log_ehandler *) _ehandler;
@@ -28,61 +28,62 @@ static const char *ATTR_FORMAT(2, 0) lda_sieve_log_expand_message
 	string_t *str;
 	const char *error;
 
-	table = mail_deliver_ctx_get_log_var_expand_table
-		(mdctx, t_strdup_vprintf(fmt, args));
+	table = mail_deliver_ctx_get_log_var_expand_table(
+		mdctx, t_strdup_vprintf(fmt, args));
 
 	str = t_str_new(256);
-	if (var_expand(str, mdctx->set->deliver_log_format, table, &error) <= 0) {
+	if (var_expand(str, mdctx->set->deliver_log_format,
+		       table, &error) <= 0) {
 		i_error("Failed to expand deliver_log_format=%s: %s",
 			mdctx->set->deliver_log_format, error);
 	}
 	return str_c(str);
 }
 
-static void ATTR_FORMAT(4, 0) lda_sieve_log_verror
-(struct sieve_error_handler *ehandler, unsigned int flags,
-	const char *location, const char *fmt, va_list args)
+static void ATTR_FORMAT(4, 0)
+lda_sieve_log_verror(struct sieve_error_handler *ehandler, unsigned int flags,
+		     const char *location, const char *fmt, va_list args)
 {
-	sieve_direct_error(ehandler->svinst,
-		ehandler->parent, flags, location, "%s",
-		lda_sieve_log_expand_message(ehandler, fmt, args));
+	sieve_direct_error(ehandler->svinst, ehandler->parent,
+			   flags, location, "%s",
+			   lda_sieve_log_expand_message(ehandler, fmt, args));
 }
 
-static void ATTR_FORMAT(4, 0) lda_sieve_log_vwarning
-(struct sieve_error_handler *ehandler, unsigned int flags,
-	const char *location, const char *fmt, va_list args)
+static void ATTR_FORMAT(4, 0)
+lda_sieve_log_vwarning(struct sieve_error_handler *ehandler, unsigned int flags,
+		       const char *location, const char *fmt, va_list args)
 {
-	sieve_direct_warning(ehandler->svinst,
-		ehandler->parent, flags, location, "%s",
-		lda_sieve_log_expand_message(ehandler, fmt, args));
+	sieve_direct_warning(ehandler->svinst, ehandler->parent,
+			    flags, location, "%s",
+			    lda_sieve_log_expand_message(ehandler, fmt, args));
 }
 
-static void ATTR_FORMAT(4, 0) lda_sieve_log_vinfo
-(struct sieve_error_handler *ehandler, unsigned int flags,
-	const char *location, const char *fmt, va_list args)
+static void ATTR_FORMAT(4, 0)
+lda_sieve_log_vinfo(struct sieve_error_handler *ehandler, unsigned int flags,
+		    const char *location, const char *fmt, va_list args)
 {
-	sieve_direct_info(ehandler->svinst,
-		ehandler->parent, flags, location, "%s",
-		lda_sieve_log_expand_message(ehandler, fmt, args));
+	sieve_direct_info(ehandler->svinst, ehandler->parent,
+			  flags, location, "%s",
+			  lda_sieve_log_expand_message(ehandler, fmt, args));
 }
 
-static void ATTR_FORMAT(4, 0) lda_sieve_log_vdebug
-(struct sieve_error_handler *ehandler, unsigned int flags,
-	const char *location, const char *fmt, va_list args)
+static void ATTR_FORMAT(4, 0)
+lda_sieve_log_vdebug(struct sieve_error_handler *ehandler, unsigned int flags,
+		     const char *location, const char *fmt, va_list args)
 {
-	sieve_direct_debug(ehandler->svinst,
-		ehandler->parent, flags, location, "%s",
-		lda_sieve_log_expand_message(ehandler, fmt, args));
+	sieve_direct_debug(ehandler->svinst, ehandler->parent,
+			   flags, location, "%s",
+			   lda_sieve_log_expand_message(ehandler, fmt, args));
 }
 
-struct sieve_error_handler *lda_sieve_log_ehandler_create
-(struct sieve_error_handler *parent,
-	struct mail_deliver_context *mdctx)
+struct sieve_error_handler *
+lda_sieve_log_ehandler_create(struct sieve_error_handler *parent,
+			      struct mail_deliver_context *mdctx)
 {
 	struct lda_sieve_log_ehandler *ehandler;
 	pool_t pool;
 
-	if ( parent == NULL )
+	if (parent == NULL)
 		return NULL;
 
 	pool = pool_alloconly_create("lda_sieve_log_ehandler", 2048);
