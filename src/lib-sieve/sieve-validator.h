@@ -186,8 +186,5 @@ void sieve_validator_error(struct sieve_validator *valdtr,
 void sieve_validator_warning(struct sieve_validator *valdtr,
 			     unsigned int source_line, const char *fmt, ...)
 			     ATTR_FORMAT(3, 4);
-void sieve_validator_critical(struct sieve_validator *valdtr,
-			      unsigned int source_line, const char *fmt, ...)
-			      ATTR_FORMAT(3, 4);
 
 #endif
