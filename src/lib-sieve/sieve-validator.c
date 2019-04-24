@@ -1659,6 +1659,18 @@ sieve_validator_object_registry_init(struct sieve_validator *valdtr,
  * Error handling
  */
 
+void sieve_validator_error(struct sieve_validator *valdtr,
+			   unsigned int source_line, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sieve_verror(valdtr->ehandler,
+		     sieve_error_script_location(valdtr->script, source_line),
+		     fmt, args);
+	va_end(args);
+}
+
 void sieve_validator_warning(struct sieve_validator *valdtr,
 			     unsigned int source_line, const char *fmt, ...)
 {
@@ -1670,16 +1682,4 @@ void sieve_validator_warning(struct sieve_validator *valdtr,
 		       fmt, args);
 	va_end(args);
 
-}
-
-void sieve_validator_error(struct sieve_validator *valdtr,
-			   unsigned int source_line, const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	sieve_verror(valdtr->ehandler,
-		     sieve_error_script_location(valdtr->script, source_line),
-		     fmt, args);
-	va_end(args);
 }
