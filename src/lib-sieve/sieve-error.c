@@ -303,7 +303,7 @@ void sieve_logv(struct sieve_error_handler *ehandler,
 	sieve_direct_logv(ehandler->svinst, ehandler, params, 0, fmt, args);
 }
 
-void sieve_vcritical(struct sieve_instance *svinst,
+void sieve_criticalv(struct sieve_instance *svinst,
 		     struct sieve_error_handler *ehandler,
 		     const struct sieve_error_params *params,
 		     const char *user_prefix, const char *fmt, va_list args)
@@ -398,7 +398,7 @@ void sieve_critical(struct sieve_instance *svinst,
 	va_start(args, fmt);
 
 	T_BEGIN {
-		sieve_vcritical(svinst, ehandler, &params, user_prefix,
+		sieve_criticalv(svinst, ehandler, &params, user_prefix,
 				fmt, args);
 	} T_END;
 

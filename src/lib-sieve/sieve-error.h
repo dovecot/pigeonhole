@@ -84,7 +84,7 @@ sieve_error_script_location(const struct sieve_script *script,
 void sieve_logv(struct sieve_error_handler *ehandler,
 		const struct sieve_error_params *params,
 		const char *fmt, va_list args) ATTR_FORMAT(3, 0);
-void sieve_vcritical(struct sieve_instance *svinst,
+void sieve_criticalv(struct sieve_instance *svinst,
 		     struct sieve_error_handler *ehandler,
 		     const struct sieve_error_params *params,
 		     const char *user_prefix, const char *fmt, va_list args)

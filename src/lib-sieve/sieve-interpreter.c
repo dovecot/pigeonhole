@@ -1024,7 +1024,7 @@ void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 				sieve_runtime_get_full_command_location(renv);
 		}
 
-		sieve_vcritical(renv->svinst, renv->ehandler, &params,
+		sieve_criticalv(renv->svinst, renv->ehandler, &params,
 				user_prefix, fmt, args);
 	} T_END;
 

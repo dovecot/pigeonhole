@@ -554,7 +554,7 @@ void sieve_generator_critical(struct sieve_generator *gentr,
 		sieve_error_script_location(gentr->genenv.script, source_line);
 
 	va_start(args, fmt);
-	sieve_vcritical(gentr->genenv.svinst, gentr->ehandler, &params,
+	sieve_criticalv(gentr->genenv.svinst, gentr->ehandler, &params,
 			"Code generation failed", fmt, args);
 	va_end(args);
 }

@@ -1647,7 +1647,7 @@ void sieve_result_critical(const struct sieve_action_exec_env *aenv,
 	va_start(args, fmt);
 
 	T_BEGIN {
-		sieve_vcritical(aenv->svinst, aenv->ehandler, &params,
+		sieve_criticalv(aenv->svinst, aenv->ehandler, &params,
 				user_prefix, fmt, args);
 	} T_END;
 
