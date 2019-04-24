@@ -72,6 +72,43 @@ void sieve_errors_deinit(struct sieve_instance *svinst)
  * Direct handler calls
  */
 
+typedef void (*master_log_func_t)(const char *fmt, ...) ATTR_FORMAT(1, 2);
+
+static void ATTR_FORMAT(3, 0)
+sieve_direct_master_vlog(struct sieve_instance *svinst ATTR_UNUSED,
+			 const struct sieve_error_params *params,
+			 const char *fmt, va_list args)
+{
+	master_log_func_t log_func;
+	string_t *str;
+
+	switch (params->log_type) {
+	case LOG_TYPE_ERROR:
+		log_func = i_error;
+		break;
+	case LOG_TYPE_WARNING:
+		log_func = i_warning;
+		break;
+	case LOG_TYPE_INFO:
+		log_func = i_info;
+		break;
+	case LOG_TYPE_DEBUG:
+		log_func = i_debug;
+		break;
+	default:
+		i_unreached();
+	}
+
+	str = t_str_new(256);
+	str_append(str, "sieve: ");
+
+	if (params->location != NULL && *params->location != '\0')
+		str_printfa(str, "%s: ", params->location);
+	str_vprintfa(str, fmt, args);
+
+	log_func("%s", str_c(str));
+}
+
 void sieve_direct_logv(struct sieve_instance *svinst,
 		       struct sieve_error_handler *ehandler,
 		       const struct sieve_error_params *params,
@@ -581,42 +618,13 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler)
  * - Output errors directly to Dovecot master log
  */
 
-typedef void (*master_log_func_t)(const char *fmt, ...) ATTR_FORMAT(1, 2);
-
 static void ATTR_FORMAT(4, 0)
-sieve_master_logv(struct sieve_error_handler *ehandler ATTR_UNUSED,
+sieve_master_logv(struct sieve_error_handler *ehandler,
 		  const struct sieve_error_params *params,
 		  enum sieve_error_flags flags ATTR_UNUSED,
 		  const char *fmt, va_list args)
 {
-	master_log_func_t log_func;
-	string_t *str;
-
-	switch (params->log_type) {
-	case LOG_TYPE_ERROR:
-		log_func = i_error;
-		break;
-	case LOG_TYPE_WARNING:
-		log_func = i_warning;
-		break;
-	case LOG_TYPE_INFO:
-		log_func = i_info;
-		break;
-	case LOG_TYPE_DEBUG:
-		log_func = i_debug;
-		break;
-	default:
-		i_unreached();
-	}
-
-	str = t_str_new(256);
-	str_append(str, "sieve: ");
-
-	if (params->location != NULL && *params->location != '\0')
-		str_printfa(str, "%s: ", params->location);
-	str_vprintfa(str, fmt, args);
-
-	log_func("%s", str_c(str));
+	sieve_direct_master_vlog(ehandler->svinst, params, fmt, args);
 }
 
 struct sieve_error_handler *
