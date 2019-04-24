@@ -117,10 +117,8 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 {
 	if ((flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
 	    (ehandler == NULL || ehandler->parent == NULL)) {
-		i_assert(svinst->system_ehandler != NULL);
-		if (svinst->system_ehandler != ehandler ||
-		    (params->log_type > LOG_TYPE_INFO &&
-		     flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0) {
+		if (!ehandler->master_log ||
+		    (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0) {
 			struct sieve_error_params new_params = *params;
 			va_list args_copy;
 
@@ -130,14 +128,12 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 			    new_params.log_type > LOG_TYPE_INFO)
 				new_params.log_type = LOG_TYPE_INFO;
 
-			i_assert(svinst->system_ehandler->logv != NULL);
-			svinst->system_ehandler->logv(
-				svinst->system_ehandler, &new_params, 0,
-				fmt, args_copy);
+			sieve_direct_master_vlog(svinst, &new_params,
+						 fmt, args_copy);
 
 			va_end(args_copy);
 
-			if (svinst->system_ehandler == ehandler)
+			if (ehandler->master_log)
 				return;
 		}
 	}
@@ -341,7 +337,7 @@ void sieve_internal_error(struct sieve_error_handler *ehandler,
 	const char *msg;
 	struct tm *tm;
 
-	if (ehandler == NULL || ehandler == ehandler->svinst->system_ehandler)
+	if (ehandler == NULL || ehandler->master_log)
 		return;
 
 	tm = localtime(&ioloop_time);
@@ -375,8 +371,7 @@ void sieve_criticalv(struct sieve_instance *svinst,
 
 	new_params.log_type = LOG_TYPE_ERROR;
 
-	sieve_direct_logv(svinst, svinst->system_ehandler, &new_params, 0,
-			  fmt, args);
+	sieve_direct_master_vlog(svinst, &new_params, fmt, args);
 	sieve_internal_error(ehandler,
 			     params->csrc.filename, params->csrc.linenum,
 			     params->location, user_prefix);
