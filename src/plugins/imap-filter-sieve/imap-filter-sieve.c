@@ -953,6 +953,8 @@ static void imap_filter_sieve_user_deinit(struct mail_user *user)
 
 	if (ifsuser->storage != NULL)
 		sieve_storage_unref(&ifsuser->storage);
+	if (ifsuser->global_storage != NULL)
+		sieve_storage_unref(&ifsuser->global_storage);
 	if (ifsuser->svinst != NULL)
 		sieve_deinit(&ifsuser->svinst);
 	if (ifsuser->dup_db != NULL)
