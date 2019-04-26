@@ -604,8 +604,9 @@ int sieve_script_rename
 					/* Failed to activate; roll back */
 					ret = -1;
 					(void)sieve_script_delete(newscript, TRUE);
-					sieve_script_unref(&newscript);
 				}
+				if (newscript != NULL)
+					sieve_script_unref(&newscript);
 
 				if (ret < 0) {
 					sieve_storage_sys_error(storage,
