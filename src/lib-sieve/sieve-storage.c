@@ -813,6 +813,7 @@ static int sieve_storage_check_script_direct
 		return ( *error_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1 );
 
 	ret = sieve_script_open(script, error_r);
+	sieve_script_unref(&script);
 	return ( ret >= 0 ? 1 :
 		( *error_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1 ) );
 }
