@@ -118,6 +118,7 @@ static void act_duplicate_mark_finish
 		/* Message was handled successfully, so track duplicate for this
 		 * message.
 		 */
+		aenv->exec_status->significant_action_executed = TRUE;
 		sieve_action_duplicate_mark
 			(senv, data->hash, sizeof(data->hash), ioloop_time + data->period);
 	}

@@ -258,6 +258,7 @@ struct sieve_exec_status {
 	bool tried_default_save:1;
 	bool keep_original:1;
 	bool store_failed:1;
+	bool significant_action_executed:1;
 };
 
 /*

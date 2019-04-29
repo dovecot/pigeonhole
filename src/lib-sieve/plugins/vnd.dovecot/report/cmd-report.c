@@ -650,6 +650,7 @@ static int act_report_send
 				str_sanitize(error, 512));
 		}
 	} else {
+		aenv->exec_status->significant_action_executed = TRUE;
 		sieve_result_global_log(aenv,
 			"sent `%s' report to <%s>",
 			str_sanitize(act->feedback_type, 32),

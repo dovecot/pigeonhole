@@ -519,6 +519,7 @@ static int act_reject_commit
 		(aenv, recipient, rj_ctx->reason)) <= 0 )
 		return ret;
 
+	aenv->exec_status->significant_action_executed = TRUE;
 	sieve_result_global_log(aenv,
 		"rejected message from <%s> (%s)",
 		smtp_address_encode(sender),
