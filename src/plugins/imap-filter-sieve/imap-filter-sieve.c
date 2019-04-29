@@ -771,7 +771,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 		e_info(sieve_get_event(svinst),
 		       "Aborted script execution sequence "
 		       "with successful implicit keep");
-		return 1;
+		return 0;
 	}
 
 	i_assert(last_script != NULL); /* at least one script is executed */
