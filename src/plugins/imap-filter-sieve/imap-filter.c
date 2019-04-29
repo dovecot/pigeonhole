@@ -87,7 +87,11 @@ static bool imap_filter_more(struct client_command_context *cmd)
 
 	while (mailbox_search_next_nonblock(ctx->search_ctx,
 					    &mail, &tryagain)) {
-		if (!imap_filter_mail(cmd, mail))
+		bool ret;
+		T_BEGIN {
+			ret = imap_filter_mail(cmd, mail);
+		} T_END;
+		if (!ret)
 			break;
 	}
 	if (tryagain)
