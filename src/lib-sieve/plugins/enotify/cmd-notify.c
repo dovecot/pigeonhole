@@ -578,6 +578,8 @@ static int act_notify_commit
 			(aenv->ehandler, NULL, "notify action");
 
 		ret = method->def->action_execute(&nenv, act);
+		if (ret >= 0)
+			aenv->exec_status->significant_action_executed = TRUE;
 
 		sieve_error_handler_unref(&nenv.ehandler);
 	}

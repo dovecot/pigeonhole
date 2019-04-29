@@ -1134,6 +1134,7 @@ static int act_vacation_send
 		return SIEVE_EXEC_FAILURE;
 	}
 
+	aenv->exec_status->significant_action_executed = TRUE;
 	return SIEVE_EXEC_OK;
 }
 
@@ -1459,6 +1460,7 @@ static int act_vacation_commit
 	if ( ret == SIEVE_EXEC_OK ) {
 		sieve_number_t seconds;
 
+		aenv->exec_status->significant_action_executed = TRUE;
 		sieve_result_global_log(aenv, "sent vacation response to <%s>",
 			smtp_address_encode(sender));
 

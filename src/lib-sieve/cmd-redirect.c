@@ -576,6 +576,7 @@ act_redirect_commit(const struct sieve_action *action,
 		sieve_action_duplicate_mark(senv, dupeid, strlen(dupeid),
 			ioloop_time + svinst->redirect_duplicate_period);
 
+		aenv->exec_status->significant_action_executed = TRUE;
 		sieve_result_global_log(
 			aenv, "redirect action: forwarded to <%s>",
 			smtp_address_encode(ctx->to_address));

@@ -838,7 +838,10 @@ static int act_notify_commit
 		result = act_notify_send(aenv, act);
 	} T_END;
 
-	return ( result ? SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE );
+	if (!result)
+		return SIEVE_EXEC_FAILURE;
+	aenv->exec_status->significant_action_executed = TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 
