@@ -37,13 +37,14 @@ imap_filter_mail(struct client_command_context *cmd, struct mail *mail)
 	struct client *client = cmd->client;
 	string_t *errors = NULL;
 	bool have_warnings = FALSE;
+	bool have_changes = FALSE;
 	string_t *reply = t_str_new(128);
 	int ret;
 
 	// FIXME: return fatal error status when no mail filter activity will
 	// work (e.g. when binary is corrupt)
 	ret = imap_sieve_filter_run_mail(ctx->sieve, mail,
-					 &errors, &have_warnings);
+					 &errors, &have_warnings, &have_changes);
 
 	str_printfa(reply, "* %u FILTERED (TAG %s) UID %u ",
 		    mail->seq, cmd->tag, mail->uid);
@@ -53,10 +54,13 @@ imap_filter_mail(struct client_command_context *cmd, struct mail *mail)
 			    str_len(errors));
 		str_append_str(reply, errors);
 		str_append(reply, "\r\n");
-	} else {
+	} else if (have_changes || ret > 0) {
 		str_append(reply, "OK\r\n");
+	} else {
+		str_truncate(reply, 0);
 	}
-	o_stream_nsend(client->output, str_data(reply), str_len(reply));
+	if (str_len(reply) > 0)
+		o_stream_nsend(client->output, str_data(reply), str_len(reply));
 
 	/* Handle the result */
 	if (ret < 0) {

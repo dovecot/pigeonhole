@@ -861,7 +861,7 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 
 int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 			       struct mail *mail, string_t **errors_r,
-			       bool *have_warnings_r)
+			       bool *have_warnings_r, bool *have_changes_r)
 {
 	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
 	struct mail_user *user = sctx->user;
@@ -876,6 +876,7 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 
 	*errors_r = NULL;
 	*have_warnings_r = FALSE;
+	*have_changes_r = FALSE;
 
 	/* Prepare error handler */
 	user_ehandler = imap_filter_sieve_create_error_handler(sctx);
@@ -936,6 +937,7 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 		sieve_trace_log_free(&trace_log);
 
 	*have_warnings_r = (sieve_get_warnings(user_ehandler) > 0);
+	*have_changes_r = estatus.significant_action_executed;
 	*errors_r = sctx->errors;
 
 	sieve_error_handler_unref(&user_ehandler);
