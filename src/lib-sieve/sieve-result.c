@@ -510,11 +510,10 @@ static int _sieve_result_add_action
 					return ret;
 			} else {
 				/* True duplicate */
-				return sieve_result_side_effects_merge
-					(renv, &action, raction, seffects);
+				return sieve_result_side_effects_merge(
+					renv, &action, raction, seffects);
 			}
-
-		} if ( act_def != NULL && raction->action.def == act_def ) {
+		} else if ( act_def != NULL && raction->action.def == act_def ) {
 			instance_count++;
 
 			/* Possible duplicate */
