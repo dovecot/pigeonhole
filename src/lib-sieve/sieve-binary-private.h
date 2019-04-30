@@ -20,10 +20,10 @@ struct sieve_binary_file {
 	int fd;
 	off_t offset;
 
-	const void *(*load_data)
-		(struct sieve_binary_file *file, off_t *offset, size_t size);
-	buffer_t *(*load_buffer)
-		(struct sieve_binary_file *file, off_t *offset, size_t size);
+	const void *(*load_data)(struct sieve_binary_file *file,
+				 off_t *offset, size_t size);
+	buffer_t *(*load_buffer)(struct sieve_binary_file *file,
+				 off_t *offset, size_t size);
 };
 
 bool sieve_binary_file_open
@@ -44,9 +44,9 @@ struct sieve_binary_extension_reg {
 	/* Global extension object */
 	const struct sieve_extension *extension;
 
-	/* Extension to the binary; typically used to manage extension-specific blocks
-	 * in the binary and as a means to get a binary_free notification to release
-	 * references held by extensions.
+	/* Extension to the binary; typically used to manage extension-specific
+	   blocks in the binary and as a means to get a binary_free notification
+	   to release references held by extensions.
 	 */
 	const struct sieve_binary_extension *binext;
 
@@ -83,18 +83,19 @@ struct sieve_binary {
 
 	struct sieve_binary_file *file;
 
-	/* When the binary is loaded into memory or when it is being constructed by
-	 * the generator, extensions can be associated to the binary. The extensions
-	 * array is a sequential list of all linked extensions. The extension_index
-	 * array is a mapping ext_id -> binary_extension. This is used to obtain the
-	 * index code associated with an extension for this particular binary. The
-	 * linked_extensions list all extensions linked to this binary object other
-	 * than the preloaded language features implemented as 'extensions'.
-	 *
-	 * All arrays refer to the same extension registration objects. Upon loading
-	 * a binary, the 'require'd extensions will sometimes need to associate
-	 * context data to the binary object in memory. This is stored in these
-	 * registration objects as well.
+	/* When the binary is loaded into memory or when it is being constructed
+	   by the generator, extensions can be associated to the binary. The
+	   extensions array is a sequential list of all linked extensions. The
+	   extension_index array is a mapping ext_id -> binary_extension. This
+	   is used to obtain the index code associated with an extension for
+	   this particular binary. The linked_extensions list all extensions
+	   linked to this binary object other than the preloaded language
+	   features implemented as 'extensions'.
+
+	   All arrays refer to the same extension registration objects. Upon
+	   loading a binary, the 'require'd extensions will sometimes need to
+	   associate context data to the binary object in memory. This is stored
+	   in these registration objects as well.
 	 */
 	ARRAY(struct sieve_binary_extension_reg *) extensions;
 	ARRAY(struct sieve_binary_extension_reg *) extension_index;
@@ -107,50 +108,47 @@ struct sieve_binary {
 	ARRAY(struct sieve_binary_block *) blocks;
 };
 
-struct sieve_binary *sieve_binary_create
-	(struct sieve_instance *svinst, struct sieve_script *script);
+struct sieve_binary *
+sieve_binary_create(struct sieve_instance *svinst, struct sieve_script *script);
 
 /* Blocks management */
 
-static inline struct sieve_binary_block *sieve_binary_block_index
-(struct sieve_binary *sbin, unsigned int id)
+static inline struct sieve_binary_block *
+sieve_binary_block_index(struct sieve_binary *sbin, unsigned int id)
 {
 	struct sieve_binary_block * const *sblock;
 
-	if  ( id >= array_count(&sbin->blocks) )
+	if (id >= array_count(&sbin->blocks))
 		return NULL;
 
 	sblock = array_idx(&sbin->blocks, id);
-
-	if ( *sblock == NULL ) {
+	if (*sblock == NULL)
 		return NULL;
-	}
-
 	return *sblock;
 }
 
-static inline size_t _sieve_binary_block_get_size
-(const struct sieve_binary_block *sblock)
+static inline size_t
+_sieve_binary_block_get_size(const struct sieve_binary_block *sblock)
 {
 	return buffer_get_used_size(sblock->data);
 }
 
-struct sieve_binary_block *sieve_binary_block_create_id
-	(struct sieve_binary *sbin, unsigned int id);
+struct sieve_binary_block *
+sieve_binary_block_create_id(struct sieve_binary *sbin, unsigned int id);
 
-buffer_t *sieve_binary_block_get_buffer
-	(struct sieve_binary_block *sblock);
+buffer_t *sieve_binary_block_get_buffer(struct sieve_binary_block *sblock);
 
 /* Extension registration */
 
 static inline struct sieve_binary_extension_reg *
-	sieve_binary_extension_create_reg
-(struct sieve_binary *sbin, const struct sieve_extension *ext)
+sieve_binary_extension_create_reg(struct sieve_binary *sbin,
+				  const struct sieve_extension *ext)
 {
 	int index = array_count(&sbin->extensions);
 	struct sieve_binary_extension_reg *ereg;
 
-	if ( ext->id < 0 ) return NULL;
+	if (ext->id < 0)
+		return NULL;
 
 	ereg = p_new(sbin->pool, struct sieve_binary_extension_reg, 1);
 	ereg->index = index;
@@ -162,40 +160,46 @@ static inline struct sieve_binary_extension_reg *
 	return ereg;
 }
 
-static inline struct sieve_binary_extension_reg *sieve_binary_extension_get_reg
-(struct sieve_binary *sbin, const struct sieve_extension *ext, bool create)
+static inline struct sieve_binary_extension_reg *
+sieve_binary_extension_get_reg(struct sieve_binary *sbin,
+			       const struct sieve_extension *ext,
+			       bool create)
 {
 	struct sieve_binary_extension_reg *reg = NULL;
 
-	if ( ext->id >= 0 && ext->id < (int) array_count(&sbin->extension_index) ) {
+	if (ext->id >= 0 &&
+	    ext->id < (int)array_count(&sbin->extension_index)) {
 		struct sieve_binary_extension_reg * const *ereg =
-			array_idx(&sbin->extension_index, (unsigned int) ext->id);
+			array_idx(&sbin->extension_index,
+				  (unsigned int)ext->id);
 
 		reg = *ereg;
 	}
 
 	/* Register if not known */
-	if ( reg == NULL && create )
+	if (reg == NULL && create)
 		return sieve_binary_extension_create_reg(sbin, ext);
-
 	return reg;
 }
 
-static inline int sieve_binary_extension_register
-(struct sieve_binary *sbin, const struct sieve_extension *ext,
-	struct sieve_binary_extension_reg **reg_r)
+static inline int
+sieve_binary_extension_register(struct sieve_binary *sbin,
+				const struct sieve_extension *ext,
+				struct sieve_binary_extension_reg **reg_r)
 {
 	struct sieve_binary_extension_reg *ereg;
 
-	if ( (ereg=sieve_binary_extension_get_reg(sbin, ext, FALSE)) == NULL ) {
+	if ((ereg = sieve_binary_extension_get_reg(sbin, ext, FALSE)) == NULL) {
 		ereg = sieve_binary_extension_create_reg(sbin, ext);
 
-		if ( ereg == NULL ) return -1;
+		if (ereg == NULL)
+			return -1;
 
 		array_append(&sbin->linked_extensions, &ereg, 1);
 	}
 
-	if ( reg_r != NULL ) *reg_r = ereg;
+	if (reg_r != NULL)
+		*reg_r = ereg;
 	return ereg->index;
 }
 
