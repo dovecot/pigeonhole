@@ -280,11 +280,8 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 
 	/* Check whether saving is necessary */
 	if (!update && sbin->path != NULL && strcmp(sbin->path, path) == 0) {
-		if (sbin->svinst->debug) {
-			sieve_sys_debug(sbin->svinst, "binary save: "
-				"not saving binary %s, "
-				"because it is already stored", path);
-		}
+		e_debug(sbin->event, "save: "
+			"not saving binary, because it is already stored");
 		return 0;
 	}
 
@@ -704,10 +701,10 @@ static int _read_extensions(struct sieve_binary_block *sblock)
 					    !sieve_binary_read_unsigned(sblock, &offset, &ereg->block_id)) {
 						result = -1;
 					} else if (!sieve_extension_version_is(ext, version)) {
-						sieve_sys_debug(sbin->svinst, "binary open: "
-							"binary %s was compiled with different version "
+						e_debug(sbin->event, "open: "
+							"binary was compiled with different version "
 							"of the `%s' extension (compiled v%d, expected v%d;"
-							"automatically fixed when re-compiled)", sbin->path,
+							"automatically fixed when re-compiled)",
 							sieve_extension_name(ext), version,
 							sieve_extension_version(ext));
 						result = 0;
@@ -749,11 +746,10 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 					"binary %s has corrupted header "
 					"(0x%08x) or it is not a Sieve binary",
 					sbin->path, header->magic);
-			} else if (sbin->svinst->debug) {
-				sieve_sys_debug(sbin->svinst, "binary open: "
-					"binary %s stored with in different endian format "
-					"(automatically fixed when re-compiled)",
-					sbin->path);
+			} else {
+				e_debug(sbin->event, "open: "
+					"binary stored with in different endian format "
+					"(automatically fixed when re-compiled)");
 			}
 			result = FALSE;
 		/* Check binary version */
@@ -761,14 +757,11 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 			   (header->version_major != SIEVE_BINARY_VERSION_MAJOR ||
 			    header->version_minor != SIEVE_BINARY_VERSION_MINOR)) {
 			/* Binary is of different version. Caller will have to recompile */
-			if (sbin->svinst->debug) {
-				sieve_sys_debug(sbin->svinst, "binary open: "
-					"binary %s stored with different binary version %d.%d "
-					"(!= %d.%d; automatically fixed when re-compiled)",
-					sbin->path,
-					(int)header->version_major, header->version_minor,
-					SIEVE_BINARY_VERSION_MAJOR, SIEVE_BINARY_VERSION_MINOR);
-			}
+			e_debug(sbin->event, "open: "
+				"binary stored with different binary version %d.%d "
+				"(!= %d.%d; automatically fixed when re-compiled)",
+				(int) header->version_major, header->version_minor,
+				SIEVE_BINARY_VERSION_MAJOR, SIEVE_BINARY_VERSION_MINOR);
 			result = FALSE;
 		/* Check block content */
 		} else if (result && header->blocks == 0) {
