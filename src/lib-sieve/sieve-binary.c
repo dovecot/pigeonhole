@@ -36,6 +36,25 @@ sieve_binary_extension_register(struct sieve_binary *sbin,
  * Binary object
  */
 
+void sieve_binary_update_event(struct sieve_binary *sbin, const char *new_path)
+{
+	if (new_path != NULL) {
+		event_set_append_log_prefix(
+			sbin->event, t_strdup_printf("binary %s: ", new_path));
+	} else if (sbin->path != NULL) {
+		event_set_append_log_prefix(
+			sbin->event,
+			t_strdup_printf("binary %s: ", sbin->path));
+	} else if (sbin->script != NULL) {
+		event_set_append_log_prefix(
+			sbin->event,
+			t_strdup_printf("binary %s: ",
+					sieve_script_name(sbin->script)));
+	} else {
+		event_set_append_log_prefix(sbin->event, "binary: ");
+	}
+}
+
 struct sieve_binary *
 sieve_binary_create(struct sieve_instance *svinst, struct sieve_script *script)
 {
@@ -53,6 +72,8 @@ sieve_binary_create(struct sieve_instance *svinst, struct sieve_script *script)
 	sbin->script = script;
 	if (script != NULL)
 		sieve_script_ref(script);
+
+	sbin->event = event_create(svinst->event);
 
 	ext_count = sieve_extensions_get_count(svinst);
 
@@ -80,6 +101,8 @@ struct sieve_binary *sieve_binary_create_new(struct sieve_script *script)
 		sieve_binary_create(sieve_script_svinst(script), script);
 	struct sieve_binary_block *sblock;
 	unsigned int i;
+
+	sieve_binary_update_event(sbin, NULL);
 
 	/* Create script metadata block */
 	sblock = sieve_binary_block_create(sbin);
@@ -129,6 +152,7 @@ void sieve_binary_unref(struct sieve_binary **sbin)
 	if ((*sbin)->script != NULL)
 		sieve_script_unref(&(*sbin)->script);
 
+	event_unref(&((*sbin)->event));
 	pool_unref(&((*sbin)->pool));
 
 	*sbin = NULL;

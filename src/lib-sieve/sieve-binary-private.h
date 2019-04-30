@@ -73,8 +73,8 @@ struct sieve_binary_block {
 struct sieve_binary {
 	pool_t pool;
 	int refcount;
-
 	struct sieve_instance *svinst;
+	struct event *event;
 
 	struct sieve_script *script;
 
@@ -104,6 +104,9 @@ struct sieve_binary {
 	/* Blocks */
 	ARRAY(struct sieve_binary_block *) blocks;
 };
+
+void sieve_binary_update_event(struct sieve_binary *sbin, const char *new_path)
+			       ATTR_NULL(2);
 
 struct sieve_binary *
 sieve_binary_create(struct sieve_instance *svinst, struct sieve_script *script);

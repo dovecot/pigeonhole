@@ -198,7 +198,7 @@ _save_block_index_record(struct sieve_binary *sbin, struct ostream *stream,
 }
 
 static bool
-_sieve_binary_save(struct sieve_binary *sbin, struct ostream *stream)
+sieve_binary_save_to_stream(struct sieve_binary *sbin, struct ostream *stream)
 {
 	struct sieve_binary_header header;
 	struct sieve_binary_block *ext_block;
@@ -265,8 +265,9 @@ _sieve_binary_save(struct sieve_binary *sbin, struct ostream *stream)
 	return TRUE;
 }
 
-int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
-		      mode_t save_mode, enum sieve_error *error_r)
+static int
+sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
+		     mode_t save_mode, enum sieve_error *error_r)
 {
 	int result, fd;
 	string_t *temp_path;
@@ -324,7 +325,7 @@ int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
 	/* Save binary */
 	result = 1;
 	stream = o_stream_create_fd(fd, 0);
-	if (!_sieve_binary_save(sbin, stream)) {
+	if (!sieve_binary_save_to_stream(sbin, stream)) {
 		result = -1;
 		if (error_r != NULL)
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
@@ -394,6 +395,19 @@ int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
 
 	return result;
 }
+
+int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
+		      mode_t save_mode, enum sieve_error *error_r)
+{
+	int ret;
+
+	sieve_binary_update_event(sbin, path);
+	ret = sieve_binary_do_save(sbin, path, update, save_mode, error_r);
+	sieve_binary_update_event(sbin, NULL);
+
+	return ret;
+}
+
 
 /*
  * Binary file management
@@ -824,6 +838,10 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 		return NULL;
 	}
 	sbin->file = file;
+
+	event_set_append_log_prefix(
+		sbin->event,
+		t_strdup_printf("binary %s: ", path));
 
 	if (!_sieve_binary_open(sbin)) {
 		sieve_binary_unref(&sbin);
