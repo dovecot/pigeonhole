@@ -1,3 +1,14 @@
+v0.5.6 2019-04-30  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	+ sieve: Redirect loop prevention is sometimes ineffective. Improve
+	  existing loop detection by also recognizing the
+	  X-Sieve-Redirected-From header in incoming messages and dropping
+	  redirect actions when it points to the sending account. This header
+	  is already added by the redirect action, so this improvement only
+	  adds an additional use of this header.
+	- sieve: Prevent execution of implicit keep upon temporary failure
+	  occurring at runtime.
+
 v0.5.5 2019-03-05  Stephan Bosch <stephan@rename-it.nl>
 
 	+ IMAPSieve: Add new plugin/imapsieve_expunge_discarded setting which
