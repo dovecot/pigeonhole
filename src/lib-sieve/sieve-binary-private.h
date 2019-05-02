@@ -26,9 +26,6 @@ struct sieve_binary_file {
 				 off_t *offset, size_t size);
 };
 
-bool sieve_binary_file_open
-	(struct sieve_binary_file *file, struct sieve_instance *svinst,
-		const char *path, enum sieve_error *error_r);
 void sieve_binary_file_close(struct sieve_binary_file **file);
 
 /*

@@ -399,9 +399,10 @@ int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
  * Binary file management
  */
 
-bool sieve_binary_file_open(struct sieve_binary_file *file,
-			    struct sieve_instance *svinst, const char *path,
-			    enum sieve_error *error_r)
+static bool
+sieve_binary_file_open(struct sieve_binary_file *file,
+		       struct sieve_instance *svinst, const char *path,
+		       enum sieve_error *error_r)
 {
 	int fd;
 	bool result = TRUE;
