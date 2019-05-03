@@ -14,7 +14,7 @@
 struct sieve_binary_file {
 	pool_t pool;
 	const char *path;
-	struct sieve_instance *svinst;
+	struct sieve_binary *sbin;
 
 	struct stat st;
 	int fd;

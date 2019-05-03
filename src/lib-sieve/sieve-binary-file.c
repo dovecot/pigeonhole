@@ -401,9 +401,10 @@ int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
 
 static bool
 sieve_binary_file_open(struct sieve_binary_file *file,
-		       struct sieve_instance *svinst, const char *path,
+		       struct sieve_binary *sbin, const char *path,
 		       enum sieve_error *error_r)
 {
+	struct sieve_instance *svinst = sbin->svinst;
 	int fd;
 	bool result = TRUE;
 	struct stat st;
@@ -456,7 +457,7 @@ sieve_binary_file_open(struct sieve_binary_file *file,
 		return FALSE;
 	}
 
-	file->svinst = svinst;
+	file->sbin = sbin;
 	file->fd = fd;
 	file->st = st;
 
@@ -466,12 +467,13 @@ sieve_binary_file_open(struct sieve_binary_file *file,
 void sieve_binary_file_close(struct sieve_binary_file **_file)
 {
 	struct sieve_binary_file *file = *_file;
+	struct sieve_binary *sbin = file->sbin;
 
 	*_file = NULL;
 
 	if (file->fd != -1) {
 		if (close(file->fd) < 0) {
-			sieve_sys_error(file->svinst, "binary close: "
+			sieve_sys_error(sbin->svinst, "binary close: "
 				"failed to close: close(fd=%s) failed: %m",
 				file->path);
 		}
@@ -486,7 +488,8 @@ static bool
 _file_lazy_read(struct sieve_binary_file *file, off_t *offset,
 		void *buffer, size_t size)
 {
-	struct sieve_instance *svinst = file->svinst;
+	struct sieve_binary *sbin = file->sbin;
+	struct sieve_instance *svinst = sbin->svinst;
 	int ret;
 	void *indata = buffer;
 	size_t insize = size;
@@ -558,7 +561,7 @@ _file_lazy_load_buffer(struct sieve_binary_file *file,
 }
 
 static struct sieve_binary_file *
-_file_lazy_open(struct sieve_instance *svinst, const char *path,
+_file_lazy_open(struct sieve_binary *sbin, const char *path,
 		enum sieve_error *error_r)
 {
 	pool_t pool;
@@ -571,7 +574,7 @@ _file_lazy_open(struct sieve_instance *svinst, const char *path,
 	file->load_data = _file_lazy_load_data;
 	file->load_buffer = _file_lazy_load_buffer;
 
-	if (!sieve_binary_file_open(file, svinst, path, error_r)) {
+	if (!sieve_binary_file_open(file, sbin, path, error_r)) {
 		pool_unref(&pool);
 		return NULL;
 	}
@@ -812,13 +815,14 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 
 	i_assert(script == NULL || sieve_script_svinst(script) == svinst);
 
-	//file = _file_memory_open(path);
-	if ((file = _file_lazy_open(svinst, path, error_r)) == NULL)
-		return NULL;
-
 	/* Create binary object */
 	sbin = sieve_binary_create(svinst, script);
 	sbin->path = p_strdup(sbin->pool, path);
+
+	if ((file=_file_lazy_open(sbin, path, error_r)) == NULL) {
+		sieve_binary_unref(&sbin);
+		return NULL;
+	}
 	sbin->file = file;
 
 	if (!_sieve_binary_open(sbin)) {
