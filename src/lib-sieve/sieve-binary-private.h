@@ -26,7 +26,7 @@ struct sieve_binary_file {
 				 off_t *offset, size_t size);
 };
 
-void sieve_binary_file_close(struct sieve_binary_file **file);
+void sieve_binary_file_close(struct sieve_binary_file **_file);
 
 /*
  * Internal structures

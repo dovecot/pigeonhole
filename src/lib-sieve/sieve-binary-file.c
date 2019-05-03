@@ -463,19 +463,21 @@ sieve_binary_file_open(struct sieve_binary_file *file,
 	return TRUE;
 }
 
-void sieve_binary_file_close(struct sieve_binary_file **file)
+void sieve_binary_file_close(struct sieve_binary_file **_file)
 {
-	if ((*file)->fd != -1) {
-		if (close((*file)->fd) < 0) {
-			sieve_sys_error((*file)->svinst, "binary close: "
+	struct sieve_binary_file *file = *_file;
+
+	*_file = NULL;
+
+	if (file->fd != -1) {
+		if (close(file->fd) < 0) {
+			sieve_sys_error(file->svinst, "binary close: "
 				"failed to close: close(fd=%s) failed: %m",
-				(*file)->path);
+				file->path);
 		}
 	}
 
-	pool_unref(&(*file)->pool);
-
-	*file = NULL;
+	pool_unref(&file->pool);
 }
 
 /* File open in lazy mode (only read what is needed into memory) */
