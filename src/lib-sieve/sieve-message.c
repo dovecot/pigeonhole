@@ -1236,6 +1236,7 @@ static int sieve_message_parts_add_missing
 			} hdr_field;
 
 			/* Reading headers */
+			i_assert( body_part != NULL );
 
 			/* Decode block */
 			(void)message_decoder_decode_next_block
@@ -1251,7 +1252,6 @@ static int sieve_message_parts_add_missing
 				}
 
 				/* Save bodies only if we have a wanted content-type */
-				i_assert( body_part != NULL );
 				save_body = iter_all || _is_wanted_content_type
 					(content_types, body_part->content_type);
 				continue;
@@ -1261,7 +1261,6 @@ static int sieve_message_parts_add_missing
 			 * the start of the body
 			 */
 			if ( hdr->eoh ) {
-				i_assert( body_part != NULL );
 				body_part->have_body = TRUE;
 				continue;
 			} else if ( header_part != NULL ) {
@@ -1348,8 +1347,6 @@ static int sieve_message_parts_add_missing
 					continue;
 			}
 
-			i_assert( body_part != NULL );
-
 			/* Parse the content type from the Content-type header */
 			T_BEGIN {
 				switch ( hdr_field ) {
@@ -1377,11 +1374,15 @@ static int sieve_message_parts_add_missing
 		}
 	}
 
+	/* even with an empty message there was at least the "end of headers"
+	   block, which set the body_part. */
+	i_assert( body_part != NULL );
+
 	/* Save last body part if necessary */
 	if ( header_part != NULL ) {
 		sieve_message_part_save
 			(renv, buf, header_part, FALSE);
-	} else if ( body_part != NULL && save_body ) {
+	} else if ( save_body ) {
 		sieve_message_part_save
 			(renv, buf, body_part, extract_text);
 	}
