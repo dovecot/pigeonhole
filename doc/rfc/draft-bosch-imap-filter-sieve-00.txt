@@ -4,8 +4,8 @@
 
 Network Working Group                                           S. Bosch
 Internet-Draft                                                Dovecot Oy
-Intended status: Standards Track                            May 26, 2018
-Expires: November 27, 2018
+Intended status: Standards Track                            May 16, 2019
+Expires: November 17, 2019
 
 
     Internet Message Access Protocol (IMAP) - FILTER=SIEVE Extension
@@ -24,23 +24,23 @@ Status of This Memo
    Internet-Drafts are working documents of the Internet Engineering
    Task Force (IETF).  Note that other groups may also distribute
    working documents as Internet-Drafts.  The list of current Internet-
-   Drafts is at http://datatracker.ietf.org/drafts/current/.
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
 
    Internet-Drafts are draft documents valid for a maximum of six months
    and may be updated, replaced, or obsoleted by other documents at any
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on November 27, 2018.
+   This Internet-Draft will expire on November 17, 2019.
 
 Copyright Notice
 
-   Copyright (c) 2018 IETF Trust and the persons identified as the
+   Copyright (c) 2019 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
    Provisions Relating to IETF Documents
-   (http://trustee.ietf.org/license-info) in effect on the date of
+   (https://trustee.ietf.org/license-info) in effect on the date of
    publication of this document.  Please review these documents
    carefully, as they describe your rights and restrictions with respect
    to this document.  Code Components extracted from this document must
@@ -53,9 +53,9 @@ Copyright Notice
 
 
 
-Bosch                   Expires November 27, 2018               [Page 1]
+Bosch                   Expires November 17, 2019               [Page 1]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
 Table of Contents
@@ -109,9 +109,9 @@ Table of Contents
 
 
 
-Bosch                   Expires November 27, 2018               [Page 2]
+Bosch                   Expires November 17, 2019               [Page 2]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
    applying a mail filter on a set of messages that match the specified
@@ -165,9 +165,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018               [Page 3]
+Bosch                   Expires November 17, 2019               [Page 3]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
    DELIVERY
@@ -221,9 +221,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018               [Page 4]
+Bosch                   Expires November 17, 2019               [Page 4]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
    command returns a tagged NO response.  In that case, the server
@@ -240,8 +240,10 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
    Once the filter is initialized successfully, the filter is applied to
    each matching message.  An untagged FILTERED response is sent by the
-   server for each of those messages.  This response indicates the
-   result of applying the filter to the corresponding message.  Refer to
+   server for each of the messages for which a significant action was
+   performed.  This means any user visible action, such as a flag change
+   or moving the mail to another mailbox.  It is also sent for messages
+   where the filter resulted in errors or warnings.  Refer to
    Section 3.3 for details.
 
    The (implicit) "keep" action of the Sieve filter [SIEVE] leaves the
@@ -275,11 +277,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-
-
-Bosch                   Expires November 27, 2018               [Page 5]
+Bosch                   Expires November 17, 2019               [Page 5]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
       Example:
@@ -299,7 +299,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
             C: }
             C:
             C:
-            C: ALL
+            C:  ALL
             S: * FILTER (TAG "A003")
                  ERROR "line 1: unknown test command `subject'"
             S: A003 NO Sieve filter failed to compile
@@ -313,7 +313,7 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
             C: }
             C:
             C:
-            C: ALL
+            C:  ALL
             S: * 1 FETCH (UID 41 FLAGS (\Deleted \Seen))
             S: * 1 FILTERED (TAG "A004") UID 41 OK
             S: * 2 FETCH (UID 45 FLAGS (\Deleted))
@@ -333,9 +333,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018               [Page 6]
+Bosch                   Expires November 17, 2019               [Page 6]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
                per-message filter result
@@ -344,8 +344,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
    successful, partially successful, or unsuccessful FILTER or UID
    FILTER command specified in Section 3.2.  It is sent for each message
    that matched the searching criteria of the corresponding FILTER
-   command and it indicates the success/failure result of applying the
-   filter to that message.
+   command and that the filter successfully changed in some way.  It is
+   also sent for messages where the filter resulted in errors or
+   warnings.  This success/failure result is indicated in the reply.
 
    The FILTERED response starts with a message number.  Just like the
    untagged FETCH response, the message number is always a message
@@ -388,10 +389,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-
-Bosch                   Expires November 27, 2018               [Page 7]
+Bosch                   Expires November 17, 2019               [Page 7]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
 3.4.  FILTER Untagged Response
@@ -445,9 +445,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018               [Page 8]
+Bosch                   Expires November 17, 2019               [Page 8]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
 4.  Semantics of Sieve Actions
@@ -491,19 +491,19 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
    the (implicit) "keep" action means that the message is treated as it
    would have been if no Sieve script were run.  For FILTER=SIEVE, this
    means that the message is left in the mailbox.  If actions have been
-   taken that change the message, those changes are considered transient
-   and MUST NOT be retained for any "keep" action (because IMAP messages
-   are immutable).  No error is generated, but the original message,
-   without the changes, is kept.
+   taken that change the message, a new modified message is appended and
+   the original message is marked as deleted.
 
 
 
 
 
 
-Bosch                   Expires November 27, 2018               [Page 9]
+
+
+Bosch                   Expires November 17, 2019               [Page 9]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
 4.2.  The "fileinto" Action
@@ -557,9 +557,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018              [Page 10]
+Bosch                   Expires November 17, 2019              [Page 10]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
 4.5.  The "notify" Action
@@ -593,10 +593,10 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
    its functions can be used in scripts executed in FILTER=SIEVE
    context, but any changes made to the message, using the "replace" or
    "enclose" action, MUST be considered transient and are only
-   applicable with actions such as "redirect" and "fileinto".  Because
-   messages in IMAP mailboxes are immutable, such changes are not
-   applicable for the "keep" action (explicit or implicit).  See
-   Section 4.1.
+   applicable with actions such as "redirect" and "fileinto".  If the
+   "keep" action (explicit or implicit) is used, the editheader results
+   in appending a new modified message and marking the original message
+   deleted.  See Section 4.1.
 
 4.9.  The "imapsieve" extension
 
@@ -613,9 +613,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018              [Page 11]
+Bosch                   Expires November 17, 2019              [Page 11]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
 4.10.  Ignored Actions
@@ -669,9 +669,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018              [Page 12]
+Bosch                   Expires November 17, 2019              [Page 12]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
 5.1.  The "hasflag" Test
@@ -725,9 +725,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018              [Page 13]
+Bosch                   Expires November 17, 2019              [Page 13]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
 7.  Formal Syntax
@@ -746,9 +746,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
                          ; CHARSET argument MUST be registered with IANA
 
    filter-spec        = "SIEVE" SP "DELIVERY" /
-                        "SIEVE" SP "PERSONAL" sieve-name /
-                        "SIEVE" SP "GLOBAL" sieve-name /
-                        "SIEVE" SP "SCRIPT" sieve-literal
+                        "SIEVE" SP "PERSONAL" SP sieve-name /
+                        "SIEVE" SP "GLOBAL" SP sieve-name /
+                        "SIEVE" SP "SCRIPT" SP sieve-literal
 
    filter-correlator  = "(" "TAG" SP tag-string ")"
 
@@ -781,9 +781,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018              [Page 14]
+Bosch                   Expires November 17, 2019              [Page 14]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
    any obvious security concerns.  However, when ManageSieve is not
@@ -837,9 +837,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018              [Page 15]
+Bosch                   Expires November 17, 2019              [Page 15]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
    [IMAPSIEVE]
@@ -893,9 +893,9 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
 
 
 
-Bosch                   Expires November 27, 2018              [Page 16]
+Bosch                   Expires November 17, 2019              [Page 16]
 
-Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
+Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2019
 
 
    [SIEVE-INCLUDE]
@@ -911,8 +911,8 @@ Internet-Draft        IMAP - FILTER=SIEVE Extension             May 2018
    [SIEVE-REJECT]
               Stone, A., Ed., "Sieve Email Filtering: Reject and
               Extended Reject Extensions", RFC 5429,
-              DOI 10.17487/RFC5429, March 2009, <https://www.rfc-
-              editor.org/info/rfc5429>.
+              DOI 10.17487/RFC5429, March 2009,
+              <https://www.rfc-editor.org/info/rfc5429>.
 
    [SIEVE-SPAMVIRUSTEST]
               Daboo, C., "Sieve Email Filtering: Spamtest and Virustest
@@ -949,4 +949,4 @@ Author's Address
 
 
 
-Bosch                   Expires November 27, 2018              [Page 17]
+Bosch                   Expires November 17, 2019              [Page 17]
