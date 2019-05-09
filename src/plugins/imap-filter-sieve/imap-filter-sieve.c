@@ -877,6 +877,7 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 	*errors_r = NULL;
 	*have_warnings_r = FALSE;
 	*have_changes_r = FALSE;
+	i_zero(&estatus);
 
 	/* Prepare error handler */
 	user_ehandler = imap_filter_sieve_create_error_handler(sctx);
@@ -923,7 +924,6 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 			scriptenv.trace_config = trace_config;
 			scriptenv.script_context = sctx;
 
-			i_zero(&estatus);
 			scriptenv.exec_status = &estatus;
 
 			/* Execute script(s) */
