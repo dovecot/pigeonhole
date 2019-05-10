@@ -258,6 +258,11 @@ managesieve_parser_read_string(struct managesieve_parser *parser,
 			break;
 		}
 
+		if (data[i] == '\0') {
+			parser->error = "NULs not allowed in strings";
+			return FALSE;
+		}
+
 		if (data[i] == '\\') {
 			if (i+1 == data_size) {
 				/* known data ends with '\' - leave it to
