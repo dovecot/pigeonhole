@@ -128,8 +128,10 @@ sieve_lexer_error(const struct sieve_lexer *lexer,
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 	};
 	va_list args;
 
@@ -155,8 +157,10 @@ sieve_lexer_warning(const struct sieve_lexer *lexer,
 	struct sieve_lexical_scanner *scanner = lexer->scanner;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 	};
 	va_list args;
 

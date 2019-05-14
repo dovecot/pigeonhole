@@ -178,8 +178,10 @@ void sieve_global_error(struct sieve_instance *svinst,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -200,8 +202,10 @@ void sieve_global_warning(struct sieve_instance *svinst,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -222,8 +226,10 @@ void sieve_global_info(struct sieve_instance *svinst,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -245,8 +251,10 @@ void sieve_global_info_error(struct sieve_instance *svinst,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -268,8 +276,10 @@ void sieve_global_info_warning(struct sieve_instance *svinst,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -293,8 +303,10 @@ void sieve_internal_error(struct sieve_error_handler *ehandler,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	char str[256];
@@ -348,8 +360,10 @@ void sieve_error(struct sieve_error_handler *ehandler,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -369,8 +383,10 @@ void sieve_warning(struct sieve_error_handler *ehandler,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -390,8 +406,10 @@ void sieve_info(struct sieve_error_handler *ehandler,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -411,8 +429,10 @@ void sieve_debug(struct sieve_error_handler *ehandler,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_DEBUG,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -434,8 +454,10 @@ void sieve_critical(struct sieve_instance *svinst,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -796,8 +818,10 @@ sieve_logfile_printf(struct sieve_logfile_ehandler *ehandler,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;

@@ -95,8 +95,10 @@ sieve_parser_error(struct sieve_parser *parser,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 	};
 	va_list args;
 

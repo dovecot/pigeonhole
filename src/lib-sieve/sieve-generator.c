@@ -517,8 +517,10 @@ void sieve_generator_error(struct sieve_generator *gentr,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 	};
 	va_list args;
 
@@ -538,8 +540,10 @@ void sieve_generator_warning(struct sieve_generator *gentr,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 	};
 	va_list args;
 
@@ -559,8 +563,10 @@ void sieve_generator_critical(struct sieve_generator *gentr,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 	};
 	va_list args;
 

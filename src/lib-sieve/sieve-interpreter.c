@@ -971,8 +971,10 @@ void sieve_runtime_error(const struct sieve_runtime_env *renv,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -989,8 +991,10 @@ void sieve_runtime_warning(const struct sieve_runtime_env *renv,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -1007,8 +1011,10 @@ void sieve_runtime_log(const struct sieve_runtime_env *renv,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
@@ -1027,8 +1033,10 @@ void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
-		.csrc.filename = csrc_filename,
-		.csrc.linenum = csrc_linenum,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
 		.location = location,
 	};
 	va_list args;
