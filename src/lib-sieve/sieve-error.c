@@ -100,7 +100,7 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 {
 	if ((flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
 	    (ehandler == NULL || ehandler->parent == NULL) &&
-	    (!ehandler->master_log ||
+	    (ehandler == NULL || !ehandler->master_log ||
 	     (params->log_type > LOG_TYPE_INFO &&
 	      (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0))) {
 		struct sieve_error_params new_params = *params;
@@ -117,7 +117,7 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 
 		va_end(args_copy);
 
-		if (ehandler->master_log)
+		if (ehandler != NULL && ehandler->master_log)
 			return;
 	}
 
