@@ -101,7 +101,8 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 	if ((flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
 	    (ehandler == NULL || ehandler->parent == NULL) &&
 	    (!ehandler->master_log ||
-	     (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0)) {
+	     (params->log_type > LOG_TYPE_INFO &&
+	      (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0))) {
 		struct sieve_error_params new_params = *params;
 		va_list args_copy;
 
