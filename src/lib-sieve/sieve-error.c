@@ -99,26 +99,25 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 		       const char *fmt, va_list args)
 {
 	if ((flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
-	    (ehandler == NULL || ehandler->parent == NULL)) {
-		if (!ehandler->master_log ||
-		    (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0) {
-			struct sieve_error_params new_params = *params;
-			va_list args_copy;
+	    (ehandler == NULL || ehandler->parent == NULL) &&
+	    (!ehandler->master_log ||
+	     (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0)) {
+		struct sieve_error_params new_params = *params;
+		va_list args_copy;
 
-			VA_COPY(args_copy, args);
+		VA_COPY(args_copy, args);
 
-			if ((flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 &&
-			    new_params.log_type > LOG_TYPE_INFO)
-				new_params.log_type = LOG_TYPE_INFO;
+		if ((flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 &&
+		    new_params.log_type > LOG_TYPE_INFO)
+			new_params.log_type = LOG_TYPE_INFO;
 
-			sieve_direct_master_vlog(svinst, &new_params,
-						 fmt, args_copy);
+		sieve_direct_master_vlog(svinst, &new_params,
+					 fmt, args_copy);
 
-			va_end(args_copy);
+		va_end(args_copy);
 
-			if (ehandler->master_log)
-				return;
-		}
+		if (ehandler->master_log)
+			return;
 	}
 
 	if (ehandler == NULL)
