@@ -169,10 +169,8 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 
 			/* remove the escapes */
 			if (parser->str_first_escape >= 0 &&
-				  (parser->flags & MANAGESIEVE_PARSE_FLAG_NO_UNESCAPE) == 0) {
-				/* -1 because we skipped the '"' prefix */
-				str_unescape(str + parser->str_first_escape-1);
-			}
+				  (parser->flags & MANAGESIEVE_PARSE_FLAG_NO_UNESCAPE) == 0)
+				(void)str_unescape(str);
 
 			arg->_data.str = str;
 			arg->str_len = strlen(str);
