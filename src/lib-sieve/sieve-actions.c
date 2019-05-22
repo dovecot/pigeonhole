@@ -35,54 +35,51 @@
  * Side-effect operand
  */
 
-const struct sieve_operand_class sieve_side_effect_operand_class =
-	{ "SIDE-EFFECT" };
+const struct sieve_operand_class
+sieve_side_effect_operand_class = { "SIDE-EFFECT" };
 
-bool sieve_opr_side_effect_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+bool sieve_opr_side_effect_dump(const struct sieve_dumptime_env *denv,
+				sieve_size_t *address)
 {
 	struct sieve_side_effect seffect;
 	const struct sieve_side_effect_def *sdef;
 
-	if ( !sieve_opr_object_dump
-		(denv, &sieve_side_effect_operand_class, address, &seffect.object) )
+	if (!sieve_opr_object_dump(denv, &sieve_side_effect_operand_class,
+				   address, &seffect.object))
 		return FALSE;
 
 	sdef = seffect.def =
-		(const struct sieve_side_effect_def *) seffect.object.def;
+		(const struct sieve_side_effect_def *)seffect.object.def;
 
-	if ( sdef->dump_context != NULL ) {
+	if (sdef->dump_context != NULL) {
 		sieve_code_descend(denv);
-		if ( !sdef->dump_context(&seffect, denv, address) ) {
+		if (!sdef->dump_context(&seffect, denv, address))
 			return FALSE;
-		}
 		sieve_code_ascend(denv);
 	}
-
 	return TRUE;
 }
 
-int sieve_opr_side_effect_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
-	struct sieve_side_effect *seffect)
+int sieve_opr_side_effect_read(const struct sieve_runtime_env *renv,
+			       sieve_size_t *address,
+			       struct sieve_side_effect *seffect)
 {
 	const struct sieve_side_effect_def *sdef;
 	int ret;
 
 	seffect->context = NULL;
 
-	if ( !sieve_opr_object_read
-		(renv, &sieve_side_effect_operand_class, address, &seffect->object) )
+	if (!sieve_opr_object_read(renv, &sieve_side_effect_operand_class,
+				   address, &seffect->object))
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	sdef = seffect->def =
-		(const struct sieve_side_effect_def *) seffect->object.def;
+		(const struct sieve_side_effect_def *)seffect->object.def;
 
-	if ( sdef->read_context != NULL && (ret=sdef->read_context
-		(seffect, renv, address, &seffect->context)) <= 0 ) {
+	if (sdef->read_context != NULL &&
+	    (ret = sdef->read_context(seffect, renv, address,
+				      &seffect->context)) <= 0)
 		return ret;
-	}
-
 	return SIEVE_EXEC_OK;
 }
 
@@ -90,79 +87,81 @@ int sieve_opr_side_effect_read
  * Optional operands
  */
 
-int sieve_action_opr_optional_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address,
-	signed int *opt_code)
+int sieve_action_opr_optional_dump(const struct sieve_dumptime_env *denv,
+				   sieve_size_t *address, signed int *opt_code)
 {
 	signed int _opt_code = 0;
 	bool final = FALSE, opok = TRUE;
 
-	if ( opt_code == NULL ) {
+	if (opt_code == NULL) {
 		opt_code = &_opt_code;
 		final = TRUE;
 	}
 
-	while ( opok ) {
+	while (opok) {
 		int opt;
 
-		if ( (opt=sieve_opr_optional_dump(denv, address, opt_code)) <= 0 )
+		opt = sieve_opr_optional_dump(denv, address, opt_code);
+		if (opt <= 0)
 			return opt;
 
-		if ( *opt_code == SIEVE_OPT_SIDE_EFFECT ) {
+		if (*opt_code == SIEVE_OPT_SIDE_EFFECT)
 			opok = sieve_opr_side_effect_dump(denv, address);
-		} else {
-			return ( final ? -1 : 1 );
-		}
+		else
+			return (final ? -1 : 1);
 	}
 
 	return -1;
 }
 
-int sieve_action_opr_optional_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
-	signed int *opt_code, int *exec_status,
-	struct sieve_side_effects_list **list)
+int sieve_action_opr_optional_read(const struct sieve_runtime_env *renv,
+				   sieve_size_t *address,
+				   signed int *opt_code, int *exec_status,
+				   struct sieve_side_effects_list **list)
 {
 	signed int _opt_code = 0;
 	bool final = FALSE;
 	int ret;
 
-	if ( opt_code == NULL ) {
+	if (opt_code == NULL) {
 		opt_code = &_opt_code;
 		final = TRUE;
 	}
 
-	if ( exec_status != NULL )
+	if (exec_status != NULL)
 		*exec_status = SIEVE_EXEC_OK;
 
-	for ( ;; ) {
+	for (;;) {
 		int opt;
 
-		if ( (opt=sieve_opr_optional_read(renv, address, opt_code)) <= 0 ) {
-			if ( opt < 0 && exec_status != NULL )
+		opt = sieve_opr_optional_read(renv, address, opt_code);
+		if (opt <= 0) {
+			if (opt < 0 && exec_status != NULL)
 				*exec_status = SIEVE_EXEC_BIN_CORRUPT;
 			return opt;
 		}
 
-		if ( *opt_code == SIEVE_OPT_SIDE_EFFECT ) {
+		if (*opt_code == SIEVE_OPT_SIDE_EFFECT) {
 			struct sieve_side_effect seffect;
 
-			i_assert( list != NULL );
+			i_assert(list != NULL);
 
-			if ( (ret=sieve_opr_side_effect_read(renv, address, &seffect)) <= 0 ) {
-				if ( exec_status != NULL )
+			ret = sieve_opr_side_effect_read(renv, address, &seffect);
+			if (ret <= 0) {
+				if (exec_status != NULL)
 					*exec_status = ret;
 				return -1;
 			}
 
-			if ( *list == NULL )
+			if (*list == NULL)
 				*list = sieve_side_effects_list_create(renv->result);
 
 			sieve_side_effects_list_add(*list, &seffect);
 		} else {
-			if ( final ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
-				if ( exec_status != NULL )
+			if (final) {
+				sieve_runtime_trace_error(
+					renv, "invalid optional operand");
+				if (exec_status != NULL)
 					*exec_status = SIEVE_EXEC_BIN_CORRUPT;
 				return -1;
 			}
@@ -180,30 +179,32 @@ int sieve_action_opr_optional_read
 
 /* Forward declarations */
 
-static bool act_store_equals
-	(const struct sieve_script_env *senv,
+static bool
+act_store_equals(const struct sieve_script_env *senv,
 		const struct sieve_action *act1, const struct sieve_action *act2);
 
-static int act_store_check_duplicate
-	(const struct sieve_runtime_env *renv,
-		const struct sieve_action *act,
-		const struct sieve_action *act_other);
-static void act_store_print
-	(const struct sieve_action *action,
+static int
+act_store_check_duplicate(const struct sieve_runtime_env *renv,
+			  const struct sieve_action *act,
+			  const struct sieve_action *act_other);
+static void
+act_store_print(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
 
-static int act_store_start
-	(const struct sieve_action *action,
+static int
+act_store_start(const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv, void **tr_context);
-static int act_store_execute
-	(const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv, void *tr_context);
-static int act_store_commit
-	(const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
-static void act_store_rollback
-	(const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
+static int
+act_store_execute(const struct sieve_action *action,
+		  const struct sieve_action_exec_env *aenv, void *tr_context);
+static int
+act_store_commit(const struct sieve_action *action,
+		 const struct sieve_action_exec_env *aenv, void *tr_context,
+		 bool *keep);
+static void
+act_store_rollback(const struct sieve_action *action,
+		   const struct sieve_action_exec_env *aenv, void *tr_context,
+		   bool success);
 
 /* Action object */
 
@@ -223,9 +224,9 @@ const struct sieve_action_def act_store = {
 
 /* API */
 
-int sieve_act_store_add_to_result
-(const struct sieve_runtime_env *renv,
-	struct sieve_side_effects_list *seffects, const char *mailbox)
+int sieve_act_store_add_to_result(const struct sieve_runtime_env *renv,
+				  struct sieve_side_effects_list *seffects,
+				  const char *mailbox)
 {
 	pool_t pool;
 	struct act_store_context *act;
@@ -235,39 +236,40 @@ int sieve_act_store_add_to_result
 	act = p_new(pool, struct act_store_context, 1);
 	act->mailbox = p_strdup(pool, mailbox);
 
-	return sieve_result_add_action
-		(renv, NULL, &act_store, seffects, (void *)act, 0, TRUE);
+	return sieve_result_add_action(renv, NULL, &act_store, seffects,
+				       (void *)act, 0, TRUE);
 }
 
-void sieve_act_store_add_flags
-(const struct sieve_action_exec_env *aenv, void *tr_context,
-	const char *const *keywords, enum mail_flags flags)
+void sieve_act_store_add_flags(const struct sieve_action_exec_env *aenv,
+			       void *tr_context, const char *const *keywords,
+			       enum mail_flags flags)
 {
 	struct act_store_transaction *trans =
-		(struct act_store_transaction *) tr_context;
+		(struct act_store_transaction *)tr_context;
 
 	i_assert(trans != NULL);
 
 	/* Assign mail keywords for subsequent mailbox_copy() */
-	if ( *keywords != NULL ) {
+	if (*keywords != NULL) {
 		const char *const *kw;
 
-		if ( !array_is_created(&trans->keywords) ) {
+		if (!array_is_created(&trans->keywords)) {
 			pool_t pool = sieve_result_pool(aenv->result);
 			p_array_init(&trans->keywords, pool, 2);
 		}
 
 		kw = keywords;
-		while ( *kw != NULL ) {
-
+		while (*kw != NULL) {
 			const char *kw_error;
 
-			if ( trans->box != NULL && trans->error_code == MAIL_ERROR_NONE ) {
-				if ( mailbox_keyword_is_valid(trans->box, *kw, &kw_error) )
+			if (trans->box != NULL &&
+			    trans->error_code == MAIL_ERROR_NONE) {
+				if (mailbox_keyword_is_valid(trans->box, *kw, &kw_error))
 					array_append(&trans->keywords, kw, 1);
 				else {
 					char *error = "";
-					if ( kw_error != NULL && *kw_error != '\0' ) {
+					if (kw_error != NULL &&
+					    *kw_error != '\0') {
 						error = t_strdup_noconst(kw_error);
 						error[0] = i_tolower(error[0]);
 					}
@@ -290,67 +292,70 @@ void sieve_act_store_add_flags
 
 /* Equality */
 
-static bool act_store_equals
-(const struct sieve_script_env *senv,
-	const struct sieve_action *act1, const struct sieve_action *act2)
+static bool
+act_store_equals(const struct sieve_script_env *senv,
+		 const struct sieve_action *act1,
+		 const struct sieve_action *act2)
 {
-	struct act_store_context *st_ctx1 =
-		( act1 == NULL ? NULL : (struct act_store_context *) act1->context );
-	struct act_store_context *st_ctx2 =
-		( act2 == NULL ? NULL : (struct act_store_context *) act2->context );
+	struct act_store_context *st_ctx1 = (
+		act1 == NULL ? NULL :
+			(struct act_store_context *)act1->context);
+	struct act_store_context *st_ctx2 = (
+		act2 == NULL ? NULL :
+			(struct act_store_context *)act2->context);
 	const char *mailbox1, *mailbox2;
 
 	/* FIXME: consider namespace aliases */
 
-	if ( st_ctx1 == NULL && st_ctx2 == NULL )
+	if (st_ctx1 == NULL && st_ctx2 == NULL)
 		return TRUE;
 
-	mailbox1 = ( st_ctx1 == NULL ?
-		SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) : st_ctx1->mailbox );
-	mailbox2 = ( st_ctx2 == NULL ?
-		SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) : st_ctx2->mailbox );
+	mailbox1 = (st_ctx1 == NULL ?
+		    SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) : st_ctx1->mailbox);
+	mailbox2 = (st_ctx2 == NULL ?
+		    SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) : st_ctx2->mailbox);
 
-	if ( strcmp(mailbox1, mailbox2) == 0 )
+	if (strcmp(mailbox1, mailbox2) == 0)
 		return TRUE;
 
-	return
-		( strcasecmp(mailbox1, "INBOX") == 0 && strcasecmp(mailbox2, "INBOX") == 0 );
-
+	return (strcasecmp(mailbox1, "INBOX") == 0 &&
+		strcasecmp(mailbox2, "INBOX") == 0);
 }
 
 /* Result verification */
 
-static int act_store_check_duplicate
-(const struct sieve_runtime_env *renv,
-	const struct sieve_action *act,
-	const struct sieve_action *act_other)
+static int
+act_store_check_duplicate(const struct sieve_runtime_env *renv,
+			  const struct sieve_action *act,
+			  const struct sieve_action *act_other)
 {
-	return ( act_store_equals(renv->scriptenv, act, act_other) ? 1 : 0 );
+	return (act_store_equals(renv->scriptenv, act, act_other) ? 1 : 0);
 }
 
 /* Result printing */
 
-static void act_store_print
-(const struct sieve_action *action,
-	const struct sieve_result_print_env *rpenv, bool *keep)
+static void
+act_store_print(const struct sieve_action *action,
+		const struct sieve_result_print_env *rpenv, bool *keep)
 {
-	struct act_store_context *ctx = (struct act_store_context *) action->context;
+	struct act_store_context *ctx =
+		(struct act_store_context *)action->context;
 	const char *mailbox;
 
-	mailbox = ( ctx == NULL ?
-		SIEVE_SCRIPT_DEFAULT_MAILBOX(rpenv->scriptenv) : ctx->mailbox );
+	mailbox = (ctx == NULL ?
+		   SIEVE_SCRIPT_DEFAULT_MAILBOX(rpenv->scriptenv) :
+			ctx->mailbox);
 
 	sieve_result_action_printf(rpenv, "store message in folder: %s",
-		str_sanitize(mailbox, 128));
+				   str_sanitize(mailbox, 128));
 
 	*keep = FALSE;
 }
 
 /* Action implementation */
 
-void sieve_act_store_get_storage_error
-(const struct sieve_action_exec_env *aenv,
-	struct act_store_transaction *trans)
+void sieve_act_store_get_storage_error(const struct sieve_action_exec_env *aenv,
+				       struct act_store_transaction *trans)
 {
 	pool_t pool = sieve_result_pool(aenv->result);
 
@@ -359,9 +364,10 @@ void sieve_act_store_get_storage_error
 		&trans->error_code));
 }
 
-static bool act_store_mailbox_open
-(const struct sieve_action_exec_env *aenv, const char *mailbox,
-	struct mailbox **box_r, enum mail_error *error_code_r, const char **error_r)
+static bool
+act_store_mailbox_open(const struct sieve_action_exec_env *aenv,
+		       const char *mailbox, struct mailbox **box_r,
+		       enum mail_error *error_code_r, const char **error_r)
 {
 	struct mailbox *box;
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
@@ -371,7 +377,7 @@ static bool act_store_mailbox_open
 	*error_code_r = MAIL_ERROR_NONE;
 	*error_r = NULL;
 
-	if ( !uni_utf8_str_is_valid(mailbox) ) {
+	if (!uni_utf8_str_is_valid(mailbox)) {
 		/* Just a precaution; already (supposed to be) checked at
 		 * compiletime/runtime.
 		 */
@@ -384,8 +390,8 @@ static bool act_store_mailbox_open
 		flags |= MAILBOX_FLAG_AUTO_CREATE;
 	if (aenv->scriptenv->mailbox_autosubscribe)
 		flags |= MAILBOX_FLAG_AUTO_SUBSCRIBE;
-	*box_r = box = mailbox_alloc_delivery(
-		aenv->scriptenv->user, mailbox, flags);
+	*box_r = box =
+		mailbox_alloc_delivery(aenv->scriptenv->user, mailbox, flags);
 	*storage = mailbox_get_storage(box);
 
 	if (mailbox_open(box) == 0)
@@ -394,11 +400,12 @@ static bool act_store_mailbox_open
 	return FALSE;
 }
 
-static int act_store_start
-(const struct sieve_action *action,
-	const struct sieve_action_exec_env *aenv, void **tr_context)
+static int
+act_store_start(const struct sieve_action *action,
+		const struct sieve_action_exec_env *aenv, void **tr_context)
 {
-	struct act_store_context *ctx = (struct act_store_context *) action->context;
+	struct act_store_context *ctx =
+		(struct act_store_context *)action->context;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct act_store_transaction *trans;
 	struct mailbox *box = NULL;
@@ -408,9 +415,10 @@ static int act_store_start
 	bool disabled = FALSE, open_failed = FALSE;
 
 	/* If context is NULL, the store action is the result of (implicit) keep */
-	if ( ctx == NULL ) {
+	if (ctx == NULL) {
 		ctx = p_new(pool, struct act_store_context, 1);
-		ctx->mailbox = p_strdup(pool, SIEVE_SCRIPT_DEFAULT_MAILBOX(senv));
+		ctx->mailbox =
+			p_strdup(pool, SIEVE_SCRIPT_DEFAULT_MAILBOX(senv));
 	}
 
 	/* Open the requested mailbox */
@@ -418,11 +426,10 @@ static int act_store_start
 	/* NOTE: The caller of the sieve library is allowed to leave user set
 	 * to NULL. This implementation will then skip actually storing the message.
 	 */
-	if ( senv->user != NULL ) {
-		if ( !act_store_mailbox_open
-			(aenv, ctx->mailbox, &box, &error_code, &error) ) {
+	if (senv->user != NULL) {
+		if (!act_store_mailbox_open(aenv, ctx->mailbox, &box,
+					    &error_code, &error))
 			open_failed = TRUE;
-		}
 	} else {
 		disabled = TRUE;
 	}
@@ -436,7 +443,7 @@ static int act_store_start
 
 	trans->disabled = disabled;
 
-	if ( open_failed  ) {
+	if (open_failed) {
 		trans->error = error;
 		trans->error_code = error_code;
 	} else {
@@ -445,7 +452,7 @@ static int act_store_start
 
 	*tr_context = (void *)trans;
 
-	switch ( trans->error_code ) {
+	switch (trans->error_code) {
 	case MAIL_ERROR_NONE:
 	case MAIL_ERROR_NOTFOUND:
 		return SIEVE_EXEC_OK;
@@ -454,18 +461,19 @@ static int act_store_start
 	default:
 		break;
 	}
-	
 	return SIEVE_EXEC_FAILURE;
 }
 
-static struct mail_keywords *act_store_keywords_create
-(const struct sieve_action_exec_env *aenv, ARRAY_TYPE(const_string) *keywords,
- struct mailbox *box, bool create_empty)
+static struct mail_keywords *
+act_store_keywords_create(const struct sieve_action_exec_env *aenv,
+			  ARRAY_TYPE(const_string) *keywords,
+			  struct mailbox *box, bool create_empty)
 {
 	struct mail_keywords *box_keywords = NULL;
-	bool has_keywords = array_is_created(keywords) && array_count(keywords) > 0;
-	if ( has_keywords || create_empty )
-	{
+	bool has_keywords = array_is_created(keywords) &&
+			    array_count(keywords) > 0;
+
+	if (has_keywords || create_empty) {
 		const char *const *kwds = NULL;
 
 		if (has_keywords) {
@@ -473,8 +481,9 @@ static struct mail_keywords *act_store_keywords_create
 			kwds = array_idx(keywords, 0);
 		}
 
-		if ( mailbox_keywords_create(box, kwds, &box_keywords) < 0) {
-			sieve_result_error(aenv, "invalid keywords set for stored message");
+		if (mailbox_keywords_create(box, kwds, &box_keywords) < 0) {
+			sieve_result_error(
+				aenv, "invalid keywords set for stored message");
 			return NULL;
 		}
 	}
@@ -508,31 +517,33 @@ have_equal_keywords(struct mail *mail, struct mail_keywords *new_kw)
 	return TRUE;
 }
 
-static int act_store_execute
-(const struct sieve_action *action,
-	const struct sieve_action_exec_env *aenv, void *tr_context)
+static int
+act_store_execute(const struct sieve_action *action,
+		  const struct sieve_action_exec_env *aenv, void *tr_context)
 {
 	struct act_store_transaction *trans =
-		(struct act_store_transaction *) tr_context;
-	struct mail *mail =	( action->mail != NULL ?
-		action->mail : aenv->msgdata->mail );
+		(struct act_store_transaction *)tr_context;
+	struct mail *mail = (action->mail != NULL ?
+			     action->mail : aenv->msgdata->mail);
 	struct mail_save_context *save_ctx;
 	struct mail_keywords *keywords = NULL;
 	bool backends_equal = FALSE;
 	int status = SIEVE_EXEC_OK;
 
 	/* Verify transaction */
-	if ( trans == NULL ) return SIEVE_EXEC_FAILURE;
+	if (trans == NULL)
+		return SIEVE_EXEC_FAILURE;
 
 	/* Check whether we need to do anything */
-	if ( trans->disabled ) return SIEVE_EXEC_OK;
+	if (trans->disabled)
+		return SIEVE_EXEC_OK;
 
 	/* Exit early if mailbox is not available */
-	if ( trans->box == NULL )
+	if (trans->box == NULL)
 		return SIEVE_EXEC_FAILURE;
 
 	/* Exit early if transaction already failed */
- 	switch ( trans->error_code ) {
+ 	switch (trans->error_code) {
 	case MAIL_ERROR_NONE:
 		break;
 	case MAIL_ERROR_TEMP:
@@ -545,25 +556,25 @@ static int act_store_execute
 	/* If the message originates from the target mailbox, only update the flags
 	 * and keywords (if not read-only)
 	 */
-	if ( mailbox_backends_equal(trans->box, mail->box) ) {
+	if (mailbox_backends_equal(trans->box, mail->box)) {
 		backends_equal = TRUE;
 	} else {
 		struct mail *real_mail;
 
-		if ( mail_get_backend_mail(mail, &real_mail) < 0 )
+		if (mail_get_backend_mail(mail, &real_mail) < 0)
 			return SIEVE_EXEC_FAILURE;
-		if ( real_mail != mail &&
-			mailbox_backends_equal(trans->box, real_mail->box) )
+		if (real_mail != mail &&
+		    mailbox_backends_equal(trans->box, real_mail->box))
 			backends_equal = TRUE;
 	}
 	if (backends_equal) {
 		trans->redundant = TRUE;
 
-		if ( trans->flags_altered && !mailbox_is_readonly(mail->box) ) {
-			keywords = act_store_keywords_create
-				(aenv, &trans->keywords, mail->box, TRUE);
+		if (trans->flags_altered && !mailbox_is_readonly(mail->box)) {
+			keywords = act_store_keywords_create(
+				aenv, &trans->keywords, mail->box, TRUE);
 
-			if ( keywords != NULL ) {
+			if (keywords != NULL) {
 				if (!have_equal_keywords(mail, keywords)) {
 					aenv->exec_status->significant_action_executed = TRUE;
 					mail_update_keywords(mail, MODIFY_REPLACE, keywords);
@@ -576,7 +587,6 @@ static int act_store_execute
 				mail_update_flags(mail, MODIFY_REPLACE, trans->flags);
 			}
 		}
-
 		return SIEVE_EXEC_OK;
 
 	/* If the message is modified, only store it in the source mailbox when it is
@@ -584,17 +594,17 @@ static int act_store_execute
 	 * mailbox, unrelated to the orignal mail, so this case needs to be handled
 	 * separately.
 	 */
-	} else if ( mail != aenv->msgdata->mail
-		&& mailbox_is_readonly(aenv->msgdata->mail->box)
-		&& ( mailbox_backends_equal(trans->box, aenv->msgdata->mail->box) ) ) {
-
+	} else if (mail != aenv->msgdata->mail &&
+		   mailbox_is_readonly(aenv->msgdata->mail->box) &&
+		   (mailbox_backends_equal(trans->box,
+					   aenv->msgdata->mail->box))) {
 		trans->redundant = TRUE;
 		return SIEVE_EXEC_OK;
 	}
 
 	/* Mark attempt to store in default mailbox */
-	if ( strcmp(trans->context->mailbox,
-		SIEVE_SCRIPT_DEFAULT_MAILBOX(aenv->scriptenv)) == 0 )
+	if (strcmp(trans->context->mailbox,
+		   SIEVE_SCRIPT_DEFAULT_MAILBOX(aenv->scriptenv)) == 0)
 		aenv->exec_status->tried_default_save = TRUE;
 
 	/* Mark attempt to use storage. Can only get here when all previous actions
@@ -603,15 +613,16 @@ static int act_store_execute
 	aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 
 	/* Start mail transaction */
-	trans->mail_trans = mailbox_transaction_begin
-		(trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL, __func__);
+	trans->mail_trans = mailbox_transaction_begin(
+		trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL, __func__);
 
 	/* Store the message */
 	save_ctx = mailbox_save_alloc(trans->mail_trans);
 
 	/* Apply keywords and flags that side-effects may have added */
-	if ( trans->flags_altered ) {
-		keywords = act_store_keywords_create(aenv, &trans->keywords, trans->box, FALSE);
+	if (trans->flags_altered) {
+		keywords = act_store_keywords_create(aenv, &trans->keywords,
+						     trans->box, FALSE);
 
 		if (trans->flags != 0 || keywords != NULL) {
 			aenv->exec_status->significant_action_executed = TRUE;
@@ -621,115 +632,114 @@ static int act_store_execute
 		mailbox_save_copy_flags(save_ctx, mail);
 	}
 
-	if ( mailbox_save_using_mail(&save_ctx, mail) < 0 ) {
+	if (mailbox_save_using_mail(&save_ctx, mail) < 0) {
 		sieve_act_store_get_storage_error(aenv, trans);
-		status = ( trans->error_code == MAIL_ERROR_TEMP ?
-			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
+		status = (trans->error_code == MAIL_ERROR_TEMP ?
+			  SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
 	} else {
 		aenv->exec_status->significant_action_executed = TRUE;
 	}
 
 	/* Deallocate keywords */
- 	if ( keywords != NULL ) {
+ 	if (keywords != NULL)
  		mailbox_keywords_unref(&keywords);
- 	}
-
 	return status;
 }
 
-static void act_store_log_status
-(struct act_store_transaction *trans, const struct sieve_action_exec_env *aenv,
-	bool rolled_back, bool status )
+static void
+act_store_log_status(struct act_store_transaction *trans,
+		     const struct sieve_action_exec_env *aenv,
+		     bool rolled_back, bool status)
 {
 	const char *mailbox_name;
 
 	mailbox_name = str_sanitize(trans->context->mailbox, 128);
 
-	if ( trans->box != NULL ) {
+	if (trans->box != NULL) {
 		const char *mailbox_vname = str_sanitize(mailbox_get_vname(trans->box), 128);
 
-		if ( strcmp(mailbox_name, mailbox_vname) != 0 )
-			mailbox_name =
-				t_strdup_printf("'%s' (%s)", mailbox_name, mailbox_vname);
-		else
+		if (strcmp(mailbox_name, mailbox_vname) != 0) {
+			mailbox_name = t_strdup_printf("'%s' (%s)",
+						       mailbox_name,
+						       mailbox_vname);
+		} else {
 			mailbox_name = t_strdup_printf("'%s'", mailbox_name);
+		}
 	} else {
 		mailbox_name = t_strdup_printf("'%s'", mailbox_name);
 	}
 
 	/* Store disabled? */
-	if ( trans->disabled ) {
-		sieve_result_global_log
-			(aenv, "store into mailbox %s skipped", mailbox_name);
-
+	if (trans->disabled) {
+		sieve_result_global_log(aenv, "store into mailbox %s skipped",
+					mailbox_name);
 	/* Store redundant? */
-	} else if ( trans->redundant ) {
-		sieve_result_global_log
-			(aenv, "left message in mailbox %s", mailbox_name);
-
+	} else if (trans->redundant) {
+		sieve_result_global_log(aenv, "left message in mailbox %s",
+					mailbox_name);
 	/* Store failed? */
-	} else if ( !status ) {
+	} else if (!status) {
 		const char *errstr;
 		enum mail_error error_code;
 
-		if ( trans->error == NULL )
+		if (trans->error == NULL)
 			sieve_act_store_get_storage_error(aenv, trans);
 
 		errstr = trans->error;
 		error_code = trans->error_code;
 
-		if ( error_code == MAIL_ERROR_NOQUOTA ) {
+		if (error_code == MAIL_ERROR_NOQUOTA) {
 			/* Never log quota problems as error in global log */
-			sieve_result_global_log_error(aenv,
-				"failed to store into mailbox %s: %s",
+			sieve_result_global_log_error(
+				aenv, "failed to store into mailbox %s: %s",
 				mailbox_name, errstr);
-		} else if ( error_code == MAIL_ERROR_NOTFOUND ||
-			error_code == MAIL_ERROR_PARAMS ||
-			error_code == MAIL_ERROR_PERM ) {
-			sieve_result_error(aenv,
-				"failed to store into mailbox %s: %s",
+		} else if (error_code == MAIL_ERROR_NOTFOUND ||
+			   error_code == MAIL_ERROR_PARAMS ||
+			   error_code == MAIL_ERROR_PERM) {
+			sieve_result_error(
+				aenv, "failed to store into mailbox %s: %s",
 				mailbox_name, errstr);
 		} else {
-			sieve_result_global_error(aenv,
-				"failed to store into mailbox %s: %s",
+			sieve_result_global_error(
+				aenv, "failed to store into mailbox %s: %s",
 				mailbox_name, errstr);
 		}
-
 	/* Store aborted? */
-	} else if ( rolled_back ) {
-		sieve_result_global_log
-			(aenv, "store into mailbox %s aborted", mailbox_name);
-
+	} else if (rolled_back) {
+		sieve_result_global_log(aenv, "store into mailbox %s aborted",
+					mailbox_name);
 	/* Succeeded */
 	} else {
-		sieve_result_global_log
-			(aenv, "stored mail into mailbox %s", mailbox_name);
+		sieve_result_global_log(aenv, "stored mail into mailbox %s",
+					mailbox_name);
 	}
 }
 
-static int act_store_commit
-(const struct sieve_action *action ATTR_UNUSED,
-	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
+static int
+act_store_commit(const struct sieve_action *action ATTR_UNUSED,
+		 const struct sieve_action_exec_env *aenv, void *tr_context,
+		 bool *keep)
 {
 	struct act_store_transaction *trans =
-		(struct act_store_transaction *) tr_context;
+		(struct act_store_transaction *)tr_context;
 	bool status = TRUE;
 
 	/* Verify transaction */
-	if ( trans == NULL ) return SIEVE_EXEC_FAILURE;
+	if (trans == NULL)
+		return SIEVE_EXEC_FAILURE;
 
 	/* Check whether we need to do anything */
-	if ( trans->disabled ) {
+	if (trans->disabled) {
 		act_store_log_status(trans, aenv, FALSE, status);
 		*keep = FALSE;
-		if ( trans->box != NULL )
+		if (trans->box != NULL)
 			mailbox_free(&trans->box);
 		return SIEVE_EXEC_OK;
-	} else if ( trans->redundant ) {
+	} else if (trans->redundant) {
 		act_store_log_status(trans, aenv, FALSE, status);
 		aenv->exec_status->keep_original = TRUE;
 		aenv->exec_status->message_saved = TRUE;
-		if ( trans->box != NULL )
+		if (trans->box != NULL)
 			mailbox_free(&trans->box);
 		return SIEVE_EXEC_OK;
 	}
@@ -740,10 +750,10 @@ static int act_store_commit
 	aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 
 	/* Commit mailbox transaction */
-	status = ( mailbox_transaction_commit(&trans->mail_trans) == 0 );
+	status = (mailbox_transaction_commit(&trans->mail_trans) == 0);
 
 	/* Note the fact that the message was stored at least once */
-	if ( status )
+	if (status)
 		aenv->exec_status->message_saved = TRUE;
 	else
 		aenv->exec_status->store_failed = TRUE;
@@ -755,29 +765,32 @@ static int act_store_commit
 	*keep = !status;
 
 	/* Close mailbox */
-	if ( trans->box != NULL )
+	if (trans->box != NULL)
 		mailbox_free(&trans->box);
 
 	if (status)
 		return SIEVE_EXEC_OK;
 
-	return ( trans->error_code == MAIL_ERROR_TEMP ?
-			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
+	return (trans->error_code == MAIL_ERROR_TEMP ?
+		SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
 }
 
-static void act_store_rollback
-(const struct sieve_action *action ATTR_UNUSED,
-	const struct sieve_action_exec_env *aenv, void *tr_context, bool success)
+static void
+act_store_rollback(const struct sieve_action *action ATTR_UNUSED,
+		   const struct sieve_action_exec_env *aenv, void *tr_context,
+		   bool success)
 {
 	struct act_store_transaction *trans =
-		(struct act_store_transaction *) tr_context;
+		(struct act_store_transaction *)tr_context;
 
-	if ( trans == NULL ) return;
+	if (trans == NULL)
+		return;
 
-	i_assert( trans->box != NULL );
+	i_assert(trans->box != NULL);
 
 	if (!success) {
-		aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
+		aenv->exec_status->last_storage =
+			mailbox_get_storage(trans->box);
 		aenv->exec_status->store_failed = TRUE;
 	}
 
@@ -785,7 +798,7 @@ static void act_store_rollback
 	act_store_log_status(trans, aenv, TRUE, success);
 
 	/* Rollback mailbox transaction */
-	if ( trans->mail_trans != NULL )
+	if (trans->mail_trans != NULL)
 		mailbox_transaction_rollback(&trans->mail_trans);
 
 	/* Close the mailbox */
@@ -796,10 +809,9 @@ static void act_store_rollback
  * Redirect action
  */
 
-int sieve_act_redirect_add_to_result
-(const struct sieve_runtime_env *renv,
-	struct sieve_side_effects_list *seffects,
-	const struct smtp_address *to_address)
+int sieve_act_redirect_add_to_result(const struct sieve_runtime_env *renv,
+				     struct sieve_side_effects_list *seffects,
+				     const struct smtp_address *to_address)
 {
 	struct sieve_instance *svinst = renv->svinst;
 	struct act_redirect_context *act;
@@ -809,9 +821,9 @@ int sieve_act_redirect_add_to_result
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = smtp_address_clone(pool, to_address);
 
-	if ( sieve_result_add_action
-		(renv, NULL, &act_redirect, seffects, (void *) act,
-			svinst->max_redirects, TRUE) < 0 )
+	if (sieve_result_add_action(renv, NULL, &act_redirect, seffects,
+				    (void *)act, svinst->max_redirects,
+				    TRUE) < 0)
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;
@@ -823,45 +835,43 @@ int sieve_act_redirect_add_to_result
 
 /* Checking for duplicates */
 
-bool sieve_action_duplicate_check_available
-(const struct sieve_script_env *senv)
+bool sieve_action_duplicate_check_available(
+	const struct sieve_script_env *senv)
 {
-	return ( senv->duplicate_check != NULL && senv->duplicate_mark != NULL );
+	return (senv->duplicate_check != NULL && senv->duplicate_mark != NULL);
 }
 
-bool sieve_action_duplicate_check
-(const struct sieve_script_env *senv, const void *id, size_t id_size)
+bool sieve_action_duplicate_check(const struct sieve_script_env *senv,
+				  const void *id, size_t id_size)
 {
-	if ( senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
+	if (senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
 		return FALSE;
 
 	return senv->duplicate_check(senv, id, id_size);
 }
 
-void sieve_action_duplicate_mark
-(const struct sieve_script_env *senv, const void *id, size_t id_size,
-	time_t time)
+void sieve_action_duplicate_mark(const struct sieve_script_env *senv,
+				 const void *id, size_t id_size, time_t time)
 {
-	if ( senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
+	if (senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
 		return;
 
 	senv->duplicate_mark(senv, id, id_size, time);
 }
 
-void sieve_action_duplicate_flush
-(const struct sieve_script_env *senv)
+void sieve_action_duplicate_flush(const struct sieve_script_env *senv)
 {
-	if ( senv->duplicate_flush == NULL )
+	if (senv->duplicate_flush == NULL)
 		return;
 	senv->duplicate_flush(senv);
 }
 
-
 /* Rejecting the mail */
 
-static int sieve_action_do_reject_mail
-(const struct sieve_action_exec_env *aenv,
-	const struct smtp_address *recipient, const char *reason)
+static int
+sieve_action_do_reject_mail(const struct sieve_action_exec_env *aenv,
+			    const struct smtp_address *recipient,
+			    const char *reason)
 {
 	struct sieve_instance *svinst = aenv->svinst;
 	const struct sieve_script_env *senv = aenv->scriptenv;
@@ -871,7 +881,7 @@ static int sieve_action_do_reject_mail
 	struct ostream *output;
 	struct sieve_smtp_context *sctx;
 	const char *new_msgid, *boundary, *error;
-  string_t *hdr;
+	string_t *hdr;
 	int ret;
 
 	sender = sieve_message_get_sender(aenv->msgctx);
@@ -880,30 +890,30 @@ static int sieve_action_do_reject_mail
 	sctx = sieve_smtp_start_single(senv, sender, NULL, &output);
 
 	/* Just to be sure */
-	if ( sctx == NULL ) {
-		sieve_result_global_warning
-			(aenv, "reject action has no means to send mail");
+	if (sctx == NULL) {
+		sieve_result_global_warning(
+			aenv, "reject action has no means to send mail");
 		return SIEVE_EXEC_OK;
 	}
 
 	new_msgid = sieve_message_get_new_id(svinst);
 	boundary = t_strdup_printf("%s/%s", my_pid, svinst->hostname);
 
-  hdr = t_str_new(512);
+	hdr = t_str_new(512);
 	rfc2822_header_write(hdr, "X-Sieve", SIEVE_IMPLEMENTATION);
 	rfc2822_header_write(hdr, "Message-ID", new_msgid);
 	rfc2822_header_write(hdr, "Date", message_date_create(ioloop_time));
 	rfc2822_header_write(hdr, "From", sieve_get_postmaster_address(senv));
-	rfc2822_header_printf(hdr, "To", "<%s>",
-		smtp_address_encode(sender));
+	rfc2822_header_printf(hdr, "To", "<%s>", smtp_address_encode(sender));
 	rfc2822_header_write(hdr, "Subject", "Automatically rejected mail");
 	rfc2822_header_write(hdr, "Auto-Submitted", "auto-replied (rejected)");
 	rfc2822_header_write(hdr, "Precedence", "bulk");
 
 	rfc2822_header_write(hdr, "MIME-Version", "1.0");
 	rfc2822_header_printf(hdr, "Content-Type",
-		"multipart/report; report-type=disposition-notification;\r\n"
-		"boundary=\"%s\"", boundary);
+			      "multipart/report; "
+			      "report-type=disposition-notification;\r\n"
+			      "boundary=\"%s\"", boundary);
 
 	str_append(hdr, "\r\nThis is a MIME-encapsulated message\r\n\r\n");
 
@@ -914,23 +924,24 @@ static int sieve_action_do_reject_mail
 	rfc2822_header_write(hdr, "Content-Transfer-Encoding", "8bit");
 
 	str_printfa(hdr, "\r\nYour message to <%s> was automatically rejected:\r\n"
-		"%s\r\n", smtp_address_encode(recipient), reason);
+		    "%s\r\n", smtp_address_encode(recipient), reason);
 
 	/* MDN status report */
 	str_printfa(hdr, "--%s\r\n", boundary);
-	rfc2822_header_write(hdr, "Content-Type", "message/disposition-notification");
+	rfc2822_header_write(hdr, "Content-Type",
+			     "message/disposition-notification");
 	str_append(hdr, "\r\n");
-	rfc2822_header_write(hdr, "Reporting-UA: %s; Dovecot Mail Delivery Agent",
-		svinst->hostname);	
-	if ( orig_recipient != NULL ) {
-		rfc2822_header_printf
-			(hdr, "Original-Recipient", "rfc822; %s",
-				smtp_address_encode(orig_recipient));
+	rfc2822_header_write(hdr,
+			     "Reporting-UA: %s; Dovecot Mail Delivery Agent",
+			     svinst->hostname);	
+	if (orig_recipient != NULL) {
+		rfc2822_header_printf(hdr, "Original-Recipient", "rfc822; %s",
+				      smtp_address_encode(orig_recipient));
 	}
 	rfc2822_header_printf(hdr, "Final-Recipient", "rfc822; %s",
-		smtp_address_encode(recipient));
+			      smtp_address_encode(recipient));
 
-	if ( msgdata->id != NULL )
+	if (msgdata->id != NULL)
 		rfc2822_header_write(hdr, "Original-Message-ID", msgdata->id);
 	rfc2822_header_write(hdr, "Disposition",
 		"automatic-action/MDN-sent-automatically; deleted");
@@ -943,30 +954,30 @@ static int sieve_action_do_reject_mail
 	o_stream_nsend(output, str_data(hdr), str_len(hdr));
 
 	if (mail_get_hdr_stream(msgdata->mail, NULL, &input) == 0) {
-    /* Note: If you add more headers, they need to be sorted.
-       We'll drop Content-Type because we're not including the message
-       body, and having a multipart Content-Type may confuse some
-       MIME parsers when they don't see the message boundaries. */
-    static const char *const exclude_headers[] = {
-	    "Content-Type"
-    };
+		/* Note: If you add more headers, they need to be sorted.
+		   We'll drop Content-Type because we're not including the
+		   message body, and having a multipart Content-Type may confuse
+		   some MIME parsers when they don't see the message boundaries.
+		 */
+		static const char *const exclude_headers[] = {
+			"Content-Type"
+		};
 
-    input = i_stream_create_header_filter(input,
-    		HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR |
-		HEADER_FILTER_HIDE_BODY, exclude_headers,
-		N_ELEMENTS(exclude_headers),
-		*null_header_filter_callback, (void *)NULL);
+		input = i_stream_create_header_filter(
+			input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR |
+			       HEADER_FILTER_HIDE_BODY,
+			exclude_headers, N_ELEMENTS(exclude_headers),
+			*null_header_filter_callback, (void *)NULL);
+		o_stream_nsend_istream(output, input);
+		i_stream_unref(&input);
+	}
 
-    o_stream_nsend_istream(output, input);
-    i_stream_unref(&input);
-  }
+	str_truncate(hdr, 0);
+	str_printfa(hdr, "\r\n\r\n--%s--\r\n", boundary);
+	o_stream_nsend(output, str_data(hdr), str_len(hdr));
 
-  str_truncate(hdr, 0);
-  str_printfa(hdr, "\r\n\r\n--%s--\r\n", boundary);
-  o_stream_nsend(output, str_data(hdr), str_len(hdr));
-
-	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
-		if ( ret < 0 ) {
+	if ((ret = sieve_smtp_finish(sctx, &error)) <= 0) {
+		if (ret < 0) {
 			sieve_result_global_error(aenv,
 				"failed to send rejection message to <%s>: %s "
 				"(temporary failure)",
@@ -985,20 +996,21 @@ static int sieve_action_do_reject_mail
 	return SIEVE_EXEC_OK;
 }
 
-int sieve_action_reject_mail
-(const struct sieve_action_exec_env *aenv,
-	const struct smtp_address *recipient, const char *reason)
+int sieve_action_reject_mail(const struct sieve_action_exec_env *aenv,
+			     const struct smtp_address *recipient,
+			     const char *reason)
 {
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	int result;
 
 	T_BEGIN {
-		if ( senv->reject_mail != NULL ) {
-			result =
-				( senv->reject_mail(senv, recipient, reason) >= 0 ?
-					SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE );
+		if (senv->reject_mail != NULL) {
+			result = (senv->reject_mail(senv, recipient,
+						    reason) >= 0 ?
+				  SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE);
 		} else {
-			result = sieve_action_do_reject_mail(aenv, recipient, reason);
+			result = sieve_action_do_reject_mail(aenv, recipient,
+							     reason);
 		}
 	} T_END;
 
@@ -1011,7 +1023,7 @@ int sieve_action_reject_mail
 
 bool sieve_mailbox_check_name(const char *mailbox, const char **error_r)
 {
-	if ( !uni_utf8_str_is_valid(mailbox) ) {
+	if (!uni_utf8_str_is_valid(mailbox)) {
 		*error_r = "mailbox is utf-8";
 		return FALSE;
 	}
