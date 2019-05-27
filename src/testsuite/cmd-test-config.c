@@ -19,8 +19,9 @@
  * Commands
  */
 
-static bool cmd_test_config_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
+static bool
+cmd_test_config_generate(const struct sieve_codegen_env *cgenv,
+			 struct sieve_command *ctx);
 
 /* Test_config_set command
  *
@@ -28,8 +29,9 @@ static bool cmd_test_config_generate
  *   test_config_set <setting: string> <value: string>
  */
 
-static bool cmd_test_config_set_validate
-	(struct sieve_validator *valdtr, struct sieve_command *cmd);
+static bool
+cmd_test_config_set_validate(struct sieve_validator *valdtr,
+			     struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_test_config_set = {
 	.identifier = "test_config_set",
@@ -48,8 +50,9 @@ const struct sieve_command_def cmd_test_config_set = {
  *   test_config_unset <setting: string>
  */
 
-static bool cmd_test_config_unset_validate
-	(struct sieve_validator *valdtr, struct sieve_command *cmd);
+static bool
+cmd_test_config_unset_validate(struct sieve_validator *valdtr,
+			       struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_test_config_unset = {
 	.identifier = "test_config_unset",
@@ -68,9 +71,10 @@ const struct sieve_command_def cmd_test_config_unset = {
  *   test_config_reload [:extension <extension: string>]
  */
 
-static bool cmd_test_config_reload_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-	struct sieve_command_registration *cmd_reg);
+static bool
+cmd_test_config_reload_registered(struct sieve_validator *valdtr,
+				  const struct sieve_extension *ext,
+				  struct sieve_command_registration *cmd_reg);
 
 const struct sieve_command_def cmd_test_config_reload = {
 	.identifier = "test_config_reload",
@@ -89,9 +93,10 @@ const struct sieve_command_def cmd_test_config_reload = {
 
 /* Forward declarations */
 
-static bool cmd_test_config_reload_validate_tag
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command *cmd);
+static bool
+cmd_test_config_reload_validate_tag(struct sieve_validator *valdtr,
+				    struct sieve_ast_argument **arg,
+				    struct sieve_command *cmd);
 
 /* Argument objects */
 
@@ -113,10 +118,12 @@ enum cmd_test_config_optional {
 
 /* Test_config_set operation */
 
-static bool cmd_test_config_set_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int cmd_test_config_set_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+cmd_test_config_set_operation_dump(const struct sieve_dumptime_env *denv,
+				   sieve_size_t *address);
+static int
+cmd_test_config_set_operation_execute(const struct sieve_runtime_env *renv,
+				      sieve_size_t *address);
 
 const struct sieve_operation_def test_config_set_operation = {
 	.mnemonic = "TEST_CONFIG_SET",
@@ -128,10 +135,12 @@ const struct sieve_operation_def test_config_set_operation = {
 
 /* Test_config_unset operation */
 
-static bool cmd_test_config_unset_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int cmd_test_config_unset_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+cmd_test_config_unset_operation_dump(const struct sieve_dumptime_env *denv,
+				     sieve_size_t *address);
+static int
+cmd_test_config_unset_operation_execute(const struct sieve_runtime_env *renv,
+					sieve_size_t *address);
 
 const struct sieve_operation_def test_config_unset_operation = {
 	.mnemonic = "TEST_CONFIG_UNSET",
@@ -143,10 +152,12 @@ const struct sieve_operation_def test_config_unset_operation = {
 
 /* Test_config_read operation */
 
-static bool cmd_test_config_reload_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int cmd_test_config_reload_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+cmd_test_config_reload_operation_dump(const struct sieve_dumptime_env *denv,
+				      sieve_size_t *address);
+static int
+cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
+					 sieve_size_t *address);
 
 const struct sieve_operation_def test_config_reload_operation = {
 	.mnemonic = "TEST_CONFIG_RELOAD",
@@ -160,9 +171,10 @@ const struct sieve_operation_def test_config_reload_operation = {
  * Tag validation
  */
 
-static bool cmd_test_config_reload_validate_tag
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-	struct sieve_command *cmd)
+static bool
+cmd_test_config_reload_validate_tag(struct sieve_validator *valdtr,
+				    struct sieve_ast_argument **arg,
+				    struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 
@@ -172,10 +184,9 @@ static bool cmd_test_config_reload_validate_tag
 	/* Check syntax:
 	 *   :extension <extension: string>
 	 */
-	if ( !sieve_validate_tag_parameter
-		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING, TRUE) ) {
+	if (!sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, NULL, 0,
+					  SAAT_STRING, TRUE))
 		return FALSE;
-	}
 
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
@@ -187,13 +198,14 @@ static bool cmd_test_config_reload_validate_tag
  * Command registration
  */
 
-static bool cmd_test_config_reload_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-	struct sieve_command_registration *cmd_reg)
+static bool
+cmd_test_config_reload_registered(struct sieve_validator *valdtr,
+				  const struct sieve_extension *ext,
+				  struct sieve_command_registration *cmd_reg)
 {
-	sieve_validator_register_tag
-		(valdtr, cmd_reg, ext, &test_config_reload_extension_tag, OPT_EXTENSION);
-
+	sieve_validator_register_tag(valdtr, cmd_reg, ext,
+				     &test_config_reload_extension_tag,
+				     OPT_EXTENSION);
 	return TRUE;
 }
 
@@ -201,8 +213,9 @@ static bool cmd_test_config_reload_registered
  * Command validation
  */
 
-static bool cmd_test_config_set_validate
-(struct sieve_validator *valdtr, struct sieve_command *cmd)
+static bool
+cmd_test_config_set_validate(struct sieve_validator *valdtr,
+			     struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
@@ -210,37 +223,34 @@ static bool cmd_test_config_set_validate
 	 *   <setting: string> <value: string>
 	 */
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, cmd, arg, "setting", 1, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "setting",
+						1, SAAT_STRING))
 		return FALSE;
-	}
 
-	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
+	if (!sieve_validator_argument_activate(valdtr, cmd, arg, FALSE))
 		return FALSE;
 
 	arg = sieve_ast_argument_next(arg);
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, cmd, arg, "value", 2, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "value", 2,
+						SAAT_STRING))
 		return FALSE;
-	}
 
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
-static bool cmd_test_config_unset_validate
-(struct sieve_validator *valdtr, struct sieve_command *cmd)
+static bool
+cmd_test_config_unset_validate(struct sieve_validator *valdtr,
+			       struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
 	/* Check syntax:
 	 *   <setting: string>
 	 */
-
-	if ( !sieve_validate_positional_argument
-		(valdtr, cmd, arg, "setting", 1, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "setting", 1,
+						SAAT_STRING))
 		return FALSE;
-	}
 
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
@@ -249,25 +259,26 @@ static bool cmd_test_config_unset_validate
  * Code generation
  */
 
-static bool cmd_test_config_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+static bool
+cmd_test_config_generate(const struct sieve_codegen_env *cgenv,
+			 struct sieve_command *cmd)
 {
-	if ( sieve_command_is(cmd, cmd_test_config_set) )
-		sieve_operation_emit
-			(cgenv->sblock, cmd->ext, &test_config_set_operation);
-	else if ( sieve_command_is(cmd, cmd_test_config_unset) )
-		sieve_operation_emit
-			(cgenv->sblock, cmd->ext, &test_config_unset_operation);
-	else if ( sieve_command_is(cmd, cmd_test_config_reload) )
-		sieve_operation_emit
-			(cgenv->sblock, cmd->ext, &test_config_reload_operation);
-	else
+	if (sieve_command_is(cmd, cmd_test_config_set)) {
+		sieve_operation_emit(cgenv->sblock, cmd->ext,
+				     &test_config_set_operation);
+	} else if (sieve_command_is(cmd, cmd_test_config_unset)) {
+		sieve_operation_emit(cgenv->sblock, cmd->ext,
+				     &test_config_unset_operation);
+	} else if (sieve_command_is(cmd, cmd_test_config_reload)) {
+		sieve_operation_emit(cgenv->sblock, cmd->ext,
+				     &test_config_reload_operation);
+	} else {
 		i_unreached();
+	}
 
  	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
+	if (!sieve_generate_arguments(cgenv, cmd, NULL))
 		return FALSE;
-
 	return TRUE;
 }
 
@@ -275,30 +286,32 @@ static bool cmd_test_config_generate
  * Code dump
  */
 
-static bool cmd_test_config_set_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+cmd_test_config_set_operation_dump(const struct sieve_dumptime_env *denv,
+				   sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "TEST_CONFIG_SET:");
 
 	sieve_code_descend(denv);
 
-	return sieve_opr_string_dump(denv, address, "setting") &&
-		sieve_opr_string_dump(denv, address, "value");
+	return (sieve_opr_string_dump(denv, address, "setting") &&
+		sieve_opr_string_dump(denv, address, "value"));
 }
 
-static bool cmd_test_config_unset_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+cmd_test_config_unset_operation_dump(const struct sieve_dumptime_env *denv,
+				     sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "TEST_CONFIG_UNSET:");
 
 	sieve_code_descend(denv);
 
-	return
-		sieve_opr_string_dump(denv, address, "setting");
+	return sieve_opr_string_dump(denv, address, "setting");
 }
 
-static bool cmd_test_config_reload_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+cmd_test_config_reload_operation_dump(const struct sieve_dumptime_env *denv,
+				      sieve_size_t *address)
 {
 	int opt_code = 0;
 
@@ -311,21 +324,25 @@ static bool cmd_test_config_reload_operation_dump
 		int opt;
 		bool opok = TRUE;
 
-		if ( (opt=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+		if ((opt = sieve_opr_optional_dump(denv, address,
+						   &opt_code)) < 0)
 			return FALSE;
 
-		if ( opt == 0 ) break;
+		if (opt == 0)
+			break;
 
-		switch ( opt_code ) {
+		switch (opt_code) {
 		case OPT_EXTENSION:
-			opok = sieve_opr_string_dump(denv, address, "extensions");
+			opok = sieve_opr_string_dump(denv, address,
+						     "extensions");
 			break;
 		default:
 			opok = FALSE;
 			break;
 		}
 
-		if ( !opok ) return FALSE;
+		if (!opok)
+			return FALSE;
 	}
 
 	return TRUE;
@@ -335,8 +352,9 @@ static bool cmd_test_config_reload_operation_dump
  * Interpretation
  */
 
-static int cmd_test_config_set_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+cmd_test_config_set_operation_execute(const struct sieve_runtime_env *renv,
+				      sieve_size_t *address)
 {
 	string_t *setting;
 	string_t *value;
@@ -347,22 +365,25 @@ static int cmd_test_config_set_operation_execute
 	 */
 
 	/* Setting */
-	if ( (ret=sieve_opr_string_read(renv, address, "setting", &setting)) <= 0 )
+	if ((ret = sieve_opr_string_read(renv, address, "setting",
+					 &setting)) <= 0)
 		return ret;
 
 	/* Value */
-	if ( (ret=sieve_opr_string_read(renv, address, "value", &value)) <= 0 )
+	if ((ret = sieve_opr_string_read(renv, address, "value",
+					 &value)) <= 0)
 		return ret;
 
 	/*
 	 * Perform operation
 	 */
 
-	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-		sieve_runtime_trace(renv, 0,
-			"testsuite: test_config_set command");
+	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
+		sieve_runtime_trace(
+			renv, 0, "testsuite: test_config_set command");
 		sieve_runtime_trace_descend(renv);
-		sieve_runtime_trace(renv, 0, "set config `%s' = `%s'",
+		sieve_runtime_trace(
+			renv, 0, "set config `%s' = `%s'",
 			str_c(setting), str_c(value));
 	}
 
@@ -371,8 +392,9 @@ static int cmd_test_config_set_operation_execute
 	return SIEVE_EXEC_OK;
 }
 
-static int cmd_test_config_unset_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+cmd_test_config_unset_operation_execute(const struct sieve_runtime_env *renv,
+					sieve_size_t *address)
 {
 	string_t *setting;
 	int ret;
@@ -382,18 +404,20 @@ static int cmd_test_config_unset_operation_execute
 	 */
 
 	/* Setting */
-	if ( (ret=sieve_opr_string_read(renv, address, "setting", &setting)) <= 0 )
+	if ((ret = sieve_opr_string_read(renv, address, "setting",
+					 &setting)) <= 0)
 		return ret;
 
 	/*
 	 * Perform operation
 	 */
 
-	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-		sieve_runtime_trace(renv, 0,
-			"testsuite: test_config_unset command");
+	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
+		sieve_runtime_trace(
+			renv, 0, "testsuite: test_config_unset command");
 		sieve_runtime_trace_descend(renv);
-		sieve_runtime_trace(renv, 0, "unset config `%s'", str_c(setting));
+		sieve_runtime_trace(
+			renv, 0, "unset config `%s'", str_c(setting));
 	}
 
 	testsuite_setting_unset(str_c(setting));
@@ -401,8 +425,9 @@ static int cmd_test_config_unset_operation_execute
 	return SIEVE_EXEC_OK;
 }
 
-static int cmd_test_config_reload_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
+					 sieve_size_t *address)
 {
 	const struct sieve_extension *ext;
 	int opt_code = 0;
@@ -417,62 +442,63 @@ static int cmd_test_config_reload_operation_execute
 	for (;;) {
 		int opt;
 
-		if ( (opt=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+		if ((opt = sieve_opr_optional_read(renv, address,
+						   &opt_code)) < 0)
 			return SIEVE_EXEC_BIN_CORRUPT;
 
-		if ( opt == 0 ) break;
+		if (opt == 0)
+			break;
 
-		switch ( opt_code ) {
+		switch (opt_code) {
 		case OPT_EXTENSION:
-			ret = sieve_opr_string_read(renv, address, "extension", &extension);
+			ret = sieve_opr_string_read(renv, address, "extension",
+						    &extension);
 			break;
 		default:
-			sieve_runtime_trace_error(renv, "unknown optional operand");
+			sieve_runtime_trace_error(
+				renv, "unknown optional operand");
 			ret = SIEVE_EXEC_BIN_CORRUPT;
 		}
 
-		if ( ret <= 0 ) return ret;
+		if (ret <= 0)
+			return ret;
 	}
 
 	/*
 	 * Perform operation
 	 */
 
-	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-		sieve_runtime_trace(renv, 0,
-			"testsuite: test_config_reload command");
+	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
+		sieve_runtime_trace(
+			renv, 0, "testsuite: test_config_reload command");
 		sieve_runtime_trace_descend(renv);
 	}
 
-	if ( extension == NULL ) {
-		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-			sieve_runtime_trace(renv, 0,
+	if (extension == NULL) {
+		if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
+			sieve_runtime_trace(
+				renv, 0,
 				"reload configuration for sieve engine");
 		}
 
 		sieve_settings_load(renv->svinst);
-
 	} else {
-		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-			sieve_runtime_trace(renv, 0,
+		if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
+			sieve_runtime_trace(
+				renv, 0,
 				"reload configuration for extension `%s'",
 				str_c(extension));
 		}
 
-		ext = sieve_extension_get_by_name(renv->svinst, str_c(extension));
-		if ( ext == NULL ) {
+		ext = sieve_extension_get_by_name(renv->svinst,
+						  str_c(extension));
+		if (ext == NULL) {
 			testsuite_test_failf("test_config_reload: "
-				"unknown extension '%s'", str_c(extension));
+					     "unknown extension '%s'",
+					     str_c(extension));
 			return SIEVE_EXEC_OK;
 		}
-
 		sieve_extension_reload(ext);
 	}
-
 	return SIEVE_EXEC_OK;
 }
-
-
-
-
-
