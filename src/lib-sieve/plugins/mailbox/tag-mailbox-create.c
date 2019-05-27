@@ -119,12 +119,13 @@ static int
 seff_mailbox_create_pre_execute(
 	const struct sieve_side_effect *seffect ATTR_UNUSED,
 	const struct sieve_action *action ATTR_UNUSED,
-	const struct sieve_action_exec_env *aenv ATTR_UNUSED,
+	const struct sieve_action_exec_env *aenv,
 	void **se_context ATTR_UNUSED, void *tr_context ATTR_UNUSED)
 {
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *)tr_context;
-	struct mail_storage **storage = &(aenv->exec_status->last_storage);
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct mail_storage **storage = &(eenv->exec_status->last_storage);
 	enum mail_error error;
 
 	/* Check whether creation is necessary */
@@ -159,7 +160,7 @@ seff_mailbox_create_pre_execute(
 	}
 
 	/* Subscribe to it if necessary */
-	if (aenv->scriptenv->mailbox_autosubscribe) {
+	if (eenv->scriptenv->mailbox_autosubscribe) {
 		(void)mailbox_list_set_subscribed(
 			mailbox_get_namespace(trans->box)->list,
 			mailbox_get_name(trans->box), TRUE);

@@ -940,7 +940,8 @@ _get_full_reply_recipient(const struct sieve_action_exec_env *aenv,
 			  const struct smtp_address *smtp_to,
 			  struct message_address *reply_to_r)
 {
-	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
 	const char *const *hdsp;
 	int ret;
 
@@ -1009,7 +1010,8 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 				 const struct ext_vacation_config *config,
 				 const char **subject_r)
 {
-	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
 	const char *header, *error;
 	string_t *str;
 	const struct var_expand_table *tab;
@@ -1052,8 +1054,9 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 		  const struct smtp_address *smtp_from,
 		  const struct message_address *reply_from)
 {
-	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct sieve_smtp_context *sctx;
 	struct ostream *output;
 	string_t *msg;
@@ -1094,7 +1097,7 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 
 	sctx = sieve_smtp_start_single(senv, smtp_to, smtp_from, &output);
 
-	outmsgid = sieve_message_get_new_id(aenv->svinst);
+	outmsgid = sieve_message_get_new_id(eenv->svinst);
 
 	/* Produce a proper reply */
 
@@ -1182,7 +1185,7 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 		return SIEVE_EXEC_FAILURE;
 	}
 
-	aenv->exec_status->significant_action_executed = TRUE;
+	eenv->exec_status->significant_action_executed = TRUE;
 	return SIEVE_EXEC_OK;
 }
 
@@ -1207,10 +1210,11 @@ act_vacation_commit(const struct sieve_action *action,
 		    void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
 	const struct sieve_extension *ext = action->ext;
-	struct sieve_instance *svinst = aenv->svinst;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct sieve_instance *svinst = eenv->svinst;
 	const struct ext_vacation_config *config =
 		(const struct ext_vacation_config *)ext->context;
-	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct act_vacation_context *ctx =
 		(struct act_vacation_context *)action->context;
 	unsigned char dupl_hash[MD5_RESULTLEN];
@@ -1222,7 +1226,7 @@ act_vacation_commit(const struct sieve_action *action,
 	const char *const *hdsp, *const *headers;
 	int ret;
 
-	if ((aenv->flags & SIEVE_EXECUTE_FLAG_SKIP_RESPONSES) != 0) {
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_SKIP_RESPONSES) != 0) {
 		sieve_result_global_log(
 			aenv, "not sending vacation reply (skipped)");
 		return SIEVE_EXEC_OK;
@@ -1514,7 +1518,7 @@ act_vacation_commit(const struct sieve_action *action,
 	if (ret == SIEVE_EXEC_OK) {
 		sieve_number_t seconds;
 
-		aenv->exec_status->significant_action_executed = TRUE;
+		eenv->exec_status->significant_action_executed = TRUE;
 		sieve_result_global_log(aenv, "sent vacation response to <%s>",
 					smtp_address_encode(sender));
 

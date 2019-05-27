@@ -194,7 +194,8 @@ static int
 cmd_redirect_operation_execute(const struct sieve_runtime_env *renv,
 			       sieve_size_t *address)
 {
-	struct sieve_instance *svinst = renv->svinst;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	struct sieve_instance *svinst = eenv->svinst;
 	struct sieve_side_effects_list *slist = NULL;
 	string_t *redirect;
 	const struct smtp_address *to_address;
@@ -265,11 +266,13 @@ act_redirect_equals(const struct sieve_script_env *senv ATTR_UNUSED,
 }
 
 static int
-act_redirect_check_duplicate(const struct sieve_runtime_env *renv ATTR_UNUSED,
+act_redirect_check_duplicate(const struct sieve_runtime_env *renv,
 			     const struct sieve_action *act,
 			     const struct sieve_action *act_other)
 {
-	return (act_redirect_equals(renv->scriptenv, act, act_other) ? 1 : 0);
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	return (act_redirect_equals(eenv->scriptenv, act, act_other) ? 1 : 0);
 }
 
 static void
@@ -290,9 +293,10 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 		  ATTR_NULL(4)
 {
 	static const char *hide_headers[] = { "Return-Path" };
-	struct sieve_instance *svinst = aenv->svinst;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct sieve_instance *svinst = eenv->svinst;
 	struct sieve_message_context *msgctx = aenv->msgctx;
-	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct sieve_address_source env_from = svinst->redirect_from;
 	struct istream *input;
 	struct ostream *output;
@@ -327,18 +331,18 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 	   when then returns a delivery status notification that also ends up
 	   being redirected to the same invalid address.
 	 */
-	if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
 		/* Envelope available */
 		sender = sieve_message_get_sender(msgctx);
 		if (sender != NULL &&
 		    sieve_address_source_get_address(&env_from, svinst, senv,
-						     msgctx, aenv->flags,
+						     msgctx, eenv->flags,
 						     &sender) < 0)
 			sender = NULL;
 	} else {
 		/* No envelope available */
 		ret = sieve_address_source_get_address(&env_from, svinst, senv,
-						       msgctx, aenv->flags,
+						       msgctx, eenv->flags,
 						       &sender);
 		if (ret < 0)
 			sender = NULL;
@@ -363,10 +367,10 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 		rfc2822_header_append(hdr, "X-Sieve", SIEVE_IMPLEMENTATION,
 				      FALSE, NULL);
 		if (svinst->user_email == NULL &&
-		    (aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
+		    (eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
 			user_email = sieve_message_get_final_recipient(msgctx);
 		else
-			user_email = sieve_get_user_email(aenv->svinst);
+			user_email = sieve_get_user_email(svinst);
 		if (user_email != NULL) {
 			rfc2822_header_append(hdr, "X-Sieve-Redirected-From",
 					      smtp_address_encode(user_email),
@@ -423,8 +427,9 @@ act_redirect_get_duplicate_id(struct act_redirect_context *ctx,
 			      const struct sieve_action_exec_env *aenv,
 			      const char *msg_id, const char **dupeid_r)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_message_context *msgctx = aenv->msgctx;
-	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
 	struct mail *mail = msgdata->mail;
 	const struct smtp_address *recipient;
 	const char *resent_id = NULL, *list_id = NULL;
@@ -447,10 +452,10 @@ act_redirect_get_duplicate_id(struct act_redirect_context *ctx,
 			"failed to read header field `list-id'");
 	}
 
-	if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
 		recipient = sieve_message_get_orig_recipient(msgctx);
 	else
-		recipient = sieve_get_user_email(aenv->svinst);
+		recipient = sieve_get_user_email(eenv->svinst);
 
 	/* Base the duplicate ID on:
 	   - the message id
@@ -473,6 +478,7 @@ static int
 act_redirect_check_loop_header(const struct sieve_action_exec_env *aenv,
 			       struct mail *mail, bool *loop_detected_r)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const char *const *headers;
 	const char *recipient, *user_email;
@@ -493,12 +499,12 @@ act_redirect_check_loop_header(const struct sieve_action_exec_env *aenv,
 		return SIEVE_EXEC_OK;
 
 	recipient = user_email = NULL;
-	if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
 		addr = sieve_message_get_final_recipient(msgctx);
 		if (addr != NULL)
 			recipient = smtp_address_encode(addr);
 	}
-	addr = sieve_get_user_email(aenv->svinst);
+	addr = sieve_get_user_email(eenv->svinst);
 	if (addr != NULL)
 		user_email = smtp_address_encode(addr);
 
@@ -523,14 +529,15 @@ act_redirect_commit(const struct sieve_action *action,
 		    const struct sieve_action_exec_env *aenv,
 		    void *tr_context ATTR_UNUSED, bool *keep)
 {
-	struct sieve_instance *svinst = aenv->svinst;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct sieve_instance *svinst = eenv->svinst;
 	struct act_redirect_context *ctx =
 		(struct act_redirect_context *)action->context;
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	struct mail *mail = (action->mail != NULL ?
 			     action->mail : sieve_message_get_mail(msgctx));
-	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	const char *msg_id = msgdata->id, *new_msg_id = NULL;
 	const char *dupeid = NULL;
 	bool loop_detected = FALSE;
@@ -542,7 +549,7 @@ act_redirect_commit(const struct sieve_action *action,
 
 	/* Create Message-ID for the message if it has none */
 	if (msg_id == NULL)
-		msg_id = new_msg_id = sieve_message_get_new_id(aenv->svinst);
+		msg_id = new_msg_id = sieve_message_get_new_id(eenv->svinst);
 
 	/* Create ID for duplicate database lookup */
 	ret = act_redirect_get_duplicate_id(ctx, aenv, msg_id, &dupeid);
@@ -585,13 +592,13 @@ act_redirect_commit(const struct sieve_action *action,
 		sieve_action_duplicate_mark(senv, dupeid, strlen(dupeid),
 			ioloop_time + svinst->redirect_duplicate_period);
 
-		aenv->exec_status->significant_action_executed = TRUE;
+		eenv->exec_status->significant_action_executed = TRUE;
 		sieve_result_global_log(
 			aenv, "redirect action: forwarded to <%s>",
 			smtp_address_encode(ctx->to_address));
 
 		/* Indicate that message was successfully forwarded */
-		aenv->exec_status->message_forwarded = TRUE;
+		eenv->exec_status->message_forwarded = TRUE;
 
 		/* Cancel implicit keep */
 		*keep = FALSE;

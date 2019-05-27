@@ -115,7 +115,9 @@ ext_vacation_interpreter_run(const struct sieve_extension *ext,
 			     const struct sieve_runtime_env *renv,
 			     void *context ATTR_UNUSED, bool deferred)
 {
-	if ((renv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0) {
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0) {
 		if (!deferred) {
 			sieve_runtime_error(
 				renv, NULL,

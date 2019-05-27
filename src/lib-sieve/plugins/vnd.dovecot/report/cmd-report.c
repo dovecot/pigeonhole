@@ -409,11 +409,13 @@ act_report_equals(const struct sieve_script_env *senv ATTR_UNUSED,
 }
 
 static int
-act_report_check_duplicate(const struct sieve_runtime_env *renv ATTR_UNUSED,
+act_report_check_duplicate(const struct sieve_runtime_env *renv,
 			   const struct sieve_action *act,
 			   const struct sieve_action *act_other)
 {
-	return (act_report_equals(renv->scriptenv, act, act_other) ? 1 : 0);
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	return (act_report_equals(eenv->scriptenv, act, act_other) ? 1 : 0);
 }
 
 /* Result printing */
@@ -450,10 +452,11 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 		const struct ext_report_config *config,
 		const struct act_report_data *act)
 {
-	struct sieve_instance *svinst = aenv->svinst;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct sieve_instance *svinst = eenv->svinst;
 	struct sieve_message_context *msgctx = aenv->msgctx;
-	const struct sieve_script_env *senv = aenv->scriptenv;
-	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_script_env *senv = eenv->scriptenv;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
 	struct sieve_address_source report_from = config->report_from;
 	const struct smtp_address *sender, *user;
 	struct sieve_smtp_context *sctx;
@@ -489,7 +492,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 		report_from.address = NULL;
 	}
 	if ((ret = sieve_address_source_get_address(
-		&report_from, svinst, senv, msgctx, aenv->flags,
+		&report_from, svinst, senv, msgctx, eenv->flags,
 		&sender)) > 0 && sender != NULL)
 		from = smtp_address_encode_path(sender);
 	else
@@ -498,7 +501,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	/* Start message */
 	sctx = sieve_smtp_start_single(senv, act->to_address, NULL, &output);
 
-	outmsgid = sieve_message_get_new_id(aenv->svinst);
+	outmsgid = sieve_message_get_new_id(svinst);
 	boundary = t_strdup_printf("%s/%s", my_pid, svinst->hostname);
 
 	/* Compose main report headers */
@@ -553,7 +556,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 			     PACKAGE_NAME "/" PACKAGE_VERSION " "
 			     PIGEONHOLE_NAME "/" PIGEONHOLE_VERSION);
 
-	if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
 		const struct smtp_address *sender, *orig_recipient;
 
 		sender = sieve_message_get_sender(msgctx);
@@ -569,7 +572,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	}
 	if (svinst->user_email != NULL)
 		user = svinst->user_email;
-	else if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0 ||
+	else if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0 ||
 		 (user = sieve_message_get_orig_recipient(msgctx)) == NULL)
 		user = sieve_get_user_email(svinst);
 	if (user != NULL) {
@@ -648,7 +651,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 				str_sanitize(error, 512));
 		}
 	} else {
-		aenv->exec_status->significant_action_executed = TRUE;
+		eenv->exec_status->significant_action_executed = TRUE;
 		sieve_result_global_log(
 			aenv, "sent `%s' report to <%s>",
 			str_sanitize(act->feedback_type, 32),

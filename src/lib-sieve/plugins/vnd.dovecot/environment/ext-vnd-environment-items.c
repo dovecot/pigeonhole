@@ -29,8 +29,10 @@ static const char *
 envit_default_mailbox_get_value(const struct sieve_runtime_env *renv,
 				const char *name ATTR_UNUSED)
 {
-	i_assert(renv->scriptenv->default_mailbox != NULL);
-	return renv->scriptenv->default_mailbox;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	i_assert(eenv->scriptenv->default_mailbox != NULL);
+	return eenv->scriptenv->default_mailbox;
 }
 
 const struct sieve_environment_item default_mailbox_env_item = {
@@ -44,7 +46,9 @@ static const char *
 envit_username_get_value(const struct sieve_runtime_env *renv,
 			 const char *name ATTR_UNUSED)
 {
-	return renv->svinst->username;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	return eenv->svinst->username;
 }
 
 const struct sieve_environment_item username_env_item = {
@@ -57,10 +61,12 @@ const struct sieve_environment_item username_env_item = {
 static const char *
 envit_config_get_value(const struct sieve_runtime_env *renv, const char *name)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
 	if (*name == '\0')
 		return NULL;
 
-	return sieve_setting_get(renv->svinst,
+	return sieve_setting_get(eenv->svinst,
 				 t_strconcat("sieve_env_", name, NULL));
 }
 

@@ -524,6 +524,7 @@ act_notify_check_duplicate(const struct sieve_runtime_env *renv,
 			   const struct sieve_action *act,
 			   const struct sieve_action *act_other)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_enotify_action *nact, *nact_other;
 	const struct sieve_enotify_method_def *nmth_def;
 	struct sieve_enotify_env nenv;
@@ -543,7 +544,7 @@ act_notify_check_duplicate(const struct sieve_runtime_env *renv,
 		return 0;
 
 	i_zero(&nenv);
-	nenv.svinst = renv->svinst;
+	nenv.svinst = eenv->svinst;
 	nenv.method = nact->method;
 	nenv.ehandler =
 		sieve_prefix_ehandler_create(renv->ehandler, act->location,
@@ -592,6 +593,7 @@ act_notify_commit(const struct sieve_action *action,
 		  const struct sieve_action_exec_env *aenv,
 		  void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	const struct sieve_enotify_action *act =
 		(const struct sieve_enotify_action *)action->context;
 	const struct sieve_enotify_method *method = act->method;
@@ -601,11 +603,11 @@ act_notify_commit(const struct sieve_action *action,
 	if (method->def != NULL && method->def->action_execute != NULL)	{
 		/* Compose log structure */
 		i_zero(&nenv);
-		nenv.svinst = aenv->svinst;
-		nenv.flags = aenv->flags;
+		nenv.svinst = eenv->svinst;
+		nenv.flags = eenv->flags;
 		nenv.method = method;
-		nenv.scriptenv = aenv->scriptenv;
-		nenv.msgdata = aenv->msgdata;
+		nenv.scriptenv = eenv->scriptenv;
+		nenv.msgdata = eenv->msgdata;
 		nenv.msgctx = aenv->msgctx;
 
 		nenv.ehandler = sieve_prefix_ehandler_create(
@@ -613,7 +615,7 @@ act_notify_commit(const struct sieve_action *action,
 
 		ret = method->def->action_execute(&nenv, act);
 		if (ret >= 0)
-			aenv->exec_status->significant_action_executed = TRUE;
+			eenv->exec_status->significant_action_executed = TRUE;
 
 		sieve_error_handler_unref(&nenv.ehandler);
 	}

@@ -130,7 +130,9 @@ ext_envelope_interpreter_run(const struct sieve_extension *ext,
 			     const struct sieve_runtime_env *renv,
 			     void *context ATTR_UNUSED, bool deferred)
 {
-	if ((renv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0) {
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0) {
 		if (!deferred) {
 			sieve_runtime_error(
 				renv, NULL,
@@ -339,12 +341,13 @@ _to_part_get_values(const struct sieve_runtime_env *renv)
 static const char *const *
 _auth_part_get_values(const struct sieve_runtime_env *renv)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	ARRAY(const char *) envelope_values;
 
 	t_array_init(&envelope_values, 2);
 
-	if (renv->msgdata->auth_user != NULL)
-		array_append(&envelope_values, &renv->msgdata->auth_user, 1);
+	if (eenv->msgdata->auth_user != NULL)
+		array_append(&envelope_values, &eenv->msgdata->auth_user, 1);
 
 	(void)array_append_space(&envelope_values);
 

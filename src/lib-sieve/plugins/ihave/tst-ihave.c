@@ -229,7 +229,8 @@ static int
 tst_ihave_operation_execute(const struct sieve_runtime_env *renv,
 			    sieve_size_t *address)
 {
-	struct sieve_instance *svinst = renv->svinst;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	struct sieve_instance *svinst = eenv->svinst;
 	struct sieve_stringlist *capabilities;
 	string_t *cap_item;
 	bool matched;

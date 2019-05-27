@@ -323,10 +323,11 @@ static int
 tst_duplicate_operation_execute(const struct sieve_runtime_env *renv,
 				sieve_size_t *address ATTR_UNUSED)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *ext = renv->oprtn->ext;
 	const struct ext_duplicate_config *config =
 		(const struct ext_duplicate_config *)ext->context;
-	struct mail *mail = renv->msgdata->mail;
+	struct mail *mail = eenv->msgdata->mail;
 	int opt_code = 0;
 	string_t *handle = NULL, *header = NULL, *uniqueid = NULL;
 	const char *val = NULL;

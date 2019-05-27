@@ -720,7 +720,8 @@ static bool
 act_notify_send(const struct sieve_action_exec_env *aenv,
 		const struct ext_notify_action *act)
 {
-	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	const struct ext_notify_recipient *recipients;
 	struct sieve_smtp_context *sctx;
 	unsigned int count, i;
@@ -785,10 +786,10 @@ act_notify_send(const struct sieve_action_exec_env *aenv,
 		rfc2822_header_write(msg, "Content-Transfer-Encoding", "7bit");
 	}
 
-	outmsgid = sieve_message_get_new_id(aenv->svinst);
+	outmsgid = sieve_message_get_new_id(eenv->svinst);
 	rfc2822_header_write(msg, "Message-ID", outmsgid);
 
-	if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 &&
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0 &&
 	    sieve_message_get_sender(aenv->msgctx) != NULL) {
 		sctx = sieve_smtp_start(senv, sieve_get_postmaster_smtp(senv));
 	} else {
@@ -846,7 +847,8 @@ act_notify_commit(const struct sieve_action *action,
 		  const struct sieve_action_exec_env *aenv,
 		  void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
-	struct mail *mail = aenv->msgdata->mail;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct mail *mail = eenv->msgdata->mail;
 	const struct ext_notify_action *act =
 		(const struct ext_notify_action *)action->context;
 	const char *const *hdsp;
@@ -867,7 +869,7 @@ act_notify_commit(const struct sieve_action *action,
 				const struct smtp_address *sender = NULL;
 				const char *from;
 
-				if ((aenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
+				if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
 					sender = sieve_message_get_sender(aenv->msgctx);
 				from = (sender == NULL ? "" :
 					t_strdup_printf(" from <%s>",
@@ -889,6 +891,6 @@ act_notify_commit(const struct sieve_action *action,
 
 	if (!result)
 		return SIEVE_EXEC_FAILURE;
-	aenv->exec_status->significant_action_executed = TRUE;
+	eenv->exec_status->significant_action_executed = TRUE;
 	return SIEVE_EXEC_OK;
 }

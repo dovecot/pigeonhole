@@ -110,7 +110,8 @@ act_duplicate_mark_finish(const struct sieve_action *action,
 			  const struct sieve_action_exec_env *aenv,
 			  void *tr_context ATTR_UNUSED, int status)
 {
-	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct act_duplicate_mark_data *data =
 		(struct act_duplicate_mark_data *)action->context;
 
@@ -118,7 +119,7 @@ act_duplicate_mark_finish(const struct sieve_action *action,
 		/* Message was handled successfully, so track duplicate for this
 		 * message.
 		 */
-		aenv->exec_status->significant_action_executed = TRUE;
+		eenv->exec_status->significant_action_executed = TRUE;
 		sieve_action_duplicate_mark(senv, data->hash,
 					    sizeof(data->hash),
 					    ioloop_time + data->period);
@@ -169,8 +170,9 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 			const char *value, size_t value_len,
 			sieve_number_t period, bool last)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
-	const struct sieve_script_env *senv = renv->scriptenv;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct ext_duplicate_context *rctx;
 	bool duplicate = FALSE;
 	pool_t msg_pool = NULL, result_pool = NULL;

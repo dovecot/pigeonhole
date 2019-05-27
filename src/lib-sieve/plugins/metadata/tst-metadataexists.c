@@ -255,7 +255,8 @@ tst_metadataexists_check_annotations(const struct sieve_runtime_env *renv,
 				     struct sieve_stringlist *anames,
 				     bool *all_exist_r)
 {
-	struct mail_user *user = renv->scriptenv->user;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	struct mail_user *user = eenv->scriptenv->user;
 	struct mailbox *box = NULL;
 	struct imap_metadata_transaction *imtrans;
 	string_t *aname;

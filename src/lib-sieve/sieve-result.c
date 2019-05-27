@@ -91,14 +91,15 @@ struct sieve_result {
 };
 
 struct sieve_result *
-sieve_result_create(struct sieve_instance *svinst,
-		    const struct sieve_message_data *msgdata,
-		    const struct sieve_script_env *senv)
+sieve_result_create(struct sieve_instance *svinst, pool_t pool,
+		    const struct sieve_execute_env *eenv)
 {
-	pool_t pool;
+	const struct sieve_script_env *senv = eenv->scriptenv;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
 	struct sieve_result *result;
 
-	pool = pool_alloconly_create("sieve_result", 4096);
+	pool_ref(pool);
+
 	result = p_new(pool, struct sieve_result, 1);
 	result->refcount = 1;
 	result->pool = pool;
@@ -106,10 +107,8 @@ sieve_result_create(struct sieve_instance *svinst,
 
 	p_array_init(&result->ext_contexts, pool, 4);
 
-	result->action_env.svinst = svinst;
 	result->action_env.result = result;
-	result->action_env.scriptenv = senv;
-	result->action_env.msgdata = msgdata;
+	result->action_env.exec_env = eenv;
 	result->action_env.msgctx =
 		sieve_message_context_create(svinst, senv->user, msgdata);
 
@@ -161,13 +160,13 @@ pool_t sieve_result_pool(struct sieve_result *result)
 const struct sieve_script_env *
 sieve_result_get_script_env(struct sieve_result *result)
 {
-	return result->action_env.scriptenv;
+	return result->action_env.exec_env->scriptenv;
 }
 
 const struct sieve_message_data *
 sieve_result_get_message_data(struct sieve_result *result)
 {
-	return result->action_env.msgdata;
+	return result->action_env.exec_env->msgdata;
 }
 
 struct sieve_message_context *
@@ -370,7 +369,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 {
 	int ret = 0;
 	unsigned int instance_count = 0;
-	struct sieve_instance *svinst = renv->svinst;
+	struct sieve_instance *svinst = renv->exec_env->svinst;
 	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction = NULL, *kaction = NULL;
 	struct sieve_action action;
@@ -831,29 +830,23 @@ bool sieve_result_print(struct sieve_result *result,
 
 static void
 _sieve_result_prepare_execution(struct sieve_result *result,
-				struct sieve_error_handler *ehandler,
-				enum sieve_execute_flags flags)
+				struct sieve_error_handler *ehandler)
 {
-	const struct sieve_script_env *senv = result->action_env.scriptenv;
-
-	result->action_env.flags = flags;
 	result->action_env.ehandler = ehandler;
-	result->action_env.exec_status =
-		(senv->exec_status == NULL ?
-		 t_new(struct sieve_exec_status, 1) : senv->exec_status);
 }
 
 static int
 _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 {
 	const struct sieve_action_exec_env *aenv = &result->action_env;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_result_action *rac, *kac;
 	int status = SIEVE_EXEC_OK;
 	struct sieve_result_side_effect *rsef, *rsef_first = NULL;
 	void *tr_context = NULL;
 	struct sieve_action act_keep;
 
-	if ((aenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0)
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0)
 		return SIEVE_EXEC_OK;
 
 	if (rollback)
@@ -883,7 +876,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 		while (rac != NULL) {
 			if (rac->action.def == act_keep.def &&
 			    act_keep.def->equals != NULL &&
-			    act_keep.def->equals(aenv->scriptenv, NULL,
+			    act_keep.def->equals(eenv->scriptenv, NULL,
 						 &rac->action) &&
 			    rac->action.executed)
 				return SIEVE_EXEC_OK;
@@ -988,11 +981,11 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 
 int sieve_result_implicit_keep(struct sieve_result *result,
 			       struct sieve_error_handler *ehandler,
-			       enum sieve_execute_flags flags, bool success)
+			       bool success)
 {
 	int ret;
 
-	_sieve_result_prepare_execution(result, ehandler, flags);
+	_sieve_result_prepare_execution(result, ehandler);
 
 	ret = _sieve_result_implicit_keep(result, !success);
 
@@ -1035,7 +1028,8 @@ sieve_result_transaction_start(struct sieve_result *result,
 			       struct sieve_result_action *first,
 			       struct sieve_result_action **last_r)
 {
-	const struct sieve_script_env *senv = result->action_env.scriptenv;
+	const struct sieve_execute_env *eenv = result->action_env.exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct sieve_result_action *rac = first;
 	int status = SIEVE_EXEC_OK;
 	bool dup_flushed = FALSE;
@@ -1327,8 +1321,7 @@ sieve_result_transaction_finish(struct sieve_result *result,
 }
 
 int sieve_result_execute(struct sieve_result *result, bool *keep,
-			 struct sieve_error_handler *ehandler,
-			 enum sieve_execute_flags flags)
+			 struct sieve_error_handler *ehandler)
 {
 	int status = SIEVE_EXEC_OK, result_status;
 	struct sieve_result_action *first_action, *last_action;
@@ -1340,7 +1333,7 @@ int sieve_result_execute(struct sieve_result *result, bool *keep,
 
 	/* Prepare environment */
 
-	_sieve_result_prepare_execution(result, ehandler, flags);
+	_sieve_result_prepare_execution(result, ehandler);
 
 	/* Make notice of this attempt */
 
@@ -1552,6 +1545,7 @@ void sieve_result_global_error(const struct sieve_action_exec_env *aenv,
 			       const char *csrc_filename,
 			       unsigned int csrc_linenum, const char *fmt, ...)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
 		.csrc = {
@@ -1562,7 +1556,7 @@ void sieve_result_global_error(const struct sieve_action_exec_env *aenv,
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_logv(aenv->svinst, aenv->ehandler, &params, fmt, args);
+	sieve_global_logv(eenv->svinst, aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1591,6 +1585,7 @@ void sieve_result_global_warning(const struct sieve_action_exec_env *aenv,
 				 unsigned int csrc_linenum,
 				 const char *fmt, ...)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
 		.csrc = {
@@ -1601,7 +1596,7 @@ void sieve_result_global_warning(const struct sieve_action_exec_env *aenv,
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_logv(aenv->svinst, aenv->ehandler, &params, fmt, args);
+	sieve_global_logv(eenv->svinst, aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1629,6 +1624,7 @@ void sieve_result_global_log(const struct sieve_action_exec_env *aenv,
 			     const char *csrc_filename,
 			     unsigned int csrc_linenum, const char *fmt, ...)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
 		.csrc = {
@@ -1639,7 +1635,7 @@ void sieve_result_global_log(const struct sieve_action_exec_env *aenv,
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_logv(aenv->svinst, aenv->ehandler, &params, fmt, args);
+	sieve_global_logv(eenv->svinst, aenv->ehandler, &params, fmt, args);
 	va_end(args);
 }
 
@@ -1649,6 +1645,7 @@ void sieve_result_global_log_error(const struct sieve_action_exec_env *aenv,
 				   unsigned int csrc_linenum,
 				   const char *fmt, ...)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
 		.csrc = {
@@ -1659,7 +1656,7 @@ void sieve_result_global_log_error(const struct sieve_action_exec_env *aenv,
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_info_logv(aenv->svinst, aenv->ehandler, &params,
+	sieve_global_info_logv(eenv->svinst, aenv->ehandler, &params,
 			       fmt, args);
 	va_end(args);
 }
@@ -1670,6 +1667,7 @@ void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
 				     unsigned int csrc_linenum,
 				     const char *fmt, ...)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
 		.csrc = {
@@ -1680,7 +1678,7 @@ void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_global_info_logv(aenv->svinst, aenv->ehandler, &params,
+	sieve_global_info_logv(eenv->svinst, aenv->ehandler, &params,
 			       fmt, args);
 	va_end(args);
 }
@@ -1690,6 +1688,7 @@ void sieve_result_critical(const struct sieve_action_exec_env *aenv,
 			   const char *csrc_filename, unsigned int csrc_linenum,
 			   const char *user_prefix, const char *fmt, ...)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
 		.csrc = {
@@ -1702,7 +1701,7 @@ void sieve_result_critical(const struct sieve_action_exec_env *aenv,
 	va_start(args, fmt);
 
 	T_BEGIN {
-		sieve_criticalv(aenv->svinst, aenv->ehandler, &params,
+		sieve_criticalv(eenv->svinst, aenv->ehandler, &params,
 				user_prefix, fmt, args);
 	} T_END;
 

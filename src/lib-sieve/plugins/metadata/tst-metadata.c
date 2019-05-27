@@ -279,7 +279,8 @@ tst_metadata_get_annotation(const struct sieve_runtime_env *renv,
 			    const char *mailbox, const char *aname,
 			    const char **annotation_r)
 {
-	struct mail_user *user = renv->scriptenv->user;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	struct mail_user *user = eenv->scriptenv->user;
 	struct mailbox *box;
 	struct imap_metadata_transaction *imtrans;
 	struct mail_attribute_value avalue;

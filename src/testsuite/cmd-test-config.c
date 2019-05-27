@@ -429,6 +429,7 @@ static int
 cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 					 sieve_size_t *address)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *ext;
 	int opt_code = 0;
 	string_t *extension = NULL;
@@ -481,7 +482,7 @@ cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 				"reload configuration for sieve engine");
 		}
 
-		sieve_settings_load(renv->svinst);
+		sieve_settings_load(eenv->svinst);
 	} else {
 		if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
 			sieve_runtime_trace(
@@ -490,7 +491,7 @@ cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 				str_c(extension));
 		}
 
-		ext = sieve_extension_get_by_name(renv->svinst,
+		ext = sieve_extension_get_by_name(eenv->svinst,
 						  str_c(extension));
 		if (ext == NULL) {
 			testsuite_test_failf("test_config_reload: "

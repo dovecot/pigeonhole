@@ -190,7 +190,9 @@ ext_reject_interpreter_run(const struct sieve_extension *ext,
 			   const struct sieve_runtime_env *renv,
 			   void *context ATTR_UNUSED, bool deferred)
 {
-	if ((renv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0) {
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0) {
 		if (!deferred) {
 			sieve_runtime_error(
 				renv, NULL,
@@ -506,6 +508,7 @@ act_reject_commit(const struct sieve_action *action,
 		  const struct sieve_action_exec_env *aenv,
 		  void *tr_context ATTR_UNUSED, bool *keep)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct act_reject_context *rj_ctx =
 		(struct act_reject_context *)action->context;
 	const struct smtp_address *sender, *recipient;
@@ -514,7 +517,7 @@ act_reject_commit(const struct sieve_action *action,
 	sender = sieve_message_get_sender(aenv->msgctx);
 	recipient = sieve_message_get_orig_recipient(aenv->msgctx);
 
-	if ((aenv->flags & SIEVE_EXECUTE_FLAG_SKIP_RESPONSES) != 0) {
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_SKIP_RESPONSES) != 0) {
 		sieve_result_global_log(
 			aenv, "not sending reject message (skipped)");
 		return SIEVE_EXEC_OK;
@@ -542,7 +545,7 @@ act_reject_commit(const struct sieve_action *action,
 					    rj_ctx->reason)) <= 0)
 		return ret;
 
-	aenv->exec_status->significant_action_executed = TRUE;
+	eenv->exec_status->significant_action_executed = TRUE;
 	sieve_result_global_log(
 		aenv, "rejected message from <%s> (%s)",
 		smtp_address_encode(sender),

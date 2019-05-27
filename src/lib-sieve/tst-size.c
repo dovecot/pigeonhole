@@ -257,6 +257,7 @@ static int
 tst_size_operation_execute(const struct sieve_runtime_env *renv,
 			   sieve_size_t *address)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	sieve_number_t mail_size, limit;
 	int ret;
 
@@ -275,7 +276,7 @@ tst_size_operation_execute(const struct sieve_runtime_env *renv,
 	/* Get the size of the message */
 	if (!tst_size_get(renv, &mail_size)) {
 		/* FIXME: improve this error */
-		e_error(renv->svinst->event, "failed to assess message size");
+		e_error(eenv->svinst->event, "failed to assess message size");
 		return SIEVE_EXEC_FAILURE;
 	}
 

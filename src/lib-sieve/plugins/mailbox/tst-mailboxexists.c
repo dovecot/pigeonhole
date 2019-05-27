@@ -154,6 +154,7 @@ static int
 tst_mailboxexists_operation_execute(const struct sieve_runtime_env *renv,
 				    sieve_size_t *address)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	struct sieve_stringlist *mailbox_names;
 	string_t *mailbox_item;
 	bool trace = FALSE;
@@ -180,7 +181,7 @@ tst_mailboxexists_operation_execute(const struct sieve_runtime_env *renv,
 		trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING);
 	}
 
-	if (renv->scriptenv->user != NULL) {
+	if (eenv->scriptenv->user != NULL) {
 		int ret;
 
 		mailbox_item = NULL;
@@ -192,7 +193,7 @@ tst_mailboxexists_operation_execute(const struct sieve_runtime_env *renv,
 
 			/* Find the namespace */
 			ns = mail_namespace_find(
-				renv->scriptenv->user->namespaces, mailbox);
+				eenv->scriptenv->user->namespaces, mailbox);
 			if (ns == NULL) {
 				if (trace) {
 					sieve_runtime_trace(

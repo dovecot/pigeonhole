@@ -492,6 +492,7 @@ bool ext_enotify_compile_check_arguments(struct sieve_validator *valdtr,
 bool ext_enotify_runtime_method_validate(const struct sieve_runtime_env *renv,
 					 string_t *method_uri)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	const struct sieve_enotify_method *method;
 	const char *uri = str_c(method_uri);
@@ -511,7 +512,7 @@ bool ext_enotify_runtime_method_validate(const struct sieve_runtime_env *renv,
 		struct sieve_enotify_env nenv;
 
 		i_zero(&nenv);
-		nenv.svinst = renv->svinst;
+		nenv.svinst = eenv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create(
 			renv->ehandler,
@@ -565,6 +566,7 @@ ext_enotify_runtime_get_method_capability(const struct sieve_runtime_env *renv,
 					  string_t *method_uri,
 					  const char *capability)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_enotify_method *method;
 	const char *uri_body;
 	const char *result = NULL;
@@ -579,7 +581,7 @@ ext_enotify_runtime_get_method_capability(const struct sieve_runtime_env *renv,
 		struct sieve_enotify_env nenv;
 
 		i_zero(&nenv);
-		nenv.svinst = renv->svinst;
+		nenv.svinst = eenv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create(
 			renv->ehandler,
@@ -600,6 +602,7 @@ int ext_enotify_runtime_check_operands(
 	string_t *message, string_t *from, struct sieve_stringlist *options,
 	const struct sieve_enotify_method **method_r, void **method_context)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_enotify_method *method;
 	const char *uri_body;
 
@@ -615,7 +618,7 @@ int ext_enotify_runtime_check_operands(
 		int result = SIEVE_EXEC_OK;
 
 		i_zero(&nenv);
-		nenv.svinst = renv->svinst;
+		nenv.svinst = eenv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create(
 			renv->ehandler,

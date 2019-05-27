@@ -94,11 +94,10 @@ _sieve_interpreter_create(struct sieve_binary *sbin,
 			  struct sieve_binary_block *sblock,
 			  struct sieve_script *script,
 			  struct sieve_interpreter *parent,
-			  const struct sieve_message_data *msgdata,
-			  const struct sieve_script_env *senv,
-			  struct sieve_error_handler *ehandler,
-			  enum sieve_execute_flags flags) ATTR_NULL(3, 4)
+			  const struct sieve_execute_env *eenv,
+			  struct sieve_error_handler *ehandler) ATTR_NULL(3, 4)
 {
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	unsigned int i, ext_count;
 	struct sieve_interpreter *interp;
 	pool_t pool;
@@ -116,31 +115,20 @@ _sieve_interpreter_create(struct sieve_binary *sbin,
 	interp->runenv.ehandler = ehandler;
 	sieve_error_handler_ref(ehandler);
 
+	interp->runenv.exec_env = eenv;
 	interp->runenv.interp = interp;
 	interp->runenv.oprtn = &interp->oprtn;
 	interp->runenv.sbin = sbin;
 	interp->runenv.sblock = sblock;
-	interp->runenv.flags = flags;
 	sieve_binary_ref(sbin);
 
 	svinst = sieve_binary_svinst(sbin);
-
-	interp->runenv.svinst = svinst;
-	interp->runenv.msgdata = msgdata;
-	interp->runenv.scriptenv = senv;
 
 	if (senv->trace_log != NULL) {
 		interp->trace.log = senv->trace_log;
 		interp->trace.config = senv->trace_config;
 		interp->trace.indent = 0;
 		interp->runenv.trace = &interp->trace;
-	}
-
-	if (senv->exec_status == NULL) {
-		interp->runenv.exec_status =
-			p_new(interp->pool, struct sieve_exec_status, 1);
-	} else {
-		interp->runenv.exec_status = senv->exec_status;
 	}
 
 	if (script == NULL)
@@ -217,7 +205,7 @@ _sieve_interpreter_create(struct sieve_binary *sbin,
 
 			if (ext->def != NULL) {
 				if (ext->global &&
-				    (flags & SIEVE_EXECUTE_FLAG_NOGLOBAL) != 0) {
+				    (eenv->flags & SIEVE_EXECUTE_FLAG_NOGLOBAL) != 0) {
 					sieve_runtime_error(&interp->runenv, NULL,
 						"failed to enable extension `%s': "
 						"its use is restricted to global scripts",
@@ -251,10 +239,8 @@ _sieve_interpreter_create(struct sieve_binary *sbin,
 struct sieve_interpreter *
 sieve_interpreter_create(struct sieve_binary *sbin,
 			 struct sieve_interpreter *parent,
-			 const struct sieve_message_data *msgdata,
-			 const struct sieve_script_env *senv,
-			 struct sieve_error_handler *ehandler,
-			 enum sieve_execute_flags flags)
+			 const struct sieve_execute_env *eenv,
+			 struct sieve_error_handler *ehandler)
 {
 	struct sieve_binary_block *sblock;
 
@@ -262,24 +248,22 @@ sieve_interpreter_create(struct sieve_binary *sbin,
 		sbin, SBIN_SYSBLOCK_MAIN_PROGRAM)) == NULL)
 		return NULL;
 
- 	return _sieve_interpreter_create(sbin, sblock, NULL, parent, msgdata,
-					 senv, ehandler, flags);
+	return _sieve_interpreter_create(sbin, sblock, NULL, parent, eenv,
+					 ehandler);
 }
 
 struct sieve_interpreter *
 sieve_interpreter_create_for_block(struct sieve_binary_block *sblock,
 				   struct sieve_script *script,
 				   struct sieve_interpreter *parent,
-				   const struct sieve_message_data *msgdata,
-				   const struct sieve_script_env *senv,
-				   struct sieve_error_handler *ehandler,
-				   enum sieve_execute_flags flags)
+				   const struct sieve_execute_env *eenv,
+				   struct sieve_error_handler *ehandler)
 {
 	if (sblock == NULL) return NULL;
 
- 	return _sieve_interpreter_create(sieve_binary_block_get_binary(sblock),
-					 sblock, script, parent, msgdata,
-					 senv, ehandler, flags);
+	return _sieve_interpreter_create(sieve_binary_block_get_binary(sblock),
+					 sblock, script, parent, eenv,
+					 ehandler);
 }
 
 void sieve_interpreter_free(struct sieve_interpreter **_interp)
@@ -345,7 +329,7 @@ sieve_interpreter_get_error_handler(struct sieve_interpreter *interp)
 struct sieve_instance *
 sieve_interpreter_svinst(struct sieve_interpreter *interp)
 {
-	return interp->runenv.svinst;
+	return interp->runenv.exec_env->svinst;
 }
 
 /* Do not use this function for normal sieve extensions. This is intended for
@@ -1031,6 +1015,7 @@ void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 			    const char *location, const char *user_prefix,
 			    const char *fmt, ...)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
 		.csrc = {
@@ -1049,7 +1034,7 @@ void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 				sieve_runtime_get_full_command_location(renv);
 		}
 
-		sieve_criticalv(renv->svinst, renv->ehandler, &params,
+		sieve_criticalv(eenv->svinst, renv->ehandler, &params,
 				user_prefix, fmt, args);
 	} T_END;
 

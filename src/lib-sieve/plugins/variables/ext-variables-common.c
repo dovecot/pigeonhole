@@ -881,9 +881,10 @@ bool ext_variables_interpreter_load(const struct sieve_extension *ext,
 				    const struct sieve_runtime_env *renv,
 				    sieve_size_t *address)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	struct sieve_variable_scope_binary *scpbin;
 
-	scpbin = sieve_variable_scope_binary_read(renv->svinst, ext, NULL,
+	scpbin = sieve_variable_scope_binary_read(eenv->svinst, ext, NULL,
 						  renv->sblock, address);
 	if (scpbin == NULL)
 		return FALSE;

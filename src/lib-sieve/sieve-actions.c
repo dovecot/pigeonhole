@@ -329,7 +329,9 @@ act_store_check_duplicate(const struct sieve_runtime_env *renv,
 			  const struct sieve_action *act,
 			  const struct sieve_action *act_other)
 {
-	return (act_store_equals(renv->scriptenv, act, act_other) ? 1 : 0);
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	return (act_store_equals(eenv->scriptenv, act, act_other) ? 1 : 0);
 }
 
 /* Result printing */
@@ -369,8 +371,9 @@ act_store_mailbox_open(const struct sieve_action_exec_env *aenv,
 		       const char *mailbox, struct mailbox **box_r,
 		       enum mail_error *error_code_r, const char **error_r)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct mailbox *box;
-	struct mail_storage **storage = &(aenv->exec_status->last_storage);
+	struct mail_storage **storage = &(eenv->exec_status->last_storage);
 	enum mailbox_flags flags = 0;
 
 	*box_r = NULL;
@@ -386,12 +389,12 @@ act_store_mailbox_open(const struct sieve_action_exec_env *aenv,
 		return FALSE;
 	}
 
-	if (aenv->scriptenv->mailbox_autocreate)
+	if (eenv->scriptenv->mailbox_autocreate)
 		flags |= MAILBOX_FLAG_AUTO_CREATE;
-	if (aenv->scriptenv->mailbox_autosubscribe)
+	if (eenv->scriptenv->mailbox_autosubscribe)
 		flags |= MAILBOX_FLAG_AUTO_SUBSCRIBE;
 	*box_r = box =
-		mailbox_alloc_delivery(aenv->scriptenv->user, mailbox, flags);
+		mailbox_alloc_delivery(eenv->scriptenv->user, mailbox, flags);
 	*storage = mailbox_get_storage(box);
 
 	if (mailbox_open(box) == 0)
@@ -406,7 +409,8 @@ act_store_start(const struct sieve_action *action,
 {
 	struct act_store_context *ctx =
 		(struct act_store_context *)action->context;
-	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct act_store_transaction *trans;
 	struct mailbox *box = NULL;
 	pool_t pool = sieve_result_pool(aenv->result);
@@ -521,10 +525,11 @@ static int
 act_store_execute(const struct sieve_action *action,
 		  const struct sieve_action_exec_env *aenv, void *tr_context)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *)tr_context;
 	struct mail *mail = (action->mail != NULL ?
-			     action->mail : aenv->msgdata->mail);
+			     action->mail : eenv->msgdata->mail);
 	struct mail_save_context *save_ctx;
 	struct mail_keywords *keywords = NULL;
 	bool backends_equal = FALSE;
@@ -576,14 +581,14 @@ act_store_execute(const struct sieve_action *action,
 
 			if (keywords != NULL) {
 				if (!have_equal_keywords(mail, keywords)) {
-					aenv->exec_status->significant_action_executed = TRUE;
+					eenv->exec_status->significant_action_executed = TRUE;
 					mail_update_keywords(mail, MODIFY_REPLACE, keywords);
 				}
 				mailbox_keywords_unref(&keywords);
 			}
 
 			if ((mail_get_flags(mail) & MAIL_FLAGS_NONRECENT) != trans->flags) {
-				aenv->exec_status->significant_action_executed = TRUE;
+				eenv->exec_status->significant_action_executed = TRUE;
 				mail_update_flags(mail, MODIFY_REPLACE, trans->flags);
 			}
 		}
@@ -594,23 +599,24 @@ act_store_execute(const struct sieve_action *action,
 	 * mailbox, unrelated to the orignal mail, so this case needs to be handled
 	 * separately.
 	 */
-	} else if (mail != aenv->msgdata->mail &&
-		   mailbox_is_readonly(aenv->msgdata->mail->box) &&
+	} else if (mail != eenv->msgdata->mail &&
+		   mailbox_is_readonly(eenv->msgdata->mail->box) &&
 		   (mailbox_backends_equal(trans->box,
-					   aenv->msgdata->mail->box))) {
+					   eenv->msgdata->mail->box))) {
+
 		trans->redundant = TRUE;
 		return SIEVE_EXEC_OK;
 	}
 
 	/* Mark attempt to store in default mailbox */
 	if (strcmp(trans->context->mailbox,
-		   SIEVE_SCRIPT_DEFAULT_MAILBOX(aenv->scriptenv)) == 0)
-		aenv->exec_status->tried_default_save = TRUE;
+		   SIEVE_SCRIPT_DEFAULT_MAILBOX(eenv->scriptenv)) == 0)
+		eenv->exec_status->tried_default_save = TRUE;
 
 	/* Mark attempt to use storage. Can only get here when all previous actions
 	 * succeeded.
 	 */
-	aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
+	eenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 
 	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin(
@@ -625,7 +631,7 @@ act_store_execute(const struct sieve_action *action,
 						     trans->box, FALSE);
 
 		if (trans->flags != 0 || keywords != NULL) {
-			aenv->exec_status->significant_action_executed = TRUE;
+			eenv->exec_status->significant_action_executed = TRUE;
 			mailbox_save_set_flags(save_ctx, trans->flags, keywords);
 		}
 	} else {
@@ -637,7 +643,7 @@ act_store_execute(const struct sieve_action *action,
 		status = (trans->error_code == MAIL_ERROR_TEMP ?
 			  SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
 	} else {
-		aenv->exec_status->significant_action_executed = TRUE;
+		eenv->exec_status->significant_action_executed = TRUE;
 	}
 
 	/* Deallocate keywords */
@@ -720,6 +726,7 @@ act_store_commit(const struct sieve_action *action ATTR_UNUSED,
 		 const struct sieve_action_exec_env *aenv, void *tr_context,
 		 bool *keep)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *)tr_context;
 	bool status = TRUE;
@@ -737,8 +744,8 @@ act_store_commit(const struct sieve_action *action ATTR_UNUSED,
 		return SIEVE_EXEC_OK;
 	} else if (trans->redundant) {
 		act_store_log_status(trans, aenv, FALSE, status);
-		aenv->exec_status->keep_original = TRUE;
-		aenv->exec_status->message_saved = TRUE;
+		eenv->exec_status->keep_original = TRUE;
+		eenv->exec_status->message_saved = TRUE;
 		if (trans->box != NULL)
 			mailbox_free(&trans->box);
 		return SIEVE_EXEC_OK;
@@ -747,16 +754,16 @@ act_store_commit(const struct sieve_action *action ATTR_UNUSED,
 	/* Mark attempt to use storage. Can only get here when all previous actions
 	 * succeeded.
 	 */
-	aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
+	eenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 
 	/* Commit mailbox transaction */
 	status = (mailbox_transaction_commit(&trans->mail_trans) == 0);
 
 	/* Note the fact that the message was stored at least once */
 	if (status)
-		aenv->exec_status->message_saved = TRUE;
+		eenv->exec_status->message_saved = TRUE;
 	else
-		aenv->exec_status->store_failed = TRUE;
+		eenv->exec_status->store_failed = TRUE;
 
 	/* Log our status */
 	act_store_log_status(trans, aenv, FALSE, status);
@@ -780,6 +787,7 @@ act_store_rollback(const struct sieve_action *action ATTR_UNUSED,
 		   const struct sieve_action_exec_env *aenv, void *tr_context,
 		   bool success)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *)tr_context;
 
@@ -789,9 +797,9 @@ act_store_rollback(const struct sieve_action *action ATTR_UNUSED,
 	i_assert(trans->box != NULL);
 
 	if (!success) {
-		aenv->exec_status->last_storage =
+		eenv->exec_status->last_storage =
 			mailbox_get_storage(trans->box);
-		aenv->exec_status->store_failed = TRUE;
+		eenv->exec_status->store_failed = TRUE;
 	}
 
 	/* Log status */
@@ -813,7 +821,8 @@ int sieve_act_redirect_add_to_result(const struct sieve_runtime_env *renv,
 				     struct sieve_side_effects_list *seffects,
 				     const struct smtp_address *to_address)
 {
-	struct sieve_instance *svinst = renv->svinst;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	struct sieve_instance *svinst = eenv->svinst;
 	struct act_redirect_context *act;
 	pool_t pool;
 
@@ -873,9 +882,10 @@ sieve_action_do_reject_mail(const struct sieve_action_exec_env *aenv,
 			    const struct smtp_address *recipient,
 			    const char *reason)
 {
-	struct sieve_instance *svinst = aenv->svinst;
-	const struct sieve_script_env *senv = aenv->scriptenv;
-	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct sieve_instance *svinst = eenv->svinst;
+	const struct sieve_script_env *senv = eenv->scriptenv;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
 	const struct smtp_address *sender, *orig_recipient;
 	struct istream *input;
 	struct ostream *output;
@@ -1000,7 +1010,8 @@ int sieve_action_reject_mail(const struct sieve_action_exec_env *aenv,
 			     const struct smtp_address *recipient,
 			     const char *reason)
 {
-	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	int result;
 
 	T_BEGIN {

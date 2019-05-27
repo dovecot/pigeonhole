@@ -334,16 +334,18 @@ act_pipe_commit(const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv,
 		void *tr_context ATTR_UNUSED, bool *keep)
 {
-	const struct ext_pipe_action *act = 
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct ext_pipe_action *act =
 		(const struct ext_pipe_action *) action->context;
 	enum sieve_error error = SIEVE_ERROR_NONE;
-	struct mail *mail = (action->mail != NULL ? action->mail :
+	struct mail *mail = (action->mail != NULL ?
+			     action->mail :
 			     sieve_message_get_mail(aenv->msgctx));
 	struct sieve_extprogram *sprog;
 	int ret;
 
-	sprog = sieve_extprogram_create(action->ext, aenv->scriptenv,
-					aenv->msgdata, "pipe",
+	sprog = sieve_extprogram_create(action->ext, eenv->scriptenv,
+					eenv->msgdata, "pipe",
 					act->program_name, act->args, &error);
 	if (sprog != NULL) {
 		if (sieve_extprogram_set_input_mail(sprog, mail) < 0) {
@@ -365,7 +367,7 @@ act_pipe_commit(const struct sieve_action *action,
 					str_sanitize(act->program_name, 128));
 
 		/* Indicate that message was successfully 'forwarded' */
-		aenv->exec_status->message_forwarded = TRUE;
+		eenv->exec_status->message_forwarded = TRUE;
 	} else {
 		if (ret < 0) {
 			if (error == SIEVE_ERROR_NOT_FOUND) {

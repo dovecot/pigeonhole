@@ -89,12 +89,15 @@ bool testsuite_script_is_subtest(const struct sieve_runtime_env *renv)
 
 bool testsuite_script_run(const struct sieve_runtime_env *renv)
 {
-	const struct sieve_script_env *senv = renv->scriptenv;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct testsuite_interpreter_context *ictx =
 		testsuite_interpreter_context_get(renv->interp, testsuite_ext);
 	struct sieve_script_env scriptenv;
+	struct sieve_exec_status exec_status;
 	struct sieve_result *result;
 	struct sieve_interpreter *interp;
+	struct sieve_execute_env exec_env;
 	const char *error;
 	int ret;
 
@@ -107,6 +110,8 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	}
 
 	testsuite_log_clear_messages();
+
+	i_zero(&exec_status);
 
 	/* Compose script execution environment */
 	if (sieve_script_env_init(&scriptenv, senv->user, &error) < 0) {
@@ -122,15 +127,23 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	scriptenv.smtp_finish = testsuite_smtp_finish;
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
-	scriptenv.trace_log = renv->scriptenv->trace_log;
-	scriptenv.trace_config = renv->scriptenv->trace_config;
+	scriptenv.trace_log = eenv->scriptenv->trace_log;
+	scriptenv.trace_config = eenv->scriptenv->trace_config;
+	scriptenv.exec_status = &exec_status;
 
 	result = testsuite_result_get();
 
+	i_zero(&exec_env);
+	exec_env.svinst = eenv->svinst;
+	exec_env.flags = eenv->flags;
+	exec_env.msgdata = eenv->msgdata;
+	exec_env.scriptenv = &scriptenv;
+	exec_env.exec_status = &exec_status;
+
 	/* Execute the script */
 	interp = sieve_interpreter_create(ictx->compiled_script, NULL,
-					  renv->msgdata, &scriptenv,
-					  testsuite_log_ehandler, 0);
+					  &exec_env, testsuite_log_ehandler);
+
 	if (interp == NULL)
 		return FALSE;
 
@@ -176,8 +189,10 @@ bool testsuite_script_multiscript(const struct sieve_runtime_env *renv,
 				  ARRAY_TYPE (const_string) *scriptfiles)
 {
 	struct sieve_instance *svinst = testsuite_sieve_instance;
-	const struct sieve_script_env *senv = renv->scriptenv;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct sieve_script_env scriptenv;
+	struct sieve_exec_status exec_status;
 	struct sieve_multiscript *mscript;
 	const char *const *scripts;
 	const char *error;
@@ -202,12 +217,13 @@ bool testsuite_script_multiscript(const struct sieve_runtime_env *renv,
 	scriptenv.smtp_finish = testsuite_smtp_finish;
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
-	scriptenv.trace_log = renv->scriptenv->trace_log;
-	scriptenv.trace_config = renv->scriptenv->trace_config;
+	scriptenv.trace_log = eenv->scriptenv->trace_log;
+	scriptenv.trace_config = eenv->scriptenv->trace_config;
+	scriptenv.exec_status = &exec_status;
 
 	/* Start execution */
 
-	mscript = sieve_multiscript_start_execute(svinst, renv->msgdata,
+	mscript = sieve_multiscript_start_execute(svinst, eenv->msgdata,
 						  &scriptenv);
 
 	/* Execute scripts before main script */

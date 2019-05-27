@@ -672,6 +672,7 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 				unsigned int include_id,
 				enum ext_include_flags flags)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	int result = SIEVE_EXEC_OK;
 	struct ext_include_interpreter_context *ctx;
@@ -732,27 +733,25 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 
 		/* We are the top-level interpreter instance */
 		if (result == SIEVE_EXEC_OK) {
-			enum sieve_execute_flags exflags = renv->flags;
+			struct sieve_execute_env eenv_new = *eenv;
 
 			if (included->location != EXT_INCLUDE_LOCATION_GLOBAL)
-				exflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
+				eenv_new.flags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
 			else
-				exflags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
+				eenv_new.flags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
 
 			/* Create interpreter for top-level included script
 			   (first sub-interpreter)
 			 */
 			subinterp = sieve_interpreter_create_for_block(
-				included->block, included->script,
-				renv->interp, renv->msgdata, renv->scriptenv,
-				ehandler, exflags);
+				included->block, included->script, renv->interp,
+				&eenv_new, ehandler);
 			if (subinterp != NULL) {
 				curctx = ext_include_interpreter_context_init_child(
 					this_ext, subinterp, ctx, included->script,
 					included);
 
-				/* Activate and start the top-level included script
-				 */
+				/* Activate and start the top-level included script */
 				result = sieve_interpreter_start(
 					subinterp, renv->result, &interrupted);
 			} else {
@@ -805,18 +804,17 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 						/* Sub-include requested */
 
 						if (result == SIEVE_EXEC_OK) {
-							enum sieve_execute_flags exflags = renv->flags;
+							struct sieve_execute_env eenv_new = *eenv;
 
 							if (curctx->include->location != EXT_INCLUDE_LOCATION_GLOBAL)
-								exflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
+								eenv_new.flags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
 							else
-								exflags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
+								eenv_new.flags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
 
 							/* Create sub-interpreter */
 							subinterp = sieve_interpreter_create_for_block(
 								curctx->include->block, curctx->include->script,
-								curctx->interp, renv->msgdata,
-								renv->scriptenv, ehandler, exflags);
+								curctx->interp, &eenv_new, ehandler);
 							if (subinterp != NULL) {
 								curctx = ext_include_interpreter_context_init_child(
 									this_ext, subinterp, curctx,

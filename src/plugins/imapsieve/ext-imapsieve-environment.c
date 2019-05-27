@@ -25,7 +25,9 @@ static const char *
 envit_imap_user_get_value(const struct sieve_runtime_env *renv,
 			  const char *name ATTR_UNUSED)
 {
-	return renv->svinst->username;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	return eenv->svinst->username;
 }
 
 const struct sieve_environment_item imap_user_env_item = {
@@ -39,8 +41,9 @@ static const char *
 envit_imap_email_get_value(const struct sieve_runtime_env *renv,
 			   const char *name ATTR_UNUSED)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct smtp_address *user_email =
-		sieve_get_user_email(renv->svinst);
+		sieve_get_user_email(eenv->svinst);
 
 	if (user_email == NULL)
 		return NULL;
@@ -58,7 +61,8 @@ static const char *
 envit_imap_cause_get_value(const struct sieve_runtime_env *renv,
 			   const char *name ATTR_UNUSED)
 {
-	const struct sieve_script_env *senv = renv->scriptenv;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 
@@ -76,7 +80,8 @@ static const char *
 envit_imap_mailbox_get_value(const struct sieve_runtime_env *renv,
 			     const char *name ATTR_UNUSED)
 {
-	const struct sieve_message_data *msgdata = renv->msgdata;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
 
 	return mailbox_get_vname(msgdata->mail->box);
 }
@@ -93,7 +98,8 @@ static const char *
 envit_imap_changedflags_get_value(const struct sieve_runtime_env *renv,
 				  const char *name ATTR_UNUSED)
 {
-	const struct sieve_script_env *senv = renv->scriptenv;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 
@@ -111,7 +117,8 @@ static const char *
 envit_vnd_mailbox_from_get_value(const struct sieve_runtime_env *renv,
 				 const char *name ATTR_UNUSED)
 {
-	const struct sieve_script_env *senv = renv->scriptenv;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 
@@ -129,7 +136,8 @@ static const char *
 envit_vnd_mailbox_to_get_value(const struct sieve_runtime_env *renv,
 			       const char *name ATTR_UNUSED)
 {
-	const struct sieve_script_env *senv = renv->scriptenv;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 

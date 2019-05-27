@@ -154,9 +154,10 @@ static int
 cmd_notify_extract_body_text(const struct sieve_runtime_env *renv,
 			     const char **body_text_r, size_t *body_size_r)
 {
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_notify_message_context *mctx;
-	struct mail *mail = renv->msgdata->mail;
+	struct mail *mail = eenv->msgdata->mail;
 	struct message_parser_ctx *parser;
 	struct message_decoder_context *decoder;
 	struct message_part *parts;
@@ -255,7 +256,8 @@ int ext_notify_construct_message(const struct sieve_runtime_env *renv,
 				 const char *msg_format,
 				 string_t *out_msg)
 {
-	const struct sieve_message_data *msgdata = renv->msgdata;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+	const struct sieve_message_data *msgdata = eenv->msgdata;
 	struct sieve_message_context *msgctx = renv->msgctx;
 	const struct smtp_address *return_path =
 		sieve_message_get_sender(msgctx);

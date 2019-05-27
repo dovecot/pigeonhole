@@ -129,7 +129,8 @@ cmd_filter_operation_dump(const struct sieve_dumptime_env *denv,
 static int
 cmd_filter_operation_execute(const struct sieve_runtime_env *renv,
 			     sieve_size_t *address)
-{	
+{
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	unsigned int is_test = 0;
 	struct sieve_stringlist *args_list = NULL;
@@ -183,8 +184,8 @@ cmd_filter_operation_execute(const struct sieve_runtime_env *renv,
 	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
 		"execute program `%s'", str_sanitize(program_name, 128));
 
-	sprog = sieve_extprogram_create(this_ext, renv->scriptenv,
-					renv->msgdata, "filter",
+	sprog = sieve_extprogram_create(this_ext, eenv->scriptenv,
+					eenv->msgdata, "filter",
 					program_name, args, &error);
 	if (sprog != NULL) {
 		struct mail *mail = sieve_message_get_mail(renv->msgctx);

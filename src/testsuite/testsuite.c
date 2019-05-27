@@ -55,18 +55,16 @@ static void print_help(void)
 }
 
 static int
-testsuite_run(struct sieve_binary *sbin,
-	      const struct sieve_message_data *msgdata,
-	      const struct sieve_script_env *senv,
-	      struct sieve_error_handler *ehandler)
+testsuite_run(struct sieve_binary *sbin, struct sieve_error_handler *ehandler)
 {
 	struct sieve_interpreter *interp;
 	struct sieve_result *result;
 	int ret = 0;
 
 	/* Create the interpreter */
-	if ((interp = sieve_interpreter_create(sbin, NULL, msgdata, senv,
-					       ehandler, 0)) == NULL)
+	interp = sieve_interpreter_create(sbin, NULL, &testsuite_execute_env,
+					  ehandler);
+	if (interp == NULL)
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Run the interpreter */
@@ -169,6 +167,7 @@ int main(int argc, char **argv)
 				  testsuite_log_main_ehandler,
 				  0, NULL)) != NULL) {
 		struct sieve_trace_log *trace_log = NULL;
+		struct sieve_exec_status exec_status;
 		struct sieve_script_env scriptenv;
 
 		/* Dump script */
@@ -190,6 +189,8 @@ int main(int argc, char **argv)
 				error);
 		}
 
+		i_zero(&exec_status);
+
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.smtp_start = testsuite_smtp_start;
 		scriptenv.smtp_add_rcpt = testsuite_smtp_add_rcpt;
@@ -198,14 +199,14 @@ int main(int argc, char **argv)
 		scriptenv.smtp_finish = testsuite_smtp_finish;
 		scriptenv.trace_log = trace_log;
 		scriptenv.trace_config = trace_config;
+		scriptenv.exec_status = &exec_status;
 
 		testsuite_scriptenv = &scriptenv;
 
 		testsuite_result_init();
 
 		/* Run the test */
-		ret = testsuite_run(sbin, &testsuite_msgdata,
-				    &scriptenv, testsuite_log_main_ehandler);
+		ret = testsuite_run(sbin, testsuite_log_main_ehandler);
 
 		switch (ret) {
 		case SIEVE_EXEC_OK:

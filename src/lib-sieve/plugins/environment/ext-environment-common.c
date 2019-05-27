@@ -221,7 +221,9 @@ static const char *
 envit_domain_get_value(const struct sieve_runtime_env *renv,
 		       const char *name ATTR_UNUSED)
 {
-	return renv->svinst->domainname;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	return eenv->svinst->domainname;
 }
 
 const struct sieve_environment_item domain_env_item = {
@@ -239,7 +241,9 @@ static const char *
 envit_host_get_value(const struct sieve_runtime_env *renv,
 		     const char *name ATTR_UNUSED)
 {
-	return renv->svinst->hostname;
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	return eenv->svinst->hostname;
 }
 
 const struct sieve_environment_item host_env_item = {
@@ -262,7 +266,9 @@ static const char *
 envit_location_get_value(const struct sieve_runtime_env *renv,
 			 const char *name ATTR_UNUSED)
 {
-	switch (renv->svinst->env_location) {
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	switch (eenv->svinst->env_location ) {
 	case SIEVE_ENV_LOCATION_MDA:
 		return "MDA";
 	case SIEVE_ENV_LOCATION_MTA:
@@ -292,7 +298,9 @@ static const char *
 envit_phase_get_value(const struct sieve_runtime_env *renv,
 		      const char *name ATTR_UNUSED)
 {
-	switch (renv->svinst->delivery_phase) {
+	const struct sieve_execute_env *eenv = renv->exec_env;
+
+	switch (eenv->svinst->delivery_phase) {
 	case SIEVE_DELIVERY_PHASE_PRE:
 		return "pre";
 	case SIEVE_DELIVERY_PHASE_DURING:

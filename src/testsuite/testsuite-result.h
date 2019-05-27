@@ -1,6 +1,10 @@
 #ifndef TESTSUITE_RESULT_H
 #define TESTSUITE_RESULT_H
 
+#include "sieve-execute.h"
+
+extern struct sieve_execute_env testsuite_execute_env;
+
 void testsuite_result_init(void);
 void testsuite_result_deinit(void);
 

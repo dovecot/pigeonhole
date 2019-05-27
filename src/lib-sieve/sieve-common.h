@@ -93,6 +93,9 @@ struct sieve_binary_block;
 struct sieve_binary_debug_writer;
 struct sieve_binary_debug_reader;
 
+/* sieve-execute.h */
+struct sieve_execute;
+
 /* sieve-objects.h */
 struct sieve_object_def;
 struct sieve_object;

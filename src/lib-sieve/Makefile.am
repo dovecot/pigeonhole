@@ -158,6 +158,7 @@ headers = \
 	sieve-address.h \
 	sieve-validator.h \
 	sieve-generator.h \
+	sieve-execute.h \
 	sieve-interpreter.h \
 	sieve-runtime-trace.h \
 	sieve-runtime.h \

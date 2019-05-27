@@ -8,22 +8,19 @@
 #include "sieve-common.h"
 #include "sieve-objects.h"
 #include "sieve-extensions.h"
+#include "sieve-execute.h"
 
 /*
  * Action execution environment
  */
 
 struct sieve_action_exec_env {
-	struct sieve_instance *svinst;
+	const struct sieve_execute_env *exec_env;
 
 	struct sieve_result *result;
-	enum sieve_execute_flags flags;
 	struct sieve_error_handler *ehandler;
 
-	const struct sieve_message_data *msgdata;
 	struct sieve_message_context *msgctx;
-	const struct sieve_script_env *scriptenv;
-	struct sieve_exec_status *exec_status;
 };
 
 const char *sieve_action_get_location(const struct sieve_action_exec_env *aenv);
