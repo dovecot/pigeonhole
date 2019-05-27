@@ -606,9 +606,7 @@ sieve_attribute_iter_init(struct mailbox *box, enum mail_attribute_type type,
 	siter->iter.box = box;
 	siter->super = sbox->super.attribute_iter_init(box, type, prefix);
 
-	if (box->storage->user->dsyncing &&
-	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
-	    str_begins(prefix, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
+	if (box->storage->user->dsyncing) {
 		if (sieve_attribute_iter_script_init(siter) < 0)
 			siter->failed = TRUE;
 	}
