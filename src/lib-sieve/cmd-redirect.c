@@ -36,10 +36,12 @@
  *   redirect <address: string>
  */
 
-static bool cmd_redirect_validate
-	(struct sieve_validator *validator, struct sieve_command *cmd);
-static bool cmd_redirect_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
+static bool
+cmd_redirect_validate(struct sieve_validator *validator,
+		      struct sieve_command *cmd);
+static bool
+cmd_redirect_generate(const struct sieve_codegen_env *cgenv,
+		      struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_redirect = {
 	.identifier = "redirect",
@@ -56,10 +58,12 @@ const struct sieve_command_def cmd_redirect = {
  * Redirect operation
  */
 
-static bool cmd_redirect_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int cmd_redirect_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+cmd_redirect_operation_dump(const struct sieve_dumptime_env *denv,
+			    sieve_size_t *address);
+static int
+cmd_redirect_operation_execute(const struct sieve_runtime_env *renv,
+			       sieve_size_t *address);
 
 const struct sieve_operation_def cmd_redirect_operation = {
 	.mnemonic = "REDIRECT",
@@ -72,19 +76,21 @@ const struct sieve_operation_def cmd_redirect_operation = {
  * Redirect action
  */
 
-static bool act_redirect_equals
-	(const struct sieve_script_env *senv, const struct sieve_action *act1,
-		const struct sieve_action *act2);
-static int act_redirect_check_duplicate
-	(const struct sieve_runtime_env *renv,
-		const struct sieve_action *act,
-		const struct sieve_action *act_other);
-static void act_redirect_print
-	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
-		bool *keep);
-static int act_redirect_commit
-	(const struct sieve_action *action, const struct sieve_action_exec_env *aenv,
-		void *tr_context, bool *keep);
+static bool
+act_redirect_equals(const struct sieve_script_env *senv,
+		    const struct sieve_action *act1,
+		    const struct sieve_action *act2);
+static int
+act_redirect_check_duplicate(const struct sieve_runtime_env *renv,
+			     const struct sieve_action *act,
+			     const struct sieve_action *act_other);
+static void
+act_redirect_print(const struct sieve_action *action,
+		   const struct sieve_result_print_env *rpenv, bool *keep);
+static int
+act_redirect_commit(const struct sieve_action *action,
+		    const struct sieve_action_exec_env *aenv, void *tr_context,
+		    bool *keep);
 
 const struct sieve_action_def act_redirect = {
 	.name = "redirect",
@@ -99,27 +105,27 @@ const struct sieve_action_def act_redirect = {
  * Validation
  */
 
-static bool cmd_redirect_validate
-(struct sieve_validator *validator, struct sieve_command *cmd)
+static bool
+cmd_redirect_validate(struct sieve_validator *validator,
+		      struct sieve_command *cmd)
 {
 	struct sieve_instance *svinst = sieve_validator_svinst(validator);
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
 	/* Check and activate address argument */
 
-	if ( !sieve_validate_positional_argument
-		(validator, cmd, arg, "address", 1, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(validator, cmd, arg, "address",
+						1, SAAT_STRING))
 		return FALSE;
-	}
 
-	if ( !sieve_validator_argument_activate(validator, cmd, arg, FALSE) )
+	if (!sieve_validator_argument_activate(validator, cmd, arg, FALSE))
 		return FALSE;
 
 	/* We can only assess the validity of the outgoing address when it is
 	 * a string literal. For runtime-generated strings this needs to be
 	 * done at runtime.
 	 */
-	if ( sieve_argument_is_string_literal(arg) ) {
+	if (sieve_argument_is_string_literal(arg)) {
 		string_t *raw_address = sieve_ast_argument_str(arg);
 		const char *error;
 		bool result;
@@ -127,17 +133,19 @@ static bool cmd_redirect_validate
 		T_BEGIN {
 			/* Parse the address */
 			result = sieve_address_validate_str(raw_address, &error);
-			if ( !result ) {
-				sieve_argument_validate_error(validator, arg,
+			if (!result) {
+				sieve_argument_validate_error(
+					validator, arg,
 					"specified redirect address '%s' is invalid: %s",
-					str_sanitize(str_c(raw_address),128), error);
+					str_sanitize(str_c(raw_address),128),
+					error);
 			}
 		} T_END;
 
 		return result;
 	}
 
-	if ( svinst->max_redirects == 0 ) {
+	if (svinst->max_redirects == 0) {
 		sieve_command_validate_error(validator, cmd,
 			"local policy prohibits the use of a redirect action");
 		return FALSE;
@@ -151,8 +159,9 @@ static bool cmd_redirect_validate
  * Code generation
  */
 
-static bool cmd_redirect_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+static bool
+cmd_redirect_generate(const struct sieve_codegen_env *cgenv,
+		      struct sieve_command *cmd)
 {
 	sieve_operation_emit(cgenv->sblock, NULL,  &cmd_redirect_operation);
 
@@ -164,13 +173,14 @@ static bool cmd_redirect_generate
  * Code dump
  */
 
-static bool cmd_redirect_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+cmd_redirect_operation_dump(const struct sieve_dumptime_env *denv,
+			    sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "REDIRECT");
 	sieve_code_descend(denv);
 
-	if ( sieve_action_opr_optional_dump(denv, address, NULL) != 0 )
+	if (sieve_action_opr_optional_dump(denv, address, NULL) != 0)
 		return FALSE;
 
 	return sieve_opr_string_dump(denv, address, "address");
@@ -180,8 +190,9 @@ static bool cmd_redirect_operation_dump
  * Code execution
  */
 
-static int cmd_redirect_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+cmd_redirect_operation_execute(const struct sieve_runtime_env *renv,
+			       sieve_size_t *address)
 {
 	struct sieve_instance *svinst = renv->svinst;
 	struct sieve_side_effects_list *slist = NULL;
@@ -195,12 +206,13 @@ static int cmd_redirect_operation_execute
 	 */
 
 	/* Optional operands (side effects only) */
-	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 )
+	if (sieve_action_opr_optional_read(renv, address, NULL,
+					   &ret, &slist) != 0)
 		return ret;
 
 	/* Read the address */
-	if ( (ret=sieve_opr_string_read
-		(renv, address, "address", &redirect)) <= 0 )
+	if ((ret = sieve_opr_string_read(renv, address, "address",
+					 &redirect)) <= 0)
 		return ret;
 
 	/*
@@ -209,20 +221,20 @@ static int cmd_redirect_operation_execute
 
 	/* Parse the address */
 	to_address = sieve_address_parse_str(redirect, &error);
-	if ( to_address == NULL ) {
+	if (to_address == NULL) {
 		sieve_runtime_error(renv, NULL,
 			"specified redirect address '%s' is invalid: %s",
 			str_sanitize(str_c(redirect),128), error);
 		return SIEVE_EXEC_FAILURE;
 	}
 
-	if ( svinst->max_redirects == 0 ) {
+	if (svinst->max_redirects == 0) {
 		sieve_runtime_error(renv, NULL,
 			"local policy prohibits the use of a redirect action");
 		return SIEVE_EXEC_FAILURE;
 	}
 
-	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {
+	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS)) {
 		sieve_runtime_trace(renv, 0, "redirect action");
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(renv, 0, "forward message to address %s",
@@ -231,57 +243,53 @@ static int cmd_redirect_operation_execute
 
 	/* Add redirect action to the result */
 
-	return sieve_act_redirect_add_to_result
-		(renv, slist, to_address);
+	return sieve_act_redirect_add_to_result(renv, slist, to_address);
 }
 
 /*
  * Action implementation
  */
 
-static bool act_redirect_equals
-(const struct sieve_script_env *senv ATTR_UNUSED,
-	const struct sieve_action *act1, const struct sieve_action *act2)
+static bool
+act_redirect_equals(const struct sieve_script_env *senv ATTR_UNUSED,
+		    const struct sieve_action *act1,
+		    const struct sieve_action *act2)
 {
 	struct act_redirect_context *rd_ctx1 =
-		(struct act_redirect_context *) act1->context;
+		(struct act_redirect_context *)act1->context;
 	struct act_redirect_context *rd_ctx2 =
-		(struct act_redirect_context *) act2->context;
+		(struct act_redirect_context *)act2->context;
 
 	/* Address is already normalized */
-	return ( smtp_address_equals
-		(rd_ctx1->to_address, rd_ctx2->to_address) );
+	return (smtp_address_equals(rd_ctx1->to_address, rd_ctx2->to_address));
 }
 
-static int act_redirect_check_duplicate
-(const struct sieve_runtime_env *renv ATTR_UNUSED,
-	const struct sieve_action *act,
-	const struct sieve_action *act_other)
+static int
+act_redirect_check_duplicate(const struct sieve_runtime_env *renv ATTR_UNUSED,
+			     const struct sieve_action *act,
+			     const struct sieve_action *act_other)
 {
-	return ( act_redirect_equals
-		(renv->scriptenv, act, act_other) ? 1 : 0 );
+	return (act_redirect_equals(renv->scriptenv, act, act_other) ? 1 : 0);
 }
 
-static void act_redirect_print
-(const struct sieve_action *action,
-	const struct sieve_result_print_env *rpenv, bool *keep)
+static void
+act_redirect_print(const struct sieve_action *action,
+		   const struct sieve_result_print_env *rpenv, bool *keep)
 {
 	struct act_redirect_context *ctx =
-		(struct act_redirect_context *) action->context;
+		(struct act_redirect_context *)action->context;
 
 	sieve_result_action_printf(rpenv, "redirect message to: %s",
-		smtp_address_encode_path(ctx->to_address));
-
+				   smtp_address_encode_path(ctx->to_address));
 	*keep = FALSE;
 }
 
 static int
 act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 		  struct act_redirect_context *ctx, const char *new_msg_id)
-	ATTR_NULL(4)
+		  ATTR_NULL(4)
 {
-	static const char *hide_headers[] =
-		{ "Return-Path" };
+	static const char *hide_headers[] = { "Return-Path" };
 	struct sieve_instance *svinst = aenv->svinst;
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = aenv->scriptenv;
@@ -323,19 +331,19 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 		/* Envelope available */
 		sender = sieve_message_get_sender(msgctx);
 		if (sender != NULL &&
-		    sieve_address_source_get_address(
-			&env_from, svinst, senv, msgctx, aenv->flags,
-			&sender) < 0)
+		    sieve_address_source_get_address(&env_from, svinst, senv,
+						     msgctx, aenv->flags,
+						     &sender) < 0)
 			sender = NULL;
 	} else {
 		/* No envelope available */
-		ret = sieve_address_source_get_address(
-			&env_from, svinst, senv, msgctx, aenv->flags, &sender);
-		if (ret < 0) {
+		ret = sieve_address_source_get_address(&env_from, svinst, senv,
+						       msgctx, aenv->flags,
+						       &sender);
+		if (ret < 0)
 			sender = NULL;
-		} else if (ret == 0) {
+		else if (ret == 0)
 			sender = svinst->user_email;
-		}
 	}
 
 	/* Open SMTP transport */
@@ -452,7 +460,8 @@ act_redirect_get_duplicate_id(struct act_redirect_context *ctx,
 		   the original message
 	   - if the message came through a mailing list: the mailinglist ID
 	 */
-	*dupeid_r = t_strdup_printf("%s-%s-%s-%s-%s", msg_id,
+	*dupeid_r = t_strdup_printf(
+		"%s-%s-%s-%s-%s", msg_id,
 		(recipient != NULL ? smtp_address_encode(recipient) : ""),
 		smtp_address_encode(ctx->to_address),
 		(resent_id != NULL ? resent_id : ""),
@@ -473,7 +482,7 @@ act_redirect_check_loop_header(const struct sieve_action_exec_env *aenv,
 	*loop_detected_r = FALSE;
 
 	ret = mail_get_headers(mail, "x-sieve-redirected-from", &headers);
-	if (ret < 0 ) {
+	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, mail, "redirect action: "
 			"failed to read header field "
@@ -516,7 +525,7 @@ act_redirect_commit(const struct sieve_action *action,
 {
 	struct sieve_instance *svinst = aenv->svinst;
 	struct act_redirect_context *ctx =
-		(struct act_redirect_context *) action->context;
+		(struct act_redirect_context *)action->context;
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	struct mail *mail = (action->mail != NULL ?
 			     action->mail : sieve_message_get_mail(msgctx));
