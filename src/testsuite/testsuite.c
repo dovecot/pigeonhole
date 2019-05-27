@@ -54,17 +54,19 @@ static void print_help(void)
 	);
 }
 
-static int testsuite_run
-(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler)
+static int
+testsuite_run(struct sieve_binary *sbin,
+	      const struct sieve_message_data *msgdata,
+	      const struct sieve_script_env *senv,
+	      struct sieve_error_handler *ehandler)
 {
 	struct sieve_interpreter *interp;
 	struct sieve_result *result;
 	int ret = 0;
 
 	/* Create the interpreter */
-	if ( (interp=sieve_interpreter_create
-		(sbin, NULL, msgdata, senv, ehandler, 0)) == NULL )
+	if ((interp = sieve_interpreter_create(sbin, NULL, msgdata, senv,
+					       ehandler, 0)) == NULL)
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Run the interpreter */
@@ -89,8 +91,8 @@ int main(int argc, char **argv)
 	bool log_stdout = FALSE;
 	int ret, c;
 
-	sieve_tool = sieve_tool_init
-		("testsuite", &argc, &argv, "d:t:T:EDP:", TRUE);
+	sieve_tool = sieve_tool_init("testsuite", &argc, &argv,
+				     "d:t:T:EDP:", TRUE);
 
 	/* Parse arguments */
 	dumpfile = tracefile = NULL;
@@ -114,13 +116,12 @@ int main(int argc, char **argv)
 			break;
 		default:
 			print_help();
-			i_fatal_status(EX_USAGE,
-				"Unknown argument: %c", c);
+			i_fatal_status(EX_USAGE, "Unknown argument: %c", c);
 			break;
 		}
 	}
 
-	if ( optind < argc ) {
+	if (optind < argc) {
 		scriptfile = t_strdup(argv[optind++]);
 	} else {
 		print_help();
@@ -133,12 +134,13 @@ int main(int argc, char **argv)
 	}
 
 	// FIXME: very very ugly
-	master_service_parse_option(master_service,
-		'o', "postmaster_address=postmaster@example.com");
+	master_service_parse_option(
+		master_service, 'o',
+		"postmaster_address=postmaster@example.com");
 
+	/* Initialize mail user */
 	if (t_get_working_dir(&cwd, &error) < 0)
 		i_fatal("Failed to get working directory: %s", error);
-	/* Initialize mail user */
 	sieve_tool_set_homedir(sieve_tool, cwd);
 
 	/* Initialize settings environment */
@@ -146,16 +148,15 @@ int main(int argc, char **argv)
 
 	/* Currently needed for include (FIXME) */
 	sieve_dir = strrchr(scriptfile, '/');
-	if ( sieve_dir == NULL )
-		sieve_dir= "./";
-	else {
+	if (sieve_dir == NULL)
+		sieve_dir = "./";
+	else
 		sieve_dir = t_strdup_until(scriptfile, sieve_dir+1);
-	}
 
-	testsuite_setting_set
-		("sieve_dir", t_strconcat(sieve_dir, "included", NULL));
-	testsuite_setting_set
-		("sieve_global_dir", t_strconcat(sieve_dir, "included-global", NULL));
+	testsuite_setting_set("sieve_dir",
+			      t_strconcat(sieve_dir, "included", NULL));
+	testsuite_setting_set("sieve_global_dir",
+			      t_strconcat(sieve_dir, "included-global", NULL));
 
 	/* Finish testsuite initialization */
 	svinst = sieve_tool_init_finish(sieve_tool, FALSE, FALSE);
@@ -164,27 +165,30 @@ int main(int argc, char **argv)
 	printf("Test case: %s:\n\n", scriptfile);
 
 	/* Compile sieve script */
-	if ( (sbin = sieve_compile
-		(svinst, scriptfile, NULL, testsuite_log_main_ehandler, 0, NULL))
-			!= NULL ) {
+	if ((sbin = sieve_compile(svinst, scriptfile, NULL,
+				  testsuite_log_main_ehandler,
+				  0, NULL)) != NULL) {
 		struct sieve_trace_log *trace_log = NULL;
 		struct sieve_script_env scriptenv;
 
 		/* Dump script */
 		sieve_tool_dump_binary_to(sbin, dumpfile, FALSE);
 
-		if ( tracefile != NULL ) {
-			(void)sieve_trace_log_create(svinst,
-				(strcmp(tracefile, "-") == 0 ? NULL : tracefile),
-				&trace_log);
+		if (tracefile != NULL) {
+			(void)sieve_trace_log_create(
+				svinst, (strcmp(tracefile, "-") == 0 ?
+					 NULL : tracefile), &trace_log);
 		}
 
 		testsuite_mailstore_init();
 		testsuite_message_init();
 
 		if (sieve_script_env_init(&scriptenv,
-			testsuite_mailstore_get_user(), &error) < 0)
-			i_fatal("Failed to initialize script execution: %s", error);
+					  testsuite_mailstore_get_user(),
+					  &error) < 0) {
+			i_fatal("Failed to initialize script execution: %s",
+				error);
+		}
 
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.smtp_start = testsuite_smtp_start;
@@ -200,19 +204,21 @@ int main(int argc, char **argv)
 		testsuite_result_init();
 
 		/* Run the test */
-		ret = testsuite_run
-			(sbin, &testsuite_msgdata, &scriptenv, testsuite_log_main_ehandler);
+		ret = testsuite_run(sbin, &testsuite_msgdata,
+				    &scriptenv, testsuite_log_main_ehandler);
 
-		switch ( ret ) {
+		switch (ret) {
 		case SIEVE_EXEC_OK:
 			break;
 		case SIEVE_EXEC_FAILURE:
 		case SIEVE_EXEC_KEEP_FAILED:
 		case SIEVE_EXEC_TEMP_FAILURE:
-			testsuite_testcase_fail("test script execution aborted due to error");
+			testsuite_testcase_fail(
+				"test script execution aborted due to error");
 			break;
 		case SIEVE_EXEC_BIN_CORRUPT:
-			testsuite_testcase_fail("compiled test script binary is corrupt");
+			testsuite_testcase_fail(
+				"compiled test script binary is corrupt");
 			break;
 		}
 
@@ -223,7 +229,7 @@ int main(int argc, char **argv)
 		testsuite_mailstore_deinit();
 		testsuite_result_deinit();
 
-		if ( trace_log != NULL )
+		if (trace_log != NULL)
 			sieve_trace_log_free(&trace_log);
 
 		testsuite_scriptenv = NULL;
@@ -237,7 +243,7 @@ int main(int argc, char **argv)
 
 	sieve_tool_deinit(&sieve_tool);
 
-	if ( !testsuite_testcase_result() )
+	if (!testsuite_testcase_result())
 		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;
