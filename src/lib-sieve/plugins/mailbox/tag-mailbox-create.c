@@ -19,12 +19,14 @@
  * Tagged argument
  */
 
-static bool tag_mailbox_create_validate
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command *cmd);
-static bool tag_mailbox_create_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-    struct sieve_command *context);
+static bool
+tag_mailbox_create_validate(struct sieve_validator *valdtr,
+			    struct sieve_ast_argument **arg,
+			    struct sieve_command *cmd);
+static bool
+tag_mailbox_create_generate(const struct sieve_codegen_env *cgenv,
+			    struct sieve_ast_argument *arg,
+			    struct sieve_command *context);
 
 const struct sieve_argument_def mailbox_create_tag = {
 	.identifier = "create",
@@ -36,13 +38,16 @@ const struct sieve_argument_def mailbox_create_tag = {
  * Side effect
  */
 
-static void seff_mailbox_create_print
-	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
-		const struct sieve_result_print_env *rpenv, bool *keep);
-static int seff_mailbox_create_pre_execute
-	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv, void **se_context,
-		void *tr_context);
+static void
+seff_mailbox_create_print(const struct sieve_side_effect *seffect,
+			  const struct sieve_action *action,
+			  const struct sieve_result_print_env *rpenv,
+			  bool *keep);
+static int
+seff_mailbox_create_pre_execute(const struct sieve_side_effect *seffect,
+				const struct sieve_action *action,
+				const struct sieve_action_exec_env *aenv,
+				void **se_context, void *tr_context);
 
 const struct sieve_side_effect_def mailbox_create_side_effect = {
 	SIEVE_OBJECT("create", &mailbox_create_operand, 0),
@@ -69,9 +74,10 @@ const struct sieve_operand_def mailbox_create_operand = {
  * Tag validation
  */
 
-static bool tag_mailbox_create_validate
-(struct sieve_validator *valdtr ATTR_UNUSED,
-	struct sieve_ast_argument **arg, struct sieve_command *cmd ATTR_UNUSED)
+static bool
+tag_mailbox_create_validate(struct sieve_validator *valdtr ATTR_UNUSED,
+			    struct sieve_ast_argument **arg,
+			    struct sieve_command *cmd ATTR_UNUSED)
 {
 	*arg = sieve_ast_argument_next(*arg);
 
@@ -82,17 +88,16 @@ static bool tag_mailbox_create_validate
  * Code generation
  */
 
-static bool tag_mailbox_create_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-	struct sieve_command *context ATTR_UNUSED)
+static bool
+tag_mailbox_create_generate(const struct sieve_codegen_env *cgenv,
+			    struct sieve_ast_argument *arg,
+			    struct sieve_command *context ATTR_UNUSED)
 {
-	if ( sieve_ast_argument_type(arg) != SAAT_TAG ) {
+	if (sieve_ast_argument_type(arg) != SAAT_TAG)
 		return FALSE;
-	}
 
-	sieve_opr_side_effect_emit
-		(cgenv->sblock, arg->argument->ext, &mailbox_create_side_effect);
-
+	sieve_opr_side_effect_emit(cgenv->sblock, arg->argument->ext,
+				   &mailbox_create_side_effect);
 	return TRUE;
 }
 
@@ -100,31 +105,34 @@ static bool tag_mailbox_create_generate
  * Side effect implementation
  */
 
-static void seff_mailbox_create_print
-(const struct sieve_side_effect *seffect ATTR_UNUSED,
-	const struct sieve_action *action ATTR_UNUSED,
-	const struct sieve_result_print_env *rpenv, bool *keep ATTR_UNUSED)
+static void
+seff_mailbox_create_print(const struct sieve_side_effect *seffect ATTR_UNUSED,
+			  const struct sieve_action *action ATTR_UNUSED,
+			  const struct sieve_result_print_env *rpenv,
+			  bool *keep ATTR_UNUSED)
 {
-	sieve_result_seffect_printf(rpenv, "create mailbox if it does not exist");
+	sieve_result_seffect_printf(
+		rpenv, "create mailbox if it does not exist");
 }
 
-static int seff_mailbox_create_pre_execute
-(const struct sieve_side_effect *seffect ATTR_UNUSED,
+static int
+seff_mailbox_create_pre_execute(
+	const struct sieve_side_effect *seffect ATTR_UNUSED,
 	const struct sieve_action *action ATTR_UNUSED,
 	const struct sieve_action_exec_env *aenv ATTR_UNUSED,
 	void **se_context ATTR_UNUSED, void *tr_context ATTR_UNUSED)
 {
 	struct act_store_transaction *trans =
-		(struct act_store_transaction *) tr_context;
+		(struct act_store_transaction *)tr_context;
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
 	enum mail_error error;
 
 	/* Check whether creation is necessary */
-	if ( trans->box == NULL || trans->disabled )
+	if (trans->box == NULL || trans->disabled)
 		return SIEVE_EXEC_OK;
 
 	/* Check whether creation has a chance of working */
-	switch ( trans->error_code ) {
+	switch (trans->error_code) {
 	case MAIL_ERROR_NONE:
 		return SIEVE_EXEC_OK;
 	case MAIL_ERROR_NOTFOUND:
@@ -141,30 +149,29 @@ static int seff_mailbox_create_pre_execute
 	*storage = mailbox_get_storage(trans->box);
 
 	/* Create mailbox */
-	if ( mailbox_create(trans->box, NULL, FALSE) < 0 ) {
+	if (mailbox_create(trans->box, NULL, FALSE) < 0) {
 		(void)mail_storage_get_last_error(*storage, &error);
-		if ( error != MAIL_ERROR_EXISTS ) {
+		if (error != MAIL_ERROR_EXISTS) {
 			sieve_act_store_get_storage_error(aenv, trans);
-			return ( trans->error_code == MAIL_ERROR_TEMP ?
-				SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
+			return (trans->error_code == MAIL_ERROR_TEMP ?
+				SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
 		}
 	}
 
 	/* Subscribe to it if necessary */
-	if ( aenv->scriptenv->mailbox_autosubscribe ) {
-		(void)mailbox_list_set_subscribed
-			(mailbox_get_namespace(trans->box)->list,
-			 mailbox_get_name(trans->box), TRUE);
+	if (aenv->scriptenv->mailbox_autosubscribe) {
+		(void)mailbox_list_set_subscribed(
+			mailbox_get_namespace(trans->box)->list,
+			mailbox_get_name(trans->box), TRUE);
 	}
 
 	/* Try opening again */
-	if ( mailbox_open(trans->box) < 0 ) {
+	if (mailbox_open(trans->box) < 0) {
 		/* Failed definitively */
 		sieve_act_store_get_storage_error(aenv, trans);
-		return ( trans->error_code == MAIL_ERROR_TEMP ?
-			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
+		return (trans->error_code == MAIL_ERROR_TEMP ?
+			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
 	}
-
 	return SIEVE_EXEC_OK;
 }
 
