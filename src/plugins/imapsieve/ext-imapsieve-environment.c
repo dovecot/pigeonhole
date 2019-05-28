@@ -21,9 +21,9 @@
 
 /* imap.user */
 
-static const char *envit_imap_user_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_imap_user_get_value(const struct sieve_runtime_env *renv,
+			  const char *name ATTR_UNUSED)
 {
 	return renv->svinst->username;
 }
@@ -35,9 +35,9 @@ const struct sieve_environment_item imap_user_env_item = {
 
 /* imap.email */
 
-static const char *envit_imap_email_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_imap_email_get_value(const struct sieve_runtime_env *renv,
+			   const char *name ATTR_UNUSED)
 {
 	const struct smtp_address *user_email =
 		sieve_get_user_email(renv->svinst);
@@ -54,9 +54,9 @@ const struct sieve_environment_item imap_email_env_item = {
 
 /* imap.cause */
 
-static const char *envit_imap_cause_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_imap_cause_get_value(const struct sieve_runtime_env *renv,
+			   const char *name ATTR_UNUSED)
 {
 	const struct sieve_script_env *senv = renv->scriptenv;
 	struct imap_sieve_context *isctx =
@@ -72,9 +72,9 @@ const struct sieve_environment_item imap_cause_env_item = {
 
 /* imap.mailbox */
 
-static const char *envit_imap_mailbox_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_imap_mailbox_get_value(const struct sieve_runtime_env *renv,
+			     const char *name ATTR_UNUSED)
 {
 	const struct sieve_message_data *msgdata = renv->msgdata;
 
@@ -89,9 +89,9 @@ const struct sieve_environment_item imap_mailbox_env_item = {
 
 /* imap.changedflags */
 
-static const char *envit_imap_changedflags_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_imap_changedflags_get_value(const struct sieve_runtime_env *renv,
+				  const char *name ATTR_UNUSED)
 {
 	const struct sieve_script_env *senv = renv->scriptenv;
 	struct imap_sieve_context *isctx =
@@ -107,9 +107,9 @@ const struct sieve_environment_item imap_changedflags_env_item = {
 
 /* vnd.dovecot.mailbox-from */
 
-static const char *envit_vnd_mailbox_from_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_vnd_mailbox_from_get_value(const struct sieve_runtime_env *renv,
+				 const char *name ATTR_UNUSED)
 {
 	const struct sieve_script_env *senv = renv->scriptenv;
 	struct imap_sieve_context *isctx =
@@ -125,9 +125,9 @@ const struct sieve_environment_item vnd_mailbox_from_env_item = {
 
 /* vnd.dovecot.mailbox-to */
 
-static const char *envit_vnd_mailbox_to_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_vnd_mailbox_to_get_value(const struct sieve_runtime_env *renv,
+			       const char *name ATTR_UNUSED)
 {
 	const struct sieve_script_env *senv = renv->scriptenv;
 	struct imap_sieve_context *isctx =
@@ -145,32 +145,32 @@ const struct sieve_environment_item vnd_mailbox_to_env_item = {
  * Register
  */
 
-void ext_imapsieve_environment_items_register
-(const struct sieve_extension *ext, const struct sieve_runtime_env *renv)
+void ext_imapsieve_environment_items_register(
+	const struct sieve_extension *ext, const struct sieve_runtime_env *renv)
 {
 	const struct sieve_extension *env_ext =
-		(const struct sieve_extension *) ext->context;
+		(const struct sieve_extension *)ext->context;
 
-	sieve_environment_item_register
-		(env_ext, renv->interp, &imap_user_env_item);
-	sieve_environment_item_register
-		(env_ext, renv->interp, &imap_email_env_item);
-	sieve_environment_item_register
-		(env_ext, renv->interp, &imap_cause_env_item);
-	sieve_environment_item_register
-		(env_ext, renv->interp, &imap_mailbox_env_item);
-	sieve_environment_item_register
-		(env_ext, renv->interp, &imap_changedflags_env_item);
+	sieve_environment_item_register(env_ext, renv->interp,
+					&imap_user_env_item);
+	sieve_environment_item_register(env_ext, renv->interp,
+					&imap_email_env_item);
+	sieve_environment_item_register(env_ext, renv->interp,
+					&imap_cause_env_item);
+	sieve_environment_item_register(env_ext, renv->interp,
+					&imap_mailbox_env_item);
+	sieve_environment_item_register(env_ext, renv->interp,
+					&imap_changedflags_env_item);
 }
 
 void ext_imapsieve_environment_vendor_items_register
 (const struct sieve_extension *ext, const struct sieve_runtime_env *renv)
 {
 	const struct sieve_extension *env_ext =
-		(const struct sieve_extension *) ext->context;
+		(const struct sieve_extension *)ext->context;
 
-	sieve_environment_item_register
-		(env_ext, renv->interp, &vnd_mailbox_from_env_item);
-	sieve_environment_item_register
-		(env_ext, renv->interp, &vnd_mailbox_to_env_item);
+	sieve_environment_item_register(env_ext, renv->interp,
+					&vnd_mailbox_from_env_item);
+	sieve_environment_item_register(env_ext, renv->interp,
+					&vnd_mailbox_to_env_item);
 }
