@@ -27,9 +27,9 @@ static const struct sieve_environment_item *core_env_items[] = {
 
 static unsigned int core_env_items_count = N_ELEMENTS(core_env_items);
 
-static void sieve_environment_item_insert
-(struct ext_environment_interpreter_context *ctx,
-	const struct sieve_environment_item *item);
+static void
+sieve_environment_item_insert(struct ext_environment_interpreter_context *ctx,
+			      const struct sieve_environment_item *item);
 
 /*
  * Validator context
@@ -43,9 +43,10 @@ struct ext_environment_interpreter_context {
 	bool active:1;
 };
 
-static void ext_environment_interpreter_extension_free
-	(const struct sieve_extension *ext, struct sieve_interpreter *interp,
-		void *context);
+static void
+ext_environment_interpreter_extension_free(const struct sieve_extension *ext,
+					   struct sieve_interpreter *interp,
+					   void *context);
 
 struct sieve_interpreter_extension environment_interpreter_extension = {
 	.ext_def = &environment_extension,
@@ -53,26 +54,28 @@ struct sieve_interpreter_extension environment_interpreter_extension = {
 };
 
 static struct ext_environment_interpreter_context *
-ext_environment_interpreter_context_create
-(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
+ext_environment_interpreter_context_create(
+	const struct sieve_extension *this_ext,
+	struct sieve_interpreter *interp)
 {
 	pool_t pool = sieve_interpreter_pool(interp);
 	struct ext_environment_interpreter_context *ctx;
 
 	ctx = p_new(pool, struct ext_environment_interpreter_context, 1);
 
-	hash_table_create
-		(&ctx->name_items, default_pool, 0, str_hash, strcmp);
+	hash_table_create(&ctx->name_items, default_pool, 0, str_hash, strcmp);
 	i_array_init(&ctx->prefix_items, 16);
 
-	sieve_interpreter_extension_register
-		(interp, this_ext, &environment_interpreter_extension, (void *)ctx);
+	sieve_interpreter_extension_register(interp, this_ext,
+					     &environment_interpreter_extension,
+					     (void *)ctx);
 	return ctx;
 }
 
-static void ext_environment_interpreter_extension_free
-(const struct sieve_extension *ext ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 	void *context)
+static void
+ext_environment_interpreter_extension_free(
+	const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_interpreter *interp ATTR_UNUSED, void *context)
 {
 	struct ext_environment_interpreter_context *ctx =
 		(struct ext_environment_interpreter_context *)context;
@@ -82,21 +85,22 @@ static void ext_environment_interpreter_extension_free
 }
 
 static struct ext_environment_interpreter_context *
-ext_environment_interpreter_context_get
-(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
+ext_environment_interpreter_context_get(const struct sieve_extension *this_ext,
+					struct sieve_interpreter *interp)
 {
 	struct ext_environment_interpreter_context *ctx =
 		(struct ext_environment_interpreter_context *)
 		sieve_interpreter_extension_get_context(interp, this_ext);
 
-	if ( ctx == NULL )
-		ctx = ext_environment_interpreter_context_create(this_ext, interp);
-
+	if (ctx == NULL) {
+		ctx = ext_environment_interpreter_context_create(
+			this_ext, interp);
+	}
 	return ctx;
 }
 
-void ext_environment_interpreter_init
-(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
+void ext_environment_interpreter_init(const struct sieve_extension *this_ext,
+				      struct sieve_interpreter *interp)
 {
 	struct ext_environment_interpreter_context *ctx;
 	unsigned int i;
@@ -104,43 +108,42 @@ void ext_environment_interpreter_init
 	/* Create our context */
 	ctx = ext_environment_interpreter_context_get(this_ext, interp);
 
-	for ( i = 0; i < core_env_items_count; i++ )
+	for (i = 0; i < core_env_items_count; i++)
 		sieve_environment_item_insert(ctx, core_env_items[i]);
 
 	ctx->active = TRUE;
 }
 
-bool sieve_ext_environment_is_active
-(const struct sieve_extension *env_ext, struct sieve_interpreter *interp)
+bool sieve_ext_environment_is_active(const struct sieve_extension *env_ext,
+				     struct sieve_interpreter *interp)
 {
 	struct ext_environment_interpreter_context *ctx =
 		ext_environment_interpreter_context_get(env_ext, interp);
 
-	return ( ctx != NULL && ctx->active );
+	return (ctx != NULL && ctx->active);
 }
 
 /*
  * Registration
  */
 
-static void sieve_environment_item_insert
-(struct ext_environment_interpreter_context *ctx,
-	const struct sieve_environment_item *item)
+static void
+sieve_environment_item_insert(struct ext_environment_interpreter_context *ctx,
+			      const struct sieve_environment_item *item)
 {
 	if (!item->prefix)
 		hash_table_insert(ctx->name_items, item->name, item);
-	else {
+	else
 		array_append(&ctx->prefix_items, &item, 1);
-	}
 }
 
-void sieve_environment_item_register
-(const struct sieve_extension *env_ext, struct sieve_interpreter *interp,
-	const struct sieve_environment_item *item)
+void sieve_environment_item_register(const struct sieve_extension *env_ext,
+				     struct sieve_interpreter *interp,
+				     const struct sieve_environment_item *item)
 {
 	struct ext_environment_interpreter_context *ctx;
 
-	i_assert( sieve_extension_is(env_ext, environment_extension) );
+	i_assert(sieve_extension_is(env_ext, environment_extension));
 	ctx = ext_environment_interpreter_context_get(env_ext, interp);
 
 	sieve_environment_item_insert(ctx, item);
@@ -151,15 +154,15 @@ void sieve_environment_item_register
  */
 
 static const struct sieve_environment_item *
-ext_environment_item_lookup
-(struct ext_environment_interpreter_context *ctx, const char **_name)
+ext_environment_item_lookup(struct ext_environment_interpreter_context *ctx,
+			    const char **_name)
 {
 	const struct sieve_environment_item *const *item_idx;
 	const struct sieve_environment_item *item;
 	const char *name = *_name;
 
 	item = hash_table_lookup(ctx->name_items, name);
-	if ( item != NULL )
+	if (item != NULL)
 		return item;
 
 	array_foreach(&ctx->prefix_items, item_idx) {
@@ -169,11 +172,11 @@ ext_environment_item_lookup
 		i_assert(item->prefix);
 		prefix_len = strlen(item->name);
 
-		if ( str_begins(name, item->name)) {
-			if ( name[prefix_len] == '.' ) {
+		if (str_begins(name, item->name)) {
+			if (name[prefix_len] == '.') {
 				*_name = &name[prefix_len+1];
 				return item;
-			} else if ( name[prefix_len] == '\0' ) {
+			} else if (name[prefix_len] == '\0') {
 				*_name = &name[prefix_len+1];
 				return item;
 			}
@@ -182,26 +185,25 @@ ext_environment_item_lookup
 	return NULL;
 }
 
-const char *ext_environment_item_get_value
-(const struct sieve_extension *env_ext,
-	const struct sieve_runtime_env *renv, const char *name)
+const char *
+ext_environment_item_get_value(const struct sieve_extension *env_ext,
+			       const struct sieve_runtime_env *renv,
+			       const char *name)
 {
 	struct ext_environment_interpreter_context *ctx;
 	const struct sieve_environment_item *item;
 
-	i_assert( sieve_extension_is(env_ext, environment_extension) );
-	ctx =	ext_environment_interpreter_context_get(env_ext, renv->interp);
+	i_assert(sieve_extension_is(env_ext, environment_extension));
+	ctx = ext_environment_interpreter_context_get(env_ext, renv->interp);
 
 	item = ext_environment_item_lookup(ctx, &name);
-	if ( item == NULL )
+	if (item == NULL)
 		return NULL;
 
-	if ( item->value != NULL )
+	if (item->value != NULL)
 		return item->value;
-
-	if ( item->get_value != NULL )
+	if (item->get_value != NULL)
 		return item->get_value(renv, name);
-
 	return NULL;
 }
 
@@ -210,14 +212,14 @@ const char *ext_environment_item_get_value
  */
 
 /* "domain":
- *
- *   The primary DNS domain associated with the Sieve execution context, usually
- *   but not always a proper suffix of the host name.
+
+     The primary DNS domain associated with the Sieve execution context, usually
+     but not always a proper suffix of the host name.
  */
 
-static const char *envit_domain_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_domain_get_value(const struct sieve_runtime_env *renv,
+		       const char *name ATTR_UNUSED)
 {
 	return renv->svinst->domainname;
 }
@@ -228,14 +230,14 @@ const struct sieve_environment_item domain_env_item = {
 };
 
 /* "host":
- *
- *   The fully-qualified domain name of the host where the Sieve script is
- *   executing.
+
+     The fully-qualified domain name of the host where the Sieve script is
+     executing.
  */
 
-static const char *envit_host_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_host_get_value(const struct sieve_runtime_env *renv,
+		     const char *name ATTR_UNUSED)
 {
 	return renv->svinst->hostname;
 }
@@ -246,21 +248,21 @@ const struct sieve_environment_item host_env_item = {
 };
 
 /* "location":
- *
- *   Sieve evaluation can be performed at various different points as messages
- *   are processed. This item provides additional information about the type of
- *   service that is evaluating the script.  Possible values are:
- *    "MTA" - the Sieve script is being evaluated by a Message Transfer Agent
- *    "MDA" - evaluation is being performed by a Mail Delivery Agent
- *    "MUA" - evaluation is being performed by a Mail User Agent (right...)
- *    "MS"  - evaluation is being performed by a Message Store
+
+     Sieve evaluation can be performed at various different points as messages
+     are processed. This item provides additional information about the type of
+     service that is evaluating the script.  Possible values are:
+      "MTA" - the Sieve script is being evaluated by a Message Transfer Agent
+      "MDA" - evaluation is being performed by a Mail Delivery Agent
+      "MUA" - evaluation is being performed by a Mail User Agent (right...)
+      "MS"  - evaluation is being performed by a Message Store
  */
 
-static const char *envit_location_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_location_get_value(const struct sieve_runtime_env *renv,
+			 const char *name ATTR_UNUSED)
 {
-	switch ( renv->svinst->env_location ) {
+	switch (renv->svinst->env_location) {
 	case SIEVE_ENV_LOCATION_MDA:
 		return "MDA";
 	case SIEVE_ENV_LOCATION_MTA:
@@ -279,18 +281,18 @@ const struct sieve_environment_item location_env_item = {
 };
 
 /* "phase":
- *
- *   The point relative to final delivery where the Sieve script is being
- *   evaluated.  Possible values are "pre", "during", and "post", referring
- *   respectively to processing before, during, and after final delivery has
- *   taken place.
+
+     The point relative to final delivery where the Sieve script is being
+     evaluated.  Possible values are "pre", "during", and "post", referring
+     respectively to processing before, during, and after final delivery has
+     taken place.
  */
 
-static const char *envit_phase_get_value
-(const struct sieve_runtime_env *renv,
-	const char *name ATTR_UNUSED)
+static const char *
+envit_phase_get_value(const struct sieve_runtime_env *renv,
+		      const char *name ATTR_UNUSED)
 {
-	switch ( renv->svinst->delivery_phase ) {
+	switch (renv->svinst->delivery_phase) {
 	case SIEVE_DELIVERY_PHASE_PRE:
 		return "pre";
 	case SIEVE_DELIVERY_PHASE_DURING:
@@ -309,8 +311,8 @@ const struct sieve_environment_item phase_env_item = {
 };
 
 /* "name":
- *
- *  The product name associated with the Sieve interpreter.
+
+    The product name associated with the Sieve interpreter.
  */
 
 const struct sieve_environment_item name_env_item = {
@@ -319,18 +321,13 @@ const struct sieve_environment_item name_env_item = {
 };
 
 /* "version":
- *
- * The product version associated with the Sieve interpreter. The meaning of the
- * product version string is product-specific and should always be considered
- * in the context of the product name given by the "name" item.
+
+   The product version associated with the Sieve interpreter. The meaning of the
+   product version string is product-specific and should always be considered
+   in the context of the product name given by the "name" item.
  */
 
 const struct sieve_environment_item version_env_item = {
 	.name = "version",
 	.value = PIGEONHOLE_VERSION,
 };
-
-
-
-
-
