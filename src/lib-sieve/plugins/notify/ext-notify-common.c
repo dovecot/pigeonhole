@@ -29,9 +29,10 @@
  * Importance argument
  */
 
-static bool tag_importance_validate
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command *cmd);
+static bool
+tag_importance_validate(struct sieve_validator *valdtr,
+			struct sieve_ast_argument **arg,
+			struct sieve_command *cmd);
 
 static const struct sieve_argument_def importance_low_tag = {
 	.identifier = "low",
@@ -48,21 +49,23 @@ static const struct sieve_argument_def importance_high_tag = {
 	.validate = tag_importance_validate,
 };
 
-static bool tag_importance_validate
-(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg,
-	struct sieve_command *cmd ATTR_UNUSED)
+static bool
+tag_importance_validate(struct sieve_validator *valdtr ATTR_UNUSED,
+			struct sieve_ast_argument **arg,
+			struct sieve_command *cmd ATTR_UNUSED)
 {
 	struct sieve_ast_argument *tag = *arg;
 
-	if ( sieve_argument_is(tag, importance_low_tag) )
+	if (sieve_argument_is(tag, importance_low_tag))
 		sieve_ast_argument_number_substitute(tag, 3);
-	else if ( sieve_argument_is(tag, importance_normal_tag) )
+	else if (sieve_argument_is(tag, importance_normal_tag))
 		sieve_ast_argument_number_substitute(tag, 2);
 	else
 		sieve_ast_argument_number_substitute(tag, 1);
 
-	tag->argument = sieve_argument_create
-		(tag->ast, &number_argument, tag->argument->ext, tag->argument->id_code);
+	tag->argument = sieve_argument_create(tag->ast, &number_argument,
+					      tag->argument->ext,
+					      tag->argument->id_code);
 
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
@@ -70,13 +73,17 @@ static bool tag_importance_validate
 	return TRUE;
 }
 
-void ext_notify_register_importance_tags
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg,
+void ext_notify_register_importance_tags(
+	struct sieve_validator *valdtr,
+	struct sieve_command_registration *cmd_reg,
 	const struct sieve_extension *ext, unsigned int id_code)
 {
-	sieve_validator_register_tag(valdtr, cmd_reg, ext, &importance_low_tag, id_code);
-	sieve_validator_register_tag(valdtr, cmd_reg, ext, &importance_normal_tag, id_code);
-	sieve_validator_register_tag(valdtr, cmd_reg, ext, &importance_high_tag, id_code);
+	sieve_validator_register_tag(valdtr, cmd_reg, ext,
+				     &importance_low_tag, id_code);
+	sieve_validator_register_tag(valdtr, cmd_reg, ext,
+				     &importance_normal_tag, id_code);
+	sieve_validator_register_tag(valdtr, cmd_reg, ext,
+				     &importance_high_tag, id_code);
 }
 
 /*
@@ -90,8 +97,9 @@ struct ext_notify_message_context {
 	buffer_t *body_text;
 };
 
-static struct ext_notify_message_context *ext_notify_get_message_context
-(const struct sieve_extension *this_ext, struct sieve_message_context *msgctx)
+static struct ext_notify_message_context *
+ext_notify_get_message_context(const struct sieve_extension *this_ext,
+			       struct sieve_message_context *msgctx)
 {
 	struct ext_notify_message_context *ctx;
 
@@ -100,15 +108,15 @@ static struct ext_notify_message_context *ext_notify_get_message_context
 		sieve_message_context_extension_get(msgctx, this_ext);
 
 	/* Create it if it does not exist already */
-	if ( ctx == NULL ) {
+	if (ctx == NULL) {
 		pool_t pool = sieve_message_context_pool(msgctx);
 		ctx = p_new(pool, struct ext_notify_message_context, 1);
 		ctx->pool = pool;
 		ctx->body_text = NULL;
 
 		/* Register context */
-		sieve_message_context_extension_set
-			(msgctx, this_ext, (void *) ctx);
+		sieve_message_context_extension_set(msgctx, this_ext,
+						    (void *)ctx);
 	}
 
 	return ctx;
@@ -129,23 +137,22 @@ static bool _is_text_content(const struct message_header_line *hdr)
 	if (rfc822_parse_content_type(&parser, content_type) < 0)
 		return FALSE;
 
-	/* Content-type value must end here, otherwise it is invalid after all */
+	/* Content-type value must end here, otherwise it is invalid after all
+	 */
 	(void)rfc822_skip_lwsp(&parser);
-	if ( parser.data != parser.end && *parser.data != ';' )
+	if (parser.data != parser.end && *parser.data != ';')
 		return FALSE;
 
 	/* Success */
 	data = str_c(content_type);
-	if (str_begins(data, "text/")) {
+	if (str_begins(data, "text/"))
 		return TRUE;
-	}
-
 	return FALSE;
 }
 
-static int cmd_notify_extract_body_text
-(const struct sieve_runtime_env *renv,
-	const char **body_text_r, size_t *body_size_r)
+static int
+cmd_notify_extract_body_text(const struct sieve_runtime_env *renv,
+			     const char **body_text_r, size_t *body_size_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_notify_message_context *mctx;
@@ -163,7 +170,7 @@ static int cmd_notify_extract_body_text
 
 	/* Return cached result if available */
 	mctx = ext_notify_get_message_context(this_ext, renv->msgctx);
-	if ( mctx->body_text != NULL ) {
+	if (mctx->body_text != NULL) {
 		*body_text_r = (const char *)
 			buffer_get_data(mctx->body_text, body_size_r);
 		return SIEVE_EXEC_OK;
@@ -173,9 +180,9 @@ static int cmd_notify_extract_body_text
 	mctx->body_text = buffer_create_dynamic(mctx->pool, 1024*64);
 
 	/* Get the message stream */
-	if ( mail_get_stream(mail, NULL, NULL, &input) < 0 ) {
-		return sieve_runtime_mail_error(renv, mail,
-			"notify action: failed to read input message");
+	if (mail_get_stream(mail, NULL, NULL, &input) < 0) {
+		return sieve_runtime_mail_error(renv, mail, "notify action: "
+						"failed to read input message");
 	}
 
 	/* Initialize body decoder */
@@ -184,25 +191,25 @@ static int cmd_notify_extract_body_text
 	parser = message_parser_init(mctx->pool, input, 0, 0);
 	is_text = TRUE;
 	save_body = FALSE;
-	while ( (ret=message_parser_parse_next_block(parser, &block)) > 0 ) {
-		if ( block.hdr != NULL || block.size == 0 ) {
+	while ((ret = message_parser_parse_next_block(parser, &block)) > 0) {
+		if (block.hdr != NULL || block.size == 0) {
 			/* Decode block */
-			(void)message_decoder_decode_next_block(decoder, &block, &decoded);
+			(void)message_decoder_decode_next_block(decoder, &block,
+								&decoded);
 
 			/* Check for end of headers */
-			if ( block.hdr == NULL ) {
+			if (block.hdr == NULL) {
 				save_body = is_text;
 				continue;
 			}
 
 			/* We're interested of only Content-Type: header */
-			if ( strcasecmp(block.hdr->name, "Content-Type" ) != 0)
+			if (strcasecmp(block.hdr->name, "Content-Type") != 0)
 				continue;
 
-			/* Header can have folding whitespace. Acquire the full value before
-			 * continuing
-			 */
-			if ( block.hdr->continues ) {
+			/* Header can have folding whitespace. Acquire the full
+			   value before continuing */
+			if (block.hdr->continues) {
 				block.hdr->use_full_value = TRUE;
 				continue;
 			}
@@ -216,9 +223,11 @@ static int cmd_notify_extract_body_text
 		}
 
 		/* Read text body */
-		if ( save_body ) {
-			(void)message_decoder_decode_next_block(decoder, &block, &decoded);
-			buffer_append(mctx->body_text, decoded.data, decoded.size);
+		if (save_body) {
+			(void)message_decoder_decode_next_block(decoder, &block,
+								&decoded);
+			buffer_append(mctx->body_text, decoded.data,
+				      decoded.size);
 			is_text = TRUE;
 		}
 	}
@@ -227,24 +236,24 @@ static int cmd_notify_extract_body_text
 	(void)message_parser_deinit(&parser, &parts);
 	message_decoder_deinit(&decoder);
 
-	if ( ret < 0 && input->stream_errno != 0 ) {
-		sieve_runtime_critical(renv, NULL,
-			"notify action: failed to read input message",
-			"notify action: read(%s) failed: %s",
-			i_stream_get_name(input),
-			i_stream_get_error(input));
+	if (ret < 0 && input->stream_errno != 0) {
+		sieve_runtime_critical(renv, NULL, "notify action: "
+				       "failed to read input message",
+				       "notify action: read(%s) failed: %s",
+				       i_stream_get_name(input),
+				       i_stream_get_error(input));
 		return SIEVE_EXEC_TEMP_FAILURE;
 	}
 
 	/* Return status */
-	*body_text_r = (const char *)
-		buffer_get_data(mctx->body_text, body_size_r);
+	*body_text_r = (const char *)buffer_get_data(mctx->body_text,
+						     body_size_r);
 	return SIEVE_EXEC_OK;
 }
 
-int ext_notify_construct_message
-(const struct sieve_runtime_env *renv, const char *msg_format,
-	string_t *out_msg)
+int ext_notify_construct_message(const struct sieve_runtime_env *renv,
+				 const char *msg_format,
+				 string_t *out_msg)
 {
 	const struct sieve_message_data *msgdata = renv->msgdata;
 	struct sieve_message_context *msgctx = renv->msgctx;
@@ -253,80 +262,82 @@ int ext_notify_construct_message
 	const char *p;
 	int ret;
 
-	if ( msg_format == NULL )
+	if (msg_format == NULL)
 		msg_format = "$from$: $subject$";
 
 	/* Scan message for substitutions */
 	p = msg_format;
-	while ( *p != '\0' ) {
+	while (*p != '\0') {
 		const char *header;
 
-		if ( strncasecmp(p, "$from$", 6) == 0 ) {
+		if (strncasecmp(p, "$from$", 6) == 0) {
 			p += 6;
 
 			/* Fetch sender from original message */
-			if ( (ret=mail_get_first_header_utf8
-				(msgdata->mail, "from", &header)) < 0 ) {
-				return sieve_runtime_mail_error	(renv, msgdata->mail,
+			if ((ret = mail_get_first_header_utf8(
+				msgdata->mail, "from", &header)) < 0) {
+				return sieve_runtime_mail_error(
+					renv, msgdata->mail,
 					"failed to read header field `from'");
 			}
-			if ( ret > 0 )
+			if (ret > 0)
 				str_append(out_msg, header);
-
-		} else if ( strncasecmp(p, "$env-from$", 10) == 0 ) {
+		} else if (strncasecmp(p, "$env-from$", 10) == 0) {
 			p += 10;
 
-			if ( return_path != NULL )
+			if (return_path != NULL)
 				smtp_address_write(out_msg, return_path);
-
-		} else if ( strncasecmp(p, "$subject$", 9) == 0 ) {
+		} else if (strncasecmp(p, "$subject$", 9) == 0) {
 			p += 9;
 
 			/* Fetch sender from oriinal message */
-			if ( (ret=mail_get_first_header_utf8
-				(msgdata->mail, "subject", &header)) < 0 ) {
-				return sieve_runtime_mail_error	(renv, msgdata->mail,
+			if ((ret = mail_get_first_header_utf8(
+				msgdata->mail, "subject", &header)) < 0) {
+				return sieve_runtime_mail_error(
+					renv, msgdata->mail,
 					"failed to read header field `subject'");
 			}
-			if ( ret > 0 )
+			if (ret > 0)
 				 str_append(out_msg, header);
-
-		} else if ( strncasecmp(p, "$text", 5) == 0
-			&& (p[5] == '[' || p[5] == '$') ) {
+		} else if (strncasecmp(p, "$text", 5) == 0 &&
+			   (p[5] == '[' || p[5] == '$')) {
 			size_t num = 0;
 			const char *begin = p;
 			bool valid = TRUE;
 
 			p += 5;
-			if ( *p == '[' ) {
+			if (*p == '[') {
 				p += 1;
 
-				while ( i_isdigit(*p) ) {
+				while (i_isdigit(*p)) {
 					num = num * 10 + (*p - '0');
 					p++;
 				}
 
-				if ( *p++ != ']' || *p++ != '$' ) {
-					str_append_data(out_msg, begin, p-begin);
+				if (*p++ != ']' || *p++ != '$') {
+					str_append_data(out_msg, begin,
+							p-begin);
 					valid = FALSE;
 				}
 			} else {
 				p += 1;
 			}
 
-			if ( valid ) {
+			if (valid) {
 				size_t body_size;
 				const char *body_text;
-					
-				if ( (ret=cmd_notify_extract_body_text
-					(renv, &body_text, &body_size)) <= 0 ) {
-					return ret;
-				}
 
-				if ( num > 0 && num < body_size)
-					str_append_data(out_msg, body_text, num);
-				else
-					str_append_data(out_msg, body_text, body_size);
+				if ((ret = cmd_notify_extract_body_text(
+					renv, &body_text, &body_size)) <= 0)
+					return ret;
+
+				if (num > 0 && num < body_size) {
+					str_append_data(out_msg, body_text,
+							num);
+				} else {
+					str_append_data(out_msg, body_text,
+							body_size);
+				}
 			}
 		} else {
 			size_t len;
@@ -338,7 +349,7 @@ int ext_notify_construct_message
 			str_append_data(out_msg, p, len);
 			p += len;
 		}
-  }
+	}
 
 	return SIEVE_EXEC_OK;
 }
