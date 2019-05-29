@@ -19,13 +19,11 @@ struct ext_variables_config {
 
 extern const struct sieve_extension_def variables_extension;
 
-bool ext_variables_load
-	(const struct sieve_extension *ext, void **context);
-void ext_variables_unload
-	(const struct sieve_extension *ext);
+bool ext_variables_load(const struct sieve_extension *ext, void **context);
+void ext_variables_unload(const struct sieve_extension *ext);
 
-const struct ext_variables_config *ext_variables_get_config
-	(const struct sieve_extension *var_ext);
+const struct ext_variables_config *
+ext_variables_get_config(const struct sieve_extension *var_ext);
 
 /*
  * Commands
@@ -70,32 +68,35 @@ struct ext_variables_validator_context {
 	struct sieve_variable_scope *local_scope;
 };
 
-void ext_variables_validator_initialize
-	(const struct sieve_extension *this_ext, struct sieve_validator *validator);
+void ext_variables_validator_initialize(const struct sieve_extension *this_ext,
+					struct sieve_validator *validator);
 
-struct ext_variables_validator_context *ext_variables_validator_context_get
-	(const struct sieve_extension *this_ext, struct sieve_validator *valdtr);
+struct ext_variables_validator_context *
+ext_variables_validator_context_get(const struct sieve_extension *this_ext,
+				    struct sieve_validator *valdtr);
 
-struct sieve_variable *ext_variables_validator_get_variable
-	(const struct sieve_extension *this_ext, struct sieve_validator *validator,
-		const char *variable);
-struct sieve_variable *ext_variables_validator_declare_variable
-	(const struct sieve_extension *this_ext, struct sieve_validator *validator,
-		const char *variable);
+struct sieve_variable *
+ext_variables_validator_get_variable(const struct sieve_extension *this_ext,
+				     struct sieve_validator *validator,
+				     const char *variable);
+struct sieve_variable *
+ext_variables_validator_declare_variable(const struct sieve_extension *this_ext,
+					 struct sieve_validator *validator,
+					 const char *variable);
 
 /*
  * Code generation
  */
 
-bool ext_variables_generator_load
-	(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv);
+bool ext_variables_generator_load(const struct sieve_extension *ext,
+				  const struct sieve_codegen_env *cgenv);
 
 /*
  * Interpreter context
  */
 
-bool ext_variables_interpreter_load
-	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
-		sieve_size_t *address);
+bool ext_variables_interpreter_load(const struct sieve_extension *ext,
+				    const struct sieve_runtime_env *renv,
+				    sieve_size_t *address);
 
 #endif
