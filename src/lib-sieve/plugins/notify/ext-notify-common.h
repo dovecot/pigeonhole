@@ -18,9 +18,10 @@ extern const struct sieve_command_def cmd_denotify;
  * Arguments
  */
 
-void ext_notify_register_importance_tags
-	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg,
-		const struct sieve_extension *this_ext, unsigned int id_code);
+void ext_notify_register_importance_tags(
+	struct sieve_validator *valdtr,
+	struct sieve_command_registration *cmd_reg,
+	const struct sieve_extension *this_ext, unsigned int id_code);
 
 /*
  * Operations
@@ -59,8 +60,7 @@ struct ext_notify_action {
  * Message construct
  */
 
-int ext_notify_construct_message
-	(const struct sieve_runtime_env *renv, const char *msg_format,
-		string_t *out_msg);
+int ext_notify_construct_message(const struct sieve_runtime_env *renv,
+				 const char *msg_format, string_t *out_msg);
 
 #endif
