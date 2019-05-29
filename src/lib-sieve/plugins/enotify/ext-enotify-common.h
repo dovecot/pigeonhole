@@ -76,41 +76,40 @@ extern const struct sieve_variables_modifier_def encodeurl_modifier;
  * Notify methods
  */
 
-void ext_enotify_methods_init
-	(struct sieve_instance *svinst, struct ext_enotify_context *ectx);
-void ext_enotify_methods_deinit
-	(struct ext_enotify_context *ectx);
+void ext_enotify_methods_init(struct sieve_instance *svinst,
+			      struct ext_enotify_context *ectx);
+void ext_enotify_methods_deinit(struct ext_enotify_context *ectx);
 
-const struct sieve_enotify_method *ext_enotify_method_find
-	(const struct sieve_extension *ntfy_ext, const char *identifier);
+const struct sieve_enotify_method *
+ext_enotify_method_find(const struct sieve_extension *ntfy_ext,
+			const char *identifier);
 
 /*
  * Validation
  */
 
-bool ext_enotify_compile_check_arguments
-	(struct sieve_validator *valdtr, struct sieve_command *cmd,
-		struct sieve_ast_argument *uri_arg, struct sieve_ast_argument *msg_arg,
-		struct sieve_ast_argument *from_arg,
-		struct sieve_ast_argument *options_arg);
+bool ext_enotify_compile_check_arguments(
+	struct sieve_validator *valdtr, struct sieve_command *cmd,
+	struct sieve_ast_argument *uri_arg, struct sieve_ast_argument *msg_arg,
+	struct sieve_ast_argument *from_arg,
+	struct sieve_ast_argument *options_arg);
 
 /*
  * Runtime
  */
 
-bool ext_enotify_runtime_method_validate
-	(const struct sieve_runtime_env *renv,
-		string_t *method_uri);
+bool ext_enotify_runtime_method_validate(const struct sieve_runtime_env *renv,
+					 string_t *method_uri);
 
-const char *ext_enotify_runtime_get_method_capability
-	(const struct sieve_runtime_env *renv,
-		string_t *method_uri, const char *capability);
+const char *
+ext_enotify_runtime_get_method_capability(const struct sieve_runtime_env *renv,
+					  string_t *method_uri,
+					  const char *capability);
 
-int ext_enotify_runtime_check_operands
-	(const struct sieve_runtime_env *renv,
-		string_t *method_uri, string_t *message, string_t *from,
-		struct sieve_stringlist *options,
-		const struct sieve_enotify_method **method_r, void **method_context);
+int ext_enotify_runtime_check_operands(
+	const struct sieve_runtime_env *renv, string_t *method_uri,
+	string_t *message, string_t *from, struct sieve_stringlist *options,
+	const struct sieve_enotify_method **method_r, void **method_context);
 
 /*
  * Method printing
