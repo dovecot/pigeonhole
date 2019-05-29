@@ -30,16 +30,14 @@ enum ext_include_script_location {
 	EXT_INCLUDE_LOCATION_INVALID
 };
 
-static inline const char *ext_include_script_location_name
-(enum ext_include_script_location location)
+static inline const char *
+ext_include_script_location_name(enum ext_include_script_location location)
 {
-	switch ( location ) {
+	switch (location) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
 		return "personal";
-
 	case EXT_INCLUDE_LOCATION_GLOBAL:
 		return "global";
-
 	default:
 		break;
 	}
@@ -55,10 +53,8 @@ static inline const char *ext_include_script_location_name
 extern const struct sieve_extension_def include_extension;
 extern const struct sieve_binary_extension include_binary_ext;
 
-bool ext_include_load
-	(const struct sieve_extension *ext, void **context);
-void ext_include_unload
-	(const struct sieve_extension *ext);
+bool ext_include_load(const struct sieve_extension *ext, void **context);
+void ext_include_unload(const struct sieve_extension *ext);
 
 /*
  * Commands
@@ -90,10 +86,11 @@ extern const struct sieve_operation_def global_operation;
  * Script access
  */
 
-struct sieve_storage *ext_include_get_script_storage
-	(const struct sieve_extension *ext,
-		enum ext_include_script_location location,
-		const char *script_name, enum sieve_error *error_r);
+struct sieve_storage *
+ext_include_get_script_storage(const struct sieve_extension *ext,
+			       enum ext_include_script_location location,
+			       const char *script_name,
+			       enum sieve_error *error_r);
 /*
  * Context
  */
@@ -114,8 +111,8 @@ struct ext_include_context {
 	unsigned int max_includes;
 };
 
-static inline struct ext_include_context *ext_include_get_context
-(const struct sieve_extension *ext)
+static inline struct ext_include_context *
+ext_include_get_context(const struct sieve_extension *ext)
 {
 	return (struct ext_include_context *) ext->context;
 }
@@ -123,47 +120,51 @@ static inline struct ext_include_context *ext_include_get_context
 /* AST Context */
 
 struct ext_include_ast_context {
-  struct sieve_variable_scope *global_vars;
+	struct sieve_variable_scope *global_vars;
 
-  ARRAY(struct sieve_script *) included_scripts;
+	ARRAY(struct sieve_script *) included_scripts;
 };
 
-struct ext_include_ast_context *ext_include_create_ast_context
-	(const struct sieve_extension *this_ext, struct sieve_ast *ast,
-		struct sieve_ast *parent);
-struct ext_include_ast_context *ext_include_get_ast_context
-	(const struct sieve_extension *this_ext, struct sieve_ast *ast);
+struct ext_include_ast_context *
+ext_include_create_ast_context(const struct sieve_extension *this_ext,
+			       struct sieve_ast *ast, struct sieve_ast *parent);
+struct ext_include_ast_context *
+ext_include_get_ast_context(const struct sieve_extension *this_ext,
+			    struct sieve_ast *ast);
 
-void ext_include_ast_link_included_script
-	(const struct sieve_extension *this_ext, struct sieve_ast *ast,
-		struct sieve_script *script);
+void ext_include_ast_link_included_script(
+	const struct sieve_extension *this_ext, struct sieve_ast *ast,
+	struct sieve_script *script);
 
-bool ext_include_validator_have_variables
-	(const struct sieve_extension *this_ext, struct sieve_validator *valdtr);
+bool ext_include_validator_have_variables(
+	const struct sieve_extension *this_ext, struct sieve_validator *valdtr);
 
 /* Generator context */
 
-void ext_include_register_generator_context
-	(const struct sieve_extension *this_ext,
-		const struct sieve_codegen_env *cgenv);
+void ext_include_register_generator_context(
+	const struct sieve_extension *this_ext,
+	const struct sieve_codegen_env *cgenv);
 
-int ext_include_generate_include
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
-		enum ext_include_script_location location,
-		enum ext_include_flags flags, struct sieve_script *script,
-		const struct ext_include_script_info **included_r);
+int ext_include_generate_include(
+	const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
+	enum ext_include_script_location location, enum ext_include_flags flags,
+	struct sieve_script *script,
+	const struct ext_include_script_info **included_r);
 
 /* Interpreter context */
 
-void ext_include_interpreter_context_init
-	(const struct sieve_extension *this_ext, struct sieve_interpreter *interp);
+void ext_include_interpreter_context_init(
+	const struct sieve_extension *this_ext,
+	struct sieve_interpreter *interp);
 
-int ext_include_execute_include
-	(const struct sieve_runtime_env *renv, unsigned int block_id,
-		enum ext_include_flags flags);
+int ext_include_execute_include(const struct sieve_runtime_env *renv,
+				unsigned int block_id,
+				enum ext_include_flags flags);
 void ext_include_execute_return(const struct sieve_runtime_env *renv);
 
-struct sieve_variable_storage *ext_include_interpreter_get_global_variables
-	(const struct sieve_extension *this_ext, struct sieve_interpreter *interp);
+struct sieve_variable_storage *
+ext_include_interpreter_get_global_variables(
+	const struct sieve_extension *this_ext,
+	struct sieve_interpreter *interp);
 
 #endif
