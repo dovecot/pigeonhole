@@ -47,7 +47,7 @@ void ext_environment_deinit(const struct sieve_extension *ext);
  * Validator context
  */
 
-void ext_environment_interpreter_init
-(const struct sieve_extension *this_ext, struct sieve_interpreter *interp);
+void ext_environment_interpreter_init(const struct sieve_extension *this_ext,
+				      struct sieve_interpreter *interp);
 
 #endif
