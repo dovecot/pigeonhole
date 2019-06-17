@@ -303,8 +303,6 @@ int sieve_file_storage_save_finish
 					  fsctx->tmp_path);
 			}
 
-			fsctx->tmp_path = NULL;
-			
 			errno = output_errno;
 			if ( ENOQUOTA(errno) ) {
 				sieve_storage_set_error(storage,
@@ -314,6 +312,7 @@ int sieve_file_storage_save_finish
 				sieve_storage_set_critical(storage, "save: "
 					"write(%s) failed: %m", fsctx->tmp_path);
 			}
+			fsctx->tmp_path = NULL;
 		}
 	} T_END;
 
