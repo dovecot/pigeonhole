@@ -81,7 +81,7 @@ static void testsuite_message_set_data(struct mail *mail)
 	if ( recipient == NULL )
 		recipient = testsuite_message_get_address(mail, "To");
 	if ( recipient == NULL )
-		recipient = SMTP_ADDRESS_LITERAL("recipient", "example.com");
+		recipient = &((struct smtp_address){"recipient", "example.com"});
 
 	/* Get sender address */
 	sender = testsuite_message_get_address(mail, "Return-path");
@@ -90,7 +90,7 @@ static void testsuite_message_set_data(struct mail *mail)
 	if ( sender == NULL )
 		sender = testsuite_message_get_address(mail, "From");
 	if ( sender == NULL )
-		sender = SMTP_ADDRESS_LITERAL("sender", "example.com");
+		sender = &((struct smtp_address){"sender", "example.com"});
 
 	env_mail_from = smtp_address_clone(default_pool, sender);
 	env_rcpt_to = smtp_address_clone(default_pool, recipient);
