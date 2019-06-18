@@ -347,7 +347,8 @@ int sieve_message_substitute
 
 	i_stream_seek(input, 0);
 	sender = sieve_message_get_sender(msgctx);
-	sender = (sender == NULL ? DEFAULT_ENVELOPE_SENDER : sender );
+	sender = sender == NULL ?
+		&((struct smtp_address){DEFAULT_ENVELOPE_SENDER, NULL}) : sender;
 	ret = raw_mailbox_alloc_stream(msgctx->raw_mail_user, input, (time_t)-1,
 		smtp_address_encode(sender), &box);
 
