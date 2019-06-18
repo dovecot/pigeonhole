@@ -64,6 +64,15 @@ static void testsuite_message_set_data(struct mail *mail)
 {
 	const struct smtp_address *recipient = NULL, *sender = NULL;
 
+	static const struct smtp_address default_recipient = {
+		.localpart = "recipient",
+		.domain = "example.com",
+	};
+	static const struct smtp_address default_sender = {
+		.localpart = "sender",
+		.domain = "example.com",
+	};
+
 	i_free(env_mail_from);
 	i_free(env_rcpt_to);
 	i_free(env_orig_rcpt_to);
@@ -81,7 +90,7 @@ static void testsuite_message_set_data(struct mail *mail)
 	if ( recipient == NULL )
 		recipient = testsuite_message_get_address(mail, "To");
 	if ( recipient == NULL )
-		recipient = &((struct smtp_address){"recipient", "example.com"});
+		recipient = &default_recipient;
 
 	/* Get sender address */
 	sender = testsuite_message_get_address(mail, "Return-path");
@@ -90,7 +99,7 @@ static void testsuite_message_set_data(struct mail *mail)
 	if ( sender == NULL )
 		sender = testsuite_message_get_address(mail, "From");
 	if ( sender == NULL )
-		sender = &((struct smtp_address){"sender", "example.com"});
+		sender = &default_sender;
 
 	env_mail_from = smtp_address_clone(default_pool, sender);
 	env_rcpt_to = smtp_address_clone(default_pool, recipient);
