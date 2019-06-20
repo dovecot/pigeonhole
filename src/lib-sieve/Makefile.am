@@ -113,6 +113,7 @@ libdovecot_sieve_la_SOURCES = \
 	sieve-address.c \
 	sieve-validator.c \
 	sieve-generator.c \
+	sieve-execute.c \
 	sieve-interpreter.c \
 	sieve-runtime-trace.c \
 	sieve-code-dumper.c \

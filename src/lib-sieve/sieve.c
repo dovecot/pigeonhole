@@ -514,28 +514,19 @@ int sieve_test(struct sieve_binary *sbin,
 	       struct sieve_error_handler *ehandler, struct ostream *stream,
 	       enum sieve_execute_flags flags, bool *keep)
 {
+	struct sieve_instance *svinst = sieve_binary_svinst(sbin);
 	struct sieve_result *result;
 	struct sieve_execute_env eenv;
-	struct sieve_exec_status exec_status;
 	pool_t pool;
 	int ret;
 
 	pool = pool_alloconly_create("sieve execution", 4096);
-
-	i_zero(&eenv);
-	eenv.flags = flags;
-	eenv.msgdata = msgdata;
-	eenv.scriptenv = senv;
-
-	eenv.exec_status = senv->exec_status;
-	if (eenv.exec_status == NULL)
-		eenv.exec_status = &exec_status;
-	i_zero(eenv.exec_status);
+	sieve_execute_init(&eenv, svinst, pool, msgdata, senv, flags);
 
 	if (keep != NULL) *keep = FALSE;
 
 	/* Create result object */
-	result = sieve_result_create(sieve_binary_svinst(sbin), pool, &eenv);
+	result = sieve_result_create(svinst, pool, &eenv);
 
 	/* Run the script */
 	ret = sieve_run(sbin, result, &eenv, ehandler);
@@ -551,6 +542,7 @@ int sieve_test(struct sieve_binary *sbin,
 	/* Cleanup */
 	if (result != NULL)
 		sieve_result_unref(&result);
+	sieve_execute_deinit(&eenv);
 	pool_unref(&pool);
 
 	return ret;
@@ -585,28 +577,19 @@ int sieve_execute(struct sieve_binary *sbin,
 		  struct sieve_error_handler *action_ehandler,
 		  enum sieve_execute_flags flags, bool *keep)
 {
+	struct sieve_instance *svinst = sieve_binary_svinst(sbin);
 	struct sieve_result *result = NULL;
 	struct sieve_execute_env eenv;
-	struct sieve_exec_status exec_status;
 	pool_t pool;
 	int ret;
 
 	pool = pool_alloconly_create("sieve execution", 4096);
-
-	i_zero(&eenv);
-	eenv.flags = flags;
-	eenv.msgdata = msgdata;
-	eenv.scriptenv = senv;
-
-	eenv.exec_status = senv->exec_status;
-	if (eenv.exec_status == NULL)
-		eenv.exec_status = &exec_status;
-	i_zero(eenv.exec_status);
+	sieve_execute_init(&eenv, svinst, pool, msgdata, senv, flags);
 
 	if (keep != NULL) *keep = FALSE;
 
 	/* Create result object */
-	result = sieve_result_create(sieve_binary_svinst(sbin), pool, &eenv);
+	result = sieve_result_create(svinst, pool, &eenv);
 
 	/* Run the script */
 	ret = sieve_run(sbin, result, &eenv, exec_ehandler);
@@ -639,6 +622,7 @@ int sieve_execute(struct sieve_binary *sbin,
 	/* Cleanup */
 	if (result != NULL)
 		sieve_result_unref(&result);
+	sieve_execute_deinit(&eenv);
 	pool_unref(&pool);
 
 	return ret;
@@ -651,7 +635,6 @@ int sieve_execute(struct sieve_binary *sbin,
 struct sieve_multiscript {
 	pool_t pool;
 	struct sieve_execute_env exec_env;
-	struct sieve_exec_status exec_status;
 	struct sieve_result *result;
 
 	int status;
@@ -675,14 +658,7 @@ sieve_multiscript_start_execute(struct sieve_instance *svinst,
 	pool = pool_alloconly_create("sieve execution", 4096);
 	mscript = p_new(pool, struct sieve_multiscript, 1);
 	mscript->pool = pool;
-	mscript->exec_env.svinst = svinst;
-	mscript->exec_env.msgdata = msgdata;
-	mscript->exec_env.scriptenv = senv;
-
-	mscript->exec_env.exec_status = senv->exec_status;
-	if (mscript->exec_env.exec_status == NULL)
-		mscript->exec_env.exec_status = &mscript->exec_status;
-	i_zero(mscript->exec_env.exec_status);
+	sieve_execute_init(&mscript->exec_env, svinst, pool, msgdata, senv, 0);
 
 	result = sieve_result_create(svinst, pool, &mscript->exec_env);
 	sieve_result_set_keep_action(result, NULL, NULL);
@@ -857,6 +833,7 @@ int sieve_multiscript_tempfail(struct sieve_multiscript **_mscript,
 
 	/* Cleanup */
 	sieve_result_unref(&result);
+	sieve_execute_deinit(&mscript->exec_env);
 	pool_unref(&mscript->pool);
 	*_mscript = NULL;
 
@@ -899,6 +876,7 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 
 	/* Cleanup */
 	sieve_result_unref(&result);
+	sieve_execute_deinit(&mscript->exec_env);
 	pool_unref(&mscript->pool);
 	*_mscript = NULL;
 	return ret;

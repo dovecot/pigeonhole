@@ -97,6 +97,7 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	struct sieve_exec_status exec_status;
 	struct sieve_result *result;
 	struct sieve_interpreter *interp;
+	pool_t pool;
 	struct sieve_execute_env exec_env;
 	const char *error;
 	int ret;
@@ -129,27 +130,27 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	scriptenv.duplicate_check = NULL;
 	scriptenv.trace_log = eenv->scriptenv->trace_log;
 	scriptenv.trace_config = eenv->scriptenv->trace_config;
-	scriptenv.exec_status = &exec_status;
 
 	result = testsuite_result_get();
 
-	i_zero(&exec_env);
-	exec_env.svinst = eenv->svinst;
-	exec_env.flags = eenv->flags;
-	exec_env.msgdata = eenv->msgdata;
-	exec_env.scriptenv = &scriptenv;
-	exec_env.exec_status = &exec_status;
+	pool = pool_alloconly_create("sieve execution", 4096);
+	sieve_execute_init(&exec_env, eenv->svinst, pool, eenv->msgdata,
+			   &scriptenv, eenv->flags);
+	pool_unref(&pool);
 
 	/* Execute the script */
 	interp = sieve_interpreter_create(ictx->compiled_script, NULL,
 					  &exec_env, testsuite_log_ehandler);
 
-	if (interp == NULL)
+	if (interp == NULL) {
+		sieve_execute_deinit(&exec_env);
 		return FALSE;
+	}
 
 	ret = sieve_interpreter_run(interp, result);
 
 	sieve_interpreter_free(&interp);
+	sieve_execute_deinit(&exec_env);
 
 	return (ret > 0 ||
 		sieve_binary_extension_get_index(ictx->compiled_script,

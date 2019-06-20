@@ -20,30 +20,29 @@
 
 struct sieve_execute_env testsuite_execute_env;
 
-static pool_t testsuite_execute_pool;
-static struct sieve_result *_testsuite_result;
+static pool_t testsuite_execute_pool = NULL;
+static struct sieve_result *_testsuite_result = NULL;
 
 void testsuite_result_init(void)
 {
 	struct sieve_instance *svinst = testsuite_sieve_instance;
 
-	i_zero(&testsuite_execute_env);
-	testsuite_execute_env.svinst = testsuite_sieve_instance;
-	testsuite_execute_env.msgdata = &testsuite_msgdata;
-	testsuite_execute_env.scriptenv = testsuite_scriptenv;
-	testsuite_execute_env.exec_status = testsuite_scriptenv->exec_status;
-
 	testsuite_execute_pool = pool_alloconly_create("sieve execution", 4096);
+
+	sieve_execute_init(&testsuite_execute_env, testsuite_sieve_instance,
+			   testsuite_execute_pool, &testsuite_msgdata,
+			   testsuite_scriptenv, 0);
+
 	_testsuite_result = sieve_result_create(svinst, testsuite_execute_pool,
 						&testsuite_execute_env);
 }
 
 void testsuite_result_deinit(void)
 {
-	if (_testsuite_result != NULL) {
+	if (_testsuite_result != NULL)
 		sieve_result_unref(&_testsuite_result);
-		pool_unref(&testsuite_execute_pool);
-	}
+	sieve_execute_deinit(&testsuite_execute_env);
+	pool_unref(&testsuite_execute_pool);
 }
 
 void testsuite_result_reset(const struct sieve_runtime_env *renv)
