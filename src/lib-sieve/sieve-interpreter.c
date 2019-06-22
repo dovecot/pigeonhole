@@ -947,6 +947,7 @@ sieve_runtime_logv(const struct sieve_runtime_env *renv,
 {
 	struct sieve_error_params new_params = *params;
 
+	new_params.event = renv->event;
 	T_BEGIN {
 		if (new_params.location == NULL) {
 			new_params.location =
@@ -1037,6 +1038,7 @@ void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 
 	va_start(args, fmt);
 
+	params.event = renv->event;
 	T_BEGIN {
 		if (params.location == NULL) {
 			params.location =
