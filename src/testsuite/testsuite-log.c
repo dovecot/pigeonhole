@@ -241,6 +241,10 @@ void testsuite_log_deinit(void)
 	sieve_error_handler_unref(&testsuite_log_ehandler);
 	sieve_error_handler_unref(&testsuite_log_main_ehandler);
 
+	i_set_error_handler(default_error_handler);
+	i_set_info_handler(default_error_handler);
+	i_set_debug_handler(default_error_handler);
+
 	pool_unref(&_testsuite_logmsg_pool);
 }
 
