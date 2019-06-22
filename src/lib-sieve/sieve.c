@@ -42,6 +42,10 @@
 #include <stdio.h>
 #include <dirent.h>
 
+struct event_category event_category_sieve = {
+	.name = "sieve",
+};
+
 /*
  * Main Sieve library interface
  */
@@ -70,6 +74,7 @@ struct sieve_instance *sieve_init(const struct sieve_environment *env,
 	svinst->delivery_phase = env->delivery_phase;
 
 	svinst->event = event_create(env->event_parent);
+	event_add_category(svinst->event, &event_category_sieve);
 	event_set_forced_debug(svinst->event, debug);
 	event_set_append_log_prefix(svinst->event, "sieve: ");
 	event_add_str(svinst->event, "user", env->username);
