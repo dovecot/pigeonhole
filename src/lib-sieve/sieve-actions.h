@@ -81,6 +81,7 @@ struct sieve_action_def {
 struct sieve_action {
 	const struct sieve_action_def *def;
 	const struct sieve_extension *ext;
+	struct event *event;
 
 	const char *location;
 	void *context;

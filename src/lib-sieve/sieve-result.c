@@ -133,9 +133,16 @@ void sieve_result_ref(struct sieve_result *result)
 	result->refcount++;
 }
 
+static void
+sieve_result_action_deinit(struct sieve_result_action *ract)
+{
+	event_unref(&ract->action.event);
+}
+
 void sieve_result_unref(struct sieve_result **_result)
 {
 	struct sieve_result *result = *_result;
+	struct sieve_result_action *ract;
 
 	i_assert(result->refcount > 0);
 
@@ -148,6 +155,12 @@ void sieve_result_unref(struct sieve_result **_result)
 
 	if (result->action_env.ehandler != NULL)
 		sieve_error_handler_unref(&result->action_env.ehandler);
+
+	ract = result->first_action;
+	while (ract != NULL) {
+		sieve_result_action_deinit(ract);
+		ract = ract->next;
+	}
 	event_unref(&result->event);
 
 	pool_unref(&result->pool);
@@ -212,6 +225,20 @@ sieve_result_extension_get_context(struct sieve_result *result,
 /*
  * Result composition
  */
+
+static void
+sieve_result_init_action_event(struct sieve_result *result,
+			       struct sieve_action *action)
+{
+	if (action->event != NULL)
+		return;
+
+	action->event = event_create(result->event);
+	event_add_str(action->event, "sieve_action_name",
+		      sieve_action_name(action));
+	event_add_str(action->event, "sieve_action_script_location",
+		      action->location);
+}
 
 void sieve_result_add_implicit_side_effect(
 	struct sieve_result *result, const struct sieve_action_def *to_action,
@@ -589,6 +616,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 		raction->action.mail = NULL;
 	}
 
+	sieve_result_init_action_event(result, &raction->action);
 	return 0;
 }
 
@@ -839,18 +867,21 @@ sieve_result_prepare_action_env(struct sieve_result *result,
 				const struct sieve_action *act) ATTR_NULL(2)
 {
 	result->action_env.action = act;
+	result->action_env.event = act->event;
 }
 
 static void
 sieve_result_finish_action_env(struct sieve_result *result)
 {
 	result->action_env.action = NULL;
+	result->action_env.event = result->event;
 }
 
 static void
 _sieve_result_prepare_execution(struct sieve_result *result,
 				struct sieve_error_handler *ehandler)
 {
+	result->action_env.event = result->event;
 	result->action_env.ehandler = ehandler;
 }
 
@@ -923,6 +954,9 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 				rsef_first = actctx->seffects->first_effect;
 		}
 	}
+
+	/* Initialize keep action event */
+	sieve_result_init_action_event(result, &act_keep);
 
 	/* Start keep action */
 	if (act_keep.def->start != NULL) {
@@ -1003,6 +1037,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 	}
 
 	sieve_result_finish_action_env(result);
+	event_unref(&act_keep.event);
 
 	if (status == SIEVE_EXEC_FAILURE)
 		status = SIEVE_EXEC_KEEP_FAILED;
@@ -1509,6 +1544,8 @@ void sieve_result_iterate_delete(struct sieve_result_iterate_context *rictx)
 		result->last_action = rac->prev;
 	else
 		rac->next->prev = rac->prev;
+
+	sieve_result_action_deinit(rac);
 
 	/* Skip to next action in iteration */
 
