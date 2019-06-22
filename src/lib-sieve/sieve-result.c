@@ -1612,6 +1612,7 @@ void sieve_result_error(const struct sieve_action_exec_env *aenv,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
 			.linenum = csrc_linenum,
@@ -1632,6 +1633,7 @@ void sieve_result_global_error(const struct sieve_action_exec_env *aenv,
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
 			.linenum = csrc_linenum,
@@ -1651,6 +1653,7 @@ void sieve_result_warning(const struct sieve_action_exec_env *aenv,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
 			.linenum = csrc_linenum,
@@ -1672,6 +1675,7 @@ void sieve_result_global_warning(const struct sieve_action_exec_env *aenv,
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
 			.linenum = csrc_linenum,
@@ -1691,6 +1695,7 @@ void sieve_result_log(const struct sieve_action_exec_env *aenv,
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
+		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
 			.linenum = csrc_linenum,
@@ -1711,6 +1716,7 @@ void sieve_result_global_log(const struct sieve_action_exec_env *aenv,
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
+		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
 			.linenum = csrc_linenum,
@@ -1732,6 +1738,7 @@ void sieve_result_global_log_error(const struct sieve_action_exec_env *aenv,
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
 			.linenum = csrc_linenum,
@@ -1754,6 +1761,7 @@ void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_WARNING,
+		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
 			.linenum = csrc_linenum,
@@ -1775,6 +1783,7 @@ void sieve_result_critical(const struct sieve_action_exec_env *aenv,
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_ERROR,
+		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
 			.linenum = csrc_linenum,
