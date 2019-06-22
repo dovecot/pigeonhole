@@ -24,6 +24,10 @@
 
 #include <stdio.h>
 
+struct event_category event_category_sieve_action = {
+	.name = "sieve-action",
+};
+
 /*
  * Types
  */
@@ -107,6 +111,7 @@ sieve_result_create(struct sieve_instance *svinst, pool_t pool,
 	result->svinst = svinst;
 
 	result->event = event_create(eenv->event);
+	event_add_category(result->event, &event_category_sieve_action);
 
 	p_array_init(&result->ext_contexts, pool, 4);
 
