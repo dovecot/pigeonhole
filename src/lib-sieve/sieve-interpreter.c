@@ -122,6 +122,14 @@ _sieve_interpreter_create(struct sieve_binary *sbin,
 	interp->runenv.sblock = sblock;
 	sieve_binary_ref(sbin);
 
+	interp->runenv.event = event_create(eenv->event);
+	event_add_str(interp->runenv.event, "sieve_script_name",
+		      sieve_binary_script_name(sbin));
+	event_add_str(interp->runenv.event, "sieve_script_location",
+		      sieve_binary_script_location(sbin));
+	event_add_str(interp->runenv.event, "sieve_binary_path",
+		      sieve_binary_path(sbin));
+
 	svinst = sieve_binary_svinst(sbin);
 
 	if (senv->trace_log != NULL) {
@@ -295,6 +303,7 @@ void sieve_interpreter_free(struct sieve_interpreter **_interp)
 	sieve_binary_debug_reader_deinit(&interp->dreader);
 	sieve_binary_unref(&renv->sbin);
 	sieve_error_handler_unref(&renv->ehandler);
+	event_unref(&renv->event);
 
 	pool_unref(&interp->pool);
 	*_interp = NULL;

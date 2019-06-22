@@ -10,6 +10,7 @@
 
 struct sieve_runtime_env {
 	const struct sieve_execute_env *exec_env;
+	struct event *event;
 
 	/* Interpreter */
 	struct sieve_interpreter *interp;
