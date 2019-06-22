@@ -82,6 +82,8 @@ sieve_direct_master_vlog(struct sieve_instance *svinst,
 		.source_filename = params->csrc.filename,
 		.source_linenum = params->csrc.linenum,
 	};
+	struct event *event = (params->event != NULL ?
+			       params->event : svinst->event);
 	string_t *str;
 
 	str = t_str_new(256);
@@ -89,7 +91,7 @@ sieve_direct_master_vlog(struct sieve_instance *svinst,
 		str_printfa(str, "%s: ", params->location);
 	str_vprintfa(str, fmt, args);
 
-	event_log(svinst->event, &event_params, "%s", str_c(str));
+	event_log(event, &event_params, "%s", str_c(str));
 }
 
 void sieve_direct_logv(struct sieve_instance *svinst,

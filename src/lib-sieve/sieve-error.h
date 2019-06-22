@@ -22,6 +22,7 @@ struct sieve_error_handler;
 
 struct sieve_error_params {
 	enum log_type log_type;
+	struct event *event;
 
 	/* Location log command in C source code */
 	struct {
