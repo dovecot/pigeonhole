@@ -27,6 +27,10 @@
 
 #include <string.h>
 
+static struct event_category event_category_sieve_runtime = {
+	.name = "sieve-runtime",
+};
+
 /*
  * Interpreter extension
  */
@@ -123,6 +127,7 @@ _sieve_interpreter_create(struct sieve_binary *sbin,
 	sieve_binary_ref(sbin);
 
 	interp->runenv.event = event_create(eenv->event);
+	event_add_category(interp->runenv.event, &event_category_sieve_runtime);
 	event_add_str(interp->runenv.event, "sieve_script_name",
 		      sieve_binary_script_name(sbin));
 	event_add_str(interp->runenv.event, "sieve_script_location",
