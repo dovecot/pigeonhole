@@ -96,8 +96,7 @@ act_pipe_print(const struct sieve_action *action,
 	       const struct sieve_result_print_env *rpenv,
 	       bool *keep);	
 static int
-act_pipe_commit(const struct sieve_action *action,	
-		const struct sieve_action_exec_env *aenv,
+act_pipe_commit(const struct sieve_action_exec_env *aenv,
 		void *tr_context, bool *keep);
 
 /* Action object */
@@ -330,13 +329,13 @@ act_pipe_print(const struct sieve_action *action,
 /* Result execution */
 
 static int
-act_pipe_commit(const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv,
+act_pipe_commit(const struct sieve_action_exec_env *aenv,
 		void *tr_context ATTR_UNUSED, bool *keep)
 {
+	const struct sieve_action *action = aenv->action;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	const struct ext_pipe_action *act =
-		(const struct ext_pipe_action *) action->context;
+		(const struct ext_pipe_action *)action->context;
 	enum sieve_error error = SIEVE_ERROR_NONE;
 	struct mail *mail = (action->mail != NULL ?
 			     action->mail :

@@ -88,8 +88,7 @@ static void
 act_redirect_print(const struct sieve_action *action,
 		   const struct sieve_result_print_env *rpenv, bool *keep);
 static int
-act_redirect_commit(const struct sieve_action *action,
-		    const struct sieve_action_exec_env *aenv, void *tr_context,
+act_redirect_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
 		    bool *keep);
 
 const struct sieve_action_def act_redirect = {
@@ -526,10 +525,10 @@ act_redirect_check_loop_header(const struct sieve_action_exec_env *aenv,
 }
 
 static int
-act_redirect_commit(const struct sieve_action *action,
-		    const struct sieve_action_exec_env *aenv,
+act_redirect_commit(const struct sieve_action_exec_env *aenv,
 		    void *tr_context ATTR_UNUSED, bool *keep)
 {
+	const struct sieve_action *action = aenv->action;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_instance *svinst = eenv->svinst;
 	struct act_redirect_context *ctx =

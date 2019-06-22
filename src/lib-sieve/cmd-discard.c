@@ -69,8 +69,7 @@ static void
 act_discard_print(const struct sieve_action *action,
 		  const struct sieve_result_print_env *rpenv, bool *keep);
 static int
-act_discard_commit(const struct sieve_action *action,
-		   const struct sieve_action_exec_env *aenv, void *tr_context,
+act_discard_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
 		   bool *keep);
 
 const struct sieve_action_def act_discard = {
@@ -155,8 +154,7 @@ act_discard_print(const struct sieve_action *action ATTR_UNUSED,
 }
 
 static int
-act_discard_commit(const struct sieve_action *action ATTR_UNUSED,
-		   const struct sieve_action_exec_env *aenv,
+act_discard_commit(const struct sieve_action_exec_env *aenv,
 		   void *tr_context ATTR_UNUSED, bool *keep)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;

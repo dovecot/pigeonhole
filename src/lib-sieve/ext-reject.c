@@ -297,8 +297,7 @@ static void
 act_reject_print(const struct sieve_action *action,
 		 const struct sieve_result_print_env *rpenv, bool *keep);
 static int
-act_reject_commit(const struct sieve_action *action ATTR_UNUSED,
-		  const struct sieve_action_exec_env *aenv, void *tr_context,
+act_reject_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
 		  bool *keep);
 
 const struct sieve_action_def act_reject = {
@@ -504,13 +503,12 @@ act_reject_print(const struct sieve_action *action,
 }
 
 static int
-act_reject_commit(const struct sieve_action *action,
-		  const struct sieve_action_exec_env *aenv,
+act_reject_commit(const struct sieve_action_exec_env *aenv,
 		  void *tr_context ATTR_UNUSED, bool *keep)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct act_reject_context *rj_ctx =
-		(struct act_reject_context *)action->context;
+		(struct act_reject_context *)aenv->action->context;
 	const struct smtp_address *sender, *recipient;
 	int ret;
 

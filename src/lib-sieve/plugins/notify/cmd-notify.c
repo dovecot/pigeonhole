@@ -147,8 +147,7 @@ static void
 act_notify_print(const struct sieve_action *action,
 		 const struct sieve_result_print_env *rpenv, bool *keep);
 static int
-act_notify_commit(const struct sieve_action *action,
-		  const struct sieve_action_exec_env *aenv,
+act_notify_commit(const struct sieve_action_exec_env *aenv,
 		  void *tr_context, bool *keep);
 
 /* Action object */
@@ -843,14 +842,13 @@ act_notify_send(const struct sieve_action_exec_env *aenv,
 }
 
 static int
-act_notify_commit(const struct sieve_action *action,
-		  const struct sieve_action_exec_env *aenv,
+act_notify_commit(const struct sieve_action_exec_env *aenv,
 		  void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct mail *mail = eenv->msgdata->mail;
 	const struct ext_notify_action *act =
-		(const struct ext_notify_action *)action->context;
+		(const struct ext_notify_action *)aenv->action->context;
 	const char *const *hdsp;
 	bool result;
 	int ret;

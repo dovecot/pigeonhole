@@ -922,7 +922,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 	/* Start keep action */
 	if (act_keep.def->start != NULL) {
 		sieve_result_prepare_action_env(result, &act_keep);
-		status = act_keep.def->start(&act_keep, aenv, &tr_context);
+		status = act_keep.def->start(aenv, &tr_context);
 	}
 
 	/* Execute keep action */
@@ -934,17 +934,16 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 			if (sef->def->pre_execute != NULL) {
 				sieve_result_prepare_action_env(result,
 								&act_keep);
-				status = sef->def->pre_execute(
-					sef, &act_keep, aenv,
-					&sef->context, tr_context);
+				status = sef->def->pre_execute(sef, aenv,
+							       &sef->context,
+							       tr_context);
 			}
 			rsef = rsef->next;
 		}
 
 		if (status == SIEVE_EXEC_OK && act_keep.def->execute != NULL) {
 			sieve_result_prepare_action_env(result, &act_keep);
-			status = act_keep.def->execute(&act_keep, aenv,
-						       tr_context);
+			status = act_keep.def->execute(aenv, tr_context);
 		}
 
 		rsef = rsef_first;
@@ -954,8 +953,8 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 			if (sef->def->post_execute != NULL) {
 				sieve_result_prepare_action_env(result,
 								&act_keep);
-				status = sef->def->post_execute(
-					sef, &act_keep, aenv, tr_context);
+				status = sef->def->post_execute(sef, aenv,
+								tr_context);
 			}
 			rsef = rsef->next;
 		}
@@ -967,8 +966,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 
 		if (act_keep.def->commit != NULL) {
 			sieve_result_prepare_action_env(result, &act_keep);
-			status = act_keep.def->commit(&act_keep, aenv,
-						      tr_context, &dummy);
+			status = act_keep.def->commit(aenv, tr_context, &dummy);
 		}
 
 		rsef = rsef_first;
@@ -979,8 +977,8 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 			if (sef->def->post_commit != NULL) {
 				sieve_result_prepare_action_env(result,
 								&act_keep);
-				sef->def->post_commit(sef, &act_keep, aenv,
-						      tr_context, &keep);
+				sef->def->post_commit(sef, aenv, tr_context,
+						      &keep);
 			}
 			rsef = rsef->next;
 		}
@@ -988,7 +986,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 		/* Failed, rollback */
 		if (act_keep.def->rollback != NULL) {
 			sieve_result_prepare_action_env(result, &act_keep);
-			act_keep.def->rollback(&act_keep, aenv, tr_context,
+			act_keep.def->rollback(aenv, tr_context,
 					       (status == SIEVE_EXEC_OK));
 		}
 	}
@@ -996,7 +994,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 	/* Finish keep action */
 	if (act_keep.def->finish != NULL) {
 		sieve_result_prepare_action_env(result, &act_keep);
-		act_keep.def->finish(&act_keep, aenv, tr_context, status);
+		act_keep.def->finish(aenv, tr_context, status);
 	}
 
 	sieve_result_finish_action_env(result);
@@ -1078,7 +1076,7 @@ sieve_result_transaction_start(struct sieve_result *result,
 
 		if (act->def->start != NULL) {
 			sieve_result_prepare_action_env(result, act);
-			status = act->def->start(act, &result->action_env,
+			status = act->def->start(&result->action_env,
 						 &rac->tr_context);
 			rac->success = (status == SIEVE_EXEC_OK);
 		}
@@ -1117,7 +1115,7 @@ sieve_result_transaction_execute(struct sieve_result *result,
 			if (sef->def != NULL && sef->def->pre_execute != NULL) {
 				sieve_result_prepare_action_env(result, act);
 				status = sef->def->pre_execute(
-					sef, act, &result->action_env,
+					sef, &result->action_env,
 					&sef->context, rac->tr_context);
 			}
 			rsef = rsef->next;
@@ -1127,8 +1125,8 @@ sieve_result_transaction_execute(struct sieve_result *result,
 		if (status == SIEVE_EXEC_OK && act->def != NULL &&
 		    act->def->execute != NULL) {
 			sieve_result_prepare_action_env(result, act);
-			status = act->def->execute(
-				act, &result->action_env, rac->tr_context);
+			status = act->def->execute(&result->action_env,
+						   rac->tr_context);
 		}
 
 		/* Execute post-execute event of side effects */
@@ -1140,7 +1138,7 @@ sieve_result_transaction_execute(struct sieve_result *result,
 			    sef->def->post_execute != NULL) {
 				sieve_result_prepare_action_env(result, act);
 				status = sef->def->post_execute(
-					sef, act, &result->action_env,
+					sef, &result->action_env,
 					rac->tr_context);
 			}
 			rsef = rsef->next;
@@ -1164,7 +1162,7 @@ sieve_result_action_commit(struct sieve_result *result,
 
 	if (act->def->commit != NULL) {
 		sieve_result_prepare_action_env(result, act);
-		cstatus = act->def->commit(act, &result->action_env,
+		cstatus = act->def->commit(&result->action_env,
 					   rac->tr_context, impl_keep);
 		if (cstatus == SIEVE_EXEC_OK) {
 			act->executed = TRUE;
@@ -1182,7 +1180,7 @@ sieve_result_action_commit(struct sieve_result *result,
 			if (sef->def->post_commit != NULL) {
 				sieve_result_prepare_action_env(result, act);
 				sef->def->post_commit(
-					sef, act, &result->action_env,
+					sef, &result->action_env,
 					rac->tr_context, impl_keep);
 			}
 			rsef = rsef->next;
@@ -1202,8 +1200,8 @@ sieve_result_action_rollback(struct sieve_result *result,
 
 	if (act->def->rollback != NULL) {
 		sieve_result_prepare_action_env(result, act);
-		act->def->rollback(act, &result->action_env,
-				   rac->tr_context, rac->success);
+		act->def->rollback(&result->action_env, rac->tr_context,
+				   rac->success);
 	}
 
 	/* Rollback side effects */
@@ -1213,7 +1211,7 @@ sieve_result_action_rollback(struct sieve_result *result,
 
 		if (sef->def != NULL && sef->def->rollback != NULL) {
 			sieve_result_prepare_action_env(result, act);
-			sef->def->rollback(sef, act, &result->action_env,
+			sef->def->rollback(sef, &result->action_env,
 					   rac->tr_context, rac->success);
 		}
 		rsef = rsef->next;
@@ -1355,7 +1353,7 @@ sieve_result_transaction_finish(struct sieve_result *result,
 
 		if (act->def->finish != NULL) {
 			sieve_result_prepare_action_env(result, act);
-			act->def->finish(act, &result->action_env,
+			act->def->finish(&result->action_env,
 					 rac->tr_context, status);
 		}
 

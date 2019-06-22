@@ -192,18 +192,14 @@ act_store_print(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
 
 static int
-act_store_start(const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv, void **tr_context);
+act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context);
 static int
-act_store_execute(const struct sieve_action *action,
-		  const struct sieve_action_exec_env *aenv, void *tr_context);
+act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context);
 static int
-act_store_commit(const struct sieve_action *action,
-		 const struct sieve_action_exec_env *aenv, void *tr_context,
+act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
 		 bool *keep);
 static void
-act_store_rollback(const struct sieve_action *action,
-		   const struct sieve_action_exec_env *aenv, void *tr_context,
+act_store_rollback(const struct sieve_action_exec_env *aenv, void *tr_context,
 		   bool success);
 
 /* Action object */
@@ -404,9 +400,9 @@ act_store_mailbox_open(const struct sieve_action_exec_env *aenv,
 }
 
 static int
-act_store_start(const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv, void **tr_context)
+act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 {
+	const struct sieve_action *action = aenv->action;
 	struct act_store_context *ctx =
 		(struct act_store_context *)action->context;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
@@ -522,9 +518,9 @@ have_equal_keywords(struct mail *mail, struct mail_keywords *new_kw)
 }
 
 static int
-act_store_execute(const struct sieve_action *action,
-		  const struct sieve_action_exec_env *aenv, void *tr_context)
+act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 {
+	const struct sieve_action *action = aenv->action;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *)tr_context;
@@ -722,8 +718,7 @@ act_store_log_status(struct act_store_transaction *trans,
 }
 
 static int
-act_store_commit(const struct sieve_action *action ATTR_UNUSED,
-		 const struct sieve_action_exec_env *aenv, void *tr_context,
+act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
 		 bool *keep)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
@@ -783,8 +778,7 @@ act_store_commit(const struct sieve_action *action ATTR_UNUSED,
 }
 
 static void
-act_store_rollback(const struct sieve_action *action ATTR_UNUSED,
-		   const struct sieve_action_exec_env *aenv, void *tr_context,
+act_store_rollback(const struct sieve_action_exec_env *aenv, void *tr_context,
 		   bool success)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;

@@ -139,8 +139,7 @@ act_notify_print(const struct sieve_action *action,
 		 const struct sieve_result_print_env *rpenv,
 		 bool *keep);
 static int
-act_notify_commit(const struct sieve_action *action,
-		  const struct sieve_action_exec_env *aenv,
+act_notify_commit(const struct sieve_action_exec_env *aenv,
 		  void *tr_context, bool *keep);
 
 /* Action object */
@@ -589,13 +588,12 @@ act_notify_print(const struct sieve_action *action,
 /* Result execution */
 
 static int
-act_notify_commit(const struct sieve_action *action,
-		  const struct sieve_action_exec_env *aenv,
+act_notify_commit(const struct sieve_action_exec_env *aenv,
 		  void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	const struct sieve_enotify_action *act =
-		(const struct sieve_enotify_action *)action->context;
+		(const struct sieve_enotify_action *)aenv->action->context;
 	const struct sieve_enotify_method *method = act->method;
 	struct sieve_enotify_exec_env nenv;
 	int ret = 0;

@@ -66,9 +66,10 @@ static bool ext_copy_validator_load
 static void seff_copy_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
-static void seff_copy_post_commit
-	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
+static void
+seff_copy_post_commit(const struct sieve_side_effect *seffect,
+		      const struct sieve_action_exec_env *aenv,
+		      void *tr_context, bool *keep);
 
 const struct sieve_side_effect_def copy_side_effect = {
 	SIEVE_OBJECT("copy", &copy_side_effect_operand, 0),
@@ -168,11 +169,10 @@ static void seff_copy_print
 	*keep = TRUE;
 }
 
-static void seff_copy_post_commit
-(const struct sieve_side_effect *seffect ATTR_UNUSED,
-	const struct sieve_action *action ATTR_UNUSED,
-	const struct sieve_action_exec_env *aenv ATTR_UNUSED,
-		void *tr_context ATTR_UNUSED, bool *keep)
+static void
+seff_copy_post_commit(const struct sieve_side_effect *seffect ATTR_UNUSED,
+		      const struct sieve_action_exec_env *aenv ATTR_UNUSED,
+		      void *tr_context ATTR_UNUSED, bool *keep)
 {
 	*keep = TRUE;
 }
