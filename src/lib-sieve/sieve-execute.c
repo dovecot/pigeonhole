@@ -5,6 +5,10 @@
 
 #include "sieve-execute.h"
 
+struct event_category event_category_sieve_execute = {
+	.name = "sieve-execute",
+};
+
 void sieve_execute_init(struct sieve_execute_env *eenv,
 			struct sieve_instance *svinst, pool_t pool,
 			const struct sieve_message_data *msgdata,
@@ -20,6 +24,7 @@ void sieve_execute_init(struct sieve_execute_env *eenv,
 
 	pool_ref(pool);
 	eenv->event = event_create(svinst->event);
+	event_add_category(eenv->event, &event_category_sieve_execute);
 	event_add_str(eenv->event, "message_id", msgdata->id);
 	if ((flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
 		/* Make sure important envelope fields are available */
