@@ -8,6 +8,7 @@ struct sieve_execute_env {
 	pool_t pool;
 
 	enum sieve_execute_flags flags;
+	struct event *event;
 
 	const struct sieve_message_data *msgdata;
 	const struct sieve_script_env *scriptenv;

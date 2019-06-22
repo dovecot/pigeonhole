@@ -19,6 +19,15 @@ void sieve_execute_init(struct sieve_execute_env *eenv,
 	eenv->scriptenv = senv;
 
 	pool_ref(pool);
+	eenv->event = event_create(svinst->event);
+	event_add_str(eenv->event, "message_id", msgdata->id);
+	if ((flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0) {
+		/* Make sure important envelope fields are available */
+		event_add_str(eenv->event, "mail_from",
+			smtp_address_encode(msgdata->envelope.mail_from));
+		event_add_str(eenv->event, "rcpt_to",
+			smtp_address_encode(msgdata->envelope.rcpt_to));
+	}
 
 	eenv->exec_status = senv->exec_status;
 	if (eenv->exec_status == NULL)
@@ -29,6 +38,7 @@ void sieve_execute_init(struct sieve_execute_env *eenv,
 
 void sieve_execute_deinit(struct sieve_execute_env *eenv)
 {
+	event_unref(&eenv->event);
 	pool_unref(&eenv->pool);
 }
 
