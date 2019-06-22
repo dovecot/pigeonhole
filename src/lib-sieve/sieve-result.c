@@ -68,6 +68,7 @@ struct sieve_result {
 	int refcount;
 
 	struct sieve_instance *svinst;
+	struct event *event;
 
 	/* Context data for extensions */
 	ARRAY(void *) ext_contexts;
@@ -105,10 +106,13 @@ sieve_result_create(struct sieve_instance *svinst, pool_t pool,
 	result->pool = pool;
 	result->svinst = svinst;
 
+	result->event = event_create(eenv->event);
+
 	p_array_init(&result->ext_contexts, pool, 4);
 
 	result->action_env.result = result;
 	result->action_env.exec_env = eenv;
+	result->action_env.event = result->event;
 	result->action_env.msgctx =
 		sieve_message_context_create(svinst, senv->user, msgdata);
 
@@ -144,6 +148,7 @@ void sieve_result_unref(struct sieve_result **_result)
 
 	if (result->action_env.ehandler != NULL)
 		sieve_error_handler_unref(&result->action_env.ehandler);
+	event_unref(&result->event);
 
 	pool_unref(&result->pool);
 	*_result = NULL;
