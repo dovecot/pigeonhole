@@ -129,23 +129,24 @@ void sieve_result_ref(struct sieve_result *result)
 	result->refcount++;
 }
 
-void sieve_result_unref(struct sieve_result **result)
+void sieve_result_unref(struct sieve_result **_result)
 {
-	i_assert((*result)->refcount > 0);
+	struct sieve_result *result = *_result;
 
-	if (--(*result)->refcount != 0)
+	i_assert(result->refcount > 0);
+
+	if (--result->refcount != 0)
 		return;
 
-	sieve_message_context_unref(&(*result)->action_env.msgctx);
+	sieve_message_context_unref(&result->action_env.msgctx);
 
-	hash_table_destroy(&(*result)->action_contexts);
+	hash_table_destroy(&result->action_contexts);
 
-	if ((*result)->action_env.ehandler != NULL)
-		sieve_error_handler_unref(&(*result)->action_env.ehandler);
+	if (result->action_env.ehandler != NULL)
+		sieve_error_handler_unref(&result->action_env.ehandler);
 
-	pool_unref(&(*result)->pool);
-
- 	*result = NULL;
+	pool_unref(&result->pool);
+	*_result = NULL;
 }
 
 pool_t sieve_result_pool(struct sieve_result *result)
