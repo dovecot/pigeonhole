@@ -92,6 +92,7 @@ struct sieve_action {
 };
 
 #define sieve_action_is(act, definition) ((act)->def == &(definition))
+#define sieve_action_name(act) ((act)->def->name)
 
 /*
  * Action side effects
