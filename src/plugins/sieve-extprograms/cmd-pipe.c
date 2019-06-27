@@ -264,7 +264,7 @@ cmd_pipe_operation_execute(const struct sieve_runtime_env *renv,
 	act->program_name = p_strdup(pool, str_c(pname));
 	act->try = try;
 
-	if (sieve_result_add_action(renv, this_ext, &act_pipe, slist,
+	if (sieve_result_add_action(renv, this_ext, "pipe", &act_pipe, slist,
 				    (void *)act, 0, TRUE) < 0)
 		return SIEVE_EXEC_FAILURE;
 	return SIEVE_EXEC_OK;

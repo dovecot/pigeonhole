@@ -243,7 +243,8 @@ cmd_redirect_operation_execute(const struct sieve_runtime_env *renv,
 
 	/* Add redirect action to the result */
 
-	return sieve_act_redirect_add_to_result(renv, slist, to_address);
+	return sieve_act_redirect_add_to_result(renv, "redirect", slist,
+						to_address);
 }
 
 /*

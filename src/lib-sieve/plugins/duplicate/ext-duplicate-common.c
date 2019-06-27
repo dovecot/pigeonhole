@@ -242,7 +242,8 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	 * execution.
 	 */
 	if (!duplicate || last) {
-		if (sieve_result_add_action(renv, NULL, &act_duplicate_mark,
+		if (sieve_result_add_action(renv, NULL, NULL,
+					    &act_duplicate_mark,
 					    NULL, (void *) act, 0, FALSE) < 0)
 			return -1;
 	}

@@ -750,8 +750,8 @@ ext_vacation_operation_execute(const struct sieve_runtime_env *renv,
 		act->addresses = array_idx(&addrs, 0);
 	}
 
-	if (sieve_result_add_action(renv, this_ext, &act_vacation, slist,
-				    (void *)act, 0, FALSE) < 0)
+	if (sieve_result_add_action(renv, this_ext, "vacation", &act_vacation,
+				    slist, (void *)act, 0, FALSE) < 0)
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;

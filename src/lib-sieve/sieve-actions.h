@@ -83,6 +83,7 @@ struct sieve_action {
 	const struct sieve_extension *ext;
 	struct event *event;
 
+	const char *name;
 	const char *location;
 	void *context;
 	struct mail *mail;
@@ -90,7 +91,7 @@ struct sieve_action {
 };
 
 #define sieve_action_is(act, definition) ((act)->def == &(definition))
-#define sieve_action_name(act) ((act)->def->name)
+#define sieve_action_name(act) ((act)->name)
 
 /*
  * Action side effects
@@ -219,6 +220,7 @@ struct act_store_transaction {
 };
 
 int sieve_act_store_add_to_result(const struct sieve_runtime_env *renv,
+				  const char *name,
 				  struct sieve_side_effects_list *seffects,
 				  const char *folder);
 
@@ -238,6 +240,7 @@ struct act_redirect_context {
 };
 
 int sieve_act_redirect_add_to_result(const struct sieve_runtime_env *renv,
+				     const char *name,
 				     struct sieve_side_effects_list *seffects,
 				     const struct smtp_address *to_address);
 

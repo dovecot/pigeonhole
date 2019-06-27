@@ -221,6 +221,7 @@ const struct sieve_action_def act_store = {
 /* API */
 
 int sieve_act_store_add_to_result(const struct sieve_runtime_env *renv,
+				  const char *name,
 				  struct sieve_side_effects_list *seffects,
 				  const char *mailbox)
 {
@@ -232,7 +233,7 @@ int sieve_act_store_add_to_result(const struct sieve_runtime_env *renv,
 	act = p_new(pool, struct act_store_context, 1);
 	act->mailbox = p_strdup(pool, mailbox);
 
-	return sieve_result_add_action(renv, NULL, &act_store, seffects,
+	return sieve_result_add_action(renv, NULL, name, &act_store, seffects,
 				       (void *)act, 0, TRUE);
 }
 
@@ -812,6 +813,7 @@ act_store_rollback(const struct sieve_action_exec_env *aenv, void *tr_context,
  */
 
 int sieve_act_redirect_add_to_result(const struct sieve_runtime_env *renv,
+				     const char *name,
 				     struct sieve_side_effects_list *seffects,
 				     const struct smtp_address *to_address)
 {
@@ -824,7 +826,7 @@ int sieve_act_redirect_add_to_result(const struct sieve_runtime_env *renv,
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = smtp_address_clone(pool, to_address);
 
-	if (sieve_result_add_action(renv, NULL, &act_redirect, seffects,
+	if (sieve_result_add_action(renv, NULL, name, &act_redirect, seffects,
 				    (void *)act, svinst->max_redirects,
 				    TRUE) < 0)
 		return SIEVE_EXEC_FAILURE;

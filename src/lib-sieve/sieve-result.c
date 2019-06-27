@@ -399,7 +399,7 @@ sieve_result_action_detach(struct sieve_result *result,
 
 static int
 _sieve_result_add_action(const struct sieve_runtime_env *renv,
-			 const struct sieve_extension *ext,
+			 const struct sieve_extension *ext, const char *name,
 			 const struct sieve_action_def *act_def,
 			 struct sieve_side_effects_list *seffects,
 			 void *context, unsigned int instance_limit,
@@ -412,6 +412,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 	struct sieve_result_action *raction = NULL, *kaction = NULL;
 	struct sieve_action action;
 
+	action.name = name;
 	action.def = act_def;
 	action.ext = ext;
 	action.location = sieve_runtime_get_full_command_location(renv);
@@ -545,6 +546,9 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 		raction->success = FALSE;
 	}
 
+	raction->action.name = (action.name == NULL ?
+				act_def->name :
+				p_strdup(result->pool, action.name));
 	raction->action.context = context;
 	raction->action.def = act_def;
 	raction->action.ext = ext;
@@ -626,21 +630,22 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 }
 
 int sieve_result_add_action(const struct sieve_runtime_env *renv,
-			    const struct sieve_extension *ext,
+			    const struct sieve_extension *ext, const char *name,
 			    const struct sieve_action_def *act_def,
 			    struct sieve_side_effects_list *seffects,
 			    void *context, unsigned int instance_limit,
 			    bool preserve_mail)
 {
-	return _sieve_result_add_action(renv, ext, act_def, seffects, context,
-					instance_limit, preserve_mail, FALSE);
+	return _sieve_result_add_action(renv, ext, name, act_def, seffects,
+					context, instance_limit, preserve_mail,
+					FALSE);
 }
 
 int sieve_result_add_keep(const struct sieve_runtime_env *renv,
 			  struct sieve_side_effects_list *seffects)
 {
 	return _sieve_result_add_action(renv, renv->result->keep_action.ext,
-					renv->result->keep_action.def,
+					"keep", renv->result->keep_action.def,
 					seffects, NULL, 0, TRUE, TRUE);
 }
 
@@ -908,6 +913,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 		act_keep = result->failure_action;
 	else
 		act_keep = result->keep_action;
+	act_keep.name = "keep";
 	act_keep.mail = NULL;
 
 	/* If keep is a non-action, return right away */

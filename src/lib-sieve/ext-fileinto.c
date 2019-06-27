@@ -207,8 +207,8 @@ static int ext_fileinto_operation_execute
 	}
 
 	/* Add action to result */
-	if ( sieve_act_store_add_to_result
-		(renv, slist, str_c(folder)) < 0 )
+	if ( sieve_act_store_add_to_result(renv, "fileinto", slist,
+					   str_c(folder)) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
 	sieve_message_snapshot(renv->msgctx);

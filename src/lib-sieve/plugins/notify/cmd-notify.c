@@ -583,8 +583,9 @@ cmd_notify_operation_execute(const struct sieve_runtime_env *renv,
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 
-		if (sieve_result_add_action(renv, this_ext, &act_notify_old,
-					    NULL, (void *)act, 0, FALSE) < 0)
+		if (sieve_result_add_action(renv, this_ext, "notify",
+					    &act_notify_old, NULL, (void *)act,
+					    0, FALSE) < 0)
 			return SIEVE_EXEC_FAILURE;
 	}
 

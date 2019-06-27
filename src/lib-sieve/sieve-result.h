@@ -82,7 +82,7 @@ void sieve_result_add_implicit_side_effect(
 	const struct sieve_side_effect_def *seffect, void *context);
 
 int sieve_result_add_action(const struct sieve_runtime_env *renv,
-			    const struct sieve_extension *ext,
+			    const struct sieve_extension *ext, const char *name,
 			    const struct sieve_action_def *act_def,
 			    struct sieve_side_effects_list *seffects,
 			    void *context, unsigned int instance_limit,

@@ -418,8 +418,10 @@ ext_reject_operation_execute(const struct sieve_runtime_env *renv,
 	act->reason = p_strdup(pool, str_c(reason));
 	act->ereject = sieve_operation_is(oprtn, ereject_operation);
 
-	if (sieve_result_add_action(renv, this_ext, &act_reject, slist,
-				    (void *)act, 0, FALSE) < 0)
+	if (sieve_result_add_action(renv, this_ext,
+				    (act->ereject ? "ereject" : "reject"),
+				    &act_reject, slist, (void *)act,
+				    0, FALSE) < 0)
 		return SIEVE_EXEC_FAILURE;
 	return SIEVE_EXEC_OK;
 }
