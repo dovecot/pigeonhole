@@ -192,6 +192,13 @@ void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
 #define sieve_result_global_log_warning(aenv, ...) \
 	sieve_result_global_log_warning(aenv, __FILE__, __LINE__, __VA_ARGS__)
 
+void sieve_result_event_log(const struct sieve_action_exec_env *aenv,
+			    const char *csrc_filename,
+			    unsigned int csrc_linenum, struct event *event,
+			    const char *fmt, ...) ATTR_FORMAT(5, 0);
+#define sieve_result_event_log(aenv, event, ...) \
+	sieve_result_event_log(aenv, __FILE__, __LINE__, event, __VA_ARGS__)
+
 void sieve_result_critical(const struct sieve_action_exec_env *aenv,
 			   const char *csrc_filename, unsigned int csrc_linenum,
 			   const char *user_prefix, const char *fmt, ...)

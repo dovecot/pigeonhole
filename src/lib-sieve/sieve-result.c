@@ -1780,6 +1780,29 @@ void sieve_result_global_log_warning(const struct sieve_action_exec_env *aenv,
 	va_end(args);
 }
 
+#undef sieve_result_event_log
+void sieve_result_event_log(const struct sieve_action_exec_env *aenv,
+			    const char *csrc_filename,
+			    unsigned int csrc_linenum, struct event *event,
+			    const char *fmt, ...)
+{
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct sieve_error_params params = {
+		.log_type = LOG_TYPE_INFO,
+		.event = event,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
+	};
+	va_list args;
+
+	va_start(args, fmt);
+	sieve_global_logv(eenv->svinst, aenv->ehandler, &params, fmt, args);
+	va_end(args);
+}
+
+
 #undef sieve_result_critical
 void sieve_result_critical(const struct sieve_action_exec_env *aenv,
 			   const char *csrc_filename, unsigned int csrc_linenum,
