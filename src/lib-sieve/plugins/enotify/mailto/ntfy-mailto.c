@@ -718,8 +718,14 @@ static int ntfy_mailto_send
 				str_c(all),	str_sanitize(error, 512));
 		}
 	} else {
-		sieve_enotify_global_info(nenv,
-			"sent mail notification to %s", str_c(all));
+		struct event_passthrough *e =
+			event_create_passthrough(nenv->event)->
+			set_name("sieve_action_notify")->
+			add_str("sieve_notify_target", str_c(all));
+
+		sieve_enotify_event_log(nenv, e->event(),
+					"sent mail notification to %s",
+					str_c(all));
 	}
 
 	return 0;

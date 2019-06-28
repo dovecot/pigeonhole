@@ -1518,8 +1518,14 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 		sieve_number_t seconds;
 
 		eenv->exec_status->significant_action_executed = TRUE;
-		sieve_result_global_log(aenv, "sent vacation response to <%s>",
-					smtp_address_encode(sender));
+
+		struct event_passthrough *e =
+			event_create_passthrough(aenv->event)->
+			set_name("sieve_action_vacation");
+
+		sieve_result_event_log(aenv, e->event(),
+				       "sent vacation response to <%s>",
+				       smtp_address_encode(sender));
 
 		/* Check period limits once more */
 		seconds = ctx->seconds;

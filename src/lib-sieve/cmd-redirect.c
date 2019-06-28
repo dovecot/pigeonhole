@@ -585,9 +585,16 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv,
 			ioloop_time + svinst->redirect_duplicate_period);
 
 		eenv->exec_status->significant_action_executed = TRUE;
-		sieve_result_global_log(
-			aenv, "forwarded to <%s>",
-			smtp_address_encode(ctx->to_address));
+
+		struct event_passthrough *e =
+			event_create_passthrough(aenv->event)->
+			set_name("sieve_action_redirect")->
+			add_str("sieve_redirect_target",
+				smtp_address_encode(ctx->to_address));
+
+		sieve_result_event_log(aenv, e->event(),
+				       "forwarded to <%s>",
+				       smtp_address_encode(ctx->to_address));
 
 		/* Indicate that message was successfully forwarded */
 		eenv->exec_status->message_forwarded = TRUE;

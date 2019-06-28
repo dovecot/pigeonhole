@@ -360,8 +360,15 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 		sieve_extprogram_destroy(&sprog);
 
 	if (ret > 0) {
-		sieve_result_global_log(aenv, "piped message to program `%s'",
-					str_sanitize(act->program_name, 128));
+		struct event_passthrough *e =
+			event_create_passthrough(aenv->event)->
+			set_name("sieve_action_pipe")->
+			add_str("sieve_pipe_program",
+				str_sanitize(act->program_name, 256));
+
+		sieve_result_event_log(aenv, e->event(),
+				       "piped message to program `%s'",
+				       str_sanitize(act->program_name, 128));
 
 		/* Indicate that message was successfully 'forwarded' */
 		eenv->exec_status->message_forwarded = TRUE;

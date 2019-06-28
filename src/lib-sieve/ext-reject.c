@@ -546,10 +546,15 @@ act_reject_commit(const struct sieve_action_exec_env *aenv,
 		return ret;
 
 	eenv->exec_status->significant_action_executed = TRUE;
-	sieve_result_global_log(
-		aenv, "rejected message from <%s> (%s)",
-		smtp_address_encode(sender),
-		(rj_ctx->ereject ? "ereject" : "reject"));
+
+	struct event_passthrough *e =
+		event_create_passthrough(aenv->event)->
+		set_name("sieve_action_reject");
+
+	sieve_result_event_log(aenv, e->event(),
+			       "rejected message from <%s> (%s)",
+			       smtp_address_encode(sender),
+			       (rj_ctx->ereject ? "ereject" : "reject"));
 
 	*keep = FALSE;
 	return SIEVE_EXEC_OK;

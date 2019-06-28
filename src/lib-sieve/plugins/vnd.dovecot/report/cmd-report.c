@@ -652,10 +652,19 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 		}
 	} else {
 		eenv->exec_status->significant_action_executed = TRUE;
-		sieve_result_global_log(
-			aenv, "sent `%s' report to <%s>",
-			str_sanitize(act->feedback_type, 32),
-			smtp_address_encode(act->to_address));
+
+		struct event_passthrough *e =
+			event_create_passthrough(aenv->event)->
+			set_name("sieve_action_report")->
+			add_str("sieve_report_target",
+				smtp_address_encode(act->to_address))->
+			add_str("sieve_report_type",
+				str_sanitize(act->feedback_type, 32));
+
+		sieve_result_event_log(aenv, e->event(),
+				       "sent `%s' report to <%s>",
+				       str_sanitize(act->feedback_type, 32),
+				       smtp_address_encode(act->to_address));
 	}
 
 	return SIEVE_EXEC_OK;

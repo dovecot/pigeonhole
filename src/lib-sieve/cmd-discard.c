@@ -161,8 +161,12 @@ act_discard_commit(const struct sieve_action_exec_env *aenv,
 
 	eenv->exec_status->significant_action_executed = TRUE;
 
-	sieve_result_global_log(aenv,
-		"marked message to be discarded if not explicitly delivered "
+	struct event_passthrough *e =
+		event_create_passthrough(aenv->event)->
+		set_name("sieve_action_discard");
+
+	sieve_result_event_log(aenv, e->event(),
+		"Marked message to be discarded if not explicitly delivered "
 		"(discard action)");
 	*keep = FALSE;
 

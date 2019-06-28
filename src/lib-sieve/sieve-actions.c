@@ -713,8 +713,13 @@ act_store_log_status(struct act_store_transaction *trans,
 					mailbox_name);
 	/* Succeeded */
 	} else {
-		sieve_result_global_log(aenv, "stored mail into mailbox %s",
-					mailbox_name);
+		struct event_passthrough *e =
+			event_create_passthrough(aenv->event)->
+			set_name("sieve_action_fileinto")->
+			add_str("sieve_fileinto_mailbox", mailbox_name);
+		sieve_result_event_log(aenv, e->event(),
+				       "stored mail into mailbox %s",
+				       mailbox_name);
 	}
 }
 
