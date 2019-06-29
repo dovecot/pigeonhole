@@ -596,6 +596,38 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler)
 }
 
 /*
+ * Error params utility
+ */
+
+static void
+sieve_error_params_add_prefix(struct sieve_error_handler *ehandler ATTR_UNUSED,
+			      const struct sieve_error_params *params,
+			      string_t *prefix)
+{
+	if (params->location != NULL && *params->location != '\0') {
+		str_append(prefix, params->location);
+		str_append(prefix, ": ");
+	}
+
+	switch (params->log_type) {
+	case LOG_TYPE_ERROR:
+		str_append(prefix, "error: ");
+		break;
+	case LOG_TYPE_WARNING:
+		str_append(prefix, "warning: ");
+		break;
+	case LOG_TYPE_INFO:
+		str_append(prefix, "info: ");
+		break;
+	case LOG_TYPE_DEBUG:
+		str_append(prefix, "debug: ");
+		break;
+	default:
+		i_unreached();
+	}
+}
+
+/*
  * Master/System error handler
  *
  * - Output errors directly to Dovecot master log
@@ -635,37 +667,17 @@ sieve_master_ehandler_create(struct sieve_instance *svinst,
  */
 
 static void ATTR_FORMAT(4, 0)
-sieve_stderr_logv(struct sieve_error_handler *ehandler ATTR_UNUSED,
+sieve_stderr_logv(struct sieve_error_handler *ehandler,
 		  const struct sieve_error_params *params,
 		  enum sieve_error_flags flags ATTR_UNUSED,
 		  const char *fmt, va_list args)
 {
-	const char *prefix;
+	string_t *prefix = t_str_new(64);
 
-	switch (params->log_type) {
-	case LOG_TYPE_ERROR:
-		prefix = "error";
-		break;
-	case LOG_TYPE_WARNING:
-		prefix = "warning";
-		break;
-	case LOG_TYPE_INFO:
-		prefix = "info";
-		break;
-	case LOG_TYPE_DEBUG:
-		prefix = "debug";
-		break;
-	default:
-		i_unreached();
-	}
+	sieve_error_params_add_prefix(ehandler, params, prefix);
 
-	if (params->location == NULL || *params->location == '\0') {
-		fprintf(stderr, "%s: %s.\n", prefix,
-			t_strdup_vprintf(fmt, args));
-	} else {
-		fprintf(stderr, "%s: %s: %s.\n", params->location, prefix,
-			t_strdup_vprintf(fmt, args));
-	}
+	fprintf(stderr, "%s%s.\n", str_c(prefix),
+		t_strdup_vprintf(fmt, args));
 }
 
 struct sieve_error_handler *
@@ -708,28 +720,8 @@ sieve_strbuf_logv(struct sieve_error_handler *ehandler,
 {
 	struct sieve_strbuf_ehandler *handler =
 		(struct sieve_strbuf_ehandler *) ehandler;
-	const char *prefix;
 
-	switch (params->log_type) {
-	case LOG_TYPE_ERROR:
-		prefix = "error";
-		break;
-	case LOG_TYPE_WARNING:
-		prefix = "warning";
-		break;
-	case LOG_TYPE_INFO:
-		prefix = "info";
-		break;
-	case LOG_TYPE_DEBUG:
-		prefix = "debug";
-		break;
-	default:
-		i_unreached();
-	}
-
-	if (params->location != NULL && *params->location != '\0')
-		str_printfa(handler->errors, "%s: ", params->location);
-	str_printfa(handler->errors, "%s: ", prefix);
+	sieve_error_params_add_prefix(ehandler, params, handler->errors);
 	str_vprintfa(handler->errors, fmt, args);
 
 	if (!handler->crlf)
@@ -772,10 +764,10 @@ struct sieve_logfile_ehandler {
 	struct ostream *stream;
 };
 
-static void ATTR_FORMAT(4, 0)
+static void ATTR_FORMAT(3, 0)
 sieve_logfile_vprintf(struct sieve_logfile_ehandler *ehandler,
 		      const struct sieve_error_params *params,
-		      const char *prefix, const char *fmt, va_list args)
+		      const char *fmt, va_list args)
 {
 	string_t *outbuf;
 	ssize_t ret = 0, remain;
@@ -786,9 +778,8 @@ sieve_logfile_vprintf(struct sieve_logfile_ehandler *ehandler,
 
 	T_BEGIN {
 		outbuf = t_str_new(256);
-		if (params->location != NULL && *params->location != '\0')
-			str_printfa(outbuf, "%s: ", params->location);
-		str_printfa(outbuf, "%s: ", prefix);
+		sieve_error_params_add_prefix(&ehandler->handler,
+					      params, outbuf);
 		str_vprintfa(outbuf, fmt, args);
 		str_append(outbuf, ".\n");
 
@@ -812,11 +803,10 @@ sieve_logfile_vprintf(struct sieve_logfile_ehandler *ehandler,
 	}
 }
 
-inline static void ATTR_FORMAT(6, 7)
+inline static void ATTR_FORMAT(5, 6)
 sieve_logfile_printf(struct sieve_logfile_ehandler *ehandler,
 		     const char *csrc_filename, unsigned int csrc_linenum,
-		     const char *location, const char *prefix,
-		     const char *fmt, ...)
+		     const char *location, const char *fmt, ...)
 {
 	struct sieve_error_params params = {
 		.log_type = LOG_TYPE_INFO,
@@ -829,7 +819,7 @@ sieve_logfile_printf(struct sieve_logfile_ehandler *ehandler,
 	va_list args;
 	va_start(args, fmt);
 
-	sieve_logfile_vprintf(ehandler, &params, prefix, fmt, args);
+	sieve_logfile_vprintf(ehandler, &params, fmt, args);
 
 	va_end(args);
 }
@@ -953,8 +943,7 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 
 		if (strftime(buf, sizeof(buf), "%b %d %H:%M:%S", tm) > 0) {
 			sieve_logfile_printf(ehandler, __FILE__, __LINE__,
-					     "sieve", "info",
-					     "started log at %s", buf);
+					     "sieve", "started log at %s", buf);
 		}
 	}
 }
@@ -967,29 +956,11 @@ sieve_logfile_logv(struct sieve_error_handler *ehandler,
 {
 	struct sieve_logfile_ehandler *handler =
 		(struct sieve_logfile_ehandler *) ehandler;
-	const char *prefix;
 
 	if (!handler->started)
 		sieve_logfile_start(handler);
 
-	switch (params->log_type) {
-	case LOG_TYPE_ERROR:
-		prefix = "error";
-		break;
-	case LOG_TYPE_WARNING:
-		prefix = "warning";
-		break;
-	case LOG_TYPE_INFO:
-		prefix = "info";
-		break;
-	case LOG_TYPE_DEBUG:
-		prefix = "debug";
-		break;
-	default:
-		i_unreached();
-	}
-
-	sieve_logfile_vprintf(handler, params, prefix, fmt, args);
+	sieve_logfile_vprintf(handler, params, fmt, args);
 }
 
 static void sieve_logfile_free(struct sieve_error_handler *ehandler)
