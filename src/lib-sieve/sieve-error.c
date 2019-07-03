@@ -81,17 +81,18 @@ sieve_direct_master_log(struct sieve_instance *svinst,
 		.log_type = params->log_type,
 		.source_filename = params->csrc.filename,
 		.source_linenum = params->csrc.linenum,
+
+		.base_event = svinst->event,
 	};
 	struct event *event = (params->event != NULL ?
 			       params->event : svinst->event);
-	string_t *str;
 
-	str = t_str_new(256);
-	if (params->location != NULL && *params->location != '\0')
-		str_printfa(str, "%s: ", params->location);
-	str_append(str, message);
+	if (params->location != NULL && *params->location != '\0') {
+		event_params.base_send_prefix =
+			 t_strconcat(params->location, ": ", NULL);
+	}
 
-	event_log(event, &event_params, "%s", str_c(str));
+	event_log(event, &event_params, "%s", message);
 }
 
 void sieve_direct_logv(struct sieve_instance *svinst,
@@ -100,54 +101,83 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 		       enum sieve_error_flags flags,
 		       const char *fmt, va_list args)
 {
-	bool master_log = (ehandler != NULL && ehandler->master_log);
-	bool global_info_log = (
-		(flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 &&
-		params->log_type > LOG_TYPE_INFO);
+	struct event_log_params event_params = {
+		.log_type = params->log_type,
+		.source_filename = params->csrc.filename,
+		.source_linenum = params->csrc.linenum,
+		.base_event = svinst->event,
+		.base_str_out = NULL,
+		.no_send = TRUE,
+	};
+	struct event *event = (params->event != NULL ?
+			       params->event : svinst->event);
+	bool event_log = FALSE, ehandler_log = FALSE;
 
-	if ((flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
-	    (ehandler == NULL || ehandler->parent == NULL) &&
-	    (!master_log || global_info_log)) {
-		struct sieve_error_params new_params = *params;
-		va_list args_copy;
-
-		VA_COPY(args_copy, args);
-
-		if (global_info_log)
-			new_params.log_type = LOG_TYPE_INFO;
-
-		sieve_direct_master_log(svinst, &new_params,
-					t_strdup_vprintf(fmt, args_copy));
-
-		va_end(args_copy);
-
-		if (master_log)
-			return;
+	if (ehandler != NULL) {
+		switch (params->log_type) {
+		case LOG_TYPE_ERROR:
+			ehandler_log = sieve_errors_more_allowed(ehandler);
+			break;
+		case LOG_TYPE_WARNING:
+			ehandler_log = TRUE;
+			break;
+		case LOG_TYPE_INFO:
+			ehandler_log = ehandler->log_info;
+			break;
+		case LOG_TYPE_DEBUG:
+			ehandler_log = ehandler->log_debug;
+			break;
+		case LOG_TYPE_FATAL:
+		case LOG_TYPE_PANIC:
+		case LOG_TYPE_COUNT:
+		case LOG_TYPE_OPTION:
+			i_unreached();
+		}
 	}
 
-	if (ehandler == NULL)
-		return;
+	if (ehandler != NULL && ehandler->master_log) {
+		event_log = ehandler_log;
+		ehandler_log = FALSE;
+	}
+	if ((flags & SIEVE_ERROR_FLAG_GLOBAL) != 0) {
+		event_log = TRUE;
+		if ((flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 &&
+		    params->log_type > LOG_TYPE_INFO)
+			event_params.log_type = LOG_TYPE_INFO;
+	}
 
-	if (ehandler->parent != NULL ||
-	    (params->log_type == LOG_TYPE_ERROR &&
-	     sieve_errors_more_allowed(ehandler)) ||
-	    (params->log_type == LOG_TYPE_INFO && ehandler->log_info) ||
-	    (params->log_type == LOG_TYPE_DEBUG && ehandler->log_debug)) {
-		i_assert(ehandler->log != NULL);
+	if (event_log) {
+		event_params.no_send = FALSE;
+		if (params->location != NULL && *params->location != '\0') {
+			event_params.base_send_prefix =
+				t_strconcat(params->location, ": ", NULL);
+		}
+	}
+	if (ehandler_log) {
+		if (ehandler->log == NULL)
+			ehandler_log = FALSE;
+		else
+			event_params.base_str_out = t_str_new(128);
+	}
+
+	if (event_log || ehandler_log)
+		event_logv(event, &event_params, fmt, args);
+
+	if (ehandler_log) {
 		ehandler->log(ehandler, params, flags,
-			      t_strdup_vprintf(fmt, args));
+			      str_c(event_params.base_str_out));
+	}
 
-		if (ehandler->pool != NULL) {
-			switch (params->log_type) {
-			case LOG_TYPE_ERROR:
-				ehandler->errors++;
-				break;
-			case LOG_TYPE_WARNING:
-				ehandler->warnings++;
-				break;
-			default:
-				break;
-			}
+	if (ehandler != NULL && ehandler->pool != NULL) {
+		switch (params->log_type) {
+		case LOG_TYPE_ERROR:
+			ehandler->errors++;
+			break;
+		case LOG_TYPE_WARNING:
+			ehandler->warnings++;
+			break;
+		default:
+			break;
 		}
 	}
 }
@@ -684,15 +714,6 @@ sieve_error_params_add_prefix(struct sieve_error_handler *ehandler ATTR_UNUSED,
  * - Output errors directly to Dovecot master log
  */
 
-static void
-sieve_master_log(struct sieve_error_handler *ehandler,
-		 const struct sieve_error_params *params,
-		 enum sieve_error_flags flags ATTR_UNUSED,
-		 const char *message)
-{
-	sieve_direct_master_log(ehandler->svinst, params, message);
-}
-
 struct sieve_error_handler *
 sieve_master_ehandler_create(struct sieve_instance *svinst,
 			     unsigned int max_errors)
@@ -705,8 +726,6 @@ sieve_master_ehandler_create(struct sieve_instance *svinst,
 	sieve_error_handler_init(ehandler, svinst, pool, max_errors);
 	ehandler->master_log = TRUE;
 	ehandler->log_debug = svinst->debug;
-
-	ehandler->log = sieve_master_log;
 
 	return ehandler;
 }
