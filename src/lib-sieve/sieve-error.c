@@ -591,19 +591,13 @@ bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler)
 void sieve_error_handler_accept_infolog(struct sieve_error_handler *ehandler,
 					bool enable)
 {
-	while (ehandler != NULL) {
-		ehandler->log_info = enable;
-		ehandler = ehandler->parent;
-	}
+	ehandler->log_info = enable;
 }
 
 void sieve_error_handler_accept_debuglog(struct sieve_error_handler *ehandler,
 					 bool enable)
 {
-	while (ehandler != NULL) {
-		ehandler->log_debug = enable;
-		ehandler = ehandler->parent;
-	}
+	ehandler->log_debug = enable;
 }
 
 /*
@@ -621,23 +615,6 @@ void sieve_error_handler_init(struct sieve_error_handler *ehandler,
 
 	ehandler->errors = 0;
 	ehandler->warnings = 0;
-}
-
-void sieve_error_handler_init_from_parent(struct sieve_error_handler *ehandler,
-					  pool_t pool,
-					  struct sieve_error_handler *parent)
-{
-	i_assert(parent != NULL);
-
-	sieve_error_handler_init(ehandler, parent->svinst, pool,
-				 parent->max_errors);
-
-	ehandler->parent = parent;
-	sieve_error_handler_ref(parent);
-
-	ehandler->master_log = parent->master_log;
-	ehandler->log_info = parent->log_info;
-	ehandler->log_debug = parent->log_debug;
 }
 
 void sieve_error_handler_ref(struct sieve_error_handler *ehandler)
@@ -658,8 +635,6 @@ void sieve_error_handler_unref(struct sieve_error_handler **ehandler)
 	if (--(*ehandler)->refcount != 0)
         	return;
 
-	if ((*ehandler)->parent != NULL)
-		sieve_error_handler_unref(&(*ehandler)->parent);
 	if ((*ehandler)->free != NULL)
 		(*ehandler)->free(*ehandler);
 
