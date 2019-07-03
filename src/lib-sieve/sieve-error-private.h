@@ -27,10 +27,10 @@ struct sieve_error_handler {
 	unsigned int errors;
 	unsigned int warnings;
 
-	void (*logv)(struct sieve_error_handler *ehandler,
-		     const struct sieve_error_params *params,
-		     enum sieve_error_flags flags,
-		     const char *fmt, va_list args) ATTR_FORMAT(4, 0);
+	void (*log)(struct sieve_error_handler *ehandler,
+		    const struct sieve_error_params *params,
+		    enum sieve_error_flags flags,
+		    const char *message);
 
 	void (*free)(struct sieve_error_handler *ehandler);
 

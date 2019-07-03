@@ -72,10 +72,10 @@ void sieve_errors_deinit(struct sieve_instance *svinst ATTR_UNUSED)
  * Direct handler calls
  */
 
-static void ATTR_FORMAT(3, 0)
-sieve_direct_master_vlog(struct sieve_instance *svinst,
-			 const struct sieve_error_params *params,
-			 const char *fmt, va_list args)
+static void
+sieve_direct_master_log(struct sieve_instance *svinst,
+			const struct sieve_error_params *params,
+			const char *message)
 {
 	struct event_log_params event_params = {
 		.log_type = params->log_type,
@@ -89,7 +89,7 @@ sieve_direct_master_vlog(struct sieve_instance *svinst,
 	str = t_str_new(256);
 	if (params->location != NULL && *params->location != '\0')
 		str_printfa(str, "%s: ", params->location);
-	str_vprintfa(str, fmt, args);
+	str_append(str, message);
 
 	event_log(event, &event_params, "%s", str_c(str));
 }
@@ -116,8 +116,8 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 		if (global_info_log)
 			new_params.log_type = LOG_TYPE_INFO;
 
-		sieve_direct_master_vlog(svinst, &new_params,
-					 fmt, args_copy);
+		sieve_direct_master_log(svinst, &new_params,
+					t_strdup_vprintf(fmt, args_copy));
 
 		va_end(args_copy);
 
@@ -133,8 +133,9 @@ void sieve_direct_logv(struct sieve_instance *svinst,
 	     sieve_errors_more_allowed(ehandler)) ||
 	    (params->log_type == LOG_TYPE_INFO && ehandler->log_info) ||
 	    (params->log_type == LOG_TYPE_DEBUG && ehandler->log_debug)) {
-		i_assert(ehandler->logv != NULL);
-		ehandler->logv(ehandler, params, flags, fmt, args);
+		i_assert(ehandler->log != NULL);
+		ehandler->log(ehandler, params, flags,
+			      t_strdup_vprintf(fmt, args));
 
 		if (ehandler->pool != NULL) {
 			switch (params->log_type) {
@@ -400,7 +401,8 @@ void sieve_criticalv(struct sieve_instance *svinst,
 
 	new_params.log_type = LOG_TYPE_ERROR;
 
-	sieve_direct_master_vlog(svinst, &new_params, fmt, args);
+	sieve_direct_master_log(svinst, &new_params,
+				t_strdup_vprintf(fmt, args));
 	sieve_internal_error_params(ehandler, &new_params, user_prefix);
 }
 
@@ -682,13 +684,13 @@ sieve_error_params_add_prefix(struct sieve_error_handler *ehandler ATTR_UNUSED,
  * - Output errors directly to Dovecot master log
  */
 
-static void ATTR_FORMAT(4, 0)
-sieve_master_logv(struct sieve_error_handler *ehandler,
-		  const struct sieve_error_params *params,
-		  enum sieve_error_flags flags ATTR_UNUSED,
-		  const char *fmt, va_list args)
+static void
+sieve_master_log(struct sieve_error_handler *ehandler,
+		 const struct sieve_error_params *params,
+		 enum sieve_error_flags flags ATTR_UNUSED,
+		 const char *message)
 {
-	sieve_direct_master_vlog(ehandler->svinst, params, fmt, args);
+	sieve_direct_master_log(ehandler->svinst, params, message);
 }
 
 struct sieve_error_handler *
@@ -704,7 +706,7 @@ sieve_master_ehandler_create(struct sieve_instance *svinst,
 	ehandler->master_log = TRUE;
 	ehandler->log_debug = svinst->debug;
 
-	ehandler->logv = sieve_master_logv;
+	ehandler->log = sieve_master_log;
 
 	return ehandler;
 }
@@ -715,18 +717,17 @@ sieve_master_ehandler_create(struct sieve_instance *svinst,
  * - Output errors directly to stderror
  */
 
-static void ATTR_FORMAT(4, 0)
-sieve_stderr_logv(struct sieve_error_handler *ehandler,
-		  const struct sieve_error_params *params,
-		  enum sieve_error_flags flags ATTR_UNUSED,
-		  const char *fmt, va_list args)
+static void
+sieve_stderr_log(struct sieve_error_handler *ehandler,
+		 const struct sieve_error_params *params,
+		 enum sieve_error_flags flags ATTR_UNUSED,
+		 const char *message)
 {
 	string_t *prefix = t_str_new(64);
 
 	sieve_error_params_add_prefix(ehandler, params, prefix);
 
-	fprintf(stderr, "%s%s.\n", str_c(prefix),
-		t_strdup_vprintf(fmt, args));
+	fprintf(stderr, "%s%s.\n", str_c(prefix), message);
 }
 
 struct sieve_error_handler *
@@ -744,7 +745,7 @@ sieve_stderr_ehandler_create(struct sieve_instance *svinst,
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
 	sieve_error_handler_init(ehandler, svinst, pool, max_errors);
 
-	ehandler->logv = sieve_stderr_logv;
+	ehandler->log = sieve_stderr_log;
 
 	return ehandler;
 }
@@ -761,17 +762,16 @@ struct sieve_strbuf_ehandler {
 	bool crlf;
 };
 
-static void ATTR_FORMAT(4, 0)
-sieve_strbuf_logv(struct sieve_error_handler *ehandler,
-		  const struct sieve_error_params *params,
-		  enum sieve_error_flags flags ATTR_UNUSED,
-		  const char *fmt, va_list args)
+static void
+sieve_strbuf_log(struct sieve_error_handler *ehandler,
+		 const struct sieve_error_params *params,
+		 enum sieve_error_flags flags ATTR_UNUSED, const char *message)
 {
 	struct sieve_strbuf_ehandler *handler =
 		(struct sieve_strbuf_ehandler *) ehandler;
 
 	sieve_error_params_add_prefix(ehandler, params, handler->errors);
-	str_vprintfa(handler->errors, fmt, args);
+	str_append(handler->errors, message);
 
 	if (!handler->crlf)
 		str_append(handler->errors, ".\n");
@@ -792,7 +792,7 @@ sieve_strbuf_ehandler_create(struct sieve_instance *svinst, string_t *strbuf,
 
 	sieve_error_handler_init(&ehandler->handler, svinst, pool, max_errors);
 
-	ehandler->handler.logv = sieve_strbuf_logv;
+	ehandler->handler.log = sieve_strbuf_log;
 	ehandler->crlf = crlf;
 
 	return &(ehandler->handler);
@@ -813,10 +813,10 @@ struct sieve_logfile_ehandler {
 	struct ostream *stream;
 };
 
-static void ATTR_FORMAT(3, 0)
-sieve_logfile_vprintf(struct sieve_logfile_ehandler *ehandler,
-		      const struct sieve_error_params *params,
-		      const char *fmt, va_list args)
+static void
+sieve_logfile_write(struct sieve_logfile_ehandler *ehandler,
+		    const struct sieve_error_params *params,
+		    const char *message)
 {
 	string_t *outbuf;
 	ssize_t ret = 0, remain;
@@ -829,7 +829,7 @@ sieve_logfile_vprintf(struct sieve_logfile_ehandler *ehandler,
 		outbuf = t_str_new(256);
 		sieve_error_params_add_prefix(&ehandler->handler,
 					      params, outbuf);
-		str_vprintfa(outbuf, fmt, args);
+		str_append(outbuf, message);
 		str_append(outbuf, ".\n");
 
 		remain = str_len(outbuf);
@@ -868,7 +868,7 @@ sieve_logfile_printf(struct sieve_logfile_ehandler *ehandler,
 	va_list args;
 	va_start(args, fmt);
 
-	sieve_logfile_vprintf(ehandler, &params, fmt, args);
+	sieve_logfile_write(ehandler, &params, t_strdup_vprintf(fmt, args));
 
 	va_end(args);
 }
@@ -997,11 +997,11 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 	}
 }
 
-static void ATTR_FORMAT(4, 0)
-sieve_logfile_logv(struct sieve_error_handler *ehandler,
-		   const struct sieve_error_params *params,
-		   enum sieve_error_flags flags ATTR_UNUSED,
-		   const char *fmt, va_list args)
+static void
+sieve_logfile_log(struct sieve_error_handler *ehandler,
+		  const struct sieve_error_params *params,
+		  enum sieve_error_flags flags ATTR_UNUSED,
+		  const char *message)
 {
 	struct sieve_logfile_ehandler *handler =
 		(struct sieve_logfile_ehandler *) ehandler;
@@ -1009,7 +1009,7 @@ sieve_logfile_logv(struct sieve_error_handler *ehandler,
 	if (!handler->started)
 		sieve_logfile_start(handler);
 
-	sieve_logfile_vprintf(handler, params, fmt, args);
+	sieve_logfile_write(handler, params, message);
 }
 
 static void sieve_logfile_free(struct sieve_error_handler *ehandler)
@@ -1041,7 +1041,7 @@ sieve_logfile_ehandler_create(struct sieve_instance *svinst,
 	ehandler = p_new(pool, struct sieve_logfile_ehandler, 1);
 	sieve_error_handler_init(&ehandler->handler, svinst, pool, max_errors);
 
-	ehandler->handler.logv = sieve_logfile_logv;
+	ehandler->handler.log = sieve_logfile_log;
 	ehandler->handler.free = sieve_logfile_free;
 
 	/* Don't open logfile until something is actually logged.
@@ -1074,7 +1074,7 @@ struct sieve_prefix_ehandler {
 static const char *ATTR_FORMAT(3, 0)
 _prefix_message(struct sieve_prefix_ehandler *ehandler,
 		const struct sieve_error_params *params,
-		const char *fmt, va_list args)
+		const char *message)
 {
 	string_t *str = t_str_new(256);
 
@@ -1082,16 +1082,16 @@ _prefix_message(struct sieve_prefix_ehandler *ehandler,
 		str_printfa(str, "%s: ", ehandler->prefix);
 	if (params->location != NULL && *params->location != '\0')
 		str_printfa(str, "%s: ", params->location);
-	str_vprintfa(str, fmt, args);
+	str_append(str, message);
 
 	return str_c(str);
 }
 
-static void ATTR_FORMAT(4, 0)
-sieve_prefix_logv(struct sieve_error_handler *_ehandler,
-		  const struct sieve_error_params *params,
-		  enum sieve_error_flags flags,
-		  const char *fmt, va_list args)
+static void
+sieve_prefix_log(struct sieve_error_handler *_ehandler,
+		 const struct sieve_error_params *params,
+		 enum sieve_error_flags flags,
+		 const char *message)
 {
 	struct sieve_prefix_ehandler *ehandler =
 		(struct sieve_prefix_ehandler *) _ehandler;
@@ -1101,7 +1101,7 @@ sieve_prefix_logv(struct sieve_error_handler *_ehandler,
 
 	sieve_direct_log(_ehandler->svinst, _ehandler->parent,
 			 &new_params, flags, "%s",
-			 _prefix_message(ehandler, params, fmt, args));
+			 _prefix_message(ehandler, params, message));
 }
 
 struct sieve_error_handler *
@@ -1121,7 +1121,7 @@ sieve_prefix_ehandler_create(struct sieve_error_handler *parent,
 	ehandler->location = p_strdup(pool, location);
 	ehandler->prefix = p_strdup(pool, prefix);
 
-	ehandler->handler.logv = sieve_prefix_logv;
+	ehandler->handler.log = sieve_prefix_log;
 
 	return &(ehandler->handler);
 }

@@ -35,31 +35,25 @@ ARRAY(struct _testsuite_log_message) _testsuite_log_errors;
 ARRAY(struct _testsuite_log_message) _testsuite_log_warnings;
 ARRAY(struct _testsuite_log_message) _testsuite_log_messages;
 
-static inline void ATTR_FORMAT(3, 0)
-_testsuite_stdout_vlog(const struct sieve_error_params *params,
-		       const char *prefix, const char *fmt, va_list args)
+static inline void
+_testsuite_stdout_log(const struct sieve_error_params *params,
+		      const char *prefix, const char *message)
 {
 	if (_testsuite_log_stdout) {
-		va_list args_copy;
-
-		VA_COPY(args_copy, args);
 		if (params->location == NULL || *params->location == '\0') {
 			fprintf(stdout, "LOG: %s: %s\n",
-				prefix, t_strdup_vprintf(fmt, args_copy));
+				prefix, message);
 		} else {
 			fprintf(stdout, "LOG: %s: %s: %s\n",
-				params->location, prefix,
-				t_strdup_vprintf(fmt, args_copy));
+				params->location, prefix, message);
 		}
-		va_end(args_copy);
 	}
 }
 
-static void ATTR_FORMAT(4, 0)
-_testsuite_logv(struct sieve_error_handler *ehandler ATTR_UNUSED,
-		const struct sieve_error_params *params,
-		enum sieve_error_flags flags ATTR_UNUSED,
-		const char *fmt, va_list args)
+static void
+_testsuite_log(struct sieve_error_handler *ehandler ATTR_UNUSED,
+	       const struct sieve_error_params *params,
+	       enum sieve_error_flags flags ATTR_UNUSED, const char *message)
 {
 	pool_t pool = _testsuite_logmsg_pool;
 	struct _testsuite_log_message msg;
@@ -82,10 +76,10 @@ _testsuite_logv(struct sieve_error_handler *ehandler ATTR_UNUSED,
 		i_unreached();
 	}
 
-	_testsuite_stdout_vlog(params, prefix, fmt, args);
+	_testsuite_stdout_log(params, prefix, message);
 
 	msg.location = p_strdup(pool, params->location);
-	msg.message = p_strdup_vprintf(pool, fmt, args);
+	msg.message = p_strdup(pool, message);
 
 	switch (params->log_type) {
 	case LOG_TYPE_ERROR:
@@ -104,22 +98,18 @@ _testsuite_logv(struct sieve_error_handler *ehandler ATTR_UNUSED,
 	}
 }
 
-static void ATTR_FORMAT(4, 0)
-_testsuite_main_logv(struct sieve_error_handler *ehandler,
-		     const struct sieve_error_params *params,
-		     enum sieve_error_flags flags,
-		     const char *fmt, va_list args)
+static void
+_testsuite_main_log(struct sieve_error_handler *ehandler,
+		    const struct sieve_error_params *params,
+		    enum sieve_error_flags flags, const char *message)
 {
 	if (params->log_type != LOG_TYPE_ERROR)
-		return _testsuite_logv(ehandler, params, flags, fmt, args);
+		return _testsuite_log(ehandler, params, flags, message);
 
-	if (params->location == NULL || *params->location == '\0') {
-		fprintf(stderr, "error: %s\n",
-			t_strdup_vprintf(fmt, args));
-	} else {
-		fprintf(stderr, "%s: error: %s\n",
-			params->location, t_strdup_vprintf(fmt, args));
-	}
+	if (params->location == NULL || *params->location == '\0')
+		fprintf(stderr, "error: %s\n", message);
+	else
+		fprintf(stderr, "%s: error: %s\n", params->location, message);
 }
 
 static struct sieve_error_handler *_testsuite_log_ehandler_create(void)
@@ -132,7 +122,7 @@ static struct sieve_error_handler *_testsuite_log_ehandler_create(void)
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
 	sieve_error_handler_init(ehandler, testsuite_sieve_instance, pool, 0);
 
-	ehandler->logv = _testsuite_logv;
+	ehandler->log = _testsuite_log;
 
 	return ehandler;
 }
@@ -147,7 +137,7 @@ static struct sieve_error_handler *_testsuite_log_main_ehandler_create(void)
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
 	sieve_error_handler_init(ehandler, testsuite_sieve_instance, pool, 0);
 
-	ehandler->logv = _testsuite_main_logv;
+	ehandler->log = _testsuite_main_log;
 
 	return ehandler;
 }
@@ -165,25 +155,26 @@ testsuite_error_handler(const struct failure_context *ctx, const char *fmt,
 	i_zero(&msg);
 	switch (ctx->type) {
 	case LOG_TYPE_DEBUG:
-		_testsuite_stdout_vlog(&params, "debug", fmt, args);
+		_testsuite_stdout_log(&params, "debug",
+				      t_strdup_vprintf(fmt, args));
 		break;
 	case LOG_TYPE_INFO:
-		_testsuite_stdout_vlog(&params, "info", fmt, args);
-
 		msg.message = p_strdup_vprintf(pool, fmt, args);
 		array_append(&_testsuite_log_messages, &msg, 1);
+
+		_testsuite_stdout_log(&params, "info", msg.message);
 		break;
 	case LOG_TYPE_WARNING:
-		_testsuite_stdout_vlog(&params, "warning", fmt, args);
-
 		msg.message = p_strdup_vprintf(pool, fmt, args);
 		array_append(&_testsuite_log_warnings, &msg, 1);
+
+		_testsuite_stdout_log(&params, "warning", msg.message);
 		break;
 	case LOG_TYPE_ERROR:
-		_testsuite_stdout_vlog(&params, "error", fmt, args);
-
 		msg.message = p_strdup_vprintf(pool, fmt, args);
 		array_append(&_testsuite_log_errors, &msg, 1);
+
+		_testsuite_stdout_log(&params, "error", msg.message);
 		break;
 	default:
 		default_error_handler(ctx, fmt, args);
