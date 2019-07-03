@@ -351,6 +351,33 @@ void sieve_logv(struct sieve_error_handler *ehandler,
 	sieve_direct_logv(ehandler->svinst, ehandler, params, 0, fmt, args);
 }
 
+#undef sieve_event_log
+void sieve_event_log(struct sieve_instance *svinst,
+		     struct sieve_error_handler *ehandler,
+		     struct event *event,  enum log_type log_type,
+		     const char *csrc_filename, unsigned int csrc_linenum,
+		     const char *location, enum sieve_error_flags flags,
+		     const char *fmt, ...)
+{
+	struct sieve_error_params params = {
+		.log_type = log_type,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
+		.event = event,
+		.location = location,
+	};
+	va_list args;
+	va_start(args, fmt);
+
+	T_BEGIN {
+		sieve_direct_logv(svinst, ehandler, &params, flags, fmt, args);
+	} T_END;
+
+	va_end(args);
+}
+
 void sieve_criticalv(struct sieve_instance *svinst,
 		     struct sieve_error_handler *ehandler,
 		     const struct sieve_error_params *params,

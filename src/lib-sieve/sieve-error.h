@@ -110,6 +110,18 @@ sieve_error_script_location(const struct sieve_script *script,
 void sieve_logv(struct sieve_error_handler *ehandler,
 		const struct sieve_error_params *params,
 		const char *fmt, va_list args) ATTR_FORMAT(3, 0);
+
+void sieve_event_log(struct sieve_instance *svinst,
+		     struct sieve_error_handler *ehandler,
+		     struct event *event, enum log_type log_type,
+		     const char *csrc_filename, unsigned int csrc_linenum,
+		     const char *location, enum sieve_error_flags flags,
+		     const char *fmt, ...)
+			ATTR_FORMAT(9, 10);
+#define sieve_event_log(svinst, ehandler, event, log_type, ...) \
+	sieve_event_log(svinst, ehandler, event, log_type, __FILE__, __LINE__, \
+			__VA_ARGS__)
+
 void sieve_criticalv(struct sieve_instance *svinst,
 		     struct sieve_error_handler *ehandler,
 		     const struct sieve_error_params *params,
