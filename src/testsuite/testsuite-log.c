@@ -48,7 +48,7 @@ _testsuite_stdout_vlog(const struct sieve_error_params *params,
 				prefix, t_strdup_vprintf(fmt, args_copy));
 		} else {
 			fprintf(stdout, "LOG: %s: %s: %s\n",
-				prefix, params->location,
+				params->location, prefix,
 				t_strdup_vprintf(fmt, args_copy));
 		}
 		va_end(args_copy);
