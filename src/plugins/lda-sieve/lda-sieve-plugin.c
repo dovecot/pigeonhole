@@ -2,8 +2,10 @@
  */
 
 #include "lib.h"
+#include "str.h"
 #include "array.h"
 #include "home-expand.h"
+#include "var-expand.h"
 #include "eacces-error.h"
 #include "smtp-address.h"
 #include "smtp-submit.h"
@@ -20,7 +22,6 @@
 #include "sieve-script.h"
 #include "sieve-storage.h"
 
-#include "lda-sieve-log.h"
 #include "lda-sieve-plugin.h"
 
 #include <sys/stat.h>
@@ -175,6 +176,35 @@ static void lda_sieve_duplicate_flush(const struct sieve_script_env *senv)
 		(struct mail_deliver_context *)senv->script_context;
 
 	mail_duplicate_db_flush(dctx->dup_db);
+}
+
+/*
+ * Result logging
+ */
+
+static const char *
+lda_sieve_result_amend_log_message(const struct sieve_script_env *senv,
+				   enum log_type log_type,
+				   const char *message)
+{
+	struct mail_deliver_context *mdctx = senv->script_context;
+	const struct var_expand_table *table;
+	string_t *str;
+	const char *error;
+
+	if (log_type == LOG_TYPE_DEBUG)
+		return message;
+
+	table = mail_deliver_ctx_get_log_var_expand_table(mdctx, message);
+
+	str = t_str_new(256);
+	if (var_expand(str, mdctx->set->deliver_log_format,
+		       table, &error) <= 0) {
+		e_error(mdctx->event,
+			"Failed to expand deliver_log_format=%s: %s",
+			mdctx->set->deliver_log_format, error);
+	}
+	return str_c(str);
 }
 
 /*
@@ -454,8 +484,7 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 			 enum sieve_error *error_r)
 {
 	struct sieve_instance *svinst = srctx->svinst;
-	struct mail_deliver_context *mdctx = srctx->mdctx;
-	struct sieve_error_handler *exec_ehandler, *action_ehandler;
+	struct sieve_error_handler *exec_ehandler;
 	struct sieve_binary *sbin = NULL;
 	enum sieve_compile_flags cpflags = 0;
 	enum sieve_execute_flags exflags = 0;
@@ -496,16 +525,14 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 		"Executing script from `%s'",
 		sieve_get_source(sbin));
 
-	action_ehandler = lda_sieve_log_ehandler_create(exec_ehandler, mdctx);
 	if (!discard_script) {
 		more = sieve_multiscript_run(mscript, sbin, exec_ehandler,
-					     action_ehandler, exflags);
+					     exec_ehandler, exflags);
 	} else {
 		sieve_multiscript_run_discard(mscript, sbin, exec_ehandler,
-					      action_ehandler, exflags);
+					      exec_ehandler, exflags);
 		more = FALSE;
 	}
-	sieve_error_handler_unref(&action_ehandler);
 
 	if (!more) {
 		if (sieve_multiscript_status(mscript) ==
@@ -524,18 +551,15 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 
 			/* Execute again */
 
-			action_ehandler = lda_sieve_log_ehandler_create(
-				exec_ehandler, mdctx);
 			if (!discard_script) {
 				more = sieve_multiscript_run(
 					mscript, sbin, exec_ehandler,
-					action_ehandler, exflags);
+					exec_ehandler, exflags);
 			} else {
 				sieve_multiscript_run_discard(
 					mscript, sbin, exec_ehandler,
-					action_ehandler, exflags);
+					exec_ehandler, exflags);
 			}
-			sieve_error_handler_unref(&action_ehandler);
 
 			/* Save new version */
 
@@ -553,9 +577,8 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 static int lda_sieve_execute_scripts(struct lda_sieve_run_context *srctx)
 {
 	struct sieve_instance *svinst = srctx->svinst;
-	struct mail_deliver_context *mdctx = srctx->mdctx;
 	struct sieve_multiscript *mscript;
-	struct sieve_error_handler *exec_ehandler, *action_ehandler;
+	struct sieve_error_handler *exec_ehandler;
 	struct sieve_script *script, *last_script = NULL;
 	bool discard_script;
 	enum sieve_error error;
@@ -621,14 +644,12 @@ static int lda_sieve_execute_scripts(struct lda_sieve_run_context *srctx)
 	/* Finish execution */
 	exec_ehandler = (srctx->user_ehandler != NULL ?
 			 srctx->user_ehandler : srctx->master_ehandler);
-	action_ehandler = lda_sieve_log_ehandler_create(exec_ehandler, mdctx);
 	if (error == SIEVE_ERROR_TEMP_FAILURE) {
-		ret = sieve_multiscript_tempfail(&mscript, action_ehandler, 0);
+		ret = sieve_multiscript_tempfail(&mscript, exec_ehandler, 0);
 	} else {
-		ret = sieve_multiscript_finish(&mscript, action_ehandler, 0,
+		ret = sieve_multiscript_finish(&mscript, exec_ehandler, 0,
 					       NULL);
 	}
-	sieve_error_handler_unref(&action_ehandler);
 
 	/* Don't log additional messages about compile failure */
 	if (error != SIEVE_ERROR_NONE && ret == SIEVE_EXEC_FAILURE) {
@@ -909,6 +930,7 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 	scriptenv.duplicate_check = lda_sieve_duplicate_check;
 	scriptenv.duplicate_flush = lda_sieve_duplicate_flush;
 	scriptenv.reject_mail = lda_sieve_reject_mail;
+	scriptenv.result_amend_log_message = lda_sieve_result_amend_log_message;
 	scriptenv.script_context = (void *) mdctx;
 	scriptenv.trace_log = trace_log;
 	scriptenv.trace_config = trace_config;
