@@ -95,6 +95,17 @@ struct sieve_result {
 	bool executed_delivery:1;
 };
 
+static const char *
+sieve_result_event_log_message(struct sieve_result *result,
+			       enum log_type log_type, const char *message)
+{
+	const struct sieve_script_env *senv =
+		result->action_env.exec_env->scriptenv;
+
+	i_assert(senv->result_amend_log_message != NULL);
+	return senv->result_amend_log_message(senv, log_type, message);
+}
+
 struct sieve_result *
 sieve_result_create(struct sieve_instance *svinst, pool_t pool,
 		    const struct sieve_execute_env *eenv)
@@ -112,6 +123,10 @@ sieve_result_create(struct sieve_instance *svinst, pool_t pool,
 
 	result->event = event_create(eenv->event);
 	event_add_category(result->event, &event_category_sieve_action);
+	if (senv->result_amend_log_message != NULL) {
+		event_set_log_message_callback(
+			result->event, sieve_result_event_log_message, result);
+	}
 
 	p_array_init(&result->ext_contexts, pool, 4);
 

@@ -237,6 +237,12 @@ struct sieve_script_env {
 	int (*reject_mail)(const struct sieve_script_env *senv,
 		const struct smtp_address *recipient, const char *reason);
 
+	/* Interface for amending result messages */
+	const char *
+	(*result_amend_log_message)(const struct sieve_script_env *senv,
+				    enum log_type log_type,
+				    const char *message);
+
 	/* Execution status record */
 	struct sieve_exec_status *exec_status;
 
