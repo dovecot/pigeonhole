@@ -350,8 +350,7 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 		if (sieve_extprogram_set_input_mail(sprog, mail) < 0) {
 			sieve_extprogram_destroy(&sprog);
 			return sieve_result_mail_error(
-				aenv, mail, "pipe action: "
-				"failed to read input message");
+				aenv, mail, "failed to read input message");
 		}
 		ret = sieve_extprogram_run(sprog);
 	} else {
@@ -361,8 +360,7 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 		sieve_extprogram_destroy(&sprog);
 
 	if (ret > 0) {
-		sieve_result_global_log(aenv, "pipe action: "
-					"piped message to program `%s'",
+		sieve_result_global_log(aenv, "piped message to program `%s'",
 					str_sanitize(act->program_name, 128));
 
 		/* Indicate that message was successfully 'forwarded' */
@@ -371,19 +369,19 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 		if (ret < 0) {
 			if (error == SIEVE_ERROR_NOT_FOUND) {
 				sieve_result_error(
-					aenv, "pipe action: "
+					aenv,
 					"failed to pipe message to program: "
 					"program `%s' not found",
 					str_sanitize(act->program_name, 80));						
 			} else {
 				sieve_extprogram_exec_error(
-					aenv->ehandler, NULL, "pipe action: "
+					aenv->ehandler, NULL,
 					"failed to pipe message to program `%s'",
 					str_sanitize(act->program_name, 80));
 			}
 		} else {
 			sieve_extprogram_exec_error(
-				aenv->ehandler, NULL, "pipe action: "
+				aenv->ehandler, NULL,
 				"failed to execute to program `%s'",
 				str_sanitize(act->program_name, 80));
 		}

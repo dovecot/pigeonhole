@@ -477,7 +477,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	if ((ret = mail_get_headers_utf8(msgdata->mail, "subject",
 					 &headers)) < 0) {
 		return sieve_result_mail_error(
-			aenv, msgdata->mail, "report action: "
+			aenv, msgdata->mail,
 			"failed to read header field `subject'");
 	}
 	if (ret > 0 && headers[0] != NULL)
@@ -609,19 +609,18 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	}
 	if (ret < 0) {
 		sieve_smtp_abort(sctx);
-		return sieve_result_mail_error(
-			aenv, msgdata->mail, "report action: "
-			"failed to read input message");
+		return sieve_result_mail_error(aenv, msgdata->mail,
+					       "failed to read input message");
 	}
 
 	o_stream_nsend_istream(output, input);
 
 	if (input->stream_errno != 0) {
 		/* Error; clean up */
-		sieve_result_critical(
-			aenv, "report action: failed to read input message",
-			"report action: read(%s) failed: %s",
-			i_stream_get_name(input), i_stream_get_error(input));
+		sieve_result_critical(aenv, "failed to read input message",
+				      "read(%s) failed: %s",
+				      i_stream_get_name(input),
+				      i_stream_get_error(input));
 		i_stream_unref(&input);
 		sieve_smtp_abort(sctx);
 		return SIEVE_EXEC_OK;

@@ -857,7 +857,7 @@ act_notify_commit(const struct sieve_action_exec_env *aenv,
 	/* Is the message an automatic reply ? */
 	if ((ret = mail_get_headers(mail, "auto-submitted", &hdsp)) < 0) {
 		return sieve_result_mail_error(
-			aenv, mail, "notify action: "
+			aenv, mail,
 			"failed to read `auto-submitted' header field");
 	}
 

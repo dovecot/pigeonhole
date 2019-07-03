@@ -248,14 +248,19 @@ sieve_result_extension_get_context(struct sieve_result *result,
 
 static void
 sieve_result_init_action_event(struct sieve_result *result,
-			       struct sieve_action *action)
+			       struct sieve_action *action, bool add_prefix)
 {
+	const char *name = sieve_action_name(action);
+
 	if (action->event != NULL)
 		return;
 
 	action->event = event_create(result->event);
-	event_add_str(action->event, "sieve_action_name",
-		      sieve_action_name(action));
+	if (add_prefix && name != NULL) {
+		event_set_append_log_prefix(
+			action->event, t_strconcat(name, " action: ", NULL));
+	}
+	event_add_str(action->event, "sieve_action_name", name);
 	event_add_str(action->event, "sieve_action_script_location",
 		      action->location);
 }
@@ -640,7 +645,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 		raction->action.mail = NULL;
 	}
 
-	sieve_result_init_action_event(result, &raction->action);
+	sieve_result_init_action_event(result, &raction->action, !keep);
 	return 0;
 }
 
@@ -982,7 +987,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 	}
 
 	/* Initialize keep action event */
-	sieve_result_init_action_event(result, &act_keep);
+	sieve_result_init_action_event(result, &act_keep, FALSE);
 
 	/* Start keep action */
 	if (act_keep.def->start != NULL) {

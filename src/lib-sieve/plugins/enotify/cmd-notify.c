@@ -609,14 +609,11 @@ act_notify_commit(const struct sieve_action_exec_env *aenv,
 		nenv.msgdata = eenv->msgdata;
 		nenv.msgctx = aenv->msgctx;
 
-		nenv.ehandler = sieve_prefix_ehandler_create(
-			aenv->ehandler, NULL, "notify action");
+		nenv.ehandler = aenv->ehandler;
 
 		ret = method->def->action_execute(&nenv, act);
 		if (ret >= 0)
 			eenv->exec_status->significant_action_executed = TRUE;
-
-		sieve_error_handler_unref(&nenv.ehandler);
 	}
 
 	return (ret >= 0 ? SIEVE_EXEC_OK : SIEVE_EXEC_TEMP_FAILURE);

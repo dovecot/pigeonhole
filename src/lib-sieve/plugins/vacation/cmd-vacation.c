@@ -951,7 +951,7 @@ _get_full_reply_recipient(const struct sieve_action_exec_env *aenv,
 		if ((ret = mail_get_first_header(msgdata->mail, *hdsp,
 						 &header)) < 0) {
 			return sieve_result_mail_error(
-				aenv, msgdata->mail, "vacation action: "
+				aenv, msgdata->mail,
 				"failed to read header field `%s'", *hdsp);
 		}
 		if (ret > 0 && header != NULL) {
@@ -1021,7 +1021,7 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 	if ((ret = mail_get_first_header_utf8(msgdata->mail, "subject",
 					      &header)) < 0) {
 		return sieve_result_mail_error(
-			aenv, msgdata->mail, "vacation action: "
+			aenv, msgdata->mail,
 			"failed to read header field `subject'");
 	}
 	if (ret == 0)
@@ -1130,7 +1130,7 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 					 &header)) < 0) {
 		sieve_smtp_abort(sctx);
 		return sieve_result_mail_error(
-			aenv, msgdata->mail, "vacation action: "
+			aenv, msgdata->mail,
 			"failed to read header field `references'");
 	}
 
@@ -1302,7 +1302,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	while (*hdsp != NULL) {
 		if ((ret = mail_get_headers(mail, *hdsp, &headers)) < 0) {
 			return sieve_result_mail_error(
-				aenv, mail, "vacation action: "
+				aenv, mail,
 				"failed to read header field `%s'", *hdsp);
 		}
 
@@ -1320,7 +1320,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	/* Is the message that we are replying to an automatic reply ? */
 	if ((ret = mail_get_headers(mail, "auto-submitted", &headers)) < 0) {
 		return sieve_result_mail_error(
-			aenv, mail, "vacation action: "
+			aenv, mail,
 			"failed to read header field `auto-submitted'");
 	}
 	/* Theoretically multiple headers could exist, so lets make sure */
@@ -1341,8 +1341,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	/* Check for the (non-standard) precedence header */
 	if ((ret = mail_get_headers(mail, "precedence", &headers)) < 0) {
 		return sieve_result_mail_error(
-			aenv, mail, "vacation action: "
-			"failed to read header field `precedence'");
+			aenv, mail, "failed to read header field `precedence'");
 	}
 	/* Theoretically multiple headers could exist, so lets make sure */
 	if (ret > 0) {
@@ -1365,7 +1364,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	if ((ret = mail_get_headers(mail, "x-auto-response-suppress",
 				    &headers)) < 0) {
 		return sieve_result_mail_error(
-			aenv, mail, "vacation action: "
+			aenv, mail,
 			"failed to read header field `x-auto-response-suppress'");
 	}
 	/* Theoretically multiple headers could exist, so lets make sure */
@@ -1413,8 +1412,8 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	while (*hdsp != NULL) {
 		if ((ret = mail_get_headers(mail, *hdsp, &headers)) < 0) {
 			return sieve_result_mail_error(
-				aenv, mail, "vacation action: "
-				"failed to read header field `%s'", *hdsp);
+				aenv, mail, "failed to read header field `%s'",
+				*hdsp);
 		}
 		if (ret > 0 && headers[0] != NULL) {
 			/* Final recipient directly listed in headers? */
