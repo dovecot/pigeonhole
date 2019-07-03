@@ -224,9 +224,4 @@ struct sieve_error_handler *
 sieve_logfile_ehandler_create(struct sieve_instance *svinst,
 			      const char *logfile, unsigned int max_errors);
 
-/* Wrapper: prefix all log messages */
-struct sieve_error_handler *
-sieve_prefix_ehandler_create(struct sieve_error_handler *parent,
-			     const char *location, const char *prefix);
-
 #endif
