@@ -67,6 +67,25 @@ struct sieve_filter_context {
 	struct ostream *teststream;
 };
 
+static const char *
+result_amend_log_message(const struct sieve_script_env *senv,
+			 enum log_type log_type, const char *message)
+{
+	const struct sieve_message_data *msgdata = senv->script_context;
+	string_t *str;
+
+	if (log_type == LOG_TYPE_DEBUG)
+		return message;
+
+	str = t_str_new(256);
+	str_printfa(str, "msgid=%s", (msgdata->id == NULL ?
+				      "unspecified" : msgdata->id));
+	str_append(str, ": ");
+	str_append(str, message);
+
+	return str_c(str);
+}
+
 static int filter_message
 (struct sieve_filter_context *sfctx, struct mail *mail)
 {
@@ -90,6 +109,7 @@ static int filter_message
 	msgdata.mail = mail;
 	msgdata.auth_user = senv->user->username;
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
+	senv->script_context = &msgdata;
 
 	sieve_tool_get_envelope_data
 		(&msgdata, mail, NULL, NULL, NULL);
@@ -114,19 +134,12 @@ static int filter_message
 
 	/* Execute script */
 	if ( execute ) {
-		struct sieve_error_handler *action_ehandler;
-
 		sieve_info(ehandler, NULL,
 			"filtering: [%s; %"PRIuUOFF_T" bytes] `%s'", date, size,
 			str_sanitize(subject, 40));
 
-		action_ehandler = sieve_prefix_ehandler_create
-			(ehandler, NULL, t_strdup_printf("msgid=%s",
-				( msgdata.id == NULL ? "unspecified" : msgdata.id )));
 		ret = sieve_execute(sbin, &msgdata, senv,
-				ehandler, action_ehandler, 0, NULL);
-		sieve_error_handler_unref(&action_ehandler);
-
+				ehandler, ehandler, 0, NULL);
 	} else {
 		o_stream_nsend_str(sfctx->teststream,
 			t_strdup_printf(">> Filtering message:\n\n"
@@ -545,6 +558,7 @@ int main(int argc, char **argv)
 		i_fatal("Failed to initialize script execution: %s", errstr);
 	scriptenv.mailbox_autocreate = FALSE;
 	scriptenv.default_mailbox = dst_mailbox;
+	scriptenv.result_amend_log_message = result_amend_log_message;
 
 	/* Compose filter context */
 	i_zero(&sfdata);
