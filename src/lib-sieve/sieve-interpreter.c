@@ -89,6 +89,8 @@ struct sieve_interpreter {
 	struct sieve_binary_debug_reader *dreader;
 	unsigned int command_line;
 
+	bool running:1;		    /* Interpreter is running
+				       (may be interrupted) */
 	bool interrupted:1;         /* Interpreter interrupt requested */
 	bool test_result:1;         /* Result of previous test command */
 };
@@ -286,6 +288,17 @@ void sieve_interpreter_free(struct sieve_interpreter **_interp)
 	const struct sieve_interpreter_extension_reg *eregs;
 	struct sieve_interpreter_loop *loops;
 	unsigned int count, i;
+
+	if (interp->running) {
+		struct event_passthrough *e =
+			event_create_passthrough(interp->runenv.event)->
+			set_name("sieve_runtime_script_finished")->
+			add_str("error", "Aborted");
+		e_debug(e->event(), "Aborted running script `%s'",
+			sieve_binary_source(interp->runenv.sbin));
+
+		interp->running = FALSE;
+	}
 
 	if (array_is_created(&interp->loop_stack)) {
 		loops = array_get_modifiable(&interp->loop_stack, &count);
@@ -895,6 +908,32 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 	if (interrupted != NULL)
 		*interrupted = interp->interrupted;
 
+	if (!interp->interrupted) {
+		struct event_passthrough *e =
+			event_create_passthrough(interp->runenv.event)->
+			set_name("sieve_runtime_script_finished");
+		switch (ret) {
+		case SIEVE_EXEC_OK:
+			break;
+		case SIEVE_EXEC_FAILURE:
+			e->add_str("error", "Failed");
+			break;
+		case SIEVE_EXEC_TEMP_FAILURE:
+			e->add_str("error", "Failed temporarily");
+			break;
+		case SIEVE_EXEC_BIN_CORRUPT:
+			e->add_str("error", "Binary corrupt");
+			break;
+		case SIEVE_EXEC_KEEP_FAILED:
+			/* Not supposed to occur at runtime */
+			i_unreached();
+		}
+		e_debug(e->event(), "Finished running script `%s'",
+			sieve_binary_source(interp->runenv.sbin));
+
+		interp->running = FALSE;
+	}
+
 	sieve_result_unref(&interp->runenv.result);
 	return ret;
 }
@@ -906,6 +945,13 @@ int sieve_interpreter_start(struct sieve_interpreter *interp,
 	unsigned int ext_count, i;
 	int ret;
 
+	struct event_passthrough *e =
+		event_create_passthrough(interp->runenv.event)->
+		set_name("sieve_runtime_script_started");
+	e_debug(e->event(), "Started running script `%s'",
+		sieve_binary_source(interp->runenv.sbin));
+
+	interp->running = TRUE;
 	interp->runenv.result = result;
 	interp->runenv.msgctx = sieve_result_get_message_context(result);
 
