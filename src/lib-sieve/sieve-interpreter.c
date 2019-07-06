@@ -67,10 +67,7 @@ struct sieve_interpreter {
 	sieve_size_t reset_vector;
 
 	/* Execution status */
-
 	sieve_size_t pc;          /* Program counter */
-	bool interrupted;         /* Interpreter interrupt requested */
-	bool test_result;         /* Result of previous test command */
 
 	/* Loop stack */
 	ARRAY(struct sieve_interpreter_loop) loop_stack;
@@ -87,6 +84,9 @@ struct sieve_interpreter {
 	/* Location information */
 	struct sieve_binary_debug_reader *dreader;
 	unsigned int command_line;
+
+	bool interrupted:1;         /* Interpreter interrupt requested */
+	bool test_result:1;         /* Result of previous test command */
 };
 
 static struct sieve_interpreter *
