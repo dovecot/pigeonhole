@@ -180,6 +180,11 @@ struct sieve_enotify_action {
 			LOG_TYPE_INFO, (ENV)->location, \
 			SIEVE_ERROR_FLAG_GLOBAL, __VA_ARGS__ )
 
+#define sieve_enotify_event_log(ENV, EVENT, ...) \
+	sieve_event_log((ENV)->svinst, (ENV)->ehandler, (EVENT), \
+			LOG_TYPE_INFO, (ENV)->location, \
+			SIEVE_ERROR_FLAG_GLOBAL, __VA_ARGS__ )
+
 #define sieve_enotify_global_log_error(ENV, ...) \
 	sieve_event_log((ENV)->svinst, (ENV)->ehandler, (ENV)->event, \
 			LOG_TYPE_ERROR, (ENV)->location, \
