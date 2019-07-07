@@ -980,6 +980,7 @@ lda_sieve_deliver_mail(struct mail_deliver_context *mdctx,
 	svenv.hostname = mail_set->hostname;
 	svenv.base_dir = mdctx->rcpt_user->set->base_dir;
 	svenv.temp_dir = mdctx->rcpt_user->set->mail_temp_dir;
+	svenv.event_parent = mdctx->event;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 	svenv.location = SIEVE_ENV_LOCATION_MDA;
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_DURING;
