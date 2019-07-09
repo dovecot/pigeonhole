@@ -609,6 +609,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 			i_stream_ref(input);
 	}
 	if (ret < 0) {
+		sieve_smtp_abort(sctx);
 		return sieve_result_mail_error(
 			aenv, msgdata->mail, "report action: "
 			"failed to read input message");
@@ -623,6 +624,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 			"report action: read(%s) failed: %s",
 			i_stream_get_name(input), i_stream_get_error(input));
 		i_stream_unref(&input);
+		sieve_smtp_abort(sctx);
 		return SIEVE_EXEC_OK;
 	}
 	i_stream_unref(&input);
