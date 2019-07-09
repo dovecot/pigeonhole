@@ -382,6 +382,7 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 			i_stream_get_name(input),
 			i_stream_get_error(input));
 		i_stream_unref(&input);
+		sieve_smtp_abort(sctx);
 		return SIEVE_EXEC_TEMP_FAILURE;
 	}
 	i_stream_unref(&input);
