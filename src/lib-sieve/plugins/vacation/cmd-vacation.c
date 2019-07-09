@@ -1129,6 +1129,7 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 
 	if ((ret = mail_get_first_header(msgdata->mail, "references",
 					 &header)) < 0) {
+		sieve_smtp_abort(sctx);
 		return sieve_result_mail_error(
 			aenv, msgdata->mail, "vacation action: "
 			"failed to read header field `references'");
