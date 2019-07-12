@@ -1,3 +1,14 @@
+v0.5.7 2019-07-12  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	+ vacation: Made the subject for the automatic response message produced
+	  by the Sieve vacation action configurable. Both the default subject
+	  (if the script defines none) and the subject template (e.g. used to
+	  add a subject prefix) can be configured.
+	- dsync: dsync-replication does not synchronize Sieve scripts.
+	- imap_sieve_filter: Reduce FILTER=SIEVE verbosity over IMAP connection.
+	- testsuite: Pigeonhole testsuite segfaulted if it was compiled with
+	  GCC 9
+
 v0.5.6 2019-04-30  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	+ sieve: Redirect loop prevention is sometimes ineffective. Improve
