@@ -140,6 +140,9 @@ void sieve_critical(struct sieve_instance *svinst,
 	sieve_critical(svinst, ehandler, __FILE__, __LINE__, __VA_ARGS__)
 
 
+void sieve_internal_error_params(struct sieve_error_handler *ehandler,
+				 const struct sieve_error_params *params,
+				 const char *user_prefix);
 void sieve_internal_error(struct sieve_error_handler *ehandler,
 			  const char *csrc_filename, unsigned int csrc_linenum,
 			  const char *location, const char *user_prefix)

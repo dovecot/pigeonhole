@@ -298,19 +298,10 @@ void sieve_global_info_warning(struct sieve_instance *svinst,
  * Default (user) error functions
  */
 
-#undef sieve_internal_error
-void sieve_internal_error(struct sieve_error_handler *ehandler,
-			  const char *csrc_filename, unsigned int csrc_linenum,
-			  const char *location, const char *user_prefix)
+void sieve_internal_error_params(struct sieve_error_handler *ehandler,
+				 const struct sieve_error_params *params,
+				 const char *user_prefix)
 {
-	struct sieve_error_params params = {
-		.log_type = LOG_TYPE_ERROR,
-		.csrc = {
-			.filename = csrc_filename,
-			.linenum = csrc_linenum,
-		},
-		.location = location,
-	};
 	char str[256];
 	const char *msg;
 	struct tm *tm;
@@ -323,12 +314,30 @@ void sieve_internal_error(struct sieve_error_handler *ehandler,
 	       str : CRITICAL_MSG);
 
 	if (user_prefix == NULL || *user_prefix == '\0') {
-		sieve_direct_log(ehandler->svinst, ehandler, &params, 0,
+		sieve_direct_log(ehandler->svinst, ehandler, params, 0,
 				 "%s", msg);
 	} else {
-		sieve_direct_log(ehandler->svinst, ehandler, &params, 0,
+		sieve_direct_log(ehandler->svinst, ehandler, params, 0,
 				 "%s: %s", user_prefix, msg);
 	}
+}
+
+#undef sieve_internal_error
+void sieve_internal_error(struct sieve_error_handler *ehandler,
+			  const char *csrc_filename, unsigned int csrc_linenum,
+			  const char *location, const char *user_prefix)
+
+{
+	struct sieve_error_params params = {
+		.log_type = LOG_TYPE_ERROR,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
+		.location = location,
+	};
+
+	sieve_internal_error_params(ehandler, &params, user_prefix);
 }
 
 void sieve_logv(struct sieve_error_handler *ehandler,
@@ -350,9 +359,7 @@ void sieve_criticalv(struct sieve_instance *svinst,
 	new_params.log_type = LOG_TYPE_ERROR;
 
 	sieve_direct_master_vlog(svinst, &new_params, fmt, args);
-	sieve_internal_error(ehandler,
-			     params->csrc.filename, params->csrc.linenum,
-			     params->location, user_prefix);
+	sieve_internal_error_params(ehandler, &new_params, user_prefix);
 }
 
 #undef sieve_error
