@@ -105,6 +105,8 @@ struct sieve_enotify_env {
 	const struct sieve_enotify_method *method;
 
 	struct sieve_error_handler *ehandler;
+	const char *location;
+	struct event *event;
 };
 
 /*
@@ -130,6 +132,8 @@ struct sieve_enotify_exec_env {
 	struct sieve_message_context *msgctx;
 
 	struct sieve_error_handler *ehandler;
+	const char *location;
+	struct event *event;
 };
 
 /*
@@ -150,28 +154,36 @@ struct sieve_enotify_action {
  */
 
 #define sieve_enotify_error(ENV, ...) \
-	sieve_error((ENV)->ehandler, NULL, __VA_ARGS__ )
-
+	sieve_event_log((ENV)->svinst, (ENV)->ehandler, (ENV)->event, \
+			LOG_TYPE_ERROR, (ENV)->location, 0, __VA_ARGS__ )
 #define sieve_enotify_warning(ENV, ...) \
-	sieve_warning((ENV)->ehandler, NULL, __VA_ARGS__ )
-
+	sieve_event_log((ENV)->svinst, (ENV)->ehandler, (ENV)->event, \
+			LOG_TYPE_WARNING, \
+			(ENV)->location, 0, __VA_ARGS__ )
 #define sieve_enotify_info(ENV, ...) \
-	sieve_info((ENV)->ehandler, NULL, __VA_ARGS__ )
-
+	sieve_event_log((ENV)->svinst, (ENV)->ehandler, (ENV)->event, \
+			LOG_TYPE_INFO, \
+			(ENV)->location, 0, __VA_ARGS__ )
 #define sieve_enotify_critical(ENV, ...) \
 	sieve_critical((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
 
 #define sieve_enotify_global_error(ENV, ...) \
-	sieve_global_error((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
-
+	sieve_event_log((ENV)->svinst, (ENV)->ehandler, (ENV)->event, \
+			LOG_TYPE_ERROR, (ENV)->location, \
+			SIEVE_ERROR_FLAG_GLOBAL, __VA_ARGS__ )
 #define sieve_enotify_global_warning(ENV, ...) \
-	sieve_global_warning((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
-
+	sieve_event_log((ENV)->svinst, (ENV)->ehandler, (ENV)->event, \
+			LOG_TYPE_WARNING, (ENV)->location, \
+			SIEVE_ERROR_FLAG_GLOBAL, __VA_ARGS__ )
 #define sieve_enotify_global_info(ENV, ...) \
-	sieve_global_info((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
+	sieve_event_log((ENV)->svinst, (ENV)->ehandler, (ENV)->event, \
+			LOG_TYPE_INFO, (ENV)->location, \
+			SIEVE_ERROR_FLAG_GLOBAL, __VA_ARGS__ )
 
 #define sieve_enotify_global_log_error(ENV, ...) \
-	sieve_global_info_error((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
-
+	sieve_event_log((ENV)->svinst, (ENV)->ehandler, (ENV)->event, \
+			LOG_TYPE_ERROR, (ENV)->location, \
+			(SIEVE_ERROR_FLAG_GLOBAL | \
+			 SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO), __VA_ARGS__ )
 #endif
 

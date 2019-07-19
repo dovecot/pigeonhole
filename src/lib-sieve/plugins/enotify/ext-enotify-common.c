@@ -324,11 +324,11 @@ _ext_enotify_option_check(void *context, struct sieve_ast_argument *arg)
 	i_zero(&nenv);
 	nenv.svinst = optn_context->svinst;
 	nenv.method = method;
-	nenv.ehandler = sieve_prefix_ehandler_create(
-		sieve_validator_error_handler(valdtr),
-		sieve_error_script_location(
-			sieve_validator_script(valdtr), arg->source_line),
-			"notify command");
+	nenv.ehandler = sieve_validator_error_handler(valdtr);
+	nenv.location = sieve_error_script_location(
+		sieve_validator_script(valdtr), arg->source_line);
+	nenv.event = event_create(nenv.svinst->event);
+	event_set_append_log_prefix(nenv.event, "notify command: ");
 
 	/* Parse option */
 	if (!sieve_argument_is_string_literal(arg)) {
@@ -360,7 +360,7 @@ _ext_enotify_option_check(void *context, struct sieve_ast_argument *arg)
 			  1 : -1 );
 	}
 
-	sieve_error_handler_unref(&nenv.ehandler);
+	event_unref(&nenv.event);
 	return result;
 }
 
@@ -414,12 +414,11 @@ bool ext_enotify_compile_check_arguments(struct sieve_validator *valdtr,
 	/* Check URI itself */
 	if (result && method->def->compile_check_uri != NULL) {
 		/* Set log location to location of URI argument */
-		nenv.ehandler = sieve_prefix_ehandler_create(
-			sieve_validator_error_handler(valdtr),
-			sieve_error_script_location(
-				sieve_validator_script(valdtr),
-				uri_arg->source_line),
-			"notify command");
+		nenv.ehandler = sieve_validator_error_handler(valdtr);
+		nenv.location = sieve_error_script_location(
+			sieve_validator_script(valdtr), uri_arg->source_line);
+		nenv.event = event_create(nenv.svinst->event);
+		event_set_append_log_prefix(nenv.event, "notify command: ");
 
 		/* Execute method check function */
 		result = method->def->compile_check_uri(
@@ -431,12 +430,12 @@ bool ext_enotify_compile_check_arguments(struct sieve_validator *valdtr,
 	    sieve_argument_is_string_literal(msg_arg) &&
 	    method->def->compile_check_message != NULL ) {
 		/* Set log location to location of :message argument */
-		sieve_error_handler_unref(&nenv.ehandler);
-		nenv.ehandler = sieve_prefix_ehandler_create(
-			sieve_validator_error_handler(valdtr),
-			sieve_error_script_location(
-				sieve_validator_script(valdtr),
-				msg_arg->source_line), "notify command");
+		event_unref(&nenv.event);
+		nenv.ehandler = sieve_validator_error_handler(valdtr);
+		nenv.location = sieve_error_script_location(
+			sieve_validator_script(valdtr), msg_arg->source_line);
+		nenv.event = event_create(nenv.svinst->event);
+		event_set_append_log_prefix(nenv.event, "notify command: ");
 
 		/* Execute method check function */
 		result = method->def->compile_check_message(
@@ -448,20 +447,19 @@ bool ext_enotify_compile_check_arguments(struct sieve_validator *valdtr,
 	    sieve_argument_is_string_literal(from_arg) &&
 	    method->def->compile_check_from != NULL ) {
 		/* Set log location to location of :from argument */
-		sieve_error_handler_unref(&nenv.ehandler);
-		nenv.ehandler = sieve_prefix_ehandler_create(
-			sieve_validator_error_handler(valdtr),
-			sieve_error_script_location(
-				sieve_validator_script(valdtr),
-				from_arg->source_line),
-			"notify command");
+		event_unref(&nenv.event);
+		nenv.ehandler = sieve_validator_error_handler(valdtr);
+		nenv.location = sieve_error_script_location(
+			sieve_validator_script(valdtr), from_arg->source_line);
+		nenv.event = event_create(nenv.svinst->event);
+		event_set_append_log_prefix(nenv.event, "notify command: ");
 
 		/* Execute method check function */
 		result = method->def->compile_check_from(
 			&nenv, sieve_ast_argument_str(from_arg));
 	}
 
-	sieve_error_handler_unref(&nenv.ehandler);
+	event_unref(&nenv.event);
 
 	/* Check :options argument */
 	if (result && options_arg != NULL) {
@@ -514,16 +512,17 @@ bool ext_enotify_runtime_method_validate(const struct sieve_runtime_env *renv,
 		i_zero(&nenv);
 		nenv.svinst = eenv->svinst;
 		nenv.method = method;
-		nenv.ehandler = sieve_prefix_ehandler_create(
-			renv->ehandler,
-			sieve_runtime_get_full_command_location(renv),
-			"valid_notify_method test");
+		nenv.ehandler = renv->ehandler;
+		nenv.location = sieve_runtime_get_full_command_location(renv),
+		nenv.event = event_create(nenv.svinst->event);
+		event_set_append_log_prefix(nenv.event,
+					    "valid_notify_method test: ");
 
 		/* Use the method check function to validate the URI */
 		result = method->def->runtime_check_uri(
 			&nenv, str_c(method_uri), uri);
 
-		sieve_error_handler_unref(&nenv.ehandler);
+		event_unref(&nenv.event);
 	}
 
 	return result;
@@ -583,15 +582,17 @@ ext_enotify_runtime_get_method_capability(const struct sieve_runtime_env *renv,
 		i_zero(&nenv);
 		nenv.svinst = eenv->svinst;
 		nenv.method = method;
-		nenv.ehandler = sieve_prefix_ehandler_create(
-			renv->ehandler,
-			sieve_runtime_get_full_command_location(renv),
-			"notify_method_capability test");
+		nenv.ehandler = renv->ehandler;
+		nenv.location = sieve_runtime_get_full_command_location(renv),
+		nenv.event = event_create(nenv.svinst->event);
+		event_set_append_log_prefix(nenv.event,
+					    "notify_method_capability test: ");
 
 		/* Execute method function to acquire capability value */
 		result = method->def->runtime_get_method_capability(
 			&nenv, str_c(method_uri), uri_body, capability);
-		sieve_error_handler_unref(&nenv.ehandler);
+
+		event_unref(&nenv.event);
 	}
 
 	return result;
@@ -620,10 +621,10 @@ int ext_enotify_runtime_check_operands(
 		i_zero(&nenv);
 		nenv.svinst = eenv->svinst;
 		nenv.method = method;
-		nenv.ehandler = sieve_prefix_ehandler_create(
-			renv->ehandler,
-			sieve_runtime_get_full_command_location(renv),
-			"notify action");
+		nenv.ehandler = renv->ehandler;
+		nenv.location = sieve_runtime_get_full_command_location(renv),
+		nenv.event = event_create(nenv.svinst->event);
+		event_set_append_log_prefix(nenv.event, "notify_action: ");
 
 		/* Execute check function */
 		if (method->def->runtime_check_operands(
@@ -677,7 +678,7 @@ int ext_enotify_runtime_check_operands(
 			result = SIEVE_EXEC_FAILURE;
 		}
 
-		sieve_error_handler_unref(&nenv.ehandler);
+		event_unref(&nenv.event);
 		return result;
 	}
 

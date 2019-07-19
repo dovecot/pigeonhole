@@ -546,13 +546,14 @@ act_notify_check_duplicate(const struct sieve_runtime_env *renv,
 	i_zero(&nenv);
 	nenv.svinst = eenv->svinst;
 	nenv.method = nact->method;
-	nenv.ehandler =
-		sieve_prefix_ehandler_create(renv->ehandler, act->location,
-					     "notify");
+	nenv.ehandler = renv->ehandler;
+	nenv.location = act->location;
+	nenv.event = event_create(nenv.svinst->event);
+	event_set_append_log_prefix(nenv.event, "notify: ");
 
 	result = nmth_def->action_check_duplicates(&nenv, nact, nact_other);
 
-	sieve_error_handler_unref(&nenv.ehandler);
+	event_unref(&nenv.event);
 
 	return result;
 }
@@ -610,6 +611,7 @@ act_notify_commit(const struct sieve_action_exec_env *aenv,
 		nenv.msgctx = aenv->msgctx;
 
 		nenv.ehandler = aenv->ehandler;
+		nenv.event = aenv->event;
 
 		ret = method->def->action_execute(&nenv, act);
 		if (ret >= 0)
