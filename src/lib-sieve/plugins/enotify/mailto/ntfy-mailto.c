@@ -193,35 +193,22 @@ static void ntfy_mailto_unload
 struct ntfy_mailto_uri_env {
 	const struct sieve_enotify_env *nenv;
 
+	struct event *event;
+
 	struct uri_mailto_log uri_log;
 };
 
 static void ATTR_FORMAT(5, 0)
 ntfy_mailto_uri_logv(void *context, enum log_type log_type,
-		     const char *csrc_filename ATTR_UNUSED,
-		     unsigned int csrc_linenum ATTR_UNUSED,
+		     const char *csrc_filename, unsigned int csrc_linenum,
 		     const char *fmt, va_list args)
 {
 	struct ntfy_mailto_uri_env *nmuenv = context;
 	const struct sieve_enotify_env *nenv = nmuenv->nenv;
-	const char *msg = t_strdup_vprintf(fmt, args);
 
-	switch (log_type) {
-	case LOG_TYPE_ERROR:
-		sieve_error(nenv->ehandler, NULL, "mailto URI: %s", msg);
-		break;
-	case LOG_TYPE_WARNING:
-		sieve_warning(nenv->ehandler, NULL, "mailto URI: %s", msg);
-		break;
-	case LOG_TYPE_INFO:
-		sieve_info(nenv->ehandler, NULL, "mailto URI: %s", msg);
-		break;
-	case LOG_TYPE_DEBUG:
-		sieve_debug(nenv->ehandler, NULL, "mailto URI: %s", msg);
-		break;
-	default:
-		i_unreached();
-	}
+	sieve_event_logv(nenv->svinst, nenv->ehandler, nmuenv->event,
+			 log_type, csrc_filename, csrc_linenum,
+			 nenv->location, 0, fmt, args);
 }
 
 static void
@@ -230,15 +217,17 @@ ntfy_mailto_uri_env_init(struct ntfy_mailto_uri_env *nmuenv,
 {
 	i_zero(nmuenv);
 	nmuenv->nenv = nenv;
+	nmuenv->event = event_create(nenv->event);
+	event_set_append_log_prefix(nmuenv->event, "mailto URI: ");
 
 	nmuenv->uri_log.context = nmuenv;
 	nmuenv->uri_log.logv = ntfy_mailto_uri_logv;
 }
 
 static void
-ntfy_mailto_uri_env_deinit(struct ntfy_mailto_uri_env *nmuenv ATTR_UNUSED)
+ntfy_mailto_uri_env_deinit(struct ntfy_mailto_uri_env *nmuenv)
 {
-	/* nothing yet */
+	event_unref(&nmuenv->event);
 }
 
 /*
