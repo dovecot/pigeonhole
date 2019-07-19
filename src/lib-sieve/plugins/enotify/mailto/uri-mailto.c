@@ -22,19 +22,11 @@
 
 #include "uri-mailto.h"
 
-/* Util macros */
-
-#define uri_mailto_error(PARSER, ...) \
-	sieve_error((PARSER)->ehandler, NULL, "invalid mailto URI: " __VA_ARGS__ )
-
-#define uri_mailto_warning(PARSER, ...) \
-	sieve_warning((PARSER)->ehandler, NULL, "mailto URI: " __VA_ARGS__ )
-
 /* Parser object */
 
 struct uri_mailto_parser {
 	pool_t pool;
-	struct sieve_error_handler *ehandler;
+	const struct uri_mailto_log *log;
 
 	struct uri_mailto *uri;
 
@@ -44,6 +36,36 @@ struct uri_mailto_parser {
 	int max_recipients;
 	int max_headers;
 };
+
+/* Error handling */
+
+#define uri_mailto_error(PARSER, ...) \
+	uri_mailto_log((PARSER), LOG_TYPE_ERROR, \
+		       __FILE__, __LINE__, __VA_ARGS__)
+#define uri_mailto_warning(PARSER, ...) \
+	uri_mailto_log((PARSER), LOG_TYPE_WARNING, \
+		       __FILE__, __LINE__, __VA_ARGS__)
+
+static inline void ATTR_FORMAT(5, 6)
+uri_mailto_log(struct uri_mailto_parser *parser, enum log_type log_type,
+	       const char *csrc_filename, unsigned int csrc_linenum,
+	       const char *fmt, ...)
+{
+	va_list args;
+
+	if (parser->log == NULL || parser->log->logv == NULL)
+		return;
+
+	va_start(args, fmt);
+	parser->log->logv(parser->log->context, log_type,
+			  csrc_filename, csrc_linenum, fmt, args);
+	va_end(args);
+}
+
+
+/*
+ * Error handling
+ */
 
 /*
  * Reserved and unique headers
@@ -551,19 +573,19 @@ static bool uri_mailto_parse_uri
 bool uri_mailto_validate
 (const char *uri_body, const char **reserved_headers,
 	const char **unique_headers, int max_recipients, int max_headers,
-	struct sieve_error_handler *ehandler)
+	const struct uri_mailto_log *log)
 {
 	struct uri_mailto_parser parser;
 
 	i_zero(&parser);
-	parser.ehandler = ehandler;
+	parser.log = log;
 	parser.max_recipients = max_recipients;
 	parser.max_headers = max_headers;
 	parser.reserved_headers = reserved_headers;
 	parser.unique_headers = unique_headers;
 
 	/* If no errors are reported, we don't need to record any data */
-	if ( ehandler != NULL ) {
+	if ( log != NULL ) {
 		parser.pool = pool_datastack_create();
 
 		parser.uri = p_new(parser.pool, struct uri_mailto, 1);
@@ -574,7 +596,7 @@ bool uri_mailto_validate
 	if ( !uri_mailto_parse_uri(&parser, uri_body) )
 		return FALSE;
 
-	if ( ehandler != NULL ) {
+	if ( log != NULL ) {
 		if ( array_count(&parser.uri->recipients) == 0 )
 			uri_mailto_warning(&parser, "notification URI specifies no recipients");
 	}
@@ -589,12 +611,12 @@ bool uri_mailto_validate
 struct uri_mailto *uri_mailto_parse
 (const char *uri_body, pool_t pool, const char **reserved_headers,
 	const char **unique_headers, int max_recipients, int max_headers,
-	struct sieve_error_handler *ehandler)
+	const struct uri_mailto_log *log)
 {
 	struct uri_mailto_parser parser;
 
 	parser.pool = pool;
-	parser.ehandler = ehandler;
+	parser.log = log;
 	parser.max_recipients = max_recipients;
 	parser.max_headers = max_headers;
 	parser.reserved_headers = reserved_headers;
@@ -607,7 +629,7 @@ struct uri_mailto *uri_mailto_parse
 	if ( !uri_mailto_parse_uri(&parser, uri_body) )
 		return NULL;
 
-	if ( ehandler != NULL ) {
+	if ( log != NULL ) {
 		if ( array_count(&parser.uri->recipients) == 0 )
 			uri_mailto_warning(&parser, "notification URI specifies no recipients");
 	}

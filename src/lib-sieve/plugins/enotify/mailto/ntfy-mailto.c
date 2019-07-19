@@ -187,16 +187,80 @@ static void ntfy_mailto_unload
 }
 
 /*
+ * URI parsing
+ */
+
+struct ntfy_mailto_uri_env {
+	const struct sieve_enotify_env *nenv;
+
+	struct uri_mailto_log uri_log;
+};
+
+static void ATTR_FORMAT(5, 0)
+ntfy_mailto_uri_logv(void *context, enum log_type log_type,
+		     const char *csrc_filename ATTR_UNUSED,
+		     unsigned int csrc_linenum ATTR_UNUSED,
+		     const char *fmt, va_list args)
+{
+	struct ntfy_mailto_uri_env *nmuenv = context;
+	const struct sieve_enotify_env *nenv = nmuenv->nenv;
+	const char *msg = t_strdup_vprintf(fmt, args);
+
+	switch (log_type) {
+	case LOG_TYPE_ERROR:
+		sieve_error(nenv->ehandler, NULL, "mailto URI: %s", msg);
+		break;
+	case LOG_TYPE_WARNING:
+		sieve_warning(nenv->ehandler, NULL, "mailto URI: %s", msg);
+		break;
+	case LOG_TYPE_INFO:
+		sieve_info(nenv->ehandler, NULL, "mailto URI: %s", msg);
+		break;
+	case LOG_TYPE_DEBUG:
+		sieve_debug(nenv->ehandler, NULL, "mailto URI: %s", msg);
+		break;
+	default:
+		i_unreached();
+	}
+}
+
+static void
+ntfy_mailto_uri_env_init(struct ntfy_mailto_uri_env *nmuenv,
+			 const struct sieve_enotify_env *nenv)
+{
+	i_zero(nmuenv);
+	nmuenv->nenv = nenv;
+
+	nmuenv->uri_log.context = nmuenv;
+	nmuenv->uri_log.logv = ntfy_mailto_uri_logv;
+}
+
+static void
+ntfy_mailto_uri_env_deinit(struct ntfy_mailto_uri_env *nmuenv ATTR_UNUSED)
+{
+	/* nothing yet */
+}
+
+/*
  * Validation
  */
+
 
 static bool ntfy_mailto_compile_check_uri
 (const struct sieve_enotify_env *nenv, const char *uri ATTR_UNUSED,
 	const char *uri_body)
 {
-	return uri_mailto_validate
-		(uri_body, _reserved_headers, _unique_headers,
-			NTFY_MAILTO_MAX_RECIPIENTS, NTFY_MAILTO_MAX_HEADERS, nenv->ehandler);
+	struct ntfy_mailto_uri_env nmuenv;
+	bool result;
+
+	ntfy_mailto_uri_env_init(&nmuenv, nenv);
+	result = uri_mailto_validate(
+		uri_body, _reserved_headers, _unique_headers,
+		NTFY_MAILTO_MAX_RECIPIENTS, NTFY_MAILTO_MAX_HEADERS,
+		&nmuenv.uri_log);
+	ntfy_mailto_uri_env_deinit(&nmuenv);
+
+	return result;
 }
 
 static bool ntfy_mailto_compile_check_from
@@ -221,6 +285,12 @@ static bool ntfy_mailto_compile_check_from
 /*
  * Runtime
  */
+
+struct ntfy_mailto_runtime_env {
+	const struct sieve_enotify_env *nenv;
+
+	struct event *event;
+};
 
 static const char *ntfy_mailto_runtime_get_notify_capability
 (const struct sieve_enotify_env *nenv ATTR_UNUSED, const char *uri ATTR_UNUSED,
@@ -254,6 +324,7 @@ static bool ntfy_mailto_runtime_check_operands
 	struct ntfy_mailto_context *mtctx;
 	struct uri_mailto *parsed_uri;
 	const struct smtp_address *address;
+	struct ntfy_mailto_uri_env nmuenv;
 	const char *error;
 
 	/* Need to create context before validation to have arrays present */
@@ -276,12 +347,16 @@ static bool ntfy_mailto_runtime_check_operands
 		if ( address == NULL ) return FALSE;
 	}
 
-	if ( (parsed_uri=uri_mailto_parse
-		(uri_body, context_pool, _reserved_headers,
-			_unique_headers, NTFY_MAILTO_MAX_RECIPIENTS, NTFY_MAILTO_MAX_HEADERS,
-			nenv->ehandler)) == NULL ) {
+	ntfy_mailto_uri_env_init(&nmuenv, nenv);
+	parsed_uri = uri_mailto_parse(uri_body, context_pool,
+				      _reserved_headers, _unique_headers,
+				      NTFY_MAILTO_MAX_RECIPIENTS,
+				      NTFY_MAILTO_MAX_HEADERS,
+				      &nmuenv.uri_log);
+	ntfy_mailto_uri_env_deinit(&nmuenv);
+
+	if (parsed_uri == NULL)
 		return FALSE;
-	}
 
 	mtctx->uri = parsed_uri;
 	*method_context = (void *) mtctx;
