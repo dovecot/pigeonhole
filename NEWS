@@ -1,3 +1,8 @@
+v0.5.7.1 2019-07-23  Timo Sirainen <timo.sirainen@open-xchange.com>
+
+	- dsync: Sieve script syncing failed if mailbox attributes weren't
+	  enabled.
+
 v0.5.7 2019-07-12  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	+ vacation: Made the subject for the automatic response message produced
