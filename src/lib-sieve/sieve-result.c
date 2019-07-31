@@ -432,6 +432,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 	struct sieve_result_action *raction = NULL, *kaction = NULL;
 	struct sieve_action action;
 
+	i_assert(name != NULL || act_def != NULL);
 	action.name = name;
 	action.def = act_def;
 	action.ext = ext;
