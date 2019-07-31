@@ -1520,8 +1520,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 		eenv->exec_status->significant_action_executed = TRUE;
 
 		struct event_passthrough *e =
-			event_create_passthrough(aenv->event)->
-			set_name("sieve_action_vacation");
+			sieve_action_create_finish_event(aenv);
 
 		sieve_result_event_log(aenv, e->event(),
 				       "sent vacation response to <%s>",

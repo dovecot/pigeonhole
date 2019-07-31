@@ -836,8 +836,7 @@ act_notify_send(const struct sieve_action_exec_env *aenv,
 		}
 	} else {
 		struct event_passthrough *e =
-			event_create_passthrough(aenv->event)->
-			set_name("sieve_action_notify")->
+			sieve_action_create_finish_event(aenv)->
 			add_str("sieve_notify_target", str_c(all));
 
 		sieve_result_event_log(aenv, e->event(),

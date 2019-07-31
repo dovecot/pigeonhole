@@ -719,8 +719,7 @@ static int ntfy_mailto_send
 		}
 	} else {
 		struct event_passthrough *e =
-			event_create_passthrough(nenv->event)->
-			set_name("sieve_action_notify")->
+			sieve_enotify_create_finish_event(nenv)->
 			add_str("sieve_notify_target", str_c(all));
 
 		sieve_enotify_event_log(nenv, e->event(),
