@@ -32,6 +32,20 @@
 #include <ctype.h>
 
 /*
+ * Action execution environment
+ */
+
+struct event_passthrough *
+sieve_action_create_finish_event(const struct sieve_action_exec_env *aenv)
+{
+	struct event_passthrough *e =
+		event_create_passthrough(aenv->event)->
+		set_name("sieve_action_finished");
+
+	return e;
+}
+
+/*
  * Side-effect operand
  */
 

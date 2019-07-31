@@ -25,6 +25,9 @@ struct sieve_action_exec_env {
 	struct sieve_message_context *msgctx;
 };
 
+struct event_passthrough *
+sieve_action_create_finish_event(const struct sieve_action_exec_env *aenv);
+
 /*
  * Action flags
  */
