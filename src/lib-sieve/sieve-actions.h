@@ -25,8 +25,6 @@ struct sieve_action_exec_env {
 	struct sieve_message_context *msgctx;
 };
 
-const char *sieve_action_get_location(const struct sieve_action_exec_env *aenv);
-
 /*
  * Action flags
  */
