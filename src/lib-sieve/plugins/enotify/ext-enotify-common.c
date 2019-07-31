@@ -702,3 +702,17 @@ void sieve_enotify_method_printf(const struct sieve_enotify_print_env *penv,
 	va_end(args);
 }
 
+/*
+ * Action execution
+ */
+
+struct event_passthrough *
+sieve_enotify_create_finish_event(const struct sieve_enotify_exec_env *nenv)
+{
+	struct event_passthrough *e =
+		event_create_passthrough(nenv->event)->
+		set_name("sieve_action_finished");
+
+	return e;
+}
+

@@ -136,6 +136,9 @@ struct sieve_enotify_exec_env {
 	struct event *event;
 };
 
+struct event_passthrough *
+sieve_enotify_create_finish_event(const struct sieve_enotify_exec_env *nenv);
+
 /*
  * Notify action
  */
