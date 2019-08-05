@@ -19,8 +19,18 @@ static bool managesieve_settings_verify(void *_set, pool_t pool,
 
 /* <settings checks> */
 static struct file_listener_settings managesieve_unix_listeners_array[] = {
-	{ "login/sieve", 0666, "", "" },
-	{ "srv.managesieve/%{pid}", 0600, "", "" },
+	{
+		.path = "login/sieve",
+		.mode = 0666,
+		.user = "",
+		.group = "",
+	},
+	{
+		.path = "srv.managesieve/%{pid}",
+		.mode = 0600,
+		.user = "",
+		.group = "",
+	},
 };
 static struct file_listener_settings *managesieve_unix_listeners[] = {
 	&managesieve_unix_listeners_array[0],

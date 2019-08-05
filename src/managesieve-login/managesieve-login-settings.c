@@ -22,7 +22,12 @@
 
 /* <settings checks> */
 static struct file_listener_settings managesieve_login_unix_listeners_array[] = {
-	{ "srv.managesieve-login/%{pid}", 0600, "", "" },
+	{
+		.path = "srv.managesieve-login/%{pid}",
+		.mode = 0600,
+		.user = "",
+		.group = ""
+	},
 };
 static struct file_listener_settings *managesieve_login_unix_listeners[] = {
 	&managesieve_login_unix_listeners_array[0],
@@ -33,7 +38,11 @@ static buffer_t managesieve_login_unix_listeners_buf = {
 };
 
 static struct inet_listener_settings managesieve_login_inet_listeners_array[] = {
-    { .name = "sieve", .address = "", .port = MANAGESIEVE_DEFAULT_PORT },
+	{
+		.name = "sieve",
+		.address = "",
+		.port = MANAGESIEVE_DEFAULT_PORT,
+	},
 };
 static struct inet_listener_settings *managesieve_login_inet_listeners[] = {
 	&managesieve_login_inet_listeners_array[0]
