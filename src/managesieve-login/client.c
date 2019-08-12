@@ -530,7 +530,9 @@ static const struct login_binary managesieve_login_binary = {
 	.client_vfuncs = &managesieve_client_vfuncs,
 	.preinit = managesieve_login_preinit,
 	.init = managesieve_login_init,
-	.deinit = managesieve_login_deinit
+	.deinit = managesieve_login_deinit,
+
+	.anonymous_login_acceptable = FALSE,
 };
 
 int main(int argc, char *argv[])

@@ -25,22 +25,15 @@ const char *client_authenticate_get_capabilities
 {
 	const struct auth_mech_desc *mech;
 	unsigned int i, count;
-	bool first = TRUE;
 	string_t *str;
 
 	str = t_str_new(128);
 	mech = sasl_server_get_advertised_mechs(client, &count);
 
 	for (i = 0; i < count; i++) {
-		/* Filter ANONYMOUS mechanism, ManageSieve has no use-case for it */
-		if ( (mech[i].flags & MECH_SEC_ANONYMOUS) == 0 ) {
-			if ( !first )
-				str_append_c(str, ' ');
-			else
-				first = FALSE;
-
-			str_append(str, mech[i].name);
-		}
+		if (i > 0)
+			str_append_c(str, ' ');
+		str_append(str, mech[i].name);
 	}
 
 	return str_c(str);
@@ -281,12 +274,6 @@ int cmd_authenticate
 
 		if (*mech_name == '\0')
 			return -1;
-
-		/* Refuse the ANONYMOUS mechanism. */
-		if ( strncasecmp(mech_name, "ANONYMOUS", 9) == 0 ) {
-			client_send_no(client, "ANONYMOUS login is not allowed.");
-			return 1;
-		}
 
 		i_free(client->auth_mech_name);
 		client->auth_mech_name = i_strdup(mech_name);
