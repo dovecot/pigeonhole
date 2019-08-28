@@ -1,3 +1,9 @@
+v0.4.24.2 2019-08-28  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	* CVE-2019-11500: ManageSieve protocol parser does not properly handle
+	  NUL byte when scanning data in quoted strings, leading to out of
+	  bounds heap memory writes. Found by Nick Roessler and Rafi Rubin.
+
 v0.4.24.1 2019-02-05  Stephan Bosch <stephan@rename-it.nl>
 
 	+ imapsieve: Added imapsieve_expunge_discarded setting which causes
