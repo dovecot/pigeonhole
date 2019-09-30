@@ -1,3 +1,10 @@
+v0.5.8 2019-10-08  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	- Sieve may leak resources in rare cases when a redirect, vacation or
+	  report action fails to send the message. This mainly applies when
+	  Sieve is executed in IMAP context; i.e., for the IMAPSIEVE or
+	  FILTER=SIEVE capabilities.
+
 v0.5.7.1 2019-07-23  Timo Sirainen <timo.sirainen@open-xchange.com>
 
 	- dsync: Sieve script syncing failed if mailbox attributes weren't
