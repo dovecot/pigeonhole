@@ -107,7 +107,7 @@ int sieve_result_implicit_keep(struct sieve_result *result,
 
 void sieve_result_mark_executed(struct sieve_result *result);
 
-int sieve_result_execute(struct sieve_result *result, bool *keep,
+int sieve_result_execute(struct sieve_result *result, bool last, bool *keep,
 			 struct sieve_error_handler *ehandler);
 
 bool sieve_result_executed(struct sieve_result *result);

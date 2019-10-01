@@ -92,7 +92,7 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 	testsuite_log_clear_messages();
 
 	/* Execute the result */
-	ret = sieve_result_execute(_testsuite_result, NULL,
+	ret = sieve_result_execute(_testsuite_result, TRUE, NULL,
 				   testsuite_log_ehandler);
 
 	return (ret > 0);

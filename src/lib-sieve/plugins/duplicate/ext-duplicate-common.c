@@ -77,7 +77,7 @@ act_duplicate_mark_print(const struct sieve_action *action,
 			 const struct sieve_result_print_env *rpenv,
 			 bool *keep);
 static void
-act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv,
+act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv, bool last,
 			  void *tr_context, int status);
 
 static const struct sieve_action_def act_duplicate_mark = {
@@ -105,7 +105,7 @@ act_duplicate_mark_print(const struct sieve_action *action,
 }
 
 static void
-act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv,
+act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv, bool last,
 			  void *tr_context ATTR_UNUSED, int status)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;

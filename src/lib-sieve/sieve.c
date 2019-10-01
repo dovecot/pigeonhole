@@ -607,7 +607,7 @@ int sieve_execute(struct sieve_binary *sbin,
 	 */
 	if (ret > 0) {
 		/* Execute result */
-		ret = sieve_result_execute(result, keep, action_ehandler);
+		ret = sieve_result_execute(result, TRUE, keep, action_ehandler);
 	} else if (ret == SIEVE_EXEC_FAILURE) {
 		/* Perform implicit keep if script failed with a normal runtime
 		   error
@@ -716,8 +716,8 @@ static void sieve_multiscript_execute(struct sieve_multiscript *mscript,
 	mscript->exec_env.flags = flags;
 
 	if (mscript->status > 0) {
-		mscript->status = sieve_result_execute(mscript->result, keep,
-						       ehandler);
+		mscript->status = sieve_result_execute(mscript->result, FALSE,
+						       keep, ehandler);
 	} else {
 		if (sieve_result_implicit_keep(mscript->result, ehandler,
 					       FALSE) <= 0)
