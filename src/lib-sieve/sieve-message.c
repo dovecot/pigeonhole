@@ -329,6 +329,10 @@ int sieve_message_substitute
 	static const char *wanted_headers[] = {
 		"From", "Message-ID", "Subject", "Return-Path", NULL
 	};
+	static const struct smtp_address default_sender = {
+		.localpart = DEFAULT_ENVELOPE_SENDER,
+		.domain = NULL,
+	};
 	struct mail_user *mail_user = msgctx->mail_user;
 	struct sieve_message_version *version;
 	struct mailbox_header_lookup_ctx *headers_ctx;
@@ -347,8 +351,7 @@ int sieve_message_substitute
 
 	i_stream_seek(input, 0);
 	sender = sieve_message_get_sender(msgctx);
-	sender = sender == NULL ?
-		&((struct smtp_address){DEFAULT_ENVELOPE_SENDER, NULL}) : sender;
+	sender = (sender == NULL ? &default_sender : sender);
 	ret = raw_mailbox_alloc_stream(msgctx->raw_mail_user, input, (time_t)-1,
 		smtp_address_encode(sender), &box);
 
