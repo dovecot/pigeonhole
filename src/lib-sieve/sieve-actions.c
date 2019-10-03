@@ -404,8 +404,8 @@ act_store_mailbox_open(const struct sieve_action_exec_env *aenv,
 		flags |= MAILBOX_FLAG_AUTO_CREATE;
 	if (eenv->scriptenv->mailbox_autosubscribe)
 		flags |= MAILBOX_FLAG_AUTO_SUBSCRIBE;
-	*box_r = box =
-		mailbox_alloc_delivery(eenv->scriptenv->user, mailbox, flags);
+	*box_r = box = mailbox_alloc_for_user(eenv->scriptenv->user, mailbox,
+					      MAILBOX_FLAG_POST_SESSION);
 	*storage = mailbox_get_storage(box);
 
 	if (mailbox_open(box) == 0)
