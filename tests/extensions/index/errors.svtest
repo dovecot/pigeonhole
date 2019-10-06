@@ -12,7 +12,7 @@ test "Invalid Syntax" {
                 test_fail "compile should have failed";
         }
 
-        if not test_error :count "eq" :comparator "i;ascii-numeric" "5" {
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "7" {
                 test_fail "wrong number of errors reported";
         }
 }

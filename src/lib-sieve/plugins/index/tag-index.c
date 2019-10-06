@@ -122,6 +122,13 @@ tag_index_validate(struct sieve_validator *valdtr ATTR_UNUSED,
 	}
 
 	data->fieldno = sieve_ast_argument_number(*arg);
+	if (data->fieldno == 0) {
+		sieve_argument_validate_error(valdtr, *arg,
+			"the :index tag for the %s %s cannot be zero",
+			sieve_command_identifier(cmd),
+			sieve_command_type_name(cmd));
+		return FALSE;
+	}
 
 	/* Detach parameter */
 	*arg = sieve_ast_arguments_detach(*arg,1);
@@ -204,7 +211,8 @@ svmo_index_dump_context(const struct sieve_message_override *svmo ATTR_UNUSED,
 	sieve_number_t fieldno = 0;
 	unsigned int last;
 
-	if (!sieve_binary_read_integer(denv->sblock, address, &fieldno))
+	if (!sieve_binary_read_integer(denv->sblock, address, &fieldno) ||
+	    fieldno == 0)
 		return FALSE;
 
 	sieve_code_dumpf(denv, "fieldno: %llu", (unsigned long long) fieldno);
@@ -229,6 +237,10 @@ svmo_index_read_context(const struct sieve_message_override *svmo ATTR_UNUSED,
 
 	if (!sieve_binary_read_integer(renv->sblock, address, &fieldno)) {
 		sieve_runtime_trace_error(renv, "fieldno: invalid number");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+	if (fieldno == 0) {
+		sieve_runtime_trace_error(renv, "fieldno: index is zero");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	if (!sieve_binary_read_byte(renv->sblock, address, &last)) {

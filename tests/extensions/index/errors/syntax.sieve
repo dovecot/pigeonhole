@@ -18,3 +18,9 @@ if header :index "frop" "to" "ok" {}
 
 # 4: last without index
 if header :last "to" "ok" {}
+
+# 5: index 0
+if header :index 0 "to" "ok" {}
+
+# 6: index 0 last
+if header :index 0 :last "to" "ok" {}
