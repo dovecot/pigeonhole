@@ -1100,7 +1100,7 @@ imap_sieve_mailbox_rules_match(struct mail_user *user,
 	if (rule != NULL &&
 		imap_sieve_mailbox_rule_match_cause(rule, cause)) {
 		struct imap_sieve_mailbox_rule *const *rule_idx;
-		unsigned int insert_idx = 0;
+		unsigned int insert_idx = array_count(rules);
 
 		/* Insert sorted by rule index */
 		array_foreach(rules, rule_idx) {
