@@ -218,6 +218,7 @@ static int sieve_index_stringlist_next_item
 		index = strlist->index;
 	}
 
+	i_assert(index > 0);
 	while ( index > 0 ) {
 		if ( (ret=sieve_stringlist_next_item(strlist->source, str_r)) <= 0 ) {
 			if (ret < 0)
