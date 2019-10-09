@@ -40,6 +40,14 @@ struct sieve_error_params {
 };
 
 /*
+ * Utility
+ */
+
+/* Converts external messages to a style that better matches Sieve user errors
+ */
+const char *sieve_error_from_external(const char *msg);
+
+/*
  * Global (user+system) errors
  */
 

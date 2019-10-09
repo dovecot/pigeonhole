@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <ctype.h>
 
 /*
  * Definitions
@@ -52,6 +53,19 @@ sieve_error_script_location(const struct sieve_script *script,
 		return sname;
 
 	return t_strdup_printf("%s: line %d", sname, source_line);
+}
+
+const char *sieve_error_from_external(const char *msg)
+{
+	char *new_msg;
+
+	if (msg == NULL || *msg == '\0')
+		return msg;
+
+	new_msg = t_strdup_noconst(msg);
+	new_msg[0] = i_tolower(new_msg[0]);
+
+	return new_msg;
 }
 
 /*

@@ -21,8 +21,6 @@
 #include "sieve-storage-private.h"
 #include "sieve-script-private.h"
 
-#include <ctype.h>
-
 /*
  * Script name
  */
@@ -776,9 +774,7 @@ sieve_script_get_last_error(struct sieve_script *script,
 
 const char *sieve_script_get_last_error_lcase(struct sieve_script *script)
 {
-	char *errormsg = t_strdup_noconst(script->storage->error);
-	errormsg[0] = i_tolower(errormsg[0]);
-	return errormsg;
+	return sieve_error_from_external(script->storage->error);
 }
 
 /*

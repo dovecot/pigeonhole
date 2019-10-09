@@ -21,8 +21,6 @@
 
 #include "ext-metadata-common.h"
 
-#include <ctype.h>
-
 #define TST_METADATA_MAX_MATCH_SIZE SIEVE_MAX_STRING_LEN
 
 /*
@@ -184,14 +182,12 @@ tst_metadata_validate(struct sieve_validator *valdtr, struct sieve_command *tst)
 		string_t *aname = sieve_ast_argument_str(arg);
 
 		if (!imap_metadata_verify_entry_name(str_c(aname), &error)) {
-			char *lcerror = t_strdup_noconst(error);
-
-			lcerror[0] = i_tolower(lcerror[0]);
 			sieve_argument_validate_warning(
 				valdtr, arg, "%s test: "
 				"specified annotation name `%s' is invalid: %s",
 				sieve_command_identifier(tst),
-				str_sanitize(str_c(aname), 256), lcerror);
+				str_sanitize(str_c(aname), 256),
+				sieve_error_from_external(error));
 		}
 	}
 
@@ -266,14 +262,6 @@ tst_metadata_operation_dump(const struct sieve_dumptime_env *denv,
  * Code execution
  */
 
-static inline const char *_lc_error(const char *error)
-{
-	char *lcerror = t_strdup_noconst(error);
-	lcerror[0] = i_tolower(lcerror[0]);
-
-	return lcerror;
-}
-
 static int
 tst_metadata_get_annotation(const struct sieve_runtime_env *renv,
 			    const char *mailbox, const char *aname,
@@ -314,7 +302,8 @@ tst_metadata_get_annotation(const struct sieve_runtime_env *renv,
 			renv, NULL, "%s test: "
 			"failed to retrieve annotation `%s': %s%s",
 			(mailbox != NULL ? "metadata" : "servermetadata"),
-			str_sanitize(aname, 256), _lc_error(error),
+			str_sanitize(aname, 256),
+			sieve_error_from_external(error),
 			(error_code == MAIL_ERROR_TEMP ?
 			 " (temporary failure)" : ""));
 
@@ -388,7 +377,8 @@ tst_metadata_operation_execute(const struct sieve_runtime_env *renv,
 			renv, NULL, "%s test: "
 			"specified annotation name `%s' is invalid: %s",
 			(metadata ? "metadata" : "servermetadata"),
-			str_sanitize(str_c(aname), 256), _lc_error(error));
+			str_sanitize(str_c(aname), 256),
+			sieve_error_from_external(error));
 		sieve_interpreter_set_test_result(renv->interp, FALSE);
 		return SIEVE_EXEC_OK;
 	}

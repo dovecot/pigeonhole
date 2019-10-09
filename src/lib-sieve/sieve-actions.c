@@ -29,8 +29,6 @@
 #include "sieve-message.h"
 #include "sieve-smtp.h"
 
-#include <ctype.h>
-
 /*
  * Action execution environment
  */
@@ -271,23 +269,17 @@ void sieve_act_store_add_flags(const struct sieve_action_exec_env *aenv,
 
 		kw = keywords;
 		while (*kw != NULL) {
-			const char *kw_error;
+			const char *error;
 
 			if (trans->box != NULL &&
 			    trans->error_code == MAIL_ERROR_NONE) {
-				if (mailbox_keyword_is_valid(trans->box, *kw, &kw_error))
+				if (mailbox_keyword_is_valid(trans->box, *kw, &error))
 					array_append(&trans->keywords, kw, 1);
 				else {
-					char *error = "";
-					if (kw_error != NULL &&
-					    *kw_error != '\0') {
-						error = t_strdup_noconst(kw_error);
-						error[0] = i_tolower(error[0]);
-					}
-
 					sieve_result_warning(aenv,
 						"specified IMAP keyword '%s' is invalid (ignored): %s",
-						str_sanitize(*kw, 64), error);
+						str_sanitize(*kw, 64),
+						sieve_error_from_external(error));
 				}
 			}
 

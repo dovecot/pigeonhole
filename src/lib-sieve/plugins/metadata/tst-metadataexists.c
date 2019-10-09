@@ -18,9 +18,6 @@
 
 #include "ext-metadata-common.h"
 
-#include <ctype.h>
-
-
 /*
  * Command definitions
  */
@@ -127,14 +124,12 @@ tst_metadataexists_annotation_validate(void *context,
 		const char *error;
 
 		if (!imap_metadata_verify_entry_name(aname, &error)) {
-			char *lcerror = t_strdup_noconst(error);
-
-			lcerror[0] = i_tolower(lcerror[0]);
 			sieve_argument_validate_warning(
 				valctx->valdtr, arg, "%s test: "
 				"specified annotation name `%s' is invalid: %s",
 				sieve_command_identifier(valctx->tst),
-				str_sanitize(aname, 256), lcerror);
+				str_sanitize(aname, 256),
+				sieve_error_from_external(error));
 		}
 	}
 	return 1; /* Can't check at compile time */
@@ -241,14 +236,6 @@ tst_metadataexists_operation_dump(const struct sieve_dumptime_env *denv,
  * Code execution
  */
 
-static inline const char *_lc_error(const char *error)
-{
-	char *lcerror = t_strdup_noconst(error);
-	lcerror[0] = i_tolower(lcerror[0]);
-
-	return lcerror;
-}
-
 static int
 tst_metadataexists_check_annotations(const struct sieve_runtime_env *renv,
 				     const char *mailbox,
@@ -302,7 +289,7 @@ tst_metadataexists_check_annotations(const struct sieve_runtime_env *renv,
 				(mailbox != NULL ?
 				 "metadataexists" : "servermetadataexists"),
 				str_sanitize(str_c(aname), 256),
-				_lc_error(error));
+				sieve_error_from_external(error));
 			all_exist = FALSE;
 			break;;
 		}
@@ -320,7 +307,7 @@ tst_metadataexists_check_annotations(const struct sieve_runtime_env *renv,
 				(mailbox != NULL ?
 				 "metadataexists" : "servermetadataexists"),
 				str_sanitize(str_c(aname), 256),
-				_lc_error(error),
+				sieve_error_from_external(error),
 				(error_code == MAIL_ERROR_TEMP ?
 				 " (temporary failure)" : ""));
 
