@@ -363,7 +363,7 @@ act_store_mailbox_alloc(const struct sieve_action_exec_env *aenv,
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct mailbox *box;
 	struct mail_storage **storage = &(eenv->exec_status->last_storage);
-	enum mailbox_flags flags = 0;
+	enum mailbox_flags flags = MAILBOX_FLAG_POST_SESSION;
 
 	*box_r = NULL;
 	*error_code_r = MAIL_ERROR_NONE;
@@ -383,7 +383,7 @@ act_store_mailbox_alloc(const struct sieve_action_exec_env *aenv,
 	if (eenv->scriptenv->mailbox_autosubscribe)
 		flags |= MAILBOX_FLAG_AUTO_SUBSCRIBE;
 	*box_r = box = mailbox_alloc_for_user(eenv->scriptenv->user, mailbox,
-					      MAILBOX_FLAG_POST_SESSION);
+					      flags);
 	*storage = mailbox_get_storage(box);
 
 	return TRUE;
