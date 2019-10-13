@@ -114,7 +114,7 @@ tag_specialuse_validate(struct sieve_validator *valdtr,
 	use_flag = sieve_ast_argument_strc(*arg);
 	if (!ext_special_use_flag_valid(use_flag)) {
 		sieve_argument_validate_error(
-			valdtr, *arg, "special-use tag: "
+			valdtr, *arg, "specialuse tag: "
 			"invalid special-use flag `%s' specified",
 			str_sanitize(use_flag, 64));
 		return FALSE;
@@ -196,7 +196,7 @@ seff_specialuse_read_context(
 	use_flag = str_c(special_use_flag);
 	if (!ext_special_use_flag_valid(use_flag)) {
 		sieve_runtime_error(
-			renv, NULL, "special-use_tag: "
+			renv, NULL, "specialuse tag: "
 			"invalid special-use flag `%s' specified",
 			str_sanitize(use_flag, 64));
 		return SIEVE_EXEC_FAILURE;
