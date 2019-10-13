@@ -4,9 +4,9 @@
  * ---------------------
  *
  * Authors: Stephan Bosch
- * Specification: RFC ----
- * Implementation: prototype
- * Status: development
+ * Specification: RFC 8579
+ * Implementation: full
+ * Status: testing
  *
  */
 
