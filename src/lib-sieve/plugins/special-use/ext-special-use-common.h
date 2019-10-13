@@ -39,5 +39,5 @@ extern const struct sieve_extension_def special_use_extension;
 
 bool ext_special_use_flag_valid(const char *flag);
 
-#endif /* __EXT_MAILBOX_COMMON_H */
+#endif /* EXT_SPECIAL_USE_COMMON_H */
 
