@@ -1,6 +1,7 @@
 require "vnd.dovecot.testsuite";
 require "special-use";
 require "fileinto";
+require "variables";
 
 test "Specialuse_exists - None exist" {
 	if specialuse_exists "\\Sent" {
@@ -28,6 +29,24 @@ Frop!
 	;
 
 	fileinto :specialuse "\\Junk" "frop";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+}
+
+test ":specialuse variable" {
+	test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+Subject: Frop 1
+
+Frop!
+.
+	;
+
+	set "use" "\\Junk";
+	fileinto :specialuse "${use}" "frop";
 
 	if not test_result_execute {
 		test_fail "execution of result failed";

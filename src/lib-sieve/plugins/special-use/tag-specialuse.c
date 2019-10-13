@@ -100,7 +100,6 @@ tag_specialuse_validate(struct sieve_validator *valdtr,
 			struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
-	const char *use_flag;
 
 	/* Detach the tag itself */
 	*arg = sieve_ast_argument_next(*arg);
@@ -111,13 +110,16 @@ tag_specialuse_validate(struct sieve_validator *valdtr,
 	if (!sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, NULL, 0,
 					  SAAT_STRING, FALSE))
 		return FALSE;
-	use_flag = sieve_ast_argument_strc(*arg);
-	if (!ext_special_use_flag_valid(use_flag)) {
-		sieve_argument_validate_error(
-			valdtr, *arg, "specialuse tag: "
-			"invalid special-use flag `%s' specified",
-			str_sanitize(use_flag, 64));
-		return FALSE;
+	if (sieve_argument_is_string_literal(*arg)) {
+		const char *use_flag = sieve_ast_argument_strc(*arg);
+
+		if (!ext_special_use_flag_valid(use_flag)) {
+			sieve_argument_validate_error(
+				valdtr, *arg, "specialuse tag: "
+				"invalid special-use flag `%s' specified",
+				str_sanitize(use_flag, 64));
+			return FALSE;
+		}
 	}
 
 	tag->parameters = *arg;
