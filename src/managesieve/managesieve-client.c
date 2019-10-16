@@ -33,12 +33,12 @@ struct managesieve_module_register managesieve_module_register = { 0 };
 struct client *managesieve_clients = NULL;
 unsigned int managesieve_client_count = 0;
 
-static const char *managesieve_sieve_get_setting
-(void *context, const char *identifier)
+static const char *
+managesieve_sieve_get_setting(void *context, const char *identifier)
 {
 	struct mail_user *mail_user = (struct mail_user *) context;
 
-	if ( mail_user == NULL )
+	if (mail_user == NULL)
 		return NULL;
 
 	return mail_user_plugin_getenv(mail_user, identifier);
@@ -60,8 +60,9 @@ static void client_idle_timeout(struct client *client)
 	}
 }
 
-static struct sieve_storage *client_get_storage
-(struct sieve_instance *svinst, struct mail_user *user, int fd_out)
+static struct sieve_storage *
+client_get_storage(struct sieve_instance *svinst, struct mail_user *user,
+		   int fd_out)
 {
 	struct sieve_storage *storage;
 	enum sieve_error error;
@@ -69,8 +70,9 @@ static struct sieve_storage *client_get_storage
 
 	/* Open personal script storage */
 
-	storage = sieve_storage_create_main
-		(svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error);
+	storage = sieve_storage_create_main(svinst, user,
+					    SIEVE_STORAGE_FLAG_READWRITE,
+					    &error);
 	if (storage == NULL) {
 		switch (error) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
@@ -84,8 +86,8 @@ static struct sieve_storage *client_get_storage
 				"Personal script storage disabled or not found.";
 			break;
 		default:
-			byemsg = t_strflocaltime
-				("BYE \""CRITICAL_MSG_STAMP"\"\r\n", ioloop_time);
+			byemsg = t_strflocaltime(
+				"BYE \""CRITICAL_MSG_STAMP"\"\r\n", ioloop_time);
 			errormsg = "Failed to open Sieve storage.";
 		}
 
@@ -99,10 +101,11 @@ static struct sieve_storage *client_get_storage
 	return storage;
 }
 
-struct client *client_create
-(int fd_in, int fd_out, const char *session_id, struct mail_user *user,
-	struct mail_storage_service_user *service_user,
-	const struct managesieve_settings *set)
+struct client *
+client_create(int fd_in, int fd_out, const char *session_id,
+	      struct mail_user *user,
+	      struct mail_storage_service_user *service_user,
+	      const struct managesieve_settings *set)
 {
 	struct client *client;
 	const char *ident;
@@ -119,8 +122,8 @@ struct client *client_create
 	svenv.base_dir = user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
-	svinst = sieve_init
-		(&svenv, &managesieve_sieve_callbacks, (void *) user, set->mail_debug);
+	svinst = sieve_init(&svenv, &managesieve_sieve_callbacks,
+			    (void *) user, set->mail_debug);
 
 	/* Get Sieve storage */
 
@@ -138,8 +141,8 @@ struct client *client_create
 	client->session_id = p_strdup(pool, session_id);
 	client->fd_in = fd_in;
 	client->fd_out = fd_out;
-	client->input = i_stream_create_fd
-		(fd_in, set->managesieve_max_line_length);
+	client->input = i_stream_create_fd(
+		fd_in, set->managesieve_max_line_length);
 	client->output = o_stream_create_fd(fd_out, (size_t)-1);
 
 	o_stream_set_no_error_handling(client->output, TRUE);
@@ -150,29 +153,31 @@ struct client *client_create
 
 	client->io = io_add_istream(client->input, client_input, client);
 	client->last_input = ioloop_time;
-	client->to_idle = timeout_add
-		(CLIENT_IDLE_TIMEOUT_MSECS, client_idle_timeout, client);
+	client->to_idle = timeout_add(CLIENT_IDLE_TIMEOUT_MSECS,
+				      client_idle_timeout, client);
 
-	client->cmd.pool =
-		pool_alloconly_create(MEMPOOL_GROWING"client command", 1024*12);
+	client->cmd.pool = pool_alloconly_create(
+		MEMPOOL_GROWING"client command", 1024*12);
 	client->cmd.client = client;
 	client->user = user;
 
 	if (set->rawlog_dir[0] != '\0') {
 		(void)iostream_rawlog_create(set->rawlog_dir, &client->input,
-						   &client->output);
+					     &client->output);
 	}
 
-	client->parser = managesieve_parser_create
-		(client->input, set->managesieve_max_line_length);
+	client->parser = managesieve_parser_create(
+		client->input, set->managesieve_max_line_length);
 
 	client->svinst = svinst;
 	client->storage = storage;
 
 	ident = mail_user_get_anvil_userip_ident(client->user);
 	if (ident != NULL) {
-		master_service_anvil_send(master_service, t_strconcat(
-			"CONNECT\t", my_pid, "\tsieve/", ident, "\n", NULL));
+		master_service_anvil_send(
+			master_service, t_strconcat("CONNECT\t", my_pid,
+						    "\tsieve/", ident,
+						    "\n", NULL));
 		client->anvil_sent = TRUE;
 	}
 
@@ -188,7 +193,8 @@ struct client *client_create
 static const char *client_stats(struct client *client)
 {
 	const struct var_expand_table logout_tab[] = {
-		{ 'i', dec2str(i_stream_get_absolute_offset(client->input)), "input" },
+		{ 'i', dec2str(i_stream_get_absolute_offset(client->input)),
+		  "input" },
 		{ 'o', dec2str(client->output->offset), "output" },
 		{ '\0', dec2str(client->put_bytes), "put_bytes" },
 		{ '\0', dec2str(client->put_count), "put_count" },
@@ -249,10 +255,11 @@ void client_destroy(struct client *client, const char *reason)
 	}
 
 	if (client->anvil_sent) {
-		master_service_anvil_send(master_service, t_strconcat(
-			"DISCONNECT\t", my_pid, "\tsieve/",
-			mail_user_get_anvil_userip_ident(client->user),
-			"\n", NULL));
+		master_service_anvil_send(
+			master_service, t_strconcat(
+				"DISCONNECT\t", my_pid, "\tsieve/",
+				mail_user_get_anvil_userip_ident(client->user),
+				"\n", NULL));
 	}
 
 	managesieve_parser_destroy(&client->parser);
@@ -270,7 +277,7 @@ void client_destroy(struct client *client, const char *reason)
 	mail_user_unref(&client->user);
 
 	/* free the i/ostreams after mail_user_unref(), which could trigger
-		 mail_storage_callbacks notifications that write to the ostream. */
+	   mail_storage_callbacks notifications that write to the ostream. */
 	i_stream_destroy(&client->input);
 	o_stream_destroy(&client->output);
 
@@ -342,21 +349,21 @@ int client_send_line(struct client *client, const char *data)
 	return 1;
 }
 
-void client_send_response
-(struct client *client, const char *oknobye, const char *resp_code, const char *msg)
+void client_send_response(struct client *client, const char *oknobye,
+			  const char *resp_code, const char *msg)
 {
 	string_t *str;
 
 	str = t_str_new(128);
 	str_append(str, oknobye);
 
-	if ( resp_code != NULL ) {
+	if (resp_code != NULL) {
 		str_append(str, " (");
 		str_append(str, resp_code);
 		str_append_c(str, ')');
 	}
 
-	if ( msg != NULL ) {
+	if (msg != NULL) {
 		str_append_c(str, ' ');
 		managesieve_quote_append_string(str, msg, TRUE);
 	}
@@ -364,8 +371,8 @@ void client_send_response
 	client_send_line(client, str_c(str));
 }
 
-void client_send_command_error
-(struct client_command_context *cmd, const char *msg)
+void client_send_command_error(struct client_command_context *cmd,
+			       const char *msg)
 {
 	struct client *client = cmd->client;
 	const char *error, *cmd_name;
@@ -379,20 +386,20 @@ void client_send_command_error
 		}
 	}
 
-	if (cmd->name == NULL)
-		error = t_strconcat
-			("Error in MANAGESIEVE command: ", msg, NULL);
-	else {
+	if (cmd->name == NULL) {
+		error = t_strconcat("Error in MANAGESIEVE command: ",
+				    msg, NULL);
+	} else {
 		cmd_name = t_str_ucase(cmd->name);
-		error = t_strconcat
-			("Error in MANAGESIEVE command ", cmd_name, ": ", msg, NULL);
+		error = t_strconcat("Error in MANAGESIEVE command ",
+				    cmd_name, ": ", msg, NULL);
 	}
 
 	client_send_no(client, error);
 
 	if (++client->bad_counter >= CLIENT_MAX_BAD_COMMANDS) {
-		client_disconnect_with_error(client,
-			"Too many invalid MANAGESIEVE commands.");
+		client_disconnect_with_error(
+			client, "Too many invalid MANAGESIEVE commands.");
 	}
 
 	/* client_read_args() failures rely on this being set, so that the
@@ -401,35 +408,30 @@ void client_send_command_error
 	cmd->param_error = TRUE;
 }
 
-void client_send_storage_error
-(struct client *client, struct sieve_storage *storage)
+void client_send_storage_error(struct client *client,
+			       struct sieve_storage *storage)
 {
 	enum sieve_error error_code;
 	const char *error;
 
 	error = sieve_storage_get_last_error(storage, &error_code);
 
-	switch ( error_code ) {
+	switch (error_code) {
 	case SIEVE_ERROR_TEMP_FAILURE:
 		client_send_noresp(client, "TRYLATER", error);
 		break;
-
 	case SIEVE_ERROR_NO_QUOTA:
 		client_send_noresp(client, "QUOTA", error);
 		break;
-
 	case SIEVE_ERROR_NOT_FOUND:
 		client_send_noresp(client, "NONEXISTENT", error);
 		break;
-
 	case SIEVE_ERROR_ACTIVE:
 		client_send_noresp(client, "ACTIVE", error);
 		break;
-
 	case SIEVE_ERROR_EXISTS:
 		client_send_noresp(client, "ALREADYEXISTS", error);
 		break;
-
 	case SIEVE_ERROR_NOT_POSSIBLE:
 	default:
 		client_send_no(client, error);
@@ -438,24 +440,29 @@ void client_send_storage_error
 }
 
 bool client_read_args(struct client_command_context *cmd, unsigned int count,
-	unsigned int flags, bool no_more, const struct managesieve_arg **args_r)
+		      unsigned int flags, bool no_more,
+		      const struct managesieve_arg **args_r)
 {
 	const struct managesieve_arg *dummy_args_r = NULL;
 	int ret;
 
-	if ( args_r == NULL ) args_r = &dummy_args_r;
+	if (args_r == NULL)
+		args_r = &dummy_args_r;
 
 	i_assert(count <= INT_MAX);
 
-	ret = managesieve_parser_read_args
-		(cmd->client->parser, ( no_more ? 0 : count ), flags, args_r);
-	if ( ret >= 0 ) {
-		if ( count > 0 || no_more ) {
-			if ( ret < (int)count ) {
-				client_send_command_error(cmd, "Missing arguments.");
+	ret = managesieve_parser_read_args(cmd->client->parser,
+					   (no_more ? 0 : count),
+					   flags, args_r);
+	if (ret >= 0) {
+		if (count > 0 || no_more) {
+			if (ret < (int)count) {
+				client_send_command_error(
+					cmd, "Missing arguments.");
 				return FALSE;
-			} else if ( no_more && ret > (int)count ) {
-				client_send_command_error(cmd, "Too many arguments.");
+			} else if (no_more && ret > (int)count) {
+				client_send_command_error(
+					cmd, "Too many arguments.");
 				return FALSE;
 			}
 		}
@@ -485,20 +492,20 @@ bool client_read_string_args(struct client_command_context *cmd,
 	unsigned int i;
 	bool result = TRUE;
 
-	if ( !client_read_args(cmd, count, 0, no_more, &msieve_args) )
+	if (!client_read_args(cmd, count, 0, no_more, &msieve_args))
 		return FALSE;
 
 	va_start(va, count);
-	for ( i = 0; i < count; i++ ) {
+	for (i = 0; i < count; i++) {
 		const char **ret = va_arg(va, const char **);
 
-		if ( MANAGESIEVE_ARG_IS_EOL(&msieve_args[i]) ) {
+		if (MANAGESIEVE_ARG_IS_EOL(&msieve_args[i])) {
 			client_send_command_error(cmd, "Missing arguments.");
 			result = FALSE;
 			break;
 		}
 
-		if ( !managesieve_arg_get_string(&msieve_args[i], &str) ) {
+		if (!managesieve_arg_get_string(&msieve_args[i], &str)) {
 			client_send_command_error(cmd, "Invalid arguments.");
 			result = FALSE;
 			break;
@@ -517,18 +524,18 @@ void _client_reset_command(struct client *client)
 	pool_t pool;
 	size_t size;
 
-	/* reset input idle time because command output might have taken a
-	   long time and we don't want to disconnect client immediately then */
+	/* reset input idle time because command output might have taken a long
+	   time and we don't want to disconnect client immediately then */
 	client->last_input = ioloop_time;
 	timeout_reset(client->to_idle);
 
 	client->command_pending = FALSE;
-    if (client->io == NULL && !client->disconnected) {
-        i_assert(i_stream_get_fd(client->input) >= 0);
-        client->io = io_add(i_stream_get_fd(client->input),
-                    IO_READ, client_input, client);
-    }
-    o_stream_set_flush_callback(client->output, client_output, client);
+	if (client->io == NULL && !client->disconnected) {
+		i_assert(i_stream_get_fd(client->input) >= 0);
+		client->io = io_add(i_stream_get_fd(client->input),
+				    IO_READ, client_input, client);
+	}
+	o_stream_set_flush_callback(client->output, client_output, client);
 
 	pool = client->cmd.pool;
 	i_zero(&client->cmd);
@@ -539,9 +546,9 @@ void _client_reset_command(struct client *client)
 
 	managesieve_parser_reset(client->parser);
 
-	/* if there's unread data in buffer, remember that there's input
-	   pending and we should get around to calling client_input() soon.
-	   This is mostly for APPEND/IDLE. */
+	/* if there's unread data in buffer, remember that there's input pending
+	   and we should get around to calling client_input() soon. This is
+	   mostly for APPEND/IDLE. */
 	(void)i_stream_get_data(client->input, &size);
 	if (size > 0 && !client->destroyed)
 		client->input_pending = TRUE;
@@ -583,7 +590,7 @@ static bool client_handle_input(struct client_command_context *cmd)
 		}
 
 		/* unfinished */
-    if (client->command_pending)
+		if (client->command_pending)
 			o_stream_set_flush_pending(client->output, TRUE);
 		return FALSE;
 	}
@@ -613,9 +620,8 @@ static bool client_handle_input(struct client_command_context *cmd)
 		/* find the command function */
 		struct command *command = command_find(cmd->name);
 
-		if (command != NULL) {
+		if (command != NULL)
 			cmd->func = command->func;
-		}
 	}
 
 	client->input_skip_line = TRUE;
@@ -670,8 +676,8 @@ void client_input(struct client *client)
 			ret = client_handle_input(cmd);
 		} T_END;
 	} while (ret && !client->disconnected);
-    o_stream_uncork(client->output);
-    client->handling_input = FALSE;
+	o_stream_uncork(client->output);
+	client->handling_input = FALSE;
 
 	if (client->command_pending)
 		client->input_pending = TRUE;
@@ -687,7 +693,7 @@ int client_output(struct client *client)
 	bool finished;
 
 	client->last_output = ioloop_time;
-    timeout_reset(client->to_idle);
+	timeout_reset(client->to_idle);
 	if (client->to_idle_output != NULL)
 		timeout_reset(client->to_idle_output);
 
