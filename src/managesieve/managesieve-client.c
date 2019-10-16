@@ -120,6 +120,7 @@ client_create(int fd_in, int fd_out, const char *session_id,
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
 	svenv.base_dir = user->set->base_dir;
+	svenv.event_parent = event;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
 	svinst = sieve_init(&svenv, &managesieve_sieve_callbacks,
