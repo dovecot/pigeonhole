@@ -59,8 +59,8 @@ void managesieve_refresh_proctitle(void)
 				   net_ip2addr(client->user->conn.remote_ip));
 		}
 
-		if ( client->cmd.name != NULL &&
-			str_len(title) <= MANAGESIEVE_PROCTITLE_PREFERRED_LEN ) {
+		if (client->cmd.name != NULL &&
+		    str_len(title) <= MANAGESIEVE_PROCTITLE_PREFERRED_LEN) {
 			str_append_c(title, ' ');
 			str_append(title, client->cmd.name);
 		}
@@ -115,7 +115,7 @@ static void client_add_input(struct client *client, const buffer_t *buf)
 	o_stream_cork(output);
 	if (!IS_STANDALONE())
 		client_send_ok(client, "Logged in.");
-  (void)client_input(client);
+	(void)client_input(client);
 	o_stream_uncork(output);
 	o_stream_unref(&output);
 }
@@ -140,16 +140,18 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	if (set->verbose_proctitle)
 		verbose_proctitle = TRUE;
 
-	if (settings_var_expand(&managesieve_setting_parser_info, set, mail_user->pool,
-				mail_user_var_expand_table(mail_user), &error) <= 0) {
+	if (settings_var_expand(&managesieve_setting_parser_info, set,
+				mail_user->pool,
+				mail_user_var_expand_table(mail_user),
+				&error) <= 0) {
 		i_error("Failed to expand settings: %s", error);
 		mail_storage_service_user_unref(&user);
 		mail_user_unref(&mail_user);
 		return -1;
 	}
 
-	client = client_create
-		(fd_in, fd_out, input->session_id, mail_user, user, set);
+	client = client_create(fd_in, fd_out, input->session_id,
+			       mail_user, user, set);
 	T_BEGIN {
 		client_add_input(client, input_buf);
 	} T_END;
@@ -176,8 +178,8 @@ static void main_stdio_run(const char *username)
 		net_addr2ip(value, &input.local_ip);
 
 	input_base64 = getenv("CLIENT_INPUT");
-	input_buf = input_base64 == NULL ? NULL :
-		t_base64_decode_str(input_base64);
+	input_buf = (input_base64 == NULL ?
+		     NULL : t_base64_decode_str(input_base64));
 
 	if (client_create_from_input(&input, STDIN_FILENO, STDOUT_FILENO,
 				     input_buf, &error) < 0)
@@ -210,7 +212,7 @@ login_client_connected(const struct master_login_client *client,
 		input.conn_ssl_secured = TRUE;
 
 	buffer_create_from_const_data(&input_buf, client->data,
-				 client->auth_req.data_size);
+				      client->auth_req.data_size);
 	if (client_create_from_input(&input, client->fd, client->fd,
 				     &input_buf, &error) < 0) {
 		int fd = client->fd;
@@ -226,8 +228,9 @@ login_client_connected(const struct master_login_client *client,
 	}
 }
 
-static void login_client_failed(const struct master_login_client *client,
-				const char *errormsg)
+static void
+login_client_failed(const struct master_login_client *client,
+		    const char *errormsg)
 {
 	const char *msg;
 
@@ -270,11 +273,11 @@ int main(int argc, char *argv[])
 
 	if (IS_STANDALONE() || getenv("DUMP_CAPABILITY") != NULL) {
 		service_flags |= MASTER_SERVICE_FLAG_STANDALONE |
-			MASTER_SERVICE_FLAG_STD_CLIENT;
+				 MASTER_SERVICE_FLAG_STD_CLIENT;
 	} else {
 		service_flags |= MASTER_SERVICE_FLAG_KEEP_CONFIG_OPEN;
 	}
-	if ( getenv("DUMP_CAPABILITY") != NULL )
+	if (getenv("DUMP_CAPABILITY") != NULL)
 		service_flags |= MASTER_SERVICE_FLAG_DONT_SEND_STATS;
 
 	master_service = master_service_init("managesieve", service_flags,
@@ -282,7 +285,8 @@ int main(int argc, char *argv[])
 	while ((c = master_getopt(master_service)) > 0) {
 		switch (c) {
 		case 't':
-			if (str_to_uint(optarg, &login_set.postlogin_timeout_secs) < 0 ||
+			if (str_to_uint(optarg,
+					&login_set.postlogin_timeout_secs) < 0 ||
 			    login_set.postlogin_timeout_secs == 0)
 				i_fatal("Invalid -t parameter: %s", optarg);
 			break;
@@ -302,7 +306,7 @@ int main(int argc, char *argv[])
 	commands_init();
 
 	/* Dump capabilities if requested */
-	if ( getenv("DUMP_CAPABILITY") != NULL ) {
+	if (getenv("DUMP_CAPABILITY") != NULL) {
 		managesieve_capabilities_dump();
 		commands_deinit();
 		master_service_deinit(&master_service);
@@ -313,9 +317,9 @@ int main(int argc, char *argv[])
 		i_fatal("t_abspath(%s) failed: %s", "auth-master", error);
 
 	if (argv[optind] != NULL &&
-	    t_abspath(argv[optind], &login_set.postlogin_socket_path, &error) < 0) {
-		i_fatal("t_abspath(%s) failed: %s",
-			argv[optind], error);
+	    t_abspath(argv[optind], &login_set.postlogin_socket_path,
+		      &error) < 0) {
+		i_fatal("t_abspath(%s) failed: %s", argv[optind], error);
 	}
 
 	login_set.callback = login_client_connected;
