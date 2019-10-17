@@ -444,6 +444,7 @@ bool client_read_args(struct client_command_context *cmd, unsigned int count,
 		      const struct managesieve_arg **args_r)
 {
 	const struct managesieve_arg *dummy_args_r = NULL;
+	string_t *str;
 	int ret;
 
 	if (args_r == NULL)
@@ -466,6 +467,10 @@ bool client_read_args(struct client_command_context *cmd, unsigned int count,
 				return FALSE;
 			}
 		}
+
+		str = t_str_new(256);
+		managesieve_write_args(str, *args_r);
+		cmd->args = p_strdup(cmd->pool, str_c(str));
 
 		/* all parameters read successfully */
 		return TRUE;

@@ -12,7 +12,12 @@ struct client_command_context {
 	struct client *client;
 
 	pool_t pool;
+	/* Name of this command */
 	const char *name;
+	/* Parameters for this command. These are generated from parsed
+	   ManageSieve arguments, so they may not be exactly the same as how
+	   client sent them. */
+	const char *args;
 
 	command_func_t *func;
 	void *context;
