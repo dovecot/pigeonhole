@@ -93,6 +93,8 @@ bool managesieve_arg_get_list_full(const struct managesieve_arg *arg,
 				   ATTR_WARN_UNUSED_RESULT;
 
 /* Similar to above, but assumes that arg is already of correct type. */
+const char *managesieve_arg_as_atom(const struct managesieve_arg *arg);
+const char *managesieve_arg_as_string(const struct managesieve_arg *arg);
 struct istream *
 managesieve_arg_as_string_stream(const struct managesieve_arg *arg);
 const struct managesieve_arg *
@@ -101,5 +103,15 @@ managesieve_arg_as_list(const struct managesieve_arg *arg);
 /* Returns TRUE if arg is atom and case-insensitively matches str */
 bool managesieve_arg_atom_equals(const struct managesieve_arg *arg,
 				 const char *str);
+
+/* Write ManageSieve arg to the given string. Because
+   MANAGESIVE_ARG_LITERAL_SIZE* have no content, they're written as
+   "{size}\r\n<too large>". */
+void managesieve_write_arg(string_t *dest, const struct managesieve_arg *arg);
+/* Same as managesieve_write_arg(), but write all the args until EOL. */
+void managesieve_write_args(string_t *dest, const struct managesieve_arg *args);
+/* Like managesieve_write_args(), but return the string allocated from data
+   stack. */
+const char *managesieve_args_to_str(const struct managesieve_arg *args);
 
 #endif

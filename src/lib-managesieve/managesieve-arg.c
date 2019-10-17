@@ -2,6 +2,8 @@
  */
 
 #include "lib.h"
+#include "str.h"
+#include "strescape.h"
 #include "managesieve-arg.h"
 
 bool managesieve_arg_get_atom(const struct managesieve_arg *arg,
@@ -98,6 +100,24 @@ bool managesieve_arg_get_list_full(const struct managesieve_arg *arg,
 	return TRUE;
 }
 
+const char *managesieve_arg_as_atom(const struct managesieve_arg *arg)
+{
+	const char *str;
+
+	if (!managesieve_arg_get_atom(arg, &str))
+		i_unreached();
+	return str;
+}
+
+const char *managesieve_arg_as_string(const struct managesieve_arg *arg)
+{
+	const char *str;
+
+	if (!managesieve_arg_get_string(arg, &str))
+		i_unreached();
+	return str;
+}
+
 struct istream *
 managesieve_arg_as_string_stream(const struct managesieve_arg *arg)
 {
@@ -127,3 +147,61 @@ bool managesieve_arg_atom_equals(const struct managesieve_arg *arg,
 		return FALSE;
 	return strcasecmp(value, str) == 0;
 }
+
+void managesieve_write_arg(string_t *dest, const struct managesieve_arg *arg)
+{
+	const char *strval;
+
+	switch (arg->type) {
+	case MANAGESIEVE_ARG_ATOM:
+		str_append(dest, managesieve_arg_as_atom(arg));
+		break;
+	case MANAGESIEVE_ARG_STRING:
+		strval = managesieve_arg_as_string(arg);
+		str_append_c(dest, '"');
+		str_append_escaped(dest, strval, strlen(strval));
+		str_append_c(dest, '"');
+		break;
+	case MANAGESIEVE_ARG_STRING_STREAM:
+		str_append(dest, "\"<too large>\"");
+		break;
+	case MANAGESIEVE_ARG_LITERAL: {
+		const char *strarg = managesieve_arg_as_string(arg);
+		str_printfa(dest, "{%"PRIuSIZE_T"}\r\n",
+			    strlen(strarg));
+		str_append(dest, strarg);
+		break;
+	}
+	case MANAGESIEVE_ARG_LIST:
+		str_append_c(dest, '(');
+		managesieve_write_args(dest, managesieve_arg_as_list(arg));
+		str_append_c(dest, ')');
+		break;
+	case MANAGESIEVE_ARG_NONE:
+	case MANAGESIEVE_ARG_EOL:
+		i_unreached();
+	}
+}
+
+void managesieve_write_args(string_t *dest, const struct managesieve_arg *args)
+{
+	bool first = TRUE;
+
+	for (; !MANAGESIEVE_ARG_IS_EOL(args); args++) {
+		if (first)
+			first = FALSE;
+		else
+			str_append_c(dest, ' ');
+		managesieve_write_arg(dest, args);
+	}
+}
+
+const char *managesieve_args_to_str(const struct managesieve_arg *args)
+{
+	string_t *str;
+
+	str = t_str_new(128);
+	managesieve_write_args(str, args);
+	return str_c(str);
+}
+
