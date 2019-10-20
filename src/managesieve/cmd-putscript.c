@@ -142,6 +142,131 @@ static bool cmd_putscript_cancel(struct cmd_putscript_context *ctx, bool skip)
 	return cmd_putscript_continue_cancel(ctx->cmd);
 }
 
+static bool cmd_putscript_save(struct cmd_putscript_context *ctx)
+{
+	struct client *client = ctx->client;
+
+	/* Commit to save only when this is a putscript command */
+	if (ctx->scriptname == NULL)
+		return TRUE;
+
+	/* Check commit */
+	if (sieve_storage_save_commit(&ctx->save_ctx) < 0) {
+		client_send_storage_error(client, ctx->storage);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static void
+cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
+			    struct sieve_script *script)
+{
+	struct client *client = ctx->client;
+	struct sieve_error_handler *ehandler;
+	enum sieve_compile_flags cpflags =
+		SIEVE_COMPILE_FLAG_NOGLOBAL | SIEVE_COMPILE_FLAG_UPLOADED;
+	struct sieve_binary *sbin;
+	bool success = TRUE;
+	enum sieve_error error;
+	string_t *errors;
+
+	/* Mark this as an activation when we are replacing the
+	   active script */
+	if (sieve_storage_save_will_activate(ctx->save_ctx))
+		cpflags |= SIEVE_COMPILE_FLAG_ACTIVATED;
+
+	/* Prepare error handler */
+	errors = str_new(default_pool, 1024);
+	ehandler = sieve_strbuf_ehandler_create(
+		client->svinst, errors, TRUE,
+		client->set->managesieve_max_compile_errors);
+
+	/* Compile */
+	sbin = sieve_compile_script(script, ehandler, cpflags, &error);
+	if (sbin == NULL) {
+		if (error != SIEVE_ERROR_NOT_VALID) {
+			const char *errormsg =
+				sieve_script_get_last_error(script, &error);
+			if (error != SIEVE_ERROR_NONE)
+				client_send_no(client, errormsg);
+			else
+				client_send_no(client, str_c(errors));
+		} else {
+			client_send_no(client, str_c(errors));
+		}
+		success = FALSE;
+	} else {
+		sieve_close(&sbin);
+
+		if (!cmd_putscript_save(ctx))
+			success = FALSE;
+	}
+
+	/* Finish up */
+	cmd_putscript_finish(ctx);
+
+	/* Report result to user */
+	if (success) {
+		if (ctx->scriptname != NULL) {
+			client->put_count++;
+			client->put_bytes += ctx->script_size;
+		} else {
+			client->check_count++;
+			client->check_bytes += ctx->script_size;
+		}
+
+		if (sieve_get_warnings(ehandler) > 0)
+			client_send_okresp(client, "WARNINGS", str_c(errors));
+		else if (ctx->scriptname != NULL)
+			client_send_ok(client, "PUTSCRIPT completed.");
+		else
+			client_send_ok(client, "Script checked successfully.");
+	}
+
+	sieve_error_handler_unref(&ehandler);
+	str_free(&errors);
+}
+
+static void cmd_putscript_handle_script(struct cmd_putscript_context *ctx)
+{
+	struct client *client = ctx->client;
+	struct sieve_script *script;
+
+	/* Obtain script object for uploaded script */
+	script = sieve_storage_save_get_tempscript(ctx->save_ctx);
+
+	/* Check result */
+	if (script == NULL) {
+		client_send_storage_error(client, ctx->storage);
+		cmd_putscript_finish(ctx);
+		return;
+	}
+
+	/* If quoted string, the size was not known until now */
+	if (!ctx->script_size_valid) {
+		if (sieve_script_get_size(script, &ctx->script_size) < 0) {
+			client_send_storage_error(client, ctx->storage);
+			cmd_putscript_finish(ctx);
+			return;
+		}
+		ctx->script_size_valid = TRUE;
+
+		/* Check quota; max size is already checked */
+		if (ctx->scriptname != NULL &&
+		    !managesieve_quota_check_all(client, ctx->scriptname,
+						 ctx->script_size)) {
+			cmd_putscript_finish(ctx);
+			return;
+		}
+	}
+
+	/* Try to compile and store the script */
+	T_BEGIN {
+		cmd_putscript_finish_script(ctx, script);
+	} T_END;
+}
+
 static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
@@ -172,117 +297,10 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 	}
 
 	if (MANAGESIEVE_ARG_IS_EOL(&args[0])) {
-		struct sieve_script *script;
-		bool success = TRUE;
-
 		/* Eat away the trailing CRLF */
 		client->input_skip_line = TRUE;
 
-		/* Obtain script object for uploaded script */
-		script = sieve_storage_save_get_tempscript(ctx->save_ctx);
-
-		/* Check result */
-		if (script == NULL) {
-			client_send_storage_error(client, ctx->storage);
-			cmd_putscript_finish(ctx);
-			return TRUE;
-		}
-
-		/* If quoted string, the size was not known until now */
-		if (!ctx->script_size_valid) {
-			if (sieve_script_get_size(script, &ctx->script_size) < 0) {
-				client_send_storage_error(client, ctx->storage);
-				cmd_putscript_finish(ctx);
-				return TRUE;
-			}
-			ctx->script_size_valid = TRUE;
-
-			/* Check quota; max size is already checked */
-			if (ctx->scriptname != NULL &&
-			    !managesieve_quota_check_all(
-				client, ctx->scriptname, ctx->script_size)) {
-				cmd_putscript_finish(ctx);
-				return TRUE;
-			}
-		}
-
-		/* Try to compile script */
-		T_BEGIN {
-			struct sieve_error_handler *ehandler;
-			enum sieve_compile_flags cpflags =
-				SIEVE_COMPILE_FLAG_NOGLOBAL |
-				SIEVE_COMPILE_FLAG_UPLOADED;
-			struct sieve_binary *sbin;
-			enum sieve_error error;
-			string_t *errors;
-
-			/* Mark this as an activation when we are replacing the
-			   active script */
-			if (sieve_storage_save_will_activate(ctx->save_ctx))
-				cpflags |= SIEVE_COMPILE_FLAG_ACTIVATED;
-
-			/* Prepare error handler */
-			errors = str_new(default_pool, 1024);
-			ehandler = sieve_strbuf_ehandler_create(
-				client->svinst, errors, TRUE,
-				client->set->managesieve_max_compile_errors);
-
-			/* Compile */
-			if ((sbin = sieve_compile_script(
-				script, ehandler, cpflags, &error)) == NULL) {
-				if (error != SIEVE_ERROR_NOT_VALID) {
-					const char *errormsg =
-						sieve_script_get_last_error(script, &error);
-					if (error != SIEVE_ERROR_NONE)
-						client_send_no(client, errormsg);
-					else
-						client_send_no(client, str_c(errors));
-				} else {
-					client_send_no(client, str_c(errors));
-				}
-				success = FALSE;
-			} else {
-				sieve_close(&sbin);
-
-				/* Commit to save only when this is a putscript command */
-				if (ctx->scriptname != NULL) {
-					ret = sieve_storage_save_commit(&ctx->save_ctx);
-
-					/* Check commit */
-					if (ret < 0) {
-						client_send_storage_error(client, ctx->storage);
-						success = FALSE;
-					}
-				}
-			}
-
-			/* Finish up */
-			cmd_putscript_finish(ctx);
-
-			/* Report result to user */
-			if (success) {
-				if (ctx->scriptname != NULL) {
-					client->put_count++;
-					client->put_bytes += ctx->script_size;
-				} else {
-					client->check_count++;
-					client->check_bytes += ctx->script_size;
-				}
-
-				if (sieve_get_warnings(ehandler) > 0)
-					client_send_okresp(client, "WARNINGS", str_c(errors));
-				else {
-					if (ctx->scriptname != NULL)
-						client_send_ok(client, "PUTSCRIPT completed.");
-					else
-						client_send_ok(client, "Script checked successfully.");
-				}
-			}
-
-			sieve_error_handler_unref(&ehandler);
-			str_free(&errors);
-		} T_END;
-
+		cmd_putscript_handle_script(ctx);
 		return TRUE;
 	}
 
