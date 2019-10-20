@@ -22,8 +22,7 @@ bool cmd_renamescript(struct client_command_context *cmd)
 	if (!client_read_string_args(cmd, TRUE, 2, &scriptname, &newname))
 		return FALSE;
 
-	script = sieve_storage_open_script
-		(storage, scriptname, NULL);
+	script = sieve_storage_open_script(storage, scriptname, NULL);
 	if (script == NULL) {
 		client_send_storage_error(client, storage);
 		return TRUE;
