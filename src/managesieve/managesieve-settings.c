@@ -60,7 +60,8 @@ struct service_settings managesieve_settings_service_settings = {
 #define DEF(type, name) \
 	{ type, #name, offsetof(struct managesieve_settings, name), NULL }
 #define DEFLIST(field, name, defines) \
-	{ SET_DEFLIST, name, offsetof(struct managesieve_settings, field), defines }
+	{ SET_DEFLIST, name, \
+	  offsetof(struct managesieve_settings, field), defines }
 
 static struct setting_define managesieve_setting_defines[] = {
 	DEF(SET_BOOL, mail_debug),
@@ -124,13 +125,13 @@ struct managesieve_client_workaround_list {
 };
 
 static const struct managesieve_client_workaround_list
-	managesieve_client_workaround_list[] = {
+managesieve_client_workaround_list[] = {
 	{ NULL, 0 }
 };
 
 static int
 managesieve_settings_parse_workarounds(struct managesieve_settings *set,
-				const char **error_r)
+				       const char **error_r)
 {
 	enum managesieve_client_workarounds client_workarounds = 0;
 	const struct managesieve_client_workaround_list *list;
@@ -146,7 +147,8 @@ managesieve_settings_parse_workarounds(struct managesieve_settings *set,
 			}
 		}
 		if (list->name == NULL) {
-			*error_r = t_strdup_printf("managesieve_client_workarounds: "
+			*error_r = t_strdup_printf(
+				"managesieve_client_workarounds: "
 				"Unknown workaround: %s", *str);
 			return -1;
 		}
@@ -156,8 +158,9 @@ managesieve_settings_parse_workarounds(struct managesieve_settings *set,
 }
 
 
-static bool managesieve_settings_verify
-(void *_set, pool_t pool ATTR_UNUSED, const char **error_r)
+static bool
+managesieve_settings_verify(void *_set, pool_t pool ATTR_UNUSED,
+			    const char **error_r)
 {
 	struct managesieve_settings *set = _set;
 
