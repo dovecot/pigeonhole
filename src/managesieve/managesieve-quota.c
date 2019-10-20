@@ -36,49 +36,44 @@ bool managesieve_quota_check_all(struct client *client,
 	uint64_t limit;
 	int ret;
 
-	if ((ret = sieve_storage_quota_havespace(client->storage, scriptname,
-						 size, &quota, &limit)) <= 0) {
-		if (ret == 0) {
-			switch (quota) {
-			case SIEVE_STORAGE_QUOTA_MAXSIZE:
-				client_send_noresp(
-					client, "QUOTA/MAXSIZE",
-					t_strdup_printf(
-						"Script is too large "
-						"(max %llu bytes).",
-						(unsigned long long int) limit));
-				break;
-
-			case SIEVE_STORAGE_QUOTA_MAXSCRIPTS:
-				client_send_noresp(
-					client, "QUOTA/MAXSCRIPTS",
-					t_strdup_printf(
-						"Script count quota exceeded "
-						"(max %llu scripts).",
-						(unsigned long long int) limit));
-				break;
-
-			case SIEVE_STORAGE_QUOTA_MAXSTORAGE:
-				client_send_noresp(
-					client, "QUOTA/MAXSTORAGE",
-					t_strdup_printf(
-						"Script storage quota exceeded "
-						"(max %llu bytes).",
-						(unsigned long long int) limit));
-				break;
-
-			default:
-				client_send_noresp(
-					client, "QUOTA", "Quota exceeded.");
-				break;
-			}
-		} else {
-			client_send_storage_error(client, client->storage);
-		}
-
+	ret = sieve_storage_quota_havespace(client->storage, scriptname,
+					    size, &quota, &limit);
+	if (ret > 0)
+		return TRUE;
+	if (ret < 0) {
+		client_send_storage_error(client, client->storage);
 		return FALSE;
 	}
 
-	return TRUE;
+	switch (quota) {
+	case SIEVE_STORAGE_QUOTA_MAXSIZE:
+		client_send_noresp(
+			client, "QUOTA/MAXSIZE",
+			t_strdup_printf(
+				"Script is too large "
+				"(max %llu bytes).",
+				(unsigned long long int) limit));
+		break;
+	case SIEVE_STORAGE_QUOTA_MAXSCRIPTS:
+		client_send_noresp(
+			client, "QUOTA/MAXSCRIPTS",
+			t_strdup_printf(
+				"Script count quota exceeded "
+				"(max %llu scripts).",
+				(unsigned long long int) limit));
+		break;
+	case SIEVE_STORAGE_QUOTA_MAXSTORAGE:
+		client_send_noresp(
+			client, "QUOTA/MAXSTORAGE",
+			t_strdup_printf(
+				"Script storage quota exceeded "
+				"(max %llu bytes).",
+				(unsigned long long int) limit));
+		break;
+	default:
+		client_send_noresp(client, "QUOTA", "Quota exceeded.");
+	}
+
+	return FALSE;
 }
 
