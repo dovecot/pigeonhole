@@ -32,7 +32,8 @@ static const struct setting_parser_info **plugin_set_roots;
 	{ type, #name, offsetof(struct plugin_settings, name), NULL }
 
 static const struct setting_define plugin_setting_defines[] = {
-	{ SET_STRLIST, "plugin", offsetof(struct plugin_settings, plugin_envs), NULL },
+	{ SET_STRLIST, "plugin",
+	  offsetof(struct plugin_settings, plugin_envs), NULL },
 
 	SETTING_DEFINE_LIST_END
 };
@@ -59,15 +60,16 @@ static struct plugin_settings *plugin_settings_read(void)
 {
 	const char *error;
 
-	if (master_service_settings_read_simple(master_service, plugin_set_roots, &error) < 0)
+	if (master_service_settings_read_simple(
+		master_service, plugin_set_roots, &error) < 0)
 		i_fatal("Error reading configuration: %s", error);
 
 	return (struct plugin_settings *)
 		master_service_settings_get_others(master_service)[0];
 }
 
-static const char *plugin_settings_get
-	(const struct plugin_settings *set, const char *identifier)
+static const char *
+plugin_settings_get(const struct plugin_settings *set, const char *identifier)
 {
 	const char *const *envs;
 	unsigned int i, count;
@@ -80,7 +82,6 @@ static const char *plugin_settings_get
 		if ( strcmp(envs[i], identifier) == 0 )
 			return envs[i+1];
 	}
-
 	return NULL;
 }
 
@@ -88,12 +89,11 @@ static const char *plugin_settings_get
  * Sieve environment
  */
 
-static const char *sieve_get_setting
-(void *context, const char *identifier)
+static const char *sieve_get_setting(void *context, const char *identifier)
 {
-	const struct plugin_settings *set = (const struct plugin_settings *) context;
+	const struct plugin_settings *set = context;
 
-  return plugin_settings_get(set, identifier);
+	return plugin_settings_get(set, identifier);
 }
 
 static const struct sieve_callbacks sieve_callbacks = {
@@ -121,18 +121,20 @@ void managesieve_capabilities_dump(void)
 	memset((void*)&svenv, 0, sizeof(svenv));
 	svenv.home_dir = "/tmp";
 
-	svinst = sieve_init
-		(&svenv, &sieve_callbacks, (void *) global_plugin_settings, FALSE);
+	svinst = sieve_init(&svenv, &sieve_callbacks,
+			    (void *) global_plugin_settings, FALSE);
 
 	/* Dump capabilities */
 
 	notify_cap = sieve_get_capabilities(svinst, "notify");
 
-	if ( notify_cap == NULL )
+	if (notify_cap == NULL)
 		printf("SIEVE: %s\n", sieve_get_capabilities(svinst, NULL));
-	else
-		printf("SIEVE: %s, NOTIFY: %s\n", sieve_get_capabilities(svinst, NULL),
-			sieve_get_capabilities(svinst, "notify"));
+	else {
+		printf("SIEVE: %s, NOTIFY: %s\n",
+		       sieve_get_capabilities(svinst, NULL),
+		       sieve_get_capabilities(svinst, "notify"));
+	}
 
 	sieve_deinit(&svinst);
 }
