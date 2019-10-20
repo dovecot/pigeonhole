@@ -102,8 +102,7 @@ static void cmd_putscript_finish(struct cmd_putscript_context *ctx)
 	o_stream_set_flush_callback(ctx->client->output,
 				    client_output, ctx->client);
 
-	if (ctx->save_ctx != NULL)
-	{
+	if (ctx->save_ctx != NULL) {
 		ctx->client->input_skip_line = TRUE;
 		sieve_storage_save_cancel(&ctx->save_ctx);
 	}
@@ -118,8 +117,8 @@ static bool cmd_putscript_continue_cancel(struct client_command_context *cmd)
 	(void)i_stream_get_data(ctx->input, &size);
 	i_stream_skip(ctx->input, size);
 
-	if ( cmd->client->input->closed || ctx->input->eof ||
-		ctx->input->v_offset == ctx->script_size ) {
+	if (cmd->client->input->closed || ctx->input->eof ||
+	    ctx->input->v_offset == ctx->script_size) {
 		cmd_putscript_finish(ctx);
 		return TRUE;
 	}
@@ -130,13 +129,13 @@ static bool cmd_putscript_cancel(struct cmd_putscript_context *ctx, bool skip)
 {
 	ctx->client->input_skip_line = TRUE;
 
-	if ( !skip ) {
+	if (!skip) {
 		cmd_putscript_finish(ctx);
 		return TRUE;
 	}
 
-	/* we have to read the nonsynced literal so we don't treat the uploaded script
-	   as commands. */
+	/* we have to read the nonsynced literal so we don't treat the uploaded
+	   script as commands. */
 	ctx->client->command_pending = TRUE;
 	ctx->cmd->func = cmd_putscript_continue_cancel;
 	ctx->cmd->context = ctx;
@@ -160,7 +159,8 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 			const char *msg;
 			bool fatal ATTR_UNUSED;
 
-			msg = managesieve_parser_get_error(ctx->save_parser, &fatal);
+			msg = managesieve_parser_get_error(
+				ctx->save_parser, &fatal);
 			client_send_command_error(cmd, msg);
 		}
 		cmd_putscript_finish(ctx);
@@ -171,7 +171,7 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 		return FALSE;
 	}
 
-	if ( MANAGESIEVE_ARG_IS_EOL(&args[0]) ) {
+	if (MANAGESIEVE_ARG_IS_EOL(&args[0])) {
 		struct sieve_script *script;
 		bool success = TRUE;
 
@@ -182,14 +182,14 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 		script = sieve_storage_save_get_tempscript(ctx->save_ctx);
 
 		/* Check result */
-		if ( script == NULL ) {
+		if (script == NULL) {
 			client_send_storage_error(client, ctx->storage);
 			cmd_putscript_finish(ctx);
 			return TRUE;
 		}
 
 		/* If quoted string, the size was not known until now */
-		if ( !ctx->script_size_valid ) {
+		if (!ctx->script_size_valid) {
 			if (sieve_script_get_size(script, &ctx->script_size) < 0) {
 				client_send_storage_error(client, ctx->storage);
 				cmd_putscript_finish(ctx);
@@ -198,8 +198,9 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 			ctx->script_size_valid = TRUE;
 
 			/* Check quota; max size is already checked */
-			if ( ctx->scriptname != NULL && !managesieve_quota_check_all
-					(client, ctx->scriptname, ctx->script_size) ) {
+			if (ctx->scriptname != NULL &&
+			    !managesieve_quota_check_all(
+				client, ctx->scriptname, ctx->script_size)) {
 				cmd_putscript_finish(ctx);
 				return TRUE;
 			}
@@ -209,28 +210,30 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 		T_BEGIN {
 			struct sieve_error_handler *ehandler;
 			enum sieve_compile_flags cpflags =
-				SIEVE_COMPILE_FLAG_NOGLOBAL | SIEVE_COMPILE_FLAG_UPLOADED;
+				SIEVE_COMPILE_FLAG_NOGLOBAL |
+				SIEVE_COMPILE_FLAG_UPLOADED;
 			struct sieve_binary *sbin;
 			enum sieve_error error;
 			string_t *errors;
 
-			/* Mark this as an activation when we are replacing the active script */
-			if ( sieve_storage_save_will_activate(ctx->save_ctx) ) {
+			/* Mark this as an activation when we are replacing the
+			   active script */
+			if (sieve_storage_save_will_activate(ctx->save_ctx))
 				cpflags |= SIEVE_COMPILE_FLAG_ACTIVATED;
-			}
 
 			/* Prepare error handler */
 			errors = str_new(default_pool, 1024);
-			ehandler = sieve_strbuf_ehandler_create(client->svinst, errors, TRUE,
+			ehandler = sieve_strbuf_ehandler_create(
+				client->svinst, errors, TRUE,
 				client->set->managesieve_max_compile_errors);
 
 			/* Compile */
-			if ( (sbin=sieve_compile_script
-				(script, ehandler, cpflags, &error)) == NULL ) {
-				if ( error != SIEVE_ERROR_NOT_VALID ) {
+			if ((sbin = sieve_compile_script(
+				script, ehandler, cpflags, &error)) == NULL) {
+				if (error != SIEVE_ERROR_NOT_VALID) {
 					const char *errormsg =
 						sieve_script_get_last_error(script, &error);
-					if ( error != SIEVE_ERROR_NONE )
+					if (error != SIEVE_ERROR_NONE)
 						client_send_no(client, errormsg);
 					else
 						client_send_no(client, str_c(errors));
@@ -242,7 +245,7 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 				sieve_close(&sbin);
 
 				/* Commit to save only when this is a putscript command */
-				if ( ctx->scriptname != NULL ) {
+				if (ctx->scriptname != NULL) {
 					ret = sieve_storage_save_commit(&ctx->save_ctx);
 
 					/* Check commit */
@@ -257,8 +260,8 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 			cmd_putscript_finish(ctx);
 
 			/* Report result to user */
-			if ( success ) {
-				if ( ctx->scriptname != NULL ) {
+			if (success) {
+				if (ctx->scriptname != NULL) {
 					client->put_count++;
 					client->put_bytes += ctx->script_size;
 				} else {
@@ -266,10 +269,10 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 					client->check_bytes += ctx->script_size;
 				}
 
-				if ( sieve_get_warnings(ehandler) > 0 )
+				if (sieve_get_warnings(ehandler) > 0)
 					client_send_okresp(client, "WARNINGS", str_c(errors));
 				else {
-					if ( ctx->scriptname != NULL )
+					if (ctx->scriptname != NULL)
 						client_send_ok(client, "PUTSCRIPT completed.");
 					else
 						client_send_ok(client, "Script checked successfully.");
@@ -299,8 +302,9 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 	client->input_skip_line = FALSE;
 
 	/* <script literal> */
-	ret = managesieve_parser_read_args(ctx->save_parser, 0,
-				    MANAGESIEVE_PARSE_FLAG_STRING_STREAM, &args);
+	ret = managesieve_parser_read_args(
+		ctx->save_parser, 0, MANAGESIEVE_PARSE_FLAG_STRING_STREAM,
+		&args);
 	if (ret == -1 || client->output->closed) {
 		cmd_putscript_finish(ctx);
 		client_send_command_error(cmd, "Invalid arguments.");
@@ -313,33 +317,35 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 	}
 
 	/* Validate the script argument */
-	if ( !managesieve_arg_get_string_stream(args,&ctx->input) ) {
+	if (!managesieve_arg_get_string_stream(args,&ctx->input)) {
 		client_send_command_error(cmd, "Invalid arguments.");
 		return cmd_putscript_cancel(ctx, FALSE);
 	}
 
-	if ( i_stream_get_size(ctx->input, FALSE, &ctx->script_size) > 0 ) {
+	if (i_stream_get_size(ctx->input, FALSE, &ctx->script_size) > 0) {
 		ctx->script_size_valid = TRUE;
 
 		/* Check quota */
-		if ( ctx->scriptname == NULL ) {
-			if ( !managesieve_quota_check_validsize(client, ctx->script_size) )
+		if (ctx->scriptname == NULL) {
+			if (!managesieve_quota_check_validsize(
+				client, ctx->script_size))
 				return cmd_putscript_cancel(ctx, TRUE);
 		} else {
-			if ( !managesieve_quota_check_all
-				(client, ctx->scriptname, ctx->script_size) )
+			if (!managesieve_quota_check_all(
+				client, ctx->scriptname, ctx->script_size))
 				return cmd_putscript_cancel(ctx, TRUE);
 		}
 
 	} else {
-		ctx->max_script_size = managesieve_quota_max_script_size(client);
+		ctx->max_script_size =
+			managesieve_quota_max_script_size(client);
 	}
 
 	/* save the script */
-	ctx->save_ctx = sieve_storage_save_init
-		(ctx->storage, ctx->scriptname, ctx->input);
+	ctx->save_ctx = sieve_storage_save_init(ctx->storage, ctx->scriptname,
+						ctx->input);
 
-	if ( ctx->save_ctx == NULL ) {
+	if (ctx->save_ctx == NULL) {
 		/* save initialization failed */
 		client_send_storage_error(client, ctx->storage);
 		return cmd_putscript_cancel(ctx, TRUE);
@@ -363,25 +369,26 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 	if (ctx->save_ctx != NULL) {
 		for (;;) {
 			i_assert(!ctx->script_size_valid ||
-				ctx->input->v_offset <= ctx->script_size);
-			if ( ctx->max_script_size > 0 &&
-				ctx->input->v_offset > ctx->max_script_size ) {
-				(void)managesieve_quota_check_validsize(client, ctx->input->v_offset);
+				 ctx->input->v_offset <= ctx->script_size);
+			if (ctx->max_script_size > 0 &&
+			    ctx->input->v_offset > ctx->max_script_size) {
+				(void)managesieve_quota_check_validsize(
+					client, ctx->input->v_offset);
 				cmd_putscript_finish(ctx);
 				return TRUE;
 			}
 
 			ret = i_stream_read(ctx->input);
 			if ((ret != -1 || ctx->input->stream_errno != EINVAL ||
-				client->input->eof) &&
-				sieve_storage_save_continue(ctx->save_ctx) < 0) {
+			     client->input->eof) &&
+			    sieve_storage_save_continue(ctx->save_ctx) < 0) {
 				/* we still have to finish reading the script
 			   	  from client */
 				sieve_storage_save_cancel(&ctx->save_ctx);
 				break;
 			}
 			if (ret == -1 || ret == 0)
-        break;
+				break;
 		}
 	}
 
@@ -395,24 +402,27 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 		bool failed = FALSE;
 		bool all_written = FALSE;
 
-		if ( !ctx->script_size_valid ) {
-			if ( !client->input->eof &&
-				ctx->input->stream_errno == EINVAL ) {
-				client_send_command_error(cmd, t_strdup_printf(
-					"Invalid input: %s", i_stream_get_error(ctx->input)));
+		if (!ctx->script_size_valid) {
+			if (!client->input->eof &&
+			    ctx->input->stream_errno == EINVAL) {
+				client_send_command_error(
+					cmd, t_strdup_printf(
+						"Invalid input: %s",
+						i_stream_get_error(ctx->input)));
 				client->input_skip_line = TRUE;
 				failed = TRUE;
 			}
-			all_written = ( ctx->input->eof && ctx->input->stream_errno == 0 );
+			all_written = (ctx->input->eof &&
+				       ctx->input->stream_errno == 0);
 
 		} else {
-			all_written = ( ctx->input->v_offset == ctx->script_size );
+			all_written = (ctx->input->v_offset == ctx->script_size);
 		}
 
 		/* finished */
 		ctx->input = NULL;
 
-		if ( !failed ) {
+		if (!failed) {
 			if (ctx->save_ctx == NULL) {
 				/* failed above */
 				client_send_storage_error(client, ctx->storage);
@@ -422,8 +432,9 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 					 whole script. */
 				failed = TRUE;
 				sieve_storage_save_cancel(&ctx->save_ctx);
-				client_disconnect
-					(client, "EOF while appending in PUTSCRIPT/CHECKSCRIPT");
+				client_disconnect(
+					client,
+					"EOF while appending in PUTSCRIPT/CHECKSCRIPT");
 			} else if (sieve_storage_save_finish(ctx->save_ctx) < 0) {
 				failed = TRUE;
 				client_send_storage_error(client, ctx->storage);
@@ -447,8 +458,8 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 	return FALSE;
 }
 
-static bool cmd_putscript_start
-(struct client_command_context *cmd, const char *scriptname)
+static bool
+cmd_putscript_start(struct client_command_context *cmd, const char *scriptname)
 {
 	struct cmd_putscript_context *ctx;
 	struct client *client = cmd->client;
@@ -467,8 +478,8 @@ static bool cmd_putscript_start
 	   finished */
 	o_stream_unset_flush_callback(client->output);
 
-	ctx->save_parser = managesieve_parser_create
-		(client->input, client->set->managesieve_max_line_length);
+	ctx->save_parser = managesieve_parser_create(
+		client->input, client->set->managesieve_max_line_length);
 
 	cmd->func = cmd_putscript_continue_parsing;
 	cmd->context = ctx;
@@ -481,7 +492,7 @@ bool cmd_putscript(struct client_command_context *cmd)
 	const char *scriptname;
 
 	/* <scriptname> */
-	if ( !client_read_string_args(cmd, FALSE, 1, &scriptname) )
+	if (!client_read_string_args(cmd, FALSE, 1, &scriptname))
 		return FALSE;
 
 	return cmd_putscript_start(cmd, scriptname);
