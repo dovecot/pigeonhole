@@ -18,7 +18,7 @@ bool cmd_capability(struct client_command_context *cmd)
 	unsigned int max_redirects;
 
 	/* no arguments */
-	if ( !client_read_no_args(cmd) )
+	if (!client_read_no_args(cmd))
 		return FALSE;
 
 	o_stream_cork(client->output);
@@ -30,20 +30,29 @@ bool cmd_capability(struct client_command_context *cmd)
 		max_redirects = sieve_max_redirects(client->svinst);
 
 		/* Default capabilities */
-  		client_send_line(client, t_strconcat("\"IMPLEMENTATION\" \"",
-			client->set->managesieve_implementation_string, "\"", NULL));
-		client_send_line(client, t_strconcat("\"SIEVE\" \"",
-			( sievecap == NULL ? "" : sievecap ), "\"", NULL));
+  		client_send_line(client,
+			t_strconcat(
+				"\"IMPLEMENTATION\" \"",
+				client->set->managesieve_implementation_string,
+				"\"", NULL));
+		client_send_line(client,
+			t_strconcat(
+				"\"SIEVE\" \"",
+				(sievecap == NULL ? "" : sievecap),
+				"\"", NULL));
 
 		/* Maximum number of redirects (if limited) */
-		if ( max_redirects > 0 )
+		if (max_redirects > 0) {
 			client_send_line(client,
-				t_strdup_printf("\"MAXREDIRECTS\" \"%u\"", max_redirects));
+				t_strdup_printf("\"MAXREDIRECTS\" \"%u\"",
+						max_redirects));
+		}
 
 		/* Notify methods */
-		if ( notifycap != NULL ) {
-			client_send_line(client, t_strconcat("\"NOTIFY\" \"",
-				notifycap, "\"", NULL));
+		if (notifycap != NULL) {
+			client_send_line(client,
+				t_strconcat("\"NOTIFY\" \"", notifycap, "\"",
+					    NULL));
 		}
 
 		/* Protocol version */
