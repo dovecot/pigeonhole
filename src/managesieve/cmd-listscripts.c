@@ -14,18 +14,17 @@
 
 bool cmd_listscripts(struct client_command_context *cmd)
 {
-  struct client *client = cmd->client;
+	struct client *client = cmd->client;
 	struct sieve_storage_list_context *ctx;
 	const char *scriptname;
 	bool active;
 	string_t *str;
 
 	/* no arguments */
-	if ( !client_read_no_args(cmd) )
+	if (!client_read_no_args(cmd))
 		return FALSE;
 
-	if ( (ctx = sieve_storage_list_init(client->storage))
-		== NULL ) {
+	if ((ctx = sieve_storage_list_init(client->storage)) == NULL) {
 		client_send_storage_error(client, client->storage);
 		return TRUE;
 	}
@@ -40,14 +39,14 @@ bool cmd_listscripts(struct client_command_context *cmd)
 
 			managesieve_quote_append_string(str, scriptname, FALSE);
 
-			if ( active )
+			if (active)
 				str_append(str, " ACTIVE");
 
 			client_send_line(client, str_c(str));
 		} T_END;
 	}
 
-	if ( sieve_storage_list_deinit(&ctx) < 0 ) {
+	if (sieve_storage_list_deinit(&ctx) < 0) {
 		client_send_storage_error(client, client->storage);
 		return TRUE;
 	}
