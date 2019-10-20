@@ -8,8 +8,8 @@
 #include "managesieve-commands.h"
 
 
-/* Might want to combine this somewhere in a commands-common.c
- * to avoid duplicate code
+/* May want to combine this somewhere in a commands-common.c to avoid duplicate
+   code
  */
 
 static const struct command managesieve_base_commands[] = {
@@ -98,11 +98,13 @@ void commands_init(void)
 	i_array_init(&managesieve_commands, 16);
 	commands_unsorted = FALSE;
 
-	command_register_array(managesieve_base_commands, MANAGESIEVE_COMMANDS_COUNT);
+	command_register_array(managesieve_base_commands,
+			       MANAGESIEVE_COMMANDS_COUNT);
 }
 
 void commands_deinit(void)
 {
-	command_unregister_array(managesieve_base_commands, MANAGESIEVE_COMMANDS_COUNT);
+	command_unregister_array(managesieve_base_commands,
+				 MANAGESIEVE_COMMANDS_COUNT);
 	array_free(&managesieve_commands);
 }
