@@ -18,20 +18,20 @@ bool cmd_noop(struct client_command_context *cmd)
 	string_t *resp_code;
 
 	/* [<echo string>] */
-	if ( !client_read_args(cmd, 0, 0, FALSE, &args) )
+	if (!client_read_args(cmd, 0, 0, FALSE, &args))
 		return FALSE;
 
-	if ( MANAGESIEVE_ARG_IS_EOL(&args[0]) ) {
+	if (MANAGESIEVE_ARG_IS_EOL(&args[0])) {
 		client_send_ok(client, "NOOP Completed");
 		return TRUE;
 	}
 
-	if ( !managesieve_arg_get_string(&args[0], &text) ) {
+	if (!managesieve_arg_get_string(&args[0], &text)) {
 		client_send_no(client, "Invalid echo tag.");
 		return TRUE;
 	}
 
-	if ( !MANAGESIEVE_ARG_IS_EOL(&args[1]) ) {
+	if (!MANAGESIEVE_ARG_IS_EOL(&args[1])) {
 		client_send_command_error(cmd, "Too many arguments.");
 		return TRUE;
 	}
