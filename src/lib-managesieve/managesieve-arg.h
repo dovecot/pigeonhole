@@ -55,7 +55,8 @@ enum managesieve_arg_type {
 ARRAY_DEFINE_TYPE(managesieve_arg_list, struct managesieve_arg);
 struct managesieve_arg {
 	enum managesieve_arg_type type;
-	struct managesieve_arg *parent; /* always of type MANAGESIEVE_ARG_LIST */
+	/* parent argument; always of type MANAGESIEVE_ARG_LIST */
+	struct managesieve_arg *parent;
 
 	/* Set when _data.str is set */
 	size_t str_len;
@@ -70,39 +71,35 @@ struct managesieve_arg {
 #define MANAGESIEVE_ARG_IS_EOL(arg) \
 	((arg)->type == MANAGESIEVE_ARG_EOL)
 
-bool managesieve_arg_get_atom
-	(const struct managesieve_arg *arg, const char **str_r)
-	ATTR_WARN_UNUSED_RESULT;
-bool managesieve_arg_get_number
-	(const struct managesieve_arg *arg, uoff_t *number_r)
-	ATTR_WARN_UNUSED_RESULT;
-bool managesieve_arg_get_quoted
-	(const struct managesieve_arg *arg, const char **str_r)
-	ATTR_WARN_UNUSED_RESULT;
-bool managesieve_arg_get_string
-	(const struct managesieve_arg *arg, const char **str_r)
-	ATTR_WARN_UNUSED_RESULT;
+bool managesieve_arg_get_atom(const struct managesieve_arg *arg,
+			      const char **str_r) ATTR_WARN_UNUSED_RESULT;
+bool managesieve_arg_get_number(const struct managesieve_arg *arg,
+				uoff_t *number_r) ATTR_WARN_UNUSED_RESULT;
+bool managesieve_arg_get_quoted(const struct managesieve_arg *arg,
+				const char **str_r) ATTR_WARN_UNUSED_RESULT;
+bool managesieve_arg_get_string(const struct managesieve_arg *arg,
+				const char **str_r) ATTR_WARN_UNUSED_RESULT;
 
-bool managesieve_arg_get_string_stream
-	(const struct managesieve_arg *arg, struct istream **stream_r)
-	ATTR_WARN_UNUSED_RESULT;
+bool managesieve_arg_get_string_stream(const struct managesieve_arg *arg,
+				       struct istream **stream_r)
+				       ATTR_WARN_UNUSED_RESULT;
 
-bool managesieve_arg_get_list
-	(const struct managesieve_arg *arg, const struct managesieve_arg **list_r)
-	ATTR_WARN_UNUSED_RESULT;
-bool managesieve_arg_get_list_full
-	(const struct managesieve_arg *arg, const struct managesieve_arg **list_r,
-		unsigned int *list_count_r)
-	ATTR_WARN_UNUSED_RESULT;
+bool managesieve_arg_get_list(const struct managesieve_arg *arg,
+			      const struct managesieve_arg **list_r)
+			      ATTR_WARN_UNUSED_RESULT;
+bool managesieve_arg_get_list_full(const struct managesieve_arg *arg,
+				   const struct managesieve_arg **list_r,
+				   unsigned int *list_count_r)
+				   ATTR_WARN_UNUSED_RESULT;
 
 /* Similar to above, but assumes that arg is already of correct type. */
-struct istream *managesieve_arg_as_string_stream
-	(const struct managesieve_arg *arg);
-const struct managesieve_arg *managesieve_arg_as_list
-	(const struct managesieve_arg *arg);
+struct istream *
+managesieve_arg_as_string_stream(const struct managesieve_arg *arg);
+const struct managesieve_arg *
+managesieve_arg_as_list(const struct managesieve_arg *arg);
 
 /* Returns TRUE if arg is atom and case-insensitively matches str */
-bool managesieve_arg_atom_equals
-	(const struct managesieve_arg *arg, const char *str);
+bool managesieve_arg_atom_equals(const struct managesieve_arg *arg,
+				 const char *str);
 
 #endif
