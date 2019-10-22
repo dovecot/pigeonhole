@@ -139,8 +139,12 @@ void sieve_script_unref(struct sieve_script **_script)
 {
 	struct sieve_script *script = *_script;
 
-	i_assert(script->refcount > 0);
+	*_script = NULL;
 
+	if (script == NULL)
+		return;
+
+	i_assert(script->refcount > 0);
 	if (--script->refcount != 0)
 		return;
 
@@ -152,7 +156,6 @@ void sieve_script_unref(struct sieve_script **_script)
 	sieve_storage_unref(&script->storage);
 	event_unref(&script->event);
 	pool_unref(&script->pool);
-	*_script = NULL;
 }
 
 int sieve_script_open(struct sieve_script *script, enum sieve_error *error_r)
