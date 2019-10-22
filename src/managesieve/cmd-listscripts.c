@@ -17,6 +17,7 @@ bool cmd_listscripts(struct client_command_context *cmd)
 	struct client *client = cmd->client;
 	struct sieve_storage_list_context *ctx;
 	const char *scriptname;
+	unsigned int script_count = 0;
 	bool active;
 	string_t *str;
 
@@ -25,7 +26,8 @@ bool cmd_listscripts(struct client_command_context *cmd)
 		return FALSE;
 
 	if ((ctx = sieve_storage_list_init(client->storage)) == NULL) {
-		client_send_storage_error(client, client->storage);
+		client_command_storage_error(
+			cmd, "Failed to list scripts");
 		return TRUE;
 	}
 
@@ -44,12 +46,19 @@ bool cmd_listscripts(struct client_command_context *cmd)
 
 			client_send_line(client, str_c(str));
 		} T_END;
+
+		script_count++;
 	}
 
 	if (sieve_storage_list_deinit(&ctx) < 0) {
-		client_send_storage_error(client, client->storage);
+		client_command_storage_error(
+			cmd, "Failed to list scripts");
 		return TRUE;
 	}
+
+	struct event_passthrough *e =
+		client_command_create_finish_event(cmd);
+	e_debug(e->event(), "Listed %u scripts", script_count);
 
 	client_send_ok(client, "Listscripts completed.");
 	return TRUE;

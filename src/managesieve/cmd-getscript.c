@@ -18,6 +18,7 @@ struct cmd_getscript_context {
 	struct sieve_storage *storage;
 	uoff_t script_size;
 
+	const char *scriptname;
 	struct sieve_script *script;
 	struct istream *script_stream;
 
@@ -26,6 +27,7 @@ struct cmd_getscript_context {
 
 static bool cmd_getscript_finish(struct cmd_getscript_context *ctx)
 {
+	struct client_command_context *cmd = ctx->cmd;
 	struct client *client = ctx->client;
 
 	if (ctx->script != NULL)
@@ -37,12 +39,17 @@ static bool cmd_getscript_finish(struct cmd_getscript_context *ctx)
 			return TRUE;
 		}
 
-		client_send_storage_error(client, client->storage);
+		client_command_storage_error(
+			cmd, "Failed to retrieve script `%s'", ctx->scriptname);
 		return TRUE;
 	}
 
 	client->get_count++;
 	client->get_bytes += ctx->script_size;
+
+	struct event_passthrough *e =
+		client_command_create_finish_event(cmd);
+	e_debug(e->event(), "Retrieved script `%s'", ctx->scriptname);
 
 	client_send_line(client, "");
 	client_send_ok(client, "Getscript completed.");
@@ -105,9 +112,12 @@ bool cmd_getscript(struct client_command_context *cmd)
 	if (!client_read_string_args(cmd, TRUE, 1, &scriptname))
 		return FALSE;
 
+	event_add_str(cmd->event, "managesieve_script_name", scriptname);
+
 	ctx = p_new(cmd->pool, struct cmd_getscript_context, 1);
 	ctx->cmd = cmd;
 	ctx->client = client;
+	ctx->scriptname = p_strdup(cmd->pool, scriptname);
 	ctx->storage = client->storage;
 	ctx->failed = FALSE;
 

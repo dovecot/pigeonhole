@@ -144,9 +144,14 @@ static bool cmd_putscript_cancel(struct cmd_putscript_context *ctx, bool skip)
 
 static void cmd_putscript_storage_error(struct cmd_putscript_context *ctx)
 {
-	struct client *client = ctx->client;
+	struct client_command_context *cmd = ctx->cmd;
 
-	client_send_storage_error(client, ctx->storage);
+	if (ctx->scriptname == NULL) {
+		client_command_storage_error(cmd, "Failed to check script");
+	} else {
+		client_command_storage_error(cmd, "Failed to store script `%s'",
+					     ctx->scriptname);
+	}
 }
 
 static bool cmd_putscript_save(struct cmd_putscript_context *ctx)
@@ -168,6 +173,7 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 			    struct sieve_script *script)
 {
 	struct client *client = ctx->client;
+	struct client_command_context *cmd = ctx->cmd;
 	struct sieve_error_handler *ehandler;
 	enum sieve_compile_flags cpflags =
 		SIEVE_COMPILE_FLAG_NOGLOBAL | SIEVE_COMPILE_FLAG_UPLOADED;
@@ -190,16 +196,37 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 	/* Compile */
 	sbin = sieve_compile_script(script, ehandler, cpflags, &error);
 	if (sbin == NULL) {
+		const char *errormsg = NULL, *action;
+
 		if (error != SIEVE_ERROR_NOT_VALID) {
-			const char *errormsg =
-				sieve_script_get_last_error(script, &error);
-			if (error != SIEVE_ERROR_NONE)
-				client_send_no(client, errormsg);
-			else
-				client_send_no(client, str_c(errors));
-		} else {
-			client_send_no(client, str_c(errors));
+			errormsg = sieve_script_get_last_error(script, &error);
+			if (error == SIEVE_ERROR_NONE)
+				errormsg = NULL;
 		}
+
+		action = (ctx->scriptname != NULL ?
+			  t_strdup_printf("store script `%s'",
+					  ctx->scriptname) :
+			  "check script");
+
+		if (errormsg == NULL) {
+			struct event_passthrough *e =
+				client_command_create_finish_event(cmd);
+			e_debug(e->event(), "Failed to %s: "
+				"Compilation failed (%u errors, %u warnings)",
+				action, sieve_get_errors(ehandler),
+				sieve_get_warnings(ehandler));
+
+			client_send_no(client, str_c(errors));
+		} else {
+			struct event_passthrough *e =
+				client_command_create_finish_event(cmd);
+			e_debug(e->event(), "Failed to %s: %s",
+				action, errormsg);
+
+			client_send_no(client, errormsg);
+		}
+
 		success = FALSE;
 	} else {
 		sieve_close(&sbin);
@@ -219,6 +246,17 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 		} else {
 			client->check_count++;
 			client->check_bytes += ctx->script_size;
+		}
+
+		struct event_passthrough *e =
+			client_command_create_finish_event(cmd);
+		if (ctx->scriptname != NULL) {
+			e_debug(e->event(), "Stored script `%s' successfully "
+				"(%u warnings)", ctx->scriptname,
+				sieve_get_warnings(ehandler));
+		} else {
+			e_debug(e->event(), "Checked script successfully "
+				"(%u warnings)", sieve_get_warnings(ehandler));
 		}
 
 		if (sieve_get_warnings(ehandler) > 0)
@@ -517,6 +555,8 @@ bool cmd_putscript(struct client_command_context *cmd)
 	/* <scriptname> */
 	if (!client_read_string_args(cmd, FALSE, 1, &scriptname))
 		return FALSE;
+
+	event_add_str(cmd->event, "managesieve_script_name", scriptname);
 
 	return cmd_putscript_start(cmd, scriptname);
 }

@@ -120,13 +120,22 @@ void client_send_response(struct client *client, const char *oknobye,
 #define client_send_byeresp(cmd, resp_code, msg) \
 	client_send_response(client, "BYE", resp_code, msg)
 
+struct event_passthrough *
+client_command_create_finish_event(struct client_command_context *cmd);
+
 /* Send BAD command error to client. msg can be NULL. */
 void client_send_command_error(struct client_command_context *cmd,
 			       const char *msg);
 
-/* Send storage or sieve related errors to the client */
-void client_send_storage_error(struct client *client,
-			       struct sieve_storage *storage);
+/* Send storage or sieve-related errors to the client. Returns command finish
+   event with the "error" field set accordingly. */
+void client_command_storage_error(struct client_command_context *cmd,
+				  const char *source_filename,
+				  unsigned int source_linenum,
+				  const char *log_prefix, ...)
+				  ATTR_FORMAT(4, 5);
+#define client_command_storage_error(cmd, ...) \
+	client_command_storage_error(cmd, __FILE__, __LINE__, __VA_ARGS__)
 
 /* Read a number of arguments. Returns TRUE if everything was read or
    FALSE if either needs more data or error occurred. */

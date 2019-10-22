@@ -20,13 +20,17 @@ cmd_setactive_activate(struct client_command_context *cmd,
 	struct sieve_script *script;
 	string_t *errors = NULL;
 	const char *errormsg = NULL;
-	bool warnings = FALSE;
+	unsigned int warning_count = 0, error_count = 0;
 	bool success = TRUE;
 	int ret;
 
+	event_add_str(cmd->event, "managesieve_script_name", scriptname);
+
 	script = sieve_storage_open_script(storage, scriptname, NULL);
 	if (script == NULL) {
-		client_send_storage_error(client, storage);
+		client_command_storage_error(
+			cmd, "Failed to open script `%s' for activation",
+			scriptname);
 		return;
 	}
 
@@ -60,7 +64,8 @@ cmd_setactive_activate(struct client_command_context *cmd,
 			sieve_close(&sbin);
 		}
 
-		warnings = (sieve_get_warnings(ehandler) > 0);
+		warning_count = sieve_get_warnings(ehandler);
+		error_count = sieve_get_errors(ehandler);
 		sieve_error_handler_unref(&ehandler);
 	} T_END;
 
@@ -70,9 +75,18 @@ cmd_setactive_activate(struct client_command_context *cmd,
 		   resolve some erroneous situations. */
 		ret = sieve_script_activate(script, (time_t)-1);
 		if (ret < 0) {
-			client_send_storage_error(client, storage);
+			client_command_storage_error(
+				cmd, "Failed to activate script `%s'",
+				scriptname);
 		} else {
-			if (warnings) {
+			struct event_passthrough *e =
+				client_command_create_finish_event(cmd);
+			e_debug(e->event(), "Activated script `%s' "
+				" (%u warnings%s)",
+				scriptname, warning_count,
+				(ret == 0 ? ", redundant" : ""));
+
+			if (warning_count > 0) {
 				client_send_okresp(
 					client, "WARNINGS",
 					str_c(errors));
@@ -84,8 +98,19 @@ cmd_setactive_activate(struct client_command_context *cmd,
 			}
 		}
 	} else if (errormsg == NULL) {
+		struct event_passthrough *e =
+			client_command_create_finish_event(cmd);
+		e_debug(e->event(), "Failed to activate script `%s': "
+			"Compilation failed (%u errors, %u warnings)",
+			scriptname, error_count, warning_count);
+
 		client_send_no(client, str_c(errors));
 	} else {
+		struct event_passthrough *e =
+			client_command_create_finish_event(cmd);
+		e_debug(e->event(), "Failed to activate script `%s': %s",
+			scriptname, errormsg);
+
 		client_send_no(client, errormsg);
 	}
 
@@ -103,9 +128,14 @@ cmd_setactive_deactivate(struct client_command_context *cmd)
 
 	ret = sieve_storage_deactivate(storage, (time_t)-1);
 	if (ret < 0) {
-		client_send_storage_error(client, storage);
+		client_command_storage_error(
+			cmd, "Failed to deactivate script");
 		return;
 	}
+
+	struct event_passthrough *e =
+		client_command_create_finish_event(cmd);
+	e_debug(e->event(), "Deactivated script");
 
 	client_send_ok(client, (ret > 0 ?
 				"Active script is now deactivated." :

@@ -44,8 +44,16 @@ bool cmd_havespace(struct client_command_context *cmd)
 		return TRUE;
 	}
 
+	event_add_str(cmd->event, "managesieve_script_name", scriptname);
+	event_add_int(cmd->event, "managesieve_script_size", size);
+
 	if (!managesieve_quota_check_all(cmd, scriptname, size))
 		return TRUE;
+
+	struct event_passthrough *e =
+		client_command_create_finish_event(cmd);
+	e_debug(e->event(), "Quota is within limits for script `%s' "
+		"with size %"PRIuSIZE_T, scriptname, size);
 
 	client_send_ok(client, "Putscript would succeed.");
 	return TRUE;

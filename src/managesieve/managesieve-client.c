@@ -377,6 +377,15 @@ void client_send_response(struct client *client, const char *oknobye,
 	client_send_line(client, str_c(str));
 }
 
+struct event_passthrough *
+client_command_create_finish_event(struct client_command_context *cmd)
+{
+	struct event_passthrough *e =
+		event_create_passthrough(cmd->event)->
+		set_name("managesieve_command_finished");
+	return e;
+}
+
 void client_send_command_error(struct client_command_context *cmd,
 			       const char *msg)
 {
@@ -414,11 +423,22 @@ void client_send_command_error(struct client_command_context *cmd,
 	cmd->param_error = TRUE;
 }
 
-void client_send_storage_error(struct client *client,
-			       struct sieve_storage *storage)
+#undef client_command_storage_error
+void client_command_storage_error(struct client_command_context *cmd,
+				  const char *source_filename,
+				  unsigned int source_linenum,
+				  const char *log_prefix, ...)
 {
+	struct event_log_params params = {
+		.log_type = LOG_TYPE_INFO,
+		.source_filename = source_filename,
+		.source_linenum = source_linenum,
+	};
+	struct client *client = cmd->client;
+	struct sieve_storage *storage = client->storage;
 	enum sieve_error error_code;
 	const char *error;
+	va_list args;
 
 	error = sieve_storage_get_last_error(storage, &error_code);
 
@@ -443,6 +463,15 @@ void client_send_storage_error(struct client *client,
 		client_send_no(client, error);
 		break;
 	}
+
+	struct event_passthrough *e =
+		client_command_create_finish_event(cmd)->
+		add_str("error", error);
+
+	va_start(args, log_prefix);
+	event_log(e->event(), &params, "%s: %s",
+		  t_strdup_vprintf(log_prefix, args), error);
+	va_end(args);
 }
 
 bool client_read_args(struct client_command_context *cmd, unsigned int count,
