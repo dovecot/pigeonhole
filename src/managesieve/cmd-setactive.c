@@ -92,7 +92,6 @@ cmd_setactive_activate(struct client_command_context *cmd,
 	if (errors != NULL)
 		str_free(&errors);
 	sieve_script_unref(&script);
-
 }
 
 static void
