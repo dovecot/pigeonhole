@@ -969,8 +969,20 @@ int sieve_storage_deactivate(struct sieve_storage *storage, time_t mtime)
 	ret = storage->v.deactivate(storage);
 
 	if (ret >= 0) {
+		struct event_passthrough *e =
+			event_create_passthrough(storage->event)->
+			set_name("sieve_storage_deactivated");
+		e_debug(e->event(), "Storage activated");
+
 		sieve_storage_set_modified(storage, mtime);
 		(void)sieve_storage_sync_deactivate(storage);
+	} else {
+		struct event_passthrough *e =
+			event_create_passthrough(storage->event)->
+			add_str("error", storage->error)->
+			set_name("sieve_storage_deactivated");
+		e_debug(e->event(), "Failed to deactivate storage: %s",
+			storage->error);
 	}
 
 	return ret;
