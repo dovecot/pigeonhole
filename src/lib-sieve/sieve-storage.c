@@ -259,6 +259,8 @@ sieve_storage_event_create(struct sieve_instance *svinst,
 
 	event = event_create(svinst->event);
 	event_add_category(event, &event_category_sieve_storage);
+	event_add_str(event, "sieve_storage_driver",
+		      storage_class->driver_name);
 	event_set_append_log_prefix(
 		event, t_strdup_printf("%s storage: ",
 				       storage_class->driver_name));
@@ -342,6 +344,9 @@ sieve_storage_init(struct sieve_instance *svinst,
 			storage = NULL;
 		} else {
 			storage->location = p_strdup(storage->pool, location);
+
+			event_add_str(event, "sieve_storage_location",
+				      storage->location);
 
 			if (storage_class->v.init(storage, options,
 						  error_r) < 0) {
