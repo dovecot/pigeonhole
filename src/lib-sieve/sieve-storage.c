@@ -26,6 +26,10 @@
   "Internal error occurred. Refer to server log for more information."
 #define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
 
+struct event_category event_category_sieve_storage = {
+	.name = "sieve-storage",
+};
+
 /*
  * Storage class
  */
@@ -254,6 +258,7 @@ sieve_storage_event_create(struct sieve_instance *svinst,
 	struct event *event;
 
 	event = event_create(svinst->event);
+	event_add_category(event, &event_category_sieve_storage);
 	event_set_append_log_prefix(
 		event, t_strdup_printf("%s storage: ",
 				       storage_class->driver_name));
