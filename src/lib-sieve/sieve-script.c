@@ -153,6 +153,12 @@ void sieve_script_unref(struct sieve_script **_script)
 	if (--script->refcount != 0)
 		return;
 
+	if (script->stream != NULL) {
+		struct event_passthrough *e =
+			event_create_passthrough(script->event)->
+			set_name("sieve_script_closed");
+		e_debug(e->event(), "Closed script");
+	}
 	i_stream_unref(&script->stream);
 
 	if (script->v.destroy != NULL)
@@ -301,6 +307,7 @@ int sieve_script_get_stream(struct sieve_script *script,
 			    struct istream **stream_r,
 			    enum sieve_error *error_r)
 {
+	struct sieve_storage *storage = script->storage;
 	enum sieve_error error;
 	int ret;
 
@@ -321,8 +328,20 @@ int sieve_script_get_stream(struct sieve_script *script,
 		ret = script->v.get_stream(script, &script->stream, error_r);
 	} T_END;
 
-	if (ret < 0)
+	if (ret < 0) {
+		struct event_passthrough *e =
+			event_create_passthrough(script->event)->
+			add_str("error", storage->error)->
+			set_name("sieve_script_opened");
+		e_debug(e->event(), "Failed to open script for reading: %s",
+			storage->error);
 		return -1;
+	}
+
+	struct event_passthrough *e =
+		event_create_passthrough(script->event)->
+		set_name("sieve_script_opened");
+	e_debug(e->event(), "Opened script for reading");
 
 	*stream_r = script->stream;
 	return 0;
@@ -631,6 +650,22 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 		ret = sieve_script_copy_from_default(script, newname);
 	}
 
+	if (ret >= 0) {
+		struct event_passthrough *e =
+			event_create_passthrough(script->event)->
+			add_str("sieve_script_new_name", newname)->
+			set_name("sieve_script_renamed");
+		e_debug(e->event(), "Script renamed to `%s'", newname);
+	} else {
+		struct event_passthrough *e =
+			event_create_passthrough(script->event)->
+			add_str("sieve_script_new_name", newname)->
+			add_str("error", storage->error)->
+			set_name("sieve_script_renamed");
+		e_debug(e->event(), "Failed to rename script: %s",
+			storage->error);
+	}
+
 	return ret;
 }
 
@@ -671,9 +706,22 @@ int sieve_script_delete(struct sieve_script *script, bool ignore_active)
 	i_assert(script->v.delete != NULL);
 	ret = script->v.delete(script);
 
-	/* unset INBOX mailbox attribute */
-	if (ret >= 0)
+	if (ret >= 0) {
+		struct event_passthrough *e =
+			event_create_passthrough(script->event)->
+			set_name("sieve_script_deleted");
+		e_debug(e->event(), "Script deleted");
+
+		/* unset INBOX mailbox attribute */
 		(void)sieve_storage_sync_script_delete(storage, script->name);
+	} else {
+		struct event_passthrough *e =
+			event_create_passthrough(script->event)->
+			add_str("error", storage->error)->
+			set_name("sieve_script_deleted");
+		e_debug(e->event(), "Failed to delete script: %s",
+			storage->error);
+	}
 	return ret;
 }
 
@@ -709,8 +757,20 @@ int sieve_script_activate(struct sieve_script *script, time_t mtime)
 		ret = script->v.activate(script);
 
 		if (ret >= 0) {
+			struct event_passthrough *e =
+				event_create_passthrough(script->event)->
+				set_name("sieve_script_activated");
+			e_debug(e->event(), "Script activated");
+
 			sieve_storage_set_modified(storage, mtime);
 			(void)sieve_storage_sync_script_activate(storage);
+		} else {
+			struct event_passthrough *e =
+				event_create_passthrough(script->event)->
+				add_str("error", storage->error)->
+				set_name("sieve_script_activated");
+			e_debug(e->event(), "Failed to activate script: %s",
+				storage->error);
 		}
 
 	} else {
