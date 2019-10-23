@@ -142,17 +142,22 @@ static bool cmd_putscript_cancel(struct cmd_putscript_context *ctx, bool skip)
 	return cmd_putscript_continue_cancel(ctx->cmd);
 }
 
-static bool cmd_putscript_save(struct cmd_putscript_context *ctx)
+static void cmd_putscript_storage_error(struct cmd_putscript_context *ctx)
 {
 	struct client *client = ctx->client;
 
+	client_send_storage_error(client, ctx->storage);
+}
+
+static bool cmd_putscript_save(struct cmd_putscript_context *ctx)
+{
 	/* Commit to save only when this is a putscript command */
 	if (ctx->scriptname == NULL)
 		return TRUE;
 
 	/* Check commit */
 	if (sieve_storage_save_commit(&ctx->save_ctx) < 0) {
-		client_send_storage_error(client, ctx->storage);
+		cmd_putscript_storage_error(ctx);
 		return FALSE;
 	}
 	return TRUE;
@@ -230,7 +235,6 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 
 static void cmd_putscript_handle_script(struct cmd_putscript_context *ctx)
 {
-	struct client *client = ctx->client;
 	struct client_command_context *cmd = ctx->cmd;
 	struct sieve_script *script;
 
@@ -239,7 +243,7 @@ static void cmd_putscript_handle_script(struct cmd_putscript_context *ctx)
 
 	/* Check result */
 	if (script == NULL) {
-		client_send_storage_error(client, ctx->storage);
+		cmd_putscript_storage_error(ctx);
 		cmd_putscript_finish(ctx);
 		return;
 	}
@@ -247,7 +251,7 @@ static void cmd_putscript_handle_script(struct cmd_putscript_context *ctx)
 	/* If quoted string, the size was not known until now */
 	if (!ctx->script_size_valid) {
 		if (sieve_script_get_size(script, &ctx->script_size) < 0) {
-			client_send_storage_error(client, ctx->storage);
+			cmd_putscript_storage_error(ctx);
 			cmd_putscript_finish(ctx);
 			return;
 		}
@@ -366,7 +370,7 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 
 	if (ctx->save_ctx == NULL) {
 		/* save initialization failed */
-		client_send_storage_error(client, ctx->storage);
+		cmd_putscript_storage_error(ctx);
 		return cmd_putscript_cancel(ctx, TRUE);
 	}
 
@@ -444,7 +448,7 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 		if (!failed) {
 			if (ctx->save_ctx == NULL) {
 				/* failed above */
-				client_send_storage_error(client, ctx->storage);
+				cmd_putscript_storage_error(ctx);
 				failed = TRUE;
 			} else if (!all_written) {
 				/* client disconnected before it finished sending the
@@ -456,7 +460,7 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 					"EOF while appending in PUTSCRIPT/CHECKSCRIPT");
 			} else if (sieve_storage_save_finish(ctx->save_ctx) < 0) {
 				failed = TRUE;
-				client_send_storage_error(client, ctx->storage);
+				cmd_putscript_storage_error(ctx);
 			} else {
 				failed = client->input->closed;
 			}
