@@ -231,6 +231,7 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 static void cmd_putscript_handle_script(struct cmd_putscript_context *ctx)
 {
 	struct client *client = ctx->client;
+	struct client_command_context *cmd = ctx->cmd;
 	struct sieve_script *script;
 
 	/* Obtain script object for uploaded script */
@@ -254,7 +255,7 @@ static void cmd_putscript_handle_script(struct cmd_putscript_context *ctx)
 
 		/* Check quota; max size is already checked */
 		if (ctx->scriptname != NULL &&
-		    !managesieve_quota_check_all(client, ctx->scriptname,
+		    !managesieve_quota_check_all(cmd, ctx->scriptname,
 						 ctx->script_size)) {
 			cmd_putscript_finish(ctx);
 			return;
@@ -346,11 +347,11 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 		/* Check quota */
 		if (ctx->scriptname == NULL) {
 			if (!managesieve_quota_check_validsize(
-				client, ctx->script_size))
+				cmd, ctx->script_size))
 				return cmd_putscript_cancel(ctx, TRUE);
 		} else {
 			if (!managesieve_quota_check_all(
-				client, ctx->scriptname, ctx->script_size))
+				cmd, ctx->scriptname, ctx->script_size))
 				return cmd_putscript_cancel(ctx, TRUE);
 		}
 
@@ -391,7 +392,7 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 			if (ctx->max_script_size > 0 &&
 			    ctx->input->v_offset > ctx->max_script_size) {
 				(void)managesieve_quota_check_validsize(
-					client, ctx->input->v_offset);
+					cmd, ctx->input->v_offset);
 				cmd_putscript_finish(ctx);
 				return TRUE;
 			}

@@ -44,7 +44,7 @@ bool cmd_havespace(struct client_command_context *cmd)
 		return TRUE;
 	}
 
-	if (!managesieve_quota_check_all(client, scriptname, size))
+	if (!managesieve_quota_check_all(cmd, scriptname, size))
 		return TRUE;
 
 	client_send_ok(client, "Putscript would succeed.");

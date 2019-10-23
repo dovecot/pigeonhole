@@ -15,8 +15,10 @@ uint64_t managesieve_quota_max_script_size(struct client *client)
 	return sieve_storage_quota_max_script_size(client->storage);
 }
 
-bool managesieve_quota_check_validsize(struct client *client, size_t size)
+bool managesieve_quota_check_validsize(struct client_command_context *cmd,
+				       size_t size)
 {
+	struct client *client = cmd->client;
 	uint64_t limit;
 
 	if (!sieve_storage_quota_validsize(client->storage, size, &limit)) {
@@ -29,9 +31,10 @@ bool managesieve_quota_check_validsize(struct client *client, size_t size)
 	return TRUE;
 }
 
-bool managesieve_quota_check_all(struct client *client,
+bool managesieve_quota_check_all(struct client_command_context *cmd,
 				 const char *scriptname, size_t size)
 {
+	struct client *client = cmd->client;
 	enum sieve_storage_quota quota;
 	uint64_t limit;
 	int ret;
