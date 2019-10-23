@@ -1080,6 +1080,25 @@ int sieve_storage_list_deinit(struct sieve_storage_list_context **_lctx)
  * Saving scripts
  */
 
+static struct event *
+sieve_storage_save_create_event(struct sieve_storage *storage,
+				const char *scriptname) ATTR_NULL(2)
+{
+	struct event *event;
+
+	event = event_create(storage->event);
+	event_add_str(event, "sieve_script_name", scriptname);
+	if (scriptname == NULL) {
+		event_set_append_log_prefix(event, "save: ");
+	} else {
+		event_set_append_log_prefix(
+			event, t_strdup_printf("script `%s': save: ",
+					       scriptname));
+	}
+
+	return event;
+}
+
 static void sieve_storage_save_cleanup(struct sieve_storage_save_context *sctx)
 {
 	if (sctx->scriptobject != NULL)
@@ -1095,6 +1114,7 @@ static void sieve_storage_save_deinit(struct sieve_storage_save_context **_sctx)
 		return;
 
 	sieve_storage_save_cleanup(sctx);
+	event_unref(&sctx->event);
 	pool_unref(&sctx->pool);
 }
 
@@ -1121,8 +1141,22 @@ sieve_storage_save_init(struct sieve_storage *storage, const char *scriptname,
 	sctx = storage->v.save_alloc(storage);
 	sctx->storage = storage;
 
+	sctx->event = sieve_storage_save_create_event(storage, scriptname);
+
+	struct event_passthrough *e =
+		event_create_passthrough(sctx->event)->
+		set_name("sieve_storage_save_started");
+	e_debug(e->event(), "Started saving script");
+
 	i_assert(storage->v.save_init != NULL);
 	if ((storage->v.save_init(sctx, scriptname, input)) < 0) {
+		struct event_passthrough *e =
+			event_create_passthrough(sctx->event)->
+			add_str("error", storage->error)->
+			set_name("sieve_storage_save_finished");
+		e_debug(e->event(), "Failed to save script: %s",
+			storage->error);
+
 		sieve_storage_save_deinit(&sctx);
 		return NULL;
 	}
@@ -1156,8 +1190,16 @@ int sieve_storage_save_finish(struct sieve_storage_save_context *sctx)
 
 	i_assert(storage->v.save_finish != NULL);
 	ret = storage->v.save_finish(sctx);
-	if (ret < 0)
+	if (ret < 0) {
+		struct event_passthrough *e =
+			event_create_passthrough(sctx->event)->
+			add_str("error", storage->error)->
+			set_name("sieve_storage_save_finished");
+		e_debug(e->event(), "Failed to upload script: %s",
+			storage->error);
+
 		sctx->failed = TRUE;
+	}
 	return ret;
 }
 
@@ -1259,16 +1301,29 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 			sieve_script_unref(&script);
 
 		if (ret < 0) {
-			e_error(storage->event,
+			e_error(sctx->event,
 				"Failed to implicitly activate script `%s' "
 				"while replacing the default active script",
 				scriptname);
 		}
 	}
 
-	/* set INBOX mailbox attribute */
 	if (ret >= 0) {
+		struct event_passthrough *e =
+			event_create_passthrough(sctx->event)->
+			set_name("sieve_storage_save_finished");
+		e_debug(e->event(), "Finished saving script");
+
+		/* set INBOX mailbox attribute */
 		(void)sieve_storage_sync_script_save(storage, scriptname);
+	} else {
+		struct event_passthrough *e =
+			event_create_passthrough(sctx->event)->
+			add_str("error", storage->error)->
+			set_name("sieve_storage_save_finished");
+
+		e_debug(e->event(), "Failed to save script: %s",
+			storage->error);
 	}
 
 	sieve_storage_save_deinit(&sctx);
@@ -1293,6 +1348,12 @@ void sieve_storage_save_cancel(struct sieve_storage_save_context **_sctx)
 	if (!sctx->finished)
 		(void)sieve_storage_save_finish(sctx);
 
+	struct event_passthrough *e =
+		event_create_passthrough(sctx->event)->
+		add_str("error", "Canceled")->
+		set_name("sieve_storage_save_finished");
+	e_debug(e->event(), "Canceled saving script");
+
 	i_assert(storage->v.save_cancel != NULL);
 	storage->v.save_cancel(sctx);
 
@@ -1302,15 +1363,70 @@ void sieve_storage_save_cancel(struct sieve_storage_save_context **_sctx)
 int sieve_storage_save_as_active(struct sieve_storage *storage,
 				 struct istream *input, time_t mtime)
 {
+	struct event *event;
+	int ret;
+
+	event = event_create(storage->event);
+	event_set_append_log_prefix(event, "active script: save: ");
+
+	struct event_passthrough *e =
+		event_create_passthrough(event)->
+		set_name("sieve_storage_save_started");
+	e_debug(e->event(), "Started saving active script");
+
 	i_assert(storage->v.save_as_active != NULL);
-	return storage->v.save_as_active(storage, input, mtime);
+	ret = storage->v.save_as_active(storage, input, mtime);
+
+	if (ret >= 0) {
+		struct event_passthrough *e =
+			event_create_passthrough(event)->
+			set_name("sieve_storage_save_finished");
+		e_debug(e->event(), "Finished saving active script");
+	} else {
+		struct event_passthrough *e =
+			event_create_passthrough(event)->
+			add_str("error", storage->error)->
+			set_name("sieve_storage_save_finished");
+		e_debug(e->event(), "Failed to save active script: %s",
+			storage->error);
+	}
+
+	event_unref(&event);
+	return ret;
 }
 
 int sieve_storage_save_as(struct sieve_storage *storage, struct istream *input,
 			  const char *name)
 {
+	struct event *event;
+	int ret;
+
+	event = sieve_storage_save_create_event(storage, name);
+
+	struct event_passthrough *e =
+		event_create_passthrough(event)->
+		set_name("sieve_storage_save_started");
+	e_debug(e->event(), "Started saving script");
+
 	i_assert(storage->v.save_as != NULL);
-	return storage->v.save_as(storage, input, name);
+	ret = storage->v.save_as(storage, input, name);
+
+	if (ret >= 0) {
+		struct event_passthrough *e =
+			event_create_passthrough(event)->
+			set_name("sieve_storage_save_finished");
+		e_debug(e->event(), "Finished saving sieve script");
+	} else {
+		struct event_passthrough *e =
+			event_create_passthrough(event)->
+			add_str("error", storage->error)->
+			set_name("sieve_storage_save_finished");
+		e_debug(e->event(), "Failed to save script: %s",
+			storage->error);
+	}
+
+	event_unref(&event);
+	return ret;
 }
 
 /*

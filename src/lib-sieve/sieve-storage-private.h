@@ -162,6 +162,7 @@ struct sieve_script_sequence {
 struct sieve_storage_save_context {
 	pool_t pool;
 	struct sieve_storage *storage;
+	struct event *event;
 
 	const char *scriptname, *active_scriptname;
 	struct sieve_script *scriptobject;
