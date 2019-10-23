@@ -545,6 +545,51 @@ const char *sieve_script_binary_get_prefix(struct sieve_script *script)
  * Management
  */
 
+static int
+sieve_script_copy_from_default(struct sieve_script *script, const char *newname)
+{
+	struct sieve_storage *storage = script->storage;
+	struct istream *input;
+	int ret;
+
+	/* copy from default */
+	if ((ret = sieve_script_open(script, NULL)) < 0 ||
+	    (ret = sieve_script_get_stream(script, &input, NULL)) < 0) {
+		sieve_storage_copy_error(storage->default_for, storage);
+		return ret;
+	}
+
+	ret = sieve_storage_save_as(storage->default_for, input, newname);
+	if (ret < 0) {
+		sieve_storage_copy_error(storage, storage->default_for);
+	} else if (sieve_script_is_active(script) > 0) {
+		struct sieve_script *newscript;
+		enum sieve_error error;
+
+		newscript = sieve_storage_open_script(storage->default_for,
+						      newname, &error);
+		if (newscript == NULL) {
+			/* Somehow not actually saved */
+			ret = (error == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
+		} else if (sieve_script_activate(newscript, (time_t)-1) < 0) {
+			/* Failed to activate; roll back */
+			ret = -1;
+			(void)sieve_script_delete(newscript, TRUE);
+		}
+		if (newscript != NULL)
+			sieve_script_unref(&newscript);
+
+		if (ret < 0) {
+			e_error(storage->event,
+				"Failed to implicitly activate script `%s' "
+				"after rename",	newname);
+			sieve_storage_copy_error(storage->default_for, storage);
+		}
+	}
+
+	return ret;
+}
+
 int sieve_script_rename(struct sieve_script *script, const char *newname)
 {
 	struct sieve_storage *storage = script->storage;
@@ -583,47 +628,7 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 		sieve_storage_copy_error(storage->default_for, storage);
 		ret = -1;
 	} else {
-		struct istream *input;
-
-		/* copy from default */
-		if ((ret = sieve_script_open(script, NULL)) >= 0 &&
-		    (ret = sieve_script_get_stream(script, &input,
-						   NULL)) >= 0) {
-			ret = sieve_storage_save_as(storage->default_for, input,
-						    newname);
-			if (ret < 0) {
-				sieve_storage_copy_error(storage,
-							 storage->default_for);
-			} else if (sieve_script_is_active(script) > 0) {
-				struct sieve_script *newscript;
-				enum sieve_error error;
-
-				newscript = sieve_storage_open_script(
-					storage->default_for, newname, &error);
-				if (newscript == NULL) {
-					/* Somehow not actually saved */
-					ret = (error == SIEVE_ERROR_NOT_FOUND ?
-					       0 : -1);
-				} else if (sieve_script_activate(
-					newscript, (time_t)-1) < 0) {
-					/* Failed to activate; roll back */
-					ret = -1;
-					(void)sieve_script_delete(newscript, TRUE);
-				}
-				if (newscript != NULL)
-					sieve_script_unref(&newscript);
-
-				if (ret < 0) {
-					e_error(storage->event,
-						"Failed to implicitly activate script `%s' "
-						"after rename",	newname);
-					sieve_storage_copy_error(
-						storage->default_for, storage);
-				}
-			}
-		} else {
-			sieve_storage_copy_error(storage->default_for, storage);
-		}
+		ret = sieve_script_copy_from_default(script, newname);
 	}
 
 	return ret;
