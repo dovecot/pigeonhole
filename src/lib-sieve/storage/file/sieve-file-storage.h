@@ -87,9 +87,10 @@ int sieve_file_storage_list_deinit
 
 /* Saving */
 
-struct sieve_storage_save_context *sieve_file_storage_save_init
-	(struct sieve_storage *storage, 	const char *scriptname,
-		struct istream *input);
+struct sieve_storage_save_context *
+sieve_file_storage_save_alloc(struct sieve_storage *storage);
+int sieve_file_storage_save_init(struct sieve_storage_save_context *sctx,
+				 const char *scriptname, struct istream *input);
 int sieve_file_storage_save_continue
 	(struct sieve_storage_save_context *sctx);
 int sieve_file_storage_save_finish

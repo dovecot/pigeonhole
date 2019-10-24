@@ -1058,6 +1058,24 @@ int sieve_storage_list_deinit(struct sieve_storage_list_context **_lctx)
  * Saving scripts
  */
 
+static void sieve_storage_save_cleanup(struct sieve_storage_save_context *sctx)
+{
+	if (sctx->scriptobject != NULL)
+		sieve_script_unref(&sctx->scriptobject);
+}
+
+static void sieve_storage_save_deinit(struct sieve_storage_save_context **_sctx)
+{
+	struct sieve_storage_save_context *sctx = *_sctx;
+
+	*_sctx = NULL;
+	if (sctx == NULL)
+		return;
+
+	sieve_storage_save_cleanup(sctx);
+	pool_unref(&sctx->pool);
+}
+
 struct sieve_storage_save_context *
 sieve_storage_save_init(struct sieve_storage *storage, const char *scriptname,
 			struct istream *input)
@@ -1077,11 +1095,16 @@ sieve_storage_save_init(struct sieve_storage *storage, const char *scriptname,
 
 	i_assert((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0);
 
-	i_assert(storage->v.save_init != NULL);
-	if ((sctx = storage->v.save_init(storage, scriptname, input)) == NULL)
-		return NULL;
-
+	i_assert(storage->v.save_alloc != NULL);
+	sctx = storage->v.save_alloc(storage);
 	sctx->storage = storage;
+
+	i_assert(storage->v.save_init != NULL);
+	if ((storage->v.save_init(sctx, scriptname, input)) < 0) {
+		sieve_storage_save_deinit(&sctx);
+		return NULL;
+	}
+
 	sctx->mtime = (time_t)-1;
 
 	i_assert(sctx->input != NULL);
@@ -1116,12 +1139,6 @@ void sieve_storage_save_set_mtime(struct sieve_storage_save_context *sctx,
 				  time_t mtime)
 {
 	sctx->mtime = mtime;
-}
-
-static void sieve_storage_save_deinit(struct sieve_storage_save_context *sctx)
-{
-	if (sctx->scriptobject != NULL)
-		sieve_script_unref(&sctx->scriptobject);
 }
 
 struct sieve_script *
@@ -1166,10 +1183,17 @@ bool sieve_storage_save_will_activate(struct sieve_storage_save_context *sctx)
 int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 {
 	struct sieve_storage_save_context *sctx = *_sctx;
-	struct sieve_storage *storage = sctx->storage;
+	struct sieve_storage *storage;
 	const char *scriptname;
 	bool default_activate = FALSE;
 	int ret;
+
+	*_sctx = NULL;
+	if (sctx == NULL)
+		return 0;
+
+	storage = sctx->storage;
+	scriptname = sctx->scriptname;
 
 	i_assert(sctx->finished);
 	i_assert(sctx->scriptname != NULL);
@@ -1184,12 +1208,10 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 					      NULL) <= 0)
 		default_activate = TRUE;
 
-	scriptname = t_strdup(sctx->scriptname);
-	sieve_storage_save_deinit(sctx);
+	sieve_storage_save_cleanup(sctx);
 
 	i_assert(storage->v.save_commit != NULL);
 	ret = storage->v.save_commit(sctx);
-	*_sctx = NULL;
 
 	/* Implicitly activate it when we're replacing the default
 	   active script */
@@ -1222,24 +1244,32 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 		(void)sieve_storage_sync_script_save(storage, scriptname);
 	}
 
+	sieve_storage_save_deinit(&sctx);
 	return ret;
 }
 
 void sieve_storage_save_cancel(struct sieve_storage_save_context **_sctx)
 {
 	struct sieve_storage_save_context *sctx = *_sctx;
-	struct sieve_storage *storage = sctx->storage;
+	struct sieve_storage *storage;
+
+	*_sctx = NULL;
+	if (sctx == NULL)
+		return;
+
+	storage = sctx->storage;
 
 	sctx->failed = TRUE;
 
-	sieve_storage_save_deinit(sctx);
+	sieve_storage_save_cleanup(sctx);
 
 	if (!sctx->finished)
 		(void)sieve_storage_save_finish(sctx);
 
 	i_assert(storage->v.save_cancel != NULL);
 	storage->v.save_cancel(sctx);
-	*_sctx = NULL;
+
+	sieve_storage_save_deinit(&sctx);
 }
 
 int sieve_storage_save_as_active(struct sieve_storage *storage,

@@ -183,18 +183,33 @@ static int sieve_file_storage_script_move
 }
 
 struct sieve_storage_save_context *
-sieve_file_storage_save_init(struct sieve_storage *storage,
-	const char *scriptname, struct istream *input)
+sieve_file_storage_save_alloc(struct sieve_storage *storage)
 {
-	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
 	struct sieve_file_save_context *fsctx;
 	pool_t pool;
+
+	pool = pool_alloconly_create("sieve_file_save_context", 1024);
+	fsctx = p_new(pool, struct sieve_file_save_context, 1);
+	fsctx->context.pool = pool;
+	fsctx->context.storage = storage;
+
+	return &fsctx->context;
+}
+
+int sieve_file_storage_save_init(struct sieve_storage_save_context *sctx,
+				 const char *scriptname, struct istream *input)
+{
+	struct sieve_storage *storage = sctx->storage;
+	struct sieve_file_storage *fstorage =
+		(struct sieve_file_storage *)storage;
+	struct sieve_file_save_context *fsctx =
+		(struct sieve_file_save_context *)sctx;
+	pool_t pool = sctx->pool;
 	const char *path;
-	int fd;
+	int fd, ret = 0;
 
 	if ( sieve_file_storage_pre_modify(storage) < 0 )
-		return NULL;
+		return -1;
 
 	if ( scriptname != NULL ) {
 		/* Prevent overwriting the active script link when it resides in the
@@ -215,7 +230,7 @@ sieve_file_storage_save_init(struct sieve_storage *storage,
 					SIEVE_ERROR_BAD_PARAMS,
 					"Script name `%s' is reserved for internal use.",
 					scriptname);
-				return NULL;
+				return -1;
 			}
 		}
 	}
@@ -223,20 +238,17 @@ sieve_file_storage_save_init(struct sieve_storage *storage,
 	T_BEGIN {
 		fd = sieve_file_storage_create_tmp(fstorage, scriptname, &path);
 		if (fd == -1) {
-			fsctx = NULL;
+			ret = -1;
 		} else {
-			pool = pool_alloconly_create("sieve_file_save_context", 1024);
-			fsctx = p_new(pool, struct sieve_file_save_context, 1);
 			fsctx->context.scriptname = p_strdup(pool, scriptname);
 			fsctx->context.input = input;
-			fsctx->context.pool = pool;
 			fsctx->fd = fd;
 			fsctx->output = o_stream_create_fd(fsctx->fd, 0);
 			fsctx->tmp_path = p_strdup(pool, path);
 		}
 	} T_END;
 
-	return &fsctx->context;
+	return ret;
 }
 
 int sieve_file_storage_save_continue
@@ -399,8 +411,6 @@ int sieve_file_storage_save_commit
 		if ( sctx->mtime != (time_t)-1 )
 			sieve_file_storage_update_mtime(storage, dest_path, sctx->mtime);
 	} T_END;
-
-	pool_unref(&sctx->pool);
 	
 	return ( failed ? -1 : 0 );
 }

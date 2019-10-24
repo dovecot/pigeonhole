@@ -903,6 +903,7 @@ const struct sieve_storage sieve_file_storage = {
 		.list_next = sieve_file_storage_list_next,
 		.list_deinit = sieve_file_storage_list_deinit,
 
+		.save_alloc = sieve_file_storage_save_alloc,
 		.save_init = sieve_file_storage_save_init,
 		.save_continue = sieve_file_storage_save_continue,
 		.save_finish = sieve_file_storage_save_finish,

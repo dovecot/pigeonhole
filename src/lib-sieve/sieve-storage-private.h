@@ -61,9 +61,10 @@ struct sieve_storage_vfuncs {
 
 	/* saving scripts */
 	// FIXME: simplify this API; reduce this mostly to a single save function
-	struct sieve_storage_save_context *(*save_init)(
-		struct sieve_storage *storage, const char *scriptname,
-		struct istream *input);
+	struct sieve_storage_save_context *(*save_alloc)(
+		struct sieve_storage *storage);
+	int (*save_init)(struct sieve_storage_save_context *sctx,
+			 const char *scriptname, struct istream *input);
 	int (*save_continue)(struct sieve_storage_save_context *sctx);
 	int (*save_finish)(struct sieve_storage_save_context *sctx);
 	struct sieve_script *(*save_get_tempscript)(
