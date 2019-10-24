@@ -1137,12 +1137,16 @@ int sieve_storage_save_continue(struct sieve_storage_save_context *sctx)
 int sieve_storage_save_finish(struct sieve_storage_save_context *sctx)
 {
 	struct sieve_storage *storage = sctx->storage;
+	int ret;
 
 	i_assert(!sctx->finished);
 	sctx->finished = TRUE;
 
 	i_assert(storage->v.save_finish != NULL);
-	return storage->v.save_finish(sctx);
+	ret = storage->v.save_finish(sctx);
+	if (ret < 0)
+		sctx->failed = TRUE;
+	return ret;
 }
 
 void sieve_storage_save_set_mtime(struct sieve_storage_save_context *sctx,
@@ -1205,6 +1209,7 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 	storage = sctx->storage;
 	scriptname = sctx->scriptname;
 
+	i_assert(!sctx->failed);
 	i_assert(sctx->finished);
 	i_assert(sctx->scriptname != NULL);
 
