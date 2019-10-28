@@ -86,7 +86,8 @@ bool managesieve_quota_check_all(struct client_command_context *cmd,
 	}
 
 	struct event_passthrough *e =
-		client_command_create_finish_event(cmd);
+		client_command_create_finish_event(cmd)->
+		add_str("error", error_msg);
 	e_debug(e->event(),
 		"Quota check failed for script `%s' "
 		"(size %"PRIuSIZE_T" bytes): %s",
