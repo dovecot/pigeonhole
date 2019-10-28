@@ -211,7 +211,8 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 
 		if (errormsg == NULL) {
 			struct event_passthrough *e =
-				client_command_create_finish_event(cmd);
+				client_command_create_finish_event(cmd)->
+				add_str("error", "Compilation failed");
 			e_debug(e->event(), "Failed to %s: "
 				"Compilation failed (%u errors, %u warnings)",
 				action, sieve_get_errors(ehandler),
@@ -220,7 +221,8 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 			client_send_no(client, str_c(errors));
 		} else {
 			struct event_passthrough *e =
-				client_command_create_finish_event(cmd);
+				client_command_create_finish_event(cmd)->
+				add_str("error", errormsg);
 			e_debug(e->event(), "Failed to %s: %s",
 				action, errormsg);
 
