@@ -99,7 +99,8 @@ cmd_setactive_activate(struct client_command_context *cmd,
 		}
 	} else if (errormsg == NULL) {
 		struct event_passthrough *e =
-			client_command_create_finish_event(cmd);
+			client_command_create_finish_event(cmd)->
+			add_str("error", "Compilation failed");
 		e_debug(e->event(), "Failed to activate script `%s': "
 			"Compilation failed (%u errors, %u warnings)",
 			scriptname, error_count, warning_count);
@@ -107,7 +108,8 @@ cmd_setactive_activate(struct client_command_context *cmd,
 		client_send_no(client, str_c(errors));
 	} else {
 		struct event_passthrough *e =
-			client_command_create_finish_event(cmd);
+			client_command_create_finish_event(cmd)->
+			add_str("error", errormsg);
 		e_debug(e->event(), "Failed to activate script `%s': %s",
 			scriptname, errormsg);
 
