@@ -120,15 +120,20 @@ imap_filter_sieve_init_trace_log(struct imap_filter_sieve_context *sctx,
 		*trace_log_r = sctx->trace_log;
 		return;
 	}
+	sctx->trace_log_initialized = TRUE;
 
-	if (sieve_trace_config_get(svinst, &sctx->trace_config) >= 0) {
-		if (sieve_trace_log_open(svinst, &sctx->trace_log) < 0)
-			i_zero(&sctx->trace_config);
+	if (sieve_trace_config_get(svinst, &sctx->trace_config) < 0 ||
+	    sieve_trace_log_open(svinst, &sctx->trace_log) < 0) {
+		i_zero(&sctx->trace_config);
+		sctx->trace_log = NULL;
+
+		i_zero(trace_config_r);
+		*trace_log_r = NULL;
+		return;
 	}
 
 	*trace_config_r = sctx->trace_config;
 	*trace_log_r = sctx->trace_log;
-	sctx->trace_log_initialized = TRUE;
 }
 
 static int
