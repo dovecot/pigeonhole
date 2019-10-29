@@ -50,7 +50,7 @@ struct imap_sieve {
 static const char *
 mail_sieve_get_setting(void *context, const char *identifier)
 {
-	struct imap_sieve *isieve = (struct imap_sieve *)context;
+	struct imap_sieve *isieve = context;
 	struct mail_user *user = isieve->client->user;
 
 	return mail_user_plugin_getenv(user, identifier);
@@ -159,8 +159,7 @@ static void *
 imap_sieve_smtp_start(const struct sieve_script_env *senv,
 		      const struct smtp_address *mail_from)
 {
-	struct imap_sieve_context *isctx =
-		(struct imap_sieve_context *)senv->script_context;
+	struct imap_sieve_context *isctx = senv->script_context;
 	struct imap_sieve *isieve = isctx->isieve;
 	struct mail_user *user = isieve->client->user;
 	const struct smtp_submit_settings *smtp_set = isieve->client->smtp_set;
@@ -173,15 +172,14 @@ imap_sieve_smtp_start(const struct sieve_script_env *senv,
 	i_zero(&submit_input);
 	submit_input.ssl = &ssl_set;
 
-	return (void *)smtp_submit_init_simple(&submit_input, smtp_set,
-					       mail_from);
+	return smtp_submit_init_simple(&submit_input, smtp_set, mail_from);
 }
 
 static void
 imap_sieve_smtp_add_rcpt(const struct sieve_script_env *senv ATTR_UNUSED,
 			 void *handle, const struct smtp_address *rcpt_to)
 {
-	struct smtp_submit *smtp_submit = (struct smtp_submit *)handle;
+	struct smtp_submit *smtp_submit = handle;
 
 	smtp_submit_add_rcpt(smtp_submit, rcpt_to);
 }
@@ -190,7 +188,7 @@ static struct ostream *
 imap_sieve_smtp_send(const struct sieve_script_env *senv ATTR_UNUSED,
 		     void *handle)
 {
-	struct smtp_submit *smtp_submit = (struct smtp_submit *)handle;
+	struct smtp_submit *smtp_submit = handle;
 
 	return smtp_submit_send(smtp_submit);
 }
@@ -199,7 +197,7 @@ static void
 imap_sieve_smtp_abort(const struct sieve_script_env *senv ATTR_UNUSED,
 		      void *handle)
 {
-	struct smtp_submit *smtp_submit = (struct smtp_submit *)handle;
+	struct smtp_submit *smtp_submit = handle;
 
 	smtp_submit_deinit(&smtp_submit);
 }
@@ -208,7 +206,7 @@ static int
 imap_sieve_smtp_finish(const struct sieve_script_env *senv ATTR_UNUSED,
 		       void *handle, const char **error_r)
 {
-	struct smtp_submit *smtp_submit = (struct smtp_submit *)handle;
+	struct smtp_submit *smtp_submit = handle;
 	int ret;
 
 	ret = smtp_submit_run(smtp_submit, error_r);
@@ -224,8 +222,7 @@ static bool
 imap_sieve_duplicate_check(const struct sieve_script_env *senv, const void *id,
 			   size_t id_size)
 {
-	struct imap_sieve_context *isctx =
-		(struct imap_sieve_context *)senv->script_context;
+	struct imap_sieve_context *isctx = senv->script_context;
 
 	return mail_duplicate_check(isctx->isieve->dup_db, id, id_size,
 				    senv->user->username);
@@ -235,8 +232,7 @@ static void
 imap_sieve_duplicate_mark(const struct sieve_script_env *senv, const void *id,
 			  size_t id_size, time_t time)
 {
-	struct imap_sieve_context *isctx =
-		(struct imap_sieve_context *)senv->script_context;
+	struct imap_sieve_context *isctx = senv->script_context;
 
 	mail_duplicate_mark(isctx->isieve->dup_db, id, id_size,
 			    senv->user->username, time);
@@ -245,8 +241,7 @@ imap_sieve_duplicate_mark(const struct sieve_script_env *senv, const void *id,
 static void
 imap_sieve_duplicate_flush(const struct sieve_script_env *senv)
 {
-	struct imap_sieve_context *isctx =
-		(struct imap_sieve_context *)senv->script_context;
+	struct imap_sieve_context *isctx = senv->script_context;
 
 	mail_duplicate_db_flush(isctx->isieve->dup_db);
 }
@@ -329,7 +324,7 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 	/* Get storage for user script */
 	storage = NULL;
 	if (script_name != NULL && *script_name != '\0' &&
-	    (ret=imap_sieve_get_storage(isieve, &storage)) < 0)
+	    (ret = imap_sieve_get_storage(isieve, &storage)) < 0)
 		return ret;
 
 	/* Open all scripts */
@@ -639,8 +634,8 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 		e_debug(sieve_get_event(svinst),
 			"Executing script from `%s'",
 			sieve_get_source(sbin));
-		more = sieve_multiscript_run(mscript,
-			sbin, ehandler, ehandler, exflags);
+		more = sieve_multiscript_run(mscript, sbin, ehandler, ehandler,
+					     exflags);
 
 		if (!more) {
 			if (!scripts[i].binary_corrupt &&
@@ -762,7 +757,7 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 			scriptenv.duplicate_flush = imap_sieve_duplicate_flush;
 			scriptenv.trace_log = trace_log;
 			scriptenv.trace_config = trace_config;
-			scriptenv.script_context = (void *)&context;
+			scriptenv.script_context = &context;
 
 			i_zero(&estatus);
 			scriptenv.exec_status = &estatus;
