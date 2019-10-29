@@ -842,6 +842,21 @@ lda_sieve_free_scripts(struct lda_sieve_run_context *srctx)
 		sieve_script_unref(&srctx->discard_script);
 }
 
+static void
+lda_sieve_init_trace_log(struct lda_sieve_run_context *srctx,
+			 struct sieve_trace_config *trace_config_r,
+			 struct sieve_trace_log **trace_log_r)
+{
+	struct sieve_instance *svinst = srctx->svinst;
+
+	if (sieve_trace_config_get(svinst, trace_config_r) < 0 ||
+	    sieve_trace_log_open(svinst, trace_log_r) < 0) {
+		i_zero(trace_config_r);
+		*trace_log_r = NULL;
+		return;
+	}
+}
+
 static int
 lda_sieve_execute(struct lda_sieve_run_context *srctx,
 		  struct mail_storage **storage_r)
@@ -889,10 +904,7 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 
 	/* Initialize trace logging */
 
-	trace_log = NULL;
-	if (sieve_trace_config_get(svinst, &trace_config) >= 0 &&
-	    sieve_trace_log_open(svinst, &trace_log) < 0)
-		i_zero(&trace_config);
+	lda_sieve_init_trace_log(srctx, &trace_config, &trace_log);
 
 	/* Collect necessary message data */
 
