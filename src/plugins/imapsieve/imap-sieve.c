@@ -309,15 +309,20 @@ imap_sieve_run_init_trace_log(struct imap_sieve_run *isrun,
 		*trace_log_r = isrun->trace_log;
 		return;
 	}
+	isrun->trace_log_initialized = TRUE;
 
-	if (sieve_trace_config_get(svinst, &isrun->trace_config) >= 0) {
-		if (sieve_trace_log_open(svinst, &isrun->trace_log) < 0)
-			i_zero(&isrun->trace_config);
+	if (sieve_trace_config_get(svinst, &isrun->trace_config) < 0 ||
+	    sieve_trace_log_open(svinst, &isrun->trace_log) < 0) {
+		i_zero(&isrun->trace_config);
+		isrun->trace_log = NULL;
+
+		i_zero(trace_config_r);
+		*trace_log_r = NULL;
+		return;
 	}
 
 	*trace_config_r = isrun->trace_config;
 	*trace_log_r = isrun->trace_log;
-	isrun->trace_log_initialized = TRUE;
 }
 
 int imap_sieve_run_init(struct imap_sieve *isieve,
