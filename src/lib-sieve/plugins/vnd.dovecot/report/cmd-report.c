@@ -655,9 +655,9 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 
 		struct event_passthrough *e =
 			sieve_action_create_finish_event(aenv)->
-			add_str("sieve_report_target",
+			add_str("report_target",
 				smtp_address_encode(act->to_address))->
-			add_str("sieve_report_type",
+			add_str("report_type",
 				str_sanitize(act->feedback_type, 32));
 
 		sieve_result_event_log(aenv, e->event(),

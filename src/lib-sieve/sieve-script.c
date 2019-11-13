@@ -100,8 +100,8 @@ void sieve_script_init(struct sieve_script *script,
 	script->name = p_strdup(script->pool, name);
 
 	script->event = event_create(storage->event);
-	event_add_str(script->event, "sieve_script_name", name);
-	event_add_str(script->event, "sieve_script_location", location);
+	event_add_str(script->event, "script_name", name);
+	event_add_str(script->event, "script_location", location);
 	if (name == NULL)
 		event_set_append_log_prefix(script->event, "script: ");
 	else {
@@ -206,7 +206,7 @@ int sieve_script_open_as(struct sieve_script *script, const char *name,
 
 	/* override name */
 	script->name = p_strdup(script->pool, name);
-	event_add_str(script->event, "sieve_script_name", name);
+	event_add_str(script->event, "script_name", name);
 	return 0;
 }
 
@@ -653,13 +653,13 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 	if (ret >= 0) {
 		struct event_passthrough *e =
 			event_create_passthrough(script->event)->
-			add_str("sieve_script_new_name", newname)->
+			add_str("script_new_name", newname)->
 			set_name("sieve_script_renamed");
 		e_debug(e->event(), "Script renamed to `%s'", newname);
 	} else {
 		struct event_passthrough *e =
 			event_create_passthrough(script->event)->
-			add_str("sieve_script_new_name", newname)->
+			add_str("script_new_name", newname)->
 			add_str("error", storage->error)->
 			set_name("sieve_script_renamed");
 		e_debug(e->event(), "Failed to rename script: %s",

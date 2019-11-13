@@ -588,7 +588,7 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv,
 
 		struct event_passthrough *e =
 			sieve_action_create_finish_event(aenv)->
-			add_str("sieve_redirect_target",
+			add_str("redirect_target",
 				smtp_address_encode(ctx->to_address));
 
 		sieve_result_event_log(aenv, e->event(),

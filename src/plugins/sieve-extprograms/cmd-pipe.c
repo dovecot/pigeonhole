@@ -362,7 +362,7 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 	if (ret > 0) {
 		struct event_passthrough *e =
 			sieve_action_create_finish_event(aenv)->
-			add_str("sieve_pipe_program",
+			add_str("pipe_program",
 				str_sanitize(act->program_name, 256));
 
 		sieve_result_event_log(aenv, e->event(),

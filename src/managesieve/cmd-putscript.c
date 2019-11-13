@@ -213,9 +213,9 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 			struct event_passthrough *e =
 				client_command_create_finish_event(cmd)->
 				add_str("error", "Compilation failed")->
-				add_int("sieve_compile_errors",
+				add_int("compile_errors",
 					sieve_get_errors(ehandler))->
-				add_int("sieve_compile_warnings",
+				add_int("compile_warnings",
 					sieve_get_warnings(ehandler));
 			e_debug(e->event(), "Failed to %s: "
 				"Compilation failed (%u errors, %u warnings)",
@@ -256,7 +256,7 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 
 		struct event_passthrough *e =
 			client_command_create_finish_event(cmd)->
-			add_int("sieve_compile_warnings",
+			add_int("compile_warnings",
 				sieve_get_warnings(ehandler));
 		if (ctx->scriptname != NULL) {
 			e_debug(e->event(), "Stored script `%s' successfully "

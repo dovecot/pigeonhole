@@ -259,8 +259,7 @@ sieve_storage_event_create(struct sieve_instance *svinst,
 
 	event = event_create(svinst->event);
 	event_add_category(event, &event_category_sieve_storage);
-	event_add_str(event, "sieve_storage_driver",
-		      storage_class->driver_name);
+	event_add_str(event, "driver", storage_class->driver_name);
 	event_set_append_log_prefix(
 		event, t_strdup_printf("%s storage: ",
 				       storage_class->driver_name));
@@ -345,7 +344,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 		} else {
 			storage->location = p_strdup(storage->pool, location);
 
-			event_add_str(event, "sieve_storage_location",
+			event_add_str(event, "script_location",
 				      storage->location);
 
 			if (storage_class->v.init(storage, options,
@@ -1087,7 +1086,7 @@ sieve_storage_save_create_event(struct sieve_storage *storage,
 	struct event *event;
 
 	event = event_create(storage->event);
-	event_add_str(event, "sieve_script_name", scriptname);
+	event_add_str(event, "script_name", scriptname);
 	if (scriptname == NULL) {
 		event_set_append_log_prefix(event, "save: ");
 	} else {
