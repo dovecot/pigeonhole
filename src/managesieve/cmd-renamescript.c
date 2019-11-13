@@ -22,8 +22,8 @@ bool cmd_renamescript(struct client_command_context *cmd)
 	if (!client_read_string_args(cmd, TRUE, 2, &scriptname, &newname))
 		return FALSE;
 
-	event_add_str(cmd->event, "managesieve_script_name", scriptname);
-	event_add_str(cmd->event, "managesieve_script_new_name", newname);
+	event_add_str(cmd->event, "script_name", scriptname);
+	event_add_str(cmd->event, "script_new_name", newname);
 
 	script = sieve_storage_open_script(storage, scriptname, NULL);
 	if (script == NULL) {

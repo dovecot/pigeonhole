@@ -564,7 +564,7 @@ bool cmd_putscript(struct client_command_context *cmd)
 	if (!client_read_string_args(cmd, FALSE, 1, &scriptname))
 		return FALSE;
 
-	event_add_str(cmd->event, "managesieve_script_name", scriptname);
+	event_add_str(cmd->event, "script_name", scriptname);
 
 	return cmd_putscript_start(cmd, scriptname);
 }
