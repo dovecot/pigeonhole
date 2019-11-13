@@ -726,8 +726,8 @@ act_store_log_status(struct act_store_transaction *trans,
 	} else {
 		struct event_passthrough *e =
 			sieve_action_create_finish_event(aenv)->
-			add_str("sieve_fileinto_mailbox_name", mailbox_name)->
-			add_str("sieve_fileinto_mailbox", mailbox_identifier);
+			add_str("fileinto_mailbox_name", mailbox_name)->
+			add_str("fileinto_mailbox", mailbox_identifier);
 		sieve_result_event_log(aenv, e->event(),
 				       "stored mail into mailbox %s",
 				       mailbox_identifier);

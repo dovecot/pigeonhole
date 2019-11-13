@@ -130,11 +130,11 @@ _sieve_interpreter_create(struct sieve_binary *sbin,
 
 	interp->runenv.event = event_create(eenv->event);
 	event_add_category(interp->runenv.event, &event_category_sieve_runtime);
-	event_add_str(interp->runenv.event, "sieve_script_name",
+	event_add_str(interp->runenv.event, "script_name",
 		      sieve_binary_script_name(sbin));
-	event_add_str(interp->runenv.event, "sieve_script_location",
+	event_add_str(interp->runenv.event, "script_location",
 		      sieve_binary_script_location(sbin));
-	event_add_str(interp->runenv.event, "sieve_binary_path",
+	event_add_str(interp->runenv.event, "binary_path",
 		      sieve_binary_path(sbin));
 
 	svinst = sieve_binary_svinst(sbin);

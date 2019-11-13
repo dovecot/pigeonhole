@@ -260,9 +260,8 @@ sieve_result_init_action_event(struct sieve_result *result,
 		event_set_append_log_prefix(
 			action->event, t_strconcat(name, " action: ", NULL));
 	}
-	event_add_str(action->event, "sieve_action_name", name);
-	event_add_str(action->event, "sieve_action_script_location",
-		      action->location);
+	event_add_str(action->event, "action_name", name);
+	event_add_str(action->event, "script_location", action->location);
 }
 
 void sieve_result_add_implicit_side_effect(
