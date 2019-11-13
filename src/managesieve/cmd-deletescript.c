@@ -21,7 +21,7 @@ bool cmd_deletescript(struct client_command_context *cmd)
 	if (!client_read_string_args(cmd, TRUE, 1, &scriptname))
 		return FALSE;
 
-	event_add_str(cmd->event, "managesieve_script_name", scriptname);
+	event_add_str(cmd->event, "script_name", scriptname);
 
 	script = sieve_storage_open_script(storage, scriptname, NULL);
 	if (script == NULL || sieve_script_delete(script, FALSE) < 0) {

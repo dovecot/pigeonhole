@@ -507,8 +507,7 @@ bool client_read_args(struct client_command_context *cmd, unsigned int count,
 		managesieve_write_args(str, *args_r);
 		cmd->args = p_strdup(cmd->pool, str_c(str));
 
-		event_add_str(cmd->event, "managesieve_command_args",
-			      cmd->args);
+		event_add_str(cmd->event, "cmd_args", cmd->args);
 
 		/* all parameters read successfully */
 		return TRUE;
@@ -685,8 +684,7 @@ static bool client_handle_input(struct client_command_context *cmd)
 	} else {
 		i_assert(!client->disconnected);
 
-		event_add_str(cmd->event, "managesieve_command_name",
-			      t_str_ucase(cmd->name));
+		event_add_str(cmd->event, "cmd_name", t_str_ucase(cmd->name));
 		client_handle_input(cmd);
 	}
 

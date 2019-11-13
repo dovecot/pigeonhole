@@ -112,7 +112,7 @@ bool cmd_getscript(struct client_command_context *cmd)
 	if (!client_read_string_args(cmd, TRUE, 1, &scriptname))
 		return FALSE;
 
-	event_add_str(cmd->event, "managesieve_script_name", scriptname);
+	event_add_str(cmd->event, "script_name", scriptname);
 
 	ctx = p_new(cmd->pool, struct cmd_getscript_context, 1);
 	ctx->cmd = cmd;
