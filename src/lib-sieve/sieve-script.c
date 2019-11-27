@@ -613,6 +613,7 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 {
 	struct sieve_storage *storage = script->storage;
 	const char *oldname = script->name;
+	struct event_passthrough *event;
 	int ret;
 
 	i_assert(newname != NULL);
@@ -650,19 +651,18 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 		ret = sieve_script_copy_from_default(script, newname);
 	}
 
+	event = event_create_passthrough(script->event)->
+		clear_field("script_name")->
+		add_str("old_script_name", script->name)->
+		add_str("new_script_name", newname)->
+		set_name("sieve_script_renamed");
+
 	if (ret >= 0) {
-		struct event_passthrough *e =
-			event_create_passthrough(script->event)->
-			add_str("script_new_name", newname)->
-			set_name("sieve_script_renamed");
-		e_debug(e->event(), "Script renamed to `%s'", newname);
+		e_debug(event->event(), "Script renamed to `%s'", newname);
 	} else {
-		struct event_passthrough *e =
-			event_create_passthrough(script->event)->
-			add_str("script_new_name", newname)->
-			add_str("error", storage->error)->
-			set_name("sieve_script_renamed");
-		e_debug(e->event(), "Failed to rename script: %s",
+		event = event->add_str("error", storage->error);
+
+		e_debug(event->event(), "Failed to rename script: %s",
 			storage->error);
 	}
 
