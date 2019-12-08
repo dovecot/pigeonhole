@@ -884,42 +884,50 @@ static inline bool _is_system_address(const struct smtp_address *address)
 }
 
 static inline bool
+_header_contains_my_address(const char *header_val,
+			    const struct smtp_address *my_address)
+{
+	const struct message_address *msg_addr;
+
+	msg_addr = message_address_parse(pool_datastack_create(),
+					 (const unsigned char *)header_val,
+					 strlen(header_val), 256, 0);
+	while (msg_addr != NULL) {
+		if (msg_addr->domain != NULL) {
+			struct smtp_address addr;
+
+			i_assert(msg_addr->mailbox != NULL);
+			if (smtp_address_init_from_msg(&addr, msg_addr) >= 0 &&
+			    smtp_address_equals(&addr, my_address))
+				return TRUE;
+		}
+
+		msg_addr = msg_addr->next;
+	}
+
+	return FALSE;
+}
+
+static inline bool
 _contains_my_address(const char * const *headers,
 		     const struct smtp_address *my_address)
 {
 	const char *const *hdsp = headers;
-	bool result = FALSE;
 
-	while (*hdsp != NULL && !result) {
-		const struct message_address *msg_addr;
+	while (*hdsp != NULL) {
+		bool result;
 
 		T_BEGIN {
-			msg_addr = message_address_parse(
-				pool_datastack_create(),
-				(const unsigned char *)*hdsp,
-				strlen(*hdsp), 256, 0);
-			while (msg_addr != NULL && !result) {
-				if (msg_addr->domain != NULL) {
-					struct smtp_address addr;
-
-					i_assert(msg_addr->mailbox != NULL);
-					if (smtp_address_init_from_msg(
-						&addr, msg_addr) >= 0 &&
-					    smtp_address_equals(&addr,
-								my_address)) {
-						result = TRUE;
-						break;
-					}
-				}
-
-				msg_addr = msg_addr->next;
-			}
+			result = _header_contains_my_address(*hdsp, my_address);
 		} T_END;
+
+		if (result)
+			return TRUE;
 
 		hdsp++;
 	}
 
-	return result;
+	return FALSE;
 }
 
 static bool _contains_8bit(const char *text)
