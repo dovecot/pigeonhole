@@ -941,6 +941,40 @@ static bool _contains_8bit(const char *text)
 	return FALSE;
 }
 
+static bool
+_header_get_full_reply_recipient(const struct ext_vacation_config *config,
+				 const struct smtp_address *smtp_to,
+				 const char *header,
+				 struct message_address *reply_to_r)
+{
+	const struct message_address *addr;
+
+	addr = message_address_parse(
+		pool_datastack_create(),
+		(const unsigned char *)header,
+		strlen(header), 256, 0);
+
+	for (; addr != NULL; addr = addr->next) {
+		struct smtp_address saddr;
+		bool matched = config->to_header_ignore_envelope;
+
+		if (addr->domain == NULL || addr->invalid_syntax)
+			continue;
+
+		if (!matched) {
+			i_assert(addr->mailbox != NULL);
+			matched = (smtp_address_init_from_msg(&saddr, addr) >= 0 &&
+				   smtp_address_equals(smtp_to, &saddr));
+		}
+
+		if (matched) {
+			*reply_to_r = *addr;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 static int
 _get_full_reply_recipient(const struct sieve_action_exec_env *aenv,
 			  const struct ext_vacation_config *config,
@@ -953,7 +987,7 @@ _get_full_reply_recipient(const struct sieve_action_exec_env *aenv,
 	int ret;
 
 	hdsp = _sender_headers;
-	while (*hdsp != NULL) {
+	for (; *hdsp != NULL; hdsp++) {
 		const char *header;
 
 		if ((ret = mail_get_first_header(msgdata->mail, *hdsp,
@@ -962,37 +996,12 @@ _get_full_reply_recipient(const struct sieve_action_exec_env *aenv,
 				aenv, msgdata->mail,
 				"failed to read header field `%s'", *hdsp);
 		}
-		if (ret > 0 && header != NULL) {
-			const struct message_address *addr;
+		if (ret == 0 || header == NULL)
+			continue;
 
-			addr = message_address_parse(
-				pool_datastack_create(),
-				(const unsigned char *)header,
-				strlen(header), 256, 0);
-
-			while (addr != NULL) {
-				if (addr->domain != NULL &&
-				    !addr->invalid_syntax) {
-					struct smtp_address saddr;
-					bool matched = config->to_header_ignore_envelope;
-
-					if (!matched) {
-						i_assert(addr->mailbox != NULL);
-
-						matched = (smtp_address_init_from_msg(&saddr, addr) >= 0 &&
-							   smtp_address_equals(smtp_to, &saddr));
-					}
-
-					if (matched) {
-						*reply_to_r = *addr;
-						return SIEVE_EXEC_OK;
-					}
-				}
-
-				addr = addr->next;
-			}
-		}
-		hdsp++;
+		if (_header_get_full_reply_recipient(config, smtp_to,
+						     header, reply_to_r))
+			return SIEVE_EXEC_OK;
 	}
 
 	reply_to_r->mailbox = smtp_to->localpart;
