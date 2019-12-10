@@ -883,6 +883,17 @@ static inline bool _is_system_address(const struct smtp_address *address)
 	return FALSE;
 }
 
+static bool
+_msg_address_equals(const struct message_address *addr1,
+		    const struct smtp_address *addr2)
+{
+	struct smtp_address saddr;
+
+	i_assert(addr1->mailbox != NULL);
+	return (smtp_address_init_from_msg(&saddr, addr1) >= 0 &&
+		smtp_address_equals(addr2, &saddr));
+}
+
 static inline bool
 _header_contains_my_address(const char *header_val,
 			    const struct smtp_address *my_address)
@@ -894,11 +905,7 @@ _header_contains_my_address(const char *header_val,
 					 strlen(header_val), 256, 0);
 	while (msg_addr != NULL) {
 		if (msg_addr->domain != NULL) {
-			struct smtp_address addr;
-
-			i_assert(msg_addr->mailbox != NULL);
-			if (smtp_address_init_from_msg(&addr, msg_addr) >= 0 &&
-			    smtp_address_equals(&addr, my_address))
+			if (_msg_address_equals(msg_addr, my_address))
 				return TRUE;
 		}
 
@@ -955,17 +962,13 @@ _header_get_full_reply_recipient(const struct ext_vacation_config *config,
 		strlen(header), 256, 0);
 
 	for (; addr != NULL; addr = addr->next) {
-		struct smtp_address saddr;
 		bool matched = config->to_header_ignore_envelope;
 
 		if (addr->domain == NULL || addr->invalid_syntax)
 			continue;
 
-		if (!matched) {
-			i_assert(addr->mailbox != NULL);
-			matched = (smtp_address_init_from_msg(&saddr, addr) >= 0 &&
-				   smtp_address_equals(smtp_to, &saddr));
-		}
+		if (!matched)
+			matched = _msg_address_equals(addr, smtp_to);
 
 		if (matched) {
 			*reply_to_r = *addr;
