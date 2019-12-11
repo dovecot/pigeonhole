@@ -397,6 +397,36 @@ test "Reply for :addresses" {
 }
 
 /*
+ * Reply for :addresses (case sensitivity)
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: timo@example.com
+To: Stephan.Bosch@example.com
+Subject: Frop!
+
+Frop!
+.
+;
+
+test_set "envelope.from" "timo@example.com";
+test_set "envelope.to" "stephan@example.com";
+
+test "Reply for :addresses (case sensitivity)" {
+	vacation :addresses "stephan.bosch@example.com" "I am gone";
+
+	if not test_result_execute {
+		test_fail "failed to execute vacation";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "vacation did not reply";
+	}
+}
+
+/*
  * Reply for original recipient
  */
 

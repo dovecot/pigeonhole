@@ -891,7 +891,7 @@ _msg_address_equals(const struct message_address *addr1,
 
 	i_assert(addr1->mailbox != NULL);
 	return (smtp_address_init_from_msg(&saddr, addr1) >= 0 &&
-		smtp_address_equals(addr2, &saddr));
+		smtp_address_equals_icase(addr2, &saddr));
 }
 
 static inline bool
@@ -1276,7 +1276,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 
 	/* Are we perhaps trying to respond to ourselves ?
 	 */
-	if (smtp_address_equals(sender, recipient)) {
+	if (smtp_address_equals_icase(sender, recipient)) {
 		sieve_result_global_log(
 			aenv, "discarded vacation reply to own address <%s>",
 			smtp_address_encode(sender));
@@ -1290,7 +1290,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 
 		alt_address = ctx->addresses;
 		while (*alt_address != NULL) {
-			if (smtp_address_equals(sender, *alt_address)) {
+			if (smtp_address_equals_icase(sender, *alt_address)) {
 				sieve_result_global_log(
 					aenv,
 					"discarded vacation reply to own address <%s> "
