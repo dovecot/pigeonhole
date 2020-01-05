@@ -40,10 +40,10 @@ static void print_help(void)
 }
 
 enum sieve_filter_discard_action {
-	SIEVE_FILTER_DACT_KEEP,        /* Keep discarded messages in source folder */
-	SIEVE_FILTER_DACT_MOVE,        /* Move discarded messages to Trash folder */
-	SIEVE_FILTER_DACT_DELETE,      /* Flag discarded messages as \DELETED */
-	SIEVE_FILTER_DACT_EXPUNGE      /* Expunge discarded messages */
+	SIEVE_FILTER_DACT_KEEP,   /* Keep discarded messages in source folder */
+	SIEVE_FILTER_DACT_MOVE,   /* Move discarded messages to Trash folder */
+	SIEVE_FILTER_DACT_DELETE, /* Flag discarded messages as \DELETED */
+	SIEVE_FILTER_DACT_EXPUNGE /* Expunge discarded messages */
 };
 
 struct sieve_filter_data {
@@ -86,8 +86,7 @@ result_amend_log_message(const struct sieve_script_env *senv,
 	return str_c(str);
 }
 
-static int filter_message
-(struct sieve_filter_context *sfctx, struct mail *mail)
+static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 {
 	struct sieve_error_handler *ehandler = sfctx->data->ehandler;
 	struct sieve_script_env *senv = sfctx->data->senv;
@@ -111,113 +110,119 @@ static int filter_message
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 	senv->script_context = &msgdata;
 
-	sieve_tool_get_envelope_data
-		(&msgdata, mail, NULL, NULL, NULL);
+	sieve_tool_get_envelope_data(&msgdata, mail, NULL, NULL, NULL);
 
-	if ( mail_get_virtual_size(mail, &size) < 0 ) {
-		if ( mail->expunged )
+	if (mail_get_virtual_size(mail, &size) < 0) {
+		if (mail->expunged)
 			return 1;
 
 		sieve_error(ehandler, NULL, "failed to obtain message size; "
-			"skipping this message (id=%s)",
-			( msgdata.id == NULL ? "none" : msgdata.id ));
+			    "skipping this message (id=%s)",
+			    (msgdata.id == NULL ? "none" : msgdata.id));
 		return 0;
 	}
 
-	if ( mail_get_first_header(mail, "date", &date) <= 0 )
+	if (mail_get_first_header(mail, "date", &date) <= 0)
 		date = "";
-	if ( mail_get_first_header(mail, "subject", &subject) <= 0 )
+	if (mail_get_first_header(mail, "subject", &subject) <= 0)
 		subject = "";
 
 	/* Single script */
 	sbin = sfctx->data->main_sbin;
 
 	/* Execute script */
-	if ( execute ) {
+	if (execute) {
 		sieve_info(ehandler, NULL,
-			"filtering: [%s; %"PRIuUOFF_T" bytes] `%s'", date, size,
-			str_sanitize(subject, 40));
+			   "filtering: [%s; %"PRIuUOFF_T" bytes] `%s'",
+			   date, size, str_sanitize(subject, 40));
 
-		ret = sieve_execute(sbin, &msgdata, senv,
-				ehandler, ehandler, 0, NULL);
+		ret = sieve_execute(sbin, &msgdata, senv, ehandler, ehandler,
+				    0, NULL);
 	} else {
-		o_stream_nsend_str(sfctx->teststream,
+		o_stream_nsend_str(
+			sfctx->teststream,
 			t_strdup_printf(">> Filtering message:\n\n"
-				"  ID:      %s\n"
-			  "  Date:    %s\n"
-        "  Size:    %"PRIuUOFF_T" bytes\n"
-				"  Subject: %s\n", ( msgdata.id == NULL ? "none" : msgdata.id ),
-				date, size, str_sanitize(subject, 40)));
+					"  ID:      %s\n"
+					"  Date:    %s\n"
+					"  Size:    %"PRIuUOFF_T" bytes\n"
+					"  Subject: %s\n",
+					(msgdata.id == NULL ?
+					 "none" : msgdata.id), date, size,
+					str_sanitize(subject, 40)));
 
-		ret = sieve_test
-			(sbin, &msgdata, senv, ehandler, sfctx->teststream, 0, NULL);
+		ret = sieve_test(sbin, &msgdata, senv, ehandler,
+				 sfctx->teststream, 0, NULL);
 	}
 
 	/* Handle message in source folder */
-	if ( ret > 0 ) {
+	if (ret > 0) {
 		struct mailbox *move_box = sfctx->data->move_mailbox;
 		enum sieve_filter_discard_action discard_action =
 			sfctx->data->discard_action;
 
-		if ( !source_write ) {
+		if (!source_write) {
 			/* READ-ONLY; Do nothing */
-
-		} else if ( estatus.keep_original  ) {
+		} else if (estatus.keep_original) {
 			/* Explicitly `stored' in source box; just keep it there */
-			sieve_info(ehandler, NULL, "message kept in source mailbox");
-
-		} else if ( estatus.message_saved ) {
 			sieve_info(ehandler, NULL,
+				   "message kept in source mailbox");
+		} else if (estatus.message_saved) {
+			sieve_info(
+				ehandler, NULL,
 				"message expunged from source mailbox upon successful move");
 
-			if ( execute )
+			if (execute)
 				mail_expunge(mail);
-
 		} else {
-
-			switch ( discard_action ) {
+			switch (discard_action) {
 			/* Leave it there */
 			case SIEVE_FILTER_DACT_KEEP:
-				sieve_info(ehandler, NULL, "message left in source mailbox");
+				sieve_info(ehandler, NULL,
+					   "message left in source mailbox");
 				break;
 			/* Move message to indicated folder */
 			case SIEVE_FILTER_DACT_MOVE:
-				sieve_info(ehandler, NULL,
+				sieve_info(
+					ehandler, NULL,
 					"message in source mailbox moved to mailbox '%s'",
 					mailbox_get_name(move_box));
 
-				if ( execute && move_box != NULL ) {
-					struct mailbox_transaction_context *t = sfctx->move_trans;
+				if (execute && move_box != NULL) {
+					struct mailbox_transaction_context *t =
+						sfctx->move_trans;
 					struct mail_save_context *save_ctx;
 
 					save_ctx = mailbox_save_alloc(t);
 
-					if ( mailbox_copy(&save_ctx, mail) < 0 ) {
+					if (mailbox_copy(&save_ctx, mail) < 0) {
 						enum mail_error error;
 						const char *errstr;
 
-						errstr = mail_storage_get_last_error
-							(mailbox_get_storage(move_box), &error);
+						errstr = mail_storage_get_last_error(
+							mailbox_get_storage(move_box), &error);
 
-						sieve_error(ehandler, NULL,
+						sieve_error(
+							ehandler, NULL,
 							"failed to move message to mailbox %s: %s",
 							mailbox_get_name(move_box), errstr);
 						return -1;
-				    }
-
+					}
 					mail_expunge(mail);
 				}
 				break;
 			/* Flag message as \DELETED */
 			case SIEVE_FILTER_DACT_DELETE:
-				sieve_info(ehandler, NULL, "message flagged as deleted in source mailbox");
-				if ( execute )
+				sieve_info(
+					ehandler, NULL,
+					"message flagged as deleted in source mailbox");
+				if (execute)
 					mail_update_flags(mail, MODIFY_ADD, MAIL_DELETED);
 				break;
 			/* Expunge the message immediately */
 			case SIEVE_FILTER_DACT_EXPUNGE:
-				sieve_info(ehandler, NULL, "message expunged from source mailbox");
-				if ( execute )
+				sieve_info(ehandler, NULL,
+					   "message expunged from source mailbox");
+				if (execute)
 					mail_expunge(mail);
 				break;
 			/* Unknown */
@@ -228,7 +233,7 @@ static int filter_message
 		}
 	}
 
-	switch ( ret ) {
+	switch (ret) {
 	case SIEVE_EXEC_OK:
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:
@@ -236,11 +241,13 @@ static int filter_message
 		return -1;
 	case SIEVE_EXEC_FAILURE:
 	case SIEVE_EXEC_TEMP_FAILURE:
-		if ( source_write && execute && sfctx->data->default_move &&
-			!estatus.keep_original &&	estatus.message_saved ) {
-			/* The implicit keep action moved message to default mailbox, so
-			   the source message still needs to be expunged */
-			sieve_error(ehandler, NULL,
+		if (source_write && execute && sfctx->data->default_move &&
+		    !estatus.keep_original && estatus.message_saved) {
+			/* The implicit keep action moved message to default
+			   mailbox, so the source message still needs to be
+			   expunged */
+			sieve_error(
+				ehandler, NULL,
 				"sieve script execution failed for this message; "
 				"message moved to default mailbox");
 			mail_expunge(mail);
@@ -248,7 +255,8 @@ static int filter_message
 		}
 		/* Fall through */
 	case SIEVE_EXEC_KEEP_FAILED:
-		sieve_error(ehandler, NULL,
+		sieve_error(
+			ehandler, NULL,
 			"sieve script execution failed for this message; "
 			"message left in source mailbox");
 		return 0;
@@ -258,8 +266,9 @@ static int filter_message
 }
 
 /* FIXME: introduce this into Dovecot */
-static void mail_search_build_add_flags
-(struct mail_search_args *args, enum mail_flags flags, bool not)
+static void
+mail_search_build_add_flags(struct mail_search_args *args,
+			    enum mail_flags flags, bool not)
 {
 	struct mail_search_arg *arg;
 
@@ -272,8 +281,8 @@ static void mail_search_build_add_flags
 	args->args = arg;
 }
 
-static int filter_mailbox
-(const struct sieve_filter_data *sfdata, struct mailbox *src_box)
+static int
+filter_mailbox(const struct sieve_filter_data *sfdata, struct mailbox *src_box)
 {
 	struct sieve_filter_context sfctx;
 	struct mailbox *move_box = sfdata->move_mailbox;
@@ -286,7 +295,7 @@ static int filter_mailbox
 
 	/* Sync source mailbox */
 
-	if ( mailbox_sync(src_box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {
+	if (mailbox_sync(src_box, MAILBOX_SYNC_FLAG_FULL_READ) < 0) {
 		sieve_error(ehandler, NULL, "failed to sync source mailbox");
 		return -1;
 	}
@@ -297,17 +306,17 @@ static int filter_mailbox
 	sfctx.data = sfdata;
 
 	/* Create test stream */
-	if ( !sfdata->execute ) {
+	if (!sfdata->execute) {
 		sfctx.teststream = o_stream_create_fd(1, 0);
 		o_stream_set_no_error_handling(sfctx.teststream, TRUE);
 	}
 
 	/* Start move mailbox transaction */
 
-	if ( move_box != NULL ) {
-		sfctx.move_trans = mailbox_transaction_begin
-			(move_box, MAILBOX_TRANSACTION_FLAG_EXTERNAL,
-			 "sieve_filter_data move_box");
+	if (move_box != NULL) {
+		sfctx.move_trans = mailbox_transaction_begin(
+			move_box, MAILBOX_TRANSACTION_FLAG_EXTERNAL,
+			"sieve_filter_data move_box");
 	}
 
 	/* Search non-deleted messages in the source folder */
@@ -322,36 +331,33 @@ static int filter_mailbox
 
 	/* Iterate through all requested messages */
 
-	while ( ret >= 0 && mailbox_search_next(search_ctx, &mail) ) {
+	while (ret >= 0 && mailbox_search_next(search_ctx, &mail))
 		ret = filter_message(&sfctx, mail);
-	}
 
 	/* Cleanup */
 
-	if ( mailbox_search_deinit(&search_ctx) < 0 ) {
+	if (mailbox_search_deinit(&search_ctx) < 0)
 		ret = -1;
-	}
 
-	if ( sfctx.move_trans != NULL ) {
-		if ( mailbox_transaction_commit(&sfctx.move_trans) < 0 ) {
+	if (sfctx.move_trans != NULL) {
+		if (mailbox_transaction_commit(&sfctx.move_trans) < 0)
 			ret = -1;
-		}
 	}
 
-	if ( mailbox_transaction_commit(&t) < 0 ) {
+	if (mailbox_transaction_commit(&t) < 0)
 		ret = -1;
-	}
 
-	if ( sfctx.teststream != NULL )
+	if (sfctx.teststream != NULL)
 		o_stream_destroy(&sfctx.teststream);
 
-	if ( ret < 0 ) return ret;
+	if (ret < 0) return ret;
 
 	/* Sync mailbox */
 
-	if ( sfdata->execute ) {
-		if ( mailbox_sync(src_box, MAILBOX_SYNC_FLAG_FULL_WRITE) < 0 ) {
-			sieve_error(ehandler, NULL, "failed to sync source mailbox");
+	if (sfdata->execute) {
+		if (mailbox_sync(src_box, MAILBOX_SYNC_FLAG_FULL_WRITE) < 0) {
+			sieve_error(ehandler, NULL,
+				    "failed to sync source mailbox");
 			return -1;
 		}
 	}
@@ -366,10 +372,11 @@ static int filter_mailbox
 int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
-	ARRAY_TYPE (const_string) scriptfiles;
+	ARRAY_TYPE(const_string) scriptfiles;
 	const char *scriptfile,	*src_mailbox, *dst_mailbox, *move_mailbox;
 	struct sieve_filter_data sfdata;
-	enum sieve_filter_discard_action discard_action = SIEVE_FILTER_DACT_KEEP;
+	enum sieve_filter_discard_action discard_action =
+		SIEVE_FILTER_DACT_KEEP;
 	struct mail_user *mail_user;
 	struct sieve_binary *main_sbin;
 	struct sieve_script_env scriptenv;
@@ -383,7 +390,7 @@ int main(int argc, char **argv)
 	int c;
 
 	sieve_tool = sieve_tool_init("sieve-filter", &argc, &argv,
-		"m:s:x:P:u:q:Q:DCevW", FALSE);
+				     "m:s:x:P:u:q:Q:DCevW", FALSE);
 
 	t_array_init(&scriptfiles, 16);
 
@@ -406,16 +413,19 @@ int main(int argc, char **argv)
 				array_append(&scriptfiles, &file, 1);
 
 				/* FIXME: */
-				i_fatal_status(EX_USAGE,
+				i_fatal_status(
+					EX_USAGE,
 					"The -s argument is currently NOT IMPLEMENTED");
 			}
 			break;
 		case 'q':
-			i_fatal_status(EX_USAGE,
+			i_fatal_status(
+				EX_USAGE,
 				"The -q argument is currently NOT IMPLEMENTED");
 			break;
 		case 'Q':
-			i_fatal_status(EX_USAGE,
+			i_fatal_status(
+				EX_USAGE,
 				"The -Q argument is currently NOT IMPLEMENTED");
 			break;
 		case 'e':
@@ -443,53 +453,55 @@ int main(int argc, char **argv)
 	}
 
 	/* Script file argument */
-	if ( optind < argc ) {
+	if (optind < argc)
 		scriptfile = t_strdup(argv[optind++]);
-	} else {
+	else {
 		print_help();
 		i_fatal_status(EX_USAGE, "Missing <script-file> argument");
 	}
 
 	/* Source mailbox argument */
-	if ( optind < argc ) {
+	if (optind < argc)
 		src_mailbox = t_strdup(argv[optind++]);
-	} else {
+	else {
 		print_help();
 		i_fatal_status(EX_USAGE, "Missing <source-mailbox> argument");
 	}
 
 	/* Source action argument */
-	if ( optind < argc ) {
+	if (optind < argc) {
 		const char *srcact = argv[optind++];
 
-		if ( strcmp(srcact, "keep") == 0 ) {
+		if (strcmp(srcact, "keep") == 0) {
 			discard_action = SIEVE_FILTER_DACT_KEEP;
-		} else if ( strcmp(srcact, "move") == 0 ) {
+		} else if (strcmp(srcact, "move") == 0) {
 			discard_action = SIEVE_FILTER_DACT_MOVE;
-			if ( optind < argc ) {
+			if (optind < argc)
 				move_mailbox = t_strdup(argv[optind++]);
-			} else {
+			else {
 				print_help();
-				i_fatal_status(EX_USAGE,
+				i_fatal_status(
+					EX_USAGE,
 					"Invalid <discard-action> argument: "
 					"the `move' action requires mailbox argument");
 			}
-		} else if ( strcmp(srcact, "delete") == 0 ) {
+		} else if (strcmp(srcact, "delete") == 0) {
 			discard_action = SIEVE_FILTER_DACT_DELETE;
-		} else if ( strcmp(srcact, "expunge") == 0 ) {
+		} else if (strcmp(srcact, "expunge") == 0) {
 			discard_action = SIEVE_FILTER_DACT_EXPUNGE;
 		} else {
 			print_help();
-			i_fatal_status(EX_USAGE, "Invalid <discard-action> argument");
+			i_fatal_status(EX_USAGE,
+				       "Invalid <discard-action> argument");
 		}
 	}
 
-	if ( optind != argc ) {
+	if (optind != argc) {
 		print_help();
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
 	}
 
-	if ( dst_mailbox == NULL ) {
+	if (dst_mailbox == NULL) {
 		dst_mailbox = src_mailbox;
 	} else {
 		/* The (implicit) keep action will move the message */
@@ -508,10 +520,10 @@ int main(int argc, char **argv)
 	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
 	/* Compile main sieve script */
-	if ( force_compile ) {
+	if (force_compile) {
 		main_sbin = sieve_tool_script_compile(svinst, scriptfile, NULL);
-		if ( main_sbin != NULL )
-			(void) sieve_save(main_sbin, TRUE, NULL);
+		if (main_sbin != NULL)
+			(void)sieve_save(main_sbin, TRUE, NULL);
 	} else {
 		main_sbin = sieve_tool_script_open(svinst, scriptfile);
 	}
@@ -522,35 +534,38 @@ int main(int argc, char **argv)
 	/* Open the source mailbox */
 
 	ns = mail_namespace_find(mail_user->namespaces, src_mailbox);
-	if ( ns == NULL )
-		i_fatal("Unknown namespace for source mailbox '%s'", src_mailbox);
+	if (ns == NULL) {
+		i_fatal("Unknown namespace for source mailbox '%s'",
+			src_mailbox);
+	}
 
-	if ( !source_write || !execute )
+	if (!source_write || !execute)
 		open_flags |= MAILBOX_FLAG_READONLY;
 
 	src_box = mailbox_alloc(ns->list, src_mailbox, open_flags);
-	if ( mailbox_open(src_box) < 0 ) {
+	if (mailbox_open(src_box) < 0) {
 		i_fatal("Couldn't open source mailbox '%s': %s",
 			src_mailbox, mailbox_get_last_error(src_box, &error));
 	}
 
 	/* Open move box if necessary */
 
-	if ( execute && discard_action == SIEVE_FILTER_DACT_MOVE &&
-		move_mailbox != NULL ) {
+	if (execute && discard_action == SIEVE_FILTER_DACT_MOVE &&
+	    move_mailbox != NULL) {
 		ns = mail_namespace_find(mail_user->namespaces, move_mailbox);
-		if ( ns == NULL )
-			i_fatal("Unknown namespace for mailbox '%s'", move_mailbox);
+		if (ns == NULL)
+			i_fatal("Unknown namespace for mailbox '%s'",
+				move_mailbox);
 
 		move_box = mailbox_alloc(ns->list, move_mailbox, open_flags);
-		if ( mailbox_open(move_box) < 0 ) {
+		if (mailbox_open(move_box) < 0) {
 			i_fatal("Couldn't open mailbox '%s': %s",
-				move_mailbox, mailbox_get_last_error(move_box, &error));
+				move_mailbox,
+				mailbox_get_last_error(move_box, &error));
 		}
 
-		if ( mailbox_backends_equal(src_box, move_box) ) {
+		if (mailbox_backends_equal(src_box, move_box))
 			i_fatal("Source mailbox and mailbox for move action are identical.");
-		}
 	}
 
 	/* Compose script environment */
@@ -572,18 +587,18 @@ int main(int argc, char **argv)
 	sfdata.default_move = default_move;
 
 	/* Apply Sieve filter to all messages found */
-	(void) filter_mailbox(&sfdata, src_box);
+	(void)filter_mailbox(&sfdata, src_box);
 
 	/* Close the source mailbox */
-	if ( src_box != NULL )
+	if (src_box != NULL)
 		mailbox_free(&src_box);
 
 	/* Close the move mailbox */
-	if ( move_box != NULL )
+	if (move_box != NULL)
 		mailbox_free(&move_box);
 
 	/* Close the script binary */
-	if ( main_sbin != NULL )
+	if (main_sbin != NULL)
 		sieve_close(&main_sbin);
 
 	/* Cleanup error handler */
