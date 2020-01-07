@@ -162,6 +162,7 @@ int main(int argc, char **argv)
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
+	enum sieve_execute_flags exflags = SIEVE_EXECUTE_FLAG_LOG_RESULT;
 	struct sieve_error_handler *ehandler;
 	struct ostream *teststream = NULL;
 	struct sieve_trace_log *trace_log = NULL;
@@ -361,11 +362,12 @@ int main(int argc, char **argv)
 			/* Execute/Test script */
 			if (execute) {
 				ret = sieve_execute(sbin, &msgdata, &scriptenv,
-						    ehandler, ehandler, 0,
+						    ehandler, ehandler, exflags,
 						    NULL);
 			} else {
 				ret = sieve_test(sbin, &msgdata, &scriptenv,
-						 ehandler, teststream, 0, NULL);
+						 ehandler, teststream, exflags,
+						 NULL);
 			}
 		} else {
 			/* Multiple scripts */
@@ -414,7 +416,8 @@ int main(int argc, char **argv)
 
 				/* Execute/Test script */
 				more = sieve_multiscript_run(
-					mscript, sbin, ehandler, ehandler, 0);
+					mscript, sbin, ehandler, ehandler,
+					exflags);
 			}
 
 			/* Execute/Test main script */
@@ -434,11 +437,12 @@ int main(int argc, char **argv)
 				main_sbin = NULL;
 
 				(void)sieve_multiscript_run(
-					mscript, sbin, ehandler, ehandler, 0);
+					mscript, sbin, ehandler, ehandler,
+					exflags);
 			}
 
 			result = sieve_multiscript_finish(
-				&mscript, ehandler, 0, NULL);
+				&mscript, ehandler, exflags, NULL);
 
 			ret = (ret > 0 ? result : ret);
 		}

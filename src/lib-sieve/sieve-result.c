@@ -1743,8 +1743,11 @@ void sieve_result_log(const struct sieve_action_exec_env *aenv,
 		      const char *csrc_filename, unsigned int csrc_linenum,
 		      const char *fmt, ...)
 {
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
-		.log_type = LOG_TYPE_INFO,
+		.log_type = (HAS_ALL_BITS(eenv->flags,
+					  SIEVE_EXECUTE_FLAG_LOG_RESULT) ?
+			     LOG_TYPE_INFO : LOG_TYPE_DEBUG),
 		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
@@ -1765,7 +1768,9 @@ void sieve_result_global_log(const struct sieve_action_exec_env *aenv,
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
-		.log_type = LOG_TYPE_INFO,
+		.log_type = (HAS_ALL_BITS(eenv->flags,
+					  SIEVE_EXECUTE_FLAG_LOG_RESULT) ?
+			     LOG_TYPE_INFO : LOG_TYPE_DEBUG),
 		.event = aenv->event,
 		.csrc = {
 			.filename = csrc_filename,
@@ -1833,7 +1838,9 @@ void sieve_result_event_log(const struct sieve_action_exec_env *aenv,
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_error_params params = {
-		.log_type = LOG_TYPE_INFO,
+		.log_type = (HAS_ALL_BITS(eenv->flags,
+					  SIEVE_EXECUTE_FLAG_LOG_RESULT) ?
+			     LOG_TYPE_INFO : LOG_TYPE_DEBUG),
 		.event = event,
 		.csrc = {
 			.filename = csrc_filename,

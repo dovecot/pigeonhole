@@ -89,6 +89,7 @@ result_amend_log_message(const struct sieve_script_env *senv,
 static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 {
 	struct sieve_error_handler *ehandler = sfctx->data->ehandler;
+	enum sieve_execute_flags exflags = SIEVE_EXECUTE_FLAG_LOG_RESULT;
 	struct sieve_script_env *senv = sfctx->data->senv;
 	struct sieve_exec_status estatus;
 	struct sieve_binary *sbin;
@@ -137,7 +138,7 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 			   date, size, str_sanitize(subject, 40));
 
 		ret = sieve_execute(sbin, &msgdata, senv, ehandler, ehandler,
-				    0, NULL);
+				    exflags, NULL);
 	} else {
 		o_stream_nsend_str(
 			sfctx->teststream,
@@ -151,7 +152,7 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 					str_sanitize(subject, 40)));
 
 		ret = sieve_test(sbin, &msgdata, senv, ehandler,
-				 sfctx->teststream, 0, NULL);
+				 sfctx->teststream, exflags, NULL);
 	}
 
 	/* Handle message in source folder */

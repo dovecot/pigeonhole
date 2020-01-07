@@ -160,6 +160,8 @@ enum sieve_execute_flags {
 	SIEVE_EXECUTE_FLAG_NO_ENVELOPE = (1<<2),
 	/* Skip sending responses */
 	SIEVE_EXECUTE_FLAG_SKIP_RESPONSES = (1<<3),
+	/* Log result as info (when absent, only debug logging is performed) */
+	SIEVE_EXECUTE_FLAG_LOG_RESULT = (1<<4),
 };
 
 /*

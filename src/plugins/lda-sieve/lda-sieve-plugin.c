@@ -487,7 +487,7 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 	struct sieve_error_handler *exec_ehandler;
 	struct sieve_binary *sbin = NULL;
 	enum sieve_compile_flags cpflags = 0;
-	enum sieve_execute_flags exflags = 0;
+	enum sieve_execute_flags exflags = SIEVE_EXECUTE_FLAG_LOG_RESULT;
 	bool user_script, more;
 
 	*error_r = SIEVE_ERROR_NONE;
@@ -580,6 +580,7 @@ static int lda_sieve_execute_scripts(struct lda_sieve_run_context *srctx)
 	struct sieve_multiscript *mscript;
 	struct sieve_error_handler *exec_ehandler;
 	struct sieve_script *script, *last_script = NULL;
+	enum sieve_execute_flags exflags = SIEVE_EXECUTE_FLAG_LOG_RESULT;
 	bool discard_script;
 	enum sieve_error error;
 	unsigned int i;
@@ -645,9 +646,10 @@ static int lda_sieve_execute_scripts(struct lda_sieve_run_context *srctx)
 	exec_ehandler = (srctx->user_ehandler != NULL ?
 			 srctx->user_ehandler : srctx->master_ehandler);
 	if (error == SIEVE_ERROR_TEMP_FAILURE) {
-		ret = sieve_multiscript_tempfail(&mscript, exec_ehandler, 0);
+		ret = sieve_multiscript_tempfail(&mscript, exec_ehandler,
+						 exflags);
 	} else {
-		ret = sieve_multiscript_finish(&mscript, exec_ehandler, 0,
+		ret = sieve_multiscript_finish(&mscript, exec_ehandler, exflags,
 					       NULL);
 	}
 
