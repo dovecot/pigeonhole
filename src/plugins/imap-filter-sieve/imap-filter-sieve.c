@@ -953,6 +953,8 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 	*have_changes_r = FALSE;
 	i_zero(&estatus);
 
+	sctx->mail = mail;
+
 	/* Prepare error handler */
 	user_ehandler = imap_filter_sieve_create_error_handler(sctx);
 
@@ -998,6 +1000,8 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 	*errors_r = sctx->errors;
 
 	sieve_error_handler_unref(&user_ehandler);
+
+	sctx->mail = NULL;
 
 	return ret;
 }

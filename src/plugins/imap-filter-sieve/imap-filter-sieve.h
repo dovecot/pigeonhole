@@ -26,6 +26,8 @@ struct imap_filter_sieve_context {
 	struct imap_filter_sieve_script *scripts;
 	unsigned int scripts_count;
 
+	struct mail *mail;
+
 	struct sieve_script_env scriptenv;
 	struct sieve_trace_config trace_config;
 	struct sieve_trace_log *trace_log;
