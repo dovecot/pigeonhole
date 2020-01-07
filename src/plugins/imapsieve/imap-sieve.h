@@ -15,6 +15,7 @@ struct imap_sieve_event {
 
 struct imap_sieve_context {
 	struct imap_sieve_event event;
+	struct mail *mail;
 
 	struct imap_sieve *isieve;
 };

@@ -773,6 +773,7 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 	context.event.src_mailbox = isrun->src_mailbox;
 	context.event.cause = isrun->cause;
 	context.event.changed_flags = changed_flags;
+	context.mail = mail;
 	context.isieve = isieve;
 
 	/* Initialize trace logging */
