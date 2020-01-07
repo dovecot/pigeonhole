@@ -184,16 +184,13 @@ static void lda_sieve_duplicate_flush(const struct sieve_script_env *senv)
 
 static const char *
 lda_sieve_result_amend_log_message(const struct sieve_script_env *senv,
-				   enum log_type log_type,
+				   enum log_type log_type ATTR_UNUSED,
 				   const char *message)
 {
 	struct mail_deliver_context *mdctx = senv->script_context;
 	const struct var_expand_table *table;
 	string_t *str;
 	const char *error;
-
-	if (log_type == LOG_TYPE_DEBUG)
-		return message;
 
 	table = mail_deliver_ctx_get_log_var_expand_table(mdctx, message);
 
