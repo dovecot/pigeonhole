@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "str.h"
 #include "home-expand.h"
 #include "smtp-address.h"
 #include "smtp-submit.h"
@@ -244,6 +245,27 @@ imap_sieve_duplicate_flush(const struct sieve_script_env *senv)
 	struct imap_sieve_context *isctx = senv->script_context;
 
 	mail_duplicate_db_flush(isctx->isieve->dup_db);
+}
+
+/*
+ * Result logging
+ */
+
+static const char *
+imap_sieve_result_amend_log_message(const struct sieve_script_env *senv,
+				    enum log_type log_type ATTR_UNUSED,
+				    const char *message)
+{
+	struct imap_sieve_context *isctx = senv->script_context;
+	string_t *str;
+
+	if (isctx->mail == NULL)
+		return message;
+
+	str = t_str_new(256);
+	str_printfa(str, "uid=%u: ", isctx->mail->uid);
+	str_append(str, message);
+	return str_c(str);
 }
 
 /*
@@ -818,6 +840,8 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 			scriptenv.duplicate_mark = imap_sieve_duplicate_mark;
 			scriptenv.duplicate_check = imap_sieve_duplicate_check;
 			scriptenv.duplicate_flush = imap_sieve_duplicate_flush;
+			scriptenv.result_amend_log_message =
+				imap_sieve_result_amend_log_message;
 			scriptenv.trace_log = trace_log;
 			scriptenv.trace_config = trace_config;
 			scriptenv.script_context = &context;
