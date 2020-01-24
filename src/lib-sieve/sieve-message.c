@@ -8,6 +8,7 @@
 #include "str.h"
 #include "str-sanitize.h"
 #include "istream.h"
+#include "time-util.h"
 #include "rfc822-parser.h"
 #include "message-date.h"
 #include "message-parser.h"
@@ -171,8 +172,7 @@ struct sieve_message_context *sieve_message_context_create
 	msgctx->mail_user = mail_user;
 	msgctx->msgdata = msgdata;
 
-	if (gettimeofday(&msgctx->time, NULL) < 0)
-		i_fatal("gettimeofday(): %m");
+	i_gettimeofday(&msgctx->time);
 
 	sieve_message_context_reset(msgctx);
 

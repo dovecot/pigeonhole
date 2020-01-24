@@ -6,6 +6,7 @@
 #include "ioloop.h"
 #include "hostpid.h"
 #include "file-copy.h"
+#include "time-util.h"
 
 #include "sieve-file-storage.h"
 
@@ -142,8 +143,7 @@ int sieve_file_storage_active_replace_link
 				/* Wait and try again - very unlikely */
 				sleep(2);
 				tv = &tv_now;
-				if (gettimeofday(&tv_now, NULL) < 0)
-					i_fatal("gettimeofday(): %m");
+				i_gettimeofday(&tv_now);
 				continue;
 			}
 

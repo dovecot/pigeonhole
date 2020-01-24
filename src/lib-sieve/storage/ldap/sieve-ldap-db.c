@@ -803,10 +803,8 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 	if (str_to_int(set->debug_level, &debug_level) >= 0)
 		debug = debug_level > 0;
 
-	if (debug) {
-		if (gettimeofday(&start, NULL) < 0)
-			i_zero(&start);
-	}
+	if (debug)
+		i_gettimeofday(&start);
 	i_assert(conn->pending_count == 0);
 	if (conn->ld == NULL) {
 		if (set->uris != NULL) {
@@ -883,11 +881,10 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 			return -1;
 	}
 	if (debug) {
-		if (gettimeofday(&end, NULL) == 0) {
-			int msecs = timeval_diff_msecs(&end, &start);
-			e_debug(storage->event, "db: "
-				"Initialization took %d msecs", msecs);
-		}
+		i_gettimeofday(&end);
+		int msecs = timeval_diff_msecs(&end, &start);
+		e_debug(storage->event, "db: "
+			"Initialization took %d msecs", msecs);
 	}
 
 	if (db_ldap_get_fd(conn) < 0)
