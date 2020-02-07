@@ -6,7 +6,7 @@ dnl This file is free software; the authors give
 dnl unlimited permission to copy and/or distribute it, with or without
 dnl modifications, as long as this notice is preserved.
 
-# serial 26
+# serial 30
 
 dnl
 dnl Check for support for D_FORTIFY_SOURCE=2
@@ -196,12 +196,22 @@ dnl Check for support for Retpoline
 dnl
 
 AC_DEFUN([AC_CC_RETPOLINE],[
+    AC_ARG_WITH(retpoline,
+       AS_HELP_STRING([--with-retpoline=<choice>], [Retpoline migitation choice (default: keep)]),
+            with_retpoline=$withval,
+            with_retpoline=keep)
+
     AC_REQUIRE([gl_UNKNOWN_WARNINGS_ARE_ERRORS])
     AS_IF([test "$enable_hardening" = yes], [
       case "$host" in
         *)
-          gl_COMPILER_OPTION_IF([-mfunction-return=thunk -mindirect-branch=thunk], [
-            CFLAGS="$CFLAGS -mfunction-return=thunk -mindirect-branch=thunk"
+          gl_COMPILER_OPTION_IF([-mfunction-return=$with_retpoline],
+            [CFLAGS="$CFLAGS -mfunction-return=$with_retpoline"],
+            [],
+            [AC_LANG_PROGRAM()]
+          )
+          gl_COMPILER_OPTION_IF([-mindirect-branch=$with_retpoline], [
+            CFLAGS="$CFLAGS -mindirect-branch=$with_retpoline"
             ],
             [],
             [AC_LANG_PROGRAM()]
@@ -236,8 +246,8 @@ AC_DEFUN([AC_CC_F_STACK_PROTECTOR],[
 AC_DEFUN([DC_DOVECOT_MODULEDIR],[
 	AC_ARG_WITH(moduledir,
 	[  --with-moduledir=DIR    Base directory for dynamically loadable modules],
-		moduledir="$withval",
-		moduledir=$libdir/dovecot
+		[moduledir="$withval"],
+		[moduledir="$dovecot_moduledir"]
 	)
 	AC_SUBST(moduledir)
 ])
@@ -289,9 +299,9 @@ else
   trap "rm -f \$test_out" 0 1 2 3 15
   supp_path="\$top_srcdir/run-test-valgrind.supp"
   if test -r "\$supp_path"; then
-    valgrind -q \$trace_children --leak-check=full --suppressions="\$supp_path" --log-file=\$test_out \$noundef \$[*]
+    valgrind -q \$trace_children --leak-check=full --gen-suppressions=all --suppressions="\$supp_path" --log-file=\$test_out \$noundef \$[*]
   else
-    valgrind -q \$trace_children --leak-check=full --log-file=\$test_out \$noundef \$[*]
+    valgrind -q \$trace_children --leak-check=full --gen-suppressions=all --log-file=\$test_out \$noundef \$[*]
   fi
   ret=\$?
   if test -s \$test_out; then
@@ -368,6 +378,7 @@ AC_DEFUN([DC_DOVECOT],[
 	cd $old
 	DISTCHECK_CONFIGURE_FLAGS="--with-dovecot=$abs_dovecotdir --without-dovecot-install-dirs"
 
+	dnl Make sure dovecot-config doesn't accidentically override flags
 	ORIG_CFLAGS="$CFLAGS"
 	ORIG_LDFLAGS="$LDFLAGS"
 	ORIG_BINARY_CFLAGS="$BINARY_CFLAGS"
@@ -403,7 +414,7 @@ AC_DEFUN([DC_DOVECOT],[
 	AX_SUBST_L([LIBDOVECOT], [LIBDOVECOT_LOGIN], [LIBDOVECOT_SQL], [LIBDOVECOT_SSL], [LIBDOVECOT_COMPRESS], [LIBDOVECOT_LDA], [LIBDOVECOT_STORAGE], [LIBDOVECOT_DSYNC], [LIBDOVECOT_LIBFTS])
 	AX_SUBST_L([LIBDOVECOT_DEPS], [LIBDOVECOT_LOGIN_DEPS], [LIBDOVECOT_SQL_DEPS], [LIBDOVECOT_SSL_DEPS], [LIBDOVECOT_COMPRESS_DEPS], [LIBDOVECOT_LDA_DEPS], [LIBDOVECOT_STORAGE_DEPS], [LIBDOVECOT_DSYNC_DEPS], [LIBDOVECOT_LIBFTS_DEPS])
 	AX_SUBST_L([LIBDOVECOT_INCLUDE], [LIBDOVECOT_LDA_INCLUDE], [LIBDOVECOT_AUTH_INCLUDE], [LIBDOVECOT_DOVEADM_INCLUDE], [LIBDOVECOT_SERVICE_INCLUDE], [LIBDOVECOT_STORAGE_INCLUDE], [LIBDOVECOT_LOGIN_INCLUDE], [LIBDOVECOT_SQL_INCLUDE])
-	AX_SUBST_L([LIBDOVECOT_IMAP_LOGIN_INCLUDE], [LIBDOVECOT_CONFIG_INCLUDE], [LIBDOVECOT_IMAP_INCLUDE], [LIBDOVECOT_POP3_INCLUDE], [LIBDOVECOT_SUBMISSION_INCLUDE], [LIBDOVECOT_DSYNC_INCLUDE], [LIBDOVECOT_IMAPC_INCLUDE], [LIBDOVECOT_FTS_INCLUDE])
+	AX_SUBST_L([LIBDOVECOT_IMAP_LOGIN_INCLUDE], [LIBDOVECOT_CONFIG_INCLUDE], [LIBDOVECOT_IMAP_INCLUDE], [LIBDOVECOT_POP3_INCLUDE], [LIBDOVECOT_SUBMISSION_INCLUDE], [LIBDOVECOT_LMTP_INCLUDE], [LIBDOVECOT_DSYNC_INCLUDE], [LIBDOVECOT_IMAPC_INCLUDE], [LIBDOVECOT_FTS_INCLUDE])
 	AX_SUBST_L([LIBDOVECOT_NOTIFY_INCLUDE], [LIBDOVECOT_PUSH_NOTIFICATION_INCLUDE], [LIBDOVECOT_ACL_INCLUDE], [LIBDOVECOT_LIBFTS_INCLUDE])
 
 	AM_CONDITIONAL(DOVECOT_INSTALLED, test "$DOVECOT_INSTALLED" = "yes")
