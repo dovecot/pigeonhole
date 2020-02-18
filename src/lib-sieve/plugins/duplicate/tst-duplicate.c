@@ -403,8 +403,7 @@ tst_duplicate_operation_execute(const struct sieve_runtime_env *renv,
 		val_len = str_len(uniqueid);
 	} else {
 		if (header == NULL) {
-			ret = mail_get_first_header_utf8(mail, "Message-ID",
-							 &val);
+			ret = mail_get_message_id(mail, &val);
 			if (ret < 0) {
 				return sieve_runtime_mail_error(
 					renv, mail, "duplicate test: "

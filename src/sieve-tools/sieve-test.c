@@ -310,7 +310,7 @@ int main(int argc, char **argv)
 		i_zero(&msgdata);
 		msgdata.mail = mail;
 		msgdata.auth_user = sieve_tool_get_username(sieve_tool);
-		(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
+		(void)mail_get_message_id(mail, &msgdata.id);
 
 		sieve_tool_get_envelope_data(&msgdata, mail,
 					     mail_from, rcpt_to, final_rcpt_to);

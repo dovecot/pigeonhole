@@ -819,8 +819,7 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 		i_zero(&msgdata);
 		msgdata.mail = mail;
 		msgdata.auth_user = user->username;
-		(void)mail_get_first_header(msgdata.mail, "Message-ID",
-					    &msgdata.id);
+		(void)mail_get_message_id(msgdata.mail, &msgdata.id);
 
 		/* Compose script execution environment */
 

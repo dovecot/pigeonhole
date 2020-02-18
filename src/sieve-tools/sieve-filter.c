@@ -108,7 +108,7 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 	i_zero(&msgdata);
 	msgdata.mail = mail;
 	msgdata.auth_user = senv->user->username;
-	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
+	(void)mail_get_message_id(mail, &msgdata.id);
 	senv->script_context = &msgdata;
 
 	sieve_tool_get_envelope_data(&msgdata, mail, NULL, NULL, NULL);

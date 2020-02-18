@@ -944,7 +944,7 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 	msgdata.envelope.mail_params = &mdctx->mail_params;
 	msgdata.envelope.rcpt_to = mdctx->rcpt_to;
 	msgdata.envelope.rcpt_params = &mdctx->rcpt_params;
-	(void)mail_get_first_header(msgdata.mail, "Message-ID", &msgdata.id);
+	(void)mail_get_message_id(msgdata.mail, &msgdata.id);
 
 	srctx->msgdata = &msgdata;
 

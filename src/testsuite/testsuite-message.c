@@ -42,6 +42,7 @@ static struct smtp_address *testsuite_env_orig_rcpt_to = NULL;
 static char *testsuite_env_auth = NULL;
 
 static pool_t testsuite_msg_pool;
+static char *testsuite_msg_id = NULL;
 
 static const struct smtp_address *
 testsuite_message_get_address(struct mail *mail, const char *header)
@@ -62,6 +63,7 @@ testsuite_message_get_address(struct mail *mail, const char *header)
 static void testsuite_message_set_data(struct mail *mail)
 {
 	const struct smtp_address *recipient = NULL, *sender = NULL;
+	const char *msg_id;
 
 	static const struct smtp_address default_recipient = {
 		.localpart = "recipient",
@@ -76,6 +78,7 @@ static void testsuite_message_set_data(struct mail *mail)
 	i_free(testsuite_env_rcpt_to);
 	i_free(testsuite_env_orig_rcpt_to);
 	i_free(testsuite_env_auth);
+	i_free(testsuite_msg_id);
 
 	/*
 	 * Collect necessary message data
@@ -101,18 +104,20 @@ static void testsuite_message_set_data(struct mail *mail)
 	testsuite_env_rcpt_to = smtp_address_clone(default_pool, recipient);
 	testsuite_env_orig_rcpt_to = smtp_address_clone(default_pool, recipient);
 
+	(void)mail_get_message_id(mail, &msg_id);
+	testsuite_msg_id = i_strdup(msg_id);
+
 	i_zero(&testsuite_msgdata);
 	testsuite_msgdata.mail = mail;
 	testsuite_msgdata.auth_user = sieve_tool_get_username(sieve_tool);
 	testsuite_msgdata.envelope.mail_from = testsuite_env_mail_from;
 	testsuite_msgdata.envelope.rcpt_to = testsuite_env_rcpt_to;
+	testsuite_msgdata.id = testsuite_msg_id;
 
 	i_zero(&testsuite_rcpt_params);
 	testsuite_rcpt_params.orcpt.addr = testsuite_env_orig_rcpt_to;
 
 	testsuite_msgdata.envelope.rcpt_params = &testsuite_rcpt_params;
-
-	(void)mail_get_first_header(mail, "Message-ID", &testsuite_msgdata.id);
 }
 
 void testsuite_message_init(void)
@@ -160,6 +165,7 @@ void testsuite_message_deinit(void)
 	i_free(testsuite_env_orig_rcpt_to);
 	i_free(testsuite_env_auth);
 	pool_unref(&testsuite_msg_pool);
+	i_free(testsuite_msg_id);
 }
 
 void testsuite_envelope_set_sender_address(const struct sieve_runtime_env *renv,

@@ -954,7 +954,7 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 	msgdata_r->envelope.mail_from = mail_from;
 	msgdata_r->envelope.rcpt_to = rcpt_to;
 	msgdata_r->auth_user = user->username;
-	(void)mail_get_first_header(mail, "Message-ID", &msgdata_r->id);
+	(void)mail_get_message_id(mail, &msgdata_r->id);
 }
 
 int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
