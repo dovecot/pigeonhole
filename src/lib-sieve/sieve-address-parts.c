@@ -182,7 +182,7 @@ tag_address_part_is_instance_of(struct sieve_validator *valdtr,
 		valdtr, cmd, identifier)) == NULL)
 		return FALSE;
 
-	*data = (void *) addrp;
+	*data = (void *)addrp;
 	return TRUE;
 }
 
