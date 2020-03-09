@@ -20,15 +20,18 @@
 
 /* Forward declarations */
 
-static int sieve_header_address_list_next_string_item
-	(struct sieve_stringlist *_strlist, string_t **str_r);
-static int sieve_header_address_list_next_item
-	(struct sieve_address_list *_addrlist, struct smtp_address *addr_r,
-		string_t **unparsed_r);
-static void sieve_header_address_list_reset
-	(struct sieve_stringlist *_strlist);
-static void sieve_header_address_list_set_trace
-	(struct sieve_stringlist *_strlist, bool trace);
+static int
+sieve_header_address_list_next_string_item(struct sieve_stringlist *_strlist,
+					   string_t **str_r);
+static int
+sieve_header_address_list_next_item(struct sieve_address_list *_addrlist,
+				    struct smtp_address *addr_r,
+				    string_t **unparsed_r);
+static void
+sieve_header_address_list_reset(struct sieve_stringlist *_strlist);
+static void
+sieve_header_address_list_set_trace(struct sieve_stringlist *_strlist,
+				    bool trace);
 
 /* Stringlist object */
 
@@ -39,8 +42,9 @@ struct sieve_header_address_list {
 	const struct message_address *cur_address;
 };
 
-struct sieve_address_list *sieve_header_address_list_create
-(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_values)
+struct sieve_address_list *
+sieve_header_address_list_create(const struct sieve_runtime_env *renv,
+				 struct sieve_stringlist *field_values)
 {
 	struct sieve_header_address_list *addrlist;
 
@@ -50,7 +54,8 @@ struct sieve_address_list *sieve_header_address_list_create
 	addrlist->addrlist.strlist.next_item =
 		sieve_header_address_list_next_string_item;
 	addrlist->addrlist.strlist.reset = sieve_header_address_list_reset;
-	addrlist->addrlist.strlist.set_trace = sieve_header_address_list_set_trace;
+	addrlist->addrlist.strlist.set_trace =
+		sieve_header_address_list_set_trace;
 	addrlist->addrlist.next_item = sieve_header_address_list_next_item;
 	addrlist->field_values = field_values;
 
@@ -80,94 +85,104 @@ sieve_header_address_list_next_address(
 	return ret;
 }
 
-static int sieve_header_address_list_next_item
-(struct sieve_address_list *_addrlist, struct smtp_address *addr_r,
-	string_t **unparsed_r)
+static int
+sieve_header_address_list_next_item(struct sieve_address_list *_addrlist,
+				    struct smtp_address *addr_r,
+				    string_t **unparsed_r)
 {
 	struct sieve_header_address_list *addrlist =
-		(struct sieve_header_address_list *) _addrlist;
+		(struct sieve_header_address_list *)_addrlist;
 	const struct sieve_runtime_env *runenv = _addrlist->strlist.runenv;
 	string_t *value_item = NULL;
 	bool trace = _addrlist->strlist.trace;
 
-	if ( addr_r != NULL )
+	if (addr_r != NULL)
 		smtp_address_init(addr_r, NULL, NULL);
-	if ( unparsed_r != NULL ) *unparsed_r = NULL;
+	if (unparsed_r != NULL)
+		*unparsed_r = NULL;
 
 	for (;;) {
 		int ret;
 
-		if ((ret=sieve_header_address_list_next_address(addrlist, addr_r)) < 0 &&
+		if ((ret = sieve_header_address_list_next_address(
+			addrlist, addr_r)) < 0 &&
 		    value_item != NULL) {
 			/* completely invalid address list is returned as-is */
 			if (trace) {
-				sieve_runtime_trace(runenv, 0,
+				sieve_runtime_trace(
+					runenv, 0,
 					"invalid address value `%s'",
 					str_sanitize(str_c(value_item), 80));
 			}
-			if ( unparsed_r != NULL ) *unparsed_r = value_item;
+			if (unparsed_r != NULL)
+				*unparsed_r = value_item;
 			return 1;
 		}
 		if (ret > 0) {
 			if (trace) {
-				sieve_runtime_trace(runenv, 0,
+				sieve_runtime_trace(
+					runenv, 0,
 					"address value `%s'",
-					str_sanitize(smtp_address_encode(addr_r), 80));
+					str_sanitize(smtp_address_encode(addr_r),
+						     80));
 			}
 			return 1;
 		}
 
 		/* Read next header value from source list */
-		if ( (ret=sieve_stringlist_next_item(addrlist->field_values,
-						     &value_item)) <= 0 )
+		if ((ret = sieve_stringlist_next_item(addrlist->field_values,
+						      &value_item)) <= 0)
 			return ret;
 		if (str_len(value_item) == 0) {
 			/* empty header value is returned as-is */
 			if (trace) {
 				sieve_runtime_trace(runenv, 0,
-					"empty address value");
+						    "empty address value");
 			}
 			addrlist->cur_address = NULL;
-			if ( unparsed_r != NULL ) *unparsed_r = value_item;
+			if (unparsed_r != NULL)
+				*unparsed_r = value_item;
 			return 1;
 		}
 
 		if (trace) {
-			sieve_runtime_trace(runenv, 0,
+			sieve_runtime_trace(
+				runenv, 0,
 				"parsing address header value `%s'",
 				str_sanitize(str_c(value_item), 80));
 		}
 
 		addrlist->cur_address = message_address_parse(
 			pool_datastack_create(),
-			(const unsigned char *) str_data(value_item),
+			(const unsigned char *)str_data(value_item),
 			str_len(value_item), 256, 0);
 	}
 	i_unreached();
 }
 
-static int sieve_header_address_list_next_string_item
-(struct sieve_stringlist *_strlist, string_t **str_r)
+static int
+sieve_header_address_list_next_string_item(struct sieve_stringlist *_strlist,
+					   string_t **str_r)
 {
-	struct sieve_address_list *addrlist = (struct sieve_address_list *)_strlist;
+	struct sieve_address_list *addrlist =
+		(struct sieve_address_list *)_strlist;
 	struct smtp_address addr;
 	int ret;
 
-	if ( (ret=sieve_header_address_list_next_item
-		(addrlist, &addr, str_r)) <= 0 )
+	if ((ret = sieve_header_address_list_next_item(
+		addrlist, &addr, str_r)) <= 0)
 		return ret;
 
-	if ( addr.localpart != NULL ) {
-		const char *addr_str =	smtp_address_encode(&addr);
-		if ( str_r != NULL )
+	if (addr.localpart != NULL) {
+		const char *addr_str = smtp_address_encode(&addr);
+
+		if (str_r != NULL)
 			*str_r = t_str_new_const(addr_str, strlen(addr_str));
 	}
-
 	return 1;
 }
 
-static void sieve_header_address_list_reset
-(struct sieve_stringlist *_strlist)
+static void sieve_header_address_list_reset(struct sieve_stringlist *_strlist)
 {
 	struct sieve_header_address_list *addrlist =
 		(struct sieve_header_address_list *)_strlist;
@@ -176,8 +191,9 @@ static void sieve_header_address_list_reset
 	addrlist->cur_address = NULL;
 }
 
-static void sieve_header_address_list_set_trace
-(struct sieve_stringlist *_strlist, bool trace)
+static void
+sieve_header_address_list_set_trace(struct sieve_stringlist *_strlist,
+				    bool trace)
 {
 	struct sieve_header_address_list *addrlist =
 		(struct sieve_header_address_list *)_strlist;
@@ -190,49 +206,49 @@ static void sieve_header_address_list_set_trace
  */
 
 /* Mail message address according to RFC 2822 and implemented in the Dovecot
- * message address parser:
- *
- *   address         =       mailbox / group
- *   mailbox         =       name-addr / addr-spec
- *   name-addr       =       [display-name] angle-addr
- *   angle-addr      =       [CFWS] "<" addr-spec ">" [CFWS] / obs-angle-addr
- *   group           =       display-name ":" [mailbox-list / CFWS] ";" [CFWS]
- *   display-name    =       phrase
- *
- *   addr-spec       =       local-part "@" domain
- *   local-part      =       dot-atom / quoted-string / obs-local-part
- *   domain          =       dot-atom / domain-literal / obs-domain
- *   domain-literal  =       [CFWS] "[" *([FWS] dcontent) [FWS] "]" [CFWS]
- *   dcontent        =       dtext / quoted-pair
- *   dtext           =       NO-WS-CTL /     ; Non white space controls
- *                           %d33-90 /       ; The rest of the US-ASCII
- *                           %d94-126        ;  characters not including "[",
- *                                           ;  "]", or "\"
- *
- *   atext           =       ALPHA / DIGIT / ; Any character except controls,
- *                           "!" / "#" /     ;  SP, and specials.
- *                           "$" / "%" /     ;  Used for atoms
- *                           "&" / "'" /
- *                           "*" / "+" /
- *                           "-" / "/" /
- *                           "=" / "?" /
- *                           "^" / "_" /
- *                           "`" / "{" /
- *                           "|" / "}" /
- *                           "~"
- *   atom            =       [CFWS] 1*atext [CFWS]
- *   dot-atom        =       [CFWS] dot-atom-text [CFWS]
- *   dot-atom-text   =       1*atext *("." 1*atext)
- *   word            =       atom / quoted-string
- *   phrase          =       1*word / obs-phrase
- *
- * Message address specification as allowed bij the RFC 5228 SIEVE
- * specification:
- *   sieve-address   =       addr-spec                  ; simple address
- *                           / phrase "<" addr-spec ">" ; name & addr-spec\
- *
- * Which concisely is about equal to:
- *   sieve-address   =       mailbox
+   message address parser:
+
+     address         =       mailbox / group
+     mailbox         =       name-addr / addr-spec
+     name-addr       =       [display-name] angle-addr
+     angle-addr      =       [CFWS] "<" addr-spec ">" [CFWS] / obs-angle-addr
+     group           =       display-name ":" [mailbox-list / CFWS] ";" [CFWS]
+     display-name    =       phrase
+
+     addr-spec       =       local-part "@" domain
+     local-part      =       dot-atom / quoted-string / obs-local-part
+     domain          =       dot-atom / domain-literal / obs-domain
+     domain-literal  =       [CFWS] "[" *([FWS] dcontent) [FWS] "]" [CFWS]
+     dcontent        =       dtext / quoted-pair
+     dtext           =       NO-WS-CTL /     ; Non white space controls
+                             %d33-90 /       ; The rest of the US-ASCII
+                             %d94-126        ;  characters not including "[",
+                                             ;  "]", or "\"
+
+     atext           =       ALPHA / DIGIT / ; Any character except controls,
+                            "!" / "#" /     ;  SP, and specials.
+                             "$" / "%" /     ;  Used for atoms
+                             "&" / "'" /
+                             "*" / "+" /
+                             "-" / "/" /
+                             "=" / "?" /
+                             "^" / "_" /
+                             "`" / "{" /
+                             "|" / "}" /
+                             "~"
+     atom            =       [CFWS] 1*atext [CFWS]
+     dot-atom        =       [CFWS] dot-atom-text [CFWS]
+     dot-atom-text   =       1*atext *("." 1*atext)
+     word            =       atom / quoted-string
+     phrase          =       1*word / obs-phrase
+
+   Message address specification as allowed bij the RFC 5228 SIEVE
+   specification:
+     sieve-address   =       addr-spec                  ; simple address
+                             / phrase "<" addr-spec ">" ; name & addr-spec\
+
+   Which concisely is about equal to:
+     sieve-address   =       mailbox
  */
 
 /*
@@ -253,16 +269,13 @@ struct sieve_message_address_parser {
  * Error handling
  */
 
-static inline void sieve_address_error
-	(struct sieve_message_address_parser *ctx, const char *fmt, ...)
-		ATTR_FORMAT(2, 3);
-
-static inline void sieve_address_error
-	(struct sieve_message_address_parser *ctx, const char *fmt, ...)
+static inline void ATTR_FORMAT(2, 3)
+sieve_address_error(struct sieve_message_address_parser *ctx,
+		    const char *fmt, ...)
 {
 	va_list args;
 
-	if ( str_len(ctx->error) == 0 ) {
+	if (str_len(ctx->error) == 0) {
 		va_start(args, fmt);
 		str_vprintfa(ctx->error, fmt, args);
 		va_end(args);
@@ -270,11 +283,11 @@ static inline void sieve_address_error
 }
 
 /*
- * Partial RFC 2822 address parser
- *
- *   FIXME: lots of overlap with dovecot/src/lib-mail/message-parser.c
- *          --> this implementation adds textual error reporting
- *          MERGE!
+   Partial RFC 2822 address parser
+
+     FIXME: lots of overlap with dovecot/src/lib-mail/message-parser.c
+            --> this implementation adds textual error reporting
+            MERGE!
  */
 
 static int check_local_part(struct sieve_message_address_parser *ctx)
@@ -309,8 +322,9 @@ static int parse_local_part(struct sieve_message_address_parser *ctx)
 		ret = rfc822_parse_quoted_string(&ctx->parser, ctx->local_part);
 	} else {
 		ret = -1;
-		/* NOTE: this deviates from dot-atom syntax to allow some Japanese
-		   mail addresses with dots at non-standard places to be accepted. */
+		/* NOTE: this deviates from dot-atom syntax to allow some
+		   Japanese mail addresses with dots at non-standard places to
+		   be accepted. */
 		do {
 			while (*ctx->parser.data == '.') {
 				str_append_c(ctx->local_part, '.');
@@ -332,7 +346,6 @@ static int parse_local_part(struct sieve_message_address_parser *ctx)
 		sieve_address_error(ctx, "invalid local part");
 		return -1;
 	}
-
 	return ret;
 }
 
@@ -357,11 +370,12 @@ static int parse_addr_spec(struct sieve_message_address_parser *ctx)
 	if ((ret = parse_local_part(ctx)) < 0)
 		return ret;
 
-	if ( ret > 0 && *ctx->parser.data == '@') {
+	if (ret > 0 && *ctx->parser.data == '@') {
 		return parse_domain(ctx);
 	}
 
-	sieve_address_error(ctx, "invalid or lonely local part '%s' (expecting '@')",
+	sieve_address_error(
+		ctx, "invalid or lonely local part '%s' (expecting '@')",
 		str_sanitize(str_c(ctx->local_part), 80));
 	return -1;
 }
@@ -372,7 +386,7 @@ static int parse_mailbox(struct sieve_message_address_parser *ctx)
 	const unsigned char *start;
 
 	/* sieve-address   =       addr-spec                  ; simple address
-	 *                         / phrase "<" addr-spec ">" ; name & addr-spec
+	                           / phrase "<" addr-spec ">" ; name & addr-spec
 	 */
 
 	/* Record parser state in case we fail at our first attempt */
@@ -382,16 +396,16 @@ static int parse_mailbox(struct sieve_message_address_parser *ctx)
 	str_truncate(ctx->str, 0);
 	if (rfc822_parse_phrase(&ctx->parser, ctx->str) <= 0 ||
 	    *ctx->parser.data != '<') {
-	  /* Failed; try just bare addr-spec */
-	  ctx->parser.data = start;
-	  return parse_addr_spec(ctx);
+		/* Failed; try just bare addr-spec */
+		ctx->parser.data = start;
+		return parse_addr_spec(ctx);
 	}
 
 	/* "<" addr-spec ">" */
 	ctx->parser.data++;
 
-	if ((ret = rfc822_skip_lwsp(&ctx->parser)) <= 0 ) {
-		if ( ret < 0 )
+	if ((ret = rfc822_skip_lwsp(&ctx->parser)) <= 0) {
+		if (ret < 0)
 			sieve_address_error(ctx, "invalid characters after <");
 		return ret;
 	}
@@ -405,15 +419,16 @@ static int parse_mailbox(struct sieve_message_address_parser *ctx)
 	}
 	ctx->parser.data++;
 
-	if ( (ret=rfc822_skip_lwsp(&ctx->parser)) < 0 )
-		sieve_address_error(ctx, "address ends with invalid characters");
-
+	if ((ret = rfc822_skip_lwsp(&ctx->parser)) < 0) {
+		sieve_address_error(
+			ctx, "address ends with invalid characters");
+	}
 	return ret;
 }
 
-static bool parse_mailbox_address
-(struct sieve_message_address_parser *ctx, const unsigned char *address,
-	unsigned int addr_size)
+static bool
+parse_mailbox_address(struct sieve_message_address_parser *ctx,
+		      const unsigned char *address, unsigned int addr_size)
 {
 	/* Initialize parser */
 
@@ -432,34 +447,36 @@ static bool parse_mailbox_address
 		return FALSE;
 
 	if (ctx->parser.data != ctx->parser.end) {
-		if ( *ctx->parser.data == ',' )
-			sieve_address_error(ctx, "not a single addres (found ',')");
-		else
-			sieve_address_error(ctx, "address ends in invalid characters");
+		if (*ctx->parser.data == ',') {
+			sieve_address_error(
+				ctx, "not a single addres (found ',')");
+		} else {
+			sieve_address_error(
+				ctx, "address ends in invalid characters");
+		}
 		return FALSE;
 	}
 
-	if ( str_len(ctx->domain) == 0 ) {
+	if (str_len(ctx->domain) == 0) {
 		/* Not gonna happen */
 		sieve_address_error(ctx, "missing domain");
 		return FALSE;
 	}
 
-	if ( str_len(ctx->local_part) == 0 ) {
+	if (str_len(ctx->local_part) == 0) {
 		sieve_address_error(ctx, "missing local part");
 		return FALSE;
 	}
-
 	return TRUE;
 }
 
-static bool sieve_address_do_validate
-(const unsigned char *address, size_t size,
-	const char **error_r)
+static bool
+sieve_address_do_validate(const unsigned char *address, size_t size,
+			  const char **error_r)
 {
 	struct sieve_message_address_parser ctx;
 
-	if ( address == NULL ) {
+	if (address == NULL) {
 		*error_r = "null address";
 		return FALSE;
 	}
@@ -471,28 +488,28 @@ static bool sieve_address_do_validate
 	ctx.str = t_str_new(128);
 	ctx.error = t_str_new(128);
 
-	if ( !parse_mailbox_address(&ctx, address, size) ) {
-		if ( error_r != NULL )
+	if (!parse_mailbox_address(&ctx, address, size)) {
+		if (error_r != NULL)
 			*error_r = str_c(ctx.error);
 		return FALSE;
 	}
 
-	if ( error_r != NULL )
+	if (error_r != NULL)
 		*error_r = NULL;
-
 	return TRUE;
 }
 
-static const struct smtp_address *sieve_address_do_parse
-(const unsigned char *address, size_t size,
-	const char **error_r)
+static const struct smtp_address *
+sieve_address_do_parse(const unsigned char *address, size_t size,
+		       const char **error_r)
 {
 	struct sieve_message_address_parser ctx;
 
-	if ( error_r != NULL )
+	if (error_r != NULL)
 		*error_r = NULL;
 
-	if ( address == NULL ) return NULL;
+	if (address == NULL)
+		return NULL;
 
 	i_zero(&ctx);
 
@@ -501,45 +518,44 @@ static const struct smtp_address *sieve_address_do_parse
 	ctx.str = t_str_new(128);
 	ctx.error = t_str_new(128);
 
-	if ( !parse_mailbox_address(&ctx, address, size) ) {
-		if ( error_r != NULL )
+	if (!parse_mailbox_address(&ctx, address, size)) {
+		if (error_r != NULL)
 			*error_r = str_c(ctx.error);
 		return NULL;
 	}
 
 	(void)str_lcase(str_c_modifiable(ctx.domain));
 
-	return smtp_address_create_temp(str_c(ctx.local_part), str_c(ctx.domain));
+	return smtp_address_create_temp(str_c(ctx.local_part),
+					str_c(ctx.domain));
 }
 
 /*
  * Sieve address
  */
 
-const struct smtp_address *sieve_address_parse
-(const char *address, const char **error_r)
+const struct smtp_address *
+sieve_address_parse(const char *address, const char **error_r)
 {
-	return sieve_address_do_parse
-		((const unsigned char *)address, strlen(address), error_r);
+	return sieve_address_do_parse((const unsigned char *)address,
+				      strlen(address), error_r);
 }
 
-const struct smtp_address *sieve_address_parse_str
-(string_t *address, const char **error_r)
+const struct smtp_address *
+sieve_address_parse_str(string_t *address, const char **error_r)
 {
-	return sieve_address_do_parse
-		(str_data(address), str_len(address), error_r);
+	return sieve_address_do_parse(str_data(address), str_len(address),
+				      error_r);
 }
 
-bool sieve_address_validate
-(const char *address, const char **error_r)
+bool sieve_address_validate(const char *address, const char **error_r)
 {
-	return sieve_address_do_validate
-		((const unsigned char *)address, strlen(address), error_r);
+	return sieve_address_do_validate((const unsigned char *)address,
+					 strlen(address), error_r);
 }
 
-bool sieve_address_validate_str
-(string_t *address, const char **error_r)
+bool sieve_address_validate_str(string_t *address, const char **error_r)
 {
-	return sieve_address_do_validate
-		(str_data(address), str_len(address), error_r);
+	return sieve_address_do_validate(str_data(address), str_len(address),
+					 error_r);
 }
