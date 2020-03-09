@@ -9,37 +9,33 @@
 
 struct sieve_binary_dumper;
 
-struct sieve_binary_dumper *sieve_binary_dumper_create
-	(struct sieve_binary *sbin);
-void sieve_binary_dumper_free
-	(struct sieve_binary_dumper **dumper);
+struct sieve_binary_dumper *
+sieve_binary_dumper_create(struct sieve_binary *sbin);
+void sieve_binary_dumper_free(struct sieve_binary_dumper **dumper);
 
-pool_t sieve_binary_dumper_pool
-	(struct sieve_binary_dumper *dumper);
+pool_t sieve_binary_dumper_pool(struct sieve_binary_dumper *dumper);
 
 /*
  * Formatted output
  */
 
-void sieve_binary_dumpf
-	(const struct sieve_dumptime_env *denv, const char *fmt, ...)
-		ATTR_FORMAT(2, 3);
-void sieve_binary_dump_sectionf
-	(const struct sieve_dumptime_env *denv, const char *fmt, ...)
-		ATTR_FORMAT(2, 3);
+void sieve_binary_dumpf(const struct sieve_dumptime_env *denv,
+			const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_binary_dump_sectionf(const struct sieve_dumptime_env *denv,
+				const char *fmt, ...) ATTR_FORMAT(2, 3);
 
 /*
  * Dumping the binary
  */
 
-bool sieve_binary_dumper_run
-	(struct sieve_binary_dumper *dumper, struct ostream *stream, bool verbose);
+bool sieve_binary_dumper_run(struct sieve_binary_dumper *dumper,
+			     struct ostream *stream, bool verbose);
 
 /*
  * Hexdump production
  */
 
-void sieve_binary_dumper_hexdump
-(struct sieve_binary_dumper *dumper, struct ostream *stream);
+void sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
+				 struct ostream *stream);
 
 #endif
