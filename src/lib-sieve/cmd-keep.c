@@ -20,8 +20,9 @@
  *   keep
  */
 
-static bool cmd_keep_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
+static bool
+cmd_keep_generate(const struct sieve_codegen_env *cgenv,
+		  struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_keep = {
 	.identifier = "keep",
@@ -37,10 +38,12 @@ const struct sieve_command_def cmd_keep = {
  * Keep operation
  */
 
-static bool cmd_keep_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int cmd_keep_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+cmd_keep_operation_dump(const struct sieve_dumptime_env *denv,
+			sieve_size_t *address);
+static int
+cmd_keep_operation_execute(const struct sieve_runtime_env *renv,
+			   sieve_size_t *address);
 
 const struct sieve_operation_def cmd_keep_operation = {
 	.mnemonic = "KEEP",
@@ -53,8 +56,9 @@ const struct sieve_operation_def cmd_keep_operation = {
  * Code generation
  */
 
-static bool cmd_keep_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+static bool
+cmd_keep_generate(const struct sieve_codegen_env *cgenv,
+		  struct sieve_command *cmd)
 {
 	/* Emit opcode */
 	sieve_operation_emit(cgenv->sblock, NULL, &cmd_keep_operation);
@@ -67,21 +71,23 @@ static bool cmd_keep_generate
  * Code dump
  */
 
-static bool cmd_keep_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+cmd_keep_operation_dump(const struct sieve_dumptime_env *denv,
+			sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "KEEP");
 	sieve_code_descend(denv);
 
-	return ( sieve_action_opr_optional_dump(denv, address, NULL) == 0 );
+	return (sieve_action_opr_optional_dump(denv, address, NULL) == 0);
 }
 
 /*
  * Interpretation
  */
 
-static int cmd_keep_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+cmd_keep_operation_execute(const struct sieve_runtime_env *renv,
+			   sieve_size_t *address)
 {
 	struct sieve_side_effects_list *slist = NULL;
 	int ret = 0;
@@ -91,7 +97,8 @@ static int cmd_keep_operation_execute
 	 */
 
 	/* Optional operands (side effects only) */
-	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 )
+	if (sieve_action_opr_optional_read(renv, address, NULL,
+					   &ret, &slist) != 0)
 		return ret;
 
 	/*
@@ -99,14 +106,11 @@ static int cmd_keep_operation_execute
 	 */
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
-		"keep action; store message in default mailbox");
+			    "keep action; store message in default mailbox");
 
-	/* Add keep action to result.
-	 */
-	if ( sieve_result_add_keep(renv, slist) < 0 )
+	/* Add keep action to result. */
+	if (sieve_result_add_keep(renv, slist) < 0)
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;
 }
-
-
