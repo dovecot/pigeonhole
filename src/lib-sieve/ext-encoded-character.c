@@ -23,8 +23,9 @@
  * Extension
  */
 
-static bool ext_encoded_character_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool
+ext_encoded_character_validator_load(const struct sieve_extension *ext,
+				     struct sieve_validator *valdtr);
 
 const struct sieve_extension_def encoded_character_extension = {
 	.name = "encoded-character",
@@ -35,9 +36,9 @@ const struct sieve_extension_def encoded_character_extension = {
  * Encoded string argument
  */
 
-bool arg_encoded_string_validate
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command *context);
+bool arg_encoded_string_validate(struct sieve_validator *valdtr,
+				 struct sieve_ast_argument **arg,
+				 struct sieve_command *context);
 
 const struct sieve_argument_def encoded_string_argument = {
 	.identifier = "@encoded-string",
@@ -46,19 +47,18 @@ const struct sieve_argument_def encoded_string_argument = {
 
 /* Parsing */
 
-static bool _skip_whitespace
-	(const char **in, const char *inend)
+static bool _skip_whitespace(const char **in, const char *inend)
 {
-	while ( *in < inend ) {
-		if ( **in == '\r' ) {
+	while (*in < inend) {
+		if (**in == '\r') {
 			(*in)++;
-			if ( **in != '\n' )
+			if (**in != '\n')
 				return FALSE;
 			continue;
 		}
 
 		/* (Loose LF is non-standard) */
-		if ( **in != ' ' && **in != '\n' && **in != '\t' )
+		if (**in != ' ' && **in != '\n' && **in != '\t')
 			break;
 
 		(*in)++;
@@ -67,91 +67,97 @@ static bool _skip_whitespace
 	return TRUE;
 }
 
-static bool _parse_hexint
-(const char **in, const char *inend, int max_digits, unsigned int *result)
+static bool
+_parse_hexint(const char **in, const char *inend, int max_digits,
+	      unsigned int *result)
 {
 	int digit = 0;
 	*result = 0;
 
-	while ( *in < inend && (max_digits == 0 || digit < max_digits) ) {
-
-		if ( (**in) >= '0' && (**in) <= '9' )
-			*result = ((*result) << 4) + (**in) - ((unsigned int) '0');
-		else if ( (**in) >= 'a' && (**in) <= 'f' )
-			*result = ((*result) << 4) + (**in) - ((unsigned int) 'a') + 0x0a;
-		else if ( (**in) >= 'A' && (**in) <= 'F' )
-			*result = ((*result) << 4) + (**in) - ((unsigned int) 'A') + 0x0a;
-		else
-			return ( digit > 0 );
+	while (*in < inend && (max_digits == 0 || digit < max_digits)) {
+		if ((**in) >= '0' && (**in) <= '9') {
+			*result = ((*result) << 4) + (**in) -
+				((unsigned int) '0');
+		} else if ((**in) >= 'a' && (**in) <= 'f') {
+			*result = ((*result) << 4) + (**in) -
+				((unsigned int) 'a') + 0x0a;
+		} else if ((**in) >= 'A' && (**in) <= 'F') {
+			*result = ((*result) << 4) + (**in) -
+				((unsigned int) 'A') + 0x0a;
+		} else {
+			return (digit > 0);
+		}
 
 		(*in)++;
 		digit++;
 	}
 
-	if ( digit == max_digits ) {
+	if (digit == max_digits) {
 		/* Hex digit _MUST_ end here */
-		if ( (**in >= '0' && **in <= '9')	|| (**in >= 'a' && **in <= 'f') ||
-			(**in >= 'A' && **in <= 'F') )
+		if ((**in >= '0' && **in <= '9') ||
+		    (**in >= 'a' && **in <= 'f') ||
+		    (**in >= 'A' && **in <= 'F'))
 			return FALSE;
 
 		return TRUE;
 	}
 
-	return ( digit > 0 );
+	return (digit > 0);
 }
 
-static bool _decode_hex
-(const char **in, const char *inend, string_t *result)
+static bool _decode_hex(const char **in, const char *inend, string_t *result)
 {
 	int values = 0;
 
-	while ( *in < inend ) {
+	while (*in < inend) {
 		unsigned int hexpair;
 
-		if ( !_skip_whitespace(in, inend) ) return FALSE;
+		if (!_skip_whitespace(in, inend))
+			return FALSE;
+		if (!_parse_hexint(in, inend, 2, &hexpair))
+			break;
 
-		if ( !_parse_hexint(in, inend, 2, &hexpair) ) break;
-
-		str_append_c(result, (unsigned char) hexpair);
+		str_append_c(result, (unsigned char)hexpair);
 		values++;
 	}
 
-	return ( values > 0 );
+	return (values > 0);
 }
 
-static bool _decode_unicode
-(const char **in, const char *inend, string_t *result,
-	unsigned int *error_hex)
+static bool
+_decode_unicode(const char **in, const char *inend, string_t *result,
+		unsigned int *error_hex)
 {
 	int values = 0;
 	bool valid = TRUE;
 
-	while ( *in < inend ) {
+	while (*in < inend) {
 		unsigned int unicode_hex;
 
-		if ( !_skip_whitespace(in, inend) ) return FALSE;
+		if (!_skip_whitespace(in, inend))
+			return FALSE;
+		if (!_parse_hexint(in, inend, 0, &unicode_hex))
+			break;
 
-		if ( !_parse_hexint(in, inend, 0, &unicode_hex) ) break;
-
-		if ( uni_is_valid_ucs4((unichar_t) unicode_hex) )
-			uni_ucs4_to_utf8_c((unichar_t) unicode_hex, result);
+		if (uni_is_valid_ucs4((unichar_t) unicode_hex))
+			uni_ucs4_to_utf8_c((unichar_t)unicode_hex, result);
 		else {
-			if ( valid ) *error_hex = unicode_hex;
+			if (valid)
+				*error_hex = unicode_hex;
 			valid = FALSE;
 		}
 		values++;
 	}
 
-	return ( values > 0 );
+	return (values > 0);
 }
 
-bool arg_encoded_string_validate
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command *cmd)
+bool arg_encoded_string_validate(struct sieve_validator *valdtr,
+				 struct sieve_ast_argument **arg,
+				 struct sieve_command *cmd)
 {
 	bool result = TRUE;
-	enum { ST_NONE, ST_OPEN, ST_TYPE, ST_CLOSE }
-		state = ST_NONE;
+	enum { ST_NONE, ST_OPEN, ST_TYPE, ST_CLOSE } state;
 	string_t *str = sieve_ast_argument_str(*arg);
 	string_t *tmpstr, *newstr = NULL;
 	const char *p, *mark, *strstart, *substart = NULL;
@@ -159,16 +165,17 @@ bool arg_encoded_string_validate
 	const char *strend = strval + str_len(str);
 	unsigned int error_hex = 0;
 
+	state = ST_NONE;
 	T_BEGIN {
 		tmpstr = t_str_new(32);
 
 		p = strval;
 		strstart = p;
-		while ( result && p < strend ) {
-			switch ( state ) {
+		while (result && p < strend) {
+			switch (state) {
 			/* Normal string */
 			case ST_NONE:
-				if ( *p == '$' ) {
+				if (*p == '$') {
 					substart = p;
 					state = ST_OPEN;
 				}
@@ -176,7 +183,7 @@ bool arg_encoded_string_validate
 				break;
 			/* Parsed '$' */
 			case ST_OPEN:
-				if ( *p == '{' ) {
+				if (*p == '{') {
 					state = ST_TYPE;
 					p++;
 				} else
@@ -186,9 +193,10 @@ bool arg_encoded_string_validate
 			case ST_TYPE:
 				mark = p;
 				/* Scan for 'hex' or 'unicode' */
-				while ( p < strend && i_isalpha(*p) ) p++;
+				while (p < strend && i_isalpha(*p))
+					p++;
 
-				if ( *p != ':' ) {
+				if (*p != ':') {
 					state = ST_NONE;
 					break;
 				}
@@ -196,15 +204,15 @@ bool arg_encoded_string_validate
 				state = ST_CLOSE;
 
 				str_truncate(tmpstr, 0);
-				if ( strncasecmp(mark, "hex", p - mark) == 0 ) {
+				if (strncasecmp(mark, "hex", p - mark) == 0) {
 					/* Hexadecimal */
 					p++;
-					if ( !_decode_hex(&p, strend, tmpstr) )
+					if (!_decode_hex(&p, strend, tmpstr))
 						state = ST_NONE;
-				} else if ( strncasecmp(mark, "unicode", p - mark) == 0 ) {
+				} else if (strncasecmp(mark, "unicode", p - mark) == 0) {
 					/* Unicode */
 					p++;
-					if ( !_decode_unicode(&p, strend, tmpstr, &error_hex) )
+					if (!_decode_unicode(&p, strend, tmpstr, &error_hex))
 						state = ST_NONE;
 				} else {
 					/* Invalid encoding */
@@ -213,22 +221,25 @@ bool arg_encoded_string_validate
 				}
 				break;
 			case ST_CLOSE:
-				if ( *p == '}' ) {
+				if (*p == '}') {
 					/* We now know that the substitution is valid */
 
-					if ( error_hex != 0 ) {
-						sieve_argument_validate_error(valdtr, *arg,
+					if (error_hex != 0) {
+						sieve_argument_validate_error(
+							valdtr, *arg,
 							"invalid unicode character 0x%08x in encoded character substitution",
 							error_hex);
 						result = FALSE;
 						break;
 					}
 
-					if ( newstr == NULL ) {
-						newstr = str_new(sieve_ast_pool((*arg)->ast), str_len(str)*2);
+					if (newstr == NULL) {
+						newstr = str_new(sieve_ast_pool((*arg)->ast),
+								 str_len(str) * 2);
 					}
 
-					str_append_data(newstr, strstart, substart-strstart);
+					str_append_data(newstr, strstart,
+							substart-strstart);
 					str_append_str(newstr, tmpstr);
 
 					strstart = p + 1;
@@ -241,30 +252,30 @@ bool arg_encoded_string_validate
 		}
 	} T_END;
 
-	if ( !result ) return FALSE;
+	if (!result)
+		return FALSE;
 
-	if ( newstr != NULL ) {
-		if ( strstart != strend )
-			str_append_data(newstr, strstart, strend-strstart);
+	if (newstr != NULL) {
+		if (strstart != strend)
+			str_append_data(newstr, strstart, strend - strstart);
 
 		sieve_ast_argument_string_set(*arg, newstr);
 	}
 
 	/* Pass the processed string to a (possible) next layer of processing */
-	return sieve_validator_argument_activate_super
-		(valdtr, cmd, *arg, TRUE);
+	return sieve_validator_argument_activate_super(valdtr, cmd, *arg, TRUE);
 }
 
 /*
  * Extension implementation
  */
 
-static bool ext_encoded_character_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_encoded_character_validator_load(const struct sieve_extension *ext,
+				     struct sieve_validator *valdtr)
 {
 	/* Override the constant string argument with our own */
-	sieve_validator_argument_override
-		(valdtr, SAT_CONST_STRING, ext, &encoded_string_argument);
-
+	sieve_validator_argument_override(valdtr, SAT_CONST_STRING, ext,
+					  &encoded_string_argument);
 	return TRUE;
 }
