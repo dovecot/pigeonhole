@@ -155,8 +155,10 @@ testsuite_error_handler(const struct failure_context *ctx, const char *fmt,
 	i_zero(&msg);
 	switch (ctx->type) {
 	case LOG_TYPE_DEBUG:
-		_testsuite_stdout_log(&params, "debug",
-				      t_strdup_vprintf(fmt, args));
+		T_BEGIN {
+			_testsuite_stdout_log(&params, "debug",
+					      t_strdup_vprintf(fmt, args));
+		} T_END;
 		break;
 	case LOG_TYPE_INFO:
 		msg.message = p_strdup_vprintf(pool, fmt, args);
