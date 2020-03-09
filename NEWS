@@ -1,6 +1,7 @@
 v0.5.10 2020-03-06  Aki Tuomi <aki.tuomi@open-xchange.com>
 
-	No changes
+	* imap_sieve_filter: Change result action logging to include IMAP UID
+	- vacation: Addresses were compared case-sensitively.
 
 v0.5.9 2019-12-04  Aki Tuomi <aki.tuomi@open-xchange.com>
 
