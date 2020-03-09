@@ -18,19 +18,17 @@ struct sieve_address_source {
 	const struct smtp_address *address;
 };
 
-bool sieve_address_source_parse
-	(pool_t pool, const char *value,
-		struct sieve_address_source *asrc);
-bool sieve_address_source_parse_from_setting
-	(struct sieve_instance *svinst, pool_t pool,
-		const char *setting, struct sieve_address_source *asrc);
+bool sieve_address_source_parse(pool_t pool, const char *value,
+				struct sieve_address_source *asrc);
+bool sieve_address_source_parse_from_setting(struct sieve_instance *svinst,
+					     pool_t pool, const char *setting,
+					     struct sieve_address_source *asrc);
 
-int sieve_address_source_get_address
-	(struct sieve_address_source *asrc,
-		struct sieve_instance *svinst,
-		const struct sieve_script_env *senv,
-		struct sieve_message_context *msgctx,
-		enum sieve_execute_flags flags,
-		const struct smtp_address **addr_r);
+int sieve_address_source_get_address(struct sieve_address_source *asrc,
+				     struct sieve_instance *svinst,
+				     const struct sieve_script_env *senv,
+				     struct sieve_message_context *msgctx,
+				     enum sieve_execute_flags flags,
+				     const struct smtp_address **addr_r);
 
 #endif
