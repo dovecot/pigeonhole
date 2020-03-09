@@ -301,4 +301,3 @@ void sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
 		o_stream_nsend(stream, str_data(line), str_len(line));
 	}
 }
-
