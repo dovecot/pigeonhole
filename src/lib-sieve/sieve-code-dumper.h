@@ -5,12 +5,10 @@
 
 struct sieve_code_dumper;
 
-struct sieve_code_dumper *sieve_code_dumper_create
-	(struct sieve_dumptime_env *denv);
-void sieve_code_dumper_free
-	(struct sieve_code_dumper **_dumper);
-pool_t sieve_code_dumper_pool
-	(struct sieve_code_dumper *dumper);
+struct sieve_code_dumper *
+sieve_code_dumper_create(struct sieve_dumptime_env *denv);
+void sieve_code_dumper_free(struct sieve_code_dumper **_dumper);
+pool_t sieve_code_dumper_pool(struct sieve_code_dumper *dumper);
 
 /*
  * Extension support
@@ -22,31 +20,30 @@ struct sieve_code_dumper_extension {
 	void (*free)(struct sieve_code_dumper *dumper, void *context);
 };
 
-void sieve_dump_extension_register
-(struct sieve_code_dumper *dumper, const struct sieve_extension *ext,
+void sieve_dump_extension_register(
+	struct sieve_code_dumper *dumper, const struct sieve_extension *ext,
 	const struct sieve_code_dumper_extension *dump_ext, void *context);
-void sieve_dump_extension_set_context
-	(struct sieve_code_dumper *dumper, const struct sieve_extension *ext,
-		void *context);
-void *sieve_dump_extension_get_context
-	(struct sieve_code_dumper *dumper, const struct sieve_extension *ext);
+void sieve_dump_extension_set_context(struct sieve_code_dumper *dumper,
+				      const struct sieve_extension *ext,
+				      void *context);
+void *sieve_dump_extension_get_context(struct sieve_code_dumper *dumper,
+				       const struct sieve_extension *ext);
 
 /* Dump functions */
 
-void sieve_code_dumpf
-	(const struct sieve_dumptime_env *denv, const char *fmt, ...)
-		ATTR_FORMAT(2, 3);
+void sieve_code_dumpf(const struct sieve_dumptime_env *denv,
+		      const char *fmt, ...) ATTR_FORMAT(2, 3);
 
 void sieve_code_mark(const struct sieve_dumptime_env *denv);
-void sieve_code_mark_specific
-	(const struct sieve_dumptime_env *denv, sieve_size_t location);
+void sieve_code_mark_specific(const struct sieve_dumptime_env *denv,
+			      sieve_size_t location);
 void sieve_code_descend(const struct sieve_dumptime_env *denv);
 void sieve_code_ascend(const struct sieve_dumptime_env *denv);
 
 /* Operations and operands */
 
-bool sieve_code_dumper_print_optional_operands
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+bool sieve_code_dumper_print_optional_operands(
+	const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
 /* Code dump (debugging purposes) */
 
