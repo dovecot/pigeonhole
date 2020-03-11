@@ -43,16 +43,16 @@ struct sieve_comparator_def {
 	/* Equality and ordering */
 
 	int (*compare)(const struct sieve_comparator *cmp,
-		const char *val1, size_t val1_size,
-		const char *val2, size_t val2_size);
+		       const char *val1, size_t val1_size,
+		       const char *val2, size_t val2_size);
 
 	/* Prefix and substring match */
 
 	bool (*char_match)(const struct sieve_comparator *cmp,
-		const char **val, const char *val_end,
-		const char **key, const char *key_end);
+			   const char **val, const char *val_end,
+			   const char **key, const char *key_end);
 	bool (*char_skip)(const struct sieve_comparator *cmp,
-		const char **val, const char *val_end);
+			  const char **val, const char *val_end);
 };
 
 /*
@@ -69,17 +69,16 @@ struct sieve_comparator {
 	{ SIEVE_OBJECT_DEFAULT(definition), &(definition) }
 
 #define sieve_comparator_name(cmp) \
-	( (cmp)->object.def->identifier )
+	((cmp)->object.def->identifier)
 #define sieve_comparator_is(cmp, definition) \
-	( (cmp)->def == &(definition) )
+	((cmp)->def == &(definition))
 
-static inline const struct sieve_comparator *sieve_comparator_copy
-(pool_t pool, const struct sieve_comparator *cmp_orig)
+static inline const struct sieve_comparator *
+sieve_comparator_copy(pool_t pool, const struct sieve_comparator *cmp_orig)
 {
 	struct sieve_comparator *cmp = p_new(pool, struct sieve_comparator, 1);
 
 	*cmp = *cmp_orig;
-
 	return cmp;
 }
 
@@ -89,24 +88,24 @@ static inline const struct sieve_comparator *sieve_comparator_copy
 
 extern const struct sieve_argument_def comparator_tag;
 
-static inline bool sieve_argument_is_comparator
-(struct sieve_ast_argument *arg)
+static inline bool
+sieve_argument_is_comparator(struct sieve_ast_argument *arg)
 {
-	return ( arg->argument != NULL &&
-		(arg->argument->def == &comparator_tag) );
+	return (arg->argument != NULL &&
+		(arg->argument->def == &comparator_tag));
 }
 
-void sieve_comparators_link_tag
-	(struct sieve_validator *validator,
-		struct sieve_command_registration *cmd_reg,	int id_code);
-bool sieve_comparator_tag_is
-	(struct sieve_ast_argument *tag, const struct sieve_comparator_def *cmp);
-const struct sieve_comparator *sieve_comparator_tag_get
-	(struct sieve_ast_argument *tag);
+void sieve_comparators_link_tag(struct sieve_validator *validator,
+				struct sieve_command_registration *cmd_reg,
+				int id_code);
+bool sieve_comparator_tag_is(struct sieve_ast_argument *tag,
+			     const struct sieve_comparator_def *cmp);
+const struct sieve_comparator *
+sieve_comparator_tag_get(struct sieve_ast_argument *tag);
 
-void sieve_comparator_register
-	(struct sieve_validator *validator, const struct sieve_extension *ext,
-		const struct sieve_comparator_def *cmp);
+void sieve_comparator_register(struct sieve_validator *validator,
+			       const struct sieve_extension *ext,
+			       const struct sieve_comparator_def *cmp);
 
 /*
  * Comparator operand
@@ -118,27 +117,29 @@ void sieve_comparator_register
 extern const struct sieve_operand_class sieve_comparator_operand_class;
 extern const struct sieve_operand_def comparator_operand;
 
-static inline void sieve_opr_comparator_emit
-(struct sieve_binary_block *sblock, const struct sieve_comparator *cmp)
+static inline void
+sieve_opr_comparator_emit(struct sieve_binary_block *sblock,
+			  const struct sieve_comparator *cmp)
 {
 	sieve_opr_object_emit(sblock, cmp->object.ext, cmp->object.def);
 }
-static inline bool sieve_opr_comparator_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static inline bool
+sieve_opr_comparator_dump(const struct sieve_dumptime_env *denv,
+			  sieve_size_t *address)
 {
-	return sieve_opr_object_dump
-		(denv, &sieve_comparator_operand_class, address, NULL);
+	return sieve_opr_object_dump(denv, &sieve_comparator_operand_class,
+				     address, NULL);
 }
 
-static inline int sieve_opr_comparator_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
-	struct sieve_comparator *cmp)
+static inline int
+sieve_opr_comparator_read(const struct sieve_runtime_env *renv,
+			  sieve_size_t *address, struct sieve_comparator *cmp)
 {
-	if ( !sieve_opr_object_read
-		(renv, &sieve_comparator_operand_class, address, &cmp->object) )
+	if (!sieve_opr_object_read(renv, &sieve_comparator_operand_class,
+				   address, &cmp->object))
 		return SIEVE_EXEC_BIN_CORRUPT;
 
-	cmp->def = (const struct sieve_comparator_def *) cmp->object.def;
+	cmp->def = (const struct sieve_comparator_def *)cmp->object.def;
 	return SIEVE_EXEC_OK;
 }
 
@@ -146,8 +147,7 @@ static inline int sieve_opr_comparator_read
  * Trivial/Common comparator method implementations
  */
 
-bool sieve_comparator_octet_skip
-	(const struct sieve_comparator *cmp ATTR_UNUSED,
-		const char **val, const char *val_end);
+bool sieve_comparator_octet_skip(const struct sieve_comparator *cmp ATTR_UNUSED,
+				 const char **val, const char *val_end);
 
 #endif
