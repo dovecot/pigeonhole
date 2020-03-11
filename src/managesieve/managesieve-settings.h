@@ -15,7 +15,7 @@ struct managesieve_settings {
 	const char *rawlog_dir;
 
 	/* managesieve: */
-	unsigned int managesieve_max_line_length;
+	uoff_t managesieve_max_line_length;
 	const char *managesieve_implementation_string;
 	const char *managesieve_client_workarounds;
 	const char *managesieve_logout_format;

@@ -68,7 +68,7 @@ static struct setting_define managesieve_setting_defines[] = {
 	DEF(SET_BOOL, verbose_proctitle),
 	DEF(SET_STR_VARS, rawlog_dir),
 
-	DEF(SET_UINT, managesieve_max_line_length),
+	DEF(SET_SIZE, managesieve_max_line_length),
 	DEF(SET_STR, managesieve_implementation_string),
 	DEF(SET_STR, managesieve_client_workarounds),
 	DEF(SET_STR, managesieve_logout_format),
