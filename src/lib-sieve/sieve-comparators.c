@@ -35,8 +35,9 @@ const unsigned int sieve_core_comparators_count =
  * Comparator 'extension'
  */
 
-static bool cmp_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool
+cmp_validator_load(const struct sieve_extension *ext,
+		   struct sieve_validator *valdtr);
 
 const struct sieve_extension_def comparator_extension = {
 	.name = "@comparators",
@@ -48,8 +49,8 @@ const struct sieve_extension_def comparator_extension = {
  *   name-based comparator registry.
  */
 
-static struct sieve_validator_object_registry *_get_object_registry
-(struct sieve_validator *valdtr)
+static struct sieve_validator_object_registry *
+_get_object_registry(struct sieve_validator *valdtr)
 {
 	struct sieve_instance *svinst;
 	const struct sieve_extension *mcht_ext;
@@ -59,46 +60,47 @@ static struct sieve_validator_object_registry *_get_object_registry
 	return sieve_validator_object_registry_get(valdtr, mcht_ext);
 }
 
-void sieve_comparator_register
-(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-	const struct sieve_comparator_def *cmp)
+void sieve_comparator_register(struct sieve_validator *valdtr,
+			       const struct sieve_extension *ext,
+			       const struct sieve_comparator_def *cmp)
 {
-	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
+	struct sieve_validator_object_registry *regs =
+		_get_object_registry(valdtr);
 
 	sieve_validator_object_registry_add(regs, ext, &cmp->obj_def);
 }
 
-static struct sieve_comparator *sieve_comparator_create
-(struct sieve_validator *valdtr, struct sieve_command *cmd,
-	const char *identifier)
+static struct sieve_comparator *
+sieve_comparator_create(struct sieve_validator *valdtr,
+			struct sieve_command *cmd, const char *identifier)
 {
-	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
+	struct sieve_validator_object_registry *regs =
+		_get_object_registry(valdtr);
 	struct sieve_object object;
 	struct sieve_comparator *cmp;
 
-	if ( !sieve_validator_object_registry_find(regs, identifier, &object) )
+	if (!sieve_validator_object_registry_find(regs, identifier, &object))
 		return NULL;
 
 	cmp = p_new(sieve_command_pool(cmd), struct sieve_comparator, 1);
 	cmp->object = object;
 	cmp->def = (const struct sieve_comparator_def *) object.def;
 
-  return cmp;
+	return cmp;
 }
 
-bool cmp_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+bool cmp_validator_load(const struct sieve_extension *ext,
+			struct sieve_validator *valdtr)
 {
 	struct sieve_validator_object_registry *regs =
 		sieve_validator_object_registry_init(valdtr, ext);
 	unsigned int i;
 
 	/* Register core comparators */
-	for ( i = 0; i < sieve_core_comparators_count; i++ ) {
-		sieve_validator_object_registry_add
-			(regs, NULL, &(sieve_core_comparators[i]->obj_def));
+	for (i = 0; i < sieve_core_comparators_count; i++) {
+		sieve_validator_object_registry_add(
+			regs, NULL, &(sieve_core_comparators[i]->obj_def));
 	}
-
 	return TRUE;
 }
 
@@ -108,12 +110,14 @@ bool cmp_validator_load
 
 /* Forward declarations */
 
-static bool tag_comparator_validate
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command *cmd);
-static bool tag_comparator_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-		struct sieve_command *cmd);
+static bool
+tag_comparator_validate(struct sieve_validator *valdtr,
+			struct sieve_ast_argument **arg,
+			struct sieve_command *cmd);
+static bool
+tag_comparator_generate(const struct sieve_codegen_env *cgenv,
+			struct sieve_ast_argument *arg,
+			struct sieve_command *cmd);
 
 /* Argument object */
 
@@ -125,9 +129,10 @@ const struct sieve_argument_def comparator_tag = {
 
 /* Argument implementation */
 
-static bool tag_comparator_validate
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-	struct sieve_command *cmd)
+static bool
+tag_comparator_validate(struct sieve_validator *valdtr,
+			struct sieve_ast_argument **arg,
+			struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 	const struct sieve_comparator *cmp;
@@ -138,29 +143,29 @@ static bool tag_comparator_validate
 	/* Check syntax:
 	 *   ":comparator" <comparator-name: string>
 	 */
-	if ( !sieve_validate_tag_parameter
-		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING, FALSE) ) {
+	if (!sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, NULL, 0,
+					  SAAT_STRING, FALSE) ) {
 		return FALSE;
 	}
 
 	/* FIXME: We can currently only handle string literal argument, so
 	 * variables are not allowed.
 	 */
-	if ( !sieve_argument_is_string_literal(*arg) ) {
-		sieve_argument_validate_error(valdtr, *arg,
+	if (!sieve_argument_is_string_literal(*arg)) {
+		sieve_argument_validate_error(
+			valdtr, *arg,
 			"this Sieve implementation currently only supports "
 			"a literal string argument for the :comparator tag");
 		return FALSE;
 	}
 
 	/* Get comparator from registry */
-	cmp = sieve_comparator_create(valdtr, cmd, sieve_ast_argument_strc(*arg));
-
-	if ( cmp == NULL ) {
-		sieve_argument_validate_error(valdtr, *arg,
-			"unknown comparator '%s'",
+	cmp = sieve_comparator_create(valdtr, cmd,
+				      sieve_ast_argument_strc(*arg));
+	if (cmp == NULL) {
+		sieve_argument_validate_error(
+			valdtr, *arg, "unknown comparator '%s'",
 			str_sanitize(sieve_ast_argument_strc(*arg),80));
-
 		return FALSE;
 	}
 
@@ -170,28 +175,28 @@ static bool tag_comparator_validate
 	*arg = sieve_ast_arguments_detach(*arg, 1);
 
 	/* Store comparator in context */
-	tag->argument->data = (void *) cmp;
+	tag->argument->data = (void *)cmp;
 
 	return TRUE;
 }
 
-static bool tag_comparator_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-	struct sieve_command *cmd ATTR_UNUSED)
+static bool
+tag_comparator_generate(const struct sieve_codegen_env *cgenv,
+			struct sieve_ast_argument *arg,
+			struct sieve_command *cmd ATTR_UNUSED)
 {
 	const struct sieve_comparator *cmp =
-		(const struct sieve_comparator *) arg->argument->data;
+		(const struct sieve_comparator *)arg->argument->data;
 
 	sieve_opr_comparator_emit(cgenv->sblock, cmp);
-
 	return TRUE;
 }
 
 /* Functions to enable and evaluate comparator tag for commands */
 
-void sieve_comparators_link_tag
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg,
-	int id_code)
+void sieve_comparators_link_tag(struct sieve_validator *valdtr,
+				struct sieve_command_registration *cmd_reg,
+				int id_code)
 {
 	struct sieve_instance *svinst;
 	const struct sieve_extension *mcht_ext;
@@ -199,31 +204,30 @@ void sieve_comparators_link_tag
 	svinst = sieve_validator_svinst(valdtr);
 	mcht_ext = sieve_get_comparator_extension(svinst);
 
-	sieve_validator_register_tag
-		(valdtr, cmd_reg, mcht_ext, &comparator_tag, id_code);
+	sieve_validator_register_tag(valdtr, cmd_reg, mcht_ext,
+				     &comparator_tag, id_code);
 }
 
-bool sieve_comparator_tag_is
-(struct sieve_ast_argument *tag, const struct sieve_comparator_def *cmp_def)
+bool sieve_comparator_tag_is(struct sieve_ast_argument *tag,
+			     const struct sieve_comparator_def *cmp_def)
 {
 	const struct sieve_comparator *cmp;
 
-	if ( !sieve_argument_is(tag, comparator_tag) )
+	if (!sieve_argument_is(tag, comparator_tag))
 		return FALSE;
 
-	cmp = (const struct sieve_comparator *) tag->argument->data;
+	cmp = (const struct sieve_comparator *)tag->argument->data;
 
-	return ( cmp->def == cmp_def );
+	return (cmp->def == cmp_def);
 }
 
-const struct sieve_comparator *sieve_comparator_tag_get
-(struct sieve_ast_argument *tag)
+const struct sieve_comparator *
+sieve_comparator_tag_get(struct sieve_ast_argument *tag)
 {
-	if ( !sieve_argument_is(tag, comparator_tag) )
+	if (!sieve_argument_is(tag, comparator_tag))
 		return NULL;
 
-
-	return (const struct sieve_comparator *) tag->argument->data;
+	return (const struct sieve_comparator *)tag->argument->data;
 }
 
 /*
@@ -247,14 +251,12 @@ const struct sieve_operand_def comparator_operand = {
  * Trivial/Common comparator method implementations
  */
 
-bool sieve_comparator_octet_skip
-	(const struct sieve_comparator *cmp ATTR_UNUSED,
-		const char **val, const char *val_end)
+bool sieve_comparator_octet_skip(const struct sieve_comparator *cmp ATTR_UNUSED,
+				 const char **val, const char *val_end)
 {
-	if ( *val < val_end ) {
+	if (*val < val_end) {
 		(*val)++;
 		return TRUE;
 	}
-
 	return FALSE;
 }
