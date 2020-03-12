@@ -21,17 +21,17 @@
  * Synchronization
  */
 
-int sieve_storage_sync_init
-(struct sieve_storage *storage, struct mail_user *user)
+int sieve_storage_sync_init(struct sieve_storage *storage,
+			    struct mail_user *user)
 {
 	enum sieve_storage_flags sflags = storage->flags;
 
-	if ( (sflags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
-		(sflags & SIEVE_STORAGE_FLAG_READWRITE) == 0 )
+	if ((sflags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
+	    (sflags & SIEVE_STORAGE_FLAG_READWRITE) == 0)
 		return 0;
 
-	if ( !storage->allows_synchronization ) {
-		if ( (sflags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 )
+	if (!storage->allows_synchronization) {
+		if ((sflags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0)
 			return -1;
 		return 0;
 	}
@@ -42,8 +42,7 @@ int sieve_storage_sync_init
 	return 0;
 }
 
-void sieve_storage_sync_deinit
-(struct sieve_storage *storage ATTR_UNUSED)
+void sieve_storage_sync_deinit(struct sieve_storage *storage ATTR_UNUSED)
 {
 	/* nothing */
 }
@@ -52,8 +51,10 @@ void sieve_storage_sync_deinit
  * Sync attributes
  */
 
-static int sieve_storage_sync_transaction_begin
-(struct sieve_storage *storage, struct mailbox_transaction_context **trans_r)
+static int
+sieve_storage_sync_transaction_begin(
+	struct sieve_storage *storage,
+	struct mailbox_transaction_context **trans_r)
 {
 	enum mailbox_flags mflags = MAILBOX_FLAG_IGNORE_ACLS;
 	struct mail_namespace *ns = storage->sync_inbox_ns;
@@ -78,17 +79,19 @@ static int sieve_storage_sync_transaction_begin
 	return 1;
 }
 
-static int sieve_storage_sync_transaction_finish
-(struct sieve_storage *storage, struct mailbox_transaction_context **trans)
+static int
+sieve_storage_sync_transaction_finish(
+	struct sieve_storage *storage,
+	struct mailbox_transaction_context **trans)
 {
 	struct mailbox *inbox;
 	int ret;
 
 	inbox = mailbox_transaction_get_mailbox(*trans);
 
-	if ((ret=mailbox_transaction_commit(trans)) < 0) {
+	if ((ret = mailbox_transaction_commit(trans)) < 0) {
 		enum mail_error error;
-		
+
 		e_warning(storage->event, "sync: "
 			  "Failed to update INBOX attributes: %s",
 			   mail_storage_get_last_error(
@@ -99,41 +102,37 @@ static int sieve_storage_sync_transaction_finish
 	return ret;
 }
 
-int sieve_storage_sync_script_save
-(struct sieve_storage *storage, const char *name)
+int sieve_storage_sync_script_save(struct sieve_storage *storage,
+				   const char *name)
 {
 	struct mailbox_transaction_context *trans;
 	const char *key;
 	int ret;
 
-	if ((ret=sieve_storage_sync_transaction_begin
-		(storage, &trans)) <= 0)
+	if ((ret = sieve_storage_sync_transaction_begin(storage, &trans)) <= 0)
 		return ret;
 
-	key = t_strconcat
-		(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, name, NULL);
+	key = t_strconcat(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, name, NULL);
 
 	mail_index_attribute_set(trans->itrans, TRUE, key, ioloop_time, 0);
 
 	return sieve_storage_sync_transaction_finish(storage, &trans);
 }
 
-int sieve_storage_sync_script_rename
-(struct sieve_storage *storage, const char *oldname,
-	const char *newname)
+int sieve_storage_sync_script_rename(struct sieve_storage *storage,
+				     const char *oldname, const char *newname)
 {
 	struct mailbox_transaction_context *trans;
 	const char *oldkey, *newkey;
 	int ret;
 
-	if ((ret=sieve_storage_sync_transaction_begin
-		(storage, &trans)) <= 0)
+	if ((ret = sieve_storage_sync_transaction_begin(storage, &trans)) <= 0)
 		return ret;
 
-	oldkey = t_strconcat
-		(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, oldname, NULL);
-	newkey = t_strconcat
-		(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, newname, NULL);
+	oldkey = t_strconcat(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES,
+			     oldname, NULL);
+	newkey = t_strconcat(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES,
+			     newname, NULL);
 
 	mail_index_attribute_unset(trans->itrans, TRUE, oldkey, ioloop_time);
 	mail_index_attribute_set(trans->itrans, TRUE, newkey, ioloop_time, 0);
@@ -141,55 +140,49 @@ int sieve_storage_sync_script_rename
 	return sieve_storage_sync_transaction_finish(storage, &trans);
 }
 
-int sieve_storage_sync_script_delete
-(struct sieve_storage *storage, const char *name)
+int sieve_storage_sync_script_delete(struct sieve_storage *storage,
+				     const char *name)
 {
 	struct mailbox_transaction_context *trans;
 	const char *key;
 	int ret;
 
-	if ((ret=sieve_storage_sync_transaction_begin
-		(storage, &trans)) <= 0)
+	if ((ret = sieve_storage_sync_transaction_begin(storage, &trans)) <= 0)
 		return ret;
 
-	key = t_strconcat
-		(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, name, NULL);
+	key = t_strconcat(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, name, NULL);
 
 	mail_index_attribute_unset(trans->itrans, TRUE, key, ioloop_time);
 
 	return sieve_storage_sync_transaction_finish(storage, &trans);
 }
 
-int sieve_storage_sync_script_activate
-(struct sieve_storage *storage)
+int sieve_storage_sync_script_activate(struct sieve_storage *storage)
 {
 	struct mailbox_transaction_context *trans;
 	int ret;
 
-	if ((ret=sieve_storage_sync_transaction_begin
-		(storage, &trans)) <= 0)
+	if ((ret = sieve_storage_sync_transaction_begin(storage, &trans)) <= 0)
 		return ret;
 
-	mail_index_attribute_set(trans->itrans,
-		TRUE, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT, ioloop_time, 0);
+	mail_index_attribute_set(trans->itrans, TRUE,
+				 MAILBOX_ATTRIBUTE_SIEVE_DEFAULT,
+				 ioloop_time, 0);
 
 	return sieve_storage_sync_transaction_finish(storage, &trans);
 }
 
-int sieve_storage_sync_deactivate
-(struct sieve_storage *storage)
+int sieve_storage_sync_deactivate(struct sieve_storage *storage)
 {
 	struct mailbox_transaction_context *trans;
 	int ret;
 
-	if ((ret=sieve_storage_sync_transaction_begin
-		(storage, &trans)) <= 0)
+	if ((ret = sieve_storage_sync_transaction_begin(storage, &trans)) <= 0)
 		return ret;
-	
-	mail_index_attribute_unset(trans->itrans,
-		TRUE, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT, ioloop_time);
+
+	mail_index_attribute_unset(trans->itrans, TRUE,
+				   MAILBOX_ATTRIBUTE_SIEVE_DEFAULT,
+				   ioloop_time);
 
 	return sieve_storage_sync_transaction_finish(storage, &trans);
 }
-
-
