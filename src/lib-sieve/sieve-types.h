@@ -30,7 +30,7 @@ struct sieve_trace_log;
 
 enum sieve_flag {
 	/* Relative paths are resolved to HOME */
-	SIEVE_FLAG_HOME_RELATIVE = (1 << 0)
+	SIEVE_FLAG_HOME_RELATIVE = (1 << 0),
 };
 
 /* Sieve evaluation can be performed at various different points as messages
@@ -40,10 +40,11 @@ enum sieve_env_location {
 	SIEVE_ENV_LOCATION_UNKNOWN = 0,
 	/* "MDA" - evaluation is being performed by a Mail Delivery Agent */
 	SIEVE_ENV_LOCATION_MDA,
-	/* "MTA" - the Sieve script is being evaluated by a Message Transfer Agent */
+	/* "MTA" - the Sieve script is being evaluated by a Message Transfer
+	   Agent */
 	SIEVE_ENV_LOCATION_MTA,
 	/* "MS"  - evaluation is being performed by a Message Store */
-	SIEVE_ENV_LOCATION_MS
+	SIEVE_ENV_LOCATION_MS,
 };
 
 /* The point relative to final delivery where the Sieve script is being
@@ -103,7 +104,8 @@ enum sieve_error {
 	SIEVE_ERROR_EXISTS,
 	/* Referenced item (e.g. script or binary) is not valid or currupt */
 	SIEVE_ERROR_NOT_VALID,
-	/* Not allowed to perform the operation because the item is in active use */
+	/* Not allowed to perform the operation because the item is in active
+	  use */
 	SIEVE_ERROR_ACTIVE,
 	/* Operation exceeds resource limit */
 	SIEVE_ERROR_RESOURCE_LIMIT,
@@ -123,7 +125,7 @@ enum sieve_compile_flags {
 	/* Script is being activated (usually through ManageSieve) */
 	SIEVE_COMPILE_FLAG_ACTIVATED = (1<<2),
 	/* Compiled for environment with no access to envelope */
-	SIEVE_COMPILE_FLAG_NO_ENVELOPE = (1<<3)
+	SIEVE_COMPILE_FLAG_NO_ENVELOPE = (1<<3),
 };
 
 /*
@@ -175,12 +177,12 @@ typedef enum {
 	SIEVE_TRLVL_ACTIONS,
 	SIEVE_TRLVL_COMMANDS,
 	SIEVE_TRLVL_TESTS,
-	SIEVE_TRLVL_MATCHING
+	SIEVE_TRLVL_MATCHING,
 } sieve_trace_level_t;
 
 enum {
 	SIEVE_TRFLG_DEBUG = (1 << 0),
-	SIEVE_TRFLG_ADDRESSES = (1 << 1)
+	SIEVE_TRFLG_ADDRESSES = (1 << 1),
 };
 
 struct sieve_trace_config {
@@ -220,24 +222,20 @@ struct sieve_script_env {
 	/* Callbacks */
 
 	/* Interface for sending mail */
-	void *(*smtp_start)
-		(const struct sieve_script_env *senv,
-			const struct smtp_address *mail_from);
+	void *(*smtp_start)(const struct sieve_script_env *senv,
+			    const struct smtp_address *mail_from);
 	/* Add a new recipient */
-	void (*smtp_add_rcpt)	
-		(const struct sieve_script_env *senv, void *handle,
-			const struct smtp_address *rcpt_to);
-	/* Get an output stream where the message can be written to. The recipients
-	   must already be added before calling this. */
-	struct ostream *(*smtp_send)
-		(const struct sieve_script_env *senv, void *handle);
+	void (*smtp_add_rcpt)(const struct sieve_script_env *senv, void *handle,
+			      const struct smtp_address *rcpt_to);
+	/* Get an output stream where the message can be written to. The
+	   recipients  must already be added before calling this. */
+	struct ostream *(*smtp_send)(const struct sieve_script_env *senv,
+				     void *handle);
 	/* Abort the SMTP transaction after smtp_send() is already issued */
-	void (*smtp_abort)
-		(const struct sieve_script_env *senv, void *handle);
+	void (*smtp_abort)(const struct sieve_script_env *senv, void *handle);
 	/* Returns 1 on success, 0 on permanent failure, -1 on temporary failure. */
-	int (*smtp_finish)
-		(const struct sieve_script_env *senv, void *handle,
-			const char **error_r);
+	int (*smtp_finish)(const struct sieve_script_env *senv, void *handle,
+			   const char **error_r);
 
 	/* Interface for marking and checking duplicates */
 	void *(*duplicate_transaction_begin)(
@@ -254,7 +252,8 @@ struct sieve_script_env {
 
 	/* Interface for rejecting mail */
 	int (*reject_mail)(const struct sieve_script_env *senv,
-		const struct smtp_address *recipient, const char *reason);
+			   const struct smtp_address *recipient,
+			   const char *reason);
 
 	/* Interface for amending result messages */
 	const char *
