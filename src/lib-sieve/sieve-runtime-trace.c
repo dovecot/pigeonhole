@@ -12,34 +12,35 @@
 #include "sieve-runtime.h"
 #include "sieve-runtime-trace.h"
 
-static inline string_t *_trace_line_new
-(const struct sieve_runtime_env *renv, sieve_size_t address, unsigned int cmd_line)
+static inline string_t *
+_trace_line_new(const struct sieve_runtime_env *renv, sieve_size_t address,
+		unsigned int cmd_line)
 {
 	string_t *trline;
 	unsigned int i;
 
 	trline = t_str_new(128);
-	if ( (renv->trace->config.flags & SIEVE_TRFLG_ADDRESSES) > 0 )
+	if ((renv->trace->config.flags & SIEVE_TRFLG_ADDRESSES) > 0)
 		str_printfa(trline, "%08llx: ", (unsigned long long) address);
-	if ( cmd_line > 0 )
+	if (cmd_line > 0)
 		str_printfa(trline, "%4d: ", cmd_line);
 	else
 		str_append(trline, "      ");
 
-	for ( i = 0; i < renv->trace->indent; i++ )
+	for (i = 0; i < renv->trace->indent; i++)
 		str_append(trline, "  ");
 
 	return trline;
 }
 
-static inline void _trace_line_print
-(string_t *trline, const struct sieve_runtime_env *renv)
+static inline void
+_trace_line_print(string_t *trline, const struct sieve_runtime_env *renv)
 {
 	sieve_trace_log_write_line(renv->trace->log, trline);
 }
 
-static inline void _trace_line_print_empty
-(const struct sieve_runtime_env *renv)
+static inline void
+_trace_line_print_empty(const struct sieve_runtime_env *renv)
 {
 	sieve_trace_log_write_line(renv->trace->log, NULL);
 }
@@ -48,27 +49,30 @@ static inline void _trace_line_print_empty
  * Trace errors
  */
 
-void _sieve_runtime_trace_error
-(const struct sieve_runtime_env *renv, const char *fmt, va_list args)
+void _sieve_runtime_trace_error(const struct sieve_runtime_env *renv,
+				const char *fmt, va_list args)
 {
 	string_t *trline = _trace_line_new(renv, renv->pc, 0);
 
-	str_printfa(trline, "%s: #ERROR#: ", sieve_operation_mnemonic(renv->oprtn));
+	str_printfa(trline, "%s: #ERROR#: ",
+		    sieve_operation_mnemonic(renv->oprtn));
 	str_vprintfa(trline, fmt, args);
 
 	_trace_line_print(trline, renv);
 }
 
-void _sieve_runtime_trace_operand_error
-(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
-	const char *fmt, va_list args)
+void _sieve_runtime_trace_operand_error(const struct sieve_runtime_env *renv,
+					const struct sieve_operand *oprnd,
+					const char *fmt, va_list args)
 {
-	string_t *trline = _trace_line_new(renv, oprnd->address,
+	string_t *trline = _trace_line_new(
+		renv, oprnd->address,
 		sieve_runtime_get_source_location(renv, oprnd->address));
 
-	str_printfa(trline, "%s: #ERROR#: ", sieve_operation_mnemonic(renv->oprtn));
+	str_printfa(trline, "%s: #ERROR#: ",
+		    sieve_operation_mnemonic(renv->oprtn));
 
-	if ( oprnd->field_name != NULL )
+	if (oprnd->field_name != NULL)
 		str_printfa(trline, "%s: ", oprnd->field_name);
 
 	str_vprintfa(trline, fmt, args);
@@ -80,9 +84,10 @@ void _sieve_runtime_trace_operand_error
  * Trace info
  */
 
-static inline void ATTR_FORMAT(4, 0) _sieve_runtime_trace_vprintf
-(const struct sieve_runtime_env *renv, sieve_size_t address,
-	unsigned int cmd_line, const char *fmt, va_list args)
+static inline void ATTR_FORMAT(4, 0)
+_sieve_runtime_trace_vprintf(const struct sieve_runtime_env *renv,
+			     sieve_size_t address, unsigned int cmd_line,
+			     const char *fmt, va_list args)
 {
 	string_t *trline = _trace_line_new(renv, address, cmd_line);
 
@@ -91,9 +96,10 @@ static inline void ATTR_FORMAT(4, 0) _sieve_runtime_trace_vprintf
 	_trace_line_print(trline, renv);
 }
 
-static inline void ATTR_FORMAT(4, 5) _sieve_runtime_trace_printf
-(const struct sieve_runtime_env *renv, sieve_size_t address,
-	unsigned int cmd_line, const char *fmt, ...)
+static inline void ATTR_FORMAT(4, 5)
+_sieve_runtime_trace_printf(const struct sieve_runtime_env *renv,
+			    sieve_size_t address, unsigned int cmd_line,
+			    const char *fmt, ...)
 {
 	va_list args;
 
@@ -102,21 +108,22 @@ static inline void ATTR_FORMAT(4, 5) _sieve_runtime_trace_printf
 	va_end(args);
 }
 
-void ATTR_FORMAT(2, 0) _sieve_runtime_trace
-(const struct sieve_runtime_env *renv, const char *fmt, va_list args)
+void ATTR_FORMAT(2, 0)
+_sieve_runtime_trace(const struct sieve_runtime_env *renv,
+		     const char *fmt, va_list args)
 {
-	_sieve_runtime_trace_vprintf
-		(renv, renv->oprtn->address, sieve_runtime_get_command_location(renv),
-			fmt, args);
+	_sieve_runtime_trace_vprintf(renv, renv->oprtn->address,
+				     sieve_runtime_get_command_location(renv),
+				     fmt, args);
 }
 
-void _sieve_runtime_trace_address
-(const struct sieve_runtime_env *renv, sieve_size_t address,
-	const char *fmt, va_list args)
+void _sieve_runtime_trace_address(const struct sieve_runtime_env *renv,
+				  sieve_size_t address,
+				  const char *fmt, va_list args)
 {
-	_sieve_runtime_trace_vprintf
-		(renv, address, sieve_runtime_get_source_location(renv, address), fmt,
-			args);
+	_sieve_runtime_trace_vprintf(
+		renv, address, sieve_runtime_get_source_location(renv, address),
+		fmt, args);
 }
 
 /*
@@ -125,21 +132,25 @@ void _sieve_runtime_trace_address
 
 void _sieve_runtime_trace_begin(const struct sieve_runtime_env *renv)
 {
-	const char *script_name = ( renv->script != NULL ?
-		sieve_script_name(renv->script) : sieve_binary_path(renv->sbin) );
+	const char *script_name = (renv->script != NULL ?
+				   sieve_script_name(renv->script) :
+				   sieve_binary_path(renv->sbin));
 
 	_trace_line_print_empty(renv);
 	_sieve_runtime_trace_printf(renv, renv->pc, 0,
-		"## Started executing script '%s'", script_name);
+				    "## Started executing script '%s'",
+				    script_name);
 }
 
 void _sieve_runtime_trace_end(const struct sieve_runtime_env *renv)
 {
-	const char *script_name = ( renv->script != NULL ?
-		sieve_script_name(renv->script) : sieve_binary_path(renv->sbin) );
+	const char *script_name = (renv->script != NULL ?
+				   sieve_script_name(renv->script) :
+				   sieve_binary_path(renv->sbin));
 
 	_sieve_runtime_trace_printf(renv, renv->pc, 0,
-		"## Finished executing script '%s'", script_name);
+				    "## Finished executing script '%s'",
+				    script_name);
 	_trace_line_print_empty(renv);
 }
 
@@ -147,4 +158,3 @@ void _sieve_runtime_trace_sep(const struct sieve_runtime_env *renv)
 {
 	_trace_line_print_empty(renv);
 }
-
