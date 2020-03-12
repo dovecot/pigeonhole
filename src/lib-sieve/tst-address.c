@@ -29,13 +29,15 @@
  *       <header-list: string-list> <key-list: string-list>
  */
 
-static bool tst_address_registered
-	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-		struct sieve_command_registration *cmd_reg);
-static bool tst_address_validate
-	(struct sieve_validator *valdtr, struct sieve_command *tst);
-static bool tst_address_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
+static bool
+tst_address_registered(struct sieve_validator *valdtr,
+		       const struct sieve_extension *ext,
+		       struct sieve_command_registration *cmd_reg);
+static bool
+tst_address_validate(struct sieve_validator *valdtr, struct sieve_command *tst);
+static bool
+tst_address_generate(const struct sieve_codegen_env *cgenv,
+		     struct sieve_command *ctx);
 
 const struct sieve_command_def tst_address = {
 	.identifier = "address",
@@ -53,10 +55,12 @@ const struct sieve_command_def tst_address = {
  * Address operation
  */
 
-static bool tst_address_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int tst_address_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+tst_address_operation_dump(const struct sieve_dumptime_env *denv,
+			   sieve_size_t *address);
+static int
+tst_address_operation_execute(const struct sieve_runtime_env *renv,
+			      sieve_size_t *address);
 
 const struct sieve_operation_def tst_address_operation = {
 	.mnemonic = "ADDRESS",
@@ -69,17 +73,18 @@ const struct sieve_operation_def tst_address_operation = {
  * Test registration
  */
 
-static bool tst_address_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED,
-	struct sieve_command_registration *cmd_reg)
+static bool
+tst_address_registered(struct sieve_validator *valdtr,
+		       const struct sieve_extension *ext ATTR_UNUSED,
+		       struct sieve_command_registration *cmd_reg)
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag
-		(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR );
-	sieve_match_types_link_tags
-		(valdtr, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
-	sieve_address_parts_link_tags
-		(valdtr, cmd_reg, SIEVE_AM_OPT_ADDRESS_PART);
+	sieve_comparators_link_tag(valdtr, cmd_reg,
+				   SIEVE_MATCH_OPT_COMPARATOR);
+	sieve_match_types_link_tags(valdtr, cmd_reg,
+				    SIEVE_MATCH_OPT_MATCH_TYPE);
+	sieve_address_parts_link_tags(valdtr, cmd_reg,
+				      SIEVE_AM_OPT_ADDRESS_PART);
 	return TRUE;
 }
 
@@ -88,31 +93,32 @@ static bool tst_address_registered
  */
 
 /* List of valid headers:
- *   Implementations MUST restrict the address test to headers that
- *   contain addresses, but MUST include at least From, To, Cc, Bcc,
- *   Sender, Resent-From, and Resent-To, and it SHOULD include any other
- *   header that utilizes an "address-list" structured header body.
- *
- * This list explicitly does not contain the envelope-to and return-path
- * headers. The envelope test must be used to test against these addresses.
- *
- * FIXME: this restriction is somewhat odd. Sieve list advises to allow
- *        any other header as long as its content matches the address-list
- *        grammar.
+     Implementations MUST restrict the address test to headers that contain
+     addresses, but MUST include at least From, To, Cc, Bcc, Sender,
+     Resent-From, and Resent-To, and it SHOULD include any other header that
+     utilizes an "address-list" structured header body.
+
+   This list explicitly does not contain the envelope-to and return-path
+   headers. The envelope test must be used to test against these addresses.
+
+   FIXME: this restriction is somewhat odd. Sieve list advises to allow any
+          other header as long as its content matches the address-list grammar.
  */
 static const char * const _allowed_headers[] = {
 	/* Required */
 	"from", "to", "cc", "bcc", "sender", "resent-from", "resent-to",
 
 	/* Additional (RFC 822 / RFC 2822) */
-	"reply-to", "resent-reply-to", "resent-sender", "resent-cc", "resent-bcc",
+	"reply-to", "resent-reply-to", "resent-sender", "resent-cc",
+	"resent-bcc",
 
 	/* Non-standard (RFC 2076, draft-palme-mailext-headers-08.txt) */
-	"for-approval", "for-handling", "for-comment", "apparently-to", "errors-to",
-	"delivered-to", "return-receipt-to", "x-admin", "read-receipt-to",
-	"x-confirm-reading-to", "return-receipt-requested",
-	"registered-mail-reply-requested-by", "mail-followup-to", "mail-reply-to",
-	"abuse-reports-to", "x-complaints-to", "x-report-abuse-to",
+	"for-approval", "for-handling", "for-comment", "apparently-to",
+	"errors-to", "delivered-to", "return-receipt-to", "x-admin",
+	"read-receipt-to", "x-confirm-reading-to", "return-receipt-requested",
+	"registered-mail-reply-requested-by", "mail-followup-to",
+	"mail-reply-to", "abuse-reports-to", "x-complaints-to",
+	"x-report-abuse-to",
 
 	/* Undocumented */
 	"x-beenthere", "x-original-to",
@@ -120,28 +126,25 @@ static const char * const _allowed_headers[] = {
 	NULL
 };
 
-static int _header_is_allowed
-(void *context ATTR_UNUSED, struct sieve_ast_argument *arg)
+static int
+_header_is_allowed(void *context ATTR_UNUSED, struct sieve_ast_argument *arg)
 {
-	if ( sieve_argument_is_string_literal(arg) ) {
+	if (sieve_argument_is_string_literal(arg)) {
 		const char *header = sieve_ast_strlist_strc(arg);
 
 		const char * const *hdsp = _allowed_headers;
-		while ( *hdsp != NULL ) {
-			if ( strcasecmp( *hdsp, header ) == 0 )
+		while (*hdsp != NULL) {
+			if (strcasecmp(*hdsp, header) == 0)
 				return 1;
-
 			hdsp++;
 		}
-
 		return 0;
 	}
-
 	return 1;
 }
 
-static bool tst_address_validate
-(struct sieve_validator *valdtr, struct sieve_command *tst)
+static bool
+tst_address_validate(struct sieve_validator *valdtr, struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
 	struct sieve_ast_argument *header;
@@ -150,25 +153,24 @@ static bool tst_address_validate
 	struct sieve_match_type mcht_default =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "header list", 1, SAAT_STRING_LIST) ) {
-		return FALSE;
-	}
-
-	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+	if (!sieve_validate_positional_argument(valdtr, tst, arg, "header list",
+						1, SAAT_STRING_LIST))
 		return FALSE;
 
-	if ( !sieve_command_verify_headers_argument(valdtr, arg) )
-        return FALSE;
+	if (!sieve_validator_argument_activate(valdtr, tst, arg, FALSE))
+		return FALSE;
+
+	if (!sieve_command_verify_headers_argument(valdtr, arg))
+		return FALSE;
 
 	/* Check if supplied header names are allowed
-	 *   FIXME: verify dynamic header names at runtime
+	     FIXME: verify dynamic header names at runtime
 	 */
 	header = arg;
-	if ( sieve_ast_stringlist_map
-		(&header, NULL, _header_is_allowed) <= 0 ) {
+	if (sieve_ast_stringlist_map(&header, NULL, _header_is_allowed) <= 0) {
 		i_assert(header != NULL);
-		sieve_argument_validate_error(valdtr, header,
+		sieve_argument_validate_error(
+			valdtr, header,
 			"specified header '%s' is not allowed for the address test",
 			str_sanitize(sieve_ast_strlist_strc(header), 64));
 		return FALSE;
@@ -178,25 +180,25 @@ static bool tst_address_validate
 
 	arg = sieve_ast_argument_next(arg);
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
+	if (!sieve_validate_positional_argument(valdtr, tst, arg, "key list", 2,
+						SAAT_STRING_LIST))
 		return FALSE;
-	}
 
-	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+	if (!sieve_validator_argument_activate(valdtr, tst, arg, FALSE))
 		return FALSE;
 
 	/* Validate the key argument to a specified match type */
-	return sieve_match_type_validate
-		(valdtr, tst, arg, &mcht_default, &cmp_default);
+	return sieve_match_type_validate(valdtr, tst, arg,
+					 &mcht_default, &cmp_default);
 }
 
 /*
  * Code generation
  */
 
-static bool tst_address_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *tst)
+static bool
+tst_address_generate(const struct sieve_codegen_env *cgenv,
+		     struct sieve_command *tst)
 {
 	sieve_operation_emit(cgenv->sblock, NULL, &tst_address_operation);
 
@@ -208,27 +210,28 @@ static bool tst_address_generate
  * Code dump
  */
 
-static bool tst_address_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+tst_address_operation_dump(const struct sieve_dumptime_env *denv,
+			   sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "ADDRESS");
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( sieve_message_opr_optional_dump(denv, address, NULL) != 0 )
+	if (sieve_message_opr_optional_dump(denv, address, NULL) != 0)
 		return FALSE;
 
-	return
-		sieve_opr_stringlist_dump(denv, address, "header list") &&
-		sieve_opr_stringlist_dump(denv, address, "key list");
+	return (sieve_opr_stringlist_dump(denv, address, "header list") &&
+		sieve_opr_stringlist_dump(denv, address, "key list"));
 }
 
 /*
  * Code execution
  */
 
-static int tst_address_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+tst_address_operation_execute(const struct sieve_runtime_env *renv,
+			      sieve_size_t *address)
 {
 	struct sieve_comparator cmp =
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
@@ -236,42 +239,45 @@ static int tst_address_operation_execute
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_address_part addrp =
 		SIEVE_ADDRESS_PART_DEFAULT(all_address_part);
-	struct sieve_stringlist *hdr_list, *hdr_value_list, *value_list, *key_list;
+	struct sieve_stringlist *hdr_list, *hdr_value_list, *value_list,
+				*key_list;
 	struct sieve_address_list *addr_list;
 	ARRAY_TYPE(sieve_message_override) svmos;
 	int match, ret;
 
 	/* Read optional operands */
 	i_zero(&svmos);
-	if ( sieve_message_opr_optional_read
-		(renv, address, NULL, &ret, &addrp, &mcht, &cmp, &svmos) < 0 )
+	if (sieve_message_opr_optional_read(renv, address, NULL, &ret,
+					    &addrp, &mcht, &cmp, &svmos) < 0)
 		return ret;
 
 	/* Read header-list */
-	if ( (ret=sieve_opr_stringlist_read(renv, address, "header-list", &hdr_list))
-		<= 0 )
+	if ((ret = sieve_opr_stringlist_read(renv, address, "header-list",
+					     &hdr_list)) <= 0)
 		return ret;
 
 	/* Read key-list */
-	if ( (ret=sieve_opr_stringlist_read(renv, address, "key-list", &key_list))
-		<= 0 )
+	if ((ret = sieve_opr_stringlist_read(renv, address, "key-list",
+					     &key_list)) <= 0)
 		return ret;
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "address test");
 
 	/* Get header */
 	sieve_runtime_trace_descend(renv);
-	if ( (ret=sieve_message_get_header_fields
-		(renv, hdr_list, &svmos, FALSE, &hdr_value_list)) <= 0 )
+	if ((ret = sieve_message_get_header_fields(
+		renv, hdr_list, &svmos, FALSE, &hdr_value_list)) <= 0)
 		return ret;
 	sieve_runtime_trace_ascend(renv);
 
 	/* Create value stringlist */
 	addr_list = sieve_header_address_list_create(renv, hdr_value_list);
-	value_list = sieve_address_part_stringlist_create(renv, &addrp, addr_list);
+	value_list = sieve_address_part_stringlist_create(
+		renv, &addrp, addr_list);
 
 	/* Perform match */
-	if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )
+	if ((match = sieve_match(renv, &mcht, &cmp,
+				 value_list, key_list, &ret)) < 0)
 		return ret;
 
 	/* Set test result for subsequent conditional jump */
