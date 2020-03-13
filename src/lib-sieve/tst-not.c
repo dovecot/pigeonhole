@@ -12,12 +12,14 @@
  *   not <tests: test-list>
  */
 
-static bool tst_not_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx,
-		struct sieve_jumplist *jumps, bool jump_true);
-static bool tst_not_validate_const
-	(struct sieve_validator *valdtr, struct sieve_command *tst,
-		int *const_current, int const_next);
+static bool
+tst_not_generate(const struct sieve_codegen_env *cgenv,
+		 struct sieve_command *ctx, struct sieve_jumplist *jumps,
+		 bool jump_true);
+static bool
+tst_not_validate_const(struct sieve_validator *valdtr,
+		       struct sieve_command *tst, int *const_current,
+		       int const_next);
 
 const struct sieve_command_def tst_not = {
 	.identifier = "not",
@@ -34,17 +36,17 @@ const struct sieve_command_def tst_not = {
  * Code validation
  */
 
-static bool tst_not_validate_const
-(struct sieve_validator *valdtr ATTR_UNUSED,
-	struct sieve_command *tst ATTR_UNUSED, int *const_current, int const_next)
+static bool
+tst_not_validate_const(struct sieve_validator *valdtr ATTR_UNUSED,
+		       struct sieve_command *tst ATTR_UNUSED,
+		       int *const_current, int const_next)
 {
-	if ( const_next < 0 )
+	if (const_next < 0)
 		*const_current = -1;
-	else if ( const_next > 0 )
+	else if (const_next > 0)
 		*const_current = 0;
 	else
 		*const_current = 1;
-
 	return TRUE;
 }
 
@@ -52,9 +54,10 @@ static bool tst_not_validate_const
  * Code generation
  */
 
-static bool tst_not_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx,
-	struct sieve_jumplist *jumps, bool jump_true)
+static bool
+tst_not_generate(const struct sieve_codegen_env *cgenv,
+		 struct sieve_command *ctx, struct sieve_jumplist *jumps,
+		 bool jump_true)
 {
 	struct sieve_ast_node *test;
 
@@ -63,4 +66,3 @@ static bool tst_not_generate
 
 	return sieve_generate_test(cgenv, test, jumps, !jump_true);
 }
-
