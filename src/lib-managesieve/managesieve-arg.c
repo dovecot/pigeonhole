@@ -167,7 +167,7 @@ void managesieve_write_arg(string_t *dest, const struct managesieve_arg *arg)
 		break;
 	case MANAGESIEVE_ARG_LITERAL: {
 		const char *strarg = managesieve_arg_as_string(arg);
-		str_printfa(dest, "{%"PRIuSIZE_T"}\r\n",
+		str_printfa(dest, "{%zu}\r\n",
 			    strlen(strarg));
 		str_append(dest, strarg);
 		break;

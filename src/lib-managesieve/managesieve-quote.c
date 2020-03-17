@@ -60,7 +60,7 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 		str_append_c(str, '"');
 	} else {
 		/* return as literal */
-		str_printfa(str, "{%"PRIuSIZE_T"}\r\n", value_len - extra);
+		str_printfa(str, "{%zu}\r\n", value_len - extra);
 	}
 
 	tmp = t_str_new(value_len+escape+4);

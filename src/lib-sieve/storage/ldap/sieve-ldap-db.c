@@ -1150,7 +1150,7 @@ sieve_ldap_db_get_script(struct ldap_connection *conn,
 			data = i_malloc(size);
 
 			e_debug(storage->event, "db: "
-				"Found script with length %"PRIuSIZE_T, size);
+				"Found script with length %zu", size);
 
 			memcpy(data, vals[0]->bv_val, size);
 		

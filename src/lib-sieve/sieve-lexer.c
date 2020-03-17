@@ -69,7 +69,7 @@ sieve_lexer_create(struct sieve_script *script,
 	    svinst->max_script_size > 0 &&
 	    (uoff_t)st->st_size > svinst->max_script_size) {
 		sieve_error(ehandler, sieve_script_name(script),
-			"sieve script is too large (max %"PRIuSIZE_T" bytes)",
+			"sieve script is too large (max %zu bytes)",
 			svinst->max_script_size);
 		if (error_r != NULL)
 			*error_r = SIEVE_ERROR_NOT_POSSIBLE;

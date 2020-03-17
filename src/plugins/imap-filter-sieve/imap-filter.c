@@ -50,7 +50,7 @@ imap_filter_mail(struct client_command_context *cmd, struct mail *mail)
 	str_printfa(reply, "* %u FILTERED (TAG %s) UID %u ",
 		    mail->seq, cmd->tag, mail->uid);
 	if (ret < 0 || have_warnings) {
-		str_printfa(reply, "%s {%"PRIuSIZE_T"}\r\n",
+		str_printfa(reply, "%s {%zu}\r\n",
 			    (ret < 0 ? "ERRORS" : "WARNINGS"),
 			    str_len(errors));
 		str_append_str(reply, errors);
@@ -159,7 +159,7 @@ imap_filter_start(struct imap_filter_context *ctx,
 
 		o_stream_nsend_str(cmd->client->output,
 			t_strdup_printf("* FILTER (TAG %s) "
-				"ERRORS {%"PRIuSIZE_T"}\r\n%s\r\n",
+				"ERRORS {%zu}\r\n%s\r\n",
 				cmd->tag, strlen(error), error));
 		client_send_tagline(cmd,
 			"NO Failed to initialize script execution");

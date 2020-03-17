@@ -120,7 +120,7 @@ bool ext_editheader_load
 			if ( max_header_size < EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE ) {
 				e_warning(svinst->event, "editheader: "
 					  "value of sieve_editheader_max_header_size setting "
-					  "(=%"PRIuSIZE_T") is less than the minimum (=%"PRIuSIZE_T") "
+					  "(=%zu) is less than the minimum (=%zu) "
 					  "(ignored)", max_header_size,
 					  (size_t) EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE);
 			} else {

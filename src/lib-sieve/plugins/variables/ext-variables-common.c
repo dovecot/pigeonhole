@@ -88,7 +88,7 @@ ext_variables_load(const struct sieve_extension *ext, void **context)
 			e_warning(svinst->event, "variables: "
 				  "setting sieve_variables_max_variable_size "
 				  "is lower than required by standards "
-				  "(>= %"PRIuSIZE_T" bytes)",
+				  "(>= %zu bytes)",
 				  (size_t)EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE);
 		} else {
 			config->max_variable_size = size_setting;

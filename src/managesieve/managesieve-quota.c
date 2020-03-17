@@ -31,8 +31,7 @@ bool managesieve_quota_check_validsize(struct client_command_context *cmd,
 		struct event_passthrough *e =
 			client_command_create_finish_event(cmd);
 		e_debug(e->event(),
-			"Script size check failed "
-			"(size %"PRIuSIZE_T" bytes): %s",
+			"Script size check failed (size %zu bytes): %s",
 			size, error_msg);
 
 		client_send_noresp(client, "QUOTA/MAXSIZE", error_msg);
@@ -57,7 +56,7 @@ bool managesieve_quota_check_all(struct client_command_context *cmd,
 	if (ret < 0) {
 		client_command_storage_error(
 			cmd, "Failed to check quota for script `%s' "
-			     "(size %"PRIuSIZE_T" bytes)", scriptname, size);
+			     "(size %zu bytes)", scriptname, size);
 		return FALSE;
 	}
 
@@ -89,8 +88,7 @@ bool managesieve_quota_check_all(struct client_command_context *cmd,
 		client_command_create_finish_event(cmd)->
 		add_str("error", error_msg);
 	e_debug(e->event(),
-		"Quota check failed for script `%s' "
-		"(size %"PRIuSIZE_T" bytes): %s",
+		"Quota check failed for script `%s' (size %zu bytes): %s",
 		scriptname, size, error_msg);
 
 	client_send_noresp(client, resp_code, error_msg);

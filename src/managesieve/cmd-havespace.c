@@ -53,7 +53,7 @@ bool cmd_havespace(struct client_command_context *cmd)
 	struct event_passthrough *e =
 		client_command_create_finish_event(cmd);
 	e_debug(e->event(), "Quota is within limits for script `%s' "
-		"with size %"PRIuSIZE_T, scriptname, size);
+		"with size %zu", scriptname, size);
 
 	client_send_ok(client, "Putscript would succeed.");
 	return TRUE;

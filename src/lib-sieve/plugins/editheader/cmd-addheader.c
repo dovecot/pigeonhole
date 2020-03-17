@@ -170,7 +170,7 @@ static bool cmd_addheader_validate
 
 		if ( ext_editheader_header_too_large(cmd->ext, str_len(fvalue)) ) {
 			sieve_argument_validate_error(valdtr, arg, "addheader command: "
-				"specified header value `%s' is too large (%"PRIuSIZE_T" bytes)",
+				"specified header value `%s' is too large (%zu bytes)",
 				str_sanitize(str_c(fvalue), 80), str_len(fvalue));
 			return SIEVE_EXEC_FAILURE;
 		}
@@ -317,7 +317,7 @@ static int cmd_addheader_operation_execute
 
 	if ( ext_editheader_header_too_large(this_ext, str_len(value)) ) {
 		sieve_runtime_error(renv, NULL, "addheader action: "
-			"specified header value `%s' is too large (%"PRIuSIZE_T" bytes)",
+			"specified header value `%s' is too large (%zu bytes)",
 			str_sanitize(str_c(value), 80), str_len(value));
 		return SIEVE_EXEC_FAILURE;
 	}

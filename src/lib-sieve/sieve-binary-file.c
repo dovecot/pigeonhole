@@ -110,7 +110,7 @@ _save_full(struct sieve_binary *sbin, struct ostream *stream,
 
 		if ((ret = o_stream_send(stream, pdata, bytes_left)) <= 0) {
 			e_error(sbin->event, "save: "
-				"failed to write %"PRIuSIZE_T" bytes "
+				"failed to write %zu bytes "
 				"to output stream: %s", bytes_left,
 				strerror(stream->stream_errno));
 			return FALSE;

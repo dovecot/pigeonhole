@@ -119,7 +119,7 @@ bool sieve_binary_dumper_run(struct sieve_binary_dumper *dumper,
 				sieve_binary_block_get(sbin, i);
 
 			sieve_binary_dumpf(
-				denv, "%3d: size: %"PRIuSIZE_T" bytes\n",
+				denv, "%3d: size: %zu bytes\n",
 				i, sieve_binary_block_get_size(sblock));
 		}
 	}
@@ -234,7 +234,7 @@ void sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
 		struct sieve_binary_block *sblock =
 			sieve_binary_block_get(sbin, i);
 
-		sieve_binary_dumpf(denv, "%3d: size: %"PRIuSIZE_T" bytes\n",
+		sieve_binary_dumpf(denv, "%3d: size: %zu bytes\n",
 				   i, sieve_binary_block_get_size(sblock));
 	}
 
@@ -253,8 +253,7 @@ void sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
 
 		// FIXME: calculate offset more nicely.
 		sieve_binary_dump_sectionf(
-			denv, "Block %d (%"PRIuSIZE_T" bytes, "
-			"file offset %08llx)", i, data_size,
+			denv, "Block %d (%zu bytes, file offset %08llx)", i, data_size,
 			(unsigned long long int)sblock->offset + 8);
 
 		line = t_str_new(128);
