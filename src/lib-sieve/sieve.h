@@ -12,156 +12,106 @@ struct sieve_binary;
  * Main Sieve library interface
  */
 
-/* sieve_init():
- *   Initializes the sieve engine. Must be called before any sieve functionality
- *   is used.
- */
-struct sieve_instance *sieve_init(const struct sieve_environment *env,
-				  const struct sieve_callbacks *callbacks,
-				  void *context, bool debug);
+/* Initialize the sieve engine. Must be called before any sieve functionality is
+   used. */
+struct sieve_instance *
+sieve_init(const struct sieve_environment *env,
+	   const struct sieve_callbacks *callbacks, void *context, bool debug);
 
-/* sieve_deinit():
- *   Frees all memory allocated by the sieve engine.
- */
+/* Free all memory allocated by the sieve engine. */
 void sieve_deinit(struct sieve_instance **_svinst);
 
-/* sieve_get_capabilities():
- *
- */
-const char *sieve_get_capabilities(struct sieve_instance *svinst,
-				   const char *name);
+/* Get capability string for a particular extension. */
+const char *
+sieve_get_capabilities(struct sieve_instance *svinst, const char *name);
 
-/* sieve_set_extensions():
- *
- */
+/* Set the supported extensions. The provided string is parsed into a list
+   of extensions that are to be enabled/disabled. */
 void sieve_set_extensions(struct sieve_instance *svinst,
 			  const char *extensions);
 
 
-/* sieve_get_event():
- *
- */
+/* Get top-level event for this Sieve instance. */
 struct event *sieve_get_event(struct sieve_instance *svinst) ATTR_PURE;
 
 /*
  * Script compilation
  */
 
-/* sieve_compile_script:
- */
-struct sieve_binary *sieve_compile_script(struct sieve_script *script,
-					  struct sieve_error_handler *ehandler,
-					  enum sieve_compile_flags flags,
-					  enum sieve_error *error_r)
-					  ATTR_NULL(2, 4);
+/* Compile a Sieve script from a Sieve script object. Returns Sieve binary upon
+   success and NULL upon failure. */
+struct sieve_binary *
+sieve_compile_script(struct sieve_script *script,
+		     struct sieve_error_handler *ehandler,
+		     enum sieve_compile_flags flags, enum sieve_error *error_r)
+		     ATTR_NULL(2, 4);
 
-/* sieve_compile:
- *
- *   Compiles the script into a binary.
- */
-struct sieve_binary *sieve_compile(struct sieve_instance *svinst,
-				   const char *script_location,
-				   const char *script_name,
-				   struct sieve_error_handler *ehandler,
-				   enum sieve_compile_flags flags,
-				   enum sieve_error *error_r)
-				   ATTR_NULL(3, 4, 6);
+/* Compile a Sieve script from a Sieve script location string. Returns Sieve
+   binary upon success and NULL upon failure. The provided script_name is used
+   for the internally created Sieve script object. */
+struct sieve_binary *
+sieve_compile(struct sieve_instance *svinst, const char *script_location,
+	      const char *script_name, struct sieve_error_handler *ehandler,
+	      enum sieve_compile_flags flags, enum sieve_error *error_r)
+	      ATTR_NULL(3, 4, 6);
 
 /*
  * Reading/writing Sieve binaries
  */
 
-/* sieve_load:
- *
- *  Loads the sieve binary indicated by the provided path.
+/* Loads the sieve binary indicated by the provided path. */
+struct sieve_binary *
+sieve_load(struct sieve_instance *svinst, const char *bin_path,
+	   enum sieve_error *error_r);
+/* First tries to open the binary version of the specified script and if it does
+   not exist or if it contains errors, the script is (re-)compiled. Note that
+   errors in the bytecode are caught only at runtime.
  */
-struct sieve_binary *sieve_load(struct sieve_instance *svinst,
-				const char *bin_path,
-				enum sieve_error *error_r);
-
-/* sieve_open_script:
- *
- *   First tries to open the binary version of the specified script and if it
- *   does not exist or if it contains errors, the script is (re-)compiled. Note
- *   that errors in the bytecode are caught only at runtime.
+struct sieve_binary *
+sieve_open_script(struct sieve_script *script,
+		  struct sieve_error_handler *ehandler,
+		  enum sieve_compile_flags flags, enum sieve_error *error_r);
+/* First tries to open the binary version of the specified script and if it does
+   not exist or if it contains errors, the script is (re-)compiled. Note that
+   errors in the bytecode are caught only at runtime.
  */
-struct sieve_binary *sieve_open_script(struct sieve_script *script,
-				       struct sieve_error_handler *ehandler,
-				       enum sieve_compile_flags flags,
-				       enum sieve_error *error_r);
+struct sieve_binary *
+sieve_open(struct sieve_instance *svinst, const char *script_location,
+	   const char *script_name, struct sieve_error_handler *ehandler,
+	   enum sieve_compile_flags flags, enum sieve_error *error_r);
 
-/* sieve_open:
- *
- *   First tries to open the binary version of the specified script and if it
- *   does not exist or if it contains errors, the script is (re-)compiled. Note
- *   that errors in the bytecode are caught only at runtime.
- */
-struct sieve_binary *sieve_open(struct sieve_instance *svinst,
-				const char *script_location,
-				const char *script_name,
-				struct sieve_error_handler *ehandler,
-				enum sieve_compile_flags flags,
-				enum sieve_error *error_r);
-
-/* sieve_save_as:
- *
- *  Saves the binary as the file indicated by the path parameter. This function
- *  will not write the binary to disk when it was loaded from the indicated
- *  bin_path, unless update is TRUE.
+/* Saves the binary as the file indicated by the path parameter. This function
+   will not write the binary to disk when the provided binary object was loaded
+   earlier from the indicated bin_path, unless update is TRUE.
  */
 int sieve_save_as(struct sieve_binary *sbin, const char *bin_path, bool update,
 		  mode_t save_mode, enum sieve_error *error_r);
 
-/* sieve_save:
- *
- *  Saves the binary to the default location. This function will not overwrite
- *  the binary it was loaded earlier from the default location, unless update
- *  is TRUE.
+/* Saves the binary to the default location. This function will not overwrite
+   the binary on disk when the provided binary object was loaded earlier from
+   the default location, unless update is TRUE.
  */
 int sieve_save(struct sieve_binary *sbin, bool update,
 	       enum sieve_error *error_r);
 
-/* sieve_close:
- *
- *   Closes a compiled/opened sieve binary.
- */
+/* Closes a compiled/opened sieve binary. */
 void sieve_close(struct sieve_binary **sbin);
-
-/* sieve_get_source:
- *
- *   Obtains the path the binary was compiled or loaded from
- */
+/* Obtains the path the binary was compiled or loaded from. */
 const char *sieve_get_source(struct sieve_binary *sbin);
-
-/*
- * sieve_is_loeded:
- *
- *   Indicates whether the binary was loaded from a pre-compiled file.
- */
+/* Indicates whether the binary was loaded from a pre-compiled file. */
 bool sieve_is_loaded(struct sieve_binary *sbin);
 
 /*
  * Debugging
  */
 
-/* sieve_dump:
- *
- *   Dumps the byte code in human-readable form to the specified ostream.
- */
+/* Dumps the byte code in human-readable form to the specified ostream. */
 void sieve_dump(struct sieve_binary *sbin,
 		struct ostream *stream, bool verbose);
-
-/* sieve_hexdump:
- *
- *   Dumps the byte code in hexdump form to the specified ostream.
- */
-
+/* Dumps the byte code in hexdump form to the specified ostream. */
 void sieve_hexdump(struct sieve_binary *sbin, struct ostream *stream);
 
-/* sieve_test:
- *
- *   Executes the bytecode, but only prints the result to the given stream.
- */
+/* Executes the bytecode, but only prints the result to the given stream. */
 int sieve_test(struct sieve_binary *sbin,
 	       const struct sieve_message_data *msgdata,
 	       const struct sieve_script_env *senv,
@@ -172,17 +122,11 @@ int sieve_test(struct sieve_binary *sbin,
  * Script execution
  */
 
-/* sieve_script_env_init:
- *
- *   Initializes the scirpt environment from the given mail_user.
- */
+/* Initializes the scirpt environment from the given mail_user. */
 int sieve_script_env_init(struct sieve_script_env *senv, struct mail_user *user,
 			  const char **error_r);
 
-/* sieve_execute:
- *
- *   Executes the binary, including the result.
- */
+/* Executes the binary, including the result. */
 int sieve_execute(struct sieve_binary *sbin,
 		  const struct sieve_message_data *msgdata,
 		  const struct sieve_script_env *senv,
