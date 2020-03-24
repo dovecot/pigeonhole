@@ -205,25 +205,25 @@ cmd_filter_sieve_script_read_stream(struct imap_filter_context *ctx)
 
 	while ((ret = i_stream_read_more(input, &data, &size)) > 0)
 		i_stream_skip(input, size);
-	if (ret < 0) {
-		if (input->v_offset != ctx->script_len) {
-			/* client disconnected */
-			i_assert(input->eof);
-			return -1;
-		}
-		/* finished reading the value */
-		i_stream_seek(input, 0);
+	if (ret == 0)
+		return 0;
 
-		if (ctx->failed) {
-			i_stream_unref(&ctx->script_input);
-			return 1;
-		}
+	if (input->v_offset != ctx->script_len) {
+		/* client disconnected */
+		i_assert(input->eof);
+		return -1;
+	}
+	/* finished reading the value */
+	i_stream_seek(input, 0);
 
-		cmd_filter_sieve_compile_input(ctx, ctx->script_input);
+	if (ctx->failed) {
 		i_stream_unref(&ctx->script_input);
 		return 1;
 	}
-	return 0;
+
+	cmd_filter_sieve_compile_input(ctx, ctx->script_input);
+	i_stream_unref(&ctx->script_input);
+	return 1;
 }
 
 static int
