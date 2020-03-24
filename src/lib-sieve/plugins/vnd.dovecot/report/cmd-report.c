@@ -490,9 +490,9 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 		report_from.type = SIEVE_ADDRESS_SOURCE_DEFAULT;
 		report_from.address = NULL;
 	}
-	if ((ret = sieve_address_source_get_address(
+	if (sieve_address_source_get_address(
 		&report_from, svinst, senv, msgctx, eenv->flags,
-		&sender)) > 0 && sender != NULL)
+		&sender) > 0 && sender != NULL)
 		from = smtp_address_encode_path(sender);
 	else
 		from = sieve_get_postmaster_address(senv);

@@ -1096,7 +1096,6 @@ static int sieve_message_parts_add_missing
 	unsigned int idx = 0;
 	bool save_body = FALSE, have_all;
 	string_t *hdr_content = NULL;
-	int ret;
 
 	/* First check whether any are missing */
 	if ( !iter_all && sieve_message_body_get_return_parts
@@ -1134,8 +1133,7 @@ static int sieve_message_parts_add_missing
 		// hparser_flags, mparser_flags);
 	parser = message_parser_init(pool_datastack_create(),
 		input, hparser_flags, mparser_flags);
-	while ( (ret=message_parser_parse_next_block
-		(parser, &block)) > 0 ) {
+	while ( message_parser_parse_next_block(parser, &block) > 0 ) {
 		struct sieve_message_part **body_part_idx;
 		struct message_header_line *hdr = block.hdr;
 		struct sieve_message_header *header;

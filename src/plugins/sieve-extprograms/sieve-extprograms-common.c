@@ -418,7 +418,6 @@ struct sieve_extprogram *sieve_extprogram_create
 	const char *path = NULL;
 	struct stat st;
 	bool fork = FALSE;
-	int ret;
 
 	e_debug(svinst->event, "action %s: "
 		"running program: %s", action, program_name);
@@ -437,7 +436,7 @@ struct sieve_extprogram *sieve_extprogram_create
 	if ( ext_config->socket_dir != NULL ) {
 		path = t_strconcat(senv->user->set->base_dir, "/",
 			ext_config->socket_dir, "/", program_name, NULL);
-		if ( (ret=stat(path, &st)) < 0 ) {
+		if ( stat(path, &st) < 0 ) {
 			switch ( errno ) {
 			case ENOENT:
 				e_debug(svinst->event, "action %s: "
@@ -471,7 +470,7 @@ struct sieve_extprogram *sieve_extprogram_create
 	if ( path == NULL && ext_config->bin_dir != NULL ) {
 		fork = TRUE;
 		path = t_strconcat(ext_config->bin_dir, "/", program_name, NULL);
-		if ( (ret=stat(path, &st)) < 0 ) {
+		if ( stat(path, &st) < 0 ) {
 			switch ( errno ) {
 			case ENOENT:
 				e_debug(svinst->event, "action %s: "
