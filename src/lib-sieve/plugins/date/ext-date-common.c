@@ -27,10 +27,10 @@ struct ext_date_context {
  * Runtime initialization
  */
 
-static int ext_date_runtime_init
-(const struct sieve_extension *ext,
-	const struct sieve_runtime_env *renv,
-	void *context ATTR_UNUSED, bool deferred ATTR_UNUSED)
+static int
+ext_date_runtime_init(const struct sieve_extension *ext,
+		      const struct sieve_runtime_env *renv,
+		      void *context ATTR_UNUSED, bool deferred ATTR_UNUSED)
 {
 	struct ext_date_context *dctx;
 	pool_t pool;
@@ -52,26 +52,24 @@ static int ext_date_runtime_init
 	dctx->current_date = current_date;
 	dctx->zone_offset = zone_offset;
 
-	sieve_message_context_extension_set
-		(renv->msgctx, ext, (void *) dctx);
+	sieve_message_context_extension_set(renv->msgctx, ext, (void *)dctx);
 	return SIEVE_EXEC_OK;
 }
 
-static struct sieve_interpreter_extension
-date_interpreter_extension = {
+static struct sieve_interpreter_extension date_interpreter_extension = {
 	.ext_def = &date_extension,
 	.run = ext_date_runtime_init
 };
 
-bool ext_date_interpreter_load
-(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
-	sieve_size_t *address ATTR_UNUSED)
+bool ext_date_interpreter_load(const struct sieve_extension *ext,
+			       const struct sieve_runtime_env *renv,
+			       sieve_size_t *address ATTR_UNUSED)
 {
 	/* Register runtime hook to obtain stript start timestamp */
-	if ( renv->msgctx == NULL ||
-		sieve_message_context_extension_get(renv->msgctx, ext) == NULL ) {
-		sieve_interpreter_extension_register
-			(renv->interp, ext, &date_interpreter_extension, NULL);
+	if (renv->msgctx == NULL ||
+	    sieve_message_context_extension_get(renv->msgctx, ext) == NULL) {
+		sieve_interpreter_extension_register(
+			renv->interp, ext, &date_interpreter_extension, NULL);
 	}
 
 	return TRUE;
@@ -81,10 +79,9 @@ bool ext_date_interpreter_load
  * Zone string
  */
 
-bool ext_date_parse_timezone
-(const char *zone, int *zone_offset_r)
+bool ext_date_parse_timezone(const char *zone, int *zone_offset_r)
 {
-	const unsigned char *str = (const unsigned char *) zone;
+	const unsigned char *str = (const unsigned char *)zone;
 	size_t len = strlen(zone);
 
 	if (len == 5 && (*str == '+' || *str == '-')) {
@@ -95,14 +92,12 @@ bool ext_date_parse_timezone
 			return FALSE;
 
 		offset = ((str[1]-'0') * 10 + (str[2]-'0')) * 60  +
-			(str[3]-'0') * 10 + (str[4]-'0');
+			  (str[3]-'0') * 10 + (str[4]-'0');
 
-		if ( zone_offset_r != NULL )
+		if (zone_offset_r != NULL)
 			*zone_offset_r = *str == '+' ? offset : -offset;
-
 		return TRUE;
 	}
-
 	return FALSE;
 }
 
@@ -110,24 +105,25 @@ bool ext_date_parse_timezone
  * Current date
  */
 
-time_t ext_date_get_current_date
-(const struct sieve_runtime_env *renv, int *zone_offset_r)
+time_t ext_date_get_current_date(const struct sieve_runtime_env *renv,
+				 int *zone_offset_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_date_context *dctx = (struct ext_date_context *)
 		sieve_message_context_extension_get(renv->msgctx, this_ext);
 
-	if ( dctx == NULL ) {
+	if (dctx == NULL) {
 		ext_date_runtime_init(this_ext, renv, NULL, FALSE);
 		dctx = (struct ext_date_context *)
-			sieve_message_context_extension_get(renv->msgctx, this_ext);
+			sieve_message_context_extension_get(
+				renv->msgctx, this_ext);
 
 		i_assert(dctx != NULL);
 	}
 
 	/* Read script start timestamp from message context */
 
-	if ( zone_offset_r != NULL )
+	if (zone_offset_r != NULL)
 		*zone_offset_r = dctx->zone_offset;
 
 	return dctx->current_date;
@@ -144,7 +140,7 @@ static const char *ext_date_year_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part year_date_part = {
 	"year",
-	ext_date_year_part_get
+	ext_date_year_part_get,
 };
 
 /* "month"     => the month, "01" .. "12".
@@ -154,7 +150,7 @@ static const char *ext_date_month_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part month_date_part = {
 	"month",
-	ext_date_month_part_get
+	ext_date_month_part_get,
 };
 
 /* "day"       => the day, "01" .. "31".
@@ -164,7 +160,7 @@ static const char *ext_date_day_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part day_date_part = {
 	"day",
-	ext_date_day_part_get
+	ext_date_day_part_get,
 };
 
 /* "date"      => the date in "yyyy-mm-dd" format.
@@ -174,23 +170,20 @@ static const char *ext_date_date_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part date_date_part = {
 	"date",
-	ext_date_date_part_get
+	ext_date_date_part_get,
 };
 
-/* "julian"    => the Modified Julian Day, that is, the date
- *              expressed as an integer number of days since
- *              00:00 UTC on November 17, 1858 (using the Gregorian
- *              calendar).  This corresponds to the regular
- *              Julian Day minus 2400000.5.  Sample routines to
- *              convert to and from modified Julian dates are
- *              given in Appendix A.
+/* "julian"    => the Modified Julian Day, that is, the date expressed as an
+                  integer number of days since 00:00 UTC on November 17, 1858
+                  (using the Gregorian calendar). This corresponds to the
+                  regular Julian Day minus 2400000.5.
  */
 
 static const char *ext_date_julian_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part julian_date_part = {
 	"julian",
-	ext_date_julian_part_get
+	ext_date_julian_part_get,
 };
 
 /* "hour"      => the hour, "00" .. "23".
@@ -199,7 +192,7 @@ static const char *ext_date_hour_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part hour_date_part = {
 	"hour",
-	ext_date_hour_part_get
+	ext_date_hour_part_get,
 };
 
 /* "minute"    => the minute, "00" .. "59".
@@ -208,7 +201,7 @@ static const char *ext_date_minute_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part minute_date_part = {
 	"minute",
-	ext_date_minute_part_get
+	ext_date_minute_part_get,
 };
 
 /* "second"    => the second, "00" .. "60".
@@ -217,7 +210,7 @@ static const char *ext_date_second_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part second_date_part = {
 	"second",
-	ext_date_second_part_get
+	ext_date_second_part_get,
 };
 
 /* "time"      => the time in "hh:mm:ss" format.
@@ -226,7 +219,7 @@ static const char *ext_date_time_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part time_date_part = {
 	"time",
-	ext_date_time_part_get
+	ext_date_time_part_get,
 };
 
 /* "iso8601"   => the date and time in restricted ISO 8601 format.
@@ -235,43 +228,42 @@ static const char *ext_date_iso8601_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part iso8601_date_part = {
 	"iso8601",
-	ext_date_iso8601_part_get
+	ext_date_iso8601_part_get,
 };
 
-/* "std11"     => the date and time in a format appropriate
- *                for use in a Date: header field [RFC2822].
+/* "std11"     => the date and time in a format appropriate for use in a Date:
+                  header field [RFC2822].
  */
 static const char *ext_date_std11_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part std11_date_part = {
 	"std11",
-	ext_date_std11_part_get
+	ext_date_std11_part_get,
 };
 
-/* "zone"      => the time zone in use.  If the user specified a
- *                time zone with ":zone", "zone" will
- *                contain that value.  If :originalzone is specified
- *                this value will be the original zone specified
- *                in the date-time value.  If neither argument is
- *                specified the value will be the server's default
- *                time zone in offset format "+hhmm" or "-hhmm".  An
- *                 offset of 0 (Zulu) always has a positive sign.
+/* "zone"      => the time zone in use. If the user specified a time zone with
+                  ":zone", "zone" will contain that value. If :originalzone is
+                  specified this value will be the original zone specified in
+                  the date-time value. If neither argument is specified the
+                  value will be the server's default time zone in offset format
+                  "+hhmm" or "-hhmm". An offset of 0 (Zulu) always has a
+		  positive sign.
  */
 static const char *ext_date_zone_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part zone_date_part = {
 	"zone",
-	ext_date_zone_part_get
+	ext_date_zone_part_get,
 };
 
-/* "weekday"   => the day of the week expressed as an integer between
- *                "0" and "6". "0" is Sunday, "1" is Monday, etc.
+/* "weekday"   => the day of the week expressed as an integer between "0" and
+                  "6". "0" is Sunday, "1" is Monday, etc.
  */
 static const char *ext_date_weekday_part_get(struct tm *tm, int zone_offset);
 
 static const struct ext_date_part weekday_date_part = {
 	"weekday",
-	ext_date_weekday_part_get
+	ext_date_weekday_part_get,
 };
 
 /*
@@ -279,10 +271,11 @@ static const struct ext_date_part weekday_date_part = {
  */
 
 static const struct ext_date_part *date_parts[] = {
-	&year_date_part, &month_date_part, &day_date_part, &date_date_part,
-	&julian_date_part, &hour_date_part, &minute_date_part, &second_date_part,
-	&time_date_part, &iso8601_date_part, &std11_date_part, &zone_date_part,
-	&weekday_date_part
+	&year_date_part, &month_date_part, &day_date_part,
+	&date_date_part, &julian_date_part, &hour_date_part,
+	&minute_date_part, &second_date_part, &time_date_part,
+	&iso8601_date_part, &std11_date_part, &zone_date_part,
+	&weekday_date_part,
 };
 
 unsigned int date_parts_count = N_ELEMENTS(date_parts);
@@ -291,21 +284,18 @@ const struct ext_date_part *ext_date_part_find(const char *part)
 {
 	unsigned int i;
 
-	for ( i = 0; i < date_parts_count; i++ ) {
-		if ( strcasecmp(date_parts[i]->identifier, part) == 0 ) {
+	for (i = 0; i < date_parts_count; i++) {
+		if (strcasecmp(date_parts[i]->identifier, part) == 0)
 			return date_parts[i];
-		}
 	}
-
 	return NULL;
 }
 
-const char *ext_date_part_extract
-(const struct ext_date_part *dpart, struct tm *tm, int zone_offset)
+const char *ext_date_part_extract(const struct ext_date_part *dpart,
+				  struct tm *tm, int zone_offset)
 {
-	if ( dpart == NULL || dpart->get_string == NULL )
+	if (dpart == NULL || dpart->get_string == NULL)
 		return NULL;
-
 	return dpart->get_string(tm, zone_offset);
 }
 
@@ -322,33 +312,33 @@ static const char *weekday_names[] = {
 	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
 
-static const char *ext_date_year_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_year_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	return t_strdup_printf("%04d", tm->tm_year + 1900);
 }
 
-static const char *ext_date_month_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_month_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	return t_strdup_printf("%02d", tm->tm_mon + 1);
 }
 
-static const char *ext_date_day_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_day_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	return t_strdup_printf("%02d", tm->tm_mday);
 }
 
-static const char *ext_date_date_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_date_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	return t_strdup_printf("%04d-%02d-%02d",
 		tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
 }
 
-static const char *ext_date_julian_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_julian_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	int year = tm->tm_year+1900;
 	int month = tm->tm_mon+1;
@@ -357,7 +347,7 @@ static const char *ext_date_julian_part_get
 
 	/* Modified from RFC 5260 Appendix A (refer to Errata) */
 
-	if ( month > 2 )
+	if (month > 2)
 		month -= 3;
 	else {
 		month += 9;
@@ -367,64 +357,64 @@ static const char *ext_date_julian_part_get
 	c = year / 100;
 	ya = year - c * 100;
 
-	jd = c * 146097 / 4 + ya * 1461 / 4 + (month * 153 + 2) / 5 + day + 1721119;
+	jd = c * 146097 / 4 + ya * 1461 / 4 + (month * 153 + 2) / 5 +
+	     day + 1721119;
 
 	return t_strdup_printf("%d", jd - 2400001);
 }
 
-static const char *ext_date_hour_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_hour_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	return t_strdup_printf("%02d", tm->tm_hour);
 }
 
-static const char *ext_date_minute_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_minute_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	return t_strdup_printf("%02d", tm->tm_min);
 }
 
-static const char *ext_date_second_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_second_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	return t_strdup_printf("%02d", tm->tm_sec);
 }
 
-static const char *ext_date_time_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_time_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return t_strdup_printf("%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
+	return t_strdup_printf("%02d:%02d:%02d",
+			       tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
 
-static const char *ext_date_iso8601_part_get
-(struct tm *tm, int zone_offset)
+static const char *
+ext_date_iso8601_part_get(struct tm *tm, int zone_offset)
 {
-	/* From RFC: `The restricted ISO 8601 format is specified by the date-time
-	 * ABNF production given in [RFC3339], Section 5.6, with the added
-   * restrictions that the letters "T" and "Z" MUST be in upper case, and
-	 * a time zone offset of zero MUST be represented by "Z" and not "+00:00".
+	/* From RFC: `The restricted ISO 8601 format is specified by the
+	              date-time ABNF production given in [RFC3339], Section 5.6,
+	              with the added restrictions that the letters "T" and "Z"
+	              MUST be in upper case, and a time zone offset of zero MUST
+	              be represented by "Z" and not "+00:00".`
 	 */
-	if ( zone_offset == 0 )
+	if (zone_offset == 0)
 		zone_offset = INT_MAX;
 
 	return iso8601_date_create_tm(tm, zone_offset);
 }
 
-
-static const char *ext_date_std11_part_get
-(struct tm *tm, int zone_offset)
+static const char *
+ext_date_std11_part_get(struct tm *tm, int zone_offset)
 {
 	return t_strdup_printf("%s, %02d %s %04d %02d:%02d:%02d %s",
-		weekday_names[tm->tm_wday],
-		tm->tm_mday,
-		month_names[tm->tm_mon],
-		tm->tm_year+1900,
-		tm->tm_hour, tm->tm_min, tm->tm_sec,
-		ext_date_zone_part_get(tm, zone_offset));
+			       weekday_names[tm->tm_wday], tm->tm_mday,
+			       month_names[tm->tm_mon], tm->tm_year+1900,
+			       tm->tm_hour, tm->tm_min, tm->tm_sec,
+			       ext_date_zone_part_get(tm, zone_offset));
 }
 
-static const char *ext_date_zone_part_get
-(struct tm *tm ATTR_UNUSED, int zone_offset)
+static const char *
+ext_date_zone_part_get(struct tm *tm ATTR_UNUSED, int zone_offset)
 {
 	bool negative;
 	int offset = zone_offset;
@@ -436,12 +426,12 @@ static const char *ext_date_zone_part_get
 		offset = -offset;
 	}
 
-	return t_strdup_printf
-		("%c%02d%02d", negative ? '-' : '+', offset / 60, offset % 60);
+	return t_strdup_printf("%c%02d%02d", (negative ? '-' : '+'),
+			       offset / 60, offset % 60);
 }
 
-static const char *ext_date_weekday_part_get
-(struct tm *tm, int zone_offset ATTR_UNUSED)
+static const char *
+ext_date_weekday_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	return t_strdup_printf("%d", tm->tm_wday);
 }
@@ -452,10 +442,11 @@ static const char *ext_date_weekday_part_get
 
 /* Forward declarations */
 
-static int ext_date_stringlist_next_item
-	(struct sieve_stringlist *_strlist, string_t **str_r);
-static void ext_date_stringlist_reset
-	(struct sieve_stringlist *_strlist);
+static int
+ext_date_stringlist_next_item(struct sieve_stringlist *_strlist,
+			      string_t **str_r);
+static void
+ext_date_stringlist_reset(struct sieve_stringlist *_strlist);
 
 /* Stringlist object */
 
@@ -472,9 +463,10 @@ struct ext_date_stringlist {
 	bool read:1;
 };
 
-struct sieve_stringlist *ext_date_stringlist_create
-(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_values,
-	int time_zone, const struct ext_date_part *dpart)
+struct sieve_stringlist *
+ext_date_stringlist_create(const struct sieve_runtime_env *renv,
+			   struct sieve_stringlist *field_values,
+			   int time_zone, const struct ext_date_part *dpart)
 {
 	struct ext_date_stringlist *strlist;
 
@@ -487,27 +479,30 @@ struct sieve_stringlist *ext_date_stringlist_create
 	strlist->time_zone = time_zone;
 	strlist->date_part = dpart;
 
-	strlist->local_time = ext_date_get_current_date(renv, &strlist->local_zone);
+	strlist->local_time =
+		ext_date_get_current_date(renv, &strlist->local_zone);
 
 	return &strlist->strlist;
 }
 
 /* Stringlist implementation */
 
-static int ext_date_stringlist_next_item
-(struct sieve_stringlist *_strlist, string_t **str_r)
+static int
+ext_date_stringlist_next_item(struct sieve_stringlist *_strlist,
+			      string_t **str_r)
 {
 	struct ext_date_stringlist *strlist =
-		(struct ext_date_stringlist *) _strlist;
+		(struct ext_date_stringlist *)_strlist;
 	bool got_date = FALSE;
 	time_t date_value;
 	const char *part_value = NULL;
 	int original_zone;
 
 	/* Check whether the item was already read */
-	if ( strlist->read ) return 0;
+	if (strlist->read)
+		return 0;
 
-	if ( strlist->field_values != NULL ) {
+	if (strlist->field_values != NULL) {
 		string_t *hdr_item;
 		const char *header_value, *date_string;
 		int ret;
@@ -515,8 +510,9 @@ static int ext_date_stringlist_next_item
 		/* Use header field value */
 
 		/* Read first */
-		if ( (ret=sieve_stringlist_next_item(strlist->field_values, &hdr_item))
-			<= 0 )
+		ret = sieve_stringlist_next_item(strlist->field_values,
+						 &hdr_item);
+		if (ret <= 0)
 			return ret;
 
 		/* Extract the date string value */
@@ -524,7 +520,7 @@ static int ext_date_stringlist_next_item
 		header_value = str_c(hdr_item);
 		date_string = strrchr(header_value, ';');
 
-		if ( date_string == NULL ) {
+		if (date_string == NULL) {
 			/* Direct header value */
 			date_string = header_value;
 		} else {
@@ -533,24 +529,25 @@ static int ext_date_stringlist_next_item
 		}
 
 		/* Parse the date value */
-		if ( message_date_parse((const unsigned char *) date_string,
-			strlen(date_string), &date_value, &original_zone) ) {
+		if (message_date_parse((const unsigned char *)date_string,
+				       strlen(date_string),
+				       &date_value, &original_zone))
 			got_date = TRUE;
-		}
 	} else {
-		/* Use time stamp recorded at the time the script first started */
+		/* Use time stamp recorded at the time the script first started.
+		 */
 		date_value = strlist->local_time;
 		original_zone = strlist->local_zone;
 		got_date = TRUE;
 	}
 
-	if ( got_date ) {
+	if (got_date) {
 		int wanted_zone;
 		struct tm *date_tm;
 
 		/* Apply wanted timezone */
 
-		switch ( strlist->time_zone ) {
+		switch (strlist->time_zone) {
 		case EXT_DATE_TIMEZONE_LOCAL:
 			wanted_zone = strlist->local_zone;
 			break;
@@ -565,29 +562,28 @@ static int ext_date_stringlist_next_item
 
 		/* Convert timestamp to struct tm */
 
-		if ( (date_tm=gmtime(&date_value)) != NULL ) {
+		if ((date_tm = gmtime(&date_value)) != NULL) {
 			/* Extract the date part */
-			part_value = ext_date_part_extract
-				(strlist->date_part, date_tm, wanted_zone);
+			part_value = ext_date_part_extract(
+				strlist->date_part, date_tm, wanted_zone);
 		}
 	}
 
 	strlist->read = TRUE;
 
-	if ( part_value == NULL )
+	if (part_value == NULL)
 		return 0;
 
 	*str_r = t_str_new_const(part_value, strlen(part_value));
 	return 1;
 }
 
-static void ext_date_stringlist_reset
-(struct sieve_stringlist *_strlist)
+static void ext_date_stringlist_reset(struct sieve_stringlist *_strlist)
 {
 	struct ext_date_stringlist *strlist =
-		(struct ext_date_stringlist *) _strlist;
+		(struct ext_date_stringlist *)_strlist;
 
-	if ( strlist->field_values != NULL )
+	if (strlist->field_values != NULL)
 		sieve_stringlist_reset(strlist->field_values);
 	strlist->read = FALSE;
 }
