@@ -226,7 +226,7 @@ static bool tag_body_transform_generate
 	struct sieve_command *cmd ATTR_UNUSED)
 {
 	enum tst_body_transform transform =
-		(enum tst_body_transform) arg->argument->data;
+		POINTER_CAST_TO(arg->argument->data, enum tst_body_transform);
 
 	sieve_binary_emit_byte(cgenv->sblock, transform);
 	sieve_generate_argument_parameters(cgenv, cmd, arg);
