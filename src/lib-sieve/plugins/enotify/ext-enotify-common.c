@@ -21,7 +21,7 @@
 #include <ctype.h>
 
 /* FIXME: (from draft RFC)
- 
+
    Header/envelope tests [Sieve] together with Sieve variables can be used to
    extract the list of users to receive notifications from the incoming email
    message or its envelope. This is potentially quite dangerous, as this can be
@@ -47,7 +47,7 @@ ext_notify_get_methods_string(const struct sieve_extension *ntfy_ext);
 
 const struct sieve_extension_capabilities notify_capabilities = {
 	"notify",
-	ext_notify_get_methods_string
+	ext_notify_get_methods_string,
 };
 
 /*
@@ -110,7 +110,7 @@ sieve_enotify_method_register(struct sieve_instance *svinst,
 
 	if (ntfy_ext != NULL) {
 		struct ext_enotify_context *ectx =
-			(struct ext_enotify_context *) ntfy_ext->context;
+			(struct ext_enotify_context *)ntfy_ext->context;
 
 		return ext_enotify_method_register(svinst, ectx, nmth_def);
 	}
@@ -192,9 +192,9 @@ static const char *ext_enotify_uri_scheme_parse(const char **uri_p)
 	unsigned int len = 0;
 
 	/* RFC 3968:
-	  
+
 	     scheme  = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
-	  
+
 	   FIXME: we do not allow '%' in schemes. Is this correct?
 	 */
 
@@ -229,7 +229,7 @@ ext_enotify_option_parse(struct sieve_enotify_env *nenv,
 	const char *p = option;
 
 	/* "<optionname>=<value>".
-	
+
 	   l-d = ALPHA / DIGIT
 	   l-d-p = l-d / "." / "-" / "_"
 	   optionname = l-d *l-d-p
@@ -357,7 +357,7 @@ _ext_enotify_option_check(void *context, struct sieve_ast_argument *arg)
 	    method->def->compile_check_option != NULL) {
 		result = (method->def->compile_check_option(&nenv, opt_name,
 							    opt_value) ?
-			  1 : -1 );
+			  1 : -1);
 	}
 
 	event_unref(&nenv.event);
@@ -428,7 +428,7 @@ bool ext_enotify_compile_check_arguments(struct sieve_validator *valdtr,
 	/* Check :message argument */
 	if (result && msg_arg != NULL &&
 	    sieve_argument_is_string_literal(msg_arg) &&
-	    method->def->compile_check_message != NULL ) {
+	    method->def->compile_check_message != NULL) {
 		/* Set log location to location of :message argument */
 		event_unref(&nenv.event);
 		nenv.ehandler = sieve_validator_error_handler(valdtr);
@@ -445,7 +445,7 @@ bool ext_enotify_compile_check_arguments(struct sieve_validator *valdtr,
 	/* Check :from argument */
 	if (result && from_arg != NULL &&
 	    sieve_argument_is_string_literal(from_arg) &&
-	    method->def->compile_check_from != NULL ) {
+	    method->def->compile_check_from != NULL) {
 		/* Set log location to location of :from argument */
 		event_unref(&nenv.event);
 		nenv.ehandler = sieve_validator_error_handler(valdtr);
@@ -572,7 +572,8 @@ ext_enotify_runtime_get_method_capability(const struct sieve_runtime_env *renv,
 
 	/* Get method */
 	method = ext_enotify_get_method(renv, method_uri, &uri_body);
-	if ( method == NULL ) return NULL;
+	if (method == NULL)
+		return NULL;
 
 	/* Get requested capability */
 	if (method->def != NULL &&
