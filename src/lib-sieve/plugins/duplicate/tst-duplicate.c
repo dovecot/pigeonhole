@@ -164,9 +164,9 @@ tst_duplicate_validate_string_tag(struct sieve_validator *valdtr,
 	*arg = sieve_ast_arguments_detach(*arg,1);
 
 	/* Check syntax:
-	 *   :header <header-name: string>
-	 *   :value <value: string>
-	 *   :handle <handle: string>
+	     :header <header-name: string>
+	     :value <value: string>
+	     :handle <handle: string>
 	 */
 	if (!sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, NULL, 0,
 					  SAAT_STRING, FALSE))
