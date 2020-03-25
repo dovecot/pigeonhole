@@ -87,22 +87,22 @@ cmd_notify_validate_importance_tag(struct sieve_validator *valdtr,
 
 static const struct sieve_argument_def notify_from_tag = {
 	.identifier = "from",
-	.validate = cmd_notify_validate_string_tag
+	.validate = cmd_notify_validate_string_tag,
 };
 
 static const struct sieve_argument_def notify_options_tag = {
 	.identifier = "options",
-	.validate = cmd_notify_validate_stringlist_tag
+	.validate = cmd_notify_validate_stringlist_tag,
 };
 
 static const struct sieve_argument_def notify_message_tag = {
 	.identifier = "message",
-	.validate = cmd_notify_validate_string_tag
+	.validate = cmd_notify_validate_string_tag,
 };
 
 static const struct sieve_argument_def notify_importance_tag = {
 	.identifier = "importance",
-	.validate = cmd_notify_validate_importance_tag
+	.validate = cmd_notify_validate_importance_tag,
 };
 
 /*
@@ -121,7 +121,7 @@ const struct sieve_operation_def notify_operation = {
 	.ext_def = &enotify_extension,
 	.code = EXT_ENOTIFY_OPERATION_NOTIFY,
 	.dump = cmd_notify_operation_dump,
-	.execute = cmd_notify_operation_execute
+	.execute = cmd_notify_operation_execute,
 };
 
 /*
@@ -177,8 +177,8 @@ cmd_notify_validate_string_tag(struct sieve_validator *valdtr,
 	*arg = sieve_ast_arguments_detach(*arg,1);
 
 	/* Check syntax:
-	 *   :from <string>
-	 *   :message <string>
+	     :from <string>
+	     :message <string>
 	 */
 	if (!sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, NULL, 0,
 					  SAAT_STRING, FALSE))
@@ -211,7 +211,7 @@ cmd_notify_validate_stringlist_tag(struct sieve_validator *valdtr,
 	*arg = sieve_ast_arguments_detach(*arg,1);
 
 	/* Check syntax:
-	 *   :options string-list
+	     :options string-list
 	 */
 	if (!sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, NULL, 0,
 					  SAAT_STRING_LIST, FALSE))
@@ -238,7 +238,7 @@ cmd_notify_validate_importance_tag(struct sieve_validator *valdtr,
 	*arg = sieve_ast_arguments_detach(*arg,1);
 
 	/* Check syntax:
-	 *   :importance <"1" / "2" / "3">
+	     :importance <"1" / "2" / "3">
 	 */
 	if (sieve_ast_argument_type(*arg) != SAAT_STRING) {
 		/* Not a string */
