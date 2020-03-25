@@ -24,13 +24,16 @@
  *     <key-list: string-list>
  */
 
-static bool tst_notifymc_registered
-	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-		struct sieve_command_registration *cmd_reg);
-static bool tst_notifymc_validate
-	(struct sieve_validator *valdtr, struct sieve_command *tst);
-static bool tst_notifymc_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
+static bool
+tst_notifymc_registered(struct sieve_validator *valdtr,
+			const struct sieve_extension *ext,
+			struct sieve_command_registration *cmd_reg);
+static bool
+tst_notifymc_validate(struct sieve_validator *valdtr,
+		      struct sieve_command *tst);
+static bool
+tst_notifymc_generate(const struct sieve_codegen_env *cgenv,
+		      struct sieve_command *ctx);
 
 const struct sieve_command_def notify_method_capability_test = {
 	.identifier = "notify_method_capability",
@@ -41,24 +44,26 @@ const struct sieve_command_def notify_method_capability_test = {
 	.block_required = FALSE,
 	.registered = tst_notifymc_registered,
 	.validate = tst_notifymc_validate,
-	.generate = tst_notifymc_generate
+	.generate = tst_notifymc_generate,
 };
 
 /*
  * String operation
  */
 
-static bool tst_notifymc_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int tst_notifymc_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+tst_notifymc_operation_dump(const struct sieve_dumptime_env *denv,
+			    sieve_size_t *address);
+static int
+tst_notifymc_operation_execute(const struct sieve_runtime_env *renv,
+			       sieve_size_t *address);
 
 const struct sieve_operation_def notify_method_capability_operation = {
 	.mnemonic = "NOTIFY_METHOD_CAPABILITY",
 	.ext_def = &enotify_extension,
 	.code = EXT_ENOTIFY_OPERATION_NOTIFY_METHOD_CAPABILITY,
 	.dump = tst_notifymc_operation_dump,
-	.execute = tst_notifymc_operation_execute
+	.execute = tst_notifymc_operation_execute,
 };
 
 /*
@@ -68,16 +73,17 @@ const struct sieve_operation_def notify_method_capability_operation = {
 enum tst_notifymc_optional {
 	OPT_END,
 	OPT_COMPARATOR,
-	OPT_MATCH_TYPE
+	OPT_MATCH_TYPE,
 };
 
 /*
  * Test registration
  */
 
-static bool tst_notifymc_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED,
-	struct sieve_command_registration *cmd_reg)
+static bool
+tst_notifymc_registered(struct sieve_validator *valdtr,
+			const struct sieve_extension *ext ATTR_UNUSED,
+			struct sieve_command_registration *cmd_reg)
 {
 	/* The order of these is not significant */
 	sieve_comparators_link_tag(valdtr, cmd_reg, OPT_COMPARATOR);
@@ -90,8 +96,8 @@ static bool tst_notifymc_registered
  * Test validation
  */
 
-static bool tst_notifymc_validate
-(struct sieve_validator *valdtr, struct sieve_command *tst)
+static bool
+tst_notifymc_validate(struct sieve_validator *valdtr, struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
 	const struct sieve_match_type mcht_default =
@@ -99,48 +105,43 @@ static bool tst_notifymc_validate
 	const struct sieve_comparator cmp_default =
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "notification-uri", 1, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(
+		valdtr, tst, arg, "notification-uri", 1, SAAT_STRING))
 		return FALSE;
-	}
-
-	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+	if (!sieve_validator_argument_activate(valdtr, tst, arg, FALSE))
 		return FALSE;
 
 	arg = sieve_ast_argument_next(arg);
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "notification-capability", 2, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(
+		valdtr, tst, arg, "notification-capability", 2, SAAT_STRING))
 		return FALSE;
-	}
-
-	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+	if (!sieve_validator_argument_activate(valdtr, tst, arg, FALSE))
 		return FALSE;
 
 	arg = sieve_ast_argument_next(arg);
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "key-list", 3, SAAT_STRING_LIST) ) {
+	if (!sieve_validate_positional_argument(
+		valdtr, tst, arg, "key-list", 3, SAAT_STRING_LIST))
 		return FALSE;
-	}
-
-	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+	if (!sieve_validator_argument_activate(valdtr, tst, arg, FALSE))
 		return FALSE;
 
 	/* Validate the key argument to a specified match type */
-	return sieve_match_type_validate
-		(valdtr, tst, arg, &mcht_default, &cmp_default);
+	return sieve_match_type_validate(valdtr, tst, arg,
+					 &mcht_default, &cmp_default);
 }
 
 /*
  * Test generation
  */
 
-static bool tst_notifymc_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+static bool
+tst_notifymc_generate(const struct sieve_codegen_env *cgenv,
+		      struct sieve_command *cmd)
 {
-	sieve_operation_emit
-		(cgenv->sblock, cmd->ext, &notify_method_capability_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext,
+			     &notify_method_capability_operation);
 
  	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);
@@ -150,28 +151,29 @@ static bool tst_notifymc_generate
  * Code dump
  */
 
-static bool tst_notifymc_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+tst_notifymc_operation_dump(const struct sieve_dumptime_env *denv,
+			    sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "NOTIFY_METHOD_CAPABILITY");
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( sieve_match_opr_optional_dump(denv, address, NULL) != 0 )
+	if (sieve_match_opr_optional_dump(denv, address, NULL) != 0)
 		return FALSE;
 
-	return
-		sieve_opr_string_dump(denv, address, "notify uri") &&
+	return (sieve_opr_string_dump(denv, address, "notify uri") &&
 		sieve_opr_string_dump(denv, address, "notify capability") &&
-		sieve_opr_stringlist_dump(denv, address, "key list");
+		sieve_opr_stringlist_dump(denv, address, "key list"));
 }
 
 /*
  * Code execution
  */
 
-static int tst_notifymc_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+tst_notifymc_operation_execute(const struct sieve_runtime_env *renv,
+			       sieve_size_t *address)
 {
 	struct sieve_match_type mcht =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
@@ -187,40 +189,43 @@ static int tst_notifymc_operation_execute
 	 */
 
 	/* Handle match-type and comparator operands */
-	if ( sieve_match_opr_optional_read
-		(renv, address, NULL, &ret, &cmp, &mcht) < 0 )
+	if (sieve_match_opr_optional_read(renv, address, NULL,
+					  &ret, &cmp, &mcht) < 0)
 		return ret;
 
 	/* Read notify uri */
-	if ( (ret=sieve_opr_string_read(renv, address, "notify-uri", &notify_uri))
-		<= 0 )
+	ret = sieve_opr_string_read(renv, address, "notify-uri", &notify_uri);
+	if (ret <= 0)
 		return ret;
 
 	/* Read notify capability */
-	if ( (ret=sieve_opr_string_read
-		(renv, address, "notify-capability", &notify_capability)) <= 0 )
+	ret = sieve_opr_string_read(renv, address, "notify-capability",
+				    &notify_capability);
+	if (ret <= 0)
 		return ret;
 
 	/* Read key-list */
-	if ( (ret=sieve_opr_stringlist_read(renv, address, "key-list", &key_list))
-		<= 0)
+	ret = sieve_opr_stringlist_read(renv, address, "key-list", &key_list);
+	if (ret <= 0)
 		return ret;
 
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "notify_method_capability test");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+			    "notify_method_capability test");
 
-	cap_value = ext_enotify_runtime_get_method_capability
-		(renv, notify_uri, str_c(notify_capability));
-
-	if ( cap_value != NULL ) {
-		value_list = sieve_single_stringlist_create_cstr(renv, cap_value, TRUE);
+	cap_value = ext_enotify_runtime_get_method_capability(
+		renv, notify_uri, str_c(notify_capability));
+	if (cap_value != NULL) {
+		value_list = sieve_single_stringlist_create_cstr(
+			renv, cap_value, TRUE);
 
 		/* Perform match */
-		if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret))
-			< 0 )
+		match = sieve_match(renv, &mcht, &cmp,
+				    value_list, key_list, &ret);
+		if (match < 0)
 			return ret;
 	} else {
 		match = 0;
