@@ -24,27 +24,28 @@
  * Extensions
  */
 
-static bool ext_duplicate_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool
+ext_duplicate_validator_load(const struct sieve_extension *ext,
+			     struct sieve_validator *valdtr);
 
 const struct sieve_extension_def duplicate_extension = {
 	.name = "duplicate",
 	.load = ext_duplicate_load,
 	.unload = ext_duplicate_unload,
 	.validator_load = ext_duplicate_validator_load,
-	SIEVE_EXT_DEFINE_OPERATION(tst_duplicate_operation)
+	SIEVE_EXT_DEFINE_OPERATION(tst_duplicate_operation),
 };
 
 /*
  * Validation
  */
 
-static bool ext_duplicate_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_duplicate_validator_load(const struct sieve_extension *ext,
+			     struct sieve_validator *valdtr)
 {
 	/* Register duplicate test */
 	sieve_validator_register_command(valdtr, ext, &tst_duplicate);
 
 	return TRUE;
 }
-
