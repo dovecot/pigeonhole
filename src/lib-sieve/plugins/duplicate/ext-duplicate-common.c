@@ -83,7 +83,7 @@ act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv,
 static const struct sieve_action_def act_duplicate_mark = {
 	.name = "duplicate_mark",
 	.print = act_duplicate_mark_print,
-	.finish = act_duplicate_mark_finish
+	.finish = act_duplicate_mark_finish,
 };
 
 static void
@@ -264,8 +264,8 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	}
 
 	/* We may only mark the message as duplicate when Sieve script executes
-	 * successfully; therefore defer this operation until successful result
-	 * execution.
+	   successfully; therefore defer this operation until successful result
+	   execution.
 	 */
 	if (!duplicate || last) {
 		if (sieve_result_add_action(renv, NULL, NULL,
@@ -295,4 +295,3 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 
 	return SIEVE_EXEC_OK;
 }
-
