@@ -22,7 +22,7 @@ mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 const struct sieve_variables_modifier_def encodeurl_modifier = {
 	SIEVE_OBJECT("encodeurl", &encodeurl_operand, 0),
 	15,
-	mod_encodeurl_modify
+	mod_encodeurl_modify,
 };
 
 /*
@@ -36,7 +36,7 @@ const struct sieve_operand_def encodeurl_operand = {
 	.name = "modifier",
 	.ext_def = &enotify_extension,
 	.class = &sieve_variables_modifier_operand_class,
-	.interface = &ext_enotify_modifiers
+	.interface = &ext_enotify_modifiers,
 };
 
 /*
@@ -72,7 +72,7 @@ mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 	const unsigned char *p, *poff, *pend;
 	size_t new_size;
 
-	if ( str_len(in) == 0 ) {
+	if (str_len(in) == 0) {
 		*result = in;
 		return TRUE;
 	}
@@ -114,5 +114,3 @@ mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 	str_append_data(*result, poff, p - poff);
 	return TRUE;
 }
-
-
