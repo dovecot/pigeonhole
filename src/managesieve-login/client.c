@@ -11,7 +11,6 @@
 #include "strescape.h"
 #include "base64.h"
 #include "master-service.h"
-#include "master-auth.h"
 #include "auth-client.h"
 
 #include "managesieve-parser.h"
