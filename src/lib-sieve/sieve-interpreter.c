@@ -28,6 +28,7 @@
 #include <string.h>
 
 static struct event_category event_category_sieve_runtime = {
+	.parent = &event_category_sieve,
 	.name = "sieve-runtime",
 };
 

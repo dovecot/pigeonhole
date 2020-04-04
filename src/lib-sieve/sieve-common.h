@@ -153,6 +153,12 @@ bool sieve_validate
 		enum sieve_compile_flags flags, enum sieve_error *error_r);
 
 /*
+ * Parent category
+ */
+
+extern struct event_category event_category_sieve;
+
+/*
  * Sieve engine instance
  */
 

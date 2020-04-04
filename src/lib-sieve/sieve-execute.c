@@ -6,6 +6,7 @@
 #include "sieve-execute.h"
 
 struct event_category event_category_sieve_execute = {
+	.parent = &event_category_sieve,
 	.name = "sieve-execute",
 };
 

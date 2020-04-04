@@ -27,6 +27,7 @@
 #define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
 
 struct event_category event_category_sieve_storage = {
+	.parent = &event_category_sieve,
 	.name = "sieve-storage",
 };
 

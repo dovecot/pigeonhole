@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 struct event_category event_category_sieve_action = {
+	.parent = &event_category_sieve,
 	.name = "sieve-action",
 };
 
