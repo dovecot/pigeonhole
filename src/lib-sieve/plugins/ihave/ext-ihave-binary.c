@@ -20,15 +20,17 @@
  * Forward declarations
  */
 
-static bool ext_ihave_binary_pre_save
-	(const struct sieve_extension *ext, struct sieve_binary *sbin,
-		void *context, enum sieve_error *error_r);
-static bool ext_ihave_binary_open
-	(const struct sieve_extension *ext, struct sieve_binary *sbin,
-		void *context);
-static bool ext_ihave_binary_up_to_date
-	(const struct sieve_extension *ext, struct sieve_binary *sbin,
-		void *context, enum sieve_compile_flags cpflags);
+static bool
+ext_ihave_binary_pre_save(const struct sieve_extension *ext,
+			  struct sieve_binary *sbin, void *context,
+			  enum sieve_error *error_r);
+static bool
+ext_ihave_binary_open(const struct sieve_extension *ext,
+		      struct sieve_binary *sbin, void *context);
+static bool
+ext_ihave_binary_up_to_date(const struct sieve_extension *ext,
+			    struct sieve_binary *sbin, void *context,
+			    enum sieve_compile_flags cpflags);
 
 /*
  * Binary include extension
@@ -38,7 +40,7 @@ const struct sieve_binary_extension ihave_binary_ext = {
 	.extension = &ihave_extension,
 	.binary_pre_save = ext_ihave_binary_pre_save,
 	.binary_open = ext_ihave_binary_open,
-	.binary_up_to_date = ext_ihave_binary_up_to_date
+	.binary_up_to_date = ext_ihave_binary_up_to_date,
 };
 
 /*
@@ -52,11 +54,11 @@ struct ext_ihave_binary_context {
 	ARRAY(const char *) missing_extensions;
 };
 
-static struct ext_ihave_binary_context *ext_ihave_binary_create_context
-(const struct sieve_extension *this_ext, struct sieve_binary *sbin)
+static struct ext_ihave_binary_context *
+ext_ihave_binary_create_context(const struct sieve_extension *this_ext,
+				struct sieve_binary *sbin)
 {
 	pool_t pool = sieve_binary_pool(sbin);
-
 	struct ext_ihave_binary_context *ctx =
 		p_new(pool, struct ext_ihave_binary_context, 1);
 
@@ -67,21 +69,22 @@ static struct ext_ihave_binary_context *ext_ihave_binary_create_context
 	return ctx;
 }
 
-struct ext_ihave_binary_context *ext_ihave_binary_get_context
-(const struct sieve_extension *this_ext, struct sieve_binary *sbin)
+struct ext_ihave_binary_context *
+ext_ihave_binary_get_context(const struct sieve_extension *this_ext,
+			     struct sieve_binary *sbin)
 {
-	struct ext_ihave_binary_context *ctx = (struct ext_ihave_binary_context *)
-		sieve_binary_extension_get_context(sbin, this_ext);
+	struct ext_ihave_binary_context *ctx =
+		(struct ext_ihave_binary_context *)
+			sieve_binary_extension_get_context(sbin, this_ext);
 
-	if ( ctx == NULL )
+	if (ctx == NULL)
 		ctx = ext_ihave_binary_create_context(this_ext, sbin);
-
 	return ctx;
 }
 
-struct ext_ihave_binary_context *ext_ihave_binary_init
-(const struct sieve_extension *this_ext, struct sieve_binary *sbin,
-	struct sieve_ast *ast)
+struct ext_ihave_binary_context *
+ext_ihave_binary_init(const struct sieve_extension *this_ext,
+		      struct sieve_binary *sbin, struct sieve_ast *ast)
 {
 	struct ext_ihave_ast_context *ast_ctx =
 		ext_ihave_get_ast_context(this_ext, ast);
@@ -92,14 +95,15 @@ struct ext_ihave_binary_context *ext_ihave_binary_init
 	binctx = ext_ihave_binary_get_context(this_ext, sbin);
 
 	exts = array_get(&ast_ctx->missing_extensions, &count);
-
-	if ( count > 0 ) {
+	if (count > 0) {
 		pool_t pool = sieve_binary_pool(sbin);
 
-		if ( binctx->block == NULL )
-			binctx->block = sieve_binary_extension_create_block(sbin, this_ext);
+		if (binctx->block == NULL) {
+			binctx->block = sieve_binary_extension_create_block(
+				sbin, this_ext);
+		}
 
-		for ( i = 0; i < count; i++ ) {
+		for (i = 0; i < count; i++) {
 			const char *ext_name = p_strdup(pool, exts[i]);
 
 			array_append(&binctx->missing_extensions, &ext_name, 1);
@@ -113,54 +117,56 @@ struct ext_ihave_binary_context *ext_ihave_binary_init
  * Binary extension
  */
 
-static bool ext_ihave_binary_pre_save
-(const struct sieve_extension *ext, struct sieve_binary *sbin,
-	void *context, enum sieve_error *error_r ATTR_UNUSED)
+static bool
+ext_ihave_binary_pre_save(const struct sieve_extension *ext,
+			  struct sieve_binary *sbin, void *context,
+			  enum sieve_error *error_r ATTR_UNUSED)
 {
 	struct ext_ihave_binary_context *binctx =
-		(struct ext_ihave_binary_context *) context;
+		(struct ext_ihave_binary_context *)context;
 	const char *const *exts;
 	unsigned int count, i;
 
 	exts = array_get(&binctx->missing_extensions, &count);
 
-	if ( binctx->block != NULL )
+	if (binctx->block != NULL)
 		sieve_binary_block_clear(binctx->block);
 
-	if ( count > 0 ) {
-		if ( binctx->block == NULL )
-			binctx->block = sieve_binary_extension_create_block(sbin, ext);
+	if (count > 0) {
+		if (binctx->block == NULL) {
+			binctx->block =
+				sieve_binary_extension_create_block(sbin, ext);
+		}
 
 		sieve_binary_emit_unsigned(binctx->block, count);
 
-		for ( i = 0; i < count; i++ ) {
+		for (i = 0; i < count; i++)
 			sieve_binary_emit_cstring(binctx->block, exts[i]);
-		}
 	}
-
 	return TRUE;
 }
 
-static bool ext_ihave_binary_open
-(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context)
+static bool
+ext_ihave_binary_open(const struct sieve_extension *ext,
+		      struct sieve_binary *sbin, void *context)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_ihave_binary_context *binctx =
-		(struct ext_ihave_binary_context *) context;
+		(struct ext_ihave_binary_context *)context;
 	struct sieve_binary_block *sblock;
 	unsigned int i, count, block_id;
 	sieve_size_t offset;
 
 	sblock = sieve_binary_extension_get_block(sbin, ext);
 
-	if ( sblock != NULL ) {
+	if (sblock != NULL) {
 		binctx->block = sblock;
 		block_id = sieve_binary_block_get_id(sblock);
 
 		offset = 0;
 
 		/* Read number of missing extensions to read subsequently */
-		if ( !sieve_binary_read_unsigned(sblock, &offset, &count) ) {
+		if (!sieve_binary_read_unsigned(sblock, &offset, &count)) {
 			e_error(svinst->event, "ihave: "
 				"failed to read missing extension count "
 				"from block %d of binary %s",
@@ -169,11 +175,12 @@ static bool ext_ihave_binary_open
 		}
 
 		/* Read dependencies */
-		for ( i = 0; i < count; i++ ) {
+		for (i = 0; i < count; i++) {
 			string_t *ext_name;
 			const char *name;
 
-			if ( !sieve_binary_read_string(sblock, &offset, &ext_name) ) {
+			if (!sieve_binary_read_string(sblock, &offset,
+						      &ext_name)) {
 				/* Binary is corrupt, recompile */
 				e_error(svinst->event, "ihave: "
 					"failed to read missing extension name "
@@ -190,23 +197,25 @@ static bool ext_ihave_binary_open
 	return TRUE;
 }
 
-static bool ext_ihave_binary_up_to_date
-(const struct sieve_extension *ext, struct sieve_binary *sbin ATTR_UNUSED,
-	void *context, enum sieve_compile_flags cpflags)
+static bool
+ext_ihave_binary_up_to_date(const struct sieve_extension *ext,
+			    struct sieve_binary *sbin ATTR_UNUSED,
+			    void *context, enum sieve_compile_flags cpflags)
 {
 	struct ext_ihave_binary_context *binctx =
-		(struct ext_ihave_binary_context *) context;
+		(struct ext_ihave_binary_context *)context;
 	const struct sieve_extension *mext;
 	const char *const *mexts;
 	unsigned int count, i;
 
 	mexts = array_get(&binctx->missing_extensions, &count);
-	for ( i = 0; i < count; i++ ) {
-		if ( (mext=sieve_extension_get_by_name(ext->svinst, mexts[i])) != NULL &&
-			((cpflags & SIEVE_COMPILE_FLAG_NOGLOBAL) == 0 || !mext->global) )
+	for (i = 0; i < count; i++) {
+		mext = sieve_extension_get_by_name(ext->svinst, mexts[i]);
+		if (mext != NULL &&
+		    ((cpflags & SIEVE_COMPILE_FLAG_NOGLOBAL) == 0 ||
+		     !mext->global))
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -214,16 +223,16 @@ static bool ext_ihave_binary_up_to_date
  * Main extension interface
  */
 
-bool ext_ihave_binary_load
-(const struct sieve_extension *ext, struct sieve_binary *sbin)
+bool ext_ihave_binary_load(const struct sieve_extension *ext,
+			   struct sieve_binary *sbin)
 {
 	(void)ext_ihave_binary_get_context(ext, sbin);
 
 	return TRUE;
 }
 
-bool ext_ihave_binary_dump
-(const struct sieve_extension *ext, struct sieve_dumptime_env *denv)
+bool ext_ihave_binary_dump(const struct sieve_extension *ext,
+			   struct sieve_dumptime_env *denv)
 {
 	struct sieve_binary *sbin = denv->sbin;
 	struct ext_ihave_binary_context *binctx =
@@ -233,17 +242,14 @@ bool ext_ihave_binary_dump
 
 	exts = array_get(&binctx->missing_extensions, &count);
 
-	if ( count > 0 ) {
-		sieve_binary_dump_sectionf(denv,
-			"Extensions missing at compile (block: %d)",
+	if (count > 0) {
+		sieve_binary_dump_sectionf(
+			denv, "Extensions missing at compile (block: %d)",
 			sieve_binary_block_get_id(binctx->block));
 
-		for ( i = 0; i < count; i++ ) {
+		for (i = 0; i < count; i++)
 			sieve_binary_dumpf(denv, "  -  %s\n", exts[i]);
-		}
 	}
 
 	return TRUE;
 }
-
-
