@@ -41,7 +41,7 @@ const struct sieve_command_def ihave_test = {
 	.block_required = FALSE,
 	.validate = tst_ihave_validate,
 	.validate_const = tst_ihave_validate_const,
-	.generate = tst_ihave_generate
+	.generate = tst_ihave_generate,
 };
 
 /*
@@ -60,7 +60,7 @@ const struct sieve_operation_def tst_ihave_operation = {
 	.ext_def = &ihave_extension,
 	.code = EXT_IHAVE_OPERATION_IHAVE,
 	.dump = tst_ihave_operation_dump,
-	.execute = tst_ihave_operation_execute
+	.execute = tst_ihave_operation_execute,
 };
 
 /*
@@ -155,7 +155,7 @@ tst_ihave_validate(struct sieve_validator *valdtr, struct sieve_command *tst)
 	   [RFC5228], or variables [RFC5229] that change how the content of
 	   Sieve scripts are interpreted.  The test MUST fail and the extension
 	   MUST NOT be enabled if such usage is attempted.
-	  
+
 	   FIXME: current implementation of this restriction is hardcoded and
 	   therefore highly inflexible
 	 */
