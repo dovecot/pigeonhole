@@ -27,32 +27,34 @@
  * Extension
  */
 
-static bool ext_environment_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
-static bool ext_environment_interpreter_load
-(const struct sieve_extension *ext,
-	const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+ext_environment_validator_load(const struct sieve_extension *ext,
+			       struct sieve_validator *valdtr);
+static bool
+ext_environment_interpreter_load(const struct sieve_extension *ext,
+				 const struct sieve_runtime_env *renv,
+				 sieve_size_t *address);
 
 const struct sieve_extension_def environment_extension = {
 	.name = "environment",
 	.validator_load = ext_environment_validator_load,
 	.interpreter_load = ext_environment_interpreter_load,
-	SIEVE_EXT_DEFINE_OPERATION(tst_environment_operation)
+	SIEVE_EXT_DEFINE_OPERATION(tst_environment_operation),
 };
 
-static bool ext_environment_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_environment_validator_load(const struct sieve_extension *ext,
+			       struct sieve_validator *valdtr)
 {
 	sieve_validator_register_command(valdtr, ext, &tst_environment);
 	return TRUE;
 }
 
-static bool ext_environment_interpreter_load
-(const struct sieve_extension *ext,
-	const struct sieve_runtime_env *renv,
-	sieve_size_t *address ATTR_UNUSED)
+static bool
+ext_environment_interpreter_load(const struct sieve_extension *ext,
+				 const struct sieve_runtime_env *renv,
+				 sieve_size_t *address ATTR_UNUSED)
 {
 	ext_environment_interpreter_init(ext, renv->interp);
 	return TRUE;
 }
-
