@@ -22,7 +22,7 @@ static const struct sieve_environment_item *core_env_items[] = {
 	&location_env_item,
 	&phase_env_item,
 	&name_env_item,
-	&version_env_item
+	&version_env_item,
 };
 
 static unsigned int core_env_items_count = N_ELEMENTS(core_env_items);
