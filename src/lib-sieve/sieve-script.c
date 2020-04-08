@@ -499,12 +499,9 @@ bool sieve_script_binary_dump_metadata(struct sieve_script *script,
 					    NULL, NULL);
 	}
 
-	if (script != NULL) {
-		if (script->v.binary_dump_metadata == NULL)
-			return TRUE;
-
-		result = script->v.binary_dump_metadata(script, denv,
-							sblock, offset);
+	if (script != NULL && script->v.binary_dump_metadata != NULL) {
+		result = script->v.binary_dump_metadata(
+			script, denv, sblock, offset);
 	}
 
 	if (adhoc_script != NULL)
