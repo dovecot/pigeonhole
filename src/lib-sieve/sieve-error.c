@@ -998,7 +998,7 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 		now = time(NULL);
 		tm = localtime(&now);
 
-		if (strftime(buf, sizeof(buf), "%b %d %H:%M:%S", tm) > 0) {
+		if (strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S %z", tm) > 0) {
 			sieve_logfile_printf(ehandler, __FILE__, __LINE__,
 					     "sieve", "started log at %s", buf);
 		}
