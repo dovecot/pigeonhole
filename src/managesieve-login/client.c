@@ -535,6 +535,10 @@ static const struct login_binary managesieve_login_binary = {
 	.anonymous_login_acceptable = FALSE,
 };
 
+struct event_category login_event_category = {
+	.name = "managesieve",
+};
+
 int main(int argc, char *argv[])
 {
 	return login_binary_run(&managesieve_login_binary, argc, argv);

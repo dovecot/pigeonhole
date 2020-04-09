@@ -77,7 +77,7 @@ static int proxy_write_auth
 	if ( !client->proxy_sasl ) {
 		/* Prevent sending credentials to a server that has login disabled;
 		   i.e., due to the lack of TLS */
-		client_log_err(&client->common, "proxy: "
+		e_error(login_proxy_get_event(client->common.login_proxy),
 			"Server has disabled authentication (TLS required?)");
 		return -1;
 	}
@@ -99,9 +99,9 @@ static int proxy_write_auth
 	managesieve_quote_append_string(str, mech_name, FALSE);
 	if (dsasl_client_output(client->common.proxy_sasl_client,
 				&output, &len, &error) < 0) {
-		client_log_err(&client->common, t_strdup_printf(
-			"proxy: SASL mechanism %s init failed: %s",
-			mech_name, error));
+		e_error(login_proxy_get_event(client->common.login_proxy),
+			"SASL mechanism %s init failed: %s",
+			mech_name, error);
 		return -1;
 	}
 	if (len > 0) {
@@ -142,9 +142,9 @@ static int proxy_input_auth_challenge
 		if ( ret > 0 && managesieve_arg_get_string(&args[0], &challenge) ) {
 			*challenge_r = t_strdup(challenge);
 		} else {
-			client_log_err(&client->common, t_strdup_printf("proxy: "
+			e_error(login_proxy_get_event(client->common.login_proxy),
 				"Server sent invalid SASL challenge line: %s",
-				str_sanitize(line,160)));
+				str_sanitize(line,160));
 			fatal = TRUE;
 		}
 
@@ -157,9 +157,9 @@ static int proxy_input_auth_challenge
 		error_str = (error_str != NULL ? error_str : "unknown (bug)" );
 
 		/* Do not accept faulty server */
-		client_log_err(&client->common, t_strdup_printf("proxy: "
+		e_error(login_proxy_get_event(client->common.login_proxy),
 			"Protocol parse error(%d) int SASL challenge line: %s (line=`%s')",
-			ret, error_str, line));
+			ret, error_str, line);
 		fatal = TRUE;
 	}
 
@@ -183,8 +183,8 @@ static int proxy_write_auth_response
 	int ret;
 
 	if (base64_decode(challenge, strlen(challenge), NULL, str) < 0) {
-		client_log_err(&client->common,
-			"proxy: Server sent invalid base64 data in AUTHENTICATE response");
+		e_error(login_proxy_get_event(client->common.login_proxy),
+			"Server sent invalid base64 data in AUTHENTICATE response");
 		return -1;
 	}
 	ret = dsasl_client_input(client->common.proxy_sasl_client,
@@ -194,9 +194,8 @@ static int proxy_write_auth_response
 					  &data, &data_len, &error);
 	}
 	if (ret < 0) {
-		client_log_err(&client->common, t_strdup_printf(
-			"proxy: Server sent invalid authentication data: %s",
-			error));
+		e_error(login_proxy_get_event(client->common.login_proxy),
+			"Server sent invalid authentication data: %s", error);
 		return -1;
 	}
 	i_assert(ret == 0);
@@ -261,18 +260,18 @@ static int proxy_input_capability
 	ret = managesieve_parser_read_args(parser, 2, 0, &args);
 
 	if ( ret == 0 ) {
-		client_log_err(&client->common, t_strdup_printf("proxy: "
+		e_error(login_proxy_get_event(client->common.login_proxy),
 			"Remote returned with invalid capability/greeting line: %s",
-			str_sanitize(line,160)));
+			str_sanitize(line,160));
 		fatal = TRUE;
 	} else if ( ret > 0 ) {
 		if ( args[0].type == MANAGESIEVE_ARG_ATOM ) {
 			*resp_r = proxy_read_response(args);
 
 			if ( *resp_r == MANAGESIEVE_RESPONSE_NONE ) {
-				client_log_err(&client->common, t_strdup_printf("proxy: "
+				e_error(login_proxy_get_event(client->common.login_proxy),
 					"Remote sent invalid response: %s",
-					str_sanitize(line,160)));
+					str_sanitize(line,160));
 
 				fatal = TRUE;
 			}
@@ -292,8 +291,8 @@ static int proxy_input_capability
 					}
 
 				} else {
-					client_log_err(&client->common, "proxy: "
-		         		"Server returned erroneous SASL capability");
+					e_error(login_proxy_get_event(client->common.login_proxy),
+						"Server returned erroneous SASL capability");
 					fatal = TRUE;
 				}
 
@@ -305,9 +304,9 @@ static int proxy_input_capability
 
 		} else {
 			/* Do not accept faulty server */
-			client_log_err(&client->common, t_strdup_printf("proxy: "
+			e_error(login_proxy_get_event(client->common.login_proxy),
 				"Remote returned with invalid capability/greeting line: %s",
-				str_sanitize(line,160)));
+				str_sanitize(line,160));
 			fatal = TRUE;
 		}
 
@@ -320,9 +319,9 @@ static int proxy_input_capability
 		error_str = (error_str != NULL ? error_str : "unknown (bug)" );
 
 		/* Do not accept faulty server */
-		client_log_err(&client->common, t_strdup_printf("proxy: "
+		e_error(login_proxy_get_event(client->common.login_proxy),
 			"Protocol parse error(%d) in capability/greeting line: %s (line=`%s')",
-			ret, error_str, line));
+			ret, error_str, line);
 		fatal = TRUE;
 	}
 
@@ -362,7 +361,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 
 		if ( ret == 0 ) {
 			if ( response != MANAGESIEVE_RESPONSE_OK ) {
-				client_log_err(client, "proxy: "
+				e_error(login_proxy_get_event(client->login_proxy),
 					"Remote sent unexpected NO/BYE instead of capability response");
 				client_proxy_failed(client, TRUE);
 				return -1;
@@ -373,7 +372,8 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 			ssl_flags = login_proxy_get_ssl_flags(client->login_proxy);
 			if ((ssl_flags & PROXY_SSL_FLAG_STARTTLS) != 0) {
 				if ( !msieve_client->proxy_starttls ) {
-					client_log_err(client, "proxy: Remote doesn't support STARTTLS");
+					e_error(login_proxy_get_event(client->login_proxy),
+						"Remote doesn't support STARTTLS");
 						client_proxy_failed(client, TRUE);
 					return -1;
 				}
@@ -413,7 +413,8 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 			return 1;
 		}
 
-		client_log_err(client, "proxy: Remote refused STARTTLS command");
+		e_error(login_proxy_get_event(client->login_proxy),
+			"Remote refused STARTTLS command");
 		client_proxy_failed(client, TRUE);
 		return -1;
 
@@ -426,9 +427,9 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		if ( ret == 0 ) {
 			if ( response != MANAGESIEVE_RESPONSE_OK ) {
 				/* STARTTLS failed */
-				client_log_err(client,
-					t_strdup_printf("proxy: Remote STARTTLS failed: %s",
-						str_sanitize(line, 160)));
+				e_error(login_proxy_get_event(client->login_proxy),
+					"Remote STARTTLS failed: %s",
+					str_sanitize(line, 160));
 				client_proxy_failed(client, TRUE);
 				return -1;
 			}
@@ -463,9 +464,9 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 			return 0;
 		}
 
-		client_log_err(client, t_strdup_printf(
-			"proxy: Remote XCLIENT failed: %s",
-			str_sanitize(line, 160)));
+		e_error(login_proxy_get_event(client->login_proxy),
+			"Remote XCLIENT failed: %s",
+			str_sanitize(line, 160));
 		client_proxy_failed(client, TRUE);
 		return -1;
 
