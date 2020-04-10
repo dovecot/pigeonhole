@@ -222,9 +222,9 @@ int sieve_file_storage_save_init(struct sieve_storage_save_context *sctx,
 
 			svext = strrchr(fstorage->active_fname, '.');
 			namelen = svext - fstorage->active_fname;
-			if ( svext != NULL && str_begins(svext+1, "sieve") &&
+			if ( svext != NULL && str_begins_with(svext+1, "sieve") &&
 			     strlen(scriptname) == namelen &&
-			     str_begins(fstorage->active_fname, scriptname) )
+			     str_begins_with(fstorage->active_fname, scriptname) )
 			{
 				sieve_storage_set_error(storage,
 					SIEVE_ERROR_BAD_PARAMS,

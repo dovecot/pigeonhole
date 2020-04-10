@@ -877,7 +877,7 @@ static inline bool _is_system_address(const struct smtp_address *address)
 		return TRUE;
 	if (strstr(address->localpart, "-request") != NULL)
 		return TRUE;
-	if (str_begins(address->localpart, "owner-"))
+	if (str_begins_with(address->localpart, "owner-"))
 		return TRUE;
 	return FALSE;
 }

@@ -836,7 +836,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 		if (ret != LDAP_SUCCESS) {
 			if (ret == LDAP_OPERATIONS_ERROR &&
 			    set->uris != NULL &&
-			    str_begins(set->uris, "ldaps:")) {
+			    str_begins_with(set->uris, "ldaps:")) {
 				e_error(storage->event, "db: "
 					"Don't use both tls=yes and ldaps URI");
 			}

@@ -644,9 +644,9 @@ void sieve_tool_dump_binary_to(struct sieve_binary *sbin,
 void sieve_tool_parse_trace_option(struct sieve_trace_config *tr_config,
 				   const char *tr_option)
 {
-	if (str_begins(tr_option, "level=")) {
-		const char *lvl = &tr_option[6];
+	const char *lvl;
 
+	if (str_begins(tr_option, "level=", &lvl)) {
 		if (strcmp(lvl, "none") == 0) {
 			tr_config->level = SIEVE_TRLVL_NONE;
 		} else if (strcmp(lvl, "actions") == 0) {

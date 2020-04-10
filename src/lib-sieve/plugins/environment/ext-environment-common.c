@@ -158,26 +158,21 @@ ext_environment_item_lookup(struct ext_environment_interpreter_context *ctx,
 			    const char **_name)
 {
 	const struct sieve_environment_item *item;
-	const char *name = *_name;
+	const char *suffix, *name = *_name;
 
 	item = hash_table_lookup(ctx->name_items, name);
 	if (item != NULL)
 		return item;
 
 	array_foreach_elem(&ctx->prefix_items, item) {
-		size_t prefix_len;
-
 		i_assert(item->prefix);
-		prefix_len = strlen(item->name);
 
-		if (str_begins(name, item->name)) {
-			if (name[prefix_len] == '.') {
-				*_name = &name[prefix_len+1];
-				return item;
-			} else if (name[prefix_len] == '\0') {
-				*_name = &name[prefix_len];
-				return item;
-			}
+		if (str_begins(name, item->name, &suffix)) {
+			if (*suffix == '.')
+				++suffix;
+
+			*_name = suffix;
+			return item;
 		}
 	}
 	return NULL;

@@ -292,12 +292,11 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 
 	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT) == 0)
 		return sieve_attribute_set_default(storage, svstorage, value);
-	if (!str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES)) {
+	if (!str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, &scriptname)) {
 		mail_storage_set_error(storage, MAIL_ERROR_NOTFOUND,
 				       "Nonexistent sieve attribute");
 		return -1;
 	}
-	scriptname = key + strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES);
 
 	if (value->value != NULL) {
 		input = i_stream_create_from_data(value->value,
@@ -370,7 +369,7 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 
 	if (t->box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
-	    str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
+	    str_begins_with(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
 		time_t ts =
 			(value->last_change != 0 ? value->last_change : ioloop_time);
 
@@ -516,14 +515,13 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 
 	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT) == 0)
 		return sieve_attribute_get_default(storage, svstorage, value_r);
-	if (!str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES))
+	if (!str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, &scriptname))
 		return 0;
 	if ((value_r->flags & MAIL_ATTRIBUTE_VALUE_FLAG_INT_STREAMS) == 0) {
 		mail_storage_set_error(storage, MAIL_ERROR_PARAMS,
 			"Sieve attributes are available only as streams");
 		return -1;
 	}
-	scriptname = key + strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES);
 	script = sieve_storage_open_script(svstorage, scriptname, NULL);
 	if ((ret=sieve_attribute_retrieve_script
 		(storage, svstorage, script, FALSE, value_r, &errstr)) < 0) {
@@ -545,7 +543,7 @@ sieve_attribute_get(struct mailbox *box,
 
 	if (box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
-	    str_begins(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
+	    str_begins_with(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
 
 		ret = sieve_attribute_get_sieve(box->storage, key, value_r);
 		if (ret >= 0 && user->mail_debug) {
