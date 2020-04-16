@@ -27,13 +27,9 @@ struct plugin_settings {
 
 static const struct setting_parser_info **plugin_set_roots;
 
-#undef DEF
-#define DEF(type, name) \
-	{ type, #name, offsetof(struct plugin_settings, name), NULL }
-
 static const struct setting_define plugin_setting_defines[] = {
-	{ SET_STRLIST, "plugin",
-	  offsetof(struct plugin_settings, plugin_envs), NULL },
+	{ .type = SET_STRLIST, .key = "plugin",
+	  .offset = offsetof(struct plugin_settings, plugin_envs) },
 
 	SETTING_DEFINE_LIST_END
 };

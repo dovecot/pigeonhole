@@ -60,12 +60,12 @@ struct service_settings managesieve_login_settings_service_settings = {
 
 #undef DEF
 #define DEF(type, name) \
-	{ type, #name, offsetof(struct managesieve_login_settings, name), NULL }
+	SETTING_DEFINE_STRUCT_##type(#name, name, struct managesieve_login_settings)
 
 static const struct setting_define managesieve_login_setting_defines[] = {
-	DEF(SET_STR, managesieve_implementation_string),
-	DEF(SET_STR, managesieve_sieve_capability),
-	DEF(SET_STR, managesieve_notify_capability),
+	DEF(STR, managesieve_implementation_string),
+	DEF(STR, managesieve_sieve_capability),
+	DEF(STR, managesieve_notify_capability),
 
 	SETTING_DEFINE_LIST_END
 };

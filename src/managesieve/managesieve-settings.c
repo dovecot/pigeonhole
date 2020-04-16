@@ -56,23 +56,19 @@ struct service_settings managesieve_settings_service_settings = {
 };
 
 #undef DEF
-#undef DEFLIST
 #define DEF(type, name) \
-	{ type, #name, offsetof(struct managesieve_settings, name), NULL }
-#define DEFLIST(field, name, defines) \
-	{ SET_DEFLIST, name, \
-	  offsetof(struct managesieve_settings, field), defines }
+	SETTING_DEFINE_STRUCT_##type(#name, name, struct managesieve_settings)
 
 static struct setting_define managesieve_setting_defines[] = {
-	DEF(SET_BOOL, mail_debug),
-	DEF(SET_BOOL, verbose_proctitle),
-	DEF(SET_STR_VARS, rawlog_dir),
+	DEF(BOOL, mail_debug),
+	DEF(BOOL, verbose_proctitle),
+	DEF(STR_VARS, rawlog_dir),
 
-	DEF(SET_SIZE, managesieve_max_line_length),
-	DEF(SET_STR, managesieve_implementation_string),
-	DEF(SET_STR, managesieve_client_workarounds),
-	DEF(SET_STR, managesieve_logout_format),
-	DEF(SET_UINT, managesieve_max_compile_errors),
+	DEF(SIZE, managesieve_max_line_length),
+	DEF(STR, managesieve_implementation_string),
+	DEF(STR, managesieve_client_workarounds),
+	DEF(STR, managesieve_logout_format),
+	DEF(UINT, managesieve_max_compile_errors),
 
 
 	SETTING_DEFINE_LIST_END
