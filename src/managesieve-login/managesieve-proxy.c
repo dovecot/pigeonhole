@@ -574,11 +574,17 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		 * figure out if user exists or not just by looking at the
 		 * reply string.
 		 */
-		client_send_no(client, AUTH_FAILED_MSG);
+		enum login_proxy_failure_type failure_type;
+		if (try_later)
+			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL;
+		else {
+			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH;
+			client_send_no(client, AUTH_FAILED_MSG);
+		}
 
 		login_proxy_failed(client->login_proxy,
 			login_proxy_get_event(client->login_proxy),
-			LOGIN_PROXY_FAILURE_TYPE_AUTH, reason);
+			failure_type, reason);
 		return -1;
 
 	default:
@@ -620,7 +626,8 @@ managesieve_proxy_send_failure_reply(struct client *client,
 				       NULL, LOGIN_PROXY_FAILURE_MSG);
 		break;
 	case LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL:
-		i_unreached();
+		client_send_no(client, AUTH_FAILED_MSG);
+		break;
 	case LOGIN_PROXY_FAILURE_TYPE_AUTH:
 		/* reply was already sent */
 		break;
