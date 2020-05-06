@@ -31,15 +31,6 @@ static const char *managesieve_proxy_state_names[MSIEVE_PROXY_STATE_COUNT] = {
 	"none", "tls-start", "tls-ready", "xclient", "auth"
 };
 
-static void proxy_free_password(struct client *client)
-{
-	if (client->proxy_password == NULL)
-		return;
-
-	safe_memset(client->proxy_password, 0, strlen(client->proxy_password));
-	i_free_and_null(client->proxy_password);
-}
-
 static void proxy_write_xclient
 (struct managesieve_client *client, string_t *str)
 {
@@ -109,7 +100,6 @@ static int proxy_write_auth
 		proxy_write_auth_data(output, len, str);
 	}
 	str_append(str, "\r\n");
-	proxy_free_password(&client->common);
 	return 0;
 }
 
