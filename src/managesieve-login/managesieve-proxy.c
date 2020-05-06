@@ -522,13 +522,9 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		}
 
 		/* Authentication failed */
-		if ( client->set->auth_verbose ) {
-			const char *log_line = line;
-
-			if (strncasecmp(log_line, "NO ", 3) == 0)
-				log_line += 3;
-			client_proxy_log_failure(client, log_line);
-		}
+		const char *log_line = line;
+		if (strncasecmp(log_line, "NO ", 3) == 0)
+			log_line += 3;
 
 		/* FIXME: properly parse and handle response codes */
 
@@ -540,7 +536,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 
 		login_proxy_failed(client->login_proxy,
 			login_proxy_get_event(client->login_proxy),
-			LOGIN_PROXY_FAILURE_TYPE_AUTH, NULL);
+			LOGIN_PROXY_FAILURE_TYPE_AUTH, log_line);
 		return -1;
 
 	default:
@@ -563,9 +559,39 @@ void managesieve_proxy_reset(struct client *client)
 	msieve_client->proxy_state = MSIEVE_PROXY_STATE_NONE;
 }
 
-void managesieve_proxy_error(struct client *client, const char *text)
+static void
+managesieve_proxy_send_failure_reply(struct client *client,
+				     enum login_proxy_failure_type type,
+				     const char *reason ATTR_UNUSED)
 {
-	client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO, "TRYLATER", text);
+	switch (type) {
+	case LOGIN_PROXY_FAILURE_TYPE_CONNECT:
+	case LOGIN_PROXY_FAILURE_TYPE_INTERNAL:
+	case LOGIN_PROXY_FAILURE_TYPE_REMOTE:
+	case LOGIN_PROXY_FAILURE_TYPE_PROTOCOL:
+		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
+				       "TRYLATER", LOGIN_PROXY_FAILURE_MSG);
+		break;
+	case LOGIN_PROXY_FAILURE_TYPE_INTERNAL_CONFIG:
+	case LOGIN_PROXY_FAILURE_TYPE_REMOTE_CONFIG:
+		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
+				       NULL, LOGIN_PROXY_FAILURE_MSG);
+		break;
+	case LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL:
+		i_unreached();
+	case LOGIN_PROXY_FAILURE_TYPE_AUTH:
+		/* reply was already sent */
+		break;
+	}
+}
+
+void managesieve_proxy_failed(struct client *client,
+			      enum login_proxy_failure_type type,
+			      const char *reason, bool reconnecting)
+{
+	if (!reconnecting)
+		managesieve_proxy_send_failure_reply(client, type, reason);
+	client_common_proxy_failed(client, type, reason, reconnecting);
 }
 
 const char *managesieve_proxy_get_state(struct client *client)
