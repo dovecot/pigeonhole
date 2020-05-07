@@ -610,7 +610,7 @@ void managesieve_proxy_reset(struct client *client)
 static void
 managesieve_proxy_send_failure_reply(struct client *client,
 				     enum login_proxy_failure_type type,
-				     const char *reason ATTR_UNUSED)
+				     const char *reason)
 {
 	switch (type) {
 	case LOGIN_PROXY_FAILURE_TYPE_CONNECT:
@@ -626,7 +626,8 @@ managesieve_proxy_send_failure_reply(struct client *client,
 				       NULL, LOGIN_PROXY_FAILURE_MSG);
 		break;
 	case LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL:
-		client_send_no(client, AUTH_FAILED_MSG);
+		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
+				       "TRYLATER", reason);
 		break;
 	case LOGIN_PROXY_FAILURE_TYPE_AUTH:
 		/* reply was already sent */
