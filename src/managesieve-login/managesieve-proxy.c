@@ -359,6 +359,51 @@ static int proxy_input_capability
 	return 0;
 }
 
+static void
+managesieve_proxy_parse_auth_reply(const char *line,
+				   const char **reason_r, bool *trylater_r)
+{
+	struct managesieve_parser *parser;
+	const struct managesieve_arg *args;
+	struct istream *input;
+	const char *reason;
+	int ret;
+
+	*trylater_r = FALSE;
+
+	if (strncasecmp(line, "NO ", 3) != 0) {
+		*reason_r = line;
+		return;
+	}
+	line += 3;
+	*reason_r = line;
+
+	if (line[0] == '(') {
+		/* Parse optional resp-code. FIXME: The current
+		   managesieve-parser can't really handle this properly, so
+		   we'll just assume that there aren't any strings with ')'
+		   in them. */
+		if (strncasecmp(line, "(TRYLATER) ", 11) == 0) {
+			*trylater_r = TRUE;
+			line += 11;
+		} else {
+			line = strstr(line, ") ");
+			if (line == NULL)
+				return;
+			line += 2;
+		}
+	}
+
+	/* parse the string */
+	input = i_stream_create_from_data(line, strlen(line));
+	parser = managesieve_parser_create(input, (size_t)-1);
+	(void)i_stream_read(input);
+	ret = managesieve_parser_finish_line(parser, 0, 0, &args);
+	if (ret == 1 && managesieve_arg_get_string(&args[0], &reason))
+		*reason_r = t_strdup(reason);
+	managesieve_parser_destroy(&parser);
+}
+
 int managesieve_proxy_parse_line(struct client *client, const char *line)
 {
 	struct managesieve_client *msieve_client =
@@ -522,11 +567,8 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		}
 
 		/* Authentication failed */
-		const char *log_line = line;
-		if (strncasecmp(log_line, "NO ", 3) == 0)
-			log_line += 3;
-
-		/* FIXME: properly parse and handle response codes */
+		bool try_later;
+		(void)managesieve_proxy_parse_auth_reply(line, &reason, &try_later);
 
 		/* Login failed. Send our own failure reply so client can't
 		 * figure out if user exists or not just by looking at the
@@ -536,7 +578,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 
 		login_proxy_failed(client->login_proxy,
 			login_proxy_get_event(client->login_proxy),
-			LOGIN_PROXY_FAILURE_TYPE_AUTH, log_line);
+			LOGIN_PROXY_FAILURE_TYPE_AUTH, reason);
 		return -1;
 
 	default:
