@@ -189,7 +189,11 @@ cmd_notify_extract_body_text(const struct sieve_runtime_env *renv,
 	/* Initialize body decoder */
 	decoder = message_decoder_init(NULL, 0);
 
-	parser = message_parser_init(mctx->pool, input, 0, 0);
+	struct message_parser_settings mparser_set = {
+		.hdr_flags = 0,
+		.flags = 0,
+	};
+	parser = message_parser_init(mctx->pool, input, &mparser_set);
 	is_text = TRUE;
 	save_body = FALSE;
 	while ((ret = message_parser_parse_next_block(parser, &block)) > 0) {
