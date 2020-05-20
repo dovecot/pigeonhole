@@ -84,12 +84,11 @@ test "Timeout" {
 		test_fail "pipe should have timed out";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
-  	test_fail "wrong number of errors reported";
-  }    
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+		test_fail "wrong number of errors reported";
+	}
 
-	if not test_error :index 1 :contains "failed to pipe" {
-  	test_fail "wrong error reported";
-  }    
-
+	if not test_error :index 2 :contains "failed to pipe" {
+		test_fail "wrong error reported";
+	}
 }
