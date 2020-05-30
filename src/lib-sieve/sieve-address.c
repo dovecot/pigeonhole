@@ -433,7 +433,7 @@ static bool parse_mailbox_address
 
 	if (ctx->parser.data != ctx->parser.end) {
 		if ( *ctx->parser.data == ',' )
-			sieve_address_error(ctx, "not a single addres (found ',')");
+			sieve_address_error(ctx, "not a single address (found ',')");
 		else
 			sieve_address_error(ctx, "address ends in invalid characters");
 		return FALSE;
