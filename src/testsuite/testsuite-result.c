@@ -54,6 +54,7 @@ void testsuite_result_reset(const struct sieve_runtime_env *renv)
 		pool_unref(&testsuite_execute_pool);
 	}
 
+	testsuite_message_flush();
 	i_zero(testsuite_execute_env.exec_status);
 
 	testsuite_execute_pool = pool_alloconly_create("sieve execution", 4096);

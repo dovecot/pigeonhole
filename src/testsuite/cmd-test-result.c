@@ -14,6 +14,7 @@
 
 #include "testsuite-common.h"
 #include "testsuite-result.h"
+#include "testsuite-message.h"
 #include "testsuite-smtp.h"
 
 /*

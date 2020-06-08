@@ -12,6 +12,8 @@ extern struct sieve_message_data testsuite_msgdata;
 void testsuite_message_init(void);
 void testsuite_message_deinit(void);
 
+void testsuite_message_flush(void);
+
 void testsuite_message_set_string(const struct sieve_runtime_env *renv,
 				  string_t *message);
 void testsuite_message_set_file(const struct sieve_runtime_env *renv,

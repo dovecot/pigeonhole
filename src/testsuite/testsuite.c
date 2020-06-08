@@ -227,9 +227,9 @@ int main(int argc, char **argv)
 		sieve_close(&sbin);
 
 		/* De-initialize message environment */
+		testsuite_result_deinit();
 		testsuite_message_deinit();
 		testsuite_mailstore_deinit();
-		testsuite_result_deinit();
 
 		if (trace_log != NULL)
 			sieve_trace_log_free(&trace_log);

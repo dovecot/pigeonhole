@@ -8,6 +8,7 @@
 #include "message-address.h"
 #include "mail-storage.h"
 #include "master-service.h"
+#include "mail-raw.h"
 
 #include "sieve-common.h"
 #include "sieve-address.h"
@@ -24,10 +25,16 @@
  * Testsuite message environment
  */
 
+struct testsuite_message {
+	struct testsuite_message *next;
+
+	struct mail_raw *mail_raw;
+};
+
 struct sieve_message_data testsuite_msgdata;
 static struct smtp_params_rcpt testsuite_rcpt_params;
 
-static struct mail *testsuite_mail;
+static struct testsuite_message *testsuite_msg;
 
 static const char *_default_message_data =
 "From: sender@example.com\n"
@@ -123,6 +130,68 @@ static void testsuite_message_set_data(struct mail *mail)
 	testsuite_msgdata.envelope.rcpt_params = &testsuite_rcpt_params;
 }
 
+static struct testsuite_message *testsuite_message_new(void)
+{
+	struct testsuite_message *msg;
+
+	msg = i_new(struct testsuite_message, 1);
+	msg->next = testsuite_msg;
+	testsuite_msg = msg;
+
+	return msg;
+}
+
+static void testsuite_message_new_string(string_t *mail_str)
+{
+	struct mail_user *mail_raw_user =
+		sieve_tool_get_mail_raw_user(sieve_tool);
+	struct testsuite_message *msg;
+
+	msg = testsuite_message_new();
+	msg->mail_raw = mail_raw_open_data(mail_raw_user, mail_str);
+
+	testsuite_message_set_data(msg->mail_raw->mail);
+}
+
+static void testsuite_message_new_file(const char *mail_path)
+{
+	struct mail_user *mail_raw_user =
+		sieve_tool_get_mail_raw_user(sieve_tool);
+	struct testsuite_message *msg;
+
+	msg = testsuite_message_new();
+	msg->mail_raw = mail_raw_open_file(mail_raw_user, mail_path);
+
+	testsuite_message_set_data(msg->mail_raw->mail);
+}
+
+static void testsuite_message_free(bool all)
+{
+	struct testsuite_message *msg;
+
+	if (testsuite_msg == NULL)
+		return;
+
+	msg = (all ? testsuite_msg : testsuite_msg->next);
+	while (msg != NULL) {
+		struct testsuite_message *msg_next = msg->next;
+
+		mail_raw_close(&msg->mail_raw);
+		i_free(msg);
+
+		msg = msg_next;
+	}
+	if (all)
+		testsuite_msg = NULL;
+	else
+		testsuite_msg->next = NULL;
+}
+
+void testsuite_message_flush(void)
+{
+	testsuite_message_free(FALSE);
+}
+
 void testsuite_message_init(void)
 {
 	testsuite_msg_pool = pool_alloconly_create("testsuite_message", 6096);
@@ -130,9 +199,7 @@ void testsuite_message_init(void)
 	string_t *default_message = str_new(testsuite_msg_pool, 1024);
 	str_append(default_message, _default_message_data);
 
-	testsuite_mail =
-		sieve_tool_open_data_as_mail(sieve_tool, default_message);
-	testsuite_message_set_data(testsuite_mail);
+	testsuite_message_new_string(default_message);
 }
 
 void testsuite_message_set_string(const struct sieve_runtime_env *renv,
@@ -140,8 +207,7 @@ void testsuite_message_set_string(const struct sieve_runtime_env *renv,
 {
 	sieve_message_context_reset(renv->msgctx);
 
-	testsuite_mail = sieve_tool_open_data_as_mail(sieve_tool, message);
-	testsuite_message_set_data(testsuite_mail);
+	testsuite_message_new_string(message);
 }
 
 void testsuite_message_set_file(const struct sieve_runtime_env *renv,
@@ -149,8 +215,7 @@ void testsuite_message_set_file(const struct sieve_runtime_env *renv,
 {
 	sieve_message_context_reset(renv->msgctx);
 
-	testsuite_mail = sieve_tool_open_file_as_mail(sieve_tool, file_path);
-	testsuite_message_set_data(testsuite_mail);
+	testsuite_message_new_file(file_path);
 }
 
 void testsuite_message_set_mail(const struct sieve_runtime_env *renv,
@@ -163,6 +228,8 @@ void testsuite_message_set_mail(const struct sieve_runtime_env *renv,
 
 void testsuite_message_deinit(void)
 {
+	testsuite_message_free(TRUE);
+
 	i_free(testsuite_env_mail_from);
 	i_free(testsuite_env_rcpt_to);
 	i_free(testsuite_env_orig_rcpt_to);
