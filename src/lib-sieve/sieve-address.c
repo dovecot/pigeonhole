@@ -476,6 +476,8 @@ sieve_address_do_validate(const unsigned char *address, size_t size,
 {
 	struct sieve_message_address_parser ctx;
 
+	*error_r = NULL;
+
 	if (address == NULL) {
 		*error_r = "null address";
 		return FALSE;
@@ -489,13 +491,10 @@ sieve_address_do_validate(const unsigned char *address, size_t size,
 	ctx.error = t_str_new(128);
 
 	if (!parse_mailbox_address(&ctx, address, size)) {
-		if (error_r != NULL)
-			*error_r = str_c(ctx.error);
+		*error_r = str_c(ctx.error);
 		return FALSE;
 	}
 
-	if (error_r != NULL)
-		*error_r = NULL;
 	return TRUE;
 }
 
@@ -505,8 +504,7 @@ sieve_address_do_parse(const unsigned char *address, size_t size,
 {
 	struct sieve_message_address_parser ctx;
 
-	if (error_r != NULL)
-		*error_r = NULL;
+	*error_r = NULL;
 
 	if (address == NULL)
 		return NULL;
@@ -519,8 +517,7 @@ sieve_address_do_parse(const unsigned char *address, size_t size,
 	ctx.error = t_str_new(128);
 
 	if (!parse_mailbox_address(&ctx, address, size)) {
-		if (error_r != NULL)
-			*error_r = str_c(ctx.error);
+		*error_r = str_c(ctx.error);
 		return NULL;
 	}
 
