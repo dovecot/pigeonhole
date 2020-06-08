@@ -815,6 +815,21 @@ sieve_interpreter_do_program_jump(struct sieve_interpreter *interp,
 	return SIEVE_EXEC_OK;
 }
 
+int sieve_interpreter_program_jump_to(struct sieve_interpreter *interp,
+				      sieve_size_t jmp_target,
+				      bool break_loops)
+{
+	int ret;
+
+	ret = sieve_interpreter_check_program_jump(interp, jmp_target,
+						   break_loops);
+	if (ret <= 0)
+		return ret;
+
+	return sieve_interpreter_do_program_jump(
+		interp, jmp_target, break_loops);
+}
+
 int sieve_interpreter_program_jump(struct sieve_interpreter *interp,
 				   bool jump, bool break_loops)
 {

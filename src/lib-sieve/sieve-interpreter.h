@@ -92,6 +92,9 @@ void sieve_interpreter_interrupt(struct sieve_interpreter *interp);
 sieve_size_t
 sieve_interpreter_program_counter(struct sieve_interpreter *interp);
 
+int sieve_interpreter_program_jump_to(struct sieve_interpreter *interp,
+				      sieve_size_t jmp_target,
+				      bool break_loops);
 int sieve_interpreter_program_jump(struct sieve_interpreter *interp, bool jump,
 				   bool break_loops);
 
