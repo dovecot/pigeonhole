@@ -784,31 +784,13 @@ sieve_interpreter_check_program_jump(struct sieve_interpreter *interp,
 	return SIEVE_EXEC_OK;
 }
 
-int sieve_interpreter_program_jump(struct sieve_interpreter *interp,
-				   bool jump, bool break_loops)
+static int
+sieve_interpreter_do_program_jump(struct sieve_interpreter *interp,
+				  sieve_size_t jmp_target, bool break_loops)
 {
 	const struct sieve_runtime_env *renv = &interp->runenv;
 	sieve_size_t *address = &(interp->runenv.pc);
-	sieve_size_t jmp_start = *address, jmp_target;
-	sieve_offset_t jmp_offset;
 	int ret;
-
-	if (!sieve_binary_read_offset(renv->sblock, address, &jmp_offset))
-	{
-		sieve_runtime_trace_error(renv, "invalid jump offset");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
-	jmp_target = jmp_start + jmp_offset;
-
-	ret = sieve_interpreter_check_program_jump(interp, jmp_target,
-						   break_loops);
-	if (ret <= 0)
-		return ret;
-
-	if (!jump) {
-		sieve_runtime_trace(renv, 0, "not jumping");
-		return SIEVE_EXEC_OK;
-	}
 
 	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
 		unsigned int jmp_line =
@@ -831,6 +813,35 @@ int sieve_interpreter_program_jump(struct sieve_interpreter *interp,
 
 	*address = jmp_target;
 	return SIEVE_EXEC_OK;
+}
+
+int sieve_interpreter_program_jump(struct sieve_interpreter *interp,
+				   bool jump, bool break_loops)
+{
+	const struct sieve_runtime_env *renv = &interp->runenv;
+	sieve_size_t *address = &(interp->runenv.pc);
+	sieve_size_t jmp_start = *address, jmp_target;
+	sieve_offset_t jmp_offset;
+	int ret;
+
+	if (!sieve_binary_read_offset(renv->sblock, address, &jmp_offset)) {
+		sieve_runtime_trace_error(renv, "invalid jump offset");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+	jmp_target = jmp_start + jmp_offset;
+
+	ret = sieve_interpreter_check_program_jump(interp, jmp_target,
+						   break_loops);
+	if (ret <= 0)
+		return ret;
+
+	if (!jump) {
+		sieve_runtime_trace(renv, 0, "not jumping");
+		return SIEVE_EXEC_OK;
+	}
+
+	return sieve_interpreter_do_program_jump(
+		interp, jmp_target, break_loops);
 }
 
 /*
