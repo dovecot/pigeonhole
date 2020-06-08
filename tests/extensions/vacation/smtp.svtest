@@ -155,3 +155,45 @@ test "Cc" {
 		test_fail "envelope sender not null";
 	}
 }
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@example.org
+Subject: No subject of discussion
+To: nicëøôçêè—öxample.org
+
+Frop
+.
+;
+
+test "Bad recipient address (from message)" {
+    vacation :subject "Tulips" "I am not in today!";
+
+    if not test_result_execute {
+        test_fail "execution of result failed";
+    }
+
+}
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@example.org
+Subject: No subject of discussion
+To: tss@example.net
+
+Frop
+.
+;
+
+test_set "envelope.to" "nicëøôçêè—öxample.org";
+
+test "Bad recipient address (from envelope)" {
+    vacation :subject "Tulips" "I am not in today!";
+
+    if not test_result_execute {
+        test_fail "execution of result failed";
+    }
+
+}

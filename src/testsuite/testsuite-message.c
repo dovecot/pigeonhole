@@ -48,6 +48,7 @@ static const struct smtp_address *
 testsuite_message_get_address(struct mail *mail, const char *header)
 {
 	struct message_address *addr;
+	struct smtp_address *smtp_addr;
 	const char *str;
 
 	if (mail_get_first_header(mail, header, &str) <= 0)
@@ -57,7 +58,9 @@ testsuite_message_get_address(struct mail *mail, const char *header)
 				     strlen(str), 1, 0);
 	if (addr == NULL || addr->mailbox == NULL || *addr->mailbox == '\0')
 		return NULL;
-	return smtp_address_create_temp(addr->mailbox, addr->domain);
+	if (smtp_address_create_from_msg_temp(addr, &smtp_addr) < 0)
+		return NULL;
+	return smtp_addr;
 }
 
 static void testsuite_message_set_data(struct mail *mail)
