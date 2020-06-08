@@ -375,13 +375,18 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 	ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
 }
 
-struct mail *
-sieve_tool_open_file_as_mail(struct sieve_tool *tool, const char *path)
+static void sieve_tool_init_mail_raw_user(struct sieve_tool *tool)
 {
 	if (tool->mail_raw_user == NULL) {
 		tool->mail_raw_user = mail_raw_user_create(
 			master_service, tool->mail_user_dovecot);
 	}
+}
+
+struct mail *
+sieve_tool_open_file_as_mail(struct sieve_tool *tool, const char *path)
+{
+	sieve_tool_init_mail_raw_user(tool);
 
 	if (tool->mail_raw != NULL)
 		mail_raw_close(&tool->mail_raw);
@@ -394,10 +399,7 @@ sieve_tool_open_file_as_mail(struct sieve_tool *tool, const char *path)
 struct mail *
 sieve_tool_open_data_as_mail(struct sieve_tool *tool, string_t *mail_data)
 {
-	if (tool->mail_raw_user == NULL) {
-		tool->mail_raw_user = mail_raw_user_create(
-			master_service, tool->mail_user_dovecot);
-	}
+	sieve_tool_init_mail_raw_user(tool);
 
 	if (tool->mail_raw != NULL)
 		mail_raw_close(&tool->mail_raw);
@@ -471,6 +473,12 @@ struct mail_user *sieve_tool_get_mail_user(struct sieve_tool *tool)
 {
 	return (tool->mail_user == NULL ?
 		tool->mail_user_dovecot : tool->mail_user);
+}
+
+struct mail_user *sieve_tool_get_mail_raw_user(struct sieve_tool *tool)
+{
+	sieve_tool_init_mail_raw_user(tool);
+	return tool->mail_raw_user;
 }
 
 /*

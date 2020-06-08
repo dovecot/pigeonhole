@@ -51,6 +51,7 @@ sieve_tool_open_data_as_mail(struct sieve_tool *tool, string_t *mail_data);
 const char *sieve_tool_get_username(struct sieve_tool *tool);
 const char *sieve_tool_get_homedir(struct sieve_tool *tool);
 struct mail_user *sieve_tool_get_mail_user(struct sieve_tool *tool);
+struct mail_user *sieve_tool_get_mail_raw_user(struct sieve_tool *tool);
 
 /*
  * Configuration
