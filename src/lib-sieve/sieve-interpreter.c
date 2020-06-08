@@ -779,45 +779,45 @@ int sieve_interpreter_program_jump(struct sieve_interpreter *interp,
 	}
 
 	jmp_target = jmp_start + jmp_offset;
-	if (jmp_target <= sieve_binary_block_get_size(renv->sblock) &&
-	    (loop_limit == 0 || jmp_target < loop_limit) &&
-	    jmp_start + jmp_offset > 0)
-	{
-		if (jump) {
-			if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
-				unsigned int jmp_line =
-					sieve_runtime_get_source_location(renv, jmp_target);
-
-				if (sieve_runtime_trace_hasflag(renv, SIEVE_TRFLG_ADDRESSES)) {
-					sieve_runtime_trace(renv, 0, "jumping to line %d [%08llx]",
-							    jmp_line,
-							    (long long unsigned int) jmp_target);
-				} else {
-					sieve_runtime_trace(renv, 0, "jumping to line %d",
-							    jmp_line);
-				}
-			}
-
-			if (break_loops && 
-			    (ret = sieve_interpreter_loop_break_out(interp,
-								    jmp_target)) <= 0)
-				return ret;
-			*address = jmp_target;
+	if (jmp_target == 0 ||
+	    jmp_target > sieve_binary_block_get_size(renv->sblock) ||
+	    (loop_limit > 0 && jmp_target >= loop_limit)) {
+		if (interp->loop_limit != 0) {
+			sieve_runtime_trace_error(
+				renv, "jump offset crosses loop boundary");
 		} else {
-			sieve_runtime_trace(renv, 0, "not jumping");
+			sieve_runtime_trace_error(
+				renv, "jump offset out of range");
 		}
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
+	if (!jump) {
+		sieve_runtime_trace(renv, 0, "not jumping");
 		return SIEVE_EXEC_OK;
 	}
 
-	if (interp->loop_limit != 0) {
-		sieve_runtime_trace_error(
-			renv, "jump offset crosses loop boundary");
-	} else {
-		sieve_runtime_trace_error(
-			renv, "jump offset out of range");
+	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
+		unsigned int jmp_line =
+			sieve_runtime_get_source_location(renv, jmp_target);
+
+		if (sieve_runtime_trace_hasflag(renv, SIEVE_TRFLG_ADDRESSES)) {
+			sieve_runtime_trace(renv, 0, "jumping to line %d [%08llx]",
+					    jmp_line,
+					    (long long unsigned int)jmp_target);
+		} else {
+			sieve_runtime_trace(renv, 0, "jumping to line %d",
+					    jmp_line);
+		}
 	}
-	return SIEVE_EXEC_BIN_CORRUPT;
+
+	if (break_loops &&
+	    (ret = sieve_interpreter_loop_break_out(interp,
+						    jmp_target)) <= 0)
+		return ret;
+
+	*address = jmp_target;
+	return SIEVE_EXEC_OK;
 }
 
 /*
