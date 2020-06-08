@@ -121,6 +121,8 @@ cmd_test_generate(const struct sieve_codegen_env *cgenv,
 
 	/* Prepare jumplist */
 	sieve_jumplist_reset(genctx->exit_jumps);
+	sieve_jumplist_add(genctx->exit_jumps,
+		sieve_binary_emit_offset(cgenv->sblock, 0));
 
 	/* Test body */
 	if (!sieve_generate_block(cgenv, cmd->ast_node))
@@ -142,10 +144,24 @@ static bool
 cmd_test_operation_dump(const struct sieve_dumptime_env *denv,
 			sieve_size_t *address)
 {
+	sieve_size_t tst_begin;
+	sieve_offset_t tst_end_offset;
+
 	sieve_code_dumpf(denv, "TEST:");
 	sieve_code_descend(denv);
 
-	return sieve_opr_string_dump(denv, address, "test name");
+	if (!sieve_opr_string_dump(denv, address, "test name"))
+		return FALSE;
+
+	sieve_code_mark(denv);
+	tst_begin = *address;
+	if (!sieve_binary_read_offset(denv->sblock, address, &tst_end_offset))
+		return FALSE;
+	sieve_code_dumpf(denv, "end: %d [%08llx]",
+			 tst_end_offset,
+			 (unsigned long long)tst_begin + tst_end_offset);
+
+	return TRUE;
 }
 
 /*
@@ -156,6 +172,8 @@ static int
 cmd_test_operation_execute(const struct sieve_runtime_env *renv,
 			   sieve_size_t *address)
 {
+	sieve_size_t tst_begin, tst_end;
+	sieve_offset_t tst_end_offset;
 	string_t *test_name;
 	int ret;
 
@@ -163,23 +181,28 @@ cmd_test_operation_execute(const struct sieve_runtime_env *renv,
 	if (ret <= 0)
 		return ret;
 
+	tst_begin = *address;
+	if (!sieve_binary_read_offset(renv->sblock, address, &tst_end_offset)) {
+		sieve_runtime_trace_error(renv, "invalid end offset");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+	tst_end = tst_begin + tst_end_offset;
+
 	sieve_runtime_trace_sep(renv);
 	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE,
-			    "** Testsuite test start: \"%s\"",
-			    str_c(test_name));
+			    "** Testsuite test start: \"%s\" (end: %08llx)",
+			    str_c(test_name),
+			    (unsigned long long)tst_end);
 
-	testsuite_test_start(test_name);
-	return SIEVE_EXEC_OK;
+	return testsuite_test_start(renv, test_name, tst_end);
 }
 
 static int
-cmd_test_finish_operation_execute(
-	const struct sieve_runtime_env *renv ATTR_UNUSED,
-	sieve_size_t *address ATTR_UNUSED)
+cmd_test_finish_operation_execute(const struct sieve_runtime_env *renv,
+				  sieve_size_t *address)
 {
 	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, "** Testsuite test end");
 	sieve_runtime_trace_sep(renv);
 
-	testsuite_test_succeed(NULL);
-	return SIEVE_EXEC_OK;
+	return testsuite_test_succeed(renv, address, NULL);
 }

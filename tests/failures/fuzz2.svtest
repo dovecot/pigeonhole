@@ -1,0 +1,37 @@
+require "vnd.dovecot.testsuite";
+require "fileinto";
+require "variables";
+require "mailbox";
+
+set "message" text:
+From:.org
+To:rg
+Subject: First message
+
+Frop
+.
+;
+
+
+test "sometest" {
+    test_set "message" "${message}";
+
+    fileinto :create "Folder";
+
+    if not test_result_execute {
+        test_fail "";
+    }
+
+    test_message :folder "Folder" 0;
+
+    if not header "subject" "First message" {
+        test_fail "";
+    }
+
+    test_message :folder " .Folder" 1;
+
+    if not header "subject" "Second message" {
+        test_fail "";
+    }
+
+}

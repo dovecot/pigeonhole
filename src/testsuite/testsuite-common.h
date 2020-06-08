@@ -161,12 +161,17 @@ enum testsuite_operand_code {
  * Test context
  */
 
-void testsuite_test_start(string_t *name);
-void testsuite_test_fail(string_t *reason);
-void testsuite_test_failf(const char *fmt, ...) ATTR_FORMAT(1, 2);
-void testsuite_test_fail_cstr(const char *reason);
+int testsuite_test_start(const struct sieve_runtime_env *renv,
+			 string_t *name, sieve_size_t block_end);
+int testsuite_test_fail(const struct sieve_runtime_env *renv,
+			string_t *reason);
+int testsuite_test_failf(const struct sieve_runtime_env *renv,
+			 const char *fmt, ...) ATTR_FORMAT(2, 3);
+int testsuite_test_fail_cstr(const struct sieve_runtime_env *renv,
+			     const char *reason);
 
-void testsuite_test_succeed(string_t *reason);
+int testsuite_test_succeed(const struct sieve_runtime_env *renv,
+			   sieve_size_t *address, string_t *reason);
 
 void testsuite_testcase_fail(const char *reason);
 bool testsuite_testcase_result(bool expect_failure);

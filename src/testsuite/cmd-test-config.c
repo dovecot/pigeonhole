@@ -494,10 +494,9 @@ cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 		ext = sieve_extension_get_by_name(eenv->svinst,
 						  str_c(extension));
 		if (ext == NULL) {
-			testsuite_test_failf("test_config_reload: "
-					     "unknown extension '%s'",
-					     str_c(extension));
-			return SIEVE_EXEC_OK;
+			return testsuite_test_failf(
+				renv, "test_config_reload: "
+				"unknown extension '%s'", str_c(extension));
 		}
 		sieve_extension_reload(ext);
 	}

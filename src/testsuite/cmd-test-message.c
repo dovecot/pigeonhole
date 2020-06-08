@@ -434,8 +434,8 @@ cmd_test_message_smtp_operation_execute(const struct sieve_runtime_env *renv,
 	}
 
 	if (!result) {
-		testsuite_test_failf(
-			"no outgoing SMTP message with index %llu",
+		return testsuite_test_failf(
+			renv, "no outgoing SMTP message with index %llu",
 			(unsigned long long)msg_index);
 	}
 
@@ -506,8 +506,8 @@ cmd_test_message_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 	}
 
 	if (!result) {
-		testsuite_test_failf(
-			"no message in folder '%s' with index %llu",
+		return testsuite_test_failf(
+			renv, "no message in folder '%s' with index %llu",
 			str_c(folder), (unsigned long long)msg_index);
 	}
 

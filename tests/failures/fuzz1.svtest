@@ -1,0 +1,33 @@
+# Used to cause the test suite to segfault
+
+require "vnd.dovecot.testsuite";
+require "fileinto";
+require "imap4flags";
+require "mailbox";
+
+
+test_set "message" text:
+Subject: Test message.
+
+Test message.
+.
+;
+
+test "Flag changes between stores" {
+        fileinto :create "FolderA";
+
+        if not test_result_execute {
+                test_fail "failed to execute first result";
+        }
+
+        test_message :folder "FolderA" 0;
+
+        test_result_reset;
+
+        test_message :folder "Uninteiesting" 0;
+
+        if not hasflag "$label1" {
+                test_fail "flags not stored for fired for third message";
+        }
+
+}

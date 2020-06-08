@@ -50,6 +50,7 @@ char *testsuite_test_path = NULL;
 /* Test context */
 
 static string_t *test_name;
+static sieve_size_t test_block_end;
 static unsigned int test_index;
 static unsigned int test_failures;
 
@@ -154,35 +155,51 @@ testsuite_interpreter_context_get(struct sieve_interpreter *interp,
 static void testsuite_test_context_init(void)
 {
 	test_name = str_new(default_pool, 128);
+	test_block_end = 0;
 	test_index = 0;
 	test_failures = 0;
 }
 
-void testsuite_test_start(string_t *name)
+int testsuite_test_start(const struct sieve_runtime_env *renv,
+			 string_t *name, sieve_size_t block_end)
 {
+	if (test_block_end != 0) {
+		sieve_runtime_trace_error(renv, "already inside test block");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	str_truncate(test_name, 0);
 	str_append_str(test_name, name);
 
+	test_block_end = block_end;
 	test_index++;
+
+	return SIEVE_EXEC_OK;
 }
 
-void testsuite_test_fail(string_t *reason)
+int testsuite_test_fail(const struct sieve_runtime_env *renv,
+			string_t *reason)
 {
-	testsuite_test_fail_cstr(str_c(reason));
+	return testsuite_test_fail_cstr(renv, str_c(reason));
 }
 
-void testsuite_test_failf(const char *fmt, ...)
+int testsuite_test_failf(const struct sieve_runtime_env *renv,
+			 const char *fmt, ...)
 {
 	va_list args;
+	int ret;
+
 	va_start(args, fmt);
-
-	testsuite_test_fail_cstr(t_strdup_vprintf(fmt, args));
-
+	ret = testsuite_test_fail_cstr(renv, t_strdup_vprintf(fmt, args));
 	va_end(args);
+
+	return ret;
 }
 
-void testsuite_test_fail_cstr(const char *reason)
+int testsuite_test_fail_cstr(const struct sieve_runtime_env *renv,
+			     const char *reason)
 {
+	sieve_size_t end = test_block_end;
+
 	if (str_len(test_name) == 0) {
 		if (reason == NULL || *reason == '\0')
 			printf("%2d: Test FAILED\n", test_index);
@@ -199,8 +216,11 @@ void testsuite_test_fail_cstr(const char *reason)
 	}
 
 	str_truncate(test_name, 0);
+	test_block_end = 0;
 
 	test_failures++;
+
+	return sieve_interpreter_program_jump_to(renv->interp, end, FALSE);
 }
 
 void testsuite_testcase_fail(const char *reason)
@@ -213,8 +233,12 @@ void testsuite_testcase_fail(const char *reason)
 	test_failures++;
 }
 
-void testsuite_test_succeed(string_t *reason)
+int testsuite_test_succeed(const struct sieve_runtime_env *renv,
+			   sieve_size_t *address, string_t *reason)
 {
+	sieve_size_t end = test_block_end;
+	int ret;
+
 	if (str_len(test_name) == 0) {
 		if (reason == NULL || str_len(reason) == 0)
 			printf("%2d: Test SUCCEEDED\n", test_index);
@@ -231,7 +255,22 @@ void testsuite_test_succeed(string_t *reason)
 				str_c(test_name), str_c(reason));
 		}
 	}
+
 	str_truncate(test_name, 0);
+	test_block_end = 0;
+
+	if (*address > end) {
+		sieve_runtime_trace_error(
+			renv, "invalid test block end offset");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	} else if (*address < end) {
+		ret = sieve_interpreter_program_jump_to(
+			renv->interp, end, FALSE);
+		if (ret <= 0)
+			return ret;
+	}
+
+	return SIEVE_EXEC_OK;
 }
 
 static void testsuite_test_context_deinit(void)

@@ -195,7 +195,8 @@ cmd_test_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 		}
 
 		/* FIXME: implement */
-		testsuite_test_failf("test_mailbox_delete: NOT IMPLEMENTED");
+		return testsuite_test_failf(
+			renv, "test_mailbox_delete: NOT IMPLEMENTED");
 	}
 
 	return SIEVE_EXEC_OK;

@@ -88,17 +88,12 @@ static bool
 cmd_test_fail_generate(const struct sieve_codegen_env *cgenv,
 		       struct sieve_command *cmd)
 {
-	struct testsuite_generator_context *genctx =
-		_get_generator_context(cgenv->gentr);
-
 	sieve_operation_emit(cgenv->sblock, cmd->ext, &test_fail_operation);
 
 	/* Generate arguments */
 	if (!sieve_generate_arguments(cgenv, cmd, NULL))
 		return FALSE;
 
-	sieve_jumplist_add(genctx->exit_jumps,
-			   sieve_binary_emit_offset(cgenv->sblock, 0));
 	return TRUE;
 }
 
@@ -110,21 +105,11 @@ static bool
 cmd_test_fail_operation_dump(const struct sieve_dumptime_env *denv,
 			     sieve_size_t *address)
 {
-	unsigned int pc;
-	sieve_offset_t offset;
-
 	sieve_code_dumpf(denv, "TEST_FAIL:");
 	sieve_code_descend(denv);
 
 	if (!sieve_opr_string_dump(denv, address, "reason"))
 		return FALSE;
-
-	sieve_code_mark(denv);
-	pc = *address;
-	if (!sieve_binary_read_offset(denv->sblock, address, &offset))
-		return FALSE;
-	sieve_code_dumpf(denv, "offset: %d [%08x]",
-			 offset, pc + offset);
 
 	return TRUE;
 }
@@ -147,7 +132,5 @@ cmd_test_fail_operation_execute(const struct sieve_runtime_env *renv,
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "testsuite: "
 			    "test_fail command; FAIL current test");
 
-	testsuite_test_fail(reason);
-
-	return sieve_interpreter_program_jump(renv->interp, TRUE, TRUE);
+	return testsuite_test_fail(renv, reason);
 }
