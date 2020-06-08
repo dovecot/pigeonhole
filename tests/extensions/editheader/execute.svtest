@@ -1,10 +1,22 @@
 require "vnd.dovecot.testsuite";
 require "include";
 require "variables";
+require "editheader";
+
+/*
+ * Testsuite self-test
+ */
+
+set "message" ".";
+addheader "X-Some-Header" "Header content";
+test_result_reset;
+test_set "message" "${message}";
 
 /*
  * Multi script
  */
+
+test_result_reset;
 
 test_set "message" text:
 From: idiot@example.com

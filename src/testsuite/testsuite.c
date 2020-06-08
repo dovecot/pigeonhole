@@ -69,9 +69,7 @@ testsuite_run(struct sieve_binary *sbin, struct sieve_error_handler *ehandler)
 
 	/* Run the interpreter */
 	result = testsuite_result_get();
-	sieve_result_ref(result);
 	ret = sieve_interpreter_run(interp, result);
-	sieve_result_unref(&result);
 
 	/* Free the interpreter */
 	sieve_interpreter_free(&interp);
