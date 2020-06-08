@@ -976,16 +976,9 @@ int sieve_interpreter_start(struct sieve_interpreter *interp,
 int sieve_interpreter_run(struct sieve_interpreter *interp,
 			  struct sieve_result *result)
 {
-	int ret = 0;
-
 	sieve_interpreter_reset(interp);
-	sieve_result_ref(result);
 
-	ret = sieve_interpreter_start(interp, result, NULL);
-
-	sieve_result_unref(&result);
-
-	return ret;
+	return sieve_interpreter_start(interp, result, NULL);
 }
 
 /*
