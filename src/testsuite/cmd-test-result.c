@@ -20,8 +20,9 @@
  * Commands
  */
 
-static bool cmd_test_result_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
+static bool
+cmd_test_result_generate(const struct sieve_codegen_env *cgenv,
+			 struct sieve_command *cmd);
 
 /* Test_result_reset command
  *
@@ -36,7 +37,7 @@ const struct sieve_command_def cmd_test_result_reset = {
 	.subtests = 0,
 	.block_allowed = FALSE,
 	.block_required = FALSE,
-	.generate = cmd_test_result_generate
+	.generate = cmd_test_result_generate,
 };
 
 /* Test_result_print command
@@ -52,7 +53,7 @@ const struct sieve_command_def cmd_test_result_print = {
 	.subtests = 0,
 	.block_allowed = FALSE,
 	.block_required = FALSE,
-	.generate = cmd_test_result_generate
+	.generate = cmd_test_result_generate,
 };
 
 /*
@@ -61,41 +62,47 @@ const struct sieve_command_def cmd_test_result_print = {
 
 /* test_result_reset */
 
-static int cmd_test_result_reset_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static int
+cmd_test_result_reset_operation_execute(const struct sieve_runtime_env *renv,
+					sieve_size_t *address);
 
 const struct sieve_operation_def test_result_reset_operation = {
 	.mnemonic = "TEST_RESULT_RESET",
 	.ext_def = &testsuite_extension,
 	.code = TESTSUITE_OPERATION_TEST_RESULT_RESET,
-	.execute = cmd_test_result_reset_operation_execute
+	.execute = cmd_test_result_reset_operation_execute,
 };
 
 /* test_result_print */
 
-static int cmd_test_result_print_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static int
+cmd_test_result_print_operation_execute(const struct sieve_runtime_env *renv,
+					sieve_size_t *address);
 
 const struct sieve_operation_def test_result_print_operation = {
 	.mnemonic = "TEST_RESULT_PRINT",
 	.ext_def = &testsuite_extension,
 	.code = TESTSUITE_OPERATION_TEST_RESULT_PRINT,
-	.execute = cmd_test_result_print_operation_execute
+	.execute = cmd_test_result_print_operation_execute,
 };
 
 /*
  * Code generation
  */
 
-static bool cmd_test_result_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+static bool
+cmd_test_result_generate(const struct sieve_codegen_env *cgenv,
+			 struct sieve_command *cmd)
 {
-	if ( sieve_command_is(cmd, cmd_test_result_reset) )
-		sieve_operation_emit(cgenv->sblock, cmd->ext, &test_result_reset_operation);
-	else if ( sieve_command_is(cmd, cmd_test_result_print) )
-		sieve_operation_emit(cgenv->sblock, cmd->ext, &test_result_print_operation);
-	else
+	if (sieve_command_is(cmd, cmd_test_result_reset)) {
+		sieve_operation_emit(cgenv->sblock, cmd->ext,
+				     &test_result_reset_operation);
+	} else if (sieve_command_is(cmd, cmd_test_result_print)) {
+		sieve_operation_emit(cgenv->sblock, cmd->ext,
+				     &test_result_print_operation);
+	} else {
 		i_unreached();
+	}
 
 	return TRUE;
 }
@@ -104,11 +111,12 @@ static bool cmd_test_result_generate
  * Intepretation
  */
 
-static int cmd_test_result_reset_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
+static int
+cmd_test_result_reset_operation_execute(const struct sieve_runtime_env *renv,
+					sieve_size_t *address ATTR_UNUSED)
 {
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-			"testsuite: test_result_reset command; reset script result");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,	"testsuite: "
+			    "test_result_reset command; reset script result");
 
 	testsuite_result_reset(renv);
 	testsuite_smtp_reset();
@@ -116,17 +124,14 @@ static int cmd_test_result_reset_operation_execute
 	return SIEVE_EXEC_OK;
 }
 
-static int cmd_test_result_print_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
+static int
+cmd_test_result_print_operation_execute(const struct sieve_runtime_env *renv,
+					sieve_size_t *address ATTR_UNUSED)
 {
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-			"testsuite: test_result_print command; print script result ");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,	"testsuite: "
+			    "test_result_print command; print script result ");
 
 	testsuite_result_print(renv);
 
 	return SIEVE_EXEC_OK;
 }
-
-
-
-
