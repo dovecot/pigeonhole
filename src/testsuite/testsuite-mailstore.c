@@ -65,14 +65,15 @@ void testsuite_mailstore_init(void)
 	testsuite_mailstore_attrs =
 		i_strconcat(tmpdir, "/mail-attrs.dict", NULL);
 
-	if ( mkdir(testsuite_mailstore_location, 0700) < 0 ) {
+	if (mkdir(testsuite_mailstore_location, 0700) < 0) {
 		i_fatal("failed to create temporary directory '%s': %m.",
 			testsuite_mailstore_location);
 	}
 	
 	mail_user_dovecot = sieve_tool_get_mail_user(sieve_tool);
 	mail_user = mail_user_alloc(NULL, "testsuite-mail-user@example.org",
-		mail_user_dovecot->set_info, mail_user_dovecot->unexpanded_set);
+				    mail_user_dovecot->set_info,
+				    mail_user_dovecot->unexpanded_set);
 	mail_user->autocreated = TRUE;
 	if (t_get_working_dir(&cwd, &error) < 0)
 		i_fatal("Failed to get working directory: %s", error);
@@ -90,10 +91,12 @@ void testsuite_mailstore_init(void)
 	/* absolute paths are ok with raw storage */
 	mail_set = p_new(mail_user->pool, struct mail_storage_settings, 1);
 	*mail_set = *ns->mail_set;
-	mail_set->mail_location = p_strconcat
-		(mail_user->pool, "maildir:", testsuite_mailstore_location, NULL);
-	mail_set->mail_attribute_dict = p_strconcat
-		(mail_user->pool, "file:", testsuite_mailstore_attrs, NULL);
+	mail_set->mail_location = p_strconcat(
+		mail_user->pool, "maildir:",
+		testsuite_mailstore_location, NULL);
+	mail_set->mail_attribute_dict = p_strconcat(
+		mail_user->pool, "file:",
+		testsuite_mailstore_attrs, NULL);
 	ns->mail_set = mail_set;
 
 	if (mail_storage_create(ns, "maildir", 0, &error) < 0)
@@ -110,9 +113,10 @@ void testsuite_mailstore_deinit(void)
 
 	testsuite_mailstore_close();
 
-	if ( unlink_directory(testsuite_mailstore_location, UNLINK_DIRECTORY_FLAG_RMDIR, &error) < 0 ) {
+	if (unlink_directory(testsuite_mailstore_location,
+			     UNLINK_DIRECTORY_FLAG_RMDIR, &error) < 0) {
 		i_warning("failed to remove temporary directory '%s': %s.",
-			testsuite_mailstore_location, error);
+			  testsuite_mailstore_location, error);
 	}
 
 	i_free(testsuite_mailstore_location);
@@ -139,8 +143,8 @@ struct mail_user *testsuite_mailstore_get_user(void)
  * Mailbox Access
  */
 
-bool testsuite_mailstore_mailbox_create
-(const struct sieve_runtime_env *renv ATTR_UNUSED, const char *folder)
+bool testsuite_mailstore_mailbox_create(
+	const struct sieve_runtime_env *renv ATTR_UNUSED, const char *folder)
 {
 	struct mail_user *mail_user = testsuite_mailstore_user;
 	struct mail_namespace *ns = mail_user->namespaces;
@@ -148,7 +152,7 @@ bool testsuite_mailstore_mailbox_create
 
 	box = mailbox_alloc(ns->list, folder, 0);
 
-	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
+	if (mailbox_create(box, NULL, FALSE) < 0) {
 		mailbox_free(&box);
 		return FALSE;
 	}
@@ -160,16 +164,16 @@ bool testsuite_mailstore_mailbox_create
 
 static void testsuite_mailstore_close(void)
 {
-	if ( testsuite_mailstore_mail != NULL )
+	if (testsuite_mailstore_mail != NULL)
 		mail_free(&testsuite_mailstore_mail);
 
-	if ( testsuite_mailstore_trans != NULL )
+	if (testsuite_mailstore_trans != NULL)
 		mailbox_transaction_rollback(&testsuite_mailstore_trans);
 
-	if ( testsuite_mailstore_box != NULL )
+	if (testsuite_mailstore_box != NULL)
 		mailbox_free(&testsuite_mailstore_box);
 
-	if ( testsuite_mailstore_folder != NULL )
+	if (testsuite_mailstore_folder != NULL)
 		i_free(testsuite_mailstore_folder);
 }
 
@@ -182,17 +186,17 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	struct mailbox *box;
 	struct mailbox_transaction_context *t;
 
-	if ( testsuite_mailstore_mail == NULL ) {
+	if (testsuite_mailstore_mail == NULL) {
 		testsuite_mailstore_close();
-	} else if ( testsuite_mailstore_folder != NULL
-		&& strcmp(folder, testsuite_mailstore_folder) != 0  ) {
+	} else if (testsuite_mailstore_folder != NULL &&
+		   strcmp(folder, testsuite_mailstore_folder) != 0) {
 		testsuite_mailstore_close();
 	} else {
 		return testsuite_mailstore_mail;
 	}
 
 	box = mailbox_alloc(ns->list, folder, flags);
-	if ( mailbox_open(box) < 0 ) {
+	if (mailbox_open(box) < 0) {
 		e_error(testsuite_sieve_instance->event,
 			"testsuite: failed to open mailbox '%s'", folder);
 		mailbox_free(&box);
@@ -201,7 +205,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 
 	/* Sync mailbox */
 
-	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {
+	if (mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ) < 0) {
 		e_error(testsuite_sieve_instance->event,
 			"testsuite: failed to sync mailbox '%s'", folder);
 		mailbox_free(&box);
@@ -220,12 +224,12 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	return testsuite_mailstore_mail;
 }
 
-bool testsuite_mailstore_mail_index
-(const struct sieve_runtime_env *renv, const char *folder, unsigned int index)
+bool testsuite_mailstore_mail_index(const struct sieve_runtime_env *renv,
+				    const char *folder, unsigned int index)
 {
 	struct mail *mail = testsuite_mailstore_open(folder);
 
-	if ( mail == NULL )
+	if (mail == NULL)
 		return FALSE;
 
 	mail_set_seq(mail, index+1);
@@ -238,8 +242,9 @@ bool testsuite_mailstore_mail_index
  * IMAP metadata
  */
 
-int testsuite_mailstore_set_imap_metadata
-(const char *mailbox, const char *annotation, const char *value)
+int testsuite_mailstore_set_imap_metadata(const char *mailbox,
+					  const char *annotation,
+					  const char *value)
 {
 	struct imap_metadata_transaction *imtrans;
 	struct mail_attribute_value avalue;
@@ -248,7 +253,7 @@ int testsuite_mailstore_set_imap_metadata
 	const char *error;
 	int ret;
 
-	if ( !imap_metadata_verify_entry_name(annotation, &error) ) {
+	if (!imap_metadata_verify_entry_name(annotation, &error)) {
 		e_error(testsuite_sieve_instance->event,
 			"testsuite: imap metadata: "
 			"specified annotation name `%s' is invalid: %s",
@@ -256,32 +261,32 @@ int testsuite_mailstore_set_imap_metadata
 		return -1;
 	}
 
-	if ( mailbox != NULL ) {
+	if (mailbox != NULL) {
 		struct mail_namespace *ns;
-		ns = mail_namespace_find
-			(testsuite_mailstore_user->namespaces, mailbox);
+		ns = mail_namespace_find(testsuite_mailstore_user->namespaces,
+					 mailbox);
 		box = mailbox_alloc(ns->list, mailbox, 0);
 		imtrans = imap_metadata_transaction_begin(box);
 	} else {
 		box = NULL;
-		imtrans = imap_metadata_transaction_begin_server
-			(testsuite_mailstore_user);
+		imtrans = imap_metadata_transaction_begin_server(
+			testsuite_mailstore_user);
 	}
 
 	i_zero(&avalue);
 	avalue.value = value;
-	if ((ret=imap_metadata_set(imtrans, annotation, &avalue)) < 0) {
-		error = imap_metadata_transaction_get_last_error
-			(imtrans, &error_code);
+	if ((ret = imap_metadata_set(imtrans, annotation, &avalue)) < 0) {
+		error = imap_metadata_transaction_get_last_error(
+			imtrans, &error_code);
 		imap_metadata_transaction_rollback(&imtrans);
 	} else {
-		ret = imap_metadata_transaction_commit
-			(&imtrans, &error_code, &error);
+		ret = imap_metadata_transaction_commit(&imtrans,
+						       &error_code, &error);
 	}
-	if ( box != NULL )
+	if (box != NULL)
 		mailbox_free(&box);
 
-	if ( ret < 0 ) {
+	if (ret < 0) {
 		e_error(testsuite_sieve_instance->event,
 			"testsuite: imap metadata: "
 			"failed to assign annotation `%s': %s",
