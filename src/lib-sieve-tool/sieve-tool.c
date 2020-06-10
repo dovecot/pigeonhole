@@ -489,6 +489,7 @@ static const struct smtp_address *
 sieve_tool_get_address(struct mail *mail, const char *header)
 {
 	struct message_address *addr;
+	struct smtp_address *smtp_addr;
 	const char *str;
 
 	if (mail_get_first_header(mail, header, &str) <= 0)
@@ -500,7 +501,9 @@ sieve_tool_get_address(struct mail *mail, const char *header)
 	    addr->domain == NULL || *addr->mailbox == '\0' ||
 	    *addr->domain == '\0')
 		return NULL;
-	return smtp_address_create_temp(addr->mailbox, addr->domain);
+	if (smtp_address_create_from_msg_temp(addr, &smtp_addr) < 0)
+		return NULL;
+	return smtp_addr;
 }
 
 void sieve_tool_get_envelope_data(struct sieve_message_data *msgdata,
