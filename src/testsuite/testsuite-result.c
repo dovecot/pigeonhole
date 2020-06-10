@@ -15,6 +15,7 @@
 #include "testsuite-common.h"
 #include "testsuite-log.h"
 #include "testsuite-message.h"
+#include "testsuite-mailstore.h"
 
 #include "testsuite-result.h"
 
@@ -55,6 +56,7 @@ void testsuite_result_reset(const struct sieve_runtime_env *renv)
 	}
 
 	testsuite_message_flush();
+	testsuite_mailstore_flush();
 	i_zero(testsuite_execute_env.exec_status);
 
 	testsuite_execute_pool = pool_alloconly_create("sieve execution", 4096);

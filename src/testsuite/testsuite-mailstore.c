@@ -27,11 +27,20 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+struct testsuite_mailstore_mail {
+	struct testsuite_mailstore_mail *next;
+
+	char *folder;
+	struct mailbox *box;
+	struct mailbox_transaction_context *trans;
+	struct mail *mail;
+};
+
 /*
  * Forward declarations
  */
 
-static void testsuite_mailstore_close(void);
+static void testsuite_mailstore_free(bool all);
 
 /*
  * State
@@ -39,13 +48,10 @@ static void testsuite_mailstore_close(void);
 
 static struct mail_user *testsuite_mailstore_user = NULL;
 
+static struct testsuite_mailstore_mail *testsuite_mailstore_mail = NULL;
+
 static char *testsuite_mailstore_location = NULL;
 static char *testsuite_mailstore_attrs = NULL;
-
-static char *testsuite_mailstore_folder = NULL;
-static struct mailbox *testsuite_mailstore_box = NULL;
-static struct mailbox_transaction_context *testsuite_mailstore_trans = NULL;
-static struct mail *testsuite_mailstore_mail = NULL;
 
 /*
  * Initialization
@@ -111,7 +117,7 @@ void testsuite_mailstore_deinit(void)
 {
 	const char *error;
 
-	testsuite_mailstore_close();
+	testsuite_mailstore_free(TRUE);
 
 	if (unlink_directory(testsuite_mailstore_location,
 			     UNLINK_DIRECTORY_FLAG_RMDIR, &error) < 0) {
@@ -122,10 +128,6 @@ void testsuite_mailstore_deinit(void)
 	i_free(testsuite_mailstore_location);
 	i_free(testsuite_mailstore_attrs);
 	mail_user_unref(&testsuite_mailstore_user);
-}
-
-void testsuite_mailstore_reset(void)
-{
 }
 
 /*
@@ -162,21 +164,6 @@ bool testsuite_mailstore_mailbox_create(
 	return TRUE;
 }
 
-static void testsuite_mailstore_close(void)
-{
-	if (testsuite_mailstore_mail != NULL)
-		mail_free(&testsuite_mailstore_mail);
-
-	if (testsuite_mailstore_trans != NULL)
-		mailbox_transaction_rollback(&testsuite_mailstore_trans);
-
-	if (testsuite_mailstore_box != NULL)
-		mailbox_free(&testsuite_mailstore_box);
-
-	if (testsuite_mailstore_folder != NULL)
-		i_free(testsuite_mailstore_folder);
-}
-
 static struct mail *testsuite_mailstore_open(const char *folder)
 {
 	enum mailbox_flags flags =
@@ -185,14 +172,28 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	struct mail_namespace *ns = mail_user->namespaces;
 	struct mailbox *box;
 	struct mailbox_transaction_context *t;
+	struct testsuite_mailstore_mail *tmail, *tmail_prev;
 
-	if (testsuite_mailstore_mail == NULL) {
-		testsuite_mailstore_close();
-	} else if (testsuite_mailstore_folder != NULL &&
-		   strcmp(folder, testsuite_mailstore_folder) != 0) {
-		testsuite_mailstore_close();
-	} else {
-		return testsuite_mailstore_mail;
+	tmail = testsuite_mailstore_mail;
+	tmail_prev = NULL;
+	while (tmail != NULL) {
+		if (strcmp(tmail->folder, folder) == 0) {
+			if (tmail_prev != NULL) {
+				/* Remove it from list if it is not first. */
+				tmail_prev->next = tmail->next;
+			}
+			break;
+		}
+		tmail_prev = tmail;
+		tmail = tmail->next;
+	}
+	if (tmail != NULL) {
+		if (tmail != testsuite_mailstore_mail) {
+			/* Bring it to front */
+			tmail->next = testsuite_mailstore_mail;
+			testsuite_mailstore_mail = tmail;
+		}
+		return tmail->mail;
 	}
 
 	box = mailbox_alloc(ns->list, folder, flags);
@@ -216,12 +217,47 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 
 	t = mailbox_transaction_begin(box, 0, __func__);
 
-	testsuite_mailstore_folder = i_strdup(folder);
-	testsuite_mailstore_box = box;
-	testsuite_mailstore_trans = t;
-	testsuite_mailstore_mail = mail_alloc(t, 0, NULL);
+	tmail = i_new(struct testsuite_mailstore_mail, 1);
+	tmail->next = testsuite_mailstore_mail;
+	testsuite_mailstore_mail = tmail;
 
-	return testsuite_mailstore_mail;
+	tmail->folder = i_strdup(folder);
+	tmail->box = box;
+	tmail->trans = t;
+	tmail->mail = mail_alloc(t, 0, NULL);
+
+	return tmail->mail;
+}
+
+static void testsuite_mailstore_free(bool all)
+{
+	struct testsuite_mailstore_mail *tmail;
+
+	if (testsuite_mailstore_mail == NULL)
+		return;
+
+	tmail = (all ?
+		 testsuite_mailstore_mail : testsuite_mailstore_mail->next);
+	while (tmail != NULL) {
+		struct testsuite_mailstore_mail *tmail_next = tmail->next;
+
+		mail_free(&tmail->mail);
+		mailbox_transaction_rollback(&tmail->trans);
+		mailbox_free(&tmail->box);
+		i_free(tmail->folder);
+		i_free(tmail);
+
+		tmail = tmail_next;
+	}
+	if (all)
+		testsuite_mailstore_mail = NULL;
+	else
+		testsuite_mailstore_mail->next = NULL;
+}
+
+void testsuite_mailstore_flush(void)
+{
+	testsuite_mailstore_free(FALSE);
 }
 
 bool testsuite_mailstore_mail_index(const struct sieve_runtime_env *renv,

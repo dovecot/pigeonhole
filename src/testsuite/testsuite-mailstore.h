@@ -11,7 +11,7 @@
 
 void testsuite_mailstore_init(void);
 void testsuite_mailstore_deinit(void);
-void testsuite_mailstore_reset(void);
+void testsuite_mailstore_flush(void);
 
 /*
  * Mail user
