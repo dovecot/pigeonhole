@@ -125,8 +125,8 @@ cmd_fileinto_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 
 		if (!sieve_mailbox_check_name(folder, &error)) {
 			sieve_command_validate_error(
-				valdtr, cmd, "invalid folder name `%s' "
-				"specified for fileinto command: %s",
+				valdtr, cmd, "fileinto command: "
+				"invalid folder name `%s' specified: %s",
 				str_sanitize(folder, 256), error);
 			return FALSE;
 		}
@@ -203,8 +203,8 @@ ext_fileinto_operation_execute(const struct sieve_runtime_env *renv,
 
 	if (!uni_utf8_str_is_valid(str_c(folder))) {
 		sieve_runtime_error(
-			renv, NULL,
-			"folder name specified for fileinto command is not utf-8: %s",
+			renv, NULL, "fileinto command: "
+			"invalid folder name `%s' specified: invalid utf-8",
 			str_c(folder));
 		return SIEVE_EXEC_FAILURE;
 	}
