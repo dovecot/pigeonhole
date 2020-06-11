@@ -341,6 +341,47 @@ tst_specialuse_find_specialuse(const struct sieve_runtime_env *renv,
 }
 
 static int
+tst_specialuse_exists_check_flag(const struct sieve_runtime_env *renv,
+				 struct mailbox *box, const char *use_flag,
+				 bool trace, bool *all_exist_r)
+{
+	int ret;
+
+	if (!ext_special_use_flag_valid(use_flag)) {
+		sieve_runtime_error(
+			renv, NULL, "specialuse_exists test: "
+			"invalid special-use flag `%s' specified",
+			str_sanitize(use_flag, 64));
+		return SIEVE_EXEC_FAILURE;
+	}
+
+	if (box != NULL) {
+		/* Mailbox has this SPECIAL-USE flag? */
+		if (!mailbox_has_special_use(box, use_flag)) {
+			*all_exist_r = FALSE;
+			return SIEVE_EXEC_OK;
+		}
+	} else {
+		/* Is there mailbox with this SPECIAL-USE flag? */
+		ret = tst_specialuse_find_specialuse(renv, use_flag);
+		if (ret < 0)
+			return SIEVE_EXEC_TEMP_FAILURE;
+		if (ret == 0) {
+			*all_exist_r = FALSE;
+			return SIEVE_EXEC_OK;
+		}
+	}
+
+	if (trace) {
+		sieve_runtime_trace(
+			renv, 0, "special-use flag `%s' exists",
+			str_sanitize(use_flag, 80));
+	}
+
+	return SIEVE_EXEC_OK;
+}
+
+static int
 tst_specialuse_exists_operation_execute(const struct sieve_runtime_env *renv,
 					sieve_size_t *address)
 {
@@ -418,44 +459,19 @@ tst_specialuse_exists_operation_execute(const struct sieve_runtime_env *renv,
 		}
 
 		special_use_flag = NULL;
-		while ((ret = sieve_stringlist_next_item(
+		while (all_exist &&
+		       (ret = sieve_stringlist_next_item(
 			special_use_flags, &special_use_flag)) > 0) {
 			const char *use_flag = str_c(special_use_flag);
 
-			if (!ext_special_use_flag_valid(use_flag)) {
-				sieve_runtime_error(
-					renv, NULL, "specialuse_exists test: "
-					"invalid special-use flag `%s' specified",
-					str_sanitize(use_flag, 64));
+			ret = tst_specialuse_exists_check_flag(
+				renv, box, use_flag, trace, &all_exist);
+			if (ret <= 0) {
 				if (box != NULL) {
 					/* Close mailbox */
 					mailbox_free(&box);
 				}
-				return SIEVE_EXEC_FAILURE;
-			}
-
-			if (box != NULL) {
-				/* Mailbox has this SPECIAL-USE flag? */
-				if (!mailbox_has_special_use(box, use_flag)) {
-					all_exist = FALSE;
-					break;
-				}
-			} else {
-				/* Is there mailbox with this SPECIAL-USE flag? */
-				ret = tst_specialuse_find_specialuse(
-					renv, use_flag);
-				if (ret < 0)
-					return SIEVE_EXEC_TEMP_FAILURE;
-				if (ret == 0) {
-					all_exist = FALSE;
-					break;
-				}
-			}
-
-			if (trace) {
-				sieve_runtime_trace(
-					renv, 0, "special-use flag `%s' exists",
-					str_sanitize(use_flag, 80));
+				return ret;
 			}
 		}
 	}
