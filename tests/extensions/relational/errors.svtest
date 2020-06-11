@@ -4,6 +4,24 @@ require "vnd.dovecot.testsuite";
 require "relational";
 require "comparator-i;ascii-numeric";
 
+/*
+ * Syntax errors
+ */
+
+test "Syntax errors" {
+	if test_script_compile "errors/syntax.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if test_error :count "ne" "6" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
+/*
+ * Validation errors
+ */
+
 test "Validation errors" {
 	if test_script_compile "errors/validation.sieve" {
 		test_fail "compile should have failed";

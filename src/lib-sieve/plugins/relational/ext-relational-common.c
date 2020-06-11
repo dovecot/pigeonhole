@@ -43,6 +43,7 @@ bool mcht_relational_validate(struct sieve_validator *valdtr,
 {
 	struct sieve_match_type *mcht;
 	enum relational_match rel_match = REL_MATCH_INVALID;
+	pool_t pool = sieve_ast_argument_pool(ctx->argument);
 	string_t *rel_match_ident;
 
 	/* Check syntax:
@@ -54,14 +55,15 @@ bool mcht_relational_validate(struct sieve_validator *valdtr,
 	 */
 
 	/* Did we get a string in the first place? */
-	if ((*arg)->type != SAAT_STRING) {
+	if (*arg == NULL || (*arg)->type != SAAT_STRING) {
 		sieve_argument_validate_error(
-			valdtr, *arg,
+			valdtr, (*arg == NULL ? ctx->argument : *arg),
 			"the :%s match-type requires a constant string argument being "
 			"one of \"gt\", \"ge\", \"lt\", \"le\", \"eq\" or \"ne\", "
 			"but %s was found",
 			sieve_match_type_name(ctx->match_type),
-			sieve_ast_argument_name(*arg));
+			(*arg == NULL ?
+			 "none" : sieve_ast_argument_name(*arg)));
 		return FALSE;
 	}
 
@@ -138,7 +140,7 @@ bool mcht_relational_validate(struct sieve_validator *valdtr,
 	/* Override the actual match type with a parameter-specific one
 	 * FIXME: ugly!
 	 */
-	mcht = p_new(sieve_ast_argument_pool(*arg), struct sieve_match_type, 1);
+	mcht = p_new(pool, struct sieve_match_type, 1);
 	mcht->object.ext = ctx->match_type->object.ext;
 	SIEVE_OBJECT_SET_DEF(mcht, rel_match_types[
 		REL_MATCH_INDEX(ctx->match_type->object.def->code, rel_match)]);
