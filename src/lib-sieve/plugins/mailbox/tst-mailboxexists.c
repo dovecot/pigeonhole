@@ -234,26 +234,28 @@ tst_mailboxexists_operation_execute(const struct sieve_runtime_env *renv,
 		trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING);
 	}
 
-	if (eenv->scriptenv->user != NULL) {
-		int ret;
+	if (eenv->scriptenv->user == NULL) {
+		sieve_runtime_trace(renv, 0, "no mail user; yield true");
+		sieve_interpreter_set_test_result(renv->interp, TRUE);
+		return SIEVE_EXEC_OK;
+	}
 
-		mailbox_item = NULL;
-		while (all_exist &&
-		       (ret = sieve_stringlist_next_item(mailbox_names,
-							 &mailbox_item)) > 0) {
-			const char *mailbox = str_c(mailbox_item);
+	mailbox_item = NULL;
+	while (all_exist &&
+	       (ret = sieve_stringlist_next_item(mailbox_names,
+						 &mailbox_item)) > 0) {
+		const char *mailbox = str_c(mailbox_item);
 
-			ret = tst_mailboxexists_test_mailbox(renv, mailbox,
-							     trace, &all_exist);
-			if (ret <= 0)
-				return ret;
-		}
+		ret = tst_mailboxexists_test_mailbox(renv, mailbox,
+						     trace, &all_exist);
+		if (ret <= 0)
+			return ret;
+	}
 
-		if (ret < 0) {
-			sieve_runtime_trace_error(
-				renv, "invalid mailbox name item");
-			return SIEVE_EXEC_BIN_CORRUPT;
-		}
+	if (ret < 0) {
+		sieve_runtime_trace_error(
+			renv, "invalid mailbox name item");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
 	if (trace) {
