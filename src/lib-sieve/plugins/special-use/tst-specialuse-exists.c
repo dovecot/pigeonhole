@@ -387,7 +387,7 @@ tst_specialuse_exists_operation_execute(const struct sieve_runtime_env *renv,
 {
 	struct sieve_operand oprnd;
 	struct sieve_stringlist *special_use_flags;
-	string_t *mailbox;
+	string_t *mailbox, *special_use_flag;
 	struct mailbox *box = NULL;
 	bool trace = FALSE, all_exist = TRUE;
 	int ret;
@@ -443,36 +443,35 @@ tst_specialuse_exists_operation_execute(const struct sieve_runtime_env *renv,
 			return SIEVE_EXEC_TEMP_FAILURE;
 	}
 
-	ret = 0;
 	if (box == NULL && mailbox != NULL) {
-		all_exist = FALSE;
 		sieve_runtime_trace(
 			renv, 0, "mailbox `%s' is not accessible",
 			str_sanitize(str_c(mailbox), 80));
-	} else {
-		string_t *special_use_flag;
+		sieve_interpreter_set_test_result(renv->interp, FALSE);
+		return SIEVE_EXEC_OK;
+	}
 
-		if (mailbox != NULL) {
-			sieve_runtime_trace(
-				renv, 0, "mailbox `%s' is accessible",
-				str_sanitize(str_c(mailbox), 80));
-		}
+	if (mailbox != NULL) {
+		sieve_runtime_trace(
+			renv, 0, "mailbox `%s' is accessible",
+			str_sanitize(str_c(mailbox), 80));
+	}
 
-		special_use_flag = NULL;
-		while (all_exist &&
-		       (ret = sieve_stringlist_next_item(
-			special_use_flags, &special_use_flag)) > 0) {
-			const char *use_flag = str_c(special_use_flag);
+	ret = 0;
+	special_use_flag = NULL;
+	while (all_exist &&
+	       (ret = sieve_stringlist_next_item(
+		special_use_flags, &special_use_flag)) > 0) {
+		const char *use_flag = str_c(special_use_flag);
 
-			ret = tst_specialuse_exists_check_flag(
-				renv, box, use_flag, trace, &all_exist);
-			if (ret <= 0) {
-				if (box != NULL) {
-					/* Close mailbox */
-					mailbox_free(&box);
-				}
-				return ret;
+		ret = tst_specialuse_exists_check_flag(
+			renv, box, use_flag, trace, &all_exist);
+		if (ret <= 0) {
+			if (box != NULL) {
+				/* Close mailbox */
+				mailbox_free(&box);
 			}
+			return ret;
 		}
 	}
 
