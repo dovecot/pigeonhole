@@ -152,6 +152,41 @@ cmd_test_mailbox_operation_dump(const struct sieve_dumptime_env *denv,
  */
 
 static int
+cmd_test_mailbox_create_execute(const struct sieve_runtime_env *renv,
+				const char *mailbox)
+{
+	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
+		sieve_runtime_trace(
+			renv, 0,
+			"testsuite/test_mailbox_create command");
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(
+			renv, 0, "create mailbox `%s'", mailbox);
+	}
+
+	testsuite_mailstore_mailbox_create(renv, mailbox);
+	return SIEVE_EXEC_OK;
+}
+
+static int
+cmd_test_mailbox_delete_execute(const struct sieve_runtime_env *renv,
+				const char *mailbox)
+{
+	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
+		sieve_runtime_trace(
+			renv, 0,
+			"testsuite/test_mailbox_delete command");
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(
+			renv, 0, "delete mailbox `%s'", mailbox);
+	}
+
+	/* FIXME: implement */
+	return testsuite_test_failf(
+		renv, "test_mailbox_delete: NOT IMPLEMENTED");
+}
+
+static int
 cmd_test_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 				   sieve_size_t *address)
 {
@@ -173,31 +208,12 @@ cmd_test_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 	 * Perform operation
 	 */
 
-	if (sieve_operation_is(oprtn, test_mailbox_create_operation)) {
-		if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
-			sieve_runtime_trace(
-				renv, 0,
-				"testsuite/test_mailbox_create command");
-			sieve_runtime_trace_descend(renv);
-			sieve_runtime_trace(
-				renv, 0, "create mailbox `%s'", str_c(mailbox));
-		}
+	if (sieve_operation_is(oprtn, test_mailbox_create_operation))
+		ret = cmd_test_mailbox_create_execute(renv, str_c(mailbox));
+	else if (sieve_operation_is(oprtn, test_mailbox_delete_operation))
+		ret = cmd_test_mailbox_delete_execute(renv, str_c(mailbox));
+	else
+		i_unreached();
 
-		testsuite_mailstore_mailbox_create(renv, str_c(mailbox));
-	} else {
-		if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
-			sieve_runtime_trace(
-				renv, 0,
-				"testsuite/test_mailbox_delete command");
-			sieve_runtime_trace_descend(renv);
-			sieve_runtime_trace(
-				renv, 0, "delete mailbox `%s'", str_c(mailbox));
-		}
-
-		/* FIXME: implement */
-		return testsuite_test_failf(
-			renv, "test_mailbox_delete: NOT IMPLEMENTED");
-	}
-
-	return SIEVE_EXEC_OK;
+	return ret;
 }
