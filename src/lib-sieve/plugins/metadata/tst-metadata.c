@@ -76,7 +76,7 @@ const struct sieve_command_def servermetadata_test = {
 	.block_required = FALSE,
 	.registered = tst_metadata_registered,
 	.validate = tst_metadata_validate,
-	.generate = tst_metadata_generate
+	.generate = tst_metadata_generate,
 };
 
 /*
@@ -97,7 +97,7 @@ const struct sieve_operation_def metadata_operation = {
 	.ext_def = &mboxmetadata_extension,
 	.code = EXT_METADATA_OPERATION_METADATA,
 	.dump = tst_metadata_operation_dump,
-	.execute = tst_metadata_operation_execute
+	.execute = tst_metadata_operation_execute,
 };
 
 /* Servermetadata operation */
@@ -107,7 +107,7 @@ const struct sieve_operation_def servermetadata_operation = {
 	.ext_def = &servermetadata_extension,
 	.code = EXT_METADATA_OPERATION_METADATA,
 	.dump = tst_metadata_operation_dump,
-	.execute = tst_metadata_operation_execute
+	.execute = tst_metadata_operation_execute,
 };
 
 /*
@@ -344,19 +344,19 @@ tst_metadata_operation_execute(const struct sieve_runtime_env *renv,
 
 	/* Read mailbox */
 	if (metadata) {
-		if ((ret = sieve_opr_string_read(renv, address, "mailbox",
-						 &mailbox)) <= 0)
+		ret = sieve_opr_string_read(renv, address, "mailbox", &mailbox);
+		if (ret <= 0)
 			return ret;
 	}
 
 	/* Read annotation-name */
-	if ((ret = sieve_opr_string_read(renv, address, "annotation-name",
-					 &aname)) <= 0)
+	ret = sieve_opr_string_read(renv, address, "annotation-name", &aname);
+	if (ret <= 0)
 		return ret;
 
 	/* Read key-list */
-	if ((ret = sieve_opr_stringlist_read(renv, address, "key-list",
-					     &key_list)) <= 0)
+	ret = sieve_opr_stringlist_read(renv, address, "key-list", &key_list);
+	if (ret <= 0)
 		return ret;
 
 	/*
@@ -406,9 +406,10 @@ tst_metadata_operation_execute(const struct sieve_runtime_env *renv,
 	}
 
 	/* Get annotation */
-	if ((ret = tst_metadata_get_annotation(
-		renv, (metadata ? str_c(mailbox) : NULL),
-		str_c(aname), &annotation)) == SIEVE_EXEC_OK) {
+	ret = tst_metadata_get_annotation(renv,
+					  (metadata ? str_c(mailbox) : NULL),
+					  str_c(aname), &annotation);
+	if (ret == SIEVE_EXEC_OK) {
 		/* Perform match */
 		if (annotation != NULL) {
 			/* Create value stringlist */
@@ -416,9 +417,9 @@ tst_metadata_operation_execute(const struct sieve_runtime_env *renv,
 				renv, annotation, FALSE);
 
 			/* Perform match */
-			if ((match = sieve_match(renv, &mcht, &cmp,
-						 value_list, key_list,
-						 &ret)) < 0)
+			match = sieve_match(renv, &mcht, &cmp,
+					    value_list, key_list, &ret);
+			if (ret < 0)
 				return ret;
 		} else {
 			match = 0;
