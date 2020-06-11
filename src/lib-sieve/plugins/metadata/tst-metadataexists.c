@@ -390,7 +390,7 @@ tst_metadataexists_operation_execute(const struct sieve_runtime_env *renv,
 	if (metadata &&
 	    !sieve_mailbox_check_name(str_c(mailbox), &error)) {
 		sieve_runtime_warning(
-			renv, NULL, "metadata test: "
+			renv, NULL, "metadataexists test: "
 			"invalid mailbox name `%s' specified: %s",
 			str_sanitize(str_c(mailbox), 256), error);
 		sieve_interpreter_set_test_result(renv->interp, FALSE);
