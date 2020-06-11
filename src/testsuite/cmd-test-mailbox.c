@@ -163,7 +163,7 @@ cmd_test_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 	 * Read operands
 	 */
 
-	/* Index */
+	/* Mailbox */
 
 	ret = sieve_opr_string_read(renv, address, "mailbox", &mailbox);
 	if (ret <= 0)
