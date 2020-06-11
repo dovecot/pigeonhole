@@ -1047,7 +1047,7 @@ int sieve_action_reject_mail(const struct sieve_action_exec_env *aenv,
 bool sieve_mailbox_check_name(const char *mailbox, const char **error_r)
 {
 	if (!uni_utf8_str_is_valid(mailbox)) {
-		*error_r = "mailbox is utf-8";
+		*error_r = "invalid utf-8";
 		return FALSE;
 	}
 	return TRUE;
