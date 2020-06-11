@@ -175,6 +175,7 @@ ext_fileinto_operation_execute(const struct sieve_runtime_env *renv,
 {
 	struct sieve_side_effects_list *slist = NULL;
 	string_t *folder;
+	const char *error;
 	bool trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS);
 	int ret = 0;
 
@@ -201,11 +202,11 @@ ext_fileinto_operation_execute(const struct sieve_runtime_env *renv,
 		sieve_runtime_trace_descend(renv);
 	}
 
-	if (!uni_utf8_str_is_valid(str_c(folder))) {
+	if (!sieve_mailbox_check_name(str_c(folder), &error)) {
 		sieve_runtime_error(
 			renv, NULL, "fileinto command: "
-			"invalid folder name `%s' specified: invalid utf-8",
-			str_c(folder));
+			"invalid folder name `%s' specified: %s",
+			str_c(folder), error);
 		return SIEVE_EXEC_FAILURE;
 	}
 
