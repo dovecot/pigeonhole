@@ -243,6 +243,20 @@ test "Keep errors (FIXME: count only)" {
 }
 
 /*
+ * Fileinto command
+ */
+
+test "Fileinto errors (FIXME: count only)" {
+	if test_script_compile "errors/fileinto.sieve" {
+		test_fail "compile should have failed.";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "10" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
+/*
  * COMPARATOR errors
  */
 
