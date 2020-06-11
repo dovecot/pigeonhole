@@ -133,3 +133,20 @@ test "Fileinto invalid folder name" {
 	}
 }
 
+test "Fileinto bad UTF-8 in folder name" {
+	if not test_script_compile "errors/fileinto-bad-utf8.sieve" {
+		test_fail "compile failed";
+	}
+
+	if test_script_run {
+		test_fail "execution should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
+		test_fail "wrong number of runtime errors reported";
+	}
+
+	if not test_error :index 1 :contains "invalid folder name" {
+		test_fail "unexpected error reported";
+	}
+}
