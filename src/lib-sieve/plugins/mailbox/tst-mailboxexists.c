@@ -157,6 +157,17 @@ tst_mailboxexists_test_mailbox(const struct sieve_runtime_env *renv,
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
 	struct mailbox *box;
+	const char *error;
+
+	/* Check validity of mailbox name */
+	if (!sieve_mailbox_check_name(mailbox, &error)) {
+		sieve_runtime_warning(
+			renv, NULL, "mailboxexists test: "
+			"invalid mailbox name `%s' specified: %s",
+			str_sanitize(mailbox, 256), error);
+		*all_exist_r = FALSE;
+		return SIEVE_EXEC_OK;
+	}
 
 	/* Open the box */
 	box = mailbox_alloc_for_user(eenv->scriptenv->user,
