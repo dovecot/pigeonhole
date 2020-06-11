@@ -1,5 +1,6 @@
 require "special-use";
 require "fileinto";
+require "encoded-character";
 
 # 1
 if specialuse_exists {}
@@ -19,6 +20,9 @@ if specialuse_exists "frop" {}
 # 8
 if specialuse_exists "frop" ["frop"] {}
 
+# W:1
+if specialuse_exists "${hex:ff}rop" "\\Sent" {}
+
 # 9
 fileinto :specialuse "\\frop";
 # 10
@@ -30,3 +34,5 @@ fileinto :specialuse "\\frop" 234234;
 
 # 13
 fileinto :specialuse "frop" "frop";
+# 14
+fileinto :specialuse "\\Sent" "${hex:ff}rop";
