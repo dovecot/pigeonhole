@@ -237,6 +237,59 @@ tst_metadataexists_operation_dump(const struct sieve_dumptime_env *denv,
  */
 
 static int
+tst_metadataexists_check_annotation(const struct sieve_runtime_env *renv,
+				    struct imap_metadata_transaction *imtrans,
+				    const char *mailbox, const char *aname,
+				    bool *all_exist_r)
+{
+	struct mail_attribute_value avalue;
+	const char *error;
+	int ret;
+
+	if (!imap_metadata_verify_entry_name(aname, &error)) {
+		sieve_runtime_warning(
+			renv, NULL, "%s test: "
+			"specified annotation name `%s' is invalid: %s",
+			(mailbox != NULL ?
+			 "metadataexists" : "servermetadataexists"),
+			str_sanitize(aname, 256),
+			sieve_error_from_external(error));
+		*all_exist_r = FALSE;
+		return SIEVE_EXEC_OK;
+	}
+
+	ret = imap_metadata_get(imtrans, aname, &avalue);
+	if (ret < 0) {
+		enum mail_error error_code;
+		const char *error;
+
+		error = imap_metadata_transaction_get_last_error(
+			imtrans, &error_code);
+		sieve_runtime_error(
+			renv, NULL, "%s test: "
+			"failed to retrieve annotation `%s': %s%s",
+			(mailbox != NULL ?
+			 "metadataexists" : "servermetadataexists"),
+			str_sanitize(aname, 256),
+			sieve_error_from_external(error),
+			(error_code == MAIL_ERROR_TEMP ?
+			 " (temporary failure)" : ""));
+
+		*all_exist_r = FALSE;
+		return (error_code == MAIL_ERROR_TEMP ?
+			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
+	}
+	if (avalue.value == NULL && avalue.value_stream == NULL) {
+		sieve_runtime_trace(renv, 0,
+				    "annotation `%s': not found", aname);
+		*all_exist_r = FALSE;
+	}
+
+	sieve_runtime_trace(renv, 0, "annotation `%s': found", aname);
+	return SIEVE_EXEC_OK;
+}
+
+static int
 tst_metadataexists_check_annotations(const struct sieve_runtime_env *renv,
 				     const char *mailbox,
 				     struct sieve_stringlist *anames,
@@ -279,54 +332,11 @@ tst_metadataexists_check_annotations(const struct sieve_runtime_env *renv,
 	status = SIEVE_EXEC_OK;
 	while (all_exist &&
 	       (sret = sieve_stringlist_next_item(anames, &aname)) > 0) {
-		struct mail_attribute_value avalue;
-		const char *error;
-
-		if (!imap_metadata_verify_entry_name(str_c(aname), &error)) {
-			sieve_runtime_warning(
-				renv, NULL, "%s test: "
-				"specified annotation name `%s' is invalid: %s",
-				(mailbox != NULL ?
-				 "metadataexists" : "servermetadataexists"),
-				str_sanitize(str_c(aname), 256),
-				sieve_error_from_external(error));
-			all_exist = FALSE;
-			break;;
-		}
-
-		ret = imap_metadata_get(imtrans, str_c(aname), &avalue);
-		if (ret < 0) {
-			enum mail_error error_code;
-			const char *error;
-
-			error = imap_metadata_transaction_get_last_error(
-				imtrans, &error_code);
-			sieve_runtime_error(
-				renv, NULL, "%s test: "
-				"failed to retrieve annotation `%s': %s%s",
-				(mailbox != NULL ?
-				 "metadataexists" : "servermetadataexists"),
-				str_sanitize(str_c(aname), 256),
-				sieve_error_from_external(error),
-				(error_code == MAIL_ERROR_TEMP ?
-				 " (temporary failure)" : ""));
-
-			all_exist = FALSE;
-			status = (error_code == MAIL_ERROR_TEMP ?
-				  SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
+		ret = tst_metadataexists_check_annotation(
+			renv, imtrans, mailbox, str_c(aname), &all_exist);
+		if (ret <= 0) {
+			status = ret;
 			break;
-
-		} else if (avalue.value == NULL &&
-			   avalue.value_stream == NULL) {
-			all_exist = FALSE;
-			sieve_runtime_trace(renv, 0,
-					    "annotation `%s': not found",
-					    str_c(aname));
-			break;
-
-		} else {
-			sieve_runtime_trace(renv, 0, "annotation `%s': found",
-					    str_c(aname));
 		}
 	}
 
