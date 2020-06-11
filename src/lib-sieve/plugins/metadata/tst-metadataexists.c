@@ -90,7 +90,7 @@ const struct sieve_operation_def metadataexists_operation = {
 	.ext_def = &mboxmetadata_extension,
 	.code = EXT_METADATA_OPERATION_METADATAEXISTS,
 	.dump = tst_metadataexists_operation_dump,
-	.execute = tst_metadataexists_operation_execute
+	.execute = tst_metadataexists_operation_execute,
 };
 
 /* Mailboxexists operation */
@@ -100,7 +100,7 @@ const struct sieve_operation_def servermetadataexists_operation = {
 	.ext_def = &servermetadata_extension,
 	.code = EXT_METADATA_OPERATION_METADATAEXISTS,
 	.dump = tst_metadataexists_operation_dump,
-	.execute = tst_metadataexists_operation_execute
+	.execute = tst_metadataexists_operation_execute,
 };
 
 /*
@@ -362,14 +362,15 @@ tst_metadataexists_operation_execute(const struct sieve_runtime_env *renv,
 
 	/* Read mailbox */
 	if (metadata) {
-		if ((ret = sieve_opr_string_read(renv, address, "mailbox",
-						 &mailbox)) <= 0)
+		ret = sieve_opr_string_read(renv, address, "mailbox", &mailbox);
+		if (ret <= 0)
 			return ret;
 	}
 
 	/* Read annotation names */
-	if ((ret = sieve_opr_stringlist_read(renv, address, "annotation-names",
-					     &anames)) <= 0)
+	ret = sieve_opr_stringlist_read(renv, address, "annotation-names",
+					&anames);
+	if (ret <= 0)
 		return ret;
 
 	/*
@@ -400,9 +401,9 @@ tst_metadataexists_operation_execute(const struct sieve_runtime_env *renv,
 		trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING);
 	}
 
-	if ((ret = tst_metadataexists_check_annotations(
-		renv, (metadata ? str_c(mailbox) : NULL), anames,
-		&all_exist)) <= 0)
+	ret = tst_metadataexists_check_annotations(
+		renv, (metadata ? str_c(mailbox) : NULL), anames, &all_exist);
+	if (ret <= 0)
 		return ret;
 
 	if (trace) {
