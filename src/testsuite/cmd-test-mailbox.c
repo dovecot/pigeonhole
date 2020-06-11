@@ -1,6 +1,9 @@
 /* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "str-sanitize.h"
+
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
@@ -9,6 +12,7 @@
 #include "sieve-code.h"
 #include "sieve-binary.h"
 #include "sieve-dump.h"
+#include "sieve-actions.h"
 
 #include "testsuite-common.h"
 #include "testsuite-mailstore.h"
@@ -103,7 +107,24 @@ cmd_test_mailbox_validate(struct sieve_validator *valdtr,
 						SAAT_STRING))
 		return FALSE;
 
-	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
+	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
+		return FALSE;
+
+	/* Check name validity when folder argument is not a variable */
+	if ( sieve_argument_is_string_literal(arg) ) {
+		const char *folder = sieve_ast_argument_strc(arg), *error;
+
+		if ( !sieve_mailbox_check_name(folder, &error) ) {
+			sieve_command_validate_error(
+				valdtr, cmd, "%s command: "
+				"invalid mailbox `%s' specified: %s",
+				sieve_command_identifier(cmd),
+				str_sanitize(folder, 256), error);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
 }
 
 /*
@@ -151,6 +172,17 @@ cmd_test_mailbox_operation_dump(const struct sieve_dumptime_env *denv,
  * Intepretation
  */
 
+static const char *
+cmd_test_mailbox_get_command_name(const struct sieve_operation *oprtn)
+{
+	if (sieve_operation_is(oprtn, test_mailbox_create_operation))
+		return "test_mailbox_create";
+	if (sieve_operation_is(oprtn, test_mailbox_delete_operation))
+		return "test_mailbox_delete";
+
+	i_unreached();
+}
+
 static int
 cmd_test_mailbox_create_execute(const struct sieve_runtime_env *renv,
 				const char *mailbox)
@@ -192,6 +224,7 @@ cmd_test_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 {
 	const struct sieve_operation *oprtn = renv->oprtn;
 	string_t *mailbox = NULL;
+	const char *error;
 	int ret;
 
 	/*
@@ -203,6 +236,15 @@ cmd_test_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 	ret = sieve_opr_string_read(renv, address, "mailbox", &mailbox);
 	if (ret <= 0)
 		return ret;
+
+	if (!sieve_mailbox_check_name(str_c(mailbox), &error)) {
+		sieve_runtime_error(
+			renv, NULL, "%s command: "
+			"invalid mailbox `%s' specified: %s",
+			cmd_test_mailbox_get_command_name(oprtn),
+			str_c(mailbox), error);
+		return SIEVE_EXEC_FAILURE;
+	}
 
 	/*
 	 * Perform operation
