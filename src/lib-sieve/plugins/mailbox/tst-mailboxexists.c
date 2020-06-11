@@ -41,7 +41,7 @@ const struct sieve_command_def mailboxexists_test = {
 	.block_allowed = FALSE,
 	.block_required = FALSE,
 	.validate = tst_mailboxexists_validate,
-	.generate = tst_mailboxexists_generate
+	.generate = tst_mailboxexists_generate,
 };
 
 /*
@@ -59,7 +59,7 @@ const struct sieve_operation_def mailboxexists_operation = {
 	.mnemonic = "MAILBOXEXISTS",
 	.ext_def = &mailbox_extension,
 	.dump = tst_mailboxexists_operation_dump,
-	.execute = tst_mailboxexists_operation_execute
+	.execute = tst_mailboxexists_operation_execute,
 };
 
 /*
@@ -166,8 +166,9 @@ tst_mailboxexists_operation_execute(const struct sieve_runtime_env *renv,
 	 */
 
 	/* Read notify uris */
-	if ((ret = sieve_opr_stringlist_read(renv, address, "mailbox-names",
-					     &mailbox_names)) <= 0)
+	ret = sieve_opr_stringlist_read(renv, address, "mailbox-names",
+					&mailbox_names);
+	if (ret <= 0)
 		return ret;
 
 	/*
