@@ -175,7 +175,6 @@ ext_fileinto_operation_execute(const struct sieve_runtime_env *renv,
 {
 	struct sieve_side_effects_list *slist = NULL;
 	string_t *folder;
-	bool folder_literal;
 	bool trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS);
 	int ret = 0;
 
@@ -189,8 +188,7 @@ ext_fileinto_operation_execute(const struct sieve_runtime_env *renv,
 		return ret;
 
 	/* Folder operand */
-	ret = sieve_opr_string_read_ex(renv, address, "folder", FALSE,
-				       &folder, &folder_literal);
+	ret = sieve_opr_string_read(renv, address, "folder", &folder);
 	if (ret <= 0)
 		return ret;
 
@@ -203,7 +201,7 @@ ext_fileinto_operation_execute(const struct sieve_runtime_env *renv,
 		sieve_runtime_trace_descend(renv);
 	}
 
-	if (!folder_literal && !uni_utf8_str_is_valid(str_c(folder))) {
+	if (!uni_utf8_str_is_valid(str_c(folder))) {
 		sieve_runtime_error(
 			renv, NULL,
 			"folder name specified for fileinto command is not utf-8: %s",
