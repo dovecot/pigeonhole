@@ -138,6 +138,7 @@ test_cases = \
 	tests/extensions/enotify/mailto.svtest \
 	tests/extensions/environment/basic.svtest \
 	tests/extensions/environment/rfc.svtest \
+	tests/extensions/mailbox/errors.svtest \
 	tests/extensions/mailbox/execute.svtest \
 	tests/extensions/date/basic.svtest \
 	tests/extensions/date/date-parts.svtest \
