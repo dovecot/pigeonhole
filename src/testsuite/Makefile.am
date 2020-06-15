@@ -1,9 +1,14 @@
 noinst_PROGRAMS = testsuite
+if USE_FUZZER
+noinst_PROGRAMS += \
+	fuzzsuite
+endif
 
 ABS_TOP_BUILDDIR := $(shell cd $(top_builddir) && pwd)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
+	-I$(top_srcdir)/src/lib-sieve/storage/data \
 	-I$(top_srcdir)/src/lib-sieve/util \
 	-I$(top_srcdir)/src/lib-sieve/plugins/variables \
 	-I$(top_srcdir)/src/lib-sieve-tool \
@@ -57,6 +62,44 @@ testsuite_SOURCES = \
 	$(tests) \
 	ext-testsuite.c \
 	testsuite.c
+
+if USE_FUZZER
+nodist_EXTRA_fuzzsuite_SOURCES = force-cxx-linking.cxx
+fuzzsuite_CPPFLAGS = $(FUZZER_CPPFLAGS)
+fuzzsuite_LDFLAGS = $(FUZZER_LDFLAGS)
+
+fuzzsuite_LDADD = \
+	$(libs) \
+	$(LIBDOVECOT_STORAGE) \
+	$(LIBDOVECOT_LDA) \
+	$(LIBDOVECOT) \
+	$(LIBDOVECOT_TEST_LIBS)
+fuzzsuite_DEPENDENCIES = \
+	$(libs) \
+	$(LIBDOVECOT_STORAGE_DEPS) \
+	$(LIBDOVECOT_LDA_DEPS) \
+	$(LIBDOVECOT_DEPS) \
+	$(LIBDOVECOT_TEST_LIBS)
+
+fuzzsuite_SOURCES = \
+	testsuite-common.c \
+	testsuite-settings.c \
+	testsuite-objects.c \
+	testsuite-substitutions.c \
+	testsuite-variables.c \
+	testsuite-arguments.c \
+	testsuite-message.c \
+	testsuite-log.c \
+	testsuite-script.c \
+	testsuite-result.c \
+	testsuite-smtp.c \
+	testsuite-mailstore.c \
+	testsuite-binary.c \
+	$(commands) \
+	$(tests) \
+	ext-testsuite.c \
+	fuzzsuite.c
+endif
 
 noinst_HEADERS = \
 	testsuite-common.h \

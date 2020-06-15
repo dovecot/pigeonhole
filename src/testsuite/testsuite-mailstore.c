@@ -86,9 +86,11 @@ void testsuite_mailstore_init(void)
 		t_strconcat("mail_home=", cwd, NULL),
 		"mail_driver=maildir",
 		t_strconcat("mail_path=", testsuite_mailstore_location, NULL),
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 		"mail_attribute/dict=file",
 		"mail_attribute/dict/file/driver=file",
 		t_strconcat("mail_attribute/dict/file/path=", testsuite_mailstore_attrs, NULL),
+#endif
 		NULL,
 	};
 	struct settings_instance *set_instance =

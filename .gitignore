@@ -68,6 +68,7 @@ src/sieve-tools/sieve-test
 src/sieve-tools/sieve-filter
 
 src/testsuite/testsuite
+src/testsuite/fuzzsuite
 
 src/managesieve/managesieve
 src/managesieve-login/managesieve-login
