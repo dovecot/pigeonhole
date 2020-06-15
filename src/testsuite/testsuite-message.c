@@ -49,6 +49,7 @@ static struct smtp_address *testsuite_env_orig_rcpt_to = NULL;
 static char *testsuite_env_auth = NULL;
 
 static pool_t testsuite_msg_pool;
+static string_t *testsuite_msg_default;
 static char *testsuite_msg_id = NULL;
 
 static const struct smtp_address *
@@ -196,10 +197,17 @@ void testsuite_message_init(void)
 {
 	testsuite_msg_pool = pool_alloconly_create("testsuite_message", 6096);
 
-	string_t *default_message = str_new(testsuite_msg_pool, 1024);
-	str_append(default_message, _default_message_data);
+	testsuite_msg_default = str_new(testsuite_msg_pool, 1024);
+	str_append(testsuite_msg_default, _default_message_data);
 
-	testsuite_message_new_string(default_message);
+	testsuite_message_new_string(testsuite_msg_default);
+}
+
+void testsuite_message_set_default(const struct sieve_runtime_env *renv)
+{
+	sieve_message_context_reset(renv->msgctx);
+
+	testsuite_message_new_string(testsuite_msg_default);
 }
 
 void testsuite_message_set_string(const struct sieve_runtime_env *renv,
