@@ -25,12 +25,9 @@ enum relational_match {
 	REL_MATCH_INVALID
 };
 
-#define REL_MATCH_INDEX(type, match) \
-	(type * REL_MATCH_INVALID + match)
-#define REL_MATCH_TYPE(index) \
-	(index / REL_MATCH_INVALID)
-#define REL_MATCH(index) \
-	(index % REL_MATCH_INVALID)
+#define REL_MATCH_INDEX(type, match) (type * REL_MATCH_INVALID + match)
+#define REL_MATCH_TYPE(index) (index / REL_MATCH_INVALID)
+#define REL_MATCH(index) (index % REL_MATCH_INVALID)
 
 /*
  * Extension definitions
@@ -74,17 +71,16 @@ extern const struct sieve_operand_def rel_match_type_operand;
  * Match type validation
  */
 
-bool mcht_relational_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg,
-		struct sieve_match_type_context *ctx);
+bool mcht_relational_validate(struct sieve_validator *validator,
+			      struct sieve_ast_argument **arg,
+			      struct sieve_match_type_context *ctx);
 
 /*
  * Value match function (also used by :count)
  */
 
-int mcht_value_match_key
-	(struct sieve_match_context *mctx, const char *val, size_t val_size,
-		const char *key, size_t key_size);
-
+int mcht_value_match_key(struct sieve_match_context *mctx,
+			 const char *val, size_t val_size,
+			 const char *key, size_t key_size);
 
 #endif
