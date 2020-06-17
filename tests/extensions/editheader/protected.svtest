@@ -1,7 +1,7 @@
 require "vnd.dovecot.testsuite";
 
 require "variables";
-
+require "encoded-character";
 require "editheader";
 
 set "message" text:
@@ -148,3 +148,26 @@ id 3jhl22khhf23f; Mon, 24 Aug 2015 04:11:54 -0600;
 		test_fail "autosubmitted header was not added";
 	}
 }
+
+/*
+ * TEST - Bad header configuration
+ */
+
+test_config_set "sieve_editheader_protected" "${unicode:1F4A9} delivery-date";
+test_config_reload :extension "editheader";
+
+test_set "message" "${message}";
+test "Bad header configuration" {
+	if not exists "delivery-date" {
+		test_fail "delivery-date header did not exist in the first place";
+	}
+
+	deleteheader "delivery-date";
+
+	if not exists "delivery-date" {
+		test_fail "protected delivery-date header was deleted";
+	}
+}
+
+test_config_set "sieve_editheader_protected" "";
+test_config_reload :extension "editheader";

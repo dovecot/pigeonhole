@@ -70,6 +70,7 @@ ext_editheader_config_headers(struct sieve_instance *svinst,
 					  "setting %s contains invalid header field name "
 					  "`%s' (ignored)",
 					  setting, *headers);
+				headers++;
 				continue;
 			}
 
