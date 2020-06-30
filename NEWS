@@ -1,3 +1,12 @@
+v0.5.11 2020-08-12  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	* managesieve: managesieve_max_line_length setting is now a "size" type
+	  instead of just number of bytes. This allows using e.g. "64k" as the
+	  value.
+	- lib-sieve: When folding white space is used in the Message-ID header,
+	  it is not stripped away correctly before the message ID value is used,
+	  causing e.g. garbled log lines at delivery.
+
 v0.5.10 2020-03-06  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* imap_sieve_filter: Change result action logging to include IMAP UID
