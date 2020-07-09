@@ -113,7 +113,7 @@ act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv, bool last,
 	struct act_duplicate_mark_data *data =
 		(struct act_duplicate_mark_data *)aenv->action->context;
 
-	if (status != SIEVE_EXEC_OK)
+	if (!last || status != SIEVE_EXEC_OK)
 		return;
 
 	/* Message was handled successfully, so track duplicate for this
