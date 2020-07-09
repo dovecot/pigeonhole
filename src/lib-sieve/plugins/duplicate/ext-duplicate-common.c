@@ -113,15 +113,15 @@ act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv,
 	struct act_duplicate_mark_data *data =
 		(struct act_duplicate_mark_data *)aenv->action->context;
 
-	if (status == SIEVE_EXEC_OK) {
-		/* Message was handled successfully, so track duplicate for this
-		 * message.
-		 */
-		eenv->exec_status->significant_action_executed = TRUE;
-		sieve_action_duplicate_mark(senv, data->hash,
-					    sizeof(data->hash),
-					    ioloop_time + data->period);
-	}
+	if (status != SIEVE_EXEC_OK)
+		return;
+
+	/* Message was handled successfully, so track duplicate for this
+	 * message.
+	 */
+	eenv->exec_status->significant_action_executed = TRUE;
+	sieve_action_duplicate_mark(senv, data->hash, sizeof(data->hash),
+				    ioloop_time + data->period);
 }
 
 /*
