@@ -878,6 +878,8 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 		}
 	}
 
+	sieve_result_finish(result, action_ehandler, (ret == SIEVE_EXEC_OK));
+
 	if (keep != NULL) *keep = mscript->keep;
 
 	/* Cleanup */
