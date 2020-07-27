@@ -110,6 +110,9 @@ void sieve_result_mark_executed(struct sieve_result *result);
 int sieve_result_execute(struct sieve_result *result, bool last, bool *keep,
 			 struct sieve_error_handler *ehandler);
 
+void sieve_result_finish(struct sieve_result *result,
+			 struct sieve_error_handler *ehandler, bool success);
+
 bool sieve_result_executed(struct sieve_result *result);
 
 bool sieve_result_executed_delivery(struct sieve_result *result);
