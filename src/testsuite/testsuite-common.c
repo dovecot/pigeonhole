@@ -239,8 +239,20 @@ static void testsuite_test_context_deinit(void)
 	str_free(&test_name);
 }
 
-bool testsuite_testcase_result(void)
+bool testsuite_testcase_result(bool expect_failure)
 {
+	if (expect_failure) {
+		if (test_failures < test_index) {
+			printf("\nFAIL: Only %d of %d tests failed "
+			       "(all expected to fail).\n\n",
+			       test_failures, test_index);
+			return FALSE;
+		}
+
+		printf("\nPASS: %d tests failed.\n\n", test_index);
+		return TRUE;
+	}
+
 	if (test_failures > 0) {
 		printf("\nFAIL: %d of %d tests failed.\n\n",
 		       test_failures, test_index);

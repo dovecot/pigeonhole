@@ -169,7 +169,7 @@ void testsuite_test_fail_cstr(const char *reason);
 void testsuite_test_succeed(string_t *reason);
 
 void testsuite_testcase_fail(const char *reason);
-bool testsuite_testcase_result(void);
+bool testsuite_testcase_result(bool expect_failure);
 
 /*
  * Testsuite temporary directory
