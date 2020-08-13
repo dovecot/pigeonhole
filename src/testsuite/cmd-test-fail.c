@@ -77,13 +77,6 @@ cmd_test_fail_validate(struct sieve_validator *valdtr ATTR_UNUSED,
  * Code generation
  */
 
-static inline struct testsuite_generator_context *
-_get_generator_context(struct sieve_generator *gentr)
-{
-	return (struct testsuite_generator_context *)
-		sieve_generator_extension_get_context(gentr, testsuite_ext);
-}
-
 static bool
 cmd_test_fail_generate(const struct sieve_codegen_env *cgenv,
 		       struct sieve_command *cmd)
