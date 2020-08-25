@@ -2002,9 +2002,14 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 		 */
 		hdr_size = (prep_hdr_size +
 			    edmail->wrapped_hdr_size.physical_size);
-		i_assert(hdr_size > 0);
-		if (append_v_offset <= (hdr_size - 1) &&
-		    edmail->wrapped_hdr_size.physical_size > 0) {
+		if (hdr_size == 0) {
+			/* Corner case that doesn't happen in practice (the
+			   original message is never empty). */
+			edstream->cur_header = edmail->header_fields_appended;
+			edstream->cur_header_v_offset = v_offset;
+			edstream->header_read = TRUE;
+		} else if (append_v_offset <= (hdr_size - 1) &&
+			   edmail->wrapped_hdr_size.physical_size > 0) {
 			parent_v_offset = stream->parent_start_offset;
 			parent_end_v_offset =
 				(stream->parent_start_offset +
@@ -2054,6 +2059,11 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 		parent_v_offset = (stream->parent_start_offset +
 				   edmail->wrapped_hdr_size.physical_size -
 				   (edmail->eoh_crlf ? 2 : 1));
+		copy_v_offset = edmail->hdr_size.physical_size;
+	/* Corner case that doesn't happen in practice (the original message is
+	   never empty). */
+	} else if (edmail->wrapped_hdr_size.physical_size == 0) {
+		parent_v_offset = stream->parent_start_offset;
 		copy_v_offset = edmail->hdr_size.physical_size;
 	/* Header comes partially from original mail and headers are added
 	   between header and body. */

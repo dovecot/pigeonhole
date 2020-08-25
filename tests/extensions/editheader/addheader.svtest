@@ -831,3 +831,56 @@ test "Addheader - devious characters" {
 		test_fail "body not retained in stored mail";
 	}
 }
+
+test_result_reset;
+test_set "message" "";
+test "Addheader - empty" {
+	addheader :last "X-Some-Header" "Header content";
+
+	if not size :over 0 {
+		test_fail "mail is not larger";
+	}
+
+	if not exists "x-some-header" {
+		test_fail "header not added";
+	}
+
+	if not header :is "x-some-header" "Header content" {
+		test_fail "wrong content added";
+	}
+
+	redirect "frop@example.com";
+	fileinto :create "folder8";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "folder8" 0 {
+		test_fail "message not stored";
+	}
+
+	if not size :over 0 {
+		test_fail "stored mail is not larger";
+	}
+
+	if not exists "x-some-header" {
+		test_fail "header not in stored mail";
+	}
+
+	if not header :is "x-some-header" "Header content" {
+		test_fail "wrong content in stored mail ";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not exists "x-some-header" {
+		test_fail "header not in redirected mail";
+	}
+
+	if not header :is "x-some-header" "Header content" {
+		test_fail "wrong content in redirected mail ";
+	}
+}
