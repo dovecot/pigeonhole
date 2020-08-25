@@ -165,7 +165,8 @@ bool testsuite_mailstore_mailbox_create(
 	return TRUE;
 }
 
-static struct mail *testsuite_mailstore_open(const char *folder)
+static struct testsuite_mailstore_mail *
+testsuite_mailstore_open(const char *folder)
 {
 	enum mailbox_flags flags =
 		MAILBOX_FLAG_SAVEONLY | MAILBOX_FLAG_POST_SESSION;
@@ -202,7 +203,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 			tmail->next = testsuite_mailstore_mail;
 			testsuite_mailstore_mail = tmail;
 		}
-		return tmail->mail;
+		return tmail;
 	}
 
 	box = mailbox_alloc(ns->list, folder, flags);
@@ -235,7 +236,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	tmail->trans = t;
 	tmail->mail = mail_alloc(t, 0, NULL);
 
-	return tmail->mail;
+	return tmail;
 }
 
 static void testsuite_mailstore_free(bool all)
@@ -272,13 +273,14 @@ void testsuite_mailstore_flush(void)
 bool testsuite_mailstore_mail_index(const struct sieve_runtime_env *renv,
 				    const char *folder, unsigned int index)
 {
-	struct mail *mail = testsuite_mailstore_open(folder);
+	struct testsuite_mailstore_mail *tmail;
 
-	if (mail == NULL)
+	tmail = testsuite_mailstore_open(folder);
+	if (tmail == NULL)
 		return FALSE;
 
-	mail_set_seq(mail, index+1);
-	testsuite_message_set_mail(renv, mail);
+	mail_set_seq(tmail->mail, index+1);
+	testsuite_message_set_mail(renv, tmail->mail);
 
 	return TRUE;
 }
