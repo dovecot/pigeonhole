@@ -17,37 +17,31 @@ struct mail *edit_mail_get_mail(struct edit_mail *edmail);
 
 /* Simple API */
 
-void edit_mail_header_add
-	(struct edit_mail *edmail, const char *field_name, const char *value,
-		bool last);
-int edit_mail_header_delete
-	(struct edit_mail *edmail, const char *field_name, int index);
-int edit_mail_header_replace
-	(struct edit_mail *edmail, const char *field_name, int index,
-		const char *newname, const char *newvalue);
+void edit_mail_header_add(struct edit_mail *edmail, const char *field_name,
+			  const char *value, bool last);
+int edit_mail_header_delete(struct edit_mail *edmail,
+			    const char *field_name, int index);
+int edit_mail_header_replace(struct edit_mail *edmail,
+			     const char *field_name, int index,
+			     const char *newname, const char *newvalue);
 
 /* Iterator */
 
 struct edit_mail_header_iter;
 
-int edit_mail_headers_iterate_init
-	(struct edit_mail *edmail, const char *field_name, bool reverse,
-		struct edit_mail_header_iter **edhiter_r);
-void edit_mail_headers_iterate_deinit
-	(struct edit_mail_header_iter **edhiter);
+int edit_mail_headers_iterate_init(struct edit_mail *edmail,
+				   const char *field_name, bool reverse,
+				   struct edit_mail_header_iter **edhiter_r);
+void edit_mail_headers_iterate_deinit(struct edit_mail_header_iter **edhiter);
 
-void edit_mail_headers_iterate_get
-	(struct edit_mail_header_iter *edhiter, const char **value_r);
+void edit_mail_headers_iterate_get(struct edit_mail_header_iter *edhiter,
+				   const char **value_r);
 
-bool edit_mail_headers_iterate_next
-	(struct edit_mail_header_iter *edhiter);
+bool edit_mail_headers_iterate_next(struct edit_mail_header_iter *edhiter);
 
-bool edit_mail_headers_iterate_remove
-	(struct edit_mail_header_iter *edhiter);
-bool edit_mail_headers_iterate_replace
-	(struct edit_mail_header_iter *edhiter,
-		const char *newname, const char *newvalue);
-
-
+bool edit_mail_headers_iterate_remove(struct edit_mail_header_iter *edhiter);
+bool edit_mail_headers_iterate_replace(struct edit_mail_header_iter *edhiter,
+				       const char *newname,
+				       const char *newvalue);
 
 #endif
