@@ -1,0 +1,12 @@
+require "vnd.dovecot.testsuite";
+require "fileinto";
+require "mailbox";
+
+test"" {
+	fileinto :create "Folder";
+
+	if test_result_execute {
+	}
+
+	test_message :folder "Folder" 2;
+}

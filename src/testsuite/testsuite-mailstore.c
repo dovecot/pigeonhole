@@ -274,9 +274,14 @@ bool testsuite_mailstore_mail_index(const struct sieve_runtime_env *renv,
 				    const char *folder, unsigned int index)
 {
 	struct testsuite_mailstore_mail *tmail;
+	struct mailbox_status status;
 
 	tmail = testsuite_mailstore_open(folder);
 	if (tmail == NULL)
+		return FALSE;
+
+	mailbox_get_open_status(tmail->box, STATUS_MESSAGES, &status);
+	if (index >= status.messages)
 		return FALSE;
 
 	mail_set_seq(tmail->mail, index+1);
