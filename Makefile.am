@@ -102,6 +102,7 @@ test_cases = \
 	tests/extensions/include/rfc.svtest \
 	tests/extensions/include/execute.svtest \
 	tests/extensions/imap4flags/basic.svtest \
+	tests/extensions/imap4flags/errors.svtest \
 	tests/extensions/imap4flags/hasflag.svtest \
 	tests/extensions/imap4flags/execute.svtest \
 	tests/extensions/imap4flags/multiscript.svtest \

@@ -99,8 +99,6 @@ static bool
 tst_hasflag_validate(struct sieve_validator *valdtr,
 		     struct sieve_command *tst)
 {
-	struct sieve_ast_argument *vars = tst->first_positional;
-	struct sieve_ast_argument *keys = sieve_ast_argument_next(vars);
 	const struct sieve_match_type mcht_default =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	const struct sieve_comparator cmp_default =
@@ -108,6 +106,9 @@ tst_hasflag_validate(struct sieve_validator *valdtr,
 
 	if (!ext_imap4flags_command_validate(valdtr, tst))
 		return FALSE;
+
+	struct sieve_ast_argument *vars = tst->first_positional;
+	struct sieve_ast_argument *keys = sieve_ast_argument_next(vars);
 
 	if (keys == NULL) {
 		keys = vars;
