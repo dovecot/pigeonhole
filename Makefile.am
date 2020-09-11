@@ -195,7 +195,8 @@ $(test_cases):
 
 failure_test_cases = \
 	tests/failures/fuzz1.svtest \
-	tests/failures/fuzz2.svtest
+	tests/failures/fuzz2.svtest \
+	tests/failures/mailbox-bad-utf8.svtest
 
 $(failure_test_cases):
 	@$(TEST_BIN) -F $(top_srcdir)/$@

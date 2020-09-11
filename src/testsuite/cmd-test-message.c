@@ -2,12 +2,14 @@
  */
 
 #include "lib.h"
+#include "str-sanitize.h"
 #include "istream.h"
 #include "mail-storage.h"
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-message.h"
+#include "sieve-actions.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -253,6 +255,20 @@ cmd_test_message_validate_folder_tag(struct sieve_validator *valdtr,
 		return FALSE;
 	}
 
+	/* Check name validity when folder argument is not a variable */
+	if ( sieve_argument_is_string_literal(*arg) ) {
+		const char *folder = sieve_ast_argument_strc(*arg), *error;
+
+		if ( !sieve_mailbox_check_name(folder, &error) ) {
+			sieve_command_validate_error(
+				valdtr, cmd, "%s command: "
+				"invalid mailbox `%s' specified: %s",
+				sieve_command_identifier(cmd),
+				str_sanitize(folder, 256), error);
+			return FALSE;
+		}
+	}
+
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
 
@@ -450,6 +466,7 @@ cmd_test_message_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 	sieve_number_t msg_index;
 	unsigned int is_test = 0;
 	bool result;
+	const char *error;
 	int ret;
 
 	/*
@@ -471,6 +488,12 @@ cmd_test_message_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 	ret = sieve_opr_number_read(renv, address, "index", &msg_index);
 	if (ret <= 0)
 		return ret;
+
+	if (!sieve_mailbox_check_name(str_c(folder), &error)) {
+		return testsuite_test_failf(
+			renv, "invalid mailbox `%s' specified: %s",
+			str_c(folder), error);
+	}
 
 	/*
 	 * Perform operation
