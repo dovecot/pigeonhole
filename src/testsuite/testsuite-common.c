@@ -287,7 +287,8 @@ bool testsuite_testcase_result(bool expect_failure)
 			return FALSE;
 		}
 
-		printf("\nPASS: %d tests failed.\n\n", test_index);
+		printf("\nPASS: %d tests failed (expected to fail).\n\n",
+		       (test_index == 0 ? 1 : test_index));
 		return TRUE;
 	}
 
