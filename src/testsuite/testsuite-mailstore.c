@@ -16,6 +16,7 @@
 
 #include "sieve-common.h"
 #include "sieve-error.h"
+#include "sieve-actions.h"
 #include "sieve-interpreter.h"
 
 #include "testsuite-message.h"
@@ -173,6 +174,14 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	struct mailbox *box;
 	struct mailbox_transaction_context *t;
 	struct testsuite_mailstore_mail *tmail, *tmail_prev;
+	const char *error;
+
+	if (!sieve_mailbox_check_name(folder, &error)) {
+		e_error(testsuite_sieve_instance->event,
+			"testsuite: invalid mailbox name `%s' specified: %s",
+			folder, error);
+		return NULL;
+	}
 
 	tmail = testsuite_mailstore_mail;
 	tmail_prev = NULL;
