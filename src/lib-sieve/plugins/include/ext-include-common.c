@@ -38,7 +38,7 @@ struct ext_include_generator_context {
 
 static inline struct ext_include_generator_context *
 ext_include_get_generator_context(const struct sieve_extension *ext_this,
-				 struct sieve_generator *gentr);
+				  struct sieve_generator *gentr);
 
 /* Interpreter context */
 
@@ -102,10 +102,10 @@ bool ext_include_load(const struct sieve_extension *ext, void **context)
 
 	if (sieve_setting_get_uint_value(
 		svinst, "sieve_include_max_nesting_depth", &uint_setting))
-		ctx->max_nesting_depth = (unsigned int) uint_setting;
+		ctx->max_nesting_depth = (unsigned int)uint_setting;
 	if (sieve_setting_get_uint_value(
 		svinst, "sieve_include_max_includes", &uint_setting))
-		ctx->max_includes = (unsigned int) uint_setting;
+		ctx->max_includes = (unsigned int)uint_setting;
 
 	/* Extension dependencies */
 	ctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
@@ -606,7 +606,7 @@ int ext_include_generate_include(
 		 	subgentr = sieve_generator_create(ast, ehandler, cpflags);
 			ext_include_initialize_generator_context(
 				cmd->ext, subgentr, ctx, script);
-	
+
 			if (sieve_generator_run(subgentr, &inc_block) == NULL) {
 				sieve_command_generate_error(
 					gentr, cmd,
@@ -621,7 +621,7 @@ int ext_include_generate_include(
 			sieve_ast_unref(&ast);
 		}
 	}
-	
+
 	if (result > 0)
 		*included_r = included;
 	return result;
