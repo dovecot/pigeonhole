@@ -17,8 +17,9 @@
  *   return
  */
 
-static bool cmd_return_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
+static bool
+cmd_return_generate(const struct sieve_codegen_env *cgenv,
+		    struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_return = {
 	.identifier = "return",
@@ -27,29 +28,30 @@ const struct sieve_command_def cmd_return = {
 	.subtests = 0,
 	.block_allowed = FALSE,
 	.block_required = FALSE,
-	.generate = cmd_return_generate
+	.generate = cmd_return_generate,
 };
 
 /*
  * Return operation
  */
 
-static int opc_return_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static int
+opc_return_execute(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def return_operation = {
 	.mnemonic = "RETURN",
 	.ext_def = &include_extension,
 	.code = EXT_INCLUDE_OPERATION_RETURN,
-	.execute = opc_return_execute
+	.execute = opc_return_execute,
 };
 
 /*
  * Code generation
  */
 
-static bool cmd_return_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+static bool
+cmd_return_generate(const struct sieve_codegen_env *cgenv,
+		    struct sieve_command *cmd)
 {
 	sieve_operation_emit(cgenv->sblock, cmd->ext, &return_operation);
 
@@ -60,11 +62,10 @@ static bool cmd_return_generate
  * Execution
  */
 
-static int opc_return_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
+static int
+opc_return_execute(const struct sieve_runtime_env *renv,
+		   sieve_size_t *address ATTR_UNUSED)
 {
 	ext_include_execute_return(renv);
 	return SIEVE_EXEC_OK;
 }
-
-
