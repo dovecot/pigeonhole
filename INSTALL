@@ -303,6 +303,9 @@ plugin {
 Sieve Interpreter - Configurable Limits
 ---------------------------------------
 
+The settings that specify a period are specified in s(econds), unless followed
+by a d(ay), h(our), or m(inute) specifier character.
+
  sieve_max_script_size = 1M
    The maximum size of a Sieve script. The compiler will refuse to compile any
    script larger than this limit. If set to 0, no limit on the script size is
@@ -315,6 +318,11 @@ Sieve Interpreter - Configurable Limits
  sieve_max_redirects = 4
    The maximum number of redirect actions that can be performed during a single
    script execution. If set to 0, no redirect actions are allowed.
+
+ sieve_max_cpu_time = 30s
+   The maximum amount of CPU time that a Sieve script is allowed to use while
+   executing. If the execution exceeds this resource limit, the script ends with
+   an error, causing the implicit "keep" action to be executed.
 
 Sieve Interpreter - Per-user Sieve Script Location
 --------------------------------------------------

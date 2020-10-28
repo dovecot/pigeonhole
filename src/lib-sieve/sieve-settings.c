@@ -216,6 +216,15 @@ void sieve_settings_load(struct sieve_instance *svinst)
 					 &uint_setting))
 		svinst->max_redirects = (unsigned int)uint_setting;
 
+	svinst->max_cpu_time_secs = SIEVE_DEFAULT_MAX_CPU_TIME_SECS;
+	if (sieve_setting_get_duration_value(svinst, "sieve_max_cpu_time",
+					     &period)) {
+		if (period > UINT_MAX)
+			svinst->max_cpu_time_secs = UINT_MAX;
+		else
+			svinst->max_cpu_time_secs = (unsigned int)period;
+	}
+
 	(void)sieve_address_source_parse_from_setting(
 		svinst,	svinst->pool, "sieve_redirect_envelope_from",
 		&svinst->redirect_from);

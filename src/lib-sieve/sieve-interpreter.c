@@ -6,6 +6,7 @@
 #include "mempool.h"
 #include "array.h"
 #include "hash.h"
+#include "cpu-limit.h"
 #include "mail-storage.h"
 
 #include "sieve-common.h"
@@ -94,6 +95,7 @@ struct sieve_interpreter {
 				       (may be interrupted) */
 	bool interrupted:1;         /* Interpreter interrupt requested */
 	bool test_result:1;         /* Result of previous test command */
+	bool cpu_limit_exceeded:1;  /* Maximum amount of CPU time exceeded */
 };
 
 static struct sieve_interpreter *
@@ -915,11 +917,18 @@ static int sieve_interpreter_operation_execute(struct sieve_interpreter *interp)
 	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
+static void sieve_interpreter_cpu_limit(struct sieve_interpreter *interp)
+{
+	interp->cpu_limit_exceeded = TRUE;
+}
+
 int sieve_interpreter_continue(struct sieve_interpreter *interp,
 			       bool *interrupted)
 {
 	const struct sieve_runtime_env *renv = &interp->runenv;
+	struct cpu_limit *climit = NULL;
 	sieve_size_t *address = &(interp->runenv.pc);
+	struct sieve_instance *svinst = interp->runenv.exec_env->svinst;
 	int ret = SIEVE_EXEC_OK;
 
 	sieve_result_ref(renv->result);
@@ -928,8 +937,21 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 	if (interrupted != NULL)
 		*interrupted = FALSE;
 
+	interp->cpu_limit_exceeded = FALSE;
+	if (svinst->max_cpu_time_secs > 0) {
+		climit = cpu_limit_init(svinst->max_cpu_time_secs,
+					sieve_interpreter_cpu_limit, interp);
+	}
+
 	while (ret == SIEVE_EXEC_OK && !interp->interrupted &&
 	       *address < sieve_binary_block_get_size(renv->sblock)) {
+		if (interp->cpu_limit_exceeded) {
+			sieve_runtime_error(
+				renv, NULL,
+				"execution exceeded CPU time limit");
+			ret = SIEVE_EXEC_FAILURE;
+			break;
+		}
 		if (interp->loop_limit != 0 && *address > interp->loop_limit) {
 			sieve_runtime_trace_error(
 				renv, "program crossed loop boundary");
@@ -939,6 +961,8 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 
 		ret = sieve_interpreter_operation_execute(interp);
 	}
+
+	cpu_limit_deinit(&climit);
 
 	if (ret != SIEVE_EXEC_OK) {
 		sieve_runtime_trace(&interp->runenv, SIEVE_TRLVL_NONE,

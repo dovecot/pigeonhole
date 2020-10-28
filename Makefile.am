@@ -70,6 +70,7 @@ test_cases = \
 	tests/compile/warnings.svtest \
 	tests/compile/recover.svtest \
 	tests/execute/errors.svtest \
+	tests/execute/errors-cpu-limit.svtest \
 	tests/execute/actions.svtest \
 	tests/execute/smtp.svtest \
 	tests/execute/mailstore.svtest \
