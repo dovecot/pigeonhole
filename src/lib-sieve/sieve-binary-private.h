@@ -16,6 +16,9 @@ struct sieve_binary_header {
 	uint16_t version_major;
 	uint16_t version_minor;
 	uint32_t blocks;
+
+	uint32_t hdr_size;
+	uint32_t flags;
 };
 
 struct sieve_binary_file {

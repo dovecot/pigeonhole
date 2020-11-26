@@ -37,6 +37,10 @@
 #define SIEVE_BINARY_ALIGN_PTR(ptr) \
 	((void *) SIEVE_BINARY_ALIGN(((size_t) ptr)))
 
+#define SIEVE_BINARY_PRE_HDR_SIZE_MAJOR         1
+#define SIEVE_BINARY_PRE_HDR_SIZE_MINOR         4
+#define SIEVE_BINARY_PRE_HDR_SIZE_HDR_SIZE      12
+
 /*
  * Header and record structures of the binary on disk
  */
@@ -105,15 +109,28 @@ sieve_binary_file_read_header(struct sieve_binary *sbin, int fd,
 		return -1;
 	}
 	/* Check binary version */
-	if (header.version_major != SIEVE_BINARY_VERSION_MAJOR ||
-	    header.version_minor != SIEVE_BINARY_VERSION_MINOR) {
-		/* Binary is of different version. Caller will have to
+	if (header.version_major == SIEVE_BINARY_PRE_HDR_SIZE_MAJOR &&
+	    header.version_minor == SIEVE_BINARY_PRE_HDR_SIZE_MINOR) {
+		/* Old header without hdr_size; clear new fields */
+		static const size_t old_header_size =
+			SIEVE_BINARY_PRE_HDR_SIZE_HDR_SIZE;
+		memset(PTR_OFFSET(&header, old_header_size), 0,
+		       (sizeof(header) - old_header_size));
+		header.hdr_size = old_header_size;
+	} else if (header.version_major != SIEVE_BINARY_VERSION_MAJOR) {
+		/* Binary is of different major version. Caller will have to
 		   recompile */
 		e_error(sbin->event, "read: "
-			"binary stored with different binary version %d.%d "
+			"binary stored with different major version %d.%d "
 			"(!= %d.%d; automatically fixed when re-compiled)",
 			(int)header.version_major, (int)header.version_minor,
 			SIEVE_BINARY_VERSION_MAJOR, SIEVE_BINARY_VERSION_MINOR);
+		*error_r = SIEVE_ERROR_NOT_VALID;
+		return -1;
+	} else if (header.hdr_size < SIEVE_BINARY_BASE_HEADER_SIZE) {
+		/* Header size is smaller than base size */
+		e_error(sbin->event, "read: "
+			"binary is corrupt: header size is too small");
 		*error_r = SIEVE_ERROR_NOT_VALID;
 		return -1;
 	}
@@ -279,10 +296,12 @@ sieve_binary_save_to_stream(struct sieve_binary *sbin, struct ostream *stream)
 
 	/* Create header */
 
+	i_zero(&header);
 	header.magic = SIEVE_BINARY_MAGIC;
 	header.version_major = SIEVE_BINARY_VERSION_MAJOR;
 	header.version_minor = SIEVE_BINARY_VERSION_MINOR;
 	header.blocks = blk_count;
+	header.hdr_size = sizeof(header);
 
 	if (!_save_aligned(sbin, stream, &header, sizeof(header), NULL)) {
 		e_error(sbin->event, "save: failed to save header");
@@ -781,7 +800,7 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_r)
 					    &header, error_r);
 	if (ret < 0)
 		return FALSE;
-	offset = sizeof(header);
+	offset = header.hdr_size;
 
 	/* Load block index */
 
