@@ -61,6 +61,82 @@ struct sieve_binary_block_header {
 };
 
 /*
+ * Header manipulation
+ */
+
+static int
+sieve_binary_file_read_header(struct sieve_binary *sbin, int fd,
+			      struct sieve_binary_header *header_r,
+			      enum sieve_error *error_r)
+{
+	struct sieve_binary_header header;
+	enum sieve_error error;
+        ssize_t rret;
+ 
+	if (error_r == NULL)
+	       error_r = &error;
+	*error_r = SIEVE_ERROR_NONE;
+
+	rret = pread(fd, &header, sizeof(header), 0);
+	if (rret == 0) {
+		e_error(sbin->event, "read: "
+			"file is not large enough to contain the header");
+		*error_r = SIEVE_ERROR_NOT_VALID;
+		return -1;
+	} else if (rret < 0) {
+		e_error(sbin->event, "read: "
+			"failed to read from binary: %m");
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		return -1;
+	} else if (rret != sizeof(header)) {
+		e_error(sbin->event, "read: "
+			"header read only partially %zd/%zu",
+			rret, sizeof(header));
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		return -1;
+	}
+
+	/* Check header validity */
+	if (header.magic != SIEVE_BINARY_MAGIC) {
+		if (header.magic != SIEVE_BINARY_MAGIC_OTHER_ENDIAN) {
+			e_error(sbin->event, "read: "
+				"binary has corrupted header "
+				"(0x%08x) or it is not a Sieve binary",
+				header.magic);
+		} else {
+			e_error(sbin->event, "read: "
+				"binary stored with in different endian format "
+				"(automatically fixed when re-compiled)");
+		}
+		*error_r = SIEVE_ERROR_NOT_VALID;
+		return -1;
+	}
+	/* Check binary version */
+	if (header.version_major != SIEVE_BINARY_VERSION_MAJOR ||
+	    header.version_minor != SIEVE_BINARY_VERSION_MINOR) {
+		/* Binary is of different version. Caller will have to
+		   recompile */
+		e_error(sbin->event, "read: "
+			"binary stored with different binary version %d.%d "
+			"(!= %d.%d; automatically fixed when re-compiled)",
+			(int)header.version_major, (int)header.version_minor,
+			SIEVE_BINARY_VERSION_MAJOR, SIEVE_BINARY_VERSION_MINOR);
+		*error_r = SIEVE_ERROR_NOT_VALID;
+		return -1;
+	}
+	/* Check block content */
+	if (header.blocks == 0) {
+		e_error(sbin->event, "read: "
+			"binary is corrupt: it contains no blocks");
+		*error_r = SIEVE_ERROR_NOT_VALID;
+		return -1;
+	}
+	/* Valid */
+	*header_r = header;
+	return 0;
+}
+
+/*
  * Saving the binary to a file.
  */
 
@@ -701,65 +777,22 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_r)
 {
 	bool result = TRUE;
 	off_t offset = 0;
-	const struct sieve_binary_header *header;
+	struct sieve_binary_header header;
 	struct sieve_binary_block *ext_block;
-	unsigned int i, blk_count;
+	unsigned int i;
 	int ret;
 
-	/* Verify header */
+	/* Read header */
 
-	T_BEGIN {
-		header = LOAD_HEADER(sbin, &offset,
-				     const struct sieve_binary_header);
-		/* Check header presence */
-		if (header == NULL) {
-			e_error(sbin->event, "open: "
-				"file is not large enough to contain the header");
-			result = FALSE;
-		/* Check header validity */
-		} else if (header->magic != SIEVE_BINARY_MAGIC) {
-			if (header->magic != SIEVE_BINARY_MAGIC_OTHER_ENDIAN) {
-				e_error(sbin->event, "open: "
-					"binary has corrupted header "
-					"(0x%08x) or it is not a Sieve binary",
-					header->magic);
-			} else {
-				e_debug(sbin->event, "open: "
-					"binary stored with in different endian format "
-					"(automatically fixed when re-compiled)");
-			}
-			result = FALSE;
-		/* Check binary version */
-		} else if (result &&
-			   (header->version_major != SIEVE_BINARY_VERSION_MAJOR ||
-			    header->version_minor != SIEVE_BINARY_VERSION_MINOR)) {
-			/* Binary is of different version. Caller will have to recompile */
-			e_debug(sbin->event, "open: "
-				"binary stored with different binary version %d.%d "
-				"(!= %d.%d; automatically fixed when re-compiled)",
-				(int) header->version_major, header->version_minor,
-				SIEVE_BINARY_VERSION_MAJOR, SIEVE_BINARY_VERSION_MINOR);
-			result = FALSE;
-		/* Check block content */
-		} else if (result && header->blocks == 0) {
-			e_error(sbin->event, "open: binary is corrupt: "
-				"it contains no blocks");
-			result = FALSE;
-		/* Valid */
-		} else {
-			blk_count = header->blocks;
-		}
-	} T_END;
-
-	if (!result) {
-		if (error_r != NULL)
-			*error_r = SIEVE_ERROR_NOT_VALID;
+	ret = sieve_binary_file_read_header(sbin, sbin->file->fd,
+					    &header, error_r);
+	if (ret < 0)
 		return FALSE;
-	}
+	offset = sizeof(header);
 
 	/* Load block index */
 
-	for (i = 0; i < blk_count && result; i++) {
+	for (i = 0; i < header.blocks && result; i++) {
 		T_BEGIN {
 			if (!_read_block_index_record(sbin, &offset, i))
 				result = FALSE;
