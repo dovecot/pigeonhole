@@ -29,8 +29,8 @@
  * Macros
  */
 
-#define SIEVE_BINARY_MAGIC              0xcafebabe
-#define SIEVE_BINARY_MAGIC_OTHER_ENDIAN 0xbebafeca
+#define SIEVE_BINARY_MAGIC                      0xcafebabe
+#define SIEVE_BINARY_MAGIC_OTHER_ENDIAN         0xbebafeca
 
 #define SIEVE_BINARY_ALIGN(offset) \
 	(((offset) + 3) & ~3)
@@ -108,7 +108,8 @@ _save_full(struct sieve_binary *sbin, struct ostream *stream,
 	while (bytes_left > 0) {
 		ssize_t ret;
 
-		if ((ret = o_stream_send(stream, pdata, bytes_left)) <= 0) {
+		ret = o_stream_send(stream, pdata, bytes_left);
+		if (ret <= 0) {
 			e_error(sbin->event, "save: "
 				"failed to write %zu bytes "
 				"to output stream: %s", bytes_left,
@@ -365,7 +366,8 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 		if (sbin->path == NULL)
 			sbin->path = p_strdup(sbin->pool, path);
 
-		/* Signal all extensions that we successfully saved the binary */
+		/* Signal all extensions that we successfully saved the binary.
+		 */
 		regs = array_get(&sbin->extensions, &ext_count);
 		for (i = 0; i < ext_count; i++) {
 			const struct sieve_binary_extension *binext =
@@ -420,7 +422,8 @@ sieve_binary_file_open(struct sieve_binary_file *file,
 	if (error_r != NULL)
 		*error_r = SIEVE_ERROR_NONE;
 
-	if ((fd = open(path, O_RDONLY)) < 0) {
+	fd = open(path, O_RDONLY);
+	if (fd < 0) {
 		switch (errno) {
 		case ENOENT:
 			if (error_r != NULL)
@@ -502,7 +505,7 @@ _file_lazy_read(struct sieve_binary_file *file, off_t *offset,
 
 	/* Seek to the correct position */
 	if (*offset != file->offset &&
-	    lseek(file->fd, *offset, SEEK_SET) == (off_t) -1) {
+	    lseek(file->fd, *offset, SEEK_SET) == (off_t)-1) {
 		e_error(sbin->event, "read: "
 			"failed to seek(fd, %lld, SEEK_SET): %m",
 			(long long) *offset);
@@ -511,7 +514,8 @@ _file_lazy_read(struct sieve_binary_file *file, off_t *offset,
 
 	/* Read record into memory */
 	while (insize > 0) {
-		if ((ret = read(file->fd, indata, insize)) <= 0) {
+		ret = read(file->fd, indata, insize);
+		if (ret <= 0) {
 			if (ret == 0) {
 				e_error(sbin->event, "read: "
 					"binary is truncated "
@@ -534,7 +538,6 @@ _file_lazy_read(struct sieve_binary_file *file, off_t *offset,
 
 	*offset += size;
 	file->offset = *offset;
-
 	return TRUE;
 }
 
@@ -614,7 +617,8 @@ bool sieve_binary_load_block(struct sieve_binary_block *sblock)
 		return FALSE;
 	}
 
-	sblock->data = sbin->file->load_buffer(sbin->file, &offset, header->size);
+	sblock->data = sbin->file->load_buffer(sbin->file, &offset,
+					       header->size);
 	if (sblock->data == NULL) {
 		e_error(sbin->event, "load: "
 			"failed to read block %d of binary (size=%d)",
@@ -809,7 +813,8 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 	sbin = sieve_binary_create(svinst, script);
 	sbin->path = p_strdup(sbin->pool, path);
 
-	if ((file = _file_lazy_open(sbin, path, error_r)) == NULL) {
+	file = _file_lazy_open(sbin, path, error_r);
+	if (file == NULL) {
 		sieve_binary_unref(&sbin);
 		return NULL;
 	}
