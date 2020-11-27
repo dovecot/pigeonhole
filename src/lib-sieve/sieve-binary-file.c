@@ -499,17 +499,15 @@ int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
  */
 
 static int
-sieve_binary_file_open(struct sieve_binary *sbin, const char *path,
-		       struct sieve_binary_file **file_r,
-		       enum sieve_error *error_r)
+sieve_binary_fd_open(struct sieve_binary *sbin, const char *path,
+		     int open_flags, enum sieve_error *error_r)
 {
-	int fd, ret = 0;
-	struct stat st;
+	int fd;
 
 	if (error_r != NULL)
 		*error_r = SIEVE_ERROR_NONE;
 
-	fd = open(path, O_RDONLY);
+	fd = open(path, open_flags);
 	if (fd < 0) {
 		switch (errno) {
 		case ENOENT:
@@ -532,7 +530,24 @@ sieve_binary_file_open(struct sieve_binary *sbin, const char *path,
 		}
 		return -1;
 	}
+	return fd;
+}
 
+static int
+sieve_binary_file_open(struct sieve_binary *sbin, const char *path,
+		       struct sieve_binary_file **file_r,
+		       enum sieve_error *error_r)
+{
+	int fd, ret = 0;
+	struct stat st;
+
+	if (error_r != NULL)
+		*error_r = SIEVE_ERROR_NONE;
+
+	fd = sieve_binary_fd_open(sbin, path, O_RDONLY, error_r);
+	if (fd < 0)
+		return -1;
+	
 	if (fstat(fd, &st) < 0) {
 		if (errno != ENOENT)
 			e_error(sbin->event, "open: fstat() failed: %m");
