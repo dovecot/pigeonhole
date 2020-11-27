@@ -483,9 +483,9 @@ int sieve_save(struct sieve_binary *sbin, bool update,
 	return sieve_script_binary_save(script, sbin, update, error_r);
 }
 
-void sieve_close(struct sieve_binary **sbin)
+void sieve_close(struct sieve_binary **_sbin)
 {
-	sieve_binary_unref(sbin);
+	sieve_binary_close(_sbin);
 }
 
 /*

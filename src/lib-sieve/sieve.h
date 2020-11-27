@@ -95,7 +95,8 @@ int sieve_save(struct sieve_binary *sbin, bool update,
 	       enum sieve_error *error_r);
 
 /* Closes a compiled/opened sieve binary. */
-void sieve_close(struct sieve_binary **sbin);
+void sieve_close(struct sieve_binary **_sbin);
+
 /* Obtains the path the binary was compiled or loaded from. */
 const char *sieve_get_source(struct sieve_binary *sbin);
 /* Indicates whether the binary was loaded from a pre-compiled file. */
