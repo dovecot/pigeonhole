@@ -287,7 +287,7 @@ _save_block_index_record(struct sieve_binary *sbin, struct ostream *stream,
 static bool
 sieve_binary_save_to_stream(struct sieve_binary *sbin, struct ostream *stream)
 {
-	struct sieve_binary_header header;
+	struct sieve_binary_header *header = &sbin->header;
 	struct sieve_binary_block *ext_block;
 	unsigned int ext_count, blk_count, i;
 	uoff_t block_index;
@@ -296,14 +296,13 @@ sieve_binary_save_to_stream(struct sieve_binary *sbin, struct ostream *stream)
 
 	/* Create header */
 
-	i_zero(&header);
-	header.magic = SIEVE_BINARY_MAGIC;
-	header.version_major = SIEVE_BINARY_VERSION_MAJOR;
-	header.version_minor = SIEVE_BINARY_VERSION_MINOR;
-	header.blocks = blk_count;
-	header.hdr_size = sizeof(header);
+	header->magic = SIEVE_BINARY_MAGIC;
+	header->version_major = SIEVE_BINARY_VERSION_MAJOR;
+	header->version_minor = SIEVE_BINARY_VERSION_MINOR;
+	header->blocks = blk_count;
+	header->hdr_size = sizeof(*header);
 
-	if (!_save_aligned(sbin, stream, &header, sizeof(header), NULL)) {
+	if (!_save_aligned(sbin, stream, header, sizeof(*header), NULL)) {
 		e_error(sbin->event, "save: failed to save header");
 		return FALSE;
 	}
@@ -804,7 +803,6 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_r)
 {
 	bool result = TRUE;
 	off_t offset = 0;
-	struct sieve_binary_header header;
 	struct sieve_binary_block *ext_block;
 	unsigned int i;
 	int ret;
@@ -812,14 +810,14 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_r)
 	/* Read header */
 
 	ret = sieve_binary_file_read_header(sbin, sbin->file->fd,
-					    &header, error_r);
+					    &sbin->header, error_r);
 	if (ret < 0)
 		return FALSE;
-	offset = header.hdr_size;
+	offset = sbin->header.hdr_size;
 
 	/* Load block index */
 
-	for (i = 0; i < header.blocks && result; i++) {
+	for (i = 0; i < sbin->header.blocks && result; i++) {
 		T_BEGIN {
 			if (!_read_block_index_record(sbin, &offset, i))
 				result = FALSE;

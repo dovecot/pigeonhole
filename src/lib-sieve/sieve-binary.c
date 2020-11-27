@@ -69,6 +69,9 @@ sieve_binary_create(struct sieve_instance *svinst, struct sieve_script *script)
 	sbin->refcount = 1;
 	sbin->svinst = svinst;
 
+	sbin->header.version_major = SIEVE_BINARY_VERSION_MAJOR;
+	sbin->header.version_minor = SIEVE_BINARY_VERSION_MINOR;
+
 	sbin->script = script;
 	if (script != NULL)
 		sieve_script_ref(script);

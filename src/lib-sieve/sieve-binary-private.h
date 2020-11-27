@@ -84,6 +84,7 @@ struct sieve_binary {
 	struct sieve_script *script;
 
 	struct sieve_binary_file *file;
+	struct sieve_binary_header header;
 
 	/* When the binary is loaded into memory or when it is being constructed
 	   by the generator, extensions can be associated to the binary. The
