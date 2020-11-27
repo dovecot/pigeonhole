@@ -696,7 +696,8 @@ static int _read_extensions(struct sieve_binary_block *sblock)
 	return result;
 }
 
-static bool _sieve_binary_open(struct sieve_binary *sbin)
+static bool
+_sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_r)
 {
 	bool result = TRUE;
 	off_t offset = 0;
@@ -750,8 +751,11 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 		}
 	} T_END;
 
-	if (!result)
+	if (!result) {
+		if (error_r != NULL)
+			*error_r = SIEVE_ERROR_NOT_VALID;
 		return FALSE;
+	}
 
 	/* Load block index */
 
@@ -762,8 +766,11 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 		} T_END;
 	}
 
-	if (!result)
+	if (!result) {
+		if (error_r != NULL)
+			*error_r = SIEVE_ERROR_NOT_VALID;
 		return FALSE;
+	}
 
 	/* Load extensions used by this binary */
 
@@ -781,7 +788,12 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 		}
 	} T_END;
 
-	return result;
+	if (!result) {
+		if (error_r != NULL)
+			*error_r = SIEVE_ERROR_NOT_VALID;
+		return FALSE;
+	}
+	return TRUE;
 }
 
 struct sieve_binary *
@@ -810,10 +822,8 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 		sbin->event,
 		t_strdup_printf("binary %s: ", path));
 
-	if (!_sieve_binary_open(sbin)) {
+	if (!_sieve_binary_open(sbin, error_r)) {
 		sieve_binary_unref(&sbin);
-		if (error_r != NULL)
-			*error_r = SIEVE_ERROR_NOT_VALID;
 		return NULL;
 	}
 
