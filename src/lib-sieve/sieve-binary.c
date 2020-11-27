@@ -140,6 +140,15 @@ static inline void sieve_binary_extensions_free(struct sieve_binary *sbin)
 	}
 }
 
+static void sieve_binary_update_resource_usage(struct sieve_binary *sbin)
+{
+	enum sieve_error error;
+
+	if (sbin->rusage_updated)
+		(void)sieve_binary_file_update_resource_usage(sbin, &error);
+	sbin->rusage_updated = FALSE;
+}
+
 void sieve_binary_unref(struct sieve_binary **_sbin)
 {
 	struct sieve_binary *sbin = *_sbin;
@@ -153,6 +162,7 @@ void sieve_binary_unref(struct sieve_binary **_sbin)
 		return;
 
 	sieve_binary_file_close(&sbin->file);
+	sieve_binary_update_resource_usage(sbin);
 	sieve_binary_extensions_free(sbin);
 
 	if (sbin->script != NULL)
@@ -171,7 +181,74 @@ void sieve_binary_close(struct sieve_binary **_sbin)
 		return;
 
 	sieve_binary_file_close(&sbin->file);
+	sieve_binary_update_resource_usage(sbin);
 	sieve_binary_unref(&sbin);
+}
+
+/*
+ * Resource usage
+ */
+
+void sieve_binary_get_resource_usage(struct sieve_binary *sbin,
+				     struct sieve_resource_usage *rusage_r)
+{
+	struct sieve_binary_header *header = &sbin->header;
+	time_t update_time = header->resource_usage.update_time;
+	unsigned int timeout = sbin->svinst->resource_usage_timeout_secs;
+
+	if (update_time != 0 && (ioloop_time - update_time) > timeout)
+		i_zero(&header->resource_usage);
+
+	sieve_resource_usage_init(rusage_r);
+	rusage_r->cpu_time_msecs = header->resource_usage.cpu_time_msecs;
+	sieve_resource_usage_add(rusage_r, &sbin->rusage);
+}
+
+bool sieve_binary_check_resource_usage(struct sieve_binary *sbin)
+{
+	struct sieve_binary_header *header = &sbin->header;
+	struct sieve_resource_usage rusage;
+
+	sieve_binary_get_resource_usage(sbin, &rusage);
+
+	if (sieve_resource_usage_is_excessive(sbin->svinst, &rusage)) {
+		header->flags |= SIEVE_BINARY_FLAG_RESOURCE_LIMIT;
+		return FALSE;
+	}
+	return TRUE;
+}
+
+bool sieve_binary_record_resource_usage(
+	struct sieve_binary *sbin, const struct sieve_resource_usage *rusage)
+{
+	struct sieve_resource_usage rusage_total;
+
+	if (sbin == NULL)
+		return TRUE;
+	if (!sieve_resource_usage_is_high(sbin->svinst, rusage))
+		return TRUE;
+
+	sieve_resource_usage_add(&sbin->rusage, rusage);
+	sbin->rusage_updated = TRUE;
+
+	sieve_binary_get_resource_usage(sbin, &rusage_total);
+
+	e_debug(sbin->event, "Updated cumulative resource usage: %s",
+		sieve_resource_usage_get_summary(&rusage_total));
+
+	return sieve_binary_check_resource_usage(sbin);
+}
+
+void sieve_binary_set_resource_usage(struct sieve_binary *sbin,
+				     const struct sieve_resource_usage *rusage)
+{
+	struct sieve_binary_header *header = &sbin->header;
+
+	i_zero(&header->resource_usage);
+	sbin->rusage = *rusage;
+	sbin->rusage_updated = TRUE;
+
+	(void)sieve_binary_check_resource_usage(sbin);
 }
 
 /*

@@ -322,7 +322,28 @@ by a d(ay), h(our), or m(inute) specifier character.
  sieve_max_cpu_time = 30s
    The maximum amount of CPU time that a Sieve script is allowed to use while
    executing. If the execution exceeds this resource limit, the script ends with
-   an error, causing the implicit "keep" action to be executed.
+   an error, causing the implicit "keep" action to be executed. This limit is
+   not only enforced for a single script execution, but also cumulatively for
+   the last executions within a configurable timeout
+   (see sieve_resource_usage_timeout).
+
+ sieve_resource_usage_timeout = 1h
+   To prevent abuse, the Sieve interpreter can record resource usage of a Sieve
+   script execution in the compiled binary if it is significant. Currently, this
+   happens when CPU system + user time exceeds 1.5 seconds for one execution.
+   Such high resource usage is summed over time in the binary and once that
+   cumulative resource usage exceeds the limits (sieve_max_cpu_time), the Sieve
+   script is disabled in the binary for future execution, even if an individual
+   execution exceeded no limits. If the last time high resource usage was
+   recorded is older than sieve_resource_usage_timeout, the resource usage in
+   the binary is reset. This means that the Sieve script is only disabled when
+   the limits are cumulatively exceeded within this timeout. With the default
+   configuration this means that the Sieve script is only disabled when the
+   total CPU time of Sieve executions that lasted more than 1.5 seconds exceeds
+   30 seconds in the last hour. A disabled Sieve script can be reactivated by
+   the user by uploading a new version of the Sieve script after the excessive
+   resource usage times out. An administrator can force reactivation by forcing
+   a script compile (e.g. using the sievec command line tool).
 
 Sieve Interpreter - Per-user Sieve Script Location
 --------------------------------------------------

@@ -27,6 +27,17 @@ void sieve_binary_unref(struct sieve_binary **_sbin);
 void sieve_binary_close(struct sieve_binary **_sbin);
 
 /*
+ * Resource usage
+ */
+
+void sieve_binary_get_resource_usage(struct sieve_binary *sbin,
+				     struct sieve_resource_usage *rusage_r);
+bool sieve_binary_record_resource_usage(
+	struct sieve_binary *sbin, const struct sieve_resource_usage *rusage)
+	ATTR_NULL(1);
+void sieve_binary_set_resource_usage(struct sieve_binary *sbin,
+				     const struct sieve_resource_usage *rusage);
+/*
  * Accessors
  */
 

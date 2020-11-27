@@ -104,7 +104,9 @@ enum sieve_error {
 	/* Referenced item (e.g. script or binary) is not valid or currupt */
 	SIEVE_ERROR_NOT_VALID,
 	/* Not allowed to perform the operation because the item is in active use */
-	SIEVE_ERROR_ACTIVE
+	SIEVE_ERROR_ACTIVE,
+	/* Operation exceeds resource limit */
+	SIEVE_ERROR_RESOURCE_LIMIT,
 };
 
 /*

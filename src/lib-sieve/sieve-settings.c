@@ -224,6 +224,17 @@ void sieve_settings_load(struct sieve_instance *svinst)
 		else
 			svinst->max_cpu_time_secs = (unsigned int)period;
 	}
+	svinst->resource_usage_timeout_secs =
+		SIEVE_DEFAULT_RESOURCE_USAGE_TIMEOUT_SECS;
+	if (sieve_setting_get_duration_value(
+		svinst, "sieve_resource_usage_timeout", &period)) {
+		if (period > UINT_MAX)
+			svinst->resource_usage_timeout_secs = UINT_MAX;
+		else {
+			svinst->resource_usage_timeout_secs =
+				(unsigned int)period;
+		}
+	}
 
 	(void)sieve_address_source_parse_from_setting(
 		svinst,	svinst->pool, "sieve_redirect_envelope_from",
