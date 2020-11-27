@@ -116,8 +116,7 @@ void sieve_generator_free(struct sieve_generator **gentr)
 	sieve_error_handler_unref(&(*gentr)->ehandler);
 	sieve_binary_debug_writer_deinit(&(*gentr)->dwriter);
 
-	if ((*gentr)->genenv.sbin != NULL)
-		sieve_binary_unref(&(*gentr)->genenv.sbin);
+	sieve_binary_unref(&(*gentr)->genenv.sbin);
 
 	pool_unref(&((*gentr)->pool));
 
@@ -440,9 +439,9 @@ sieve_generator_run(struct sieve_generator *gentr,
 
 	i_assert(sbin != NULL);
 
-	sieve_binary_ref(sbin);
 	gentr->genenv.sbin = sbin;
 	gentr->genenv.sblock = sblock;
+	sieve_binary_ref(gentr->genenv.sbin);
 
 	/* Create debug block */
 	debug_block = sieve_binary_block_create(sbin);
@@ -487,9 +486,8 @@ sieve_generator_run(struct sieve_generator *gentr,
 
 	/* Cleanup */
 
-	gentr->genenv.sbin = NULL;
+	sieve_binary_unref(&gentr->genenv.sbin);
 	gentr->genenv.sblock = NULL;
-	sieve_binary_unref(&sbin);
 
 	if (!result) {
 		if (topmost) {

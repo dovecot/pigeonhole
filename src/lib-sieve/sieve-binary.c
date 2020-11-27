@@ -137,25 +137,28 @@ static inline void sieve_binary_extensions_free(struct sieve_binary *sbin)
 	}
 }
 
-void sieve_binary_unref(struct sieve_binary **sbin)
+void sieve_binary_unref(struct sieve_binary **_sbin)
 {
-	i_assert((*sbin)->refcount > 0);
+	struct sieve_binary *sbin = *_sbin;
 
-	if (--(*sbin)->refcount != 0)
+	*_sbin = NULL;
+	if (sbin == NULL)
 		return;
 
-	sieve_binary_extensions_free(*sbin);
+	i_assert(sbin->refcount > 0);
+	if (--sbin->refcount != 0)
+		return;
 
-	if ((*sbin)->file != NULL)
-		sieve_binary_file_close(&(*sbin)->file);
+	if (sbin->file != NULL)
+		sieve_binary_file_close(&sbin->file);
 
-	if ((*sbin)->script != NULL)
-		sieve_script_unref(&(*sbin)->script);
+	sieve_binary_extensions_free(sbin);
 
-	event_unref(&((*sbin)->event));
-	pool_unref(&((*sbin)->pool));
+	if (sbin->script != NULL)
+		sieve_script_unref(&sbin->script);
 
-	*sbin = NULL;
+	event_unref(&sbin->event);
+	pool_unref(&sbin->pool);
 }
 
 /*

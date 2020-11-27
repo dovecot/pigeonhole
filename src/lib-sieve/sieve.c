@@ -391,7 +391,6 @@ sieve_open_script(struct sieve_script *script,
 					"Script binary %s is not up-to-date",
 					sieve_binary_path(sbin));
 				sieve_binary_unref(&sbin);
-				sbin = NULL;
 			}
 		}
 

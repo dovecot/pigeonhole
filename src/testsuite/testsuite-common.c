@@ -117,8 +117,7 @@ testsuite_interpreter_free(const struct sieve_extension *ext ATTR_UNUSED,
 	struct testsuite_interpreter_context *ctx =
 		(struct testsuite_interpreter_context *)context;
 
-	if (ctx->compiled_script != NULL)
-		sieve_binary_unref(&ctx->compiled_script);
+	sieve_binary_unref(&ctx->compiled_script);
 }
 
 const struct sieve_interpreter_extension testsuite_interpreter_ext = {

@@ -20,7 +20,7 @@ struct sieve_binary;
 
 struct sieve_binary *sieve_binary_create_new(struct sieve_script *script);
 void sieve_binary_ref(struct sieve_binary *sbin);
-void sieve_binary_unref(struct sieve_binary **sbin);
+void sieve_binary_unref(struct sieve_binary **_sbin);
 
 /*
  * Accessors
