@@ -161,6 +161,18 @@ void sieve_binary_unref(struct sieve_binary **_sbin)
 	pool_unref(&sbin->pool);
 }
 
+void sieve_binary_close(struct sieve_binary **_sbin)
+{
+	struct sieve_binary *sbin = *_sbin;
+
+	*_sbin = NULL;
+	if (sbin == NULL)
+		return;
+
+	sieve_binary_file_close(&sbin->file);
+	sieve_binary_unref(&sbin);
+}
+
 /*
  * Accessors
  */
