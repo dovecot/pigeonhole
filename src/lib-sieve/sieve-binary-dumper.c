@@ -6,6 +6,7 @@
 #include "ostream.h"
 #include "array.h"
 #include "buffer.h"
+#include "time-util.h"
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
@@ -99,12 +100,34 @@ bool sieve_binary_dumper_run(struct sieve_binary_dumper *dumper,
 	struct sieve_binary *sbin = dumper->dumpenv.sbin;
 	struct sieve_script *script = sieve_binary_script(sbin);
 	struct sieve_dumptime_env *denv = &(dumper->dumpenv);
+	const struct sieve_binary_header *header = &sbin->header;
 	struct sieve_binary_block *sblock;
 	bool success = TRUE;
 	sieve_size_t offset;
 	int count, i;
 
 	dumper->dumpenv.stream = stream;
+
+	/* Dump header */
+
+	sieve_binary_dump_sectionf(denv, "Header");
+
+	sieve_binary_dumpf(denv,
+		"version = %"PRIu16".%"PRIu16"\n"
+		"flags = 0x%08"PRIx32"\n",
+		header->version_major, header->version_minor,
+		header->flags);
+	if (header->resource_usage.update_time != 0) {
+		time_t update_time =
+			(time_t)header->resource_usage.update_time;
+		sieve_binary_dumpf(denv,
+			"resource usage:\n"
+			"  update time = %s\n"
+			"  cpu time = %"PRIu32" ms\n",
+			t_strflocaltime("%Y-%m-%d %H:%M:%S",
+					update_time),
+			header->resource_usage.cpu_time_msecs);
+	}
 
 	/* Dump list of binary blocks */
 
