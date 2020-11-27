@@ -498,7 +498,7 @@ void sieve_binary_file_close(struct sieve_binary_file **_file)
 	pool_unref(&file->pool);
 }
 
-static bool
+static int
 sieve_binary_file_read(struct sieve_binary_file *file, off_t *offset,
 		       void *buffer, size_t size)
 {
@@ -515,7 +515,7 @@ sieve_binary_file_read(struct sieve_binary_file *file, off_t *offset,
 		e_error(sbin->event, "read: "
 			"failed to seek(fd, %lld, SEEK_SET): %m",
 			(long long) *offset);
-		return FALSE;
+		return -1;
 	}
 
 	/* Read record into memory */
@@ -539,12 +539,12 @@ sieve_binary_file_read(struct sieve_binary_file *file, off_t *offset,
 
 	if (insize != 0) {
 		/* Failed to read the whole requested record */
-		return FALSE;
+		return 0;
 	}
 
 	*offset += size;
 	file->offset = *offset;
-	return TRUE;
+	return 1;
 }
 
 static const void *
@@ -553,7 +553,7 @@ sieve_binary_file_load_data(struct sieve_binary_file *file,
 {
 	void *data = t_malloc_no0(size);
 
-	if (sieve_binary_file_read(file, offset, data, size))
+	if (sieve_binary_file_read(file, offset, data, size) > 0)
 		return data;
 
 	return NULL;
@@ -565,8 +565,9 @@ sieve_binary_file_load_buffer(struct sieve_binary_file *file,
 {
 	buffer_t *buffer = buffer_create_dynamic(file->pool, size);
 
-	if (sieve_binary_file_read(
-		file, offset, buffer_get_space_unsafe(buffer, 0, size), size))
+	if (sieve_binary_file_read(file, offset,
+				   buffer_get_space_unsafe(buffer, 0, size),
+				   size) > 0)
 		return buffer;
 
 	return NULL;
