@@ -476,13 +476,14 @@ sieve_binary_file_open(struct sieve_binary_file *file,
 void sieve_binary_file_close(struct sieve_binary_file **_file)
 {
 	struct sieve_binary_file *file = *_file;
-	struct sieve_binary *sbin = file->sbin;
 
 	*_file = NULL;
+	if (file == NULL)
+		return;
 
 	if (file->fd != -1) {
 		if (close(file->fd) < 0) {
-			e_error(sbin->event, "close: "
+			e_error(file->sbin->event, "close: "
 				"failed to close: close() failed: %m");
 		}
 	}

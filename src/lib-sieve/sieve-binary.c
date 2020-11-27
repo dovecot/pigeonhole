@@ -149,9 +149,7 @@ void sieve_binary_unref(struct sieve_binary **_sbin)
 	if (--sbin->refcount != 0)
 		return;
 
-	if (sbin->file != NULL)
-		sieve_binary_file_close(&sbin->file);
-
+	sieve_binary_file_close(&sbin->file);
 	sieve_binary_extensions_free(sbin);
 
 	if (sbin->script != NULL)
