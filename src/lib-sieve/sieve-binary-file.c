@@ -411,8 +411,8 @@ int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
  */
 
 static int
-sieve_binary_file_open(struct sieve_binary_file *file,
-		       struct sieve_binary *sbin, const char *path,
+sieve_binary_file_open(struct sieve_binary *sbin, const char *path,
+		       struct sieve_binary_file **file_r,
 		       enum sieve_error *error_r)
 {
 	int fd, ret = 0;
@@ -465,10 +465,18 @@ sieve_binary_file_open(struct sieve_binary_file *file,
 		return -1;
 	}
 
-	file->sbin = sbin;
+	pool_t pool;
+	struct sieve_binary_file *file;
+
+	pool = pool_alloconly_create("sieve_binary_file", 4096);
+	file = p_new(pool, struct sieve_binary_file, 1);
+	file->pool = pool;
+	file->path = p_strdup(pool, path);
 	file->fd = fd;
 	file->st = st;
+	file->sbin = sbin;
 
+	*file_r = file;
 	return 0;
 }
 
@@ -490,11 +498,9 @@ void sieve_binary_file_close(struct sieve_binary_file **_file)
 	pool_unref(&file->pool);
 }
 
-/* File open in lazy mode (only read what is needed into memory) */
-
 static bool
-_file_lazy_read(struct sieve_binary_file *file, off_t *offset,
-		void *buffer, size_t size)
+sieve_binary_file_read(struct sieve_binary_file *file, off_t *offset,
+		       void *buffer, size_t size)
 {
 	struct sieve_binary *sbin = file->sbin;
 	int ret;
@@ -542,50 +548,28 @@ _file_lazy_read(struct sieve_binary_file *file, off_t *offset,
 }
 
 static const void *
-_file_lazy_load_data(struct sieve_binary_file *file,
-		     off_t *offset, size_t size)
+sieve_binary_file_load_data(struct sieve_binary_file *file,
+			    off_t *offset, size_t size)
 {
 	void *data = t_malloc_no0(size);
 
-	if (_file_lazy_read(file, offset, data, size))
+	if (sieve_binary_file_read(file, offset, data, size))
 		return data;
 
 	return NULL;
 }
 
 static buffer_t *
-_file_lazy_load_buffer(struct sieve_binary_file *file,
-		       off_t *offset, size_t size)
+sieve_binary_file_load_buffer(struct sieve_binary_file *file,
+			      off_t *offset, size_t size)
 {
 	buffer_t *buffer = buffer_create_dynamic(file->pool, size);
 
-	if (_file_lazy_read(file, offset,
-			    buffer_get_space_unsafe(buffer, 0, size), size))
+	if (sieve_binary_file_read(
+		file, offset, buffer_get_space_unsafe(buffer, 0, size), size))
 		return buffer;
 
 	return NULL;
-}
-
-static struct sieve_binary_file *
-_file_lazy_open(struct sieve_binary *sbin, const char *path,
-		enum sieve_error *error_r)
-{
-	pool_t pool;
-	struct sieve_binary_file *file;
-
-	pool = pool_alloconly_create("sieve_binary_file_lazy", 4096);
-	file = p_new(pool, struct sieve_binary_file, 1);
-	file->pool = pool;
-	file->path = p_strdup(pool, path);
-	file->load_data = _file_lazy_load_data;
-	file->load_buffer = _file_lazy_load_buffer;
-
-	if (sieve_binary_file_open(file, sbin, path, error_r) < 0) {
-		pool_unref(&pool);
-		return NULL;
-	}
-
-	return file;
 }
 
 /*
@@ -593,7 +577,8 @@ _file_lazy_open(struct sieve_binary *sbin, const char *path,
  */
 
 #define LOAD_HEADER(sbin, offset, header) \
-	(header *)sbin->file->load_data(sbin->file, offset, sizeof(header))
+	(header *)sieve_binary_file_load_data(sbin->file, offset, \
+					      sizeof(header))
 
 bool sieve_binary_load_block(struct sieve_binary_block *sblock)
 {
@@ -617,8 +602,8 @@ bool sieve_binary_load_block(struct sieve_binary_block *sblock)
 		return FALSE;
 	}
 
-	sblock->data = sbin->file->load_buffer(sbin->file, &offset,
-					       header->size);
+	sblock->data = sieve_binary_file_load_buffer(sbin->file, &offset,
+						     header->size);
 	if (sblock->data == NULL) {
 		e_error(sbin->event, "load: "
 			"failed to read block %d of binary (size=%d)",
@@ -813,8 +798,7 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 	sbin = sieve_binary_create(svinst, script);
 	sbin->path = p_strdup(sbin->pool, path);
 
-	file = _file_lazy_open(sbin, path, error_r);
-	if (file == NULL) {
+	if (sieve_binary_file_open(sbin, path, &file, error_r) < 0) {
 		sieve_binary_unref(&sbin);
 		return NULL;
 	}

@@ -19,11 +19,6 @@ struct sieve_binary_file {
 	struct stat st;
 	int fd;
 	off_t offset;
-
-	const void *(*load_data)(struct sieve_binary_file *file,
-				 off_t *offset, size_t size);
-	buffer_t *(*load_buffer)(struct sieve_binary_file *file,
-				 off_t *offset, size_t size);
 };
 
 void sieve_binary_file_close(struct sieve_binary_file **_file);
