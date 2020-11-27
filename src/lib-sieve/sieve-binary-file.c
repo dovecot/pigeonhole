@@ -410,13 +410,12 @@ int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
  * Binary file management
  */
 
-static bool
+static int
 sieve_binary_file_open(struct sieve_binary_file *file,
 		       struct sieve_binary *sbin, const char *path,
 		       enum sieve_error *error_r)
 {
-	int fd;
-	bool result = TRUE;
+	int fd, ret = 0;
 	struct stat st;
 
 	if (error_r != NULL)
@@ -443,34 +442,34 @@ sieve_binary_file_open(struct sieve_binary_file *file,
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			break;
 		}
-		return FALSE;
+		return -1;
 	}
 
 	if (fstat(fd, &st) < 0) {
 		if (errno != ENOENT)
 			e_error(sbin->event, "open: fstat() failed: %m");
-		result = FALSE;
+		ret = -1;
 	}
 
-	if (result && !S_ISREG(st.st_mode)) {
+	if (ret == 0 && !S_ISREG(st.st_mode)) {
 		e_error(sbin->event, "open: "
 			"binary is not a regular file");
-		result = FALSE;
+		ret = -1;
 	}
 
-	if (!result)	{
+	if (ret < 0) {
 		if (close(fd) < 0) {
 			e_error(sbin->event, "open: "
 				"close() failed after error: %m");
 		}
-		return FALSE;
+		return -1;
 	}
 
 	file->sbin = sbin;
 	file->fd = fd;
 	file->st = st;
 
-	return TRUE;
+	return 0;
 }
 
 void sieve_binary_file_close(struct sieve_binary_file **_file)
@@ -581,7 +580,7 @@ _file_lazy_open(struct sieve_binary *sbin, const char *path,
 	file->load_data = _file_lazy_load_data;
 	file->load_buffer = _file_lazy_load_buffer;
 
-	if (!sieve_binary_file_open(file, sbin, path, error_r)) {
+	if (sieve_binary_file_open(file, sbin, path, error_r) < 0) {
 		pool_unref(&pool);
 		return NULL;
 	}
