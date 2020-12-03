@@ -212,4 +212,31 @@ void sieve_trace_log_free(struct sieve_trace_log **_trace_log);
 int sieve_trace_config_get(struct sieve_instance *svinst,
 			   struct sieve_trace_config *tr_config);
 
+/*
+ * Resource usage
+ */
+
+/* Initialize the resource usage struct, clearing all usage statistics. */
+void sieve_resource_usage_init(struct sieve_resource_usage *rusage_r);
+
+/* Calculate the sum of the provided resource usage statistics, writing the
+   result to the first. */
+void sieve_resource_usage_add(struct sieve_resource_usage *dst,
+			      const struct sieve_resource_usage *src);
+
+/* Returns TRUE if the resource usage is sufficiently high to warrant recording
+   for checking cumulative resource limits (across several different script
+   executions). */
+bool sieve_resource_usage_is_high(struct sieve_instance *svinst,
+				  const struct sieve_resource_usage *rusage);
+/* Returns TRUE when the provided resource usage statistics exceed a configured
+   policy limit. */
+bool sieve_resource_usage_is_excessive(
+	struct sieve_instance *svinst,
+	const struct sieve_resource_usage *rusage);
+/* Returns a string containing a description of the resource usage (to be used
+   log messages). */
+const char *
+sieve_resource_usage_get_summary(const struct sieve_resource_usage *rusage);
+
 #endif

@@ -3,8 +3,7 @@
 
 #include "lib.h"
 
-#include "sieve-config.h"
-#include "sieve-types.h"
+#include "sieve.h"
 
 #include <sys/types.h>
 

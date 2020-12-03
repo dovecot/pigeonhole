@@ -33,6 +33,7 @@
 
 #include "sieve.h"
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-error-private.h"
 
 #include <sys/types.h>
@@ -1180,4 +1181,45 @@ const char *sieve_get_postmaster_address(const struct sieve_script_env *senv)
 
 	message_address_write(addr, postmaster);
 	return str_c(addr);
+}
+
+/*
+ * Resource usage
+ */
+
+void sieve_resource_usage_init(struct sieve_resource_usage *rusage_r)
+{
+	i_zero(rusage_r);
+}
+
+void sieve_resource_usage_add(struct sieve_resource_usage *dst,
+			      const struct sieve_resource_usage *src)
+{
+	if ((UINT_MAX - dst->cpu_time_msecs) < src->cpu_time_msecs)
+		dst->cpu_time_msecs = UINT_MAX;
+	else
+		dst->cpu_time_msecs += src->cpu_time_msecs;
+}
+
+bool sieve_resource_usage_is_high(struct sieve_instance *svinst ATTR_UNUSED,
+				  const struct sieve_resource_usage *rusage)
+{
+	return (rusage->cpu_time_msecs > SIEVE_HIGH_CPU_TIME_MSECS);
+}
+
+bool sieve_resource_usage_is_excessive(
+	struct sieve_instance *svinst,
+	const struct sieve_resource_usage *rusage)
+{
+	i_assert(svinst->max_cpu_time_secs <= (UINT_MAX / 1000));
+	return (rusage->cpu_time_msecs > (svinst->max_cpu_time_secs * 1000));
+}
+
+const char *
+sieve_resource_usage_get_summary(const struct sieve_resource_usage *rusage)
+{
+	if (rusage->cpu_time_msecs == 0)
+		return "no usage recorded";
+
+	return t_strdup_printf("cpu time = %u ms", rusage->cpu_time_msecs);
 }

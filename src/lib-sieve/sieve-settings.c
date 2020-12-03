@@ -219,8 +219,8 @@ void sieve_settings_load(struct sieve_instance *svinst)
 	svinst->max_cpu_time_secs = SIEVE_DEFAULT_MAX_CPU_TIME_SECS;
 	if (sieve_setting_get_duration_value(svinst, "sieve_max_cpu_time",
 					     &period)) {
-		if (period > UINT_MAX)
-			svinst->max_cpu_time_secs = UINT_MAX;
+		if (period > (UINT_MAX / 1000))
+			svinst->max_cpu_time_secs = (UINT_MAX / 1000);
 		else
 			svinst->max_cpu_time_secs = (unsigned int)period;
 	}

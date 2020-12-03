@@ -31,6 +31,7 @@
  */
 
 #define SIEVE_MAX_MATCH_VALUES                          32
+#define SIEVE_HIGH_CPU_TIME_MSECS                       1500
 #define SIEVE_DEFAULT_MAX_CPU_TIME_SECS                 30
 
 /*

@@ -257,6 +257,16 @@ struct sieve_script_env {
 	(senv->default_mailbox == NULL ? "INBOX" : senv->default_mailbox )
 
 /*
+ * Resource usage
+ */
+
+struct sieve_resource_usage {
+	/* The total amount of system + user CPU time consumed while executing
+	   the Sieve script. */
+	unsigned int cpu_time_msecs;
+};
+
+/*
  * Script execution status
  */
 
