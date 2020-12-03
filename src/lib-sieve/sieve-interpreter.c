@@ -83,6 +83,7 @@ struct sieve_interpreter {
 	/* Runtime environment */
 	struct sieve_runtime_env runenv;
 	struct sieve_runtime_trace trace;
+	struct sieve_resource_usage rusage;
 
 	/* Current operation */
 	struct sieve_operation oprtn;
@@ -926,9 +927,12 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 			       bool *interrupted)
 {
 	const struct sieve_runtime_env *renv = &interp->runenv;
+	const struct sieve_execute_env *eenv = renv->exec_env;
 	struct cpu_limit *climit = NULL;
 	sieve_size_t *address = &(interp->runenv.pc);
-	struct sieve_instance *svinst = interp->runenv.exec_env->svinst;
+	struct sieve_instance *svinst = eenv->svinst;
+	struct sieve_exec_status *exec_status = eenv->exec_status;
+	struct sieve_resource_usage rusage;
 	int ret = SIEVE_EXEC_OK;
 
 	sieve_result_ref(renv->result);
@@ -962,6 +966,10 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 		ret = sieve_interpreter_operation_execute(interp);
 	}
 
+	sieve_resource_usage_init(&rusage);
+	rusage.cpu_time_msecs = cpu_limit_get_usage_msecs(climit);
+	sieve_resource_usage_add(&interp->rusage, &rusage);
+
 	cpu_limit_deinit(&climit);
 
 	if (ret != SIEVE_EXEC_OK) {
@@ -973,6 +981,8 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 		*interrupted = interp->interrupted;
 
 	if (!interp->interrupted) {
+		exec_status->resource_usage = interp->rusage;
+
 		struct event_passthrough *e =
 			event_create_passthrough(interp->runenv.event)->
 			set_name("sieve_runtime_script_finished");
@@ -992,9 +1002,10 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 			/* Not supposed to occur at runtime */
 			i_unreached();
 		}
-		e_debug(e->event(), "Finished running script `%s'",
-			sieve_binary_source(interp->runenv.sbin));
-
+		e_debug(e->event(), "Finished running script `%s' "
+			"(resource usage: %s)",
+			sieve_binary_source(interp->runenv.sbin),
+			sieve_resource_usage_get_summary(&interp->rusage));
 		interp->running = FALSE;
 	}
 
@@ -1018,6 +1029,8 @@ int sieve_interpreter_start(struct sieve_interpreter *interp,
 	interp->running = TRUE;
 	interp->runenv.result = result;
 	interp->runenv.msgctx = sieve_result_get_message_context(result);
+
+	sieve_resource_usage_init(&interp->rusage);
 
 	/* Signal registered extensions that the interpreter is being run */
 	eregs = array_get_modifiable(&interp->extensions, &ext_count);

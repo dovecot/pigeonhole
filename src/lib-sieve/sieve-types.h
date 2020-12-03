@@ -275,6 +275,8 @@ struct sieve_resource_usage {
 struct sieve_exec_status {
 	struct mail_storage *last_storage;
 
+	struct sieve_resource_usage resource_usage;
+
 	bool message_saved:1;
 	bool message_forwarded:1;
 	bool tried_default_save:1;
