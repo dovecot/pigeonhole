@@ -680,7 +680,8 @@ imap_filter_sieve_result_amend_log_message(const struct sieve_script_env *senv,
 static int
 imap_sieve_filter_handle_exec_status(struct imap_filter_sieve_context *sctx,
 				     struct sieve_script *script, int status,
-				     struct sieve_exec_status *estatus)
+				     struct sieve_exec_status *estatus,
+				     bool *fatal_r)
 {
 	struct imap_filter_sieve_user *ifsuser =
 		IMAP_FILTER_SIEVE_USER_CONTEXT_REQUIRE(sctx->user);
@@ -688,6 +689,8 @@ imap_sieve_filter_handle_exec_status(struct imap_filter_sieve_context *sctx,
 	enum log_type log_level, user_log_level;
 	enum mail_error mail_error = MAIL_ERROR_NONE;
 	int ret = -1;
+
+	*fatal_r = FALSE;
 
 	log_level = user_log_level = LOG_TYPE_ERROR;
 
@@ -742,7 +745,8 @@ static int
 imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 			      struct sieve_error_handler *user_ehandler,
 			      const struct sieve_message_data *msgdata,
-			      const struct sieve_script_env *scriptenv)
+			      const struct sieve_script_env *scriptenv,
+			      bool *fatal_r)
 {
 	struct mail_user *user = sctx->user;
 	struct imap_filter_sieve_user *ifsuser =
@@ -759,6 +763,8 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 	enum sieve_error compile_error = SIEVE_ERROR_NONE;
 	unsigned int i;
 	int ret;
+
+	*fatal_r = FALSE;
 
 	/* Start execution */
 	mscript = sieve_multiscript_start_execute(svinst, msgdata, scriptenv);
@@ -852,8 +858,9 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 	}
 
 	i_assert(last_script != NULL); /* at least one script is executed */
-	return imap_sieve_filter_handle_exec_status(sctx,
-		last_script, ret, scriptenv->exec_status);
+	return imap_sieve_filter_handle_exec_status(sctx, last_script, ret,
+						    scriptenv->exec_status,
+						    fatal_r);
 }
 
 static int
@@ -964,7 +971,8 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 
 int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 			       struct mail *mail, string_t **errors_r,
-			       bool *have_warnings_r, bool *have_changes_r)
+			       bool *have_warnings_r, bool *have_changes_r,
+			       bool *fatal_r)
 {
 	struct sieve_error_handler *user_ehandler;
 	struct sieve_message_data msgdata;
@@ -1014,7 +1022,8 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 		/* Execute script(s) */
 
 		ret = imap_sieve_filter_run_scripts(sctx, user_ehandler,
-						    &msgdata, scriptenv);
+						    &msgdata, scriptenv,
+						    fatal_r);
 	} T_END;
 
 	if (ret < 0 && str_len(sctx->errors) == 0) {

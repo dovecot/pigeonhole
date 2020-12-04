@@ -82,7 +82,8 @@ int imap_filter_sieve_open_global(struct imap_filter_sieve_context *sctx,
 int imap_sieve_filter_run_init(struct imap_filter_sieve_context *sctx);
 int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 			       struct mail *mail, string_t **errors_r,
-			       bool *have_warnings_r, bool *have_changes_r);
+			       bool *have_warnings_r, bool *have_changes_r,
+			       bool *fatal_r);
 
 /*
  *

@@ -37,15 +37,12 @@ imap_filter_mail(struct client_command_context *cmd, struct mail *mail)
 	struct imap_filter_context *ctx = cmd->context;
 	struct client *client = cmd->client;
 	string_t *errors = NULL;
-	bool have_warnings = FALSE;
-	bool have_changes = FALSE;
+	bool have_warnings = FALSE, have_changes = FALSE, fatal = FALSE;
 	string_t *reply = t_str_new(128);
 	int ret;
 
-	// FIXME: return fatal error status when no mail filter activity will
-	// work (e.g. when binary is corrupt)
-	ret = imap_sieve_filter_run_mail(ctx->sieve, mail,
-					 &errors, &have_warnings, &have_changes);
+	ret = imap_sieve_filter_run_mail(ctx->sieve, mail, &errors,
+					 &have_warnings, &have_changes, &fatal);
 
 	str_printfa(reply, "* %u FILTERED (TAG %s) UID %u ",
 		    mail->seq, cmd->tag, mail->uid);
@@ -73,7 +70,7 @@ imap_filter_mail(struct client_command_context *cmd, struct mail *mail)
 		}
 	}
 
-	return TRUE;
+	return !fatal;
 }
 
 static bool imap_filter_more(struct client_command_context *cmd)
