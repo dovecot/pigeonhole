@@ -717,6 +717,7 @@ imap_sieve_filter_handle_exec_status(struct imap_filter_sieve_context *sctx,
 		      "Execution of script %s was aborted "
 		      "due to temporary failure",
 		      sieve_script_location(script));
+		*fatal_r = TRUE;
 		ret = -1;
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:
@@ -724,6 +725,7 @@ imap_sieve_filter_handle_exec_status(struct imap_filter_sieve_context *sctx,
 			"!!BUG!!: Binary compiled from %s is still corrupt; "
 			"bailing out and reverting to default action",
 			sieve_script_location(script));
+		*fatal_r = TRUE;
 		ret = -1;
 		break;
 	case SIEVE_EXEC_KEEP_FAILED:
