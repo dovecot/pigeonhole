@@ -473,7 +473,7 @@ lda_sieve_handle_exec_status(struct lda_sieve_run_context *srctx,
 	return ret;
 }
 
-static bool
+static int
 lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 			 struct sieve_multiscript *mscript,
 			 struct sieve_script *script,
@@ -485,7 +485,8 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 	struct sieve_binary *sbin = NULL;
 	enum sieve_compile_flags cpflags = 0;
 	enum sieve_execute_flags exflags = SIEVE_EXECUTE_FLAG_LOG_RESULT;
-	bool user_script, more;
+	bool user_script;
+	int ret;
 
 	*error_r = SIEVE_ERROR_NONE;
 
@@ -514,7 +515,7 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 
 	sbin = lda_sieve_open(srctx, script, cpflags, FALSE, error_r);
 	if (sbin == NULL)
-		return FALSE;
+		return 0;
 
 	/* Execute */
 
@@ -523,15 +524,15 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 		sieve_get_source(sbin));
 
 	if (!discard_script) {
-		more = sieve_multiscript_run(mscript, sbin, exec_ehandler,
-					     exec_ehandler, exflags);
+		ret = (sieve_multiscript_run(mscript, sbin, exec_ehandler,
+					     exec_ehandler, exflags) ? 1 : 0);
 	} else {
 		sieve_multiscript_run_discard(mscript, sbin, exec_ehandler,
 					      exec_ehandler, exflags);
-		more = FALSE;
+		ret = 0;
 	}
 
-	if (!more) {
+	if (ret == 0) {
 		if (sieve_multiscript_status(mscript) ==
 			SIEVE_EXEC_BIN_CORRUPT &&
 		    sieve_is_loaded(sbin)) {
@@ -544,14 +545,14 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 			sbin = lda_sieve_open(srctx, script, cpflags, TRUE,
 					      error_r);
 			if (sbin == NULL)
-				return FALSE;
+				return 0;
 
 			/* Execute again */
 
 			if (!discard_script) {
-				more = sieve_multiscript_run(
-					mscript, sbin, exec_ehandler,
-					exec_ehandler, exflags);
+				ret = (sieve_multiscript_run(
+				       mscript, sbin, exec_ehandler,
+				       exec_ehandler, exflags) ? 1 : 0);
 			} else {
 				sieve_multiscript_run_discard(
 					mscript, sbin, exec_ehandler,
@@ -568,7 +569,7 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 
 	sieve_close(&sbin);
 
-	return more;
+	return ret;
 }
 
 static int lda_sieve_execute_scripts(struct lda_sieve_run_context *srctx)
@@ -596,8 +597,6 @@ static int lda_sieve_execute_scripts(struct lda_sieve_run_context *srctx)
 	discard_script = FALSE;
 	error = SIEVE_ERROR_NONE;
 	for (;;) {
-		bool more;
-
 		if (!discard_script) {
 			/* normal script sequence */
 			i_assert(i < srctx->script_count);
@@ -611,17 +610,19 @@ static int lda_sieve_execute_scripts(struct lda_sieve_run_context *srctx)
 		i_assert(script != NULL);
 		last_script = script;
 
-		more = lda_sieve_execute_script(srctx, mscript, script, i,
-						discard_script, &error);
+		ret = lda_sieve_execute_script(srctx, mscript, script, i,
+					       discard_script, &error);
+		if (ret < 0)
+			break;
 		if (error == SIEVE_ERROR_NOT_FOUND) {
 			/* skip scripts which finally turn out not to exist */
-			more = TRUE;
+			ret = 1;
 		}
 
 		if (discard_script) {
 			/* Executed discard script, which is always final */
 			break;
-		} else if (more) {
+		} else if (ret > 0) {
 			/* The "keep" action is applied; execute next script */
 			i_assert(i <= srctx->script_count);
 			if (i == srctx->script_count) {
