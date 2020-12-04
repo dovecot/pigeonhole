@@ -290,11 +290,12 @@ struct sieve_exec_status {
  */
 
 enum sieve_execution_exitcode {
-	SIEVE_EXEC_OK           = 1,
-	SIEVE_EXEC_FAILURE      = 0,
-	SIEVE_EXEC_TEMP_FAILURE = -1,
-	SIEVE_EXEC_BIN_CORRUPT  = -2,
-	SIEVE_EXEC_KEEP_FAILED  = -3
+	SIEVE_EXEC_OK         	        = 1,
+	SIEVE_EXEC_FAILURE              = 0,
+	SIEVE_EXEC_TEMP_FAILURE         = -1,
+	SIEVE_EXEC_BIN_CORRUPT          = -2,
+	SIEVE_EXEC_KEEP_FAILED          = -3,
+	SIEVE_EXEC_RESOURCE_LIMIT       = -4,
 };
 
 #endif

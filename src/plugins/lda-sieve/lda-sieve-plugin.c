@@ -564,6 +564,8 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 		if (mstatus != SIEVE_EXEC_BIN_CORRUPT)
 			lda_sieve_binary_save(srctx, sbin, script);
 	}
+	if (ret == 0 && mstatus == SIEVE_EXEC_RESOURCE_LIMIT)
+		ret = -1;
 
 	sieve_close(&sbin);
 

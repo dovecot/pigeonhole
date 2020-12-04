@@ -452,6 +452,10 @@ int main(int argc, char **argv)
 		case SIEVE_EXEC_OK:
 			i_info("final result: success");
 			break;
+		case SIEVE_EXEC_RESOURCE_LIMIT:
+			i_info("resource limit exceeded");
+			exit_status = EXIT_FAILURE;
+			break;
 		case SIEVE_EXEC_BIN_CORRUPT:
 			i_info("corrupt binary deleted.");
 			i_unlink_if_exists(sieve_binary_path(sbin));

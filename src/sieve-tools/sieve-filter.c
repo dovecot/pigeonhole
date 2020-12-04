@@ -237,6 +237,9 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 	switch (ret) {
 	case SIEVE_EXEC_OK:
 		break;
+	case SIEVE_EXEC_RESOURCE_LIMIT:
+		sieve_error(ehandler, NULL, "sieve resource limit exceeded");
+		return -1;
 	case SIEVE_EXEC_BIN_CORRUPT:
 		sieve_error(ehandler, NULL, "sieve script binary is corrupt");
 		return -1;

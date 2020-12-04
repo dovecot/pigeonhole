@@ -953,7 +953,7 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 			sieve_runtime_error(
 				renv, NULL,
 				"execution exceeded CPU time limit");
-			ret = SIEVE_EXEC_FAILURE;
+			ret = SIEVE_EXEC_RESOURCE_LIMIT;
 			break;
 		}
 		if (interp->loop_limit != 0 && *address > interp->loop_limit) {
@@ -997,6 +997,9 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 			break;
 		case SIEVE_EXEC_BIN_CORRUPT:
 			e->add_str("error", "Binary corrupt");
+			break;
+		case SIEVE_EXEC_RESOURCE_LIMIT:
+			e->add_str("error", "Resource limit exceeded");
 			break;
 		case SIEVE_EXEC_KEEP_FAILED:
 			/* Not supposed to occur at runtime */

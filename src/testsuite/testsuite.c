@@ -222,6 +222,10 @@ int main(int argc, char **argv)
 			testsuite_testcase_fail(
 				"compiled test script binary is corrupt");
 			break;
+		case SIEVE_EXEC_RESOURCE_LIMIT:
+			testsuite_testcase_fail(
+				"resource limit exceeded");
+			break;
 		}
 
 		sieve_close(&sbin);

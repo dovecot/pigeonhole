@@ -728,6 +728,14 @@ imap_sieve_filter_handle_exec_status(struct imap_filter_sieve_context *sctx,
 		*fatal_r = TRUE;
 		ret = -1;
 		break;
+	case SIEVE_EXEC_RESOURCE_LIMIT:
+		e_error(sieve_get_event(svinst),
+			"Execution of script %s was aborted "
+			"due to excessive resource usage",
+			sieve_script_location(script));
+		*fatal_r = TRUE;
+		ret = -1;
+		break;
 	case SIEVE_EXEC_KEEP_FAILED:
 		e_log(sieve_get_event(svinst), log_level,
 		      "Execution of script %s failed "
