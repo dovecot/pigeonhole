@@ -486,7 +486,7 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 	enum sieve_compile_flags cpflags = 0;
 	enum sieve_execute_flags exflags = SIEVE_EXECUTE_FLAG_LOG_RESULT;
 	bool user_script;
-	int ret;
+	int mstatus, ret;
 
 	*error_r = SIEVE_ERROR_NONE;
 
@@ -532,39 +532,37 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 		ret = 0;
 	}
 
-	if (ret == 0) {
-		if (sieve_multiscript_status(mscript) ==
-			SIEVE_EXEC_BIN_CORRUPT &&
-		    sieve_is_loaded(sbin)) {
-			/* Close corrupt script */
+	mstatus = sieve_multiscript_status(mscript);
+	if (ret == 0 && mstatus == SIEVE_EXEC_BIN_CORRUPT &&
+	    sieve_is_loaded(sbin)) {
+		/* Close corrupt script */
 
-			sieve_close(&sbin);
+		sieve_close(&sbin);
 
-			/* Recompile */
+		/* Recompile */
 
-			sbin = lda_sieve_open(srctx, script, cpflags, TRUE,
-					      error_r);
-			if (sbin == NULL)
-				return 0;
+		sbin = lda_sieve_open(srctx, script, cpflags, TRUE,
+				      error_r);
+		if (sbin == NULL)
+			return 0;
 
-			/* Execute again */
+		/* Execute again */
 
-			if (!discard_script) {
-				ret = (sieve_multiscript_run(
-				       mscript, sbin, exec_ehandler,
-				       exec_ehandler, exflags) ? 1 : 0);
-			} else {
-				sieve_multiscript_run_discard(
-					mscript, sbin, exec_ehandler,
-					exec_ehandler, exflags);
-			}
-
-			/* Save new version */
-
-			if (sieve_multiscript_status(mscript) !=
-				SIEVE_EXEC_BIN_CORRUPT)
-				lda_sieve_binary_save(srctx, sbin, script);
+		if (!discard_script) {
+			ret = (sieve_multiscript_run(
+				mscript, sbin, exec_ehandler,
+				exec_ehandler, exflags) ? 1 : 0);
+		} else {
+			sieve_multiscript_run_discard(
+				mscript, sbin, exec_ehandler,
+				exec_ehandler, exflags);
 		}
+
+		/* Save new version */
+
+		mstatus = sieve_multiscript_status(mscript);
+		if (mstatus != SIEVE_EXEC_BIN_CORRUPT)
+			lda_sieve_binary_save(srctx, sbin, script);
 	}
 
 	sieve_close(&sbin);
