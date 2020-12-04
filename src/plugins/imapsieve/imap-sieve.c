@@ -679,6 +679,7 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 	for (i = 0; i < count && more; i++) {
 		struct sieve_script *script = scripts[i].script;
 		struct sieve_binary *sbin = scripts[i].binary;
+		int mstatus;
 
 		cpflags = 0;
 		exflags = SIEVE_EXECUTE_FLAG_NO_ENVELOPE |
@@ -724,37 +725,34 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 		more = sieve_multiscript_run(mscript, sbin, ehandler, ehandler,
 					     exflags);
 
-		if (!more) {
-			if (!scripts[i].binary_corrupt &&
-			    sieve_multiscript_status(mscript)
-				== SIEVE_EXEC_BIN_CORRUPT &&
-			    sieve_is_loaded(sbin)) {
-				/* Close corrupt script */
-				sieve_close(&sbin);
+		mstatus = sieve_multiscript_status(mscript);
+		if (!more && mstatus == SIEVE_EXEC_BIN_CORRUPT &&
+		    !scripts[i].binary_corrupt && sieve_is_loaded(sbin)) {
+			/* Close corrupt script */
+			sieve_close(&sbin);
 
-				/* Recompile */
-				scripts[i].binary = sbin =
-					imap_sieve_run_open_script(
-						isrun, script, cpflags, FALSE,
-						&compile_error);
-				if (sbin == NULL) {
-					scripts[i].compile_error = compile_error;
-					break;
-				}
-
-				/* Execute again */
-				more = sieve_multiscript_run(mscript, sbin,
-							     ehandler, ehandler,
-							     exflags);
-
-				/* Save new version */
-
-				if (sieve_multiscript_status(mscript)
-					== SIEVE_EXEC_BIN_CORRUPT)
-					scripts[i].binary_corrupt = TRUE;
-				else if (more)
-					(void)sieve_save(sbin, FALSE, NULL);
+			/* Recompile */
+			scripts[i].binary = sbin =
+				imap_sieve_run_open_script(
+					isrun, script, cpflags, FALSE,
+					&compile_error);
+			if (sbin == NULL) {
+				scripts[i].compile_error = compile_error;
+				break;
 			}
+
+			/* Execute again */
+			more = sieve_multiscript_run(mscript, sbin,
+						     ehandler, ehandler,
+						     exflags);
+
+			/* Save new version */
+
+			mstatus = sieve_multiscript_status(mscript);
+			if (mstatus == SIEVE_EXEC_BIN_CORRUPT)
+				scripts[i].binary_corrupt = TRUE;
+			else if (more)
+				(void)sieve_save(sbin, FALSE, NULL);
 		}
 	}
 
