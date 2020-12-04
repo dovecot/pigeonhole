@@ -582,7 +582,8 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 static int
 imap_sieve_handle_exec_status(struct imap_sieve_run *isrun,
 			      struct sieve_script *script, int status,
-			      struct sieve_exec_status *estatus) ATTR_NULL(2)
+			      struct sieve_exec_status *estatus, bool *fatal_r)
+			      ATTR_NULL(2)
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
@@ -590,6 +591,8 @@ imap_sieve_handle_exec_status(struct imap_sieve_run *isrun,
 	enum log_type log_level, user_log_level;
 	enum mail_error mail_error = MAIL_ERROR_NONE;
 	int ret = -1;
+
+	*fatal_r = FALSE;
 
 	log_level = user_log_level = LOG_TYPE_ERROR;
 
@@ -649,7 +652,7 @@ imap_sieve_handle_exec_status(struct imap_sieve_run *isrun,
 static int
 imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 		       const struct sieve_message_data *msgdata,
-		       const struct sieve_script_env *scriptenv)
+		       const struct sieve_script_env *scriptenv, bool *fatal_r)
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
@@ -664,6 +667,8 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 	enum sieve_error compile_error = SIEVE_ERROR_NONE;
 	unsigned int i;
 	int ret;
+
+	*fatal_r = FALSE;
 
 	/* Start execution */
 	mscript = sieve_multiscript_start_execute(svinst, msgdata, scriptenv);
@@ -772,11 +777,11 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 	}
 
 	return imap_sieve_handle_exec_status(isrun, last_script, ret,
-					     scriptenv->exec_status);
+					     scriptenv->exec_status, fatal_r);
 }
 
 int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
-			const char *changed_flags)
+			const char *changed_flags, bool *fatal_r)
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
@@ -789,6 +794,8 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 	struct sieve_trace_log *trace_log;
 	const char *error;
 	int ret;
+
+	*fatal_r = FALSE;
 
 	i_zero(&context);
 	context.event.dest_mailbox = isrun->dest_mailbox;
@@ -851,7 +858,7 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 			/* Execute script(s) */
 
 			ret = imap_sieve_run_scripts(isrun, &msgdata,
-						     &scriptenv);
+						     &scriptenv, fatal_r);
 		}
 	} T_END;
 

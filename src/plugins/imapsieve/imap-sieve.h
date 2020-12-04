@@ -52,7 +52,7 @@ int imap_sieve_run_init(struct imap_sieve *isieve, struct mailbox *dest_mailbox,
 			ATTR_NULL(4, 5, 6);
 
 int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
-			const char *changed_flags);
+			const char *changed_flags, bool *fatal_r);
 
 void imap_sieve_run_deinit(struct imap_sieve_run **_isrun);
 

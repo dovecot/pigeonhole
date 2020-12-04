@@ -570,10 +570,12 @@ imap_sieve_mailbox_run_copy_source(
 	struct imap_sieve_mailbox_transaction *ismt,
 	struct imap_sieve_run *isrun,
 	const struct imap_sieve_mailbox_event *mevent,
-	struct mail **src_mail)
+	struct mail **src_mail, bool *fatal_r)
 {
 	struct mailbox *src_box = ismt->src_box;
 	int ret;
+
+	*fatal_r = FALSE;
 
 	if (isrun == NULL)
 		return;
@@ -595,8 +597,7 @@ imap_sieve_mailbox_run_copy_source(
 		"Running copy_source_after scripts.");
 
 	/* Run scripts for source mail */
-	ret = imap_sieve_run_mail
-		(isrun, *src_mail, NULL);
+	ret = imap_sieve_run_mail(isrun, *src_mail, NULL, fatal_r);
 	if (ret > 0) {
 		/* Discard */
 		mail_update_flags(*src_mail, MODIFY_ADD, MAIL_DELETED);
@@ -739,6 +740,7 @@ imap_sieve_mailbox_transaction_run(
 	seq_range_array_iter_init(&siter, &changes->saved_uids);
 	array_foreach(&ismt->events, mevent) {
 		uint32_t uid;
+		bool fatal;
 
 		/* Determine UID for saved message */
 		if (mevent->dest_mail_uid > 0 ||
@@ -755,8 +757,10 @@ imap_sieve_mailbox_transaction_run(
 		}
 
 		/* Run scripts for this mail */
-		ret = imap_sieve_run_mail
-			(isrun, mail, mevent->changed_flags);
+		ret = imap_sieve_run_mail(isrun, mail, mevent->changed_flags,
+					  &fatal);
+		if (fatal)
+			break;
 
 		/* Handle the result */
 		if (ret < 0) {
@@ -773,8 +777,10 @@ imap_sieve_mailbox_transaction_run(
 				mail_expunge(mail);
 			}
 
-			imap_sieve_mailbox_run_copy_source
-				(ismt, isrun_src, mevent, &src_mail);
+			imap_sieve_mailbox_run_copy_source(
+				ismt, isrun_src, mevent, &src_mail, &fatal);
+			if (fatal)
+				break;
 		}
 	}
 
