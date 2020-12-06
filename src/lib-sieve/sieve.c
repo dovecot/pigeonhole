@@ -536,6 +536,12 @@ int sieve_save(struct sieve_binary *sbin, bool update,
 	return sieve_script_binary_save(script, sbin, update, error_r);
 }
 
+bool sieve_record_resource_usage(struct sieve_binary *sbin,
+				 const struct sieve_resource_usage *rusage)
+{
+	return sieve_binary_record_resource_usage(sbin, rusage);
+}
+
 void sieve_close(struct sieve_binary **_sbin)
 {
 	sieve_binary_close(_sbin);

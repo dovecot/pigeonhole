@@ -80,6 +80,14 @@ sieve_open(struct sieve_instance *svinst, const char *script_location,
 	   const char *script_name, struct sieve_error_handler *ehandler,
 	   enum sieve_compile_flags flags, enum sieve_error *error_r);
 
+/* Record resource usage in the binary cumulatively. The binary is disabled when
+   resource limits are exceeded within a configured timeout. Returns FALSE when
+   resource limits are exceeded. */
+bool ATTR_NOWARN_UNUSED_RESULT
+sieve_record_resource_usage(struct sieve_binary *sbin,
+			    const struct sieve_resource_usage *rusage)
+			    ATTR_NULL(1);
+
 /* Saves the binary as the file indicated by the path parameter. This function
    will not write the binary to disk when the provided binary object was loaded
    earlier from the indicated bin_path, unless update is TRUE.
