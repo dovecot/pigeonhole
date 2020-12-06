@@ -382,6 +382,12 @@ sieve_open_script_real(struct sieve_script *script,
 	struct sieve_instance *svinst = sieve_script_svinst(script);
 	struct sieve_resource_usage rusage;
 	struct sieve_binary *sbin;
+	enum sieve_error error;
+	const char *errorstr = NULL;
+	int ret;
+
+	if (error_r == NULL)
+		error_r = &error;
 
 	sieve_resource_usage_init(&rusage);
 
@@ -391,7 +397,8 @@ sieve_open_script_real(struct sieve_script *script,
 		sieve_binary_get_resource_usage(sbin, &rusage);
 
 		/* Ok, it exists; now let's see if it is up to date */
-		if (!sieve_binary_up_to_date(sbin, flags)) {
+		if (!sieve_resource_usage_is_excessive(svinst, &rusage) &&
+		    !sieve_binary_up_to_date(sbin, flags)) {
 			/* Not up to date */
 			e_debug(svinst->event,
 				"Script binary %s is not up-to-date",
@@ -418,6 +425,31 @@ sieve_open_script_real(struct sieve_script *script,
 			sieve_script_location(script));
 
 		sieve_binary_set_resource_usage(sbin, &rusage);
+	}
+
+	/* Check whether binary can be executed. */
+	ret = sieve_binary_check_executable(sbin, error_r, &errorstr);
+	if (ret <= 0) {
+		const char *path = sieve_binary_path(sbin);
+
+		if (path != NULL) {
+			e_debug(svinst->event,
+				"Script binary %s cannot be executed",
+				path);
+		} else {
+			e_debug(svinst->event,
+				"Script binary from %s cannot be executed",
+				sieve_binary_source(sbin));
+		}
+		if (ret < 0) {
+			sieve_internal_error(ehandler,
+					     sieve_script_name(script),
+					     "failed to open script");
+		} else {
+			sieve_error(ehandler, sieve_script_name(script),
+				    "%s", errorstr);
+		}
+		sieve_binary_close(&sbin);
 	}
 
 	return sbin;
