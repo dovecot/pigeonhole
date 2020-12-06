@@ -951,6 +951,28 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 	return sbin;
 }
 
+int sieve_binary_check_executable(struct sieve_binary *sbin,
+				  enum sieve_error *error_r,
+				  const char **client_error_r)
+{
+	if (error_r != NULL)
+		*error_r = SIEVE_ERROR_NONE;
+	*client_error_r = NULL;
+
+	if (HAS_ALL_BITS(sbin->header.flags,
+			 SIEVE_BINARY_FLAG_RESOURCE_LIMIT)) {
+		e_debug(sbin->event,
+			"Binary execution is blocked: "
+			"Cumulative resource usage limit exceeded "
+			"(resource limit flag is set)");
+		if (error_r != NULL)
+			*error_r = SIEVE_ERROR_RESOURCE_LIMIT;
+		*client_error_r = "cumulative resource usage limit exceeded";
+		return 0;
+	}
+	return 1;
+}
+
 /*
  * Resource usage
  */

@@ -85,6 +85,10 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 bool sieve_binary_up_to_date(struct sieve_binary *sbin,
 			     enum sieve_compile_flags cpflags);
 
+int sieve_binary_check_executable(struct sieve_binary *sbin,
+				  enum sieve_error *error_r,
+				  const char **client_error_r);
+
 /*
  * Block management
  */
