@@ -385,6 +385,13 @@ sieve_binary *lda_sieve_open(struct lda_sieve_run_context *srctx,
 				"Failed to %s script `%s'",
 				compile_name, sieve_script_location(script));
 			break;
+		/* Cumulative resource limit exceeded */
+		case SIEVE_ERROR_RESOURCE_LIMIT:
+			e_error(sieve_get_event(svinst),
+				"Failed to open script `%s' for %s "
+				"(cumulative resource limit exceeded)",
+				sieve_script_location(script), compile_name);
+			break;
 		/* Something else */
 		default:
 			e_error(sieve_get_event(svinst),
@@ -459,6 +466,13 @@ lda_sieve_handle_exec_status(struct lda_sieve_run_context *srctx,
 			sieve_script_location(script));
 		ret = -1;
 		break;
+	case SIEVE_EXEC_RESOURCE_LIMIT:
+		e_error(sieve_get_event(svinst),
+			"Execution of script %s was aborted "
+			"due to excessive resource usage",
+			sieve_script_location(script));
+		ret = -1;
+		break;
 	case SIEVE_EXEC_KEEP_FAILED:
 		e_log(sieve_get_event(svinst), log_level,
 		      "Execution of script %s failed with unsuccessful implicit keep%s",
@@ -485,6 +499,8 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 	struct sieve_binary *sbin = NULL;
 	enum sieve_compile_flags cpflags = 0;
 	enum sieve_execute_flags exflags = SIEVE_EXECUTE_FLAG_LOG_RESULT;
+	struct sieve_resource_usage *rusage =
+		&srctx->scriptenv->exec_status->resource_usage;
 	bool user_script;
 	int mstatus, ret;
 
@@ -492,6 +508,7 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 
 	user_script = (script == srctx->user_script);
 
+	sieve_resource_usage_init(rusage);
 	if (user_script) {
 		cpflags |= SIEVE_COMPILE_FLAG_NOGLOBAL;
 		exflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
@@ -566,6 +583,9 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 	}
 	if (ret == 0 && mstatus == SIEVE_EXEC_RESOURCE_LIMIT)
 		ret = -1;
+
+	if (user_script)
+		(void)sieve_record_resource_usage(sbin, rusage);
 
 	sieve_close(&sbin);
 
