@@ -34,6 +34,8 @@ struct imap_filter_sieve_script {
 
 	/* Binary corrupt after recompile; don't recompile again */
 	bool binary_corrupt:1;
+	/* Resource usage exceeded */
+	bool rusage_exceeded:1;
 };
 
 struct imap_filter_sieve_user {
@@ -388,6 +390,13 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 			e_error(sieve_get_event(svinst),
 				"Failed to %s script `%s'",
 				compile_name, sieve_script_location(script));
+			break;
+		/* Cumulative resource limit exceeded */
+		case SIEVE_ERROR_RESOURCE_LIMIT:
+			e_error(sieve_get_event(svinst),
+				"Failed to open script `%s' for %s "
+				"(cumulative resource limit exceeded)",
+				sieve_script_location(script), compile_name);
 			break;
 		/* Something else */
 		default:
@@ -764,10 +773,12 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 	struct sieve_instance *svinst = ifsuser->svinst;
 	struct imap_filter_sieve_script *scripts = sctx->scripts;
 	unsigned int count = sctx->scripts_count;
+	struct sieve_resource_usage *rusage =
+		&scriptenv->exec_status->resource_usage;
 	struct sieve_multiscript *mscript;
 	struct sieve_error_handler *ehandler;
 	struct sieve_script *last_script = NULL;
-	bool user_script = FALSE, more = TRUE;
+	bool user_script = FALSE, more = TRUE, rusage_exceeded = FALSE;
 	enum sieve_compile_flags cpflags;
 	enum sieve_execute_flags exflags;
 	enum sieve_error compile_error = SIEVE_ERROR_NONE;
@@ -798,6 +809,12 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 		user_script = (script == sctx->user_script);
 		last_script = script;
 
+		if (scripts[i].rusage_exceeded) {
+			rusage_exceeded = TRUE;
+			break;
+		}
+
+		sieve_resource_usage_init(rusage);
 		if (user_script) {
 			cpflags |= SIEVE_COMPILE_FLAG_NOGLOBAL;
 			exflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
@@ -842,6 +859,12 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 			else if (more)
 				(void)sieve_save(sbin, FALSE, NULL);
 		}
+
+		if (user_script && !sieve_record_resource_usage(sbin, rusage)) {
+			rusage_exceeded = ((i + 1) < count && more);
+			scripts[i].rusage_exceeded = TRUE;
+			break;
+		}
 	}
 
 	/* Finish execution */
@@ -850,6 +873,12 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 		user_ehandler : ifsuser->master_ehandler);
 	if (compile_error == SIEVE_ERROR_TEMP_FAILURE) {
 		ret = sieve_multiscript_tempfail(&mscript, ehandler, exflags);
+	} else if (rusage_exceeded) {
+		i_assert(last_script != NULL);
+		(void)sieve_multiscript_tempfail(&mscript, ehandler, exflags);
+		sieve_error(ehandler, sieve_script_name(last_script),
+			    "cumulative resource usage limit exceeded");
+		ret = SIEVE_EXEC_RESOURCE_LIMIT;
 	} else {
 		ret = sieve_multiscript_finish(&mscript, ehandler, exflags,
 					       NULL);
@@ -864,6 +893,8 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 		return 0;
 	}
 
+	if (last_script == NULL && ret == SIEVE_EXEC_OK)
+		return 0;
 	i_assert(last_script != NULL); /* at least one script is executed */
 	return imap_sieve_filter_handle_exec_status(sctx, last_script, ret,
 						    scriptenv->exec_status,
