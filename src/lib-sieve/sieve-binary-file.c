@@ -41,13 +41,6 @@
  * Header and record structures of the binary on disk
  */
 
-struct sieve_binary_header {
-	uint32_t magic;
-	uint16_t version_major;
-	uint16_t version_minor;
-	uint32_t blocks;
-};
-
 struct sieve_binary_block_index {
 	uint32_t id;
 	uint32_t size;

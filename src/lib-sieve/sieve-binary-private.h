@@ -11,6 +11,13 @@
  * Binary file
  */
 
+struct sieve_binary_header {
+	uint32_t magic;
+	uint16_t version_major;
+	uint16_t version_minor;
+	uint32_t blocks;
+};
+
 struct sieve_binary_file {
 	pool_t pool;
 	const char *path;
