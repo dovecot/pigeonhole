@@ -380,11 +380,16 @@ sieve_open_script_real(struct sieve_script *script,
 		       enum sieve_error *error_r)
 {
 	struct sieve_instance *svinst = sieve_script_svinst(script);
+	struct sieve_resource_usage rusage;
 	struct sieve_binary *sbin;
+
+	sieve_resource_usage_init(&rusage);
 
 	/* Try to open the matching binary */
 	sbin = sieve_script_binary_load(script, error_r);
 	if (sbin != NULL) {
+		sieve_binary_get_resource_usage(sbin, &rusage);
+
 		/* Ok, it exists; now let's see if it is up to date */
 		if (!sieve_binary_up_to_date(sbin, flags)) {
 			/* Not up to date */
@@ -411,6 +416,8 @@ sieve_open_script_real(struct sieve_script *script,
 			"Script `%s' from %s successfully compiled",
 			sieve_script_name(script),
 			sieve_script_location(script));
+
+		sieve_binary_set_resource_usage(sbin, &rusage);
 	}
 
 	return sbin;
