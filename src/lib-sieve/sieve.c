@@ -373,45 +373,58 @@ sieve_load(struct sieve_instance *svinst, const char *bin_path,
 	return sieve_binary_open(svinst, bin_path, NULL, error_r);
 }
 
+static struct sieve_binary *
+sieve_open_script_real(struct sieve_script *script,
+		       struct sieve_error_handler *ehandler,
+		       enum sieve_compile_flags flags,
+		       enum sieve_error *error_r)
+{
+	struct sieve_instance *svinst = sieve_script_svinst(script);
+	struct sieve_binary *sbin;
+
+	/* Try to open the matching binary */
+	sbin = sieve_script_binary_load(script, error_r);
+	if (sbin != NULL) {
+		/* Ok, it exists; now let's see if it is up to date */
+		if (!sieve_binary_up_to_date(sbin, flags)) {
+			/* Not up to date */
+			e_debug(svinst->event,
+				"Script binary %s is not up-to-date",
+				sieve_binary_path(sbin));
+			sieve_binary_close(&sbin);
+		}
+	}
+
+	/* If the binary does not exist or is not up-to-date, we need
+	 * to (re-)compile.
+	 */
+	if (sbin != NULL) {
+		e_debug(svinst->event,
+			"Script binary %s successfully loaded",
+			sieve_binary_path(sbin));
+	} else {
+		sbin = sieve_compile_script(script, ehandler, flags, error_r);
+		if (sbin == NULL)
+			return NULL;
+
+		e_debug(svinst->event,
+			"Script `%s' from %s successfully compiled",
+			sieve_script_name(script),
+			sieve_script_location(script));
+	}
+
+	return sbin;
+}
+
 struct sieve_binary *
 sieve_open_script(struct sieve_script *script,
 		  struct sieve_error_handler *ehandler,
 		  enum sieve_compile_flags flags, enum sieve_error *error_r)
 {
-	struct sieve_instance *svinst = sieve_script_svinst(script);
 	struct sieve_binary *sbin;
 
 	T_BEGIN {
-		/* Then try to open the matching binary */
-		sbin = sieve_script_binary_load(script, error_r);
-		if (sbin != NULL) {
-			/* Ok, it exists; now let's see if it is up to date */
-			if (!sieve_binary_up_to_date(sbin, flags)) {
-				/* Not up to date */
-				e_debug(svinst->event,
-					"Script binary %s is not up-to-date",
-					sieve_binary_path(sbin));
-				sieve_binary_close(&sbin);
-			}
-		}
-
-		/* If the binary does not exist or is not up-to-date, we need
-		 * to (re-)compile.
-		 */
-		if (sbin != NULL) {
-			e_debug(svinst->event,
-				"Script binary %s successfully loaded",
-				sieve_binary_path(sbin));
-		} else {
-			sbin = sieve_compile_script(script, ehandler,
-						    flags, error_r);
-			if (sbin != NULL) {
-				e_debug(svinst->event,
-					"Script `%s' from %s successfully compiled",
-					sieve_script_name(script),
-					sieve_script_location(script));
-			}
-		}
+		sbin = sieve_open_script_real(script, ehandler, flags, error_r);
 	} T_END;
 
 	return sbin;
