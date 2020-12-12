@@ -1,3 +1,34 @@
+v0.5.13 2021-01-04  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	- duplicate: The test was handled badly in a multiscript (sieve_before,
+	  sieve_after) scenario in which an earlier script in the sequence with
+	  a duplicate test succeeded, while a later script caused a runtime
+	  failure. In that case, the message is recorded for duplicate tracking,
+	  while the message may not actually have been delivered in the end.
+	- editheader: Sieve interpreter entered infinite loop at startup when
+	  the "editheader" configuration listed an invalid header name. This
+	  problem can only be triggered by the administrator.
+	- relational: The Sieve relational extension can cause a segfault at
+	  compile time. This is triggered by invalid script syntax. The segfault
+	  happens when this match type is the last argument of the test command.
+	  This situation is not possible in a valid script; positional arguments
+	  are normally present after that, which would prevent the segfault.
+	- sieve: For some Sieve commands the provided mailbox name is not
+	  properly checked for UTF-8 validity, which can cause assert crashes at
+	  runtime when an invalid mailbox name is encountered. This can be
+	  caused by the user by writing a bad Sieve script involving the
+	  affected commands ("mailboxexists", "specialuse_exists").
+	  This can be triggered by the remote sender only when the user has
+	  written a Sieve script that passes message content to one of the
+	  affected commands.
+	- sieve: Large sequences of 8-bit octets passed to certain Sieve
+	  commands that create or modify message headers that allow UTF-8 text
+	  (vacation, notify and addheader) can cause the delivery or IMAP
+	  process (when IMAPSieve is used) to enter a memory-consuming
+	  semi-infinite loop that ends when the process exceeds its memory
+	  limits. Logged in users can cause these hangs only for their own
+	  processes.
+
 v0.5.11 2020-08-12  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* managesieve: managesieve_max_line_length setting is now a "size" type
