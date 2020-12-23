@@ -474,7 +474,6 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 			e_error(sbin->event, "failed to clean up after error: "
 				"unlink(%s) failed: %m", path);
 		}
-		sbin->path = NULL;
 	}
 
 	return result;
