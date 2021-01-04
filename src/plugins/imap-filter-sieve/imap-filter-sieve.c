@@ -1012,7 +1012,7 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 						    &msgdata, scriptenv);
 	} T_END;
 
-	if (ret < 0 || str_len(sctx->errors) == 0) {
+	if (ret < 0 && str_len(sctx->errors) == 0) {
 		/* Failed, but no user error was logged: log a generic internal
 		   error instead. */
 		sieve_internal_error(user_ehandler, NULL, NULL);
