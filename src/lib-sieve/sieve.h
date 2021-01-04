@@ -88,6 +88,14 @@ sieve_record_resource_usage(struct sieve_binary *sbin,
 			    const struct sieve_resource_usage *rusage)
 			    ATTR_NULL(1);
 
+/* Check whether Sieve binary is (still) executable. Returns 1 if all is OK,
+   0 when an error occurred, and -1 when the error is internal. Sets the Sieve
+   error code in error_r and a user error message in client_error_r when the
+   error is not internal. */
+int sieve_check_executable(struct sieve_binary *sbin,
+			   enum sieve_error *error_r,
+			   const char **client_error_r);
+
 /* Saves the binary as the file indicated by the path parameter. This function
    will not write the binary to disk when the provided binary object was loaded
    earlier from the indicated bin_path, unless update is TRUE.

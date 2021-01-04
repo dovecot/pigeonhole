@@ -542,6 +542,13 @@ bool sieve_record_resource_usage(struct sieve_binary *sbin,
 	return sieve_binary_record_resource_usage(sbin, rusage);
 }
 
+int sieve_check_executable(struct sieve_binary *sbin,
+			   enum sieve_error *error_r,
+			   const char **client_error_r)
+{
+	return sieve_binary_check_executable(sbin, error_r, client_error_r);
+}
+
 void sieve_close(struct sieve_binary **_sbin)
 {
 	sieve_binary_close(_sbin);
