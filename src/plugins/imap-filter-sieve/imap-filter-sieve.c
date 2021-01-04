@@ -433,7 +433,6 @@ int imap_filter_sieve_compile(struct imap_filter_sieve_context *sctx,
 				const char *errormsg =
 					sieve_script_get_last_error(
 						script, &error);
-
 				if (error != SIEVE_ERROR_NONE) {
 					str_truncate(sctx->errors, 0);
 					str_append(sctx->errors, errormsg);
@@ -442,6 +441,12 @@ int imap_filter_sieve_compile(struct imap_filter_sieve_context *sctx,
 			ret = -1;
 			break;
 		}
+	}
+
+	if (ret < 0 && str_len(sctx->errors) == 0) {
+		/* Failed, but no user error was logged: log a generic internal
+		   error instead. */
+		sieve_internal_error(ehandler, NULL, NULL);
 	}
 
 	*have_warnings_r = (sieve_get_warnings(ehandler) > 0);
