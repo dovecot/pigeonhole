@@ -12,8 +12,7 @@
 
 #define FILTER_MAX_INMEM_SIZE (1024*128)
 
-static int
-cmd_filter_sieve_compile_script(struct imap_filter_context *ctx)
+static int cmd_filter_sieve_compile_script(struct imap_filter_context *ctx)
 {
 	struct client_command_context *cmd = ctx->cmd;
 	struct imap_filter_sieve_context *sctx = ctx->sieve;
@@ -43,8 +42,7 @@ cmd_filter_sieve_compile_script(struct imap_filter_context *ctx)
 	return 0;
 }
 
-static bool
-cmd_filter_sieve_delivery(struct client_command_context *cmd)
+static bool cmd_filter_sieve_delivery(struct client_command_context *cmd)
 {
 	struct imap_filter_context *ctx = cmd->context;
 	struct client *client = cmd->client;
@@ -62,8 +60,8 @@ cmd_filter_sieve_delivery(struct client_command_context *cmd)
 	ret = imap_filter_sieve_open_personal(sctx, NULL,
 					      &error, &error_string);
 	if (ret < 0) {
-		client_send_tagline(cmd,
-			imap_get_error_string(cmd, error_string, error));
+		client_send_tagline(
+			cmd, imap_get_error_string(cmd, error_string, error));
 		imap_filter_deinit(ctx);
 		return TRUE;
 	}
@@ -112,12 +110,12 @@ cmd_filter_sieve_script_parse_name_arg(struct imap_filter_context *ctx)
 		return -1;
 	case IMAP_ARG_LIST:
 		client_send_command_error(ctx->cmd,
-			  "Script name must be a string");
+					  "Script name must be a string");
 		return -1;
 	case IMAP_ARG_NIL:
 	case IMAP_ARG_ATOM:
 	case IMAP_ARG_STRING:
-		/* we have the value already */
+		/* We have the value already */
 		if (ctx->failed)
 			return 1;
 		ctx->script_name = p_strdup(cmd->pool,
@@ -146,10 +144,10 @@ cmd_filter_sieve_script_parse_name(struct client_command_context *cmd)
 		return TRUE;
 	}
 
-	if ((ret=cmd_filter_sieve_script_parse_name_arg(ctx)) == 0)
+	if ((ret = cmd_filter_sieve_script_parse_name_arg(ctx)) == 0)
 		return FALSE;
 	if (ret < 0) {
-		/* already sent the error to client */ ;
+		/* Already sent the error to client */
 		imap_filter_deinit(ctx);
 		return TRUE;
 	}
@@ -168,8 +166,8 @@ cmd_filter_sieve_script_parse_name(struct client_command_context *cmd)
 		i_unreached();
 	}
 	if (ret < 0) {
-		client_send_tagline(cmd,
-			imap_get_error_string(cmd, error_string, error));
+		client_send_tagline(
+			cmd, imap_get_error_string(cmd, error_string, error));
 		imap_filter_deinit(ctx);
 		return TRUE;
 	}
@@ -195,8 +193,7 @@ cmd_filter_sieve_compile_input(struct imap_filter_context *ctx,
 	(void)cmd_filter_sieve_compile_script(ctx);
 }
 
-static int
-cmd_filter_sieve_script_read_stream(struct imap_filter_context *ctx)
+static int cmd_filter_sieve_script_read_stream(struct imap_filter_context *ctx)
 {
 	struct istream *input = ctx->script_input;
 	const unsigned char *data;
@@ -209,11 +206,11 @@ cmd_filter_sieve_script_read_stream(struct imap_filter_context *ctx)
 		return 0;
 
 	if (input->v_offset != ctx->script_len) {
-		/* client disconnected */
+		/* Client disconnected */
 		i_assert(input->eof);
 		return -1;
 	}
-	/* finished reading the value */
+	/* Finished reading the value */
 	i_stream_seek(input, 0);
 
 	if (ctx->failed) {
@@ -264,10 +261,10 @@ cmd_filter_sieve_script_parse_value_arg(struct imap_filter_context *ctx)
 	case IMAP_ARG_ATOM:
 	case IMAP_ARG_LIST:
 		client_send_command_error(ctx->cmd,
-			  "Script value must be a string");
+					  "Script value must be a string");
 		return -1;
 	case IMAP_ARG_STRING:
-		/* we have the value already */
+		/* We have the value already */
 		if (ctx->failed)
 			return 1;
 		value = imap_arg_as_nstring(&args[0]);
@@ -279,7 +276,7 @@ cmd_filter_sieve_script_parse_value_arg(struct imap_filter_context *ctx)
 		o_stream_nsend(ctx->cmd->client->output, "+ OK\r\n", 6);
 		o_stream_uncork(ctx->cmd->client->output);
 		o_stream_cork(ctx->cmd->client->output);
-		/* fall through */
+		/* Fall through */
 	case IMAP_ARG_LITERAL_SIZE_NONSYNC:
 		ctx->script_len = imap_arg_as_literal_size(&args[0]);
 
@@ -315,15 +312,15 @@ cmd_filter_sieve_script_parse_value(struct client_command_context *cmd)
 	}
 
 	if (ctx->script_input != NULL) {
-		if ((ret=cmd_filter_sieve_script_read_stream(ctx)) == 0)
+		if ((ret = cmd_filter_sieve_script_read_stream(ctx)) == 0)
 			return FALSE;
 	} else {
-		if ((ret=cmd_filter_sieve_script_parse_value_arg(ctx)) == 0)
+		if ((ret = cmd_filter_sieve_script_parse_value_arg(ctx)) == 0)
 			return FALSE;
 	}
 
 	if (ret < 0) {
-		/* already sent the error to client */ ;
+		/* Already sent the error to client */ ;
 		imap_filter_deinit(ctx);
 		return TRUE;
 	} else if (ctx->compile_failure) {
@@ -352,13 +349,13 @@ bool cmd_filter_sieve(struct client_command_context *cmd)
 
 	/* sieve-type */
 	if (IMAP_ARG_IS_EOL(args)) {
-		client_send_command_error(cmd,
-			"Missing SIEVE filter sub-type.");
+		client_send_command_error(
+			cmd, "Missing SIEVE filter sub-type.");
 		return TRUE;
 	}
 	if (!imap_arg_get_atom(args, &sieve_type)) {
-		client_send_command_error(cmd,
-			"SIEVE filter sub-type is not an atom.");
+		client_send_command_error(
+			cmd, "SIEVE filter sub-type is not an atom.");
 		return TRUE;
 	}
 	if (strcasecmp(sieve_type, "DELIVERY") == 0) {
@@ -378,7 +375,7 @@ bool cmd_filter_sieve(struct client_command_context *cmd)
 
 	ctx->sieve = imap_filter_sieve_context_create(ctx, type);
 
-	/* we support large scripts, so read the values from client
+	/* We support large scripts, so read the values from client
 	   asynchronously the same way as APPEND does. */
 	client->input_lock = cmd;
 	ctx->parser = imap_parser_create(client->input, client->output,
