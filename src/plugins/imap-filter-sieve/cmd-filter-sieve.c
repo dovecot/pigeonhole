@@ -267,7 +267,7 @@ cmd_filter_sieve_script_parse_value_arg(struct imap_filter_context *ctx)
 		/* We have the value already */
 		if (ctx->failed)
 			return 1;
-		value = imap_arg_as_nstring(&args[0]);
+		value = imap_arg_as_astring(&args[0]);
 		input = i_stream_create_from_data(value, strlen(value));
 		cmd_filter_sieve_compile_input(ctx, input);
 		i_stream_unref(&input);
