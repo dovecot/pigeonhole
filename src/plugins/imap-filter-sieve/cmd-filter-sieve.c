@@ -108,18 +108,18 @@ cmd_filter_sieve_script_parse_name_arg(struct imap_filter_context *ctx)
 	case IMAP_ARG_EOL:
 		client_send_command_error(ctx->cmd, "Script name missing");
 		return -1;
-	case IMAP_ARG_LIST:
-		client_send_command_error(ctx->cmd,
-					  "Script name must be a string");
-		return -1;
 	case IMAP_ARG_NIL:
+	case IMAP_ARG_LIST:
+		client_send_command_error(
+			ctx->cmd, "Script name must be an atom or a string");
+		return -1;
 	case IMAP_ARG_ATOM:
 	case IMAP_ARG_STRING:
 		/* We have the value already */
 		if (ctx->failed)
 			return 1;
 		ctx->script_name = p_strdup(cmd->pool,
-					    imap_arg_as_nstring(&args[0]));
+					    imap_arg_as_astring(&args[0]));
 		break;
 	case IMAP_ARG_LITERAL:
 	case IMAP_ARG_LITERAL_SIZE:
