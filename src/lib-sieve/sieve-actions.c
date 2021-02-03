@@ -352,7 +352,7 @@ void sieve_act_store_get_storage_error(const struct sieve_action_exec_env *aenv,
 	pool_t pool = sieve_result_pool(aenv->result);
 
 	trans->error = p_strdup(pool,
-		mailbox_get_last_error(trans->box, &trans->error_code));
+		mailbox_get_last_internal_error(trans->box, &trans->error_code));
 }
 
 static bool

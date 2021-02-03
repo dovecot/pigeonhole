@@ -358,7 +358,7 @@ int sieve_message_substitute
 	if ( ret < 0 ) {
 		e_error(msgctx->svinst->event,
 			"can't open substituted mail as raw: %s",
-			mailbox_get_last_error(box, NULL));
+			mailbox_get_last_internal_error(box, NULL));
 		return -1;
 	}
 

@@ -231,7 +231,7 @@ static void test_edit_mail_concatenated(void)
 
 	if (mail_get_stream(mail, NULL, NULL, &input_mail) < 0) {
 		i_fatal("Failed to open mail stream: %s",
-			mailbox_get_last_error(mail->box, NULL));
+			mailbox_get_last_internal_error(mail->box, NULL));
 	}
 
 	buffer = buffer_create_dynamic(default_pool, 1024);
@@ -717,7 +717,7 @@ static void test_edit_mail_big_header(void)
 
 	if (mail_get_stream(mail, NULL, NULL, &input_mail) < 0) {
 		i_fatal("Failed to open mail stream: %s",
-			mailbox_get_last_error(mail->box, NULL));
+			mailbox_get_last_internal_error(mail->box, NULL));
 	}
 
 	buffer = buffer_create_dynamic(default_pool, 1024);

@@ -1186,7 +1186,7 @@ int sieve_runtime_mail_error(const struct sieve_runtime_env *renv,
 	const char *error_msg, *user_prefix;
 	va_list args;
 
-	error_msg = mailbox_get_last_error(mail->box, NULL);
+	error_msg = mailbox_get_last_internal_error(mail->box, NULL);
 
 	va_start(args, fmt);
 	user_prefix = t_strdup_vprintf(fmt, args);

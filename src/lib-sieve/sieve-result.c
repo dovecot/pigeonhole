@@ -1907,7 +1907,7 @@ int sieve_result_mail_error(const struct sieve_action_exec_env *aenv,
 	const char *error_msg, *user_prefix;
 	va_list args;
 
-	error_msg = mailbox_get_last_error(mail->box, NULL);
+	error_msg = mailbox_get_last_internal_error(mail->box, NULL);
 
 	va_start(args, fmt);
 	user_prefix = t_strdup_vprintf(fmt, args);

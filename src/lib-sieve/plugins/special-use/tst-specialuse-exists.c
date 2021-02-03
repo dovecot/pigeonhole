@@ -261,7 +261,7 @@ tst_specialuse_find_mailbox(const struct sieve_runtime_env *renv,
 	/* Open the box */
 	box = mailbox_alloc_for_user(user, mailbox, MAILBOX_FLAG_POST_SESSION);
 	if (mailbox_open(box) < 0) {
-		error = mailbox_get_last_error(box, &error_code);
+		error = mailbox_get_last_internal_error(box, &error_code);
 
 		if (trace) {
 			sieve_runtime_trace(
@@ -316,7 +316,7 @@ tst_specialuse_find_specialuse(const struct sieve_runtime_env *renv,
 				     (MAILBOX_FLAG_POST_SESSION |
 				      MAILBOX_FLAG_SPECIAL_USE));
 	if (mailbox_open(box) < 0) {
-		error = mailbox_get_last_error(box, &error_code);
+		error = mailbox_get_last_internal_error(box, &error_code);
 
 		if (trace) {
 			sieve_runtime_trace(

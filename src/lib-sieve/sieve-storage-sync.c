@@ -67,7 +67,7 @@ static int sieve_storage_sync_transaction_begin
 	if (mailbox_open(inbox) < 0) {
 		e_warning(storage->event, "sync: "
 			  "Failed to open user INBOX for attribute modifications: %s",
-			  mailbox_get_last_error(inbox, &error));
+			  mailbox_get_last_internal_error(inbox, &error));
 		mailbox_free(&inbox);
 		return -1;
 	}

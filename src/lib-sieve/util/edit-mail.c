@@ -226,7 +226,7 @@ struct edit_mail *edit_mail_wrap(struct mail *mail)
 	if ( raw_mailbox_alloc_stream(raw_mail_user, wrapped_stream, (time_t)-1,
 		"editor@example.com", &raw_box) < 0 ) {
 		i_error("edit-mail: failed to open raw box: %s",
-				mailbox_get_last_error(raw_box, NULL));
+			mailbox_get_last_internal_error(raw_box, NULL));
 		mailbox_free(&raw_box);
 		edit_mail_raw_storage_drop();
 		return NULL;

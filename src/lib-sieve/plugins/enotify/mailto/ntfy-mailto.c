@@ -757,7 +757,7 @@ static int ntfy_mailto_action_execute
 				"failed to read `auto-submitted' header field",
 			"mailto notification: "
 				"failed to read `auto-submitted' header field: %s",
-			mailbox_get_last_error(mail->box, NULL));
+			mailbox_get_last_internal_error(mail->box, NULL));
 		return -1;
 	}
 

@@ -223,7 +223,7 @@ static int imap_sieve_mailbox_get_script_real
 			"Failed to read /shared/"
 			MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
 			"mailbox attribute: %s",
-			mailbox_get_last_error(box, NULL));
+			mailbox_get_last_internal_error(box, NULL));
 		return -1;
 	}
 
@@ -258,7 +258,7 @@ static int imap_sieve_mailbox_get_script_real
 					"Failed to read /shared/"
 					MAIL_SERVER_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
 					"server attribute: %s",
-					mailbox_get_last_error(inbox, NULL));
+					mailbox_get_last_internal_error(inbox, NULL));
 			} else if (ret == 0) {
 				imap_sieve_mailbox_debug(box,
 					"Server attribute /shared/"
