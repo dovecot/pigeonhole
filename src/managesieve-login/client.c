@@ -269,8 +269,7 @@ static bool managesieve_client_input_next_cmd(struct client *_client)
 			msg = managesieve_parser_get_error(client->parser, &fatal);
 			if (fatal) {
 				client_send_bye(&client->common, msg);
-				client_destroy(&client->common, t_strconcat("Disconnected: ",
-					msg, NULL));
+				client_destroy(&client->common, msg);
 				return FALSE;
 			}
 
@@ -313,7 +312,7 @@ static bool managesieve_client_input_next_cmd(struct client *_client)
 			client_send_bye(&client->common,
 				"Too many invalid MANAGESIEVE commands.");
 			client_destroy(&client->common,
-				"Disconnected: Too many invalid commands.");
+				       "Too many invalid commands.");
 			return FALSE;
 		}
 		client_send_no(&client->common,
