@@ -9,6 +9,7 @@
 #include "ioloop.h"
 #include "istream.h"
 #include "ostream.h"
+#include "iostream.h"
 #include "str.h"
 
 #include "sieve.h"
@@ -501,9 +502,11 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 					 whole script. */
 				failed = TRUE;
 				sieve_storage_save_cancel(&ctx->save_ctx);
-				client_disconnect(
-					client,
-					"EOF while appending in PUTSCRIPT/CHECKSCRIPT");
+				const char *reason = t_strdup_printf(
+					"%s (While appending in PUTSCRIPT/CHECKSCRIPT)",
+					io_stream_get_disconnect_reason(client->input,
+									client->output));
+				client_disconnect(client, reason);
 			} else if (sieve_storage_save_finish(ctx->save_ctx) < 0) {
 				failed = TRUE;
 				cmd_putscript_storage_error(ctx);

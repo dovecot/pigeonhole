@@ -35,7 +35,7 @@ static bool cmd_getscript_finish(struct cmd_getscript_context *ctx)
 
 	if (ctx->failed) {
 		if (client->output->closed) {
-			client_disconnect(client, "Disconnected");
+			client_disconnect(client, NULL);
 			return TRUE;
 		}
 
@@ -91,10 +91,7 @@ static bool cmd_getscript_continue(struct client_command_context *cmd)
 		ctx->failed = TRUE;
 		break;
 	case OSTREAM_SEND_ISTREAM_RESULT_ERROR_OUTPUT:
-		client_disconnect(
-			ctx->client,
-			io_stream_get_disconnect_reason(client->input,
-							client->output));
+		client_disconnect(ctx->client, NULL);
 		ctx->failed = TRUE;
 		break;
 	}
