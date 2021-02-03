@@ -130,7 +130,7 @@ static int managesieve_client_auth_read_response
 
 	if ( i_stream_read(client->input) == -1 ) {
 		/* disconnected */
-		client_destroy(client, "Disconnected");
+		client_destroy_iostream_error(client);
 		return -1;
 	}
 
@@ -218,7 +218,7 @@ static int managesieve_client_auth_read_response
 			return -1;
 		}
 
-		client_destroy(client, "Disconnected");
+		client_destroy_iostream_error(client);
 		return -1;
 	}
 
