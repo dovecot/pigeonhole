@@ -149,7 +149,7 @@ static int cmd_logout
 	const struct managesieve_arg *args ATTR_UNUSED)
 {
 	client_send_ok(&client->common, "Logout completed.");
-	client_destroy(&client->common, "Aborted login");
+	client_destroy(&client->common, CLIENT_UNAUTHENTICATED_LOGOUT_MSG);
 	return 1;
 }
 
