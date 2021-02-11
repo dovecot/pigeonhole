@@ -157,7 +157,6 @@ static const struct sieve_environment_item *
 ext_environment_item_lookup(struct ext_environment_interpreter_context *ctx,
 			    const char **_name)
 {
-	const struct sieve_environment_item *const *item_idx;
 	const struct sieve_environment_item *item;
 	const char *name = *_name;
 
@@ -165,10 +164,9 @@ ext_environment_item_lookup(struct ext_environment_interpreter_context *ctx,
 	if (item != NULL)
 		return item;
 
-	array_foreach(&ctx->prefix_items, item_idx) {
+	array_foreach_elem(&ctx->prefix_items, item) {
 		size_t prefix_len;
 
-		item = *item_idx;
 		i_assert(item->prefix);
 		prefix_len = strlen(item->name);
 

@@ -421,11 +421,11 @@ void sieve_validator_register_persistent_tag(
 			p_array_init(&cmd_reg->persistent_tags,
 				     valdtr->pool, 4);
 		} else {
-			struct sieve_tag_registration *const *reg_idx;
+			struct sieve_tag_registration *reg_idx;
 
 			/* Avoid dupplicate registration */
-			array_foreach(&cmd_reg->persistent_tags, reg_idx) {
-				if ((*reg_idx)->tag_def == tag_def)
+			array_foreach_elem(&cmd_reg->persistent_tags, reg_idx) {
+				if (reg_idx->tag_def == tag_def)
 					return;
 			}
 		}

@@ -669,7 +669,7 @@ imap_sieve_mailbox_transaction_run(
 		ARRAY_TYPE(imap_sieve_mailbox_rule) mbrules;
 		ARRAY_TYPE(const_string) scripts_before, scripts_after;
 		ARRAY_TYPE(const_string) scripts_copy_source;
-		struct imap_sieve_mailbox_rule *const *rule_idx;
+		struct imap_sieve_mailbox_rule *rule;
 
 		/* Find matching rules */
 		t_array_init(&mbrules, 16);
@@ -680,9 +680,7 @@ imap_sieve_mailbox_transaction_run(
 		t_array_init(&scripts_before, 8);
 		t_array_init(&scripts_after, 8);
 		t_array_init(&scripts_copy_source, 4);
-		array_foreach(&mbrules, rule_idx) {
-			struct imap_sieve_mailbox_rule *rule = *rule_idx;
-
+		array_foreach_elem(&mbrules, rule) {
 			if (rule->before != NULL)
 				array_append(&scripts_before, &rule->before, 1);
 			if (rule->after != NULL)
@@ -1047,7 +1045,7 @@ imap_sieve_mailbox_rules_match_patterns(struct mail_user *user,
 	ARRAY_TYPE(imap_sieve_mailbox_rule) *rules)
 {
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
-	struct imap_sieve_mailbox_rule *const *rule_idx;
+	struct imap_sieve_mailbox_rule *rule;
 	struct mail_namespace *dst_ns, *src_ns;
 
 	if (array_count(&isuser->mbox_patterns) == 0)
@@ -1057,8 +1055,7 @@ imap_sieve_mailbox_rules_match_patterns(struct mail_user *user,
 	src_ns = (src_box == NULL ? NULL :
 		mailbox_get_namespace(src_box));
 
-	array_foreach(&isuser->mbox_patterns, rule_idx) {
-		struct imap_sieve_mailbox_rule *rule = *rule_idx;
+	array_foreach_elem(&isuser->mbox_patterns, rule) {
 		struct imap_match_glob *glob;
 
 		if (src_ns == NULL && rule->from != NULL)

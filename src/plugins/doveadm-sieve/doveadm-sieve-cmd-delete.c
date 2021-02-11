@@ -25,13 +25,12 @@ cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 		(struct doveadm_sieve_delete_cmd_context *)_ctx;
 	struct sieve_storage *storage = _ctx->storage;
 	const ARRAY_TYPE(const_string) *scriptnames = &ctx->scriptnames;
-	const char *const *namep;
+	const char *scriptname;
 	struct sieve_script *script;
 	enum sieve_error error;
 	int ret = 0;
 
-	array_foreach(scriptnames, namep) {
-		const char *scriptname = *namep;
+	array_foreach_elem(scriptnames, scriptname) {
 		int sret = 0;
 
 		script = sieve_storage_open_script
