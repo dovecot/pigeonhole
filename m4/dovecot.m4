@@ -259,8 +259,9 @@ AC_DEFUN([DC_PLUGIN_DEPS],[
 ])
 
 AC_DEFUN([DC_DOVECOT_TEST_WRAPPER],[
-  AC_CHECK_PROG(VALGRIND, valgrind, yes, no)
-  AS_IF([test "$VALGRIND" = yes], [
+  AC_ARG_VAR([VALGRIND], [Path to valgrind])
+  AC_PATH_PROG(VALGRIND, valgrind, reject)
+  AS_IF([test "$VALGRIND" != reject], [
     cat > run-test.sh <<_DC_EOF
 #!/bin/sh
 top_srcdir=\$[1]
@@ -291,9 +292,9 @@ else
   trap "rm -f \$test_out" 0 1 2 3 15
   supp_path="\$top_srcdir/run-test-valgrind.supp"
   if test -r "\$supp_path"; then
-    valgrind -q \$trace_children --error-exitcode=213 --leak-check=full --gen-suppressions=all --suppressions="\$supp_path" --log-file=\$test_out \$noundef \$[*]
+    $VALGRIND -q \$trace_children --error-exitcode=213 --leak-check=full --gen-suppressions=all --suppressions="\$supp_path" --log-file=\$test_out \$noundef \$[*]
   else
-    valgrind -q \$trace_children --error-exitcode=213 --leak-check=full --gen-suppressions=all --log-file=\$test_out \$noundef \$[*]
+    $VALGRIND -q \$trace_children --error-exitcode=213 --leak-check=full --gen-suppressions=all --log-file=\$test_out \$noundef \$[*]
   fi
   ret=\$?
   if test -s \$test_out; then
@@ -306,7 +307,7 @@ if test \$ret != 0; then
 fi
 exit \$ret
 _DC_EOF
-    RUN_TEST='$(SHELL) $(top_builddir)/run-test.sh $(top_srcdir)'
+    RUN_TEST='$(LIBTOOL) execute $(SHELL) $(top_builddir)/run-test.sh $(top_srcdir)'
   ], [
     RUN_TEST=''
   ])
@@ -333,6 +334,27 @@ AC_DEFUN([DC_DOVECOT_HARDENING],[
 	AC_CC_RETPOLINE
 	AC_LD_RELRO
 	DOVECOT_WANT_UBSAN
+])
+
+AC_DEFUN([DC_DOVECOT_FUZZER],[
+        AC_ARG_WITH(fuzzer,
+        AS_HELP_STRING([--with-fuzzer=clang], [Build with clang fuzzer (default: no)]),
+                with_fuzzer=$withval,
+                with_fuzzer=no)
+	AS_IF([test x$with_fuzzer = xclang], [
+		CFLAGS="$CFLAGS -fsanitize=fuzzer-no-link"
+		# use $LIB_FUZZING_ENGINE for linking if it exists
+		FUZZER_LDFLAGS=${LIB_FUZZING_ENGINE--fsanitize=fuzzer}
+		# May need to use CXXLINK for linking, which wants sources to
+		# be compiled with -fPIE
+		FUZZER_CPPFLAGS='$(AM_CPPFLAGS) -fPIE -DPIE'
+	], [test x$with_fuzzer != xno], [
+		AC_MSG_ERROR([Unknown fuzzer $with_fuzzer])
+	])
+	AC_SUBST([FUZZER_CPPFLAGS])
+	AC_SUBST([FUZZER_LDFLAGS])
+	AM_CONDITIONAL([USE_FUZZER], [test "x$with_fuzzer" != "xno"])
+
 ])
 
 AC_DEFUN([DC_DOVECOT],[
