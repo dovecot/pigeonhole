@@ -297,8 +297,12 @@ static void
 act_reject_print(const struct sieve_action *action,
 		 const struct sieve_result_print_env *rpenv, bool *keep);
 static int
-act_reject_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
-		  bool *keep);
+act_reject_start(const struct sieve_action_exec_env *aenv, void **tr_context);
+static int
+act_reject_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
+		   bool *keep);
+static int
+act_reject_commit(const struct sieve_action_exec_env *aenv, void *tr_context);
 
 const struct sieve_action_def act_reject = {
 	.name = "reject",
@@ -306,6 +310,8 @@ const struct sieve_action_def act_reject = {
 	.check_duplicate = act_reject_check_duplicate,
 	.check_conflict = act_reject_check_conflict,
 	.print = act_reject_print,
+	.start = act_reject_start,
+	.execute = act_reject_execute,
 	.commit = act_reject_commit,
 };
 
@@ -430,6 +436,10 @@ ext_reject_operation_execute(const struct sieve_runtime_env *renv,
  * Action implementation
  */
 
+struct act_reject_transaction {
+	bool ignore_reject:1;
+};
+
 static int
 act_reject_check_duplicate(const struct sieve_runtime_env *renv ATTR_UNUSED,
 			   const struct sieve_action *act,
@@ -505,14 +515,27 @@ act_reject_print(const struct sieve_action *action,
 }
 
 static int
-act_reject_commit(const struct sieve_action_exec_env *aenv,
-		  void *tr_context ATTR_UNUSED, bool *keep)
+act_reject_start(const struct sieve_action_exec_env *aenv, void **tr_context)
+{
+	struct act_reject_transaction *trans;
+	pool_t pool = sieve_result_pool(aenv->result);
+
+	/* Create transaction context */
+	trans = p_new(pool, struct act_reject_transaction, 1);
+	*tr_context = trans;
+
+	return SIEVE_EXEC_OK;
+}
+
+static int
+act_reject_execute(const struct sieve_action_exec_env *aenv,
+		   void *tr_context, bool *keep)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct act_reject_context *rj_ctx =
 		(struct act_reject_context *)aenv->action->context;
+	struct act_reject_transaction *trans = tr_context;
 	const struct smtp_address *sender, *recipient;
-	int ret;
 
 	sender = sieve_message_get_sender(aenv->msgctx);
 	recipient = sieve_message_get_orig_recipient(aenv->msgctx);
@@ -520,26 +543,51 @@ act_reject_commit(const struct sieve_action_exec_env *aenv,
 	if ((eenv->flags & SIEVE_EXECUTE_FLAG_SKIP_RESPONSES) != 0) {
 		sieve_result_global_log(
 			aenv, "not sending reject message (skipped)");
+		trans->ignore_reject = TRUE;
 		return SIEVE_EXEC_OK;
 	}
 	if (smtp_address_isnull(recipient)) {
 		sieve_result_global_warning(
 			aenv, "reject action aborted: envelope recipient is <>");
+		trans->ignore_reject = TRUE;
 		return SIEVE_EXEC_OK;
 	}
 	if (rj_ctx->reason == NULL) {
 		sieve_result_global_log(
 			aenv, "not sending reject message "
 			"(would cause second response to sender)");
+		trans->ignore_reject = TRUE;
 		*keep = FALSE;
 		return SIEVE_EXEC_OK;
 	}
 	if (smtp_address_isnull(sender)) {
 		sieve_result_global_log(
 			aenv, "not sending reject message to <>");
+		trans->ignore_reject = TRUE;
 		*keep = FALSE;
 		return SIEVE_EXEC_OK;
 	}
+
+	*keep = FALSE;
+	return SIEVE_EXEC_OK;
+}
+
+static int
+act_reject_commit(const struct sieve_action_exec_env *aenv,
+		  void *tr_context ATTR_UNUSED)
+{
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct act_reject_context *rj_ctx =
+		(struct act_reject_context *)aenv->action->context;
+	struct act_reject_transaction *trans = tr_context;
+	const struct smtp_address *sender, *recipient;
+	int ret;
+
+	sender = sieve_message_get_sender(aenv->msgctx);
+	recipient = sieve_message_get_orig_recipient(aenv->msgctx);
+
+	if (trans->ignore_reject)
+		return SIEVE_EXEC_OK;
 
 	if ((ret = sieve_action_reject_mail(aenv, recipient,
 					    rj_ctx->reason)) <= 0)
@@ -554,6 +602,5 @@ act_reject_commit(const struct sieve_action_exec_env *aenv,
 			       smtp_address_encode(sender),
 			       (rj_ctx->ereject ? "ereject" : "reject"));
 
-	*keep = FALSE;
 	return SIEVE_EXEC_OK;
 }

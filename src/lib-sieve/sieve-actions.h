@@ -66,9 +66,9 @@ struct sieve_action_def {
 	int (*start)(const struct sieve_action_exec_env *aenv,
 		     void **tr_context);
 	int (*execute)(const struct sieve_action_exec_env *aenv,
-		       void *tr_context);
+		       void *tr_context, bool *keep);
 	int (*commit)(const struct sieve_action_exec_env *aenv,
-		      void *tr_context, bool *keep);
+		      void *tr_context);
 	void (*rollback)(const struct sieve_action_exec_env *aenv,
 			 void *tr_context, bool success);
 	void (*finish)(const struct sieve_action_exec_env *aenv, bool last,
@@ -88,7 +88,8 @@ struct sieve_action {
 	const char *location;
 	void *context;
 	struct mail *mail;
-	bool executed;
+
+	bool executed:1;
 };
 
 #define sieve_action_is(act, definition) ((act)->def == &(definition))
@@ -137,10 +138,10 @@ struct sieve_side_effect_def {
 			   void **context, void *tr_context);
 	int (*post_execute)(const struct sieve_side_effect *seffect,
 			    const struct sieve_action_exec_env *aenv,
-			    void *tr_context);
+			    void *tr_context, bool *keep);
 	void (*post_commit)(const struct sieve_side_effect *seffect,
 			    const struct sieve_action_exec_env *aenv,
-			    void *tr_context, bool *keep);
+			    void *tr_context);
 	void (*rollback)(const struct sieve_side_effect *seffect,
 			 const struct sieve_action_exec_env *aenv,
 			 void *tr_context, bool success);

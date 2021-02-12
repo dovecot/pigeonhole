@@ -96,8 +96,16 @@ act_pipe_print(const struct sieve_action *action,
 	       const struct sieve_result_print_env *rpenv,
 	       bool *keep);
 static int
-act_pipe_commit(const struct sieve_action_exec_env *aenv,
+act_pipe_start(const struct sieve_action_exec_env *aenv, void **tr_context);
+static int
+act_pipe_execute(const struct sieve_action_exec_env *aenv,
 		void *tr_context, bool *keep);
+static int
+act_pipe_commit(const struct sieve_action_exec_env *aenv,
+		void *tr_context);
+static void
+act_pipe_rollback(const struct sieve_action_exec_env *aenv,
+		  void *tr_context, bool success);
 
 /* Action object */
 
@@ -106,7 +114,10 @@ const struct sieve_action_def act_pipe = {
 	.flags = SIEVE_ACTFLAG_TRIES_DELIVER,
 	.check_duplicate = act_pipe_check_duplicate,
 	.print = act_pipe_print,
+	.start = act_pipe_start,
+	.execute = act_pipe_execute,
 	.commit = act_pipe_commit,
+	.rollback = act_pipe_rollback,
 };
 
 /* Action context information */
@@ -328,36 +339,71 @@ act_pipe_print(const struct sieve_action *action,
 
 /* Result execution */
 
+struct act_pipe_transaction {
+	struct sieve_extprogram *sprog;
+};
+
 static int
-act_pipe_commit(const struct sieve_action_exec_env *aenv,
-		void *tr_context ATTR_UNUSED, bool *keep)
+act_pipe_start(const struct sieve_action_exec_env *aenv, void **tr_context)
+{
+	struct act_pipe_transaction *trans;
+	pool_t pool = sieve_result_pool(aenv->result);
+
+	/* Create transaction context */
+	trans = p_new(pool, struct act_pipe_transaction, 1);
+	*tr_context = (void *)trans;
+
+	return SIEVE_EXEC_OK;
+}
+
+static int
+act_pipe_execute(const struct sieve_action_exec_env *aenv,
+		 void *tr_context, bool *keep)
 {
 	const struct sieve_action *action = aenv->action;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	const struct ext_pipe_action *act =
 		(const struct ext_pipe_action *)action->context;
-	enum sieve_error error = SIEVE_ERROR_NONE;
+	struct act_pipe_transaction *trans = tr_context;
 	struct mail *mail = (action->mail != NULL ?
-			     action->mail :
-			     sieve_message_get_mail(aenv->msgctx));
-	struct sieve_extprogram *sprog;
-	int ret;
+		     action->mail :
+		     sieve_message_get_mail(aenv->msgctx));
+	enum sieve_error error = SIEVE_ERROR_NONE;
 
-	sprog = sieve_extprogram_create(action->ext, eenv->scriptenv,
-					eenv->msgdata, "pipe",
-					act->program_name, act->args, &error);
-	if (sprog != NULL) {
-		if (sieve_extprogram_set_input_mail(sprog, mail) < 0) {
-			sieve_extprogram_destroy(&sprog);
+	trans->sprog = sieve_extprogram_create(action->ext, eenv->scriptenv,
+					       eenv->msgdata, "pipe",
+					       act->program_name, act->args,
+					       &error);
+	if (trans->sprog != NULL) {
+		if (sieve_extprogram_set_input_mail(trans->sprog, mail) < 0) {
+			sieve_extprogram_destroy(&trans->sprog);
 			return sieve_result_mail_error(
 				aenv, mail, "failed to read input message");
 		}
-		ret = sieve_extprogram_run(sprog);
+	}
+
+	*keep = FALSE;
+	return SIEVE_EXEC_OK;
+}
+
+static int
+act_pipe_commit(const struct sieve_action_exec_env *aenv,
+		void *tr_context ATTR_UNUSED)
+{
+	const struct sieve_action *action = aenv->action;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct ext_pipe_action *act =
+		(const struct ext_pipe_action *)action->context;
+	struct act_pipe_transaction *trans = tr_context;
+	enum sieve_error error = SIEVE_ERROR_NONE;
+	int ret;
+
+	if (trans->sprog != NULL) {
+		ret = sieve_extprogram_run(trans->sprog);
+		sieve_extprogram_destroy(&trans->sprog);
 	} else {
 		ret = -1;
 	}
-	if (sprog != NULL)
-		sieve_extprogram_destroy(&sprog);
 
 	if (ret > 0) {
 		struct event_passthrough *e =
@@ -397,6 +443,15 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 		return SIEVE_EXEC_FAILURE;
 	}
 
-	*keep = FALSE;
 	return SIEVE_EXEC_OK;
+}
+
+static void
+act_pipe_rollback(const struct sieve_action_exec_env *aenv ATTR_UNUSED,
+		  void *tr_context, bool success ATTR_UNUSED)
+{
+	struct act_pipe_transaction *trans = tr_context;
+
+	if (trans->sprog != NULL)
+		sieve_extprogram_destroy(&trans->sprog);
 }

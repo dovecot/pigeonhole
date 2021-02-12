@@ -88,8 +88,10 @@ static void
 act_redirect_print(const struct sieve_action *action,
 		   const struct sieve_result_print_env *rpenv, bool *keep);
 static int
-act_redirect_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
+act_redirect_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
 		    bool *keep);
+static int
+act_redirect_commit(const struct sieve_action_exec_env *aenv, void *tr_context);
 
 const struct sieve_action_def act_redirect = {
 	.name = "redirect",
@@ -97,7 +99,8 @@ const struct sieve_action_def act_redirect = {
 	.equals = act_redirect_equals,
 	.check_duplicate = act_redirect_check_duplicate,
 	.print = act_redirect_print,
-	.commit = act_redirect_commit
+	.execute = act_redirect_execute,
+	.commit = act_redirect_commit,
 };
 
 /*
@@ -519,8 +522,18 @@ act_redirect_check_loop_header(const struct sieve_action_exec_env *aenv,
 }
 
 static int
+act_redirect_execute(const struct sieve_action_exec_env *aenv ATTR_UNUSED,
+		     void *tr_context ATTR_UNUSED, bool *keep)
+{
+	/* Cancel implicit keep */
+	*keep = FALSE;
+
+	return SIEVE_EXEC_OK;
+}
+
+static int
 act_redirect_commit(const struct sieve_action_exec_env *aenv,
-		    void *tr_context ATTR_UNUSED, bool *keep)
+		    void *tr_context ATTR_UNUSED)
 {
 	const struct sieve_action *action = aenv->action;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
@@ -556,7 +569,6 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv,
 		sieve_result_global_log(
 			aenv, "discarded duplicate forward to <%s>",
 			smtp_address_encode(ctx->to_address));
-		*keep = FALSE;
 		return SIEVE_EXEC_OK;
 	}
 
@@ -597,9 +609,6 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv,
 
 		/* Indicate that message was successfully forwarded */
 		eenv->exec_status->message_forwarded = TRUE;
-
-		/* Cancel implicit keep */
-		*keep = FALSE;
 
 		return SIEVE_EXEC_OK;
 	}

@@ -210,10 +210,10 @@ act_store_print(const struct sieve_action *action,
 static int
 act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context);
 static int
-act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context);
+act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
+		  bool *keep);
 static int
-act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
-		 bool *keep);
+act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context);
 static void
 act_store_rollback(const struct sieve_action_exec_env *aenv, void *tr_context,
 		   bool success);
@@ -537,7 +537,8 @@ static bool have_equal_keywords(struct mail *mail, struct mail_keywords *new_kw)
 }
 
 static int
-act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
+act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
+		  bool *keep)
 {
 	const struct sieve_action *action = aenv->action;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
@@ -557,8 +558,10 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 	box = trans->box;
 
 	/* Check whether we need to do anything */
-	if (trans->disabled)
+	if (trans->disabled) {
+		*keep = FALSE;
 		return SIEVE_EXEC_OK;
+	}
 
 	/* Exit early if mailbox is not available */
 	if (box == NULL)
@@ -669,6 +672,10 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 	/* Deallocate keywords */
  	if (keywords != NULL)
  		mailbox_keywords_unref(&keywords);
+
+	/* Cancel implicit keep if all went well so far */
+	*keep = (status < SIEVE_EXEC_OK);
+
 	return status;
 }
 
@@ -742,8 +749,7 @@ act_store_log_status(struct act_store_transaction *trans,
 }
 
 static int
-act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
-		 bool *keep)
+act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct act_store_transaction *trans =
@@ -757,7 +763,6 @@ act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
 	/* Check whether we need to do anything */
 	if (trans->disabled) {
 		act_store_log_status(trans, aenv, FALSE, status);
-		*keep = FALSE;
 		if (trans->box != NULL)
 			mailbox_free(&trans->box);
 		return SIEVE_EXEC_OK;
@@ -786,9 +791,6 @@ act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
 
 	/* Log our status */
 	act_store_log_status(trans, aenv, FALSE, status);
-
-	/* Cancel implicit keep if all went well */
-	*keep = !status;
 
 	/* Close mailbox */
 	if (trans->box != NULL)

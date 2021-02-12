@@ -188,8 +188,7 @@ static void
 act_vacation_print(const struct sieve_action *action,
 		   const struct sieve_result_print_env *rpenv, bool *keep);
 static int
-act_vacation_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
-		    bool *keep);
+act_vacation_commit(const struct sieve_action_exec_env *aenv, void *tr_context);
 
 /* Action object */
 
@@ -1226,7 +1225,7 @@ act_vacation_hash(struct act_vacation_context *vctx, const char *sender,
 
 static int
 act_vacation_commit(const struct sieve_action_exec_env *aenv,
-		    void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
+		    void *tr_context ATTR_UNUSED)
 {
 	const struct sieve_action *action = aenv->action;
 	const struct sieve_extension *ext = action->ext;

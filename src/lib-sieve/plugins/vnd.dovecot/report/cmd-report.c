@@ -114,8 +114,7 @@ static void
 act_report_print(const struct sieve_action *action,
 		 const struct sieve_result_print_env *rpenv, bool *keep);
 static int
-act_report_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
-		  bool *keep);
+act_report_commit(const struct sieve_action_exec_env *aenv, void *tr_context);
 
 /* Action object */
 
@@ -671,7 +670,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 
 static int
 act_report_commit(const struct sieve_action_exec_env *aenv,
-		  void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
+		  void *tr_context ATTR_UNUSED)
 {
 	const struct sieve_action *action = aenv->action;
 	const struct sieve_extension *ext = action->ext;
