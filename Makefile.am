@@ -201,7 +201,7 @@ failure_test_cases = \
 $(failure_test_cases):
 	@$(TEST_BIN) -F $(top_srcdir)/$@
 
-TEST_EXTPROGRAMS_BIN = $(TEST_BIN) \
+TEST_EXTPROGRAMS_BIN = NOCHILDREN=yes $(TEST_BIN) \
 	-P src/plugins/sieve-extprograms/.libs/sieve_extprograms
 
 extprograms_test_cases = \
