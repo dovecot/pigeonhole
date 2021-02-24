@@ -635,6 +635,14 @@ int sieve_extprogram_set_input_mail
 
 int sieve_extprogram_run(struct sieve_extprogram *sprog)
 {
-	return program_client_run(sprog->program_client);
+	switch (program_client_run(sprog->program_client)) {
+	case PROGRAM_CLIENT_EXIT_STATUS_INTERNAL_FAILURE:
+		return -1;
+	case PROGRAM_CLIENT_EXIT_STATUS_FAILURE:
+		return 0;
+	case PROGRAM_CLIENT_EXIT_STATUS_SUCCESS:
+		return 1;
+	}
+	i_unreached();
 }
 
