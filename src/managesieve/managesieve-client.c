@@ -785,6 +785,7 @@ int client_output(struct client *client)
 void clients_destroy_all(void)
 {
 	while (managesieve_clients != NULL) {
+		mail_storage_service_io_activate_user(managesieve_clients->service_user);
 		client_send_bye(managesieve_clients, "Server shutting down.");
 		client_destroy(managesieve_clients, "Server shutting down.");
 	}

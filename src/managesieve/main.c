@@ -79,6 +79,7 @@ void managesieve_refresh_proctitle(void)
 
 static void client_kill_idle(struct client *client)
 {
+	mail_storage_service_io_activate_user(client->service_user);
 	client_send_bye(client, "Server shutting down.");
 	client_destroy(client, "Server shutting down.");
 }
