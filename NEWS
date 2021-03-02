@@ -1,4 +1,4 @@
-v0.5.14.rc1 2021-02-17  Aki Tuomi <aki.tuomi@open-xchange.com>
+v0.5.14 2021-03-04  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* IMAP FILTER command: cmd-filter-sieve - Do not allow NIL as
 	  script name argument.
