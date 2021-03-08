@@ -5,6 +5,7 @@
 #include "buffer.h"
 #include "ioloop.h"
 #include "istream.h"
+#include "istream-concat.h"
 #include "ostream.h"
 #include "path-util.h"
 #include "str.h"
@@ -106,14 +107,25 @@ static void managesieve_die(void)
 	}
 }
 
-static void client_add_input(struct client *client, const buffer_t *buf)
+static void client_add_istream_prefix(struct client *client,
+				      const buffer_t *input)
+{
+	struct istream *inputs[] = {
+		i_stream_create_copy_from_data(input->data, input->used),
+		client->input,
+		NULL
+	};
+	client->input = i_stream_create_concat(inputs);
+	i_stream_copy_fd(client->input, inputs[1]);
+	i_stream_unref(&inputs[0]);
+	i_stream_unref(&inputs[1]);
+
+	i_stream_set_input_pending(client->input, TRUE);
+}
+
+static void client_logged_in(struct client *client)
 {
 	struct ostream *output;
-
-	if (buf != NULL && buf->used > 0) {
-		if (!i_stream_add_data(client->input, buf->data, buf->used))
-			i_panic("Couldn't add client input to stream");
-	}
 
 	output = client->output;
 	o_stream_ref(output);
@@ -172,9 +184,11 @@ client_create_from_input(const struct mail_storage_service_input *input,
 
 	client = client_create(fd_in, fd_out, input->session_id,
 			       event, mail_user, user, set);
+	if (input_buf != NULL && input_buf->used > 0)
+		client_add_istream_prefix(client, input_buf);
 	client_create_finish(client);
 	T_BEGIN {
-		client_add_input(client, input_buf);
+		client_logged_in(client);
 	} T_END;
 	event_unref(&event);
 	return 0;
