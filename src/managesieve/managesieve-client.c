@@ -154,7 +154,6 @@ client_create(int fd_in, int fd_out, const char *session_id,
 
 	o_stream_set_flush_callback(client->output, client_output, client);
 
-	client->io = io_add_istream(client->input, client_input, client);
 	client->last_input = ioloop_time;
 	client->to_idle = timeout_add(CLIENT_IDLE_TIMEOUT_MSECS,
 				      client_idle_timeout, client);
@@ -164,14 +163,6 @@ client_create(int fd_in, int fd_out, const char *session_id,
 	client->cmd.client = client;
 	client->cmd.event = event_create(client->event);
 	client->user = user;
-
-	if (set->rawlog_dir[0] != '\0') {
-		(void)iostream_rawlog_create(set->rawlog_dir, &client->input,
-					     &client->output);
-	}
-
-	client->parser = managesieve_parser_create(
-		client->input, set->managesieve_max_line_length);
 
 	client->svinst = svinst;
 	client->storage = storage;
@@ -192,6 +183,17 @@ client_create(int fd_in, int fd_out, const char *session_id,
 
 	managesieve_refresh_proctitle();
 	return client;
+}
+
+void client_create_finish(struct client *client)
+{
+	if (client->set->rawlog_dir[0] != '\0') {
+		(void)iostream_rawlog_create(client->set->rawlog_dir,
+					     &client->input, &client->output);
+	}
+	client->parser = managesieve_parser_create(
+		client->input, client->set->managesieve_max_line_length);
+	client->io = io_add_istream(client->input, client_input, client);
 }
 
 static const char *client_stats(struct client *client)

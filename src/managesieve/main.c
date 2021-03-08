@@ -172,6 +172,7 @@ client_create_from_input(const struct mail_storage_service_input *input,
 
 	client = client_create(fd_in, fd_out, input->session_id,
 			       event, mail_user, user, set);
+	client_create_finish(client);
 	T_BEGIN {
 		client_add_input(client, input_buf);
 	} T_END;
