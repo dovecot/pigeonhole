@@ -966,11 +966,13 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 		ret = sieve_interpreter_operation_execute(interp);
 	}
 
-	sieve_resource_usage_init(&rusage);
-	rusage.cpu_time_msecs = cpu_limit_get_usage_msecs(climit);
-	sieve_resource_usage_add(&interp->rusage, &rusage);
+	if (climit != NULL) {
+		sieve_resource_usage_init(&rusage);
+		rusage.cpu_time_msecs = cpu_limit_get_usage_msecs(climit);
+		sieve_resource_usage_add(&interp->rusage, &rusage);
 
-	cpu_limit_deinit(&climit);
+		cpu_limit_deinit(&climit);
+	}
 
 	if (ret != SIEVE_EXEC_OK) {
 		sieve_runtime_trace(&interp->runenv, SIEVE_TRLVL_NONE,
