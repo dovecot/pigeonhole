@@ -96,7 +96,6 @@ struct sieve_interpreter {
 				       (may be interrupted) */
 	bool interrupted:1;         /* Interpreter interrupt requested */
 	bool test_result:1;         /* Result of previous test command */
-	bool cpu_limit_exceeded:1;  /* Maximum amount of CPU time exceeded */
 };
 
 static struct sieve_interpreter *
@@ -918,11 +917,6 @@ static int sieve_interpreter_operation_execute(struct sieve_interpreter *interp)
 	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
-static void sieve_interpreter_cpu_limit(struct sieve_interpreter *interp)
-{
-	interp->cpu_limit_exceeded = TRUE;
-}
-
 int sieve_interpreter_continue(struct sieve_interpreter *interp,
 			       bool *interrupted)
 {
@@ -941,15 +935,14 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 	if (interrupted != NULL)
 		*interrupted = FALSE;
 
-	interp->cpu_limit_exceeded = FALSE;
 	if (svinst->max_cpu_time_secs > 0) {
 		climit = cpu_limit_init(svinst->max_cpu_time_secs,
-					sieve_interpreter_cpu_limit, interp);
+					CPU_LIMIT_TYPE_USER);
 	}
 
 	while (ret == SIEVE_EXEC_OK && !interp->interrupted &&
 	       *address < sieve_binary_block_get_size(renv->sblock)) {
-		if (interp->cpu_limit_exceeded) {
+		if (climit != NULL && cpu_limit_exceeded(climit)) {
 			sieve_runtime_error(
 				renv, NULL,
 				"execution exceeded CPU time limit");
@@ -968,7 +961,8 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 
 	if (climit != NULL) {
 		sieve_resource_usage_init(&rusage);
-		rusage.cpu_time_msecs = cpu_limit_get_usage_msecs(climit);
+		rusage.cpu_time_msecs =
+			cpu_limit_get_usage_msecs(climit, CPU_LIMIT_TYPE_USER);
 		sieve_resource_usage_add(&interp->rusage, &rusage);
 
 		cpu_limit_deinit(&climit);
