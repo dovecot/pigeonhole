@@ -141,6 +141,9 @@ bool sieve_binary_dumper_run(struct sieve_binary_dumper *dumper,
 			struct sieve_binary_block *sblock =
 				sieve_binary_block_get(sbin, i);
 
+			if (sblock == NULL)
+				return FALSE;
+
 			sieve_binary_dumpf(
 				denv, "%3d: size: %zu bytes\n",
 				i, sieve_binary_block_get_size(sblock));
@@ -152,6 +155,8 @@ bool sieve_binary_dumper_run(struct sieve_binary_dumper *dumper,
 	sieve_binary_dump_sectionf(denv, "Script metadata (block: %d)",
 				   SBIN_SYSBLOCK_SCRIPT_DATA);
 	sblock = sieve_binary_block_get(sbin, SBIN_SYSBLOCK_SCRIPT_DATA);
+	if (sblock == NULL)
+		return FALSE;
 
 	T_BEGIN {
 		offset = 0;
@@ -220,6 +225,9 @@ bool sieve_binary_dumper_run(struct sieve_binary_dumper *dumper,
 
 	dumper->dumpenv.sblock =
 		sieve_binary_block_get(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);
+	if (dumper->dumpenv.sblock == NULL)
+		return FALSE;
+
 	dumper->dumpenv.cdumper = sieve_code_dumper_create(&(dumper->dumpenv));
 
 	if (dumper->dumpenv.cdumper != NULL) {
@@ -238,7 +246,7 @@ bool sieve_binary_dumper_run(struct sieve_binary_dumper *dumper,
  * Hexdump production
  */
 
-void sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
+bool sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
 				 struct ostream *stream)
 {
 	struct sieve_binary *sbin = dumper->dumpenv.sbin;
@@ -256,6 +264,9 @@ void sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
 	for (i = 0; i < count; i++) {
 		struct sieve_binary_block *sblock =
 			sieve_binary_block_get(sbin, i);
+
+		if (sblock == NULL)
+			return FALSE;
 
 		sieve_binary_dumpf(denv, "%3d: size: %zu bytes\n",
 				   i, sieve_binary_block_get_size(sblock));
@@ -323,4 +334,5 @@ void sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
 		str_printfa(line, "%08llx\n", (unsigned long long)offset);
 		o_stream_nsend(stream, str_data(line), str_len(line));
 	}
+	return TRUE;
 }

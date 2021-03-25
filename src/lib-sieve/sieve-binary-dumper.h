@@ -35,7 +35,7 @@ bool sieve_binary_dumper_run(struct sieve_binary_dumper *dumper,
  * Hexdump production
  */
 
-void sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
+bool sieve_binary_dumper_hexdump(struct sieve_binary_dumper *dumper,
 				 struct ostream *stream);
 
 #endif
