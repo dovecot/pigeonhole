@@ -252,6 +252,12 @@ static bool ext_include_binary_open
 	sieve_size_t offset;
 
 	sblock = sieve_binary_extension_get_block(sbin, ext);
+	if (sblock == NULL) {
+		e_error(svinst->event,
+			"include: failed to load dependency block of binary %s",
+			sieve_binary_path(sbin));
+		return FALSE;
+	}
 	block_id = sieve_binary_block_get_id(sblock);
 
 	offset = 0;
