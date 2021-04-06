@@ -748,6 +748,14 @@ act_store_log_status(struct act_store_transaction *trans,
 	}
 }
 
+static void act_store_cleanup(struct act_store_transaction *trans)
+{
+	if (trans->mail_trans != NULL)
+		mailbox_transaction_rollback(&trans->mail_trans);
+	if (trans->box != NULL)
+		mailbox_free(&trans->box);
+}
+
 static int
 act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 {
@@ -792,9 +800,8 @@ act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 	/* Log our status */
 	act_store_log_status(trans, aenv, FALSE, status);
 
-	/* Close mailbox */
-	if (trans->box != NULL)
-		mailbox_free(&trans->box);
+	/* Clean up */
+	act_store_cleanup(trans);
 
 	if (status)
 		return SIEVE_EXEC_OK;
@@ -825,12 +832,8 @@ act_store_rollback(const struct sieve_action_exec_env *aenv, void *tr_context,
 	/* Log status */
 	act_store_log_status(trans, aenv, TRUE, success);
 
-	/* Rollback mailbox transaction */
-	if (trans->mail_trans != NULL)
-		mailbox_transaction_rollback(&trans->mail_trans);
-
-	/* Close the mailbox */
-	mailbox_free(&trans->box);
+	/* Rollback mailbox transaction and clean up */
+	act_store_cleanup(trans);
 }
 
 /*
