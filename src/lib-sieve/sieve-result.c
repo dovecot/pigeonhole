@@ -1133,12 +1133,22 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 	/* Skip non-actions (inactive keep) */
 	if (act->def == NULL) {
 		i_assert(aexec != &rexec->keep);
+		if (act->keep)
+			e_debug(rexec->event, "Executed explicit keep");
 		return status;
 	}
 
 	/* Don't execute if others already failed */
 	if (status != SIEVE_EXEC_OK)
 		return status;
+
+	if (aexec == &rexec->keep)
+		e_debug(rexec->event, "Executing implicit keep action");
+	else {
+		e_debug(rexec->event, "Executing %s action%s",
+			sieve_action_name(act),
+			(act->keep ? " (explicit keep)" : ""));
+	}
 
 	sieve_action_execution_pre(rexec, aexec);
 
@@ -1168,6 +1178,19 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 		seexec = seexec->next;
 	}
 
+	if (aexec == &rexec->keep) {
+		e_debug(rexec->event,
+			"Finished executing implicit keep action (status=%s)",
+			sieve_execution_exitcode_to_str(status));
+	} else {
+		e_debug(rexec->event, "Finished executing %s action "
+			"(status=%s, keep=%s)", sieve_action_name(act),
+			sieve_execution_exitcode_to_str(status),
+			(act->keep ? "explicit" :
+			 (impl_keep && rexec->keep_implicit ?
+			  "implicit" : "canceled")));
+	}
+
 	if (status == SIEVE_EXEC_OK &&
 	    (act->def->flags & SIEVE_ACTFLAG_TRIES_DELIVER) != 0)
 		rexec->seen_delivery = TRUE;
@@ -1191,6 +1214,14 @@ sieve_result_action_commit(struct sieve_result_execution *rexec,
 	struct sieve_action *act = &rac->action;
 	struct sieve_side_effect_execution *seexec;
 	int cstatus = SIEVE_EXEC_OK;
+
+	if (aexec == &rexec->keep) {
+		e_debug(rexec->event, "Commit implicit keep action");
+	} else {
+		e_debug(rexec->event, "Commit %s action%s",
+			sieve_action_name(act),
+			(act->keep ? " (explicit keep)" : ""));
+	}
 
 	sieve_action_execution_pre(rexec, aexec);
 
@@ -1222,6 +1253,14 @@ sieve_result_action_rollback(struct sieve_result_execution *rexec,
 	struct sieve_action *act = &rac->action;
 	struct sieve_side_effect_execution *seexec;
 
+	if (aexec == &rexec->keep) {
+		e_debug(rexec->event, "Roll back implicit keep action");
+	} else {
+		e_debug(rexec->event, "Roll back %s action%s",
+			sieve_action_name(act),
+			(act->keep ? " (explicit keep)" : ""));
+	}
+
 	sieve_action_execution_pre(rexec, aexec);
 
 	if (act->def->rollback != NULL) {
@@ -1251,6 +1290,24 @@ sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
 	if (aexec->state >= SIEVE_ACTION_EXECUTION_STATE_FINALIZED)
 		return status;
 	aexec->state = SIEVE_ACTION_EXECUTION_STATE_FINALIZED;
+
+	if (aexec == &rexec->keep) {
+		e_debug(rexec->event, "Finalize implicit keep action"
+			"(status=%s, action_status=%s, commit_status=%s)",
+			sieve_execution_exitcode_to_str(status),
+			sieve_execution_exitcode_to_str(aexec->status),
+			sieve_execution_exitcode_to_str(*commit_status));
+	} else {
+		e_debug(rexec->event, "Finalize %s action "
+			"(%sstatus=%s, action_status=%s, commit_status=%s, "
+			 "pre-commit=%s)",
+			sieve_action_name(act),
+			(act->keep ? "explicit keep, " : ""),
+			sieve_execution_exitcode_to_str(status),
+			sieve_execution_exitcode_to_str(aexec->status),
+			sieve_execution_exitcode_to_str(*commit_status),
+			(aexec->commit ? "yes" : "no"));
+	}
 
 	/* Skip non-actions (inactive keep) */
 	if (act->def == NULL)
@@ -1297,6 +1354,14 @@ sieve_result_action_finish(struct sieve_result_execution *rexec,
 	/* Skip non-actions (inactive keep) */
 	if (act->def == NULL)
 		return;
+
+	if (aexec == &rexec->keep) {
+		e_debug(rexec->event, "Finish implicit keep action");
+	} else {
+		e_debug(rexec->event, "Finish %s action%s",
+			sieve_action_name(act),
+			(act->keep ? " (explicit keep)" : ""));
+	}
 
 	if (act->def->finish != NULL) {
 		sieve_action_execution_pre(rexec, aexec);
@@ -1592,6 +1657,8 @@ static int sieve_result_transaction_start(struct sieve_result_execution *rexec)
 	struct sieve_action_execution *aexec;
 	int status = SIEVE_EXEC_OK;
 
+	e_debug(rexec->event, "Starting execution of actions");
+
 	rexec->dup_flushed = FALSE;
 	aexec = rexec->actions_head;
 	while (status == SIEVE_EXEC_OK && aexec != NULL) {
@@ -1609,6 +1676,8 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 {
 	struct sieve_action_execution *aexec;
 	int status = SIEVE_EXEC_OK;
+
+	e_debug(rexec->event, "Executing actions");
 
 	rexec->seen_delivery = FALSE;
 	aexec = rexec->actions_head;
@@ -1632,6 +1701,11 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 			rexec->executed_delivery || rexec->seen_delivery;
 	}
 
+	e_debug(rexec->event, "Finished executing actions "
+		"(status=%s, keep=%s)",
+		sieve_execution_exitcode_to_str(status),
+		(rexec->keep_explicit ? "explicit" :
+		 (rexec->keep_implicit ? "implicit" : "none")));
 	return status;
 }
 
@@ -1650,6 +1724,8 @@ sieve_result_transaction_commit_or_rollback(
 	default:
 		break;
 	}
+
+	e_debug(rexec->event, "Finalizing actions");
 
 	/* First commit/rollback all storage actions */
 	aexec = rexec->actions_head;
@@ -1687,6 +1763,12 @@ sieve_result_transaction_commit_or_rollback(
 		aexec = aexec->next;
 	}
 
+	e_debug(rexec->event, "Finished finalizing actions "
+		"(status=%s, keep=%s)",
+		sieve_execution_exitcode_to_str(status),
+		(rexec->keep_explicit ? "explicit" :
+		 (rexec->keep_implicit ? "implicit" : "none")));
+
 	return commit_status;
 }
 
@@ -1695,6 +1777,8 @@ sieve_result_transaction_finish(struct sieve_result_execution *rexec,
 				int status)
 {
 	struct sieve_action_execution *aexec;
+
+	e_debug(rexec->event, "Finishing actions");
 
 	aexec = rexec->actions_head;
 	while (aexec != NULL) {
@@ -1759,6 +1843,10 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 	struct sieve_result *result = aenv->result;
 	int result_status, ret;
 
+	e_debug(rexec->event, "Executing result (status=%s, commit=%s)",
+		sieve_execution_exitcode_to_str(status),
+		(commit ? "yes" : "no"));
+
 	if (keep_r != NULL)
 		*keep_r = FALSE;
 	sieve_result_mark_executed(result);
@@ -1795,6 +1883,11 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 		rexec->keep_implicit = (rexec->keep_explicit ||
 					rexec->keep_implicit);
 		rexec->keep_explicit = FALSE;
+
+		e_debug(rexec->event, "Finished executing result "
+			"(no commit, status=%s, keep=%s)",
+			sieve_execution_exitcode_to_str(rexec->status),
+			(rexec->keep_implicit ? "yes" : "no"));
 
 		if (keep_r != NULL)
 			*keep_r = rexec->keep_implicit;
@@ -1866,6 +1959,11 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 	rexec->keep_implicit = (rexec->keep_explicit ||
 				rexec->keep_implicit);
 	rexec->keep_explicit = FALSE;
+
+	e_debug(rexec->event, "Finished executing result "
+		"(final, status=%s, keep=%s)",
+		sieve_execution_exitcode_to_str(result_status),
+		(rexec->keep_implicit ? "yes" : "no"));
 
 	if (keep_r != NULL)
 		*keep_r = rexec->keep_implicit;
