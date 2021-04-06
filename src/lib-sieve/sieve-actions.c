@@ -432,6 +432,8 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 			p_strdup(pool, SIEVE_SCRIPT_DEFAULT_MAILBOX(senv));
 	}
 
+	e_debug(aenv->event, "Start storing into mailbox %s", ctx->mailbox);
+
 	/* Open the requested mailbox */
 
 	/* NOTE: The caller of the sieve library is allowed to leave user set
@@ -462,6 +464,8 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 	if (alloc_failed) {
 		trans->error = p_strdup(pool, error);
 		trans->error_code = error_code;
+		e_debug(aenv->event, "Failed to open mailbox %s: %s",
+			trans->mailbox_identifier, trans->error);
 	} else {
 		trans->error_code = MAIL_ERROR_NONE;
 	}
@@ -572,6 +576,8 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
 
 	/* Check whether we need to do anything */
 	if (trans->disabled) {
+		e_debug(aenv->event, "Skip storing into mailbox %s",
+			trans->mailbox_identifier);
 		*keep = FALSE;
 		return SIEVE_EXEC_OK;
 	}
@@ -580,6 +586,9 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
 	if (box == NULL)
 		return SIEVE_EXEC_FAILURE;
 
+	e_debug(aenv->event, "Execute storing into mailbox %s",
+		trans->mailbox_identifier);
+
 	/* Mark attempt to use storage. Can only get here when all previous
 	   actions succeeded.
 	 */
@@ -587,8 +596,11 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
 
 	/* Open the mailbox (may already be open) */
 	if (trans->error_code == MAIL_ERROR_NONE) {
-		if (mailbox_open(box) < 0)
+		if (mailbox_open(box) < 0) {
 			sieve_act_store_get_storage_error(aenv, trans);
+			e_debug(aenv->event, "Failed to open mailbox %s: %s",
+				trans->mailbox_identifier, trans->error);
+		}
 	}
 
 	/* Exit early if transaction already failed */
@@ -635,6 +647,8 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
 				mail_update_flags(mail, MODIFY_REPLACE, trans->flags);
 			}
 		}
+		e_debug(aenv->event, "Updated existing mail in mailbox %s",
+			trans->mailbox_identifier);
 		return SIEVE_EXEC_OK;
 
 	/* If the message is modified, only store it in the source mailbox when
@@ -645,6 +659,9 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
 	} else if (mail != eenv->msgdata->mail &&
 		   mailbox_is_readonly(eenv->msgdata->mail->box) &&
 		   (mailbox_backends_equal(box, eenv->msgdata->mail->box))) {
+		e_debug(aenv->event,
+			"Not modifying exsiting mail in read-only mailbox %s",
+			trans->mailbox_identifier);
 		trans->redundant = TRUE;
 		return SIEVE_EXEC_OK;
 	}
@@ -676,9 +693,14 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
 
 	if (mailbox_save_using_mail(&save_ctx, mail) < 0) {
 		sieve_act_store_get_storage_error(aenv, trans);
+		e_debug(aenv->event, "Failed to save to mailbox %s: %s",
+			trans->mailbox_identifier, trans->error);
+
 		status = (trans->error_code == MAIL_ERROR_TEMP ?
 			  SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
 	} else {
+		e_debug(aenv->event, "Saving to mailbox %s successful so far",
+			trans->mailbox_identifier);
 		eenv->exec_status->significant_action_executed = TRUE;
 	}
 
@@ -751,6 +773,9 @@ act_store_log_status(struct act_store_transaction *trans,
 			sieve_result_global_log(
 				aenv, "store into mailbox %s aborted",
 				mailbox_identifier);
+		} else {
+			e_debug(aenv->event, "Store into mailbox %s aborted",
+				mailbox_identifier);
 		}
 	/* Succeeded */
 	} else {
@@ -784,6 +809,9 @@ act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 	/* Verify transaction */
 	if (trans == NULL)
 		return SIEVE_EXEC_FAILURE;
+
+	e_debug(aenv->event, "Commit storing into mailbox %s",
+		trans->mailbox_identifier);
 
 	/* Check whether we can commit this transaction */
 	if (trans->error_code != MAIL_ERROR_NONE) {
@@ -850,6 +878,9 @@ act_store_rollback(const struct sieve_action_exec_env *aenv, void *tr_context,
 
 	if (trans == NULL)
 		return;
+
+	e_debug(aenv->event, "Roll back storing into mailbox %s",
+		trans->mailbox_identifier);
 
 	i_assert(trans->box != NULL);
 
