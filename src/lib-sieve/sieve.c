@@ -732,6 +732,19 @@ sieve_multiscript_start_execute(struct sieve_instance *svinst,
 	return mscript;
 }
 
+static void sieve_multiscript_destroy(struct sieve_multiscript **_mscript)
+{
+	struct sieve_multiscript *mscript = *_mscript;
+
+	if (mscript == NULL)
+		return;
+	*_mscript = NULL;
+
+	sieve_result_unref(&mscript->result);
+	sieve_execute_deinit(&mscript->exec_env);
+	pool_unref(&mscript->pool);
+}
+
 struct sieve_multiscript *
 sieve_multiscript_start_test(struct sieve_instance *svinst,
 			     const struct sieve_message_data *msgdata,
@@ -896,10 +909,7 @@ int sieve_multiscript_tempfail(struct sieve_multiscript **_mscript,
 	}
 
 	/* Cleanup */
-	sieve_result_unref(&result);
-	sieve_execute_deinit(&mscript->exec_env);
-	pool_unref(&mscript->pool);
-	*_mscript = NULL;
+	sieve_multiscript_destroy(&mscript);
 
 	return ret;
 }
@@ -939,10 +949,8 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 	sieve_result_finish(result, action_ehandler, (ret == SIEVE_EXEC_OK));
 
 	/* Cleanup */
-	sieve_result_unref(&result);
-	sieve_execute_deinit(&mscript->exec_env);
-	pool_unref(&mscript->pool);
-	*_mscript = NULL;
+	sieve_multiscript_destroy(&mscript);
+
 	return ret;
 }
 
