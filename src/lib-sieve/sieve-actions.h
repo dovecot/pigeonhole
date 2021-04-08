@@ -89,6 +89,7 @@ struct sieve_action {
 	void *context;
 	struct mail *mail;
 
+	bool keep:1;
 	bool executed:1;
 };
 

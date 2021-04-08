@@ -39,8 +39,6 @@ struct sieve_result_action {
 	void *tr_context;
 	bool success;
 
-	bool keep;
-
 	struct sieve_side_effects_list *seffects;
 
 	struct sieve_result_action *prev, *next;
@@ -444,7 +442,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 	while (raction != NULL) {
 		const struct sieve_action *oact = &raction->action;
 
-		if (keep && raction->keep) {
+		if (keep && raction->action.keep) {
 			/* Duplicate keep */
 			if (raction->action.def == NULL ||
 			    raction->action.executed) {
@@ -476,7 +474,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 
 				/* Duplicate */
 				if (ret == 1) {
-					if (keep && !raction->keep) {
+					if (keep && !oact->keep) {
 						/* New keep has higher precedence than
 						   existing duplicate non-keep action.
 						   So, take over the result action object
@@ -573,7 +571,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 	raction->action.def = act_def;
 	raction->action.ext = ext;
 	raction->action.location = p_strdup(result->pool, action.location);
-	raction->keep = keep;
+	raction->action.keep = keep;
 
 	if (raction->prev == NULL && raction != result->actions_head) {
 		/* Add */
@@ -816,7 +814,7 @@ bool sieve_result_print(struct sieve_result *result,
 			bool impl_keep = TRUE;
 			const struct sieve_action *act = &rac->action;
 
-			if (rac->keep && keep != NULL)
+			if (rac->action.keep && keep != NULL)
 				*keep = TRUE;
 
 			if (act->def != NULL) {
@@ -827,7 +825,7 @@ bool sieve_result_print(struct sieve_result *result,
 						&penv, "%s", act->def->name);
 				}
 			} else {
-				if (rac->keep) {
+				if (act->keep) {
 					sieve_result_action_printf(&penv, "keep");
 					impl_keep = FALSE;
 				} else {
@@ -943,7 +941,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 	/* Scan for deferred keep */
 	kac = result->actions_tail;
 	while (kac != NULL && kac->action.executed) {
-		if (kac->keep && kac->action.def == NULL)
+		if (kac->action.keep && kac->action.def == NULL)
 			break;
 		kac = kac->prev;
 	}
@@ -1305,7 +1303,7 @@ sieve_result_action_commit_or_rollback(struct sieve_result *result,
 	if (status == SIEVE_EXEC_OK) {
 		int cstatus = SIEVE_EXEC_OK;
 
-		if (rac->keep && keep != NULL)
+		if (rac->action.keep && keep != NULL)
 			*keep = TRUE;
 
 		/* Skip non-actions (inactive keep) and executed ones */
@@ -1334,7 +1332,7 @@ sieve_result_action_commit_or_rollback(struct sieve_result *result,
 		sieve_result_action_rollback(result, rac);
 	}
 
-	if (rac->keep) {
+	if (act->keep) {
 		if (status == SIEVE_EXEC_FAILURE)
 			status = SIEVE_EXEC_KEEP_FAILED;
 		if (*commit_status == SIEVE_EXEC_FAILURE)
@@ -1564,7 +1562,7 @@ sieve_result_iterate_next(struct sieve_result_iterate_context *rictx,
 		rictx->next_action = rac->next;
 
 		if (keep != NULL)
-			*keep = rac->keep;
+			*keep = rac->action.keep;
 
 		return &rac->action;
 	}
