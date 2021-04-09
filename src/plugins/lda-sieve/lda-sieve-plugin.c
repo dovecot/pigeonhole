@@ -663,13 +663,10 @@ static int lda_sieve_execute_scripts(struct lda_sieve_run_context *srctx)
 	/* Finish execution */
 	exec_ehandler = (srctx->user_ehandler != NULL ?
 			 srctx->user_ehandler : srctx->master_ehandler);
-	if (error == SIEVE_ERROR_TEMP_FAILURE) {
-		ret = sieve_multiscript_tempfail(&mscript, exec_ehandler,
-						 exflags);
-	} else {
-		ret = sieve_multiscript_finish(&mscript, exec_ehandler,
-					       exflags);
-	}
+	ret = sieve_multiscript_finish(&mscript, exec_ehandler, exflags,
+				       (error == SIEVE_ERROR_TEMP_FAILURE ?
+					SIEVE_EXEC_TEMP_FAILURE :
+					SIEVE_EXEC_OK));
 
 	/* Don't log additional messages about compile failure */
 	if (error != SIEVE_ERROR_NONE && ret == SIEVE_EXEC_FAILURE) {

@@ -441,7 +441,7 @@ int main(int argc, char **argv)
 			}
 
 			result = sieve_multiscript_finish(
-				&mscript, ehandler, exflags);
+				&mscript, ehandler, exflags, ret);
 
 			ret = (ret > 0 ? result : ret);
 		}

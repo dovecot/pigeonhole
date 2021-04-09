@@ -182,12 +182,9 @@ void sieve_multiscript_run_discard(struct sieve_multiscript *mscript,
 
 int sieve_multiscript_status(struct sieve_multiscript *mscript);
 
-int sieve_multiscript_tempfail(struct sieve_multiscript **_mscript,
-			       struct sieve_error_handler *action_ehandler,
-			       enum sieve_execute_flags flags);
 int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 			     struct sieve_error_handler *action_ehandler,
-			     enum sieve_execute_flags flags);
+			     enum sieve_execute_flags flags, int status);
 
 /*
  * Configured limits

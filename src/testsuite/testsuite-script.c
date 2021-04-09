@@ -251,5 +251,5 @@ bool testsuite_script_multiscript(const struct sieve_runtime_env *renv,
 	}
 
 	return (sieve_multiscript_finish(&mscript, testsuite_log_ehandler,
-					 0) > 0 && result);
+					 0, SIEVE_EXEC_OK) > 0 && result);
 }
