@@ -895,9 +895,11 @@ struct sieve_result_execution {
 	struct event *event;
 
 	struct sieve_result_action keep;
+	struct sieve_result_action *keep_equiv_action;
 	int keep_status;
 
 	bool dup_flushed:1;
+	bool keep_success:1;
 };
 
 /* Action */
@@ -1160,6 +1162,7 @@ sieve_result_execution_create(struct sieve_result *result, pool_t pool)
 	rexec->action_env.event = result->event;
 	rexec->action_env.exec_env = result->exec_env;
 	rexec->action_env.msgctx = result->msgctx;
+	rexec->keep_success = TRUE;
 	rexec->keep_status = SIEVE_EXEC_OK;
 
 	sieve_result_ref(result);
@@ -1182,9 +1185,9 @@ void sieve_result_execution_destroy(struct sieve_result_execution **_rexec)
 	pool_unref(&rexec->pool);
 }
 
-static int
-_sieve_result_implicit_keep(struct sieve_result_execution *rexec,
-			    bool success)
+static void
+sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
+				   bool success)
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
@@ -1195,10 +1198,14 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	struct sieve_result_action *ract_keep = &rexec->keep;
 	struct sieve_action *act_keep = &ract_keep->action;
 
+	if (rexec->keep_equiv_action != NULL)
+		return;
+
+	rexec->keep_success = success;
 	rexec->keep_status = status;
 
 	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0)
-		return SIEVE_EXEC_OK;
+		return;
 
 	if (!success)
 		*act_keep = result->failure_action;
@@ -1210,7 +1217,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 	/* If keep is a non-action, return right away */
 	if (act_keep->def == NULL)
-		return SIEVE_EXEC_OK;
+		return;
 
 	/* Scan for execution of keep-equal actions */
 	rac = result->actions_head;
@@ -1219,8 +1226,10 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 		    act_keep->def->equals != NULL &&
 		    act_keep->def->equals(eenv->scriptenv, NULL,
 					  &rac->action) &&
-		    rac->action.executed)
-			return SIEVE_EXEC_OK;
+		    rac->action.executed) {
+			rexec->keep_equiv_action = rac;
+			return;
+		}
 
 		rac = rac->next;
 	}
@@ -1304,11 +1313,33 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 		}
 	}
 	rexec->keep_status = status;
+	sieve_action_execution_post(rexec);
+}
 
-	/* Commit keep action */
+static int
+sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
+				    bool success)
+{
+	const struct sieve_action_exec_env *aenv = &rexec->action_env;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct sieve_result_side_effect *rsef, *rsef_first;
+	struct sieve_result_action *ract_keep = &rexec->keep;
+	struct sieve_action *act_keep = &ract_keep->action;
+
+	i_assert(success == rexec->keep_success);
+
+	if (rexec->keep_equiv_action != NULL)
+		return SIEVE_EXEC_OK;
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0)
+		return rexec->keep_status;
+	if (act_keep->def == NULL)
+		return rexec->keep_status;
+
+	/* Finalize keep action */
 	rsef_first = (ract_keep->seffects == NULL ?
 		      NULL : ract_keep->seffects->first_effect);
 	if (rexec->keep_status == SIEVE_EXEC_OK) {
+		/* Commit keep action */
 		if (act_keep->def->commit != NULL) {
 			sieve_action_execution_pre(rexec, ract_keep);
 			rexec->keep_status = act_keep->def->commit(
@@ -1359,7 +1390,8 @@ int sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 	rexec->ehandler = ehandler;
 
-	ret = _sieve_result_implicit_keep(rexec, success);
+	sieve_result_implicit_keep_execute(rexec, success);
+	ret = sieve_result_implicit_keep_finalize(rexec, success);
 
 	sieve_action_execution_post(rexec);
 
@@ -1563,8 +1595,11 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 		 * keep was not canceled during transaction.
 		 */
 		if (status != SIEVE_EXEC_OK || implicit_keep) {
-			switch ((ret = _sieve_result_implicit_keep(
-				rexec, (status == SIEVE_EXEC_OK)))) {
+			sieve_result_implicit_keep_execute(
+				rexec, (status == SIEVE_EXEC_OK));
+			ret = sieve_result_implicit_keep_finalize(
+				rexec, (status == SIEVE_EXEC_OK));
+			switch (ret) {
 			case SIEVE_EXEC_OK:
 				if (result_status == SIEVE_EXEC_TEMP_FAILURE)
 					result_status = SIEVE_EXEC_FAILURE;
