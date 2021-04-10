@@ -894,6 +894,8 @@ struct sieve_result_execution {
 	struct sieve_error_handler *ehandler;
 	struct event *event;
 
+	struct sieve_result_action keep;
+
 	bool dup_flushed:1;
 };
 
@@ -1189,20 +1191,22 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	int status = SIEVE_EXEC_OK;
 	struct sieve_result_side_effect *rsef, *rsef_first = NULL;
 	void *tr_context = NULL;
-	struct sieve_action act_keep;
+	struct sieve_result_action *ract_keep = &rexec->keep;
+	struct sieve_action *act_keep = &ract_keep->action;
 
 	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0)
 		return SIEVE_EXEC_OK;
 
 	if (rollback)
-		act_keep = result->failure_action;
+		*act_keep = result->failure_action;
 	else
-		act_keep = result->keep_action;
-	act_keep.name = "keep";
-	act_keep.mail = NULL;
+		*act_keep = result->keep_action;
+	act_keep->name = "keep";
+	act_keep->mail = NULL;
+	act_keep->keep = TRUE;
 
 	/* If keep is a non-action, return right away */
-	if (act_keep.def == NULL)
+	if (act_keep->def == NULL)
 		return SIEVE_EXEC_OK;
 
 	/* Scan for deferred keep */
@@ -1215,23 +1219,23 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 	if (kac == NULL) {
 		if (!rollback)
-			act_keep.mail = sieve_message_get_mail(aenv->msgctx);
+			act_keep->mail = sieve_message_get_mail(aenv->msgctx);
 
 		/* Scan for execution of keep-equal actions */
 		rac = result->actions_head;
 		while (rac != NULL) {
-			if (rac->action.def == act_keep.def &&
-			    act_keep.def->equals != NULL &&
-			    act_keep.def->equals(eenv->scriptenv, NULL,
-						 &rac->action) &&
+			if (rac->action.def == act_keep->def &&
+			    act_keep->def->equals != NULL &&
+			    act_keep->def->equals(eenv->scriptenv, NULL,
+						  &rac->action) &&
 			    rac->action.executed)
 				return SIEVE_EXEC_OK;
 
 			rac = rac->next;
 		}
 	} else if (!rollback) {
-		act_keep.location = kac->action.location;
-		act_keep.mail = kac->action.mail;
+		act_keep->location = kac->action.location;
+		act_keep->mail = kac->action.mail;
 		if (kac->seffects != NULL)
 			rsef_first = kac->seffects->first_effect;
 	}
@@ -1244,7 +1248,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 			/* Check for implicit side effects to keep action */
 			actctx = hash_table_lookup(result->action_contexts,
-						   act_keep.def);
+						   act_keep->def);
 
 			if (actctx != NULL && actctx->seffects != NULL)
 				rsef_first = actctx->seffects->first_effect;
@@ -1252,12 +1256,12 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	}
 
 	/* Initialize keep action event */
-	sieve_result_init_action_event(result, &act_keep, FALSE);
+	sieve_result_init_action_event(result, act_keep, FALSE);
 
 	/* Start keep action */
-	if (act_keep.def->start != NULL) {
-		sieve_action_execution_pre(rexec, &act_keep);
-		status = act_keep.def->start(aenv, &tr_context);
+	if (act_keep->def->start != NULL) {
+		sieve_action_execution_pre(rexec, act_keep);
+		status = act_keep->def->start(aenv, &tr_context);
 	}
 
 	/* Execute keep action */
@@ -1269,7 +1273,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 			struct sieve_side_effect *sef = &rsef->seffect;
 
 			if (sef->def->pre_execute != NULL) {
-				sieve_action_execution_pre(rexec, &act_keep);
+				sieve_action_execution_pre(rexec, act_keep);
 				status = sef->def->pre_execute(sef, aenv,
 							       &sef->context,
 							       tr_context);
@@ -1277,10 +1281,10 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 			rsef = rsef->next;
 		}
 
-		if (status == SIEVE_EXEC_OK && act_keep.def->execute != NULL) {
-			sieve_action_execution_pre(rexec, &act_keep);
-			status = act_keep.def->execute(aenv, tr_context,
-						       &dummy);
+		if (status == SIEVE_EXEC_OK && act_keep->def->execute != NULL) {
+			sieve_action_execution_pre(rexec, act_keep);
+			status = act_keep->def->execute(aenv, tr_context,
+							&dummy);
 		}
 
 		rsef = rsef_first;
@@ -1288,7 +1292,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 			struct sieve_side_effect *sef = &rsef->seffect;
 
 			if (sef->def->post_execute != NULL) {
-				sieve_action_execution_pre(rexec, &act_keep);
+				sieve_action_execution_pre(rexec, act_keep);
 				status = sef->def->post_execute(sef, aenv,
 								tr_context,
 								&dummy);
@@ -1299,9 +1303,9 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 	/* Commit keep action */
 	if (status == SIEVE_EXEC_OK) {
-		if (act_keep.def->commit != NULL) {
-			sieve_action_execution_pre(rexec, &act_keep);
-			status = act_keep.def->commit(aenv, tr_context);
+		if (act_keep->def->commit != NULL) {
+			sieve_action_execution_pre(rexec, act_keep);
+			status = act_keep->def->commit(aenv, tr_context);
 		}
 
 		rsef = rsef_first;
@@ -1309,28 +1313,28 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 			struct sieve_side_effect *sef = &rsef->seffect;
 
 			if (sef->def->post_commit != NULL) {
-				sieve_action_execution_pre(rexec, &act_keep);
+				sieve_action_execution_pre(rexec, act_keep);
 				sef->def->post_commit(sef, aenv, tr_context);
 			}
 			rsef = rsef->next;
 		}
 	} else {
 		/* Failed, rollback */
-		if (act_keep.def->rollback != NULL) {
-			sieve_action_execution_pre(rexec, &act_keep);
-			act_keep.def->rollback(aenv, tr_context,
-					       (status == SIEVE_EXEC_OK));
+		if (act_keep->def->rollback != NULL) {
+			sieve_action_execution_pre(rexec, act_keep);
+			act_keep->def->rollback(aenv, tr_context,
+						(status == SIEVE_EXEC_OK));
 		}
 	}
 
 	/* Finish keep action */
-	if (act_keep.def->finish != NULL) {
-		sieve_action_execution_pre(rexec, &act_keep);
-		act_keep.def->finish(aenv, TRUE, tr_context, status);
+	if (act_keep->def->finish != NULL) {
+		sieve_action_execution_pre(rexec, act_keep);
+		act_keep->def->finish(aenv, TRUE, tr_context, status);
 	}
 
 	sieve_action_execution_post(rexec);
-	event_unref(&act_keep.event);
+	event_unref(&act_keep->event);
 
 	if (status == SIEVE_EXEC_FAILURE)
 		status = SIEVE_EXEC_KEEP_FAILED;
