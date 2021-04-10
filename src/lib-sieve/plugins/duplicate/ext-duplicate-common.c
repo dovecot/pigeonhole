@@ -77,7 +77,7 @@ act_duplicate_mark_print(const struct sieve_action *action,
 			 const struct sieve_result_print_env *rpenv,
 			 bool *keep);
 static void
-act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv, bool last,
+act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv,
 			  void *tr_context, int status);
 
 static const struct sieve_action_def act_duplicate_mark = {
@@ -105,7 +105,7 @@ act_duplicate_mark_print(const struct sieve_action *action,
 }
 
 static void
-act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv, bool last,
+act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv,
 			  void *tr_context ATTR_UNUSED, int status)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
@@ -113,7 +113,7 @@ act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv, bool last,
 	struct act_duplicate_mark_data *data =
 		(struct act_duplicate_mark_data *)aenv->action->context;
 
-	if (!last || status != SIEVE_EXEC_OK)
+	if (status != SIEVE_EXEC_OK)
 		return;
 
 	/* Message was handled successfully, so track duplicate for this

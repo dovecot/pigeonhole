@@ -72,7 +72,7 @@ struct sieve_action_def {
 		      void *tr_context);
 	void (*rollback)(const struct sieve_action_exec_env *aenv,
 			 void *tr_context, bool success);
-	void (*finish)(const struct sieve_action_exec_env *aenv, bool last,
+	void (*finish)(const struct sieve_action_exec_env *aenv,
 		       void *tr_context, int status);
 };
 
