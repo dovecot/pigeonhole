@@ -101,16 +101,23 @@ void sieve_result_set_failure_action(struct sieve_result *result,
  * Result execution
  */
 
-int sieve_result_implicit_keep(struct sieve_result *result,
+struct sieve_result_execution;
+
+struct sieve_result_execution *
+sieve_result_execution_create(struct sieve_result *result, pool_t pool);
+void sieve_result_execution_destroy(struct sieve_result_execution **_rexec);
+
+int sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 			       struct sieve_error_handler *ehandler,
 			       bool success);
 
 void sieve_result_mark_executed(struct sieve_result *result);
 
-int sieve_result_execute(struct sieve_result *result, bool last, bool *keep,
+int sieve_result_execute(struct sieve_result_execution *rexec,
+			 bool last, bool *keep,
 			 struct sieve_error_handler *ehandler);
 
-void sieve_result_finish(struct sieve_result *result,
+void sieve_result_finish(struct sieve_result_execution *rexec,
 			 struct sieve_error_handler *ehandler, bool success);
 
 bool sieve_result_executed(struct sieve_result *result);

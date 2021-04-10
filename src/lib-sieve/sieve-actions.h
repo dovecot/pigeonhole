@@ -16,6 +16,7 @@
 
 struct sieve_action_exec_env {
 	const struct sieve_execute_env *exec_env;
+	struct sieve_result_execution *rexec;
 	const struct sieve_action *action;
 	struct event *event;
 

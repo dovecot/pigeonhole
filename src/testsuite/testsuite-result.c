@@ -23,6 +23,7 @@ struct sieve_execute_env testsuite_execute_env;
 
 static pool_t testsuite_execute_pool = NULL;
 static struct sieve_result *_testsuite_result = NULL;
+static struct sieve_result_execution *_testsuite_rexec = NULL;
 
 void testsuite_result_init(void)
 {
@@ -40,6 +41,7 @@ void testsuite_result_init(void)
 
 void testsuite_result_deinit(void)
 {
+	sieve_result_execution_destroy(&_testsuite_rexec);
 	if (_testsuite_result != NULL)
 		sieve_result_unref(&_testsuite_result);
 	sieve_execute_deinit(&testsuite_execute_env);
@@ -51,6 +53,7 @@ void testsuite_result_reset(const struct sieve_runtime_env *renv)
 	struct sieve_instance *svinst = testsuite_sieve_instance;
 
 	if (_testsuite_result != NULL) {
+		sieve_result_execution_destroy(&_testsuite_rexec);
 		sieve_result_unref(&_testsuite_result);
 		pool_unref(&testsuite_execute_pool);
 	}
@@ -91,8 +94,13 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 
 	testsuite_log_clear_messages();
 
+	if (_testsuite_rexec == NULL) {
+		_testsuite_rexec = sieve_result_execution_create(
+			_testsuite_result, testsuite_execute_pool);
+	}
+
 	/* Execute the result */
-	ret = sieve_result_execute(_testsuite_result, TRUE, NULL,
+	ret = sieve_result_execute(_testsuite_rexec, TRUE, NULL,
 				   testsuite_log_ehandler);
 
 	return (ret > 0);

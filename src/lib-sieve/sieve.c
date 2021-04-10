@@ -643,6 +643,7 @@ int sieve_execute(struct sieve_binary *sbin,
 {
 	struct sieve_instance *svinst = sieve_binary_svinst(sbin);
 	struct sieve_result *result = NULL;
+	struct sieve_result_execution *rexec;
 	struct sieve_execute_env eenv;
 	pool_t pool;
 	int ret;
@@ -656,6 +657,8 @@ int sieve_execute(struct sieve_binary *sbin,
 	/* Run the script */
 	ret = sieve_run(sbin, result, &eenv, exec_ehandler);
 
+	rexec = sieve_result_execution_create(result, pool);
+
 	/* Evaluate status and execute the result:
 	   Strange situations, e.g. currupt binaries, must be handled by the
 	   caller. In that case no implicit keep is attempted, because the
@@ -663,12 +666,12 @@ int sieve_execute(struct sieve_binary *sbin,
 	 */
 	if (ret > 0) {
 		/* Execute result */
-		ret = sieve_result_execute(result, TRUE, NULL, action_ehandler);
+		ret = sieve_result_execute(rexec, TRUE, NULL, action_ehandler);
 	} else if (ret == SIEVE_EXEC_FAILURE) {
 		/* Perform implicit keep if script failed with a normal runtime
 		   error
 		 */
-		switch (sieve_result_implicit_keep(result, action_ehandler,
+		switch (sieve_result_implicit_keep(rexec, action_ehandler,
 						   FALSE)) {
 		case SIEVE_EXEC_OK:
 			break;
@@ -679,6 +682,8 @@ int sieve_execute(struct sieve_binary *sbin,
 			ret = SIEVE_EXEC_KEEP_FAILED;
 		}
 	}
+
+	sieve_result_execution_destroy(&rexec);
 
 	/* Cleanup */
 	if (result != NULL)
@@ -697,6 +702,7 @@ struct sieve_multiscript {
 	pool_t pool;
 	struct sieve_execute_env exec_env;
 	struct sieve_result *result;
+	struct sieve_result_execution *rexec;
 
 	int status;
 	bool keep;
@@ -725,6 +731,8 @@ sieve_multiscript_start_execute(struct sieve_instance *svinst,
 	sieve_result_set_keep_action(result, NULL, NULL);
 	mscript->result = result;
 
+	mscript->rexec = sieve_result_execution_create(result, pool);
+
 	mscript->status = SIEVE_EXEC_OK;
 	mscript->active = TRUE;
 	mscript->keep = TRUE;
@@ -740,6 +748,7 @@ static void sieve_multiscript_destroy(struct sieve_multiscript **_mscript)
 		return;
 	*_mscript = NULL;
 
+	sieve_result_execution_destroy(&mscript->rexec);
 	sieve_result_unref(&mscript->result);
 	sieve_execute_deinit(&mscript->exec_env);
 	pool_unref(&mscript->pool);
@@ -785,11 +794,11 @@ sieve_multiscript_execute(struct sieve_multiscript *mscript,
 	mscript->exec_env.flags = flags;
 
 	if (mscript->status > 0) {
-		mscript->status = sieve_result_execute(mscript->result, FALSE,
+		mscript->status = sieve_result_execute(mscript->rexec, FALSE,
 						       &mscript->keep,
 						       ehandler);
 	} else {
-		if (sieve_result_implicit_keep(mscript->result, ehandler,
+		if (sieve_result_implicit_keep(mscript->rexec, ehandler,
 					       FALSE) <= 0)
 			mscript->status = SIEVE_EXEC_KEEP_FAILED;
 		else
@@ -898,7 +907,7 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 		} else if (status != SIEVE_EXEC_TEMP_FAILURE ||
 			   sieve_result_executed(mscript->result)) {
 			switch (sieve_result_implicit_keep(
-				mscript->result, action_ehandler, TRUE)) {
+				mscript->rexec, action_ehandler, TRUE)) {
 			case SIEVE_EXEC_OK:
 				mscript->keep = TRUE;
 				break;
@@ -915,7 +924,7 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 	}
 
 	if (status != SIEVE_EXEC_TEMP_FAILURE) {
-		sieve_result_finish(mscript->result, action_ehandler,
+		sieve_result_finish(mscript->rexec, action_ehandler,
 				    (status == SIEVE_EXEC_OK));
 	}
 
