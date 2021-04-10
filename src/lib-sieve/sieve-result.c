@@ -1191,7 +1191,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_result_action *rac, *kac;
 	int status = SIEVE_EXEC_OK;
-	struct sieve_result_side_effect *rsef, *rsef_first = NULL;
+	struct sieve_result_side_effect *rsef, *rsef_first;
 	struct sieve_result_action *ract_keep = &rexec->keep;
 	struct sieve_action *act_keep = &ract_keep->action;
 
@@ -1239,11 +1239,10 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	} else if (success) {
 		act_keep->location = kac->action.location;
 		act_keep->mail = kac->action.mail;
-		if (kac->seffects != NULL)
-			rsef_first = kac->seffects->first_effect;
+		ract_keep->seffects = kac->seffects;
 	}
 
-	if (rsef_first == NULL) {
+	if (ract_keep->seffects == NULL) {
 		/* Apply any implicit side effects if applicable */
 		if (success && hash_table_is_created(result->action_contexts)) {
 			struct sieve_result_action_context *actctx;
@@ -1252,8 +1251,8 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 			actctx = hash_table_lookup(result->action_contexts,
 						   act_keep->def);
 
-			if (actctx != NULL && actctx->seffects != NULL)
-				rsef_first = actctx->seffects->first_effect;
+			if (actctx != NULL)
+				ract_keep->seffects = actctx->seffects;
 		}
 	}
 
@@ -1267,6 +1266,8 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	}
 
 	/* Execute keep action */
+	rsef_first = (ract_keep->seffects == NULL ?
+		      NULL : ract_keep->seffects->first_effect);
 	if (status == SIEVE_EXEC_OK) {
 		bool dummy = TRUE;
 
@@ -1305,6 +1306,8 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	rexec->keep_status = status;
 
 	/* Commit keep action */
+	rsef_first = (ract_keep->seffects == NULL ?
+		      NULL : ract_keep->seffects->first_effect);
 	if (rexec->keep_status == SIEVE_EXEC_OK) {
 		if (act_keep->def->commit != NULL) {
 			sieve_action_execution_pre(rexec, ract_keep);
