@@ -1192,7 +1192,6 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	struct sieve_result_action *rac, *kac;
 	int status = SIEVE_EXEC_OK;
 	struct sieve_result_side_effect *rsef, *rsef_first = NULL;
-	void *tr_context = NULL;
 	struct sieve_result_action *ract_keep = &rexec->keep;
 	struct sieve_action *act_keep = &ract_keep->action;
 
@@ -1265,7 +1264,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	/* Start keep action */
 	if (act_keep->def->start != NULL) {
 		sieve_action_execution_pre(rexec, ract_keep);
-		status = act_keep->def->start(aenv, &tr_context);
+		status = act_keep->def->start(aenv, &ract_keep->tr_context);
 	}
 
 	/* Execute keep action */
@@ -1278,17 +1277,17 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 			if (sef->def->pre_execute != NULL) {
 				sieve_action_execution_pre(rexec, ract_keep);
-				status = sef->def->pre_execute(sef, aenv,
-							       &sef->context,
-							       tr_context);
+				status = sef->def->pre_execute(
+					sef, aenv, &sef->context,
+					ract_keep->tr_context);
 			}
 			rsef = rsef->next;
 		}
 
 		if (status == SIEVE_EXEC_OK && act_keep->def->execute != NULL) {
 			sieve_action_execution_pre(rexec, ract_keep);
-			status = act_keep->def->execute(aenv, tr_context,
-							&dummy);
+			status = act_keep->def->execute(
+				aenv, ract_keep->tr_context, &dummy);
 		}
 
 		rsef = rsef_first;
@@ -1297,9 +1296,9 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 			if (sef->def->post_execute != NULL) {
 				sieve_action_execution_pre(rexec, ract_keep);
-				status = sef->def->post_execute(sef, aenv,
-								tr_context,
-								&dummy);
+				status = sef->def->post_execute(
+					sef, aenv, ract_keep->tr_context,
+					&dummy);
 			}
 			rsef = rsef->next;
 		}
@@ -1311,7 +1310,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 		if (act_keep->def->commit != NULL) {
 			sieve_action_execution_pre(rexec, ract_keep);
 			rexec->keep_status = act_keep->def->commit(
-				aenv, tr_context);
+				aenv, ract_keep->tr_context);
 		}
 
 		rsef = rsef_first;
@@ -1320,7 +1319,8 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 			if (sef->def->post_commit != NULL) {
 				sieve_action_execution_pre(rexec, ract_keep);
-				sef->def->post_commit(sef, aenv, tr_context);
+				sef->def->post_commit(
+					sef, aenv, ract_keep->tr_context);
 			}
 			rsef = rsef->next;
 		}
@@ -1329,7 +1329,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 		if (act_keep->def->rollback != NULL) {
 			sieve_action_execution_pre(rexec, ract_keep);
 			act_keep->def->rollback(
-				aenv, tr_context,
+				aenv, ract_keep->tr_context,
 				(rexec->keep_status == SIEVE_EXEC_OK));
 		}
 	}
@@ -1337,7 +1337,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	/* Finish keep action */
 	if (act_keep->def->finish != NULL) {
 		sieve_action_execution_pre(rexec, ract_keep);
-		act_keep->def->finish(aenv, TRUE, tr_context,
+		act_keep->def->finish(aenv, TRUE, ract_keep->tr_context,
 				      rexec->keep_status);
 	}
 
