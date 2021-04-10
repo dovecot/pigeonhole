@@ -36,6 +36,7 @@ struct event_category event_category_sieve_action = {
 struct sieve_result_action {
 	struct sieve_action action;
 
+	struct sieve_error_handler *ehandler;
 	void *tr_context;
 	int status;
 
@@ -911,9 +912,11 @@ static void
 sieve_action_execution_pre(struct sieve_result_execution *rexec,
 			   struct sieve_result_action *ract)
 {
+	if (ract->ehandler == NULL)
+		ract->ehandler = rexec->ehandler;
 	rexec->action_env.action = &ract->action;
 	rexec->action_env.event = ract->action.event;
-	rexec->action_env.ehandler = rexec->ehandler;
+	rexec->action_env.ehandler = ract->ehandler;
 }
 
 static void
@@ -1204,6 +1207,7 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 	if (rexec->keep_equiv_action != NULL)
 		return;
 
+	ract_keep->ehandler = rexec->ehandler;
 	rexec->keep_success = success;
 	rexec->keep_status = status;
 
