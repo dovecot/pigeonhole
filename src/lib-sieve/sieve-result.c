@@ -1184,7 +1184,7 @@ void sieve_result_execution_destroy(struct sieve_result_execution **_rexec)
 
 static int
 _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
-			    bool rollback)
+			    bool success)
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
@@ -1200,7 +1200,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0)
 		return SIEVE_EXEC_OK;
 
-	if (rollback)
+	if (!success)
 		*act_keep = result->failure_action;
 	else
 		*act_keep = result->keep_action;
@@ -1234,9 +1234,9 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	}
 
 	if (kac == NULL) {
-		if (!rollback)
+		if (success)
 			act_keep->mail = sieve_message_get_mail(aenv->msgctx);
-	} else if (!rollback) {
+	} else if (success) {
 		act_keep->location = kac->action.location;
 		act_keep->mail = kac->action.mail;
 		if (kac->seffects != NULL)
@@ -1245,8 +1245,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 	if (rsef_first == NULL) {
 		/* Apply any implicit side effects if applicable */
-		if (!rollback &&
-		    hash_table_is_created(result->action_contexts)) {
+		if (success && hash_table_is_created(result->action_contexts)) {
 			struct sieve_result_action_context *actctx;
 
 			/* Check for implicit side effects to keep action */
@@ -1357,7 +1356,7 @@ int sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 	rexec->ehandler = ehandler;
 
-	ret = _sieve_result_implicit_keep(rexec, !success);
+	ret = _sieve_result_implicit_keep(rexec, success);
 
 	sieve_action_execution_post(rexec);
 
@@ -1562,7 +1561,7 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 		 */
 		if (status != SIEVE_EXEC_OK || implicit_keep) {
 			switch ((ret = _sieve_result_implicit_keep(
-				rexec, (status != SIEVE_EXEC_OK)))) {
+				rexec, (status == SIEVE_EXEC_OK)))) {
 			case SIEVE_EXEC_OK:
 				if (result_status == SIEVE_EXEC_TEMP_FAILURE)
 					result_status = SIEVE_EXEC_FAILURE;
