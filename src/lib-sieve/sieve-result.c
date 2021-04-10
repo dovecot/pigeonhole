@@ -945,6 +945,64 @@ sieve_result_action_start(struct sieve_result_execution *rexec,
 	return status;
 }
 
+static int
+sieve_result_action_execute(struct sieve_result_execution *rexec,
+			    struct sieve_result_action *rac,
+			    bool *implicit_keep)
+{
+	struct sieve_action *act = &rac->action;
+	struct sieve_result_side_effect *rsef;
+	struct sieve_side_effect *sef;
+	int status = SIEVE_EXEC_OK;
+	bool impl_keep = TRUE;
+
+	/* Skip non-actions (inactive keep) and executed ones */
+	if (act->def == NULL || act->executed)
+		return status;
+
+	/* Execute pre-execute event of side effects */
+	rsef = (rac->seffects != NULL ?
+		rac->seffects->first_effect : NULL);
+	while (status == SIEVE_EXEC_OK && rsef != NULL) {
+		sef = &rsef->seffect;
+		if (sef->def != NULL && sef->def->pre_execute != NULL) {
+			sieve_action_execution_pre(rexec, act);
+			status = sef->def->pre_execute(
+				sef, &rexec->action_env,
+				&sef->context, rac->tr_context);
+		}
+		rsef = rsef->next;
+	}
+
+	/* Execute the action itself */
+	if (status == SIEVE_EXEC_OK && act->def != NULL &&
+	    act->def->execute != NULL) {
+		sieve_action_execution_pre(rexec, act);
+		status = act->def->execute(&rexec->action_env,
+					   rac->tr_context,
+					   &impl_keep);
+	}
+
+	/* Execute post-execute event of side effects */
+	rsef = (rac->seffects != NULL ?
+		rac->seffects->first_effect : NULL);
+	while (status == SIEVE_EXEC_OK && rsef != NULL) {
+		sef = &rsef->seffect;
+		if (sef->def != NULL &&
+		    sef->def->post_execute != NULL) {
+			sieve_action_execution_pre(rexec, act);
+			status = sef->def->post_execute(
+				sef, &rexec->action_env,
+				rac->tr_context, &impl_keep);
+		}
+		rsef = rsef->next;
+	}
+
+	*implicit_keep = *implicit_keep && impl_keep;
+	rac->success = (status == SIEVE_EXEC_OK);
+	return status;
+}
+
 /* Result */
 
 struct sieve_result_execution *
@@ -1212,58 +1270,7 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 	int status = SIEVE_EXEC_OK;
 
 	while (status == SIEVE_EXEC_OK && rac != NULL) {
-		struct sieve_action *act = &rac->action;
-		struct sieve_result_side_effect *rsef;
-		struct sieve_side_effect *sef;
-		bool impl_keep = TRUE;
-
-		/* Skip non-actions (inactive keep) and executed ones */
-		if (act->def == NULL || act->executed) {
-			rac = rac->next;
-			continue;
-		}
-
-
-		/* Execute pre-execute event of side effects */
-		rsef = (rac->seffects != NULL ?
-			rac->seffects->first_effect : NULL);
-		while (status == SIEVE_EXEC_OK && rsef != NULL) {
-			sef = &rsef->seffect;
-			if (sef->def != NULL && sef->def->pre_execute != NULL) {
-				sieve_action_execution_pre(rexec, act);
-				status = sef->def->pre_execute(
-					sef, &rexec->action_env,
-					&sef->context, rac->tr_context);
-			}
-			rsef = rsef->next;
-		}
-
-		/* Execute the action itself */
-		if (status == SIEVE_EXEC_OK && act->def != NULL &&
-		    act->def->execute != NULL) {
-			sieve_action_execution_pre(rexec, act);
-			status = act->def->execute(&rexec->action_env,
-						   rac->tr_context,
-						   &impl_keep);
-		}
-
-		/* Execute post-execute event of side effects */
-		rsef = (rac->seffects != NULL ?
-			rac->seffects->first_effect : NULL);
-		while (status == SIEVE_EXEC_OK && rsef != NULL) {
-			sef = &rsef->seffect;
-			if (sef->def != NULL &&
-			    sef->def->post_execute != NULL) {
-				sieve_action_execution_pre(rexec, act);
-				status = sef->def->post_execute(
-					sef, &rexec->action_env,
-					rac->tr_context, &impl_keep);
-			}
-			rsef = rsef->next;
-		}
-
-		*implicit_keep = *implicit_keep && impl_keep;
-		rac->success = (status == SIEVE_EXEC_OK);
+		status = sieve_result_action_execute(rexec, rac, implicit_keep);
 		rac = rac->next;
 	}
 	sieve_action_execution_post(rexec);
