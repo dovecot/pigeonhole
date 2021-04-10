@@ -900,6 +900,8 @@ struct sieve_result_execution {
 
 	bool dup_flushed:1;
 	bool keep_success:1;
+	bool keep_explicit:1;
+	bool keep_implicit:1;
 };
 
 /* Action */
@@ -952,14 +954,16 @@ sieve_result_action_start(struct sieve_result_execution *rexec,
 
 static int
 sieve_result_action_execute(struct sieve_result_execution *rexec,
-			    struct sieve_result_action *rac,
-			    bool *implicit_keep)
+			    struct sieve_result_action *rac)
 {
 	struct sieve_action *act = &rac->action;
 	struct sieve_result_side_effect *rsef;
 	struct sieve_side_effect *sef;
 	int status = SIEVE_EXEC_OK;
 	bool impl_keep = TRUE;
+
+	if (act->keep)
+		rexec->keep_explicit = TRUE;
 
 	/* Skip non-actions (inactive keep) and executed ones */
 	if (act->def == NULL || act->executed)
@@ -1003,7 +1007,7 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 		rsef = rsef->next;
 	}
 
-	*implicit_keep = *implicit_keep && impl_keep;
+	rexec->keep_implicit = rexec->keep_implicit && impl_keep;
 	rac->success = (status == SIEVE_EXEC_OK);
 	return status;
 }
@@ -1080,8 +1084,7 @@ sieve_result_action_rollback(struct sieve_result_execution *rexec,
 static int
 sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
 				       struct sieve_result_action *rac,
-				       int status, int *commit_status,
-				       bool *keep_r)
+				       int status, int *commit_status)
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
@@ -1089,9 +1092,6 @@ sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
 
 	if (status == SIEVE_EXEC_OK) {
 		int cstatus = SIEVE_EXEC_OK;
-
-		if (rac->action.keep && keep_r != NULL)
-			*keep_r = TRUE;
 
 		/* Skip non-actions (inactive keep) and executed ones */
 		if (act->def == NULL || act->executed)
@@ -1108,8 +1108,6 @@ sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
 					status = cstatus;
 				}
 			}
-			if (keep_r != NULL)
-				*keep_r = TRUE;
 		}
 	} else {
 		/* Skip non-actions (inactive keep) and executed ones */
@@ -1164,6 +1162,8 @@ sieve_result_execution_create(struct sieve_result *result, pool_t pool)
 	rexec->action_env.msgctx = result->msgctx;
 	rexec->keep_success = TRUE;
 	rexec->keep_status = SIEVE_EXEC_OK;
+	rexec->keep_explicit = FALSE;
+	rexec->keep_implicit = TRUE;
 
 	sieve_result_ref(result);
 	result->exec = rexec;
@@ -1448,14 +1448,13 @@ sieve_result_transaction_start(struct sieve_result_execution *rexec,
 
 static int
 sieve_result_transaction_execute(struct sieve_result_execution *rexec,
-				 struct sieve_result_action *first,
-				 bool *implicit_keep)
+				 struct sieve_result_action *first)
 {
 	struct sieve_result_action *rac = first;
 	int status = SIEVE_EXEC_OK;
 
 	while (status == SIEVE_EXEC_OK && rac != NULL) {
-		status = sieve_result_action_execute(rexec, rac, implicit_keep);
+		status = sieve_result_action_execute(rexec, rac);
 		rac = rac->next;
 	}
 	sieve_action_execution_post(rexec);
@@ -1466,8 +1465,7 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 static int
 sieve_result_transaction_commit_or_rollback(
 	struct sieve_result_execution *rexec, int status,
-	struct sieve_result_action *first, struct sieve_result_action *last,
-	bool *keep_r)
+	struct sieve_result_action *first, struct sieve_result_action *last)
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
@@ -1487,7 +1485,7 @@ sieve_result_transaction_commit_or_rollback(
 		}
 
 		status = sieve_result_action_commit_or_rollback(
-			rexec, rac, status, &commit_status, keep_r);
+			rexec, rac, status, &commit_status);
 
 		if (act->def != NULL &&
 		    (act->def->flags & SIEVE_ACTFLAG_TRIES_DELIVER) != 0)
@@ -1508,7 +1506,7 @@ sieve_result_transaction_commit_or_rollback(
 		}
 
 		status = sieve_result_action_commit_or_rollback(
-			rexec, rac, status, &commit_status, keep_r);
+			rexec, rac, status, &commit_status);
 
 		if (act->def != NULL &&
 		    (act->def->flags & SIEVE_ACTFLAG_TRIES_DELIVER) != 0)
@@ -1548,7 +1546,6 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 	struct sieve_result *result = aenv->result;
 	int status = SIEVE_EXEC_OK, result_status;
 	struct sieve_result_action *actions_head, *actions_tail;
-	bool implicit_keep = TRUE;
 	int ret;
 
 	if (keep_r != NULL)
@@ -1573,17 +1570,13 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 	/* Transaction execute */
 
 	if (status == SIEVE_EXEC_OK) {
-		status = sieve_result_transaction_execute(
-			rexec, actions_head, &implicit_keep);
+		status = sieve_result_transaction_execute(rexec, actions_head);
 	}
-
-	if (implicit_keep && keep_r != NULL)
-		*keep_r = TRUE;
 
 	/* Transaction commit/rollback */
 
 	status = sieve_result_transaction_commit_or_rollback(
-		rexec, status, actions_head, actions_tail, keep_r);
+		rexec, status, actions_head, actions_tail);
 
 	/* Perform implicit keep if necessary */
 
@@ -1594,7 +1587,7 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 		/* Execute implicit keep if the transaction failed or when the implicit
 		 * keep was not canceled during transaction.
 		 */
-		if (status != SIEVE_EXEC_OK || implicit_keep) {
+		if (status != SIEVE_EXEC_OK || rexec->keep_implicit) {
 			sieve_result_implicit_keep_execute(
 				rexec, (status == SIEVE_EXEC_OK));
 			ret = sieve_result_implicit_keep_finalize(
@@ -1624,6 +1617,16 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 
 	sieve_action_execution_post(rexec);
 	rexec->ehandler = NULL;
+
+	/* Merge explicit keep status into implicit keep for the next execution
+	   round.
+	 */
+	rexec->keep_implicit = (rexec->keep_explicit ||
+				rexec->keep_implicit);
+	rexec->keep_explicit = FALSE;
+
+	if (keep_r != NULL)
+		*keep_r = rexec->keep_implicit;
 	return result_status;
 }
 
