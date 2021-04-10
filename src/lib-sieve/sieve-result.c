@@ -37,7 +37,7 @@ struct sieve_result_action {
 	struct sieve_action action;
 
 	void *tr_context;
-	bool success;
+	int status;
 
 	struct sieve_side_effects_list *seffects;
 
@@ -559,7 +559,6 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 		raction->action.executed = FALSE;
 		raction->seffects = seffects;
 		raction->tr_context = NULL;
-		raction->success = FALSE;
 	}
 
 	raction->action.name = (action.name == NULL ?
@@ -947,7 +946,7 @@ sieve_result_action_start(struct sieve_result_execution *rexec,
 		sieve_action_execution_pre(rexec, rac);
 		status = act->def->start(&rexec->action_env,
 					 &rac->tr_context);
-		rac->success = (status == SIEVE_EXEC_OK);
+		rac->status = status;
 	}
 	return status;
 }
@@ -1008,7 +1007,7 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 	}
 
 	rexec->keep_implicit = rexec->keep_implicit && impl_keep;
-	rac->success = (status == SIEVE_EXEC_OK);
+	rac->status = status;
 	return status;
 }
 
@@ -1063,7 +1062,7 @@ sieve_result_action_rollback(struct sieve_result_execution *rexec,
 	if (act->def->rollback != NULL) {
 		sieve_action_execution_pre(rexec, rac);
 		act->def->rollback(&rexec->action_env, rac->tr_context,
-				   rac->success);
+				   (rac->status == SIEVE_EXEC_OK));
 	}
 
 	/* Rollback side effects */
@@ -1074,7 +1073,8 @@ sieve_result_action_rollback(struct sieve_result_execution *rexec,
 		if (sef->def != NULL && sef->def->rollback != NULL) {
 			sieve_action_execution_pre(rexec, rac);
 			sef->def->rollback(sef, &rexec->action_env,
-					   rac->tr_context, rac->success);
+					   rac->tr_context,
+					   (rac->status == SIEVE_EXEC_OK));
 		}
 		rsef = rsef->next;
 	}
@@ -1329,7 +1329,7 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 	i_assert(success == rexec->keep_success);
 
 	if (rexec->keep_equiv_action != NULL)
-		return SIEVE_EXEC_OK;
+		return rexec->keep_equiv_action->status;
 	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0)
 		return rexec->keep_status;
 	if (act_keep->def == NULL)
