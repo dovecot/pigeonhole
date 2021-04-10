@@ -907,7 +907,7 @@ sieve_action_execution_pre(struct sieve_result_execution *rexec,
 }
 
 static void
-sieve_result_finish_action_env(struct sieve_result_execution *rexec)
+sieve_action_execution_post(struct sieve_result_execution *rexec)
 {
 	rexec->action_env.action = NULL;
 	rexec->action_env.event = rexec->action_env.result->event;
@@ -1101,7 +1101,7 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 		act_keep.def->finish(aenv, TRUE, tr_context, status);
 	}
 
-	sieve_result_finish_action_env(rexec);
+	sieve_action_execution_post(rexec);
 	event_unref(&act_keep.event);
 
 	if (status == SIEVE_EXEC_FAILURE)
@@ -1189,7 +1189,7 @@ sieve_result_transaction_start(struct sieve_result_execution *rexec,
 		}
 		rac = rac->next;
 	}
-	sieve_result_finish_action_env(rexec);
+	sieve_action_execution_post(rexec);
 
 	*last_r = rac;
 	return status;
@@ -1258,7 +1258,7 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 		rac->success = (status == SIEVE_EXEC_OK);
 		rac = rac->next;
 	}
-	sieve_result_finish_action_env(rexec);
+	sieve_action_execution_post(rexec);
 
 	return status;
 }
@@ -1299,7 +1299,7 @@ sieve_result_action_commit(struct sieve_result_execution *rexec,
 			rsef = rsef->next;
 		}
 	}
-	sieve_result_finish_action_env(rexec);
+	sieve_action_execution_post(rexec);
 
 	return cstatus;
 }
@@ -1329,7 +1329,7 @@ sieve_result_action_rollback(struct sieve_result_execution *rexec,
 		}
 		rsef = rsef->next;
 	}
-	sieve_result_finish_action_env(rexec);
+	sieve_action_execution_post(rexec);
 }
 
 static int
@@ -1471,7 +1471,7 @@ sieve_result_transaction_finish(struct sieve_result_execution *rexec, bool last,
 
 		rac = rac->next;
 	}
-	sieve_result_finish_action_env(rexec);
+	sieve_action_execution_post(rexec);
 }
 
 int sieve_result_execute(struct sieve_result_execution *rexec,
