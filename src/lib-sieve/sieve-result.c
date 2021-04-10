@@ -1212,6 +1212,19 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	if (act_keep->def == NULL)
 		return SIEVE_EXEC_OK;
 
+	/* Scan for execution of keep-equal actions */
+	rac = result->actions_head;
+	while (rac != NULL) {
+		if (rac->action.def == act_keep->def &&
+		    act_keep->def->equals != NULL &&
+		    act_keep->def->equals(eenv->scriptenv, NULL,
+					  &rac->action) &&
+		    rac->action.executed)
+			return SIEVE_EXEC_OK;
+
+		rac = rac->next;
+	}
+
 	/* Scan for deferred keep */
 	kac = result->actions_tail;
 	while (kac != NULL && kac->action.executed) {
@@ -1223,19 +1236,6 @@ _sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	if (kac == NULL) {
 		if (!rollback)
 			act_keep->mail = sieve_message_get_mail(aenv->msgctx);
-
-		/* Scan for execution of keep-equal actions */
-		rac = result->actions_head;
-		while (rac != NULL) {
-			if (rac->action.def == act_keep->def &&
-			    act_keep->def->equals != NULL &&
-			    act_keep->def->equals(eenv->scriptenv, NULL,
-						  &rac->action) &&
-			    rac->action.executed)
-				return SIEVE_EXEC_OK;
-
-			rac = rac->next;
-		}
 	} else if (!rollback) {
 		act_keep->location = kac->action.location;
 		act_keep->mail = kac->action.mail;
