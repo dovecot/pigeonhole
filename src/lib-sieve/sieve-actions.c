@@ -763,13 +763,23 @@ act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *)tr_context;
 	bool bail_out = FALSE, status = TRUE;
+	int ret = SIEVE_EXEC_OK;
 
 	/* Verify transaction */
 	if (trans == NULL)
 		return SIEVE_EXEC_FAILURE;
 
+	/* Check whether we can commit this transaction */
+	if (trans->error_code != MAIL_ERROR_NONE) {
+		/* Transaction already failed */
+		bail_out = TRUE;
+		status = FALSE;
+		if (trans->error_code == MAIL_ERROR_TEMP)
+			ret = SIEVE_EXEC_TEMP_FAILURE;
+		else
+			ret = SIEVE_EXEC_FAILURE;
 	/* Check whether we need to do anything */
-	if (trans->disabled) {
+	} else if (trans->disabled) {
 		/* Nothing to do */
 		bail_out = TRUE;
 	} else if (trans->redundant) {
@@ -781,7 +791,7 @@ act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 	if (bail_out) {
 		act_store_log_status(trans, aenv, FALSE, status);
 		act_store_cleanup(trans);
-		return SIEVE_EXEC_OK;
+		return ret;
 	}
 
 	i_assert(trans->box != NULL);
