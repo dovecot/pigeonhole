@@ -794,11 +794,7 @@ bool sieve_result_print(struct sieve_result *result,
 	struct sieve_action act_keep = result->keep_action;
 	struct sieve_result_print_env penv;
 	bool implicit_keep = TRUE, printed_any = FALSE;
-	struct sieve_result_action *rac, *actions_head;
-
-	actions_head = (result->last_attempted_action == NULL ?
-			result->actions_head :
-			result->last_attempted_action->next);
+	struct sieve_result_action *rac;
 
 	if (keep != NULL)
 		*keep = FALSE;
@@ -811,10 +807,15 @@ bool sieve_result_print(struct sieve_result *result,
 
 	sieve_result_printf(&penv, "\nPerformed actions:\n\n");
 
-	rac = actions_head;
+	rac = result->actions_head;
 	while (rac != NULL) {
 		bool impl_keep = TRUE;
 		const struct sieve_action *act = &rac->action;
+
+		if (act->exec_seq < result->exec_seq) {
+			rac = rac->next;
+			continue;
+		}
 
 		if (rac->action.keep && keep != NULL)
 			*keep = TRUE;
