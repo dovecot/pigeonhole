@@ -100,7 +100,7 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 	}
 
 	/* Execute the result */
-	ret = sieve_result_execute(_testsuite_rexec, TRUE,
+	ret = sieve_result_execute(_testsuite_rexec, SIEVE_EXEC_OK, TRUE,
 				   testsuite_log_ehandler, NULL);
 
 	return (ret > 0);

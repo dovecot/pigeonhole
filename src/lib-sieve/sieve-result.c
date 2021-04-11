@@ -1402,22 +1402,6 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 	return rexec->keep_status;
 }
 
-int sieve_result_implicit_keep(struct sieve_result_execution *rexec,
-			       struct sieve_error_handler *ehandler,
-			       bool success)
-{
-	int ret;
-
-	rexec->ehandler = ehandler;
-
-	sieve_result_implicit_keep_execute(rexec, success);
-	ret = sieve_result_implicit_keep_finalize(rexec, success);
-
-	sieve_action_execution_post(rexec);
-
-	return ret;
-}
-
 bool sieve_result_executed(struct sieve_result *result)
 {
 	return result->executed;
@@ -1539,15 +1523,38 @@ sieve_result_transaction_finish(struct sieve_result_execution *rexec, bool last,
 	sieve_action_execution_post(rexec);
 }
 
-int sieve_result_execute(struct sieve_result_execution *rexec,
+static void
+sieve_result_execute_update_status(struct sieve_result_execution *rexec,
+				   int status)
+{
+	switch (status) {
+	case SIEVE_EXEC_OK:
+		break;
+	case SIEVE_EXEC_TEMP_FAILURE:
+		rexec->status = status;
+		break;
+	case SIEVE_EXEC_BIN_CORRUPT:
+		i_unreached();
+	case SIEVE_EXEC_FAILURE:
+	case SIEVE_EXEC_KEEP_FAILED:
+		if (rexec->status == SIEVE_EXEC_OK)
+			rexec->status = status;
+		break;
+	case SIEVE_EXEC_RESOURCE_LIMIT:
+		if (rexec->status != SIEVE_EXEC_TEMP_FAILURE)
+			rexec->status = status;
+		break;
+	}
+}
+
+int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 			 bool last, struct sieve_error_handler *ehandler,
 			 bool *keep_r)
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
-	int status = SIEVE_EXEC_OK, result_status;
 	struct sieve_result_action *actions_head, *actions_tail;
-	int ret;
+	int result_status, ret;
 
 	if (keep_r != NULL)
 		*keep_r = FALSE;
@@ -1562,24 +1569,31 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 	actions_head = (result->last_attempted_action == NULL ?
 			result->actions_head :
 			result->last_attempted_action->next);
+	actions_tail = actions_head;
 	result->last_attempted_action = result->actions_tail;
 
-	/* Transaction start */
+	if (status != SIEVE_EXEC_OK) {
+		sieve_result_execute_update_status(rexec, status);
+	} else if (rexec->status == SIEVE_EXEC_OK) {
+		/* Transaction start */
 
-	status = sieve_result_transaction_start(rexec, actions_head,
-						&actions_tail);
+		status = sieve_result_transaction_start(rexec, actions_head,
+							&actions_tail);
 
-	/* Transaction execute */
+		/* Transaction execute */
 
-	if (status == SIEVE_EXEC_OK)
-		status = sieve_result_transaction_execute(rexec, actions_head);
-	rexec->status = status;
+		if (status == SIEVE_EXEC_OK) {
+			status = sieve_result_transaction_execute(rexec,
+								  actions_head);
+		}
+		sieve_result_execute_update_status(rexec, status);
+	}
 
 	/* Transaction commit/rollback */
 
 	status = sieve_result_transaction_commit_or_rollback(
 		rexec, status, actions_head, actions_tail);
-	rexec->status = status;
+	sieve_result_execute_update_status(rexec, status);
 
 	/* Perform implicit keep if necessary */
 
@@ -1620,6 +1634,8 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 
 	sieve_action_execution_post(rexec);
 	rexec->ehandler = NULL;
+
+	rexec->status = result_status;
 
 	/* Merge explicit keep status into implicit keep for the next execution
 	   round.

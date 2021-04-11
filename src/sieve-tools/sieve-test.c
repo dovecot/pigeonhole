@@ -374,7 +374,6 @@ int main(int argc, char **argv)
 			unsigned int i, count;
 			struct sieve_multiscript *mscript;
 			bool more = TRUE;
-			int result;
 
 			if (execute)
 				mscript = sieve_multiscript_start_execute(
@@ -440,10 +439,8 @@ int main(int argc, char **argv)
 					exflags);
 			}
 
-			result = sieve_multiscript_finish(
-				&mscript, ehandler, exflags, ret);
-
-			ret = (ret > 0 ? result : ret);
+			ret = sieve_multiscript_finish(&mscript, ehandler,
+						       exflags, ret);
 		}
 
 		/* Run */

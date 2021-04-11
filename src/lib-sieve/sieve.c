@@ -664,24 +664,7 @@ int sieve_execute(struct sieve_binary *sbin,
 	   caller. In that case no implicit keep is attempted, because the
 	   situation may be resolved.
 	 */
-	if (ret > 0) {
-		/* Execute result */
-		ret = sieve_result_execute(rexec, TRUE, action_ehandler, NULL);
-	} else if (ret == SIEVE_EXEC_FAILURE) {
-		/* Perform implicit keep if script failed with a normal runtime
-		   error
-		 */
-		switch (sieve_result_implicit_keep(rexec, action_ehandler,
-						   FALSE)) {
-		case SIEVE_EXEC_OK:
-			break;
-		case SIEVE_EXEC_TEMP_FAILURE:
-			ret = SIEVE_EXEC_TEMP_FAILURE;
-			break;
-		default:
-			ret = SIEVE_EXEC_KEEP_FAILED;
-		}
-	}
+	ret = sieve_result_execute(rexec, ret, TRUE, action_ehandler, NULL);
 
 	sieve_result_execution_destroy(&rexec);
 
@@ -794,15 +777,10 @@ sieve_multiscript_execute(struct sieve_multiscript *mscript,
 	mscript->exec_env.flags = flags;
 
 	if (mscript->status > 0) {
-		mscript->status = sieve_result_execute(mscript->rexec, FALSE,
+		mscript->status = sieve_result_execute(mscript->rexec,
+						       SIEVE_EXEC_OK, FALSE,
 						       ehandler,
 						       &mscript->keep);
-	} else {
-		if (sieve_result_implicit_keep(mscript->rexec, ehandler,
-					       FALSE) <= 0)
-			mscript->status = SIEVE_EXEC_KEEP_FAILED;
-		else
-			mscript->keep = TRUE;
 	}
 }
 
@@ -897,35 +875,31 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 		return SIEVE_EXEC_OK;
 	*_mscript = NULL;
 
+	switch (status) {
+	case SIEVE_EXEC_OK:
+		status = mscript->status;
+		break;
+	case SIEVE_EXEC_TEMP_FAILURE:
+		break;
+	case SIEVE_EXEC_BIN_CORRUPT:
+	case SIEVE_EXEC_FAILURE:
+	case SIEVE_EXEC_KEEP_FAILED:
+	case SIEVE_EXEC_RESOURCE_LIMIT:
+		if (mscript->status == SIEVE_EXEC_TEMP_FAILURE)
+			status = mscript->status;
+		break;
+	}
+
 	mscript->exec_env.flags = flags;
 	sieve_result_set_keep_action(mscript->result, NULL, &act_store);
 
-	if (mscript->active) {
-		if (mscript->teststream != NULL) {
-			if (status != SIEVE_EXEC_TEMP_FAILURE)
-				mscript->keep = TRUE;
-		} else if (status != SIEVE_EXEC_TEMP_FAILURE ||
-			   sieve_result_executed(mscript->result)) {
-			switch (sieve_result_implicit_keep(
-				mscript->rexec, action_ehandler, TRUE)) {
-			case SIEVE_EXEC_OK:
-				mscript->keep = TRUE;
-				break;
-			case SIEVE_EXEC_TEMP_FAILURE:
-				if (!sieve_result_executed(mscript->result)) {
-					status = SIEVE_EXEC_TEMP_FAILURE;
-					break;
-				}
-				/* fall through */
-			default:
-				status = SIEVE_EXEC_KEEP_FAILED;
-			}
-		}
-	}
-
-	if (status != SIEVE_EXEC_TEMP_FAILURE) {
-		sieve_result_finish(mscript->rexec, action_ehandler,
-				    (status == SIEVE_EXEC_OK));
+	mscript->keep = FALSE;
+	if (mscript->teststream != NULL)
+		mscript->keep = TRUE;
+	else {
+		status = sieve_result_execute(
+			mscript->rexec, status, TRUE, action_ehandler,
+			&mscript->keep);
 	}
 
 	/* Cleanup */
