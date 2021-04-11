@@ -44,6 +44,19 @@ sieve_action_create_finish_event(const struct sieve_action_exec_env *aenv)
 }
 
 /*
+ * Action instance
+ */
+
+bool sieve_action_is_executed(const struct sieve_action *act,
+			      struct sieve_result *result)
+{
+	unsigned int cur_exec_seq = sieve_result_get_exec_seq(result);
+
+	i_assert(act->exec_seq <= cur_exec_seq);
+	return (act->exec_seq < cur_exec_seq);
+}
+
+/*
  * Side-effect operand
  */
 

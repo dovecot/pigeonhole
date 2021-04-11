@@ -81,6 +81,7 @@ struct sieve_result {
 	struct sieve_error_handler *ehandler;
 	struct sieve_message_context *msgctx;
 
+	unsigned int exec_seq;
 	struct sieve_result_execution *exec;
 
 	struct sieve_action keep_action;
@@ -209,6 +210,11 @@ struct sieve_message_context *
 sieve_result_get_message_context(struct sieve_result *result)
 {
 	return result->msgctx;
+}
+
+unsigned int sieve_result_get_exec_seq(struct sieve_result *result)
+{
+	return result->exec_seq;
 }
 
 /*
@@ -434,17 +440,18 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 	action.ext = ext;
 	action.location = sieve_runtime_get_full_command_location(renv);
 	action.context = context;
+	action.exec_seq = result->exec_seq;
 	action.executed = FALSE;
 
 	/* First, check for duplicates or conflicts */
 	raction = result->actions_head;
 	while (raction != NULL) {
 		const struct sieve_action *oact = &raction->action;
+		bool oact_new = (oact->exec_seq == result->exec_seq);
 
 		if (keep && raction->action.keep) {
 			/* Duplicate keep */
-			if (raction->action.def == NULL ||
-			    raction->action.executed) {
+			if (oact->def == NULL || !oact_new) {
 				/* Keep action from preceeding execution */
 
 				/* Detach existing keep action */
@@ -518,7 +525,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 					renv, &action, &raction->action)) != 0)
 					return ret;
 
-				if (!raction->action.executed &&
+				if (oact_new &&
 				    oact->def->check_conflict != NULL &&
 				    (ret = oact->def->check_conflict(
 					renv, &raction->action, &action)) != 0)
@@ -860,7 +867,8 @@ bool sieve_result_print(struct sieve_result *result,
 				if (rac->action.def == act_keep.def &&
 				    act_keep.def->equals != NULL &&
 				    act_keep.def->equals(senv, NULL, &rac->action) &&
-				    rac->action.executed)
+				    sieve_action_is_executed(&rac->action,
+							     result))
 					act_keep.def = NULL;
 
 				rac = rac->next;
@@ -905,6 +913,11 @@ struct sieve_result_execution {
 	bool keep_explicit:1;
 	bool keep_implicit:1;
 };
+
+void sieve_result_mark_executed(struct sieve_result *result)
+{
+	result->exec_seq++;
+}
 
 /* Action */
 
@@ -1405,25 +1418,6 @@ int sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 	return ret;
 }
 
-void sieve_result_mark_executed(struct sieve_result *result)
-{
-	struct sieve_result_action *actions_head, *rac;
-
-	actions_head = (result->last_attempted_action == NULL ?
-			result->actions_head :
-			result->last_attempted_action->next);
-	result->last_attempted_action = result->actions_tail;
-
-	rac = actions_head;
-	while (rac != NULL) {
-		if (rac->action.def != NULL)
-			rac->action.executed = TRUE;
-
-		rac = rac->next;
-	}
-}
-
-
 bool sieve_result_executed(struct sieve_result *result)
 {
 	return result->executed;
@@ -1557,6 +1551,7 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 
 	if (keep_r != NULL)
 		*keep_r = FALSE;
+	sieve_result_mark_executed(result);
 
 	/* Prepare environment */
 

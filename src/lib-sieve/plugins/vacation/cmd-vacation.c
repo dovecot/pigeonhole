@@ -767,7 +767,7 @@ act_vacation_check_duplicate(const struct sieve_runtime_env *renv ATTR_UNUSED,
 			     const struct sieve_action *act,
 			     const struct sieve_action *act_other)
 {
-	if (!act_other->executed) {
+	if (!sieve_action_is_executed(act_other, renv->result)) {
 		sieve_runtime_error(
 			renv, act->location,
 			"duplicate vacation action not allowed "
@@ -785,7 +785,7 @@ int act_vacation_check_conflict(const struct sieve_runtime_env *renv,
 				const struct sieve_action *act_other)
 {
 	if ((act_other->def->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0) {
-		if (!act_other->executed && !act->executed) {
+		if (!sieve_action_is_executed(act_other, renv->result)) {
 			sieve_runtime_error(
 				renv, act->location,
 				"vacation action conflicts with other action: "

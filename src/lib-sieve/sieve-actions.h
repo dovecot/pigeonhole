@@ -87,6 +87,7 @@ struct sieve_action {
 
 	const char *name;
 	const char *location;
+	unsigned int exec_seq;
 	void *context;
 	struct mail *mail;
 
@@ -96,6 +97,9 @@ struct sieve_action {
 
 #define sieve_action_is(act, definition) ((act)->def == &(definition))
 #define sieve_action_name(act) ((act)->name)
+
+bool sieve_action_is_executed(const struct sieve_action *act,
+			      struct sieve_result *result);
 
 /*
  * Action side effects
