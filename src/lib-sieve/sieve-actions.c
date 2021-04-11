@@ -762,7 +762,7 @@ act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *)tr_context;
-	bool status = TRUE;
+	bool bail_out = FALSE, status = TRUE;
 
 	/* Verify transaction */
 	if (trans == NULL)
@@ -770,18 +770,22 @@ act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 
 	/* Check whether we need to do anything */
 	if (trans->disabled) {
-		act_store_log_status(trans, aenv, FALSE, status);
-		if (trans->box != NULL)
-			mailbox_free(&trans->box);
-		return SIEVE_EXEC_OK;
+		/* Nothing to do */
+		bail_out = TRUE;
 	} else if (trans->redundant) {
-		act_store_log_status(trans, aenv, FALSE, status);
+		/* This transaction is redundant */
+		bail_out = TRUE;
 		eenv->exec_status->keep_original = TRUE;
 		eenv->exec_status->message_saved = TRUE;
-		if (trans->box != NULL)
-			mailbox_free(&trans->box);
+	}
+	if (bail_out) {
+		act_store_log_status(trans, aenv, FALSE, status);
+		act_store_cleanup(trans);
 		return SIEVE_EXEC_OK;
 	}
+
+	i_assert(trans->box != NULL);
+	i_assert(trans->mail_trans != NULL);
 
 	/* Mark attempt to use storage. Can only get here when all previous
 	   actions succeeded.
