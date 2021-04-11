@@ -158,15 +158,18 @@ int sieve_action_opr_optional_read(const struct sieve_runtime_env *renv,
 
 			i_assert(list != NULL);
 
-			ret = sieve_opr_side_effect_read(renv, address, &seffect);
+			ret = sieve_opr_side_effect_read(renv, address,
+							 &seffect);
 			if (ret <= 0) {
 				if (exec_status != NULL)
 					*exec_status = ret;
 				return -1;
 			}
 
-			if (*list == NULL)
-				*list = sieve_side_effects_list_create(renv->result);
+			if (*list == NULL) {
+				*list = sieve_side_effects_list_create(
+					renv->result);
+			}
 
 			sieve_side_effects_list_add(*list, &seffect);
 		} else {
@@ -193,7 +196,8 @@ int sieve_action_opr_optional_read(const struct sieve_runtime_env *renv,
 
 static bool
 act_store_equals(const struct sieve_script_env *senv,
-		const struct sieve_action *act1, const struct sieve_action *act2);
+		 const struct sieve_action *act1,
+		 const struct sieve_action *act2);
 
 static int
 act_store_check_duplicate(const struct sieve_runtime_env *renv,
@@ -268,7 +272,7 @@ void sieve_act_store_add_flags(const struct sieve_action_exec_env *aenv,
 		}
 
 		kw = keywords;
-		while ( *kw != NULL ) {
+		while (*kw != NULL) {
 			array_append(&trans->keywords, kw, 1);
 			kw++;
 		}
@@ -287,12 +291,12 @@ act_store_equals(const struct sieve_script_env *senv,
 		 const struct sieve_action *act1,
 		 const struct sieve_action *act2)
 {
-	struct act_store_context *st_ctx1 = (
-		act1 == NULL ? NULL :
-			(struct act_store_context *)act1->context);
-	struct act_store_context *st_ctx2 = (
-		act2 == NULL ? NULL :
-			(struct act_store_context *)act2->context);
+	struct act_store_context *st_ctx1 =
+		(act1 == NULL ?
+		 NULL : (struct act_store_context *)act1->context);
+	struct act_store_context *st_ctx2 =
+		(act2 == NULL ?
+		 NULL : (struct act_store_context *)act2->context);
 	const char *mailbox1, *mailbox2;
 
 	/* FIXME: consider namespace aliases */
@@ -352,7 +356,8 @@ void sieve_act_store_get_storage_error(const struct sieve_action_exec_env *aenv,
 	pool_t pool = sieve_result_pool(aenv->result);
 
 	trans->error = p_strdup(pool,
-		mailbox_get_last_internal_error(trans->box, &trans->error_code));
+		mailbox_get_last_internal_error(trans->box,
+						&trans->error_code));
 }
 
 static bool
@@ -371,9 +376,10 @@ act_store_mailbox_alloc(const struct sieve_action_exec_env *aenv,
 
 	if (!uni_utf8_str_is_valid(mailbox)) {
 		/* Just a precaution; already (supposed to be) checked at
-		 * compiletime/runtime.
+		   compiletime/runtime.
 		 */
-		*error_r = t_strdup_printf("mailbox name not utf-8: %s", mailbox);
+		*error_r = t_strdup_printf("mailbox name not utf-8: %s",
+					   mailbox);
 		*error_code_r = MAIL_ERROR_PARAMS;
 		return FALSE;
 	}
@@ -404,7 +410,9 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 	enum mail_error error_code = MAIL_ERROR_NONE;
 	bool disabled = FALSE, alloc_failed = FALSE;
 
-	/* If context is NULL, the store action is the result of (implicit) keep */
+	/* If context is NULL, the store action is the result of (implicit)
+	   keep.
+	 */
 	if (ctx == NULL) {
 		ctx = p_new(pool, struct act_store_context, 1);
 		ctx->mailbox =
@@ -414,7 +422,8 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 	/* Open the requested mailbox */
 
 	/* NOTE: The caller of the sieve library is allowed to leave user set
-	 * to NULL. This implementation will then skip actually storing the message.
+	   to NULL. This implementation will then skip actually storing the
+	   message.
 	 */
 	if (senv->user != NULL) {
 		if (!act_store_mailbox_alloc(aenv, ctx->mailbox, &box,
@@ -432,8 +441,8 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 	trans->flags = 0;
 
 	trans->mailbox_name = ctx->mailbox;
-	trans->mailbox_identifier = p_strdup_printf(pool,
-		"'%s'", str_sanitize(ctx->mailbox, 256));
+	trans->mailbox_identifier =
+		p_strdup_printf(pool, "'%s'", str_sanitize(ctx->mailbox, 256));
 
 	trans->disabled = disabled;
 
@@ -502,8 +511,7 @@ act_store_keywords_create(const struct sieve_action_exec_env *aenv,
 	return box_keywords;
 }
 
-static bool
-have_equal_keywords(struct mail *mail, struct mail_keywords *new_kw)
+static bool have_equal_keywords(struct mail *mail, struct mail_keywords *new_kw)
 {
 	const ARRAY_TYPE(keyword_indexes) *old_kw_arr =
 		mail_get_keyword_indexes(mail);
@@ -577,9 +585,8 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 		return SIEVE_EXEC_FAILURE;
 	}
 
-
-	/* If the message originates from the target mailbox, only update the flags
-	 * and keywords (if not read-only)
+	/* If the message originates from the target mailbox, only update the
+	   flags and keywords (if not read-only)
 	 */
 	if (mailbox_backends_equal(box, mail->box)) {
 		backends_equal = TRUE;
@@ -614,10 +621,10 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context)
 		}
 		return SIEVE_EXEC_OK;
 
-	/* If the message is modified, only store it in the source mailbox when it is
-	 * not opened read-only. Mail structs of modified messages have their own
-	 * mailbox, unrelated to the orignal mail, so this case needs to be handled
-	 * separately.
+	/* If the message is modified, only store it in the source mailbox when
+	   it is not opened read-only. Mail structs of modified messages have
+	   their own mailbox, unrelated to the orignal mail, so this case needs
+	   to be handled separately.
 	 */
 	} else if (mail != eenv->msgdata->mail &&
 		   mailbox_is_readonly(eenv->msgdata->mail->box) &&
@@ -763,8 +770,8 @@ act_store_commit(const struct sieve_action_exec_env *aenv, void *tr_context,
 		return SIEVE_EXEC_OK;
 	}
 
-	/* Mark attempt to use storage. Can only get here when all previous actions
-	 * succeeded.
+	/* Mark attempt to use storage. Can only get here when all previous
+	   actions succeeded.
 	 */
 	eenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 
@@ -976,10 +983,10 @@ sieve_action_do_reject_mail(const struct sieve_action_exec_env *aenv,
 	o_stream_nsend(output, str_data(hdr), str_len(hdr));
 
 	if (mail_get_hdr_stream(msgdata->mail, NULL, &input) == 0) {
-		/* Note: If you add more headers, they need to be sorted.
-		   We'll drop Content-Type because we're not including the
-		   message body, and having a multipart Content-Type may confuse
-		   some MIME parsers when they don't see the message boundaries.
+		/* NOTE: If you add more headers, they need to be sorted. We'll
+		   drop Content-Type because we're not including the message
+		   body, and having a multipart Content-Type may confuse some
+		   MIME parsers when they don't see the message boundaries.
 		 */
 		static const char *const exclude_headers[] = {
 			"Content-Type"
