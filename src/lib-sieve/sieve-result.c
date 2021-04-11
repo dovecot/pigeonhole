@@ -793,7 +793,7 @@ bool sieve_result_print(struct sieve_result *result,
 {
 	struct sieve_action act_keep = result->keep_action;
 	struct sieve_result_print_env penv;
-	bool implicit_keep = TRUE;
+	bool implicit_keep = TRUE, printed_any = FALSE;
 	struct sieve_result_action *rac, *actions_head;
 
 	actions_head = (result->last_attempted_action == NULL ?
@@ -811,42 +811,41 @@ bool sieve_result_print(struct sieve_result *result,
 
 	sieve_result_printf(&penv, "\nPerformed actions:\n\n");
 
-	if (actions_head == NULL) {
-		sieve_result_printf(&penv, "  (none)\n");
-	} else {
-		rac = actions_head;
-		while (rac != NULL) {
-			bool impl_keep = TRUE;
-			const struct sieve_action *act = &rac->action;
+	rac = actions_head;
+	while (rac != NULL) {
+		bool impl_keep = TRUE;
+		const struct sieve_action *act = &rac->action;
 
-			if (rac->action.keep && keep != NULL)
-				*keep = TRUE;
+		if (rac->action.keep && keep != NULL)
+			*keep = TRUE;
 
-			if (act->def != NULL) {
-				if (act->def->print != NULL)
-					act->def->print(act, &penv, &impl_keep);
-				else {
-					sieve_result_action_printf(
-						&penv, "%s", act->def->name);
-				}
-			} else {
-				if (act->keep) {
-					sieve_result_action_printf(&penv, "keep");
-					impl_keep = FALSE;
-				} else {
-					sieve_result_action_printf(&penv, "[NULL]");
-				}
+		if (act->def != NULL) {
+			if (act->def->print != NULL)
+				act->def->print(act, &penv, &impl_keep);
+			else {
+				sieve_result_action_printf(
+					&penv, "%s", act->def->name);
 			}
-
-			/* Print side effects */
-			sieve_result_print_side_effects(
-				&penv, &rac->action, rac->seffects, &impl_keep);
-
-			implicit_keep = implicit_keep && impl_keep;
-
-			rac = rac->next;
+		} else {
+			if (act->keep) {
+				sieve_result_action_printf(&penv, "keep");
+				impl_keep = FALSE;
+			} else {
+				sieve_result_action_printf(&penv, "[NULL]");
+			}
 		}
+		printed_any = TRUE;
+
+		/* Print side effects */
+		sieve_result_print_side_effects(
+			&penv, &rac->action, rac->seffects, &impl_keep);
+
+		implicit_keep = implicit_keep && impl_keep;
+
+		rac = rac->next;
 	}
+	if (!printed_any)
+		sieve_result_printf(&penv, "  (none)\n");
 
 	if (implicit_keep && keep != NULL)
 		*keep = TRUE;
