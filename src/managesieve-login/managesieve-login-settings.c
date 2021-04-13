@@ -28,7 +28,8 @@ static struct inet_listener_settings *managesieve_login_inet_listeners[] = {
 	&managesieve_login_inet_listeners_array[0]
 };
 static buffer_t managesieve_login_inet_listeners_buf = {
-	managesieve_login_inet_listeners, sizeof(managesieve_login_inet_listeners), { 0, }
+	{ { managesieve_login_inet_listeners,
+	    sizeof(managesieve_login_inet_listeners) } }
 };
 /* </settings checks> */
 

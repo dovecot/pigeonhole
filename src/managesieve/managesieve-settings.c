@@ -25,7 +25,7 @@ static struct file_listener_settings *managesieve_unix_listeners[] = {
 	&managesieve_unix_listeners_array[0]
 };
 static buffer_t managesieve_unix_listeners_buf = {
-	managesieve_unix_listeners, sizeof(managesieve_unix_listeners), { 0, }
+	{ { managesieve_unix_listeners, sizeof(managesieve_unix_listeners) } }
 };
 /* </settings checks> */
 
