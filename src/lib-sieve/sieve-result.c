@@ -99,8 +99,6 @@ struct sieve_result {
 	unsigned int action_count;
 	struct sieve_result_action *actions_head, *actions_tail;
 
-	struct sieve_result_action *last_attempted_action;
-
 	HASH_TABLE(const struct sieve_action_def *,
 		   struct sieve_result_action_context *) action_contexts;
 
@@ -412,9 +410,6 @@ sieve_result_action_detach(struct sieve_result *result,
 
 	if (result->actions_tail == raction)
 		result->actions_tail = raction->prev;
-
-	if (result->last_attempted_action == raction)
-		result->last_attempted_action = raction->prev;
 
 	if (raction->next != NULL)
 		raction->next->prev = raction->prev;
@@ -1445,33 +1440,34 @@ bool sieve_result_executed_delivery(struct sieve_result *result)
 	return result->executed_delivery;
 }
 
-static int
-sieve_result_transaction_start(struct sieve_result_execution *rexec,
-			       struct sieve_result_action *first,
-			       struct sieve_result_action **last_r)
+static int sieve_result_transaction_start(struct sieve_result_execution *rexec)
 {
-	struct sieve_result_action *rac = first;
+	const struct sieve_action_exec_env *aenv = &rexec->action_env;
+	struct sieve_result *result = aenv->result;
+	struct sieve_result_action *rac;
 	int status = SIEVE_EXEC_OK;
 
 	rexec->dup_flushed = FALSE;
+	rac = result->actions_head;
 	while (status == SIEVE_EXEC_OK && rac != NULL) {
 		status = sieve_result_action_start(rexec, rac);
 		rac = rac->next;
 	}
 	sieve_action_execution_post(rexec);
 
-	*last_r = rac;
 	return status;
 }
 
 static int
 sieve_result_transaction_execute(struct sieve_result_execution *rexec,
-				 struct sieve_result_action *first,
 				 int start_status)
 {
-	struct sieve_result_action *rac = first;
+	const struct sieve_action_exec_env *aenv = &rexec->action_env;
+	struct sieve_result *result = aenv->result;
+	struct sieve_result_action *rac;
 	int status = SIEVE_EXEC_OK;
 
+	rac = result->actions_head;
 	while (status == SIEVE_EXEC_OK && rac != NULL) {
 		status = sieve_result_action_execute(rexec, rac, start_status);
 		rac = rac->next;
@@ -1483,8 +1479,7 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 
 static int
 sieve_result_transaction_commit_or_rollback(
-	struct sieve_result_execution *rexec, int status,
-	struct sieve_result_action *first, struct sieve_result_action *last)
+	struct sieve_result_execution *rexec, int status)
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
@@ -1493,8 +1488,8 @@ sieve_result_transaction_commit_or_rollback(
 	bool seen_delivery = FALSE;
 
 	/* First commit/rollback all storage actions */
-	rac = first;
-	while (rac != NULL && rac != last) {
+	rac = result->actions_head;
+	while (rac != NULL) {
 		struct sieve_action *act = &rac->action;
 
 		if (act->def == NULL ||
@@ -1514,8 +1509,8 @@ sieve_result_transaction_commit_or_rollback(
 	}
 
 	/* Then commit/rollback all other actions */
-	rac = first;
-	while (rac != NULL && rac != last) {
+	rac = result->actions_head;
+	while (rac != NULL) {
 		struct sieve_action *act = &rac->action;
 
 		if (act->def != NULL &&
@@ -1548,8 +1543,9 @@ sieve_result_transaction_finish(struct sieve_result_execution *rexec, bool last,
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
-	struct sieve_result_action *rac = result->actions_head;
+	struct sieve_result_action *rac;
 
+	rac = result->actions_head;
 	while (rac != NULL) {
 		sieve_result_action_finish(rexec, rac, last, status);
 		rac = rac->next;
@@ -1587,7 +1583,6 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
-	struct sieve_result_action *actions_head, *actions_tail;
 	int result_status, ret;
 
 	if (keep_r != NULL)
@@ -1600,31 +1595,22 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 
 	/* Make notice of this attempt */
 
-	actions_head = (result->last_attempted_action == NULL ?
-			result->actions_head :
-			result->last_attempted_action->next);
-	actions_tail = actions_head;
-	result->last_attempted_action = result->actions_tail;
-
 	if (status != SIEVE_EXEC_OK) {
 		sieve_result_execute_update_status(rexec, status);
 	} else if (rexec->status == SIEVE_EXEC_OK) {
 		/* Transaction start */
 
-		status = sieve_result_transaction_start(rexec, actions_head,
-							&actions_tail);
+		status = sieve_result_transaction_start(rexec);
 
 		/* Transaction execute */
 
-		status = sieve_result_transaction_execute(rexec, actions_head,
-							  status);
+		status = sieve_result_transaction_execute(rexec, status);
 		sieve_result_execute_update_status(rexec, status);
 	}
 
 	/* Transaction commit/rollback */
 
-	status = sieve_result_transaction_commit_or_rollback(
-		rexec, status, actions_head, actions_tail);
+	status = sieve_result_transaction_commit_or_rollback(rexec, status);
 	sieve_result_execute_update_status(rexec, status);
 
 	/* Perform implicit keep if necessary */
