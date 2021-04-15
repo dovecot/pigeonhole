@@ -92,7 +92,6 @@ struct sieve_action {
 	struct mail *mail;
 
 	bool keep:1;
-	bool executed:1;
 };
 
 #define sieve_action_is(act, definition) ((act)->def == &(definition))
