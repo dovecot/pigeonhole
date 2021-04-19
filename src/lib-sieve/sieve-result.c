@@ -101,8 +101,6 @@ struct sieve_result {
 
 	HASH_TABLE(const struct sieve_action_def *,
 		   struct sieve_result_action_context *) action_contexts;
-
-	bool executed_delivery:1;
 };
 
 static const char *
@@ -915,6 +913,7 @@ struct sieve_result_execution {
 	bool keep_explicit:1;
 	bool keep_implicit:1;
 	bool executed:1;
+	bool executed_delivery:1;
 };
 
 void sieve_result_mark_executed(struct sieve_result *result)
@@ -1431,9 +1430,9 @@ bool sieve_result_executed(struct sieve_result_execution *rexec)
 	return rexec->executed;
 }
 
-bool sieve_result_executed_delivery(struct sieve_result *result)
+bool sieve_result_executed_delivery(struct sieve_result_execution *rexec)
 {
-	return result->executed_delivery;
+	return rexec->executed_delivery;
 }
 
 static int sieve_result_transaction_start(struct sieve_result_execution *rexec)
@@ -1526,8 +1525,8 @@ sieve_result_transaction_commit_or_rollback(
 	}
 
 	if (commit_status == SIEVE_EXEC_OK) {
-		result->executed_delivery =
-			result->executed_delivery || seen_delivery;
+		rexec->executed_delivery =
+			rexec->executed_delivery || seen_delivery;
 	}
 
 	return commit_status;

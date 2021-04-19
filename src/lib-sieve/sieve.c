@@ -822,7 +822,7 @@ bool sieve_multiscript_run(struct sieve_multiscript *mscript,
 bool sieve_multiscript_will_discard(struct sieve_multiscript *mscript)
 {
 	return (!mscript->active && mscript->status == SIEVE_EXEC_OK &&
-		!sieve_result_executed_delivery(mscript->result));
+		!sieve_result_executed_delivery(mscript->rexec));
 }
 
 void sieve_multiscript_run_discard(struct sieve_multiscript *mscript,

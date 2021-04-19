@@ -116,7 +116,7 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 
 bool sieve_result_executed(struct sieve_result_execution *rexec);
 
-bool sieve_result_executed_delivery(struct sieve_result *result);
+bool sieve_result_executed_delivery(struct sieve_result_execution *rexec);
 
 /*
  * Result evaluation
