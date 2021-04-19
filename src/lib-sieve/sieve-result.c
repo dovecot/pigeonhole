@@ -915,6 +915,7 @@ struct sieve_result_execution {
 	bool seen_delivery:1;
 	bool executed:1;
 	bool executed_delivery:1;
+	bool committed:1;
 };
 
 void sieve_result_mark_executed(struct sieve_result *result)
@@ -1026,6 +1027,8 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 		status = act->def->execute(&rexec->action_env,
 					   rac->tr_context,
 					   &impl_keep);
+		if (status == SIEVE_EXEC_OK)
+			rexec->executed = TRUE;
 	}
 
 	/* Execute post-execute event of side effects */
@@ -1061,7 +1064,7 @@ sieve_result_action_commit(struct sieve_result_execution *rexec,
 		cstatus = act->def->commit(&rexec->action_env,
 					   rac->tr_context);
 		if (cstatus == SIEVE_EXEC_OK)
-			rexec->executed = TRUE;
+			rexec->committed = TRUE;
 	}
 
 	if (cstatus == SIEVE_EXEC_OK) {
@@ -1138,7 +1141,7 @@ sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
 			/* This is bad; try to salvage as much as possible */
 			if (*commit_status == SIEVE_EXEC_OK) {
 				*commit_status = cstatus;
-				if (!rexec->executed) {
+				if (!rexec->committed) {
 					/* We haven't executed anything yet;
 					   continue as rollback */
 					status = cstatus;
@@ -1341,6 +1344,8 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 			sieve_action_execution_pre(rexec, ract_keep);
 			status = act_keep->def->execute(
 				aenv, ract_keep->tr_context, &dummy);
+			if (status == SIEVE_EXEC_OK)
+				rexec->executed = TRUE;
 		}
 
 		rsef = rsef_first;
@@ -1392,6 +1397,8 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 			sieve_action_execution_pre(rexec, ract_keep);
 			rexec->keep_status = act_keep->def->commit(
 				aenv, ract_keep->tr_context);
+			if (rexec->keep_status == SIEVE_EXEC_OK)
+				rexec->committed = TRUE;
 		}
 
 		rsef = rsef_first;
@@ -1433,6 +1440,11 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 bool sieve_result_executed(struct sieve_result_execution *rexec)
 {
 	return rexec->executed;
+}
+
+bool sieve_result_committed(struct sieve_result_execution *rexec)
+{
+	return rexec->committed;
 }
 
 bool sieve_result_executed_delivery(struct sieve_result_execution *rexec)
@@ -1609,7 +1621,7 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 	/* Perform implicit keep if necessary */
 
 	result_status = rexec->status;
-	if (rexec->executed ||
+	if (rexec->committed ||
 	    (rexec->status != SIEVE_EXEC_TEMP_FAILURE &&
 	     rexec->status != SIEVE_EXEC_RESOURCE_LIMIT)) {
 		/* Execute implicit keep if the transaction failed or when the implicit
@@ -1626,7 +1638,7 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 					result_status = SIEVE_EXEC_FAILURE;
 				break;
 			case SIEVE_EXEC_TEMP_FAILURE:
-				if (!rexec->executed) {
+				if (!rexec->committed) {
 					result_status = ret;
 					break;
 				}
