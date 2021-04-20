@@ -1681,23 +1681,6 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 	return result_status;
 }
 
-void sieve_result_finish(struct sieve_result_execution *rexec,
-			 struct sieve_error_handler *ehandler, bool success)
-{
-	int status = (success ? SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE);
-
-	/* Prepare environment */
-
-	rexec->ehandler = ehandler;
-
-	/* Finish execution */
-
-	sieve_result_transaction_finish(rexec, TRUE, status);
-
-	sieve_action_execution_post(rexec);
-	rexec->ehandler = NULL;
-}
-
 /*
  * Result evaluation
  */
