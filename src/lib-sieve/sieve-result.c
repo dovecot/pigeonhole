@@ -1476,7 +1476,9 @@ int sieve_result_execute(struct sieve_result *result, bool last, bool *keep,
 	/* Perform implicit keep if necessary */
 
 	result_status = status;
-	if (result->executed || status != SIEVE_EXEC_TEMP_FAILURE) {
+	if (result->executed ||
+	    (status != SIEVE_EXEC_TEMP_FAILURE &&
+	     status != SIEVE_EXEC_RESOURCE_LIMIT)) {
 		/* Execute implicit keep if the transaction failed or when the implicit
 		 * keep was not canceled during transaction.
 		 */
