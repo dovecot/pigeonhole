@@ -111,7 +111,7 @@ sieve_result_execution_create(struct sieve_result *result, pool_t pool);
 void sieve_result_execution_destroy(struct sieve_result_execution **_rexec);
 
 int sieve_result_execute(struct sieve_result_execution *rexec, int status,
-			 bool last, struct sieve_error_handler *ehandler,
+			 bool commit, struct sieve_error_handler *ehandler,
 			 bool *keep_r);
 
 bool sieve_result_executed(struct sieve_result_execution *rexec);
