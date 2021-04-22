@@ -1489,16 +1489,21 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 	struct sieve_result_action *ract_keep = &rexec->keep_action;
 	struct sieve_action *act_keep = &ract_keep->action;
 
-	if (rexec->keep_equiv_action != NULL)
+	if (rexec->keep_equiv_action != NULL) {
+		e_debug(rexec->event, "No implicit keep needed "
+			"(equivalent action already executed)");
 		return;
+	}
 
 	rexec->keep.action = &rexec->keep_action;
 	rexec->keep.ehandler = rexec->ehandler;
 	rexec->keep_success = success;
 	rexec->keep_status = status;
 
-	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0)
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0) {
+		e_debug(rexec->event, "Execution of implicit keep is deferred");
 		return;
+	}
 
 	if (!success)
 		*act_keep = result->failure_action;
@@ -1509,8 +1514,10 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 	act_keep->keep = TRUE;
 
 	/* If keep is a non-action, return right away */
-	if (act_keep->def == NULL)
+	if (act_keep->def == NULL) {
+		e_debug(rexec->event, "Keep is not defined yet");
 		return;
+	}
 
 	/* Scan for execution of keep-equal actions */
 	aexec = rexec->actions_head;
@@ -1522,6 +1529,9 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 		    act_keep->def->equals(eenv->scriptenv, NULL,
 					  &rac->action) &&
 		    aexec->state >= SIEVE_ACTION_EXECUTION_STATE_EXECUTED) {
+			e_debug(rexec->event, "No implicit keep needed "
+				"(equivalent %s action already executed)",
+				sieve_action_name(&rac->action));
 			rexec->keep_equiv_action = aexec;
 			return;
 		}
@@ -1544,6 +1554,8 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 		if (success)
 			act_keep->mail = sieve_message_get_mail(aenv->msgctx);
 	} else {
+		e_debug(rexec->event, "Found deferred keep action");
+
 		if (success) {
 			act_keep->location = aexec->action->action.location;
 			act_keep->mail = aexec->action->action.mail;
@@ -1565,6 +1577,9 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 				ract_keep->seffects = actctx->seffects;
 		}
 	}
+
+	e_debug(rexec->event, "Execute implicit keep (failure=%s)",
+		(!success ? "yes" : "no"));
 
 	/* Initialize side effects */
 	sieve_action_execution_add_side_effects(rexec, aexec_keep, ract_keep);
@@ -1597,10 +1612,22 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 	struct sieve_action *act_keep = &ract_keep->action;
 	int commit_status = SIEVE_EXEC_OK;
 
-	if (rexec->keep_equiv_action != NULL)
-		return rexec->keep_equiv_action->status;
-	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0)
+	if (rexec->keep_equiv_action != NULL) {
+		struct sieve_action_execution *ke_aexec =
+			rexec->keep_equiv_action;
+
+		e_debug(rexec->event, "No implicit keep needed "
+			"(equivalent %s action already executed)",
+			sieve_action_name(&ke_aexec->action->action));
+		return ke_aexec->status;
+	}
+	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0) {
+		e_debug(rexec->event, "Execution of implicit keep is deferred");
 		return rexec->keep_status;
+	}
+
+	e_debug(rexec->event, "Finalize implicit keep (failure=%s)",
+		(!success ? "yes" : "no"));
 
 	/* Start keep if necessary */
 	if (act_keep->def == NULL ||
@@ -1608,6 +1635,8 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 		sieve_result_implicit_keep_execute(rexec, success);
 	/* Switch to failure keep if necessary. */
 	} else if (rexec->keep_success && !success){
+		e_debug(rexec->event, "Switch to failure implicit keep");
+
 		/* Failed transaction, rollback success keep action. */
 		sieve_result_action_rollback(rexec, aexec_keep);
 
@@ -1617,7 +1646,6 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 		/* Start failure keep action. */
 		sieve_result_implicit_keep_execute(rexec, success);
 	}
-
 	if (act_keep->def == NULL)
 		return rexec->keep_status;
 
