@@ -1,3 +1,17 @@
+v0.5.15 2021-05-27  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	* CVE-2020-28200: Sieve interpreter is not protected against abusive
+	  scripts that claim excessive resource usage. Fixed by limiting the
+	  user CPU time per single script execution and cumulatively over
+	  several script runs within a configurable timeout period. Sufficiently
+	  large CPU time usage is summed in the Sieve script binary and execution
+	  is blocked when the sum exceeds the limit within that time. The block
+	  is lifted when the script is updated after the resource usage times out.
+	* Disconnection log messages are now more standardized across services.
+	  They also always now start with "Disconnected" prefix.
+	- managesieve: Commands pipelined together with and just after the
+	  authenticate command cause these commands to be executed twice.
+
 v0.5.14 2021-03-04  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* IMAP FILTER command: cmd-filter-sieve - Do not allow NIL as
