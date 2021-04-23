@@ -883,6 +883,11 @@ int sieve_multiscript_tempfail(struct sieve_multiscript **_mscript,
 			       enum sieve_execute_flags flags)
 {
 	struct sieve_multiscript *mscript = *_mscript;
+
+	if (mscript == NULL)
+		return SIEVE_EXEC_OK;
+	*_mscript = NULL;
+
 	struct sieve_result *result = mscript->result;
 	int ret = mscript->status;
 
@@ -919,6 +924,11 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 			     enum sieve_execute_flags flags)
 {
 	struct sieve_multiscript *mscript = *_mscript;
+
+	if (mscript == NULL)
+		return SIEVE_EXEC_OK;
+	*_mscript = NULL;
+
 	struct sieve_result *result = mscript->result;
 	int ret = mscript->status;
 
