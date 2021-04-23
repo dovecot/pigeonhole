@@ -1119,7 +1119,7 @@ int sieve_result_implicit_keep(struct sieve_result_execution *rexec,
 
 	ret = _sieve_result_implicit_keep(rexec, !success);
 
-	rexec->action_env.ehandler = NULL;
+	sieve_action_execution_post(rexec);
 
 	return ret;
 }
@@ -1553,7 +1553,7 @@ int sieve_result_execute(struct sieve_result_execution *rexec,
 
 	sieve_result_transaction_finish(rexec, last, status);
 
-	rexec->action_env.ehandler = NULL;
+	sieve_action_execution_post(rexec);
 	rexec->ehandler = NULL;
 	return result_status;
 }
@@ -1571,7 +1571,7 @@ void sieve_result_finish(struct sieve_result_execution *rexec,
 
 	sieve_result_transaction_finish(rexec, TRUE, status);
 
-	rexec->action_env.ehandler = NULL;
+	sieve_action_execution_post(rexec);
 	rexec->ehandler = NULL;
 }
 
