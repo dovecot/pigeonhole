@@ -747,8 +747,11 @@ act_store_log_status(struct act_store_transaction *trans,
 		}
 	/* Store aborted? */
 	} else if (rolled_back) {
-		sieve_result_global_log(aenv, "store into mailbox %s aborted",
-					mailbox_identifier);
+		if (!aenv->action->keep) {
+			sieve_result_global_log(
+				aenv, "store into mailbox %s aborted",
+				mailbox_identifier);
+		}
 	/* Succeeded */
 	} else {
 		struct event_passthrough *e =
