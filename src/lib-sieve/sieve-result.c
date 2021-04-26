@@ -6,6 +6,7 @@
 #include "ostream.h"
 #include "hash.h"
 #include "str.h"
+#include "llist.h"
 #include "strfuncs.h"
 #include "str-sanitize.h"
 #include "var-expand.h"
@@ -42,13 +43,6 @@ enum sieve_action_execution_state {
 
 struct sieve_result_action {
 	struct sieve_action action;
-
-	// FIXME: Move state to struct sieve_action_execution
-	struct sieve_error_handler *ehandler;
-	void *tr_context;
-	enum sieve_action_execution_state state;
-	int status;
-	bool commit;
 
 	struct sieve_side_effects_list *seffects;
 
@@ -566,7 +560,6 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 		/* Create new action object */
 		raction = p_new(result->pool, struct sieve_result_action, 1);
 		raction->seffects = seffects;
-		raction->tr_context = NULL;
 	}
 
 	raction->action.name = (action.name == NULL ?
@@ -577,6 +570,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 	raction->action.ext = ext;
 	raction->action.location = p_strdup(result->pool, action.location);
 	raction->action.keep = keep;
+	raction->action.exec_seq = result->exec_seq;
 
 	if (raction->prev == NULL && raction != result->actions_head) {
 		/* Add */
@@ -647,7 +641,6 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 	} else {
 		raction->action.mail = NULL;
 	}
-	raction->state = SIEVE_ACTION_EXECUTION_STATE_INIT;
 
 	sieve_result_init_action_event(result, &raction->action, !keep);
 	return 0;
@@ -897,6 +890,19 @@ bool sieve_result_print(struct sieve_result *result,
  * Result execution
  */
 
+struct sieve_action_execution {
+	struct sieve_result_action *action;
+	unsigned int exec_seq;
+	struct sieve_action_execution *prev, *next;
+
+	struct sieve_error_handler *ehandler;
+	void *tr_context;
+	enum sieve_action_execution_state state;
+	int status;
+
+	bool commit:1;
+};
+
 struct sieve_result_execution {
 	pool_t pool;
 	struct sieve_action_exec_env action_env;
@@ -905,8 +911,11 @@ struct sieve_result_execution {
 
 	int status;
 
-	struct sieve_result_action keep;
-	struct sieve_result_action *keep_equiv_action;
+	struct sieve_action_execution *actions_head, *actions_tail;
+
+	struct sieve_result_action keep_action;
+	struct sieve_action_execution keep;
+	struct sieve_action_execution *keep_equiv_action;
 	int keep_status;
 
 	bool dup_flushed:1;
@@ -928,13 +937,13 @@ void sieve_result_mark_executed(struct sieve_result *result)
 
 static void
 sieve_action_execution_pre(struct sieve_result_execution *rexec,
-			   struct sieve_result_action *ract)
+			   struct sieve_action_execution *aexec)
 {
-	if (ract->ehandler == NULL)
-		ract->ehandler = rexec->ehandler;
-	rexec->action_env.action = &ract->action;
-	rexec->action_env.event = ract->action.event;
-	rexec->action_env.ehandler = ract->ehandler;
+	if (aexec->ehandler == NULL)
+		aexec->ehandler = rexec->ehandler;
+	rexec->action_env.action = &aexec->action->action;
+	rexec->action_env.event = aexec->action->action.event;
+	rexec->action_env.ehandler = aexec->ehandler;
 }
 
 static void
@@ -947,12 +956,12 @@ sieve_action_execution_post(struct sieve_result_execution *rexec)
 
 static int
 sieve_result_action_start(struct sieve_result_execution *rexec,
-			  struct sieve_result_action *rac)
+			  struct sieve_action_execution *aexec)
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	const struct sieve_script_env *senv = eenv->scriptenv;
-	struct sieve_result_action *aexec = rac;
+	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
 	int status = SIEVE_EXEC_OK;
 
@@ -983,10 +992,10 @@ sieve_result_action_start(struct sieve_result_execution *rexec,
 
 static int
 sieve_result_action_execute(struct sieve_result_execution *rexec,
-			    struct sieve_result_action *rac,
+			    struct sieve_action_execution *aexec,
 			    int start_status)
 {
-	struct sieve_result_action *aexec = rac;
+	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
 	struct sieve_result_side_effect *rsef;
 	struct sieve_side_effect *sef;
@@ -1060,9 +1069,9 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 
 static int
 sieve_result_action_commit(struct sieve_result_execution *rexec,
-			   struct sieve_result_action *rac)
+			   struct sieve_action_execution *aexec)
 {
-	struct sieve_result_action *aexec = rac;
+	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
 	struct sieve_result_side_effect *rsef;
 	int cstatus = SIEVE_EXEC_OK;
@@ -1098,9 +1107,9 @@ sieve_result_action_commit(struct sieve_result_execution *rexec,
 
 static void
 sieve_result_action_rollback(struct sieve_result_execution *rexec,
-			     struct sieve_result_action *rac)
+			     struct sieve_action_execution *aexec)
 {
-	struct sieve_result_action *aexec = rac;
+	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
 	struct sieve_result_side_effect *rsef;
 
@@ -1128,10 +1137,10 @@ sieve_result_action_rollback(struct sieve_result_execution *rexec,
 
 static int
 sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
-				       struct sieve_result_action *rac,
+				       struct sieve_action_execution *aexec,
 				       int status, int *commit_status)
 {
-	struct sieve_result_action *aexec = rac;
+	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
 
 	/* Skip actions that are already finalized. */
@@ -1176,9 +1185,9 @@ sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
 
 static void
 sieve_result_action_finish(struct sieve_result_execution *rexec,
-			   struct sieve_result_action *rac, int status)
+			   struct sieve_action_execution *aexec, int status)
 {
-	struct sieve_result_action *aexec = rac;
+	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
 
 	/* Skip non-actions (inactive keep) */
@@ -1189,6 +1198,67 @@ sieve_result_action_finish(struct sieve_result_execution *rexec,
 		sieve_action_execution_pre(rexec, aexec);
 		act->def->finish(&rexec->action_env, aexec->tr_context, status);
 	}
+}
+
+static void
+sieve_result_action_abort(struct sieve_result_execution *rexec,
+			  struct sieve_action_execution *aexec)
+{
+	if (aexec->state > SIEVE_ACTION_EXECUTION_STATE_INIT &&
+	    aexec->state < SIEVE_ACTION_EXECUTION_STATE_FINALIZED)
+		sieve_result_action_rollback(rexec, aexec);
+	DLLIST2_REMOVE(&rexec->actions_head, &rexec->actions_tail, aexec);
+}
+
+static void
+sieve_action_execution_update(struct sieve_result_execution *rexec,
+			      struct sieve_action_execution *aexec)
+{
+	const struct sieve_action_exec_env *aenv = &rexec->action_env;
+	struct sieve_result *result = aenv->result;
+	struct sieve_result_action *rac;
+
+	rac = result->actions_head;
+	while (rac != NULL) {
+		if (aexec->action == rac)
+			break;
+		rac = rac->next;
+	}
+
+	if (rac == NULL) {
+		/* Action was removed; abort it. */
+		sieve_result_action_abort(rexec, aexec);
+		return;
+	}
+
+	if (aexec->exec_seq != rac->action.exec_seq) {
+		i_assert(rac->action.keep);
+
+		/* Recycled keep */
+		aexec->exec_seq = rac->action.exec_seq;
+		aexec->state = SIEVE_ACTION_EXECUTION_STATE_INIT;
+	}
+}
+
+static void
+sieve_result_execution_add_action(struct sieve_result_execution *rexec,
+				  struct sieve_result_action *rac)
+{
+	struct sieve_action_execution *aexec;
+
+	aexec = rexec->actions_head;
+	while (aexec != NULL) {
+		if (aexec->action == rac)
+			return;
+		aexec = aexec->next;
+	}
+
+	aexec = p_new(rexec->pool, struct sieve_action_execution, 1);
+	aexec->action = rac;
+	aexec->exec_seq = rac->action.exec_seq;
+	aexec->ehandler = rexec->ehandler;
+
+	DLLIST2_APPEND(&rexec->actions_head, &rexec->actions_tail, aexec);
 }
 
 /* Result */
@@ -1239,17 +1309,18 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
-	struct sieve_result_action *aexec;
+	struct sieve_action_execution *aexec;
 	int status = SIEVE_EXEC_OK;
 	struct sieve_result_side_effect *rsef, *rsef_first;
-	struct sieve_result_action *aexec_keep = &rexec->keep;
-	struct sieve_result_action *ract_keep = &rexec->keep;
+	struct sieve_action_execution *aexec_keep = &rexec->keep;
+	struct sieve_result_action *ract_keep = &rexec->keep_action;
 	struct sieve_action *act_keep = &ract_keep->action;
 
 	if (rexec->keep_equiv_action != NULL)
 		return;
 
-	ract_keep->ehandler = rexec->ehandler;
+	rexec->keep.action = &rexec->keep_action;
+	rexec->keep.ehandler = rexec->ehandler;
 	rexec->keep_success = success;
 	rexec->keep_status = status;
 
@@ -1269,9 +1340,9 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 		return;
 
 	/* Scan for execution of keep-equal actions */
-	aexec = result->actions_head;
+	aexec = rexec->actions_head;
 	while (aexec != NULL) {
-		struct sieve_result_action *rac = aexec;
+		struct sieve_result_action *rac = aexec->action;
 
 		if (rac->action.def == act_keep->def &&
 		    act_keep->def->equals != NULL &&
@@ -1286,10 +1357,10 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 	}
 
 	/* Scan for deferred keep */
-	aexec = result->actions_tail;
+	aexec = rexec->actions_tail;
 	while (aexec != NULL &&
 	       aexec->state >= SIEVE_ACTION_EXECUTION_STATE_EXECUTED) {
-		struct sieve_result_action *rac = aexec;
+		struct sieve_result_action *rac = aexec->action;
 
 		if (rac->action.keep && rac->action.def == NULL)
 			break;
@@ -1300,9 +1371,9 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 		if (success)
 			act_keep->mail = sieve_message_get_mail(aenv->msgctx);
 	} else if (success) {
-		act_keep->location = aexec->action.location;
-		act_keep->mail = aexec->action.mail;
-		ract_keep->seffects = aexec->seffects;
+		act_keep->location = aexec->action->action.location;
+		act_keep->mail = aexec->action->action.mail;
+		ract_keep->seffects = aexec->action->seffects;
 	}
 
 	if (ract_keep->seffects == NULL) {
@@ -1384,8 +1455,8 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_result_side_effect *rsef, *rsef_first;
-	struct sieve_result_action *aexec_keep = &rexec->keep;
-	struct sieve_result_action *ract_keep = &rexec->keep;
+	struct sieve_action_execution *aexec_keep = &rexec->keep;
+	struct sieve_result_action *ract_keep = &rexec->keep_action;
 	struct sieve_action *act_keep = &ract_keep->action;
 
 	if (rexec->keep_equiv_action != NULL)
@@ -1488,13 +1559,11 @@ bool sieve_result_executed_delivery(struct sieve_result_execution *rexec)
 
 static int sieve_result_transaction_start(struct sieve_result_execution *rexec)
 {
-	const struct sieve_action_exec_env *aenv = &rexec->action_env;
-	struct sieve_result *result = aenv->result;
-	struct sieve_result_action *aexec;
+	struct sieve_action_execution *aexec;
 	int status = SIEVE_EXEC_OK;
 
 	rexec->dup_flushed = FALSE;
-	aexec = result->actions_head;
+	aexec = rexec->actions_head;
 	while (status == SIEVE_EXEC_OK && aexec != NULL) {
 		status = sieve_result_action_start(rexec, aexec);
 		aexec = aexec->next;
@@ -1508,13 +1577,11 @@ static int
 sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 				 int start_status)
 {
-	const struct sieve_action_exec_env *aenv = &rexec->action_env;
-	struct sieve_result *result = aenv->result;
-	struct sieve_result_action *aexec;
+	struct sieve_action_execution *aexec;
 	int status = SIEVE_EXEC_OK;
 
 	rexec->seen_delivery = FALSE;
-	aexec = result->actions_head;
+	aexec = rexec->actions_head;
 	while (status == SIEVE_EXEC_OK && aexec != NULL) {
 		status = sieve_result_action_execute(rexec, aexec,
 						     start_status);
@@ -1525,7 +1592,7 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 	if (status == SIEVE_EXEC_OK) {
 		/* Since this execution series is successful so far, mark all
 		   actions in it to be committed. */
-		aexec = result->actions_head;
+		aexec = rexec->actions_head;
 		while (aexec != NULL) {
 			aexec->commit = TRUE;
 			aexec = aexec->next;
@@ -1542,9 +1609,7 @@ static int
 sieve_result_transaction_commit_or_rollback(
 	struct sieve_result_execution *rexec, int status)
 {
-	const struct sieve_action_exec_env *aenv = &rexec->action_env;
-	struct sieve_result *result = aenv->result;
-	struct sieve_result_action *aexec;
+	struct sieve_action_execution *aexec;
 	int commit_status = SIEVE_EXEC_OK;
 
 	switch (status) {
@@ -1557,9 +1622,9 @@ sieve_result_transaction_commit_or_rollback(
 	}
 
 	/* First commit/rollback all storage actions */
-	aexec = result->actions_head;
+	aexec = rexec->actions_head;
 	while (aexec != NULL) {
-		struct sieve_result_action *rac = aexec;
+		struct sieve_result_action *rac = aexec->action;
 		struct sieve_action *act = &rac->action;
 
 		if (act->def == NULL ||
@@ -1575,9 +1640,9 @@ sieve_result_transaction_commit_or_rollback(
 	}
 
 	/* Then commit/rollback all other actions */
-	aexec = result->actions_head;
+	aexec = rexec->actions_head;
 	while (aexec != NULL) {
-		struct sieve_result_action *rac = aexec;
+		struct sieve_result_action *rac = aexec->action;
 		struct sieve_action *act = &rac->action;
 
 		if (act->def != NULL &&
@@ -1599,11 +1664,9 @@ static void
 sieve_result_transaction_finish(struct sieve_result_execution *rexec,
 				int status)
 {
-	const struct sieve_action_exec_env *aenv = &rexec->action_env;
-	struct sieve_result *result = aenv->result;
-	struct sieve_result_action *aexec;
+	struct sieve_action_execution *aexec;
 
-	aexec = result->actions_head;
+	aexec = rexec->actions_head;
 	while (aexec != NULL) {
 		sieve_result_action_finish(rexec, aexec, status);
 		aexec = aexec->next;
@@ -1635,6 +1698,29 @@ sieve_result_execute_update_status(struct sieve_result_execution *rexec,
 	}
 }
 
+static void
+sieve_result_execution_update(struct sieve_result_execution *rexec)
+{
+	const struct sieve_action_exec_env *aenv = &rexec->action_env;
+	struct sieve_result *result = aenv->result;
+	struct sieve_action_execution *aexec;
+	struct sieve_result_action *rac;
+
+	aexec = rexec->actions_head;
+	while (aexec != NULL) {
+		struct sieve_action_execution *aexec_next = aexec->next;
+
+		sieve_action_execution_update(rexec, aexec);
+		aexec = aexec_next;
+	}
+
+	rac = result->actions_head;
+	while (rac != NULL) {
+		sieve_result_execution_add_action(rexec, rac);
+		rac = rac->next;
+	}
+}
+
 int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 			 bool commit, struct sieve_error_handler *ehandler,
 			 bool *keep_r)
@@ -1650,6 +1736,10 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 	/* Prepare environment */
 
 	rexec->ehandler = ehandler;
+
+	/* Update actions in execution from result */
+
+	sieve_result_execution_update(rexec);
 
 	/* Transaction start and execute */
 
