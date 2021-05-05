@@ -134,7 +134,7 @@ int sieve_ldap_storage_read_settings
 				"(%s and %s)", config_path, str, lstorage->set.ldaprc_path);
 			return -1;
 		}
-		env_put(t_strconcat("LDAPRC=", lstorage->set.ldaprc_path, NULL));
+		env_put("LDAPRC", lstorage->set.ldaprc_path);
 	}
 
 	if ( ldap_deref_from_str

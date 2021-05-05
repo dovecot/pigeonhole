@@ -133,7 +133,7 @@ static bool capability_dump(void)
 		if (dup2(fd[1], STDOUT_FILENO) < 0)
 			i_fatal("managesieve-login: dump-capability dup2() failed: %m");
 
-		env_put("DUMP_CAPABILITY=1");
+		env_put("DUMP_CAPABILITY", "1");
 
 		argv[0] = PKG_LIBEXECDIR"/managesieve";
 		argv[1] = "-k";
