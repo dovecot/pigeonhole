@@ -890,10 +890,18 @@ bool sieve_result_print(struct sieve_result *result,
  * Result execution
  */
 
+struct sieve_side_effect_execution {
+	struct sieve_result_side_effect *seffect;
+
+	struct sieve_side_effect_execution *prev, *next;
+};
+
 struct sieve_action_execution {
 	struct sieve_result_action *action;
 	unsigned int exec_seq;
 	struct sieve_action_execution *prev, *next;
+
+	struct sieve_side_effect_execution *seffects_head, *seffects_tail;
 
 	struct sieve_error_handler *ehandler;
 	void *tr_context;
@@ -938,8 +946,9 @@ void sieve_result_mark_executed(struct sieve_result *result)
 static int
 sieve_result_side_effect_pre_execute(struct sieve_result_execution *rexec,
 				     struct sieve_action_execution *aexec,
-				     struct sieve_result_side_effect *rsef)
+				     struct sieve_side_effect_execution *seexec)
 {
+	struct sieve_result_side_effect *rsef = seexec->seffect;
 	struct sieve_side_effect *sef = &rsef->seffect;
 
 	if (sef->def == NULL)
@@ -952,11 +961,12 @@ sieve_result_side_effect_pre_execute(struct sieve_result_execution *rexec,
 }
 
 static int
-sieve_result_side_effect_post_execute(struct sieve_result_execution *rexec,
-				      struct sieve_action_execution *aexec,
-				      struct sieve_result_side_effect *rsef,
-				      bool *impl_keep)
+sieve_result_side_effect_post_execute(
+	struct sieve_result_execution *rexec,
+	struct sieve_action_execution *aexec,
+	struct sieve_side_effect_execution *seexec, bool *impl_keep)
 {
+	struct sieve_result_side_effect *rsef = seexec->seffect;
 	struct sieve_side_effect *sef = &rsef->seffect;
 
 	if (sef->def == NULL)
@@ -971,9 +981,10 @@ sieve_result_side_effect_post_execute(struct sieve_result_execution *rexec,
 static void
 sieve_result_side_effect_post_commit(struct sieve_result_execution *rexec,
 				     struct sieve_action_execution *aexec,
-				     struct sieve_result_side_effect *rsef,
+				     struct sieve_side_effect_execution *seexec,
 				     int commit_status)
 {
+	struct sieve_result_side_effect *rsef = seexec->seffect;
 	struct sieve_side_effect *sef = &rsef->seffect;
 
 	if (sef->def == NULL)
@@ -988,8 +999,9 @@ sieve_result_side_effect_post_commit(struct sieve_result_execution *rexec,
 static void
 sieve_result_side_effect_rollback(struct sieve_result_execution *rexec,
 				  struct sieve_action_execution *aexec,
-				  struct sieve_result_side_effect *rsef)
+				  struct sieve_side_effect_execution *seexec)
 {
+	struct sieve_result_side_effect *rsef = seexec->seffect;
 	struct sieve_side_effect *sef = &rsef->seffect;
 
 	if (sef->def == NULL)
@@ -1000,6 +1012,40 @@ sieve_result_side_effect_rollback(struct sieve_result_execution *rexec,
 	sef->def->rollback(sef, &rexec->action_env,
 			   aexec->tr_context,
 			   (aexec->status == SIEVE_EXEC_OK));
+}
+
+static void
+sieve_action_execution_add_side_effect(struct sieve_result_execution *rexec,
+				       struct sieve_action_execution *aexec,
+				       struct sieve_result_side_effect *seffect)
+{
+	struct sieve_side_effect_execution *seexec;
+
+	seexec = aexec->seffects_head;
+	while (seexec != NULL) {
+		if (seexec->seffect == seffect)
+			return;
+		seexec = seexec->next;
+	}
+
+	seexec = p_new(rexec->pool, struct sieve_side_effect_execution, 1);
+	seexec->seffect = seffect;
+
+	DLLIST2_APPEND(&aexec->seffects_head, &aexec->seffects_tail, seexec);
+}
+
+static void
+sieve_action_execution_add_side_effects(struct sieve_result_execution *rexec,
+				        struct sieve_action_execution *aexec,
+					struct sieve_result_action *rac)
+{
+	struct sieve_result_side_effect *rsef;
+
+	rsef = (rac->seffects == NULL ? NULL : rac->seffects->first_effect);
+	while (rsef != NULL) {
+		sieve_action_execution_add_side_effect(rexec, aexec, rsef);
+		rsef = rsef->next;
+	}
 }
 
 /* Action */
@@ -1067,7 +1113,7 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 {
 	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
-	struct sieve_result_side_effect *rsef;
+	struct sieve_side_effect_execution *seexec;
 	int status = start_status;
 	bool impl_keep = TRUE;
 
@@ -1093,12 +1139,11 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 	sieve_action_execution_pre(rexec, aexec);
 
 	/* Execute pre-execute event of side effects */
-	rsef = (rac->seffects != NULL ?
-		rac->seffects->first_effect : NULL);
-	while (status == SIEVE_EXEC_OK && rsef != NULL) {
+	seexec = aexec->seffects_head;
+	while (status == SIEVE_EXEC_OK && seexec != NULL) {
 		status = sieve_result_side_effect_pre_execute(
-			rexec, aexec, rsef);
-		rsef = rsef->next;
+			rexec, aexec, seexec);
+		seexec = seexec->next;
 	}
 
 	/* Execute the action itself */
@@ -1112,12 +1157,11 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 	}
 
 	/* Execute post-execute event of side effects */
-	rsef = (rac->seffects != NULL ?
-		rac->seffects->first_effect : NULL);
-	while (status == SIEVE_EXEC_OK && rsef != NULL) {
+	seexec = aexec->seffects_head;
+	while (status == SIEVE_EXEC_OK && seexec != NULL) {
 		status = sieve_result_side_effect_post_execute(
-			rexec, aexec, rsef, &impl_keep);
-		rsef = rsef->next;
+			rexec, aexec, seexec, &impl_keep);
+		seexec = seexec->next;
 	}
 
 	if (status == SIEVE_EXEC_OK &&
@@ -1141,7 +1185,7 @@ sieve_result_action_commit(struct sieve_result_execution *rexec,
 {
 	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
-	struct sieve_result_side_effect *rsef;
+	struct sieve_side_effect_execution *seexec;
 	int cstatus = SIEVE_EXEC_OK;
 
 	sieve_action_execution_pre(rexec, aexec);
@@ -1154,12 +1198,11 @@ sieve_result_action_commit(struct sieve_result_execution *rexec,
 	}
 
 	/* Execute post_commit event of side effects */
-	rsef = (rac->seffects != NULL ?
-		rac->seffects->first_effect : NULL);
-	while (rsef != NULL) {
+	seexec = aexec->seffects_head;
+	while (seexec != NULL) {
 		sieve_result_side_effect_post_commit(
-			rexec, aexec, rsef, cstatus);
-		rsef = rsef->next;
+			rexec, aexec, seexec, cstatus);
+		seexec = seexec->next;
 	}
 
 	sieve_action_execution_post(rexec);
@@ -1173,7 +1216,7 @@ sieve_result_action_rollback(struct sieve_result_execution *rexec,
 {
 	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
-	struct sieve_result_side_effect *rsef;
+	struct sieve_side_effect_execution *seexec;
 
 	sieve_action_execution_pre(rexec, aexec);
 
@@ -1183,10 +1226,10 @@ sieve_result_action_rollback(struct sieve_result_execution *rexec,
 	}
 
 	/* Rollback side effects */
-	rsef = (rac->seffects != NULL ? rac->seffects->first_effect : NULL);
-	while (rsef != NULL) {
-		sieve_result_side_effect_rollback(rexec, aexec, rsef);
-		rsef = rsef->next;
+	seexec = aexec->seffects_head;
+	while (seexec != NULL) {
+		sieve_result_side_effect_rollback(rexec, aexec, seexec);
+		seexec = seexec->next;
 	}
 
 	sieve_action_execution_post(rexec);
@@ -1296,6 +1339,8 @@ sieve_action_execution_update(struct sieve_result_execution *rexec,
 		aexec->exec_seq = rac->action.exec_seq;
 		aexec->state = SIEVE_ACTION_EXECUTION_STATE_INIT;
 	}
+
+	sieve_action_execution_add_side_effects(rexec, aexec, rac);
 }
 
 static void
@@ -1317,6 +1362,8 @@ sieve_result_execution_add_action(struct sieve_result_execution *rexec,
 	aexec->ehandler = rexec->ehandler;
 
 	DLLIST2_APPEND(&rexec->actions_head, &rexec->actions_tail, aexec);
+
+	sieve_action_execution_add_side_effects(rexec, aexec, rac);
 }
 
 /* Result */
@@ -1449,6 +1496,9 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 				ract_keep->seffects = actctx->seffects;
 		}
 	}
+
+	/* Initialize side effects */
+	sieve_action_execution_add_side_effects(rexec, aexec_keep, ract_keep);
 
 	/* Initialize keep action event */
 	sieve_result_init_action_event(result, act_keep, FALSE);
