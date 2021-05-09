@@ -893,6 +893,8 @@ struct sieve_result_execution {
 	struct sieve_action_exec_env action_env;
 	struct sieve_error_handler *ehandler;
 	struct event *event;
+
+	bool dup_flushed:1;
 };
 
 /* Action */
@@ -912,6 +914,35 @@ sieve_action_execution_post(struct sieve_result_execution *rexec)
 	rexec->action_env.action = NULL;
 	rexec->action_env.event = rexec->action_env.result->event;
 	rexec->action_env.ehandler = NULL;
+}
+
+static int
+sieve_result_action_start(struct sieve_result_execution *rexec,
+			  struct sieve_result_action *rac)
+{
+	const struct sieve_action_exec_env *aenv = &rexec->action_env;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	const struct sieve_script_env *senv = eenv->scriptenv;
+	struct sieve_action *act = &rac->action;
+	int status = SIEVE_EXEC_OK;
+
+	/* Skip non-actions (inactive keep) and executed ones */
+	if (act->def == NULL || act->executed)
+		return status;
+
+	if ((act->def->flags & SIEVE_ACTFLAG_MAIL_STORAGE) != 0 &&
+	    !rexec->dup_flushed) {
+		sieve_action_duplicate_flush(senv);
+		rexec->dup_flushed = TRUE;
+	}
+
+	if (act->def->start != NULL) {
+		sieve_action_execution_pre(rexec, act);
+		status = act->def->start(&rexec->action_env,
+					 &rac->tr_context);
+		rac->success = (status == SIEVE_EXEC_OK);
+	}
+	return status;
 }
 
 /* Result */
@@ -1158,35 +1189,12 @@ sieve_result_transaction_start(struct sieve_result_execution *rexec,
 			       struct sieve_result_action *first,
 			       struct sieve_result_action **last_r)
 {
-	const struct sieve_action_exec_env *aenv = &rexec->action_env;
-	struct sieve_result *result = aenv->result;
-	const struct sieve_execute_env *eenv = result->exec_env;
-	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct sieve_result_action *rac = first;
 	int status = SIEVE_EXEC_OK;
-	bool dup_flushed = FALSE;
 
+	rexec->dup_flushed = FALSE;
 	while (status == SIEVE_EXEC_OK && rac != NULL) {
-		struct sieve_action *act = &rac->action;
-
-		/* Skip non-actions (inactive keep) and executed ones */
-		if (act->def == NULL || act->executed) {
-			rac = rac->next;
-			continue;
-		}
-
-		if ((act->def->flags & SIEVE_ACTFLAG_MAIL_STORAGE) != 0 &&
-		    !dup_flushed) {
-			sieve_action_duplicate_flush(senv);
-			dup_flushed = TRUE;
-		}
-
-		if (act->def->start != NULL) {
-			sieve_action_execution_pre(rexec, act);
-			status = act->def->start(&rexec->action_env,
-						 &rac->tr_context);
-			rac->success = (status == SIEVE_EXEC_OK);
-		}
+		status = sieve_result_action_start(rexec, rac);
 		rac = rac->next;
 	}
 	sieve_action_execution_post(rexec);
