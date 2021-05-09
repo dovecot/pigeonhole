@@ -1003,6 +1003,47 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 	return status;
 }
 
+static int
+sieve_result_action_commit(struct sieve_result_execution *rexec,
+			   struct sieve_result_action *rac)
+{
+	const struct sieve_action_exec_env *aenv = &rexec->action_env;
+	struct sieve_result *result = aenv->result;
+	struct sieve_action *act = &rac->action;
+	struct sieve_result_side_effect *rsef;
+	int cstatus = SIEVE_EXEC_OK;
+
+	if (act->def->commit != NULL) {
+		sieve_action_execution_pre(rexec, act);
+		cstatus = act->def->commit(&rexec->action_env,
+					   rac->tr_context);
+		if (cstatus == SIEVE_EXEC_OK) {
+			act->executed = TRUE;
+			result->executed = TRUE;
+		}
+	}
+
+	if (cstatus == SIEVE_EXEC_OK) {
+		/* Execute post_commit event of side effects */
+		rsef = (rac->seffects != NULL ?
+			rac->seffects->first_effect : NULL);
+		while (rsef != NULL) {
+			struct sieve_side_effect *sef = &rsef->seffect;
+
+			if (sef->def->post_commit != NULL) {
+				sieve_action_execution_pre(rexec, act);
+				sef->def->post_commit(
+					sef, &rexec->action_env,
+					rac->tr_context);
+			}
+			rsef = rsef->next;
+		}
+	}
+	sieve_action_execution_post(rexec);
+
+	return cstatus;
+}
+
 /* Result */
 
 struct sieve_result_execution *
@@ -1276,47 +1317,6 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 	sieve_action_execution_post(rexec);
 
 	return status;
-}
-
-static int
-sieve_result_action_commit(struct sieve_result_execution *rexec,
-			   struct sieve_result_action *rac)
-{
-	const struct sieve_action_exec_env *aenv = &rexec->action_env;
-	struct sieve_result *result = aenv->result;
-	struct sieve_action *act = &rac->action;
-	struct sieve_result_side_effect *rsef;
-	int cstatus = SIEVE_EXEC_OK;
-
-	if (act->def->commit != NULL) {
-		sieve_action_execution_pre(rexec, act);
-		cstatus = act->def->commit(&rexec->action_env,
-					   rac->tr_context);
-		if (cstatus == SIEVE_EXEC_OK) {
-			act->executed = TRUE;
-			result->executed = TRUE;
-		}
-	}
-
-	if (cstatus == SIEVE_EXEC_OK) {
-		/* Execute post_commit event of side effects */
-		rsef = (rac->seffects != NULL ?
-			rac->seffects->first_effect : NULL);
-		while (rsef != NULL) {
-			struct sieve_side_effect *sef = &rsef->seffect;
-
-			if (sef->def->post_commit != NULL) {
-				sieve_action_execution_pre(rexec, act);
-				sef->def->post_commit(
-					sef, &rexec->action_env,
-					rac->tr_context);
-			}
-			rsef = rsef->next;
-		}
-	}
-	sieve_action_execution_post(rexec);
-
-	return cstatus;
 }
 
 static void
