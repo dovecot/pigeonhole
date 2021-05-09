@@ -1072,6 +1072,58 @@ sieve_result_action_rollback(struct sieve_result_execution *rexec,
 	sieve_action_execution_post(rexec);
 }
 
+static int
+sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
+				       struct sieve_result_action *rac,
+				       int status, bool *keep,
+				       int *commit_status)
+{
+	const struct sieve_action_exec_env *aenv = &rexec->action_env;
+	struct sieve_result *result = aenv->result;
+	struct sieve_action *act = &rac->action;
+
+	if (status == SIEVE_EXEC_OK) {
+		int cstatus = SIEVE_EXEC_OK;
+
+		if (rac->action.keep && keep != NULL)
+			*keep = TRUE;
+
+		/* Skip non-actions (inactive keep) and executed ones */
+		if (act->def == NULL || act->executed)
+			return status;
+
+		cstatus = sieve_result_action_commit(rexec, rac);
+		if (cstatus != SIEVE_EXEC_OK) {
+			/* This is bad; try to salvage as much as possible */
+			if (*commit_status == SIEVE_EXEC_OK) {
+				*commit_status = cstatus;
+				if (!result->executed) {
+					/* We haven't executed anything yet;
+					   continue as rollback */
+					status = cstatus;
+				}
+			}
+			if (keep != NULL)
+				*keep = TRUE;
+		}
+	} else {
+		/* Skip non-actions (inactive keep) and executed ones */
+		if (act->def == NULL || act->executed)
+			return status;
+
+		sieve_result_action_rollback(rexec, rac);
+	}
+
+	if (act->keep) {
+		if (status == SIEVE_EXEC_FAILURE)
+			status = SIEVE_EXEC_KEEP_FAILED;
+		if (*commit_status == SIEVE_EXEC_FAILURE)
+			*commit_status = SIEVE_EXEC_KEEP_FAILED;
+	}
+
+	return status;
+}
+
 /* Result */
 
 struct sieve_result_execution *
@@ -1343,58 +1395,6 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 		rac = rac->next;
 	}
 	sieve_action_execution_post(rexec);
-
-	return status;
-}
-
-static int
-sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
-				       struct sieve_result_action *rac,
-				       int status, bool *keep,
-				       int *commit_status)
-{
-	const struct sieve_action_exec_env *aenv = &rexec->action_env;
-	struct sieve_result *result = aenv->result;
-	struct sieve_action *act = &rac->action;
-
-	if (status == SIEVE_EXEC_OK) {
-		int cstatus = SIEVE_EXEC_OK;
-
-		if (rac->action.keep && keep != NULL)
-			*keep = TRUE;
-
-		/* Skip non-actions (inactive keep) and executed ones */
-		if (act->def == NULL || act->executed)
-			return status;
-
-		cstatus = sieve_result_action_commit(rexec, rac);
-		if (cstatus != SIEVE_EXEC_OK) {
-			/* This is bad; try to salvage as much as possible */
-			if (*commit_status == SIEVE_EXEC_OK) {
-				*commit_status = cstatus;
-				if (!result->executed) {
-					/* We haven't executed anything yet;
-					   continue as rollback */
-					status = cstatus;
-				}
-			}
-			if (keep != NULL)
-				*keep = TRUE;
-		}
-	} else {
-		/* Skip non-actions (inactive keep) and executed ones */
-		if (act->def == NULL || act->executed)
-			return status;
-
-		sieve_result_action_rollback(rexec, rac);
-	}
-
-	if (act->keep) {
-		if (status == SIEVE_EXEC_FAILURE)
-			status = SIEVE_EXEC_KEEP_FAILED;
-		if (*commit_status == SIEVE_EXEC_FAILURE)
-			*commit_status = SIEVE_EXEC_KEEP_FAILED;
-	}
 
 	return status;
 }
