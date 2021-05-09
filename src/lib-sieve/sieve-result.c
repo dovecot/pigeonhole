@@ -1124,6 +1124,24 @@ sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
 	return status;
 }
 
+static void
+sieve_result_action_finish(struct sieve_result_execution *rexec,
+			   struct sieve_result_action *rac, bool last,
+			   int status)
+{
+	struct sieve_action *act = &rac->action;
+
+	/* Skip non-actions (inactive keep) and executed ones */
+	if (act->def == NULL || act->executed)
+		return;
+
+	if (act->def->finish != NULL) {
+		sieve_action_execution_pre(rexec, act);
+		act->def->finish(&rexec->action_env, last,
+				 rac->tr_context, status);
+	}
+}
+
 /* Result */
 
 struct sieve_result_execution *
@@ -1470,20 +1488,7 @@ sieve_result_transaction_finish(struct sieve_result_execution *rexec, bool last,
 	struct sieve_result_action *rac = result->actions_head;
 
 	while (rac != NULL) {
-		struct sieve_action *act = &rac->action;
-
-		/* Skip non-actions (inactive keep) and executed ones */
-		if (act->def == NULL || act->executed) {
-			rac = rac->next;
-			continue;
-		}
-
-		if (act->def->finish != NULL) {
-			sieve_action_execution_pre(rexec, act);
-			act->def->finish(&rexec->action_env, last,
-					 rac->tr_context, status);
-		}
-
+		sieve_result_action_finish(rexec, rac, last, status);
 		rac = rac->next;
 	}
 	sieve_action_execution_post(rexec);
