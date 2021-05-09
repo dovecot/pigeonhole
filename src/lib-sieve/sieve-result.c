@@ -1044,6 +1044,34 @@ sieve_result_action_commit(struct sieve_result_execution *rexec,
 	return cstatus;
 }
 
+static void
+sieve_result_action_rollback(struct sieve_result_execution *rexec,
+			     struct sieve_result_action *rac)
+{
+	struct sieve_action *act = &rac->action;
+	struct sieve_result_side_effect *rsef;
+
+	if (act->def->rollback != NULL) {
+		sieve_action_execution_pre(rexec, act);
+		act->def->rollback(&rexec->action_env, rac->tr_context,
+				   rac->success);
+	}
+
+	/* Rollback side effects */
+	rsef = (rac->seffects != NULL ? rac->seffects->first_effect : NULL);
+	while (rsef != NULL) {
+		struct sieve_side_effect *sef = &rsef->seffect;
+
+		if (sef->def != NULL && sef->def->rollback != NULL) {
+			sieve_action_execution_pre(rexec, act);
+			sef->def->rollback(sef, &rexec->action_env,
+					   rac->tr_context, rac->success);
+		}
+		rsef = rsef->next;
+	}
+	sieve_action_execution_post(rexec);
+}
+
 /* Result */
 
 struct sieve_result_execution *
@@ -1317,34 +1345,6 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 	sieve_action_execution_post(rexec);
 
 	return status;
-}
-
-static void
-sieve_result_action_rollback(struct sieve_result_execution *rexec,
-			     struct sieve_result_action *rac)
-{
-	struct sieve_action *act = &rac->action;
-	struct sieve_result_side_effect *rsef;
-
-	if (act->def->rollback != NULL) {
-		sieve_action_execution_pre(rexec, act);
-		act->def->rollback(&rexec->action_env, rac->tr_context,
-				   rac->success);
-	}
-
-	/* Rollback side effects */
-	rsef = (rac->seffects != NULL ? rac->seffects->first_effect : NULL);
-	while (rsef != NULL) {
-		struct sieve_side_effect *sef = &rsef->seffect;
-
-		if (sef->def != NULL && sef->def->rollback != NULL) {
-			sieve_action_execution_pre(rexec, act);
-			sef->def->rollback(sef, &rexec->action_env,
-					   rac->tr_context, rac->success);
-		}
-		rsef = rsef->next;
-	}
-	sieve_action_execution_post(rexec);
 }
 
 static int
