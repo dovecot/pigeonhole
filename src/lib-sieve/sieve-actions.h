@@ -146,7 +146,7 @@ struct sieve_side_effect_def {
 			    void *tr_context, bool *keep);
 	void (*post_commit)(const struct sieve_side_effect *seffect,
 			    const struct sieve_action_exec_env *aenv,
-			    void *tr_context);
+			    void *tr_context, int commit_status);
 	void (*rollback)(const struct sieve_side_effect *seffect,
 			 const struct sieve_action_exec_env *aenv,
 			 void *tr_context, bool success);
