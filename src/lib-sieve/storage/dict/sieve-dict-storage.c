@@ -93,7 +93,6 @@ int sieve_dict_storage_get_dict
 
 	if ( dstorage->dict == NULL ) {
 		i_zero(&dict_set);
-		dict_set.username = dstorage->username;
 		dict_set.base_dir = svinst->base_dir;
 		ret = dict_init(dstorage->uri, &dict_set, &dstorage->dict, &error);
 		if ( ret < 0 ) {

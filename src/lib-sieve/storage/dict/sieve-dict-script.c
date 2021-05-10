@@ -81,8 +81,11 @@ static int sieve_dict_script_open
 	path = t_strconcat
 		(DICT_SIEVE_NAME_PATH, dict_escape_string(name), NULL);
 
+	struct dict_op_settings set = {
+		.username = dstorage->username,
+	};
 	ret = dict_lookup
-		(dscript->dict, script->pool, path, &data_id, &error);
+		(dscript->dict, &set, script->pool, path, &data_id, &error);
 	if ( ret <= 0 ) {
 		if ( ret < 0 ) {
 			sieve_script_set_critical(script,
@@ -109,6 +112,8 @@ static int sieve_dict_script_get_stream
 {
 	struct sieve_dict_script *dscript =
 		(struct sieve_dict_script *)script;
+	struct sieve_dict_storage *dstorage =
+		(struct sieve_dict_storage *)script->storage;
 	const char *path, *name = script->name, *data, *error;
 	int ret;
 
@@ -118,8 +123,11 @@ static int sieve_dict_script_get_stream
 	path = t_strconcat
 		(DICT_SIEVE_DATA_PATH, dict_escape_string(dscript->data_id), NULL);
 
+	struct dict_op_settings set = {
+		.username = dstorage->username,
+	};
 	ret = dict_lookup
-		(dscript->dict, dscript->data_pool, path, &data, &error);
+		(dscript->dict, &set, dscript->data_pool, path, &data, &error);
 	if ( ret <= 0 ) {
 		if ( ret < 0 ) {
 			sieve_script_set_critical(script,
