@@ -1141,6 +1141,29 @@ int sieve_trace_config_get(struct sieve_instance *svinst,
 }
 
 /*
+ * Execution exit codes
+ */
+
+const char *sieve_execution_exitcode_to_str(int code)
+{
+	switch (code) {
+	case SIEVE_EXEC_OK:
+		return "ok";
+	case SIEVE_EXEC_FAILURE:
+		return "failure";
+	case SIEVE_EXEC_TEMP_FAILURE:
+		return "temporary_failure";
+	case SIEVE_EXEC_BIN_CORRUPT:
+		return "binary_corrupt";
+	case SIEVE_EXEC_KEEP_FAILED:
+		return "keep_failed";
+	case SIEVE_EXEC_RESOURCE_LIMIT:
+		return "resource_limit";
+	}
+	i_unreached();
+}
+
+/*
  * User e-mail address
  */
 

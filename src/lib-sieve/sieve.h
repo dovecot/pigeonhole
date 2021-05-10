@@ -226,6 +226,12 @@ int sieve_trace_config_get(struct sieve_instance *svinst,
 			   struct sieve_trace_config *tr_config);
 
 /*
+ * Execution exit codes
+ */
+
+const char *sieve_execution_exitcode_to_str(int code);
+
+/*
  * Resource usage
  */
 
