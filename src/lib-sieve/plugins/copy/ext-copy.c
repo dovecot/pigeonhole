@@ -70,9 +70,10 @@ seff_copy_print(const struct sieve_side_effect *seffect,
 		const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
 static int
-seff_copy_post_execute(const struct sieve_side_effect *seffect,
-		       const struct sieve_action_exec_env *aenv,
-		       void *tr_context, bool *keep);
+seff_copy_post_execute(const struct sieve_side_effect *seffect ATTR_UNUSED,
+		       const struct sieve_action_exec_env *aenv ATTR_UNUSED,
+		       void *tr_context ATTR_UNUSED,
+		       void *se_tr_context ATTR_UNUSED, bool *keep);
 
 const struct sieve_side_effect_def copy_side_effect = {
 	SIEVE_OBJECT("copy", &copy_side_effect_operand, 0),
@@ -174,7 +175,8 @@ seff_copy_print(const struct sieve_side_effect *seffect ATTR_UNUSED,
 static int
 seff_copy_post_execute(const struct sieve_side_effect *seffect ATTR_UNUSED,
 		       const struct sieve_action_exec_env *aenv ATTR_UNUSED,
-		       void *tr_context ATTR_UNUSED, bool *keep)
+		       void *tr_context ATTR_UNUSED,
+		       void *se_tr_context ATTR_UNUSED, bool *keep)
 {
 	*keep = TRUE;
 	return SIEVE_EXEC_OK;

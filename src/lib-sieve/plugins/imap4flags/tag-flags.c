@@ -72,10 +72,11 @@ static void
 seff_flags_print(const struct sieve_side_effect *seffect,
 		 const struct sieve_action *action,
 		 const struct sieve_result_print_env *rpenv, bool *keep);
+
 static int
 seff_flags_pre_execute(const struct sieve_side_effect *seffect,
 		       const struct sieve_action_exec_env *aenv,
-		       void **context, void *tr_context);
+		       void *tr_context, void **se_tr_context);
 
 const struct sieve_side_effect_def flags_side_effect = {
 	SIEVE_OBJECT("flags", &flags_side_effect_operand, 0),
@@ -383,15 +384,14 @@ seff_flags_print(const struct sieve_side_effect *seffect,
 static int
 seff_flags_pre_execute(const struct sieve_side_effect *seffect,
 		       const struct sieve_action_exec_env *aenv,
-		       void **context, void *tr_context)
+		       void *tr_context, void **se_tr_context ATTR_UNUSED)
 {
-	struct seff_flags_context *ctx = (struct seff_flags_context *)*context;
+	struct seff_flags_context *ctx = seffect->context;
 	const char *const *keywords;
 
 	if (ctx == NULL) {
 		ctx = seff_flags_get_implicit_context(
 			SIEVE_OBJECT_EXTENSION(seffect), aenv->result);
-		*context = (void *)ctx;
 	}
 
 	(void)array_append_space(&ctx->keywords);

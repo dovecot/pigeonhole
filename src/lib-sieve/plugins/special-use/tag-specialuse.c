@@ -60,10 +60,11 @@ static void
 seff_specialuse_print(const struct sieve_side_effect *seffect,
 		      const struct sieve_action *action,
 		      const struct sieve_result_print_env *rpenv, bool *keep);
+
 static int
 seff_specialuse_pre_execute(const struct sieve_side_effect *seffect,
 			    const struct sieve_action_exec_env *aenv,
-			    void **context, void *tr_context);
+			    void *tr_context, void **se_tr_context ATTR_UNUSED);
 
 const struct sieve_side_effect_def specialuse_side_effect = {
 	SIEVE_OBJECT("specialuse", &specialuse_operand, 0),
@@ -249,7 +250,7 @@ seff_specialuse_print(const struct sieve_side_effect *seffect,
 static int
 seff_specialuse_pre_execute(const struct sieve_side_effect *seffect,
 			    const struct sieve_action_exec_env *aenv,
-			    void **context ATTR_UNUSED, void *tr_context)
+			    void *tr_context, void **se_tr_context ATTR_UNUSED)
 {
 	struct seff_specialuse_context *ctx =
 		(struct seff_specialuse_context *)seffect->context;

@@ -140,16 +140,17 @@ struct sieve_side_effect_def {
 
 	int (*pre_execute)(const struct sieve_side_effect *seffect,
 			   const struct sieve_action_exec_env *aenv,
-			   void **context, void *tr_context);
+			   void *tr_context, void **se_tr_context);
 	int (*post_execute)(const struct sieve_side_effect *seffect,
 			    const struct sieve_action_exec_env *aenv,
-			    void *tr_context, bool *keep);
+			    void *tr_context, void *se_tr_context, bool *keep);
 	void (*post_commit)(const struct sieve_side_effect *seffect,
 			    const struct sieve_action_exec_env *aenv,
-			    void *tr_context, int commit_status);
+			    void *tr_context, void *se_tr_context,
+			    int commit_status);
 	void (*rollback)(const struct sieve_side_effect *seffect,
 			 const struct sieve_action_exec_env *aenv,
-			 void *tr_context, bool success);
+			 void *tr_context, void *se_tr_context, bool success);
 };
 
 struct sieve_side_effect {

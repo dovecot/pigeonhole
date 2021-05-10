@@ -46,7 +46,8 @@ seff_mailbox_create_print(const struct sieve_side_effect *seffect,
 static int
 seff_mailbox_create_pre_execute(const struct sieve_side_effect *seffect,
 				const struct sieve_action_exec_env *aenv,
-				void **se_context, void *tr_context);
+				void *tr_context,
+				void **se_tr_context ATTR_UNUSED);
 
 const struct sieve_side_effect_def mailbox_create_side_effect = {
 	SIEVE_OBJECT("create", &mailbox_create_operand, 0),
@@ -118,11 +119,10 @@ seff_mailbox_create_print(const struct sieve_side_effect *seffect ATTR_UNUSED,
 static int
 seff_mailbox_create_pre_execute(
 	const struct sieve_side_effect *seffect ATTR_UNUSED,
-	const struct sieve_action_exec_env *aenv,
-	void **se_context ATTR_UNUSED, void *tr_context ATTR_UNUSED)
+	const struct sieve_action_exec_env *aenv, void *tr_context,
+	void **se_tr_context ATTR_UNUSED)
 {
-	struct act_store_transaction *trans =
-		(struct act_store_transaction *)tr_context;
+	struct act_store_transaction *trans = tr_context;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct mailbox *box = trans->box;
 

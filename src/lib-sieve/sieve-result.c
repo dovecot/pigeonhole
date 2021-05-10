@@ -893,6 +893,8 @@ bool sieve_result_print(struct sieve_result *result,
 struct sieve_side_effect_execution {
 	struct sieve_result_side_effect *seffect;
 
+	void *tr_context;
+
 	struct sieve_side_effect_execution *prev, *next;
 };
 
@@ -957,7 +959,7 @@ sieve_result_side_effect_pre_execute(struct sieve_result_execution *rexec,
 		return SIEVE_EXEC_OK;
 
 	return sef->def->pre_execute(sef, &rexec->action_env,
-				     &sef->context, aexec->tr_context);
+				     aexec->tr_context, &seexec->tr_context);
 }
 
 static int
@@ -975,7 +977,8 @@ sieve_result_side_effect_post_execute(
 		return SIEVE_EXEC_OK;
 
 	return sef->def->post_execute(sef, &rexec->action_env,
-				      aexec->tr_context, impl_keep);
+				      aexec->tr_context, seexec->tr_context,
+				      impl_keep);
 }
 
 static void
@@ -992,7 +995,8 @@ sieve_result_side_effect_post_commit(struct sieve_result_execution *rexec,
 	if (sef->def->post_commit == NULL)
 		return;
 
-	sef->def->post_commit(sef, &rexec->action_env, aexec->tr_context,
+	sef->def->post_commit(sef, &rexec->action_env,
+			      aexec->tr_context, seexec->tr_context,
 			      commit_status);
 }
 
@@ -1010,7 +1014,7 @@ sieve_result_side_effect_rollback(struct sieve_result_execution *rexec,
 		return;
 
 	sef->def->rollback(sef, &rexec->action_env,
-			   aexec->tr_context,
+			   aexec->tr_context, seexec->tr_context,
 			   (aexec->status == SIEVE_EXEC_OK));
 }
 
