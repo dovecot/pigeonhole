@@ -84,8 +84,7 @@ struct sieve_result {
 	struct sieve_action failure_action;
 
 	unsigned int action_count;
-	struct sieve_result_action *first_action;
-	struct sieve_result_action *last_action;
+	struct sieve_result_action *actions_head, *actions_tail;
 
 	struct sieve_result_action *last_attempted_action;
 
@@ -143,8 +142,8 @@ sieve_result_create(struct sieve_instance *svinst, pool_t pool,
 	result->failure_action.ext = NULL;
 
 	result->action_count = 0;
-	result->first_action = NULL;
-	result->last_action = NULL;
+	result->actions_head = NULL;
+	result->actions_tail = NULL;
 
 	return result;
 }
@@ -177,7 +176,7 @@ void sieve_result_unref(struct sieve_result **_result)
 	if (result->action_env.ehandler != NULL)
 		sieve_error_handler_unref(&result->action_env.ehandler);
 
-	ract = result->first_action;
+	ract = result->actions_head;
 	while (ract != NULL) {
 		sieve_result_action_deinit(ract);
 		ract = ract->next;
@@ -396,11 +395,11 @@ static void
 sieve_result_action_detach(struct sieve_result *result,
 			   struct sieve_result_action *raction)
 {
-	if (result->first_action == raction)
-		result->first_action = raction->next;
+	if (result->actions_head == raction)
+		result->actions_head = raction->next;
 
-	if (result->last_action == raction)
-		result->last_action = raction->prev;
+	if (result->actions_tail == raction)
+		result->actions_tail = raction->prev;
 
 	if (result->last_attempted_action == raction)
 		result->last_attempted_action = raction->prev;
@@ -441,7 +440,7 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 	action.executed = FALSE;
 
 	/* First, check for duplicates or conflicts */
-	raction = result->first_action;
+	raction = result->actions_head;
 	while (raction != NULL) {
 		const struct sieve_action *oact = &raction->action;
 
@@ -576,17 +575,17 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 	raction->action.location = p_strdup(result->pool, action.location);
 	raction->keep = keep;
 
-	if (raction->prev == NULL && raction != result->first_action) {
+	if (raction->prev == NULL && raction != result->actions_head) {
 		/* Add */
-		if (result->first_action == NULL) {
-			result->first_action = raction;
-			result->last_action = raction;
+		if (result->actions_head == NULL) {
+			result->actions_head = raction;
+			result->actions_tail = raction;
 			raction->prev = NULL;
 			raction->next = NULL;
 		} else {
-			result->last_action->next = raction;
-			raction->prev = result->last_action;
-			result->last_action = raction;
+			result->actions_tail->next = raction;
+			raction->prev = result->actions_tail;
+			result->actions_tail = raction;
 			raction->next = NULL;
 		}
 		result->action_count++;
@@ -792,10 +791,10 @@ bool sieve_result_print(struct sieve_result *result,
 	struct sieve_action act_keep = result->keep_action;
 	struct sieve_result_print_env penv;
 	bool implicit_keep = TRUE;
-	struct sieve_result_action *rac, *first_action;
+	struct sieve_result_action *rac, *actions_head;
 
-	first_action = (result->last_attempted_action == NULL ?
-			result->first_action :
+	actions_head = (result->last_attempted_action == NULL ?
+			result->actions_head :
 			result->last_attempted_action->next);
 
 	if (keep != NULL)
@@ -809,10 +808,10 @@ bool sieve_result_print(struct sieve_result *result,
 
 	sieve_result_printf(&penv, "\nPerformed actions:\n\n");
 
-	if (first_action == NULL) {
+	if (actions_head == NULL) {
 		sieve_result_printf(&penv, "  (none)\n");
 	} else {
-		rac = first_action;
+		rac = actions_head;
 		while (rac != NULL) {
 			bool impl_keep = TRUE;
 			const struct sieve_action *act = &rac->action;
@@ -860,7 +859,7 @@ bool sieve_result_print(struct sieve_result *result,
 			sieve_result_print_implicit_side_effects(&penv);
 		} else {
 			/* Scan for execution of keep-equal actions */
-			rac = result->first_action;
+			rac = result->actions_head;
 			while (act_keep.def != NULL && rac != NULL) {
 				if (rac->action.def == act_keep.def &&
 				    act_keep.def->equals != NULL &&
@@ -942,7 +941,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 		return SIEVE_EXEC_OK;
 
 	/* Scan for deferred keep */
-	kac = result->last_action;
+	kac = result->actions_tail;
 	while (kac != NULL && kac->action.executed) {
 		if (kac->keep && kac->action.def == NULL)
 			break;
@@ -954,7 +953,7 @@ _sieve_result_implicit_keep(struct sieve_result *result, bool rollback)
 			act_keep.mail = sieve_message_get_mail(aenv->msgctx);
 
 		/* Scan for execution of keep-equal actions */
-		rac = result->first_action;
+		rac = result->actions_head;
 		while (rac != NULL) {
 			if (rac->action.def == act_keep.def &&
 			    act_keep.def->equals != NULL &&
@@ -1093,14 +1092,14 @@ int sieve_result_implicit_keep(struct sieve_result *result,
 
 void sieve_result_mark_executed(struct sieve_result *result)
 {
-	struct sieve_result_action *first_action, *rac;
+	struct sieve_result_action *actions_head, *rac;
 
-	first_action = (result->last_attempted_action == NULL ?
-			result->first_action :
+	actions_head = (result->last_attempted_action == NULL ?
+			result->actions_head :
 			result->last_attempted_action->next);
-	result->last_attempted_action = result->last_action;
+	result->last_attempted_action = result->actions_tail;
 
-	rac = first_action;
+	rac = actions_head;
 	while (rac != NULL) {
 		if (rac->action.def != NULL)
 			rac->action.executed = TRUE;
@@ -1412,7 +1411,7 @@ static void
 sieve_result_transaction_finish(struct sieve_result *result, bool last,
 				int status)
 {
-	struct sieve_result_action *rac = result->first_action;
+	struct sieve_result_action *rac = result->actions_head;
 
 	while (rac != NULL) {
 		struct sieve_action *act = &rac->action;
@@ -1438,7 +1437,7 @@ int sieve_result_execute(struct sieve_result *result, bool last, bool *keep,
 			 struct sieve_error_handler *ehandler)
 {
 	int status = SIEVE_EXEC_OK, result_status;
-	struct sieve_result_action *first_action, *last_action;
+	struct sieve_result_action *actions_head, *actions_tail;
 	bool implicit_keep = TRUE;
 	int ret;
 
@@ -1451,26 +1450,26 @@ int sieve_result_execute(struct sieve_result *result, bool last, bool *keep,
 
 	/* Make notice of this attempt */
 
-	first_action = (result->last_attempted_action == NULL ?
-			result->first_action :
+	actions_head = (result->last_attempted_action == NULL ?
+			result->actions_head :
 			result->last_attempted_action->next);
-	result->last_attempted_action = result->last_action;
+	result->last_attempted_action = result->actions_tail;
 
 	/* Transaction start */
 
-	status = sieve_result_transaction_start(result, first_action,
-						&last_action);
+	status = sieve_result_transaction_start(result, actions_head,
+						&actions_tail);
 
 	/* Transaction execute */
 
 	if (status == SIEVE_EXEC_OK) {
-		status = sieve_result_transaction_execute(result, first_action);
+		status = sieve_result_transaction_execute(result, actions_head);
 	}
 
 	/* Transaction commit/rollback */
 
 	status = sieve_result_transaction_commit_or_rollback(
-		result, status, first_action, last_action,
+		result, status, actions_head, actions_tail,
 		&implicit_keep, keep);
 
 	/* Perform implicit keep if necessary */
@@ -1545,7 +1544,7 @@ sieve_result_iterate_init(struct sieve_result *result)
 
 	rictx->result = result;
 	rictx->current_action = NULL;
-	rictx->next_action = result->first_action;
+	rictx->next_action = result->actions_head;
 
 	return rictx;
 }
@@ -1586,12 +1585,12 @@ void sieve_result_iterate_delete(struct sieve_result_iterate_context *rictx)
 	/* Delete action */
 
 	if (rac->prev == NULL)
-		result->first_action = rac->next;
+		result->actions_head = rac->next;
 	else
 		rac->prev->next = rac->next;
 
 	if (rac->next == NULL)
-		result->last_action = rac->prev;
+		result->actions_tail = rac->prev;
 	else
 		rac->next->prev = rac->prev;
 
