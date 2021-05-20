@@ -138,7 +138,7 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 			   date, size, str_sanitize(subject, 40));
 
 		ret = sieve_execute(sbin, &msgdata, senv, ehandler, ehandler,
-				    exflags, NULL);
+				    exflags);
 	} else {
 		o_stream_nsend_str(
 			sfctx->teststream,
@@ -152,7 +152,7 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 					str_sanitize(subject, 40)));
 
 		ret = sieve_test(sbin, &msgdata, senv, ehandler,
-				 sfctx->teststream, exflags, NULL);
+				 sfctx->teststream, exflags);
 	}
 
 	/* Handle message in source folder */

@@ -133,7 +133,7 @@ int sieve_test(struct sieve_binary *sbin,
 	       const struct sieve_message_data *msgdata,
 	       const struct sieve_script_env *senv,
 	       struct sieve_error_handler *ehandler, struct ostream *stream,
-	       enum sieve_execute_flags flags, bool *keep);
+	       enum sieve_execute_flags flags);
 
 /*
  * Script execution
@@ -149,7 +149,7 @@ int sieve_execute(struct sieve_binary *sbin,
 		  const struct sieve_script_env *senv,
 		  struct sieve_error_handler *exec_ehandler,
 		  struct sieve_error_handler *action_ehandler,
-		  enum sieve_execute_flags flags, bool *keep);
+		  enum sieve_execute_flags flags);
 
 /*
  * Multiscript support
@@ -187,7 +187,7 @@ int sieve_multiscript_tempfail(struct sieve_multiscript **_mscript,
 			       enum sieve_execute_flags flags);
 int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 			     struct sieve_error_handler *action_ehandler,
-			     enum sieve_execute_flags flags, bool *keep);
+			     enum sieve_execute_flags flags);
 
 /*
  * Configured limits

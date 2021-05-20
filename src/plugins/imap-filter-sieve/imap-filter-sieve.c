@@ -880,8 +880,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 			    "cumulative resource usage limit exceeded");
 		ret = SIEVE_EXEC_RESOURCE_LIMIT;
 	} else {
-		ret = sieve_multiscript_finish(&mscript, ehandler, exflags,
-					       NULL);
+		ret = sieve_multiscript_finish(&mscript, ehandler, exflags);
 	}
 
 	/* Don't log additional messages about compile failure */

@@ -362,12 +362,11 @@ int main(int argc, char **argv)
 			/* Execute/Test script */
 			if (execute) {
 				ret = sieve_execute(sbin, &msgdata, &scriptenv,
-						    ehandler, ehandler, exflags,
-						    NULL);
+						    ehandler, ehandler,
+						    exflags);
 			} else {
 				ret = sieve_test(sbin, &msgdata, &scriptenv,
-						 ehandler, teststream, exflags,
-						 NULL);
+						 ehandler, teststream, exflags);
 			}
 		} else {
 			/* Multiple scripts */
@@ -442,7 +441,7 @@ int main(int argc, char **argv)
 			}
 
 			result = sieve_multiscript_finish(
-				&mscript, ehandler, exflags, NULL);
+				&mscript, ehandler, exflags);
 
 			ret = (ret > 0 ? result : ret);
 		}

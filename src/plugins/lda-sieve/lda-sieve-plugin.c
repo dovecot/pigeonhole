@@ -667,8 +667,8 @@ static int lda_sieve_execute_scripts(struct lda_sieve_run_context *srctx)
 		ret = sieve_multiscript_tempfail(&mscript, exec_ehandler,
 						 exflags);
 	} else {
-		ret = sieve_multiscript_finish(&mscript, exec_ehandler, exflags,
-					       NULL);
+		ret = sieve_multiscript_finish(&mscript, exec_ehandler,
+					       exflags);
 	}
 
 	/* Don't log additional messages about compile failure */
