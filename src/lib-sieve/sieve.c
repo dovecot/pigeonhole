@@ -747,17 +747,18 @@ sieve_multiscript_start_test(struct sieve_instance *svinst,
 }
 
 static void
-sieve_multiscript_test(struct sieve_multiscript *mscript, bool *keep)
+sieve_multiscript_test(struct sieve_multiscript *mscript)
 {
 	const struct sieve_script_env *senv = mscript->exec_env.scriptenv;
 
 	if (mscript->status > 0) {
 		mscript->status =
 			(sieve_result_print(mscript->result, senv,
-					    mscript->teststream, keep) ?
+					    mscript->teststream,
+					    &mscript->keep) ?
 			 SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE);
 	} else {
-		if (keep != NULL) *keep = TRUE;
+		mscript->keep = TRUE;
 	}
 
 	sieve_result_mark_executed(mscript->result);
@@ -766,19 +767,20 @@ sieve_multiscript_test(struct sieve_multiscript *mscript, bool *keep)
 static void
 sieve_multiscript_execute(struct sieve_multiscript *mscript,
 			  struct sieve_error_handler *ehandler,
-			  enum sieve_execute_flags flags, bool *keep)
+			  enum sieve_execute_flags flags)
 {
 	mscript->exec_env.flags = flags;
 
 	if (mscript->status > 0) {
 		mscript->status = sieve_result_execute(mscript->result, FALSE,
-						       keep, ehandler);
+						       &mscript->keep,
+						       ehandler);
 	} else {
 		if (sieve_result_implicit_keep(mscript->result, ehandler,
 					       FALSE) <= 0)
 			mscript->status = SIEVE_EXEC_KEEP_FAILED;
 		else
-			if (keep != NULL) *keep = TRUE;
+			mscript->keep = TRUE;
 	}
 }
 
@@ -800,10 +802,10 @@ bool sieve_multiscript_run(struct sieve_multiscript *mscript,
 		mscript->keep = FALSE;
 
 		if (mscript->teststream != NULL)
-			sieve_multiscript_test(mscript, &mscript->keep);
+			sieve_multiscript_test(mscript);
 		else {
 			sieve_multiscript_execute(mscript, action_ehandler,
-						  flags, &mscript->keep);
+						  flags);
 		}
 		if (!mscript->keep)
 			mscript->active = FALSE;
@@ -845,10 +847,10 @@ void sieve_multiscript_run_discard(struct sieve_multiscript *mscript,
 		mscript->keep = FALSE;
 
 		if (mscript->teststream != NULL)
-			sieve_multiscript_test(mscript, &mscript->keep);
+			sieve_multiscript_test(mscript);
 		else {
 			sieve_multiscript_execute(mscript, action_ehandler,
-						  flags, &mscript->keep);
+						  flags);
 		}
 		if (mscript->status == SIEVE_EXEC_FAILURE)
 			mscript->status = SIEVE_EXEC_KEEP_FAILED;
