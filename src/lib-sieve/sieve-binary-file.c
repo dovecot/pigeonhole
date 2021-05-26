@@ -346,7 +346,7 @@ sieve_binary_save_to_stream(struct sieve_binary *sbin, struct ostream *stream)
 	header->blocks = blk_count;
 	header->hdr_size = sizeof(*header);
 
-	header->flags &= ~SIEVE_BINARY_FLAG_RESOURCE_LIMIT;
+	header->flags &= ENUM_NEGATE(SIEVE_BINARY_FLAG_RESOURCE_LIMIT);
 	sieve_binary_file_update_header(sbin);
 
 	if (!_save_aligned(sbin, stream, header, sizeof(*header), NULL)) {
