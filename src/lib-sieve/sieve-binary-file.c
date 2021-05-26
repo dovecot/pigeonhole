@@ -34,7 +34,7 @@
 #define SIEVE_BINARY_MAGIC_OTHER_ENDIAN         0xbebafeca
 
 #define SIEVE_BINARY_ALIGN(offset) \
-	(((offset) + 3) & ~3)
+	(((offset) + 3) & ~3U)
 #define SIEVE_BINARY_ALIGN_PTR(ptr) \
 	((void *) SIEVE_BINARY_ALIGN(((size_t) ptr)))
 
