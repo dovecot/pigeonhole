@@ -89,7 +89,7 @@ mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 	pend = p + str_len(in);
 	poff = p;
 	while (p < pend) {
-		unsigned int i, n = uni_utf8_char_bytes((char)*p);
+		unsigned int i, n = uni_utf8_char_bytes(*p);
 
 		if (n > 1 || (_uri_reserved_lookup[*p] & 0x01) != 0) {
 			str_append_data(*result, poff, p - poff);
