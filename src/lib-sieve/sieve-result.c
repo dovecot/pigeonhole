@@ -318,7 +318,8 @@ sieve_result_side_effects_merge(const struct sieve_runtime_env *renv,
 		struct sieve_side_effect *seffect = &rsef->seffect;
 		bool found = FALSE;
 
-		if (seffect->def != NULL && seffect->def->merge != NULL) {
+		i_assert(seffect->def != NULL);
+		if (seffect->def->merge != NULL) {
 			/* Try to find it among the new */
 			nrsef = (new_seffects != NULL ?
 				 new_seffects->first_effect : NULL);
@@ -352,7 +353,8 @@ sieve_result_side_effects_merge(const struct sieve_runtime_env *renv,
 		struct sieve_side_effect *nseffect = &nrsef->seffect;
 		bool found = FALSE;
 
-		if (nseffect->def != NULL && nseffect->def->merge != NULL) {
+		i_assert(nseffect->def != NULL);
+		if (nseffect->def->merge != NULL) {
 			/* Try to find it among the exising */
 			rsef = (old_seffects != NULL ?
 				old_seffects->first_effect : NULL);
@@ -747,13 +749,13 @@ sieve_result_print_side_effects(struct sieve_result_print_env *rpenv,
 	/* Print side effects */
 	rsef = (slist != NULL ? slist->first_effect : NULL);
 	while (rsef != NULL) {
-		if (rsef->seffect.def != NULL) {
-			const struct sieve_side_effect *sef = &rsef->seffect;
+		const struct sieve_side_effect *sef = &rsef->seffect;
 
-			if (sef->def->print != NULL) {
-				sef->def->print(sef, action, rpenv,
-						implicit_keep);
-			}
+		i_assert(sef->def != NULL);
+
+		if (sef->def->print != NULL) {
+			sef->def->print(sef, action, rpenv,
+					implicit_keep);
 		}
 		rsef = rsef->next;
 	}
@@ -953,8 +955,7 @@ sieve_result_side_effect_pre_execute(struct sieve_result_execution *rexec,
 	struct sieve_result_side_effect *rsef = seexec->seffect;
 	struct sieve_side_effect *sef = &rsef->seffect;
 
-	if (sef->def == NULL)
-		return SIEVE_EXEC_OK;
+	i_assert(sef->def != NULL);
 	if (sef->def->pre_execute == NULL)
 		return SIEVE_EXEC_OK;
 
@@ -971,8 +972,7 @@ sieve_result_side_effect_post_execute(
 	struct sieve_result_side_effect *rsef = seexec->seffect;
 	struct sieve_side_effect *sef = &rsef->seffect;
 
-	if (sef->def == NULL)
-		return SIEVE_EXEC_OK;
+	i_assert(sef->def != NULL);
 	if (sef->def->post_execute == NULL)
 		return SIEVE_EXEC_OK;
 
@@ -990,8 +990,7 @@ sieve_result_side_effect_post_commit(struct sieve_result_execution *rexec,
 	struct sieve_result_side_effect *rsef = seexec->seffect;
 	struct sieve_side_effect *sef = &rsef->seffect;
 
-	if (sef->def == NULL)
-		return;
+	i_assert(sef->def != NULL);
 	if (sef->def->post_commit == NULL)
 		return;
 
@@ -1008,8 +1007,7 @@ sieve_result_side_effect_rollback(struct sieve_result_execution *rexec,
 	struct sieve_result_side_effect *rsef = seexec->seffect;
 	struct sieve_side_effect *sef = &rsef->seffect;
 
-	if (sef->def == NULL)
-		return;
+	i_assert(sef->def != NULL);
 	if (sef->def->rollback == NULL)
 		return;
 
@@ -2101,6 +2099,9 @@ void sieve_side_effects_list_add(struct sieve_side_effects_list *list,
 	while (reffect != NULL) {
 		const struct sieve_side_effect_def *ref_def = reffect->seffect.def;
 		const struct sieve_side_effect_def *sef_def = seffect->def;
+
+		i_assert(ref_def != NULL);
+		i_assert(sef_def != NULL);
 
 		if (sef_def == ref_def) {
 			/* already listed */
