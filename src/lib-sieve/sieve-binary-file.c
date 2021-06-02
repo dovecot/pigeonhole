@@ -150,7 +150,7 @@ sieve_binary_file_read_header(struct sieve_binary *sbin, int fd,
 static int
 sieve_binary_file_write_header(struct sieve_binary *sbin, int fd,
 			       struct sieve_binary_header *header,
-			       enum sieve_error *error_r)
+			       enum sieve_error *error_r) ATTR_NULL(4)
 {
 	ssize_t wret;
 
@@ -158,13 +158,15 @@ sieve_binary_file_write_header(struct sieve_binary *sbin, int fd,
 	if (wret < 0) {
 		e_error(sbin->event, "update: "
 			"failed to write to binary: %m");
-		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		if (error_r != NULL)
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	} else if (wret != sizeof(*header)) {
 		e_error(sbin->event, "update: "
 			"header written partially %zd/%zu",
 			wret, sizeof(*header));
-		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		if (error_r != NULL)
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 	return 0;
@@ -1006,12 +1008,14 @@ sieve_binary_file_do_update_resource_usage(
 int sieve_binary_file_update_resource_usage(struct sieve_binary *sbin,
 					    enum sieve_error *error_r)
 {
+	enum sieve_error error;
 	int fd, ret = 0;
 
-	sieve_binary_file_close(&sbin->file);
+	if (error_r == NULL)
+		error_r = &error;
+	*error_r = SIEVE_ERROR_NONE;
 
-	if (error_r != NULL)
-		*error_r = SIEVE_ERROR_NONE;
+	sieve_binary_file_close(&sbin->file);
 
 	if (sbin->path == NULL)
 		return 0;

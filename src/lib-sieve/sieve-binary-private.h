@@ -234,6 +234,7 @@ bool sieve_binary_load_block(struct sieve_binary_block *);
 bool sieve_binary_check_resource_usage(struct sieve_binary *sbin);
 
 int sieve_binary_file_update_resource_usage(struct sieve_binary *sbin,
-					    enum sieve_error *error_r);
+					    enum sieve_error *error_r)
+					    ATTR_NULL(2);
 
 #endif
