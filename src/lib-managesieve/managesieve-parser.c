@@ -101,18 +101,17 @@ void managesieve_parser_reset(struct managesieve_parser *parser)
 	i_stream_unref(&parser->str_stream);
 }
 
-const char *managesieve_parser_get_error
-(struct managesieve_parser *parser, bool *fatal)
+const char *
+managesieve_parser_get_error(struct managesieve_parser *parser, bool *fatal)
 {
 	*fatal = parser->fatal_error;
 	return parser->error;
 }
 
-/* skip over everything parsed so far, plus the following whitespace */
+/* Skip over everything parsed so far, plus the following whitespace */
 static bool
 managesieve_parser_skip_to_next(struct managesieve_parser *parser,
-				    const unsigned char **data,
-				    size_t *data_size)
+				const unsigned char **data, size_t *data_size)
 {
 	size_t i;
 
@@ -130,8 +129,8 @@ managesieve_parser_skip_to_next(struct managesieve_parser *parser,
 	return *data_size > 0;
 }
 
-static struct managesieve_arg *managesieve_arg_create
-(struct managesieve_parser *parser)
+static struct managesieve_arg *
+managesieve_arg_create(struct managesieve_parser *parser)
 {
 	struct managesieve_arg *arg;
 
@@ -141,8 +140,9 @@ static struct managesieve_arg *managesieve_arg_create
 	return arg;
 }
 
-static void managesieve_parser_save_arg(struct managesieve_parser *parser,
-				 const unsigned char *data, size_t size)
+static void
+managesieve_parser_save_arg(struct managesieve_parser *parser,
+			    const unsigned char *data, size_t size)
 {
 	struct managesieve_arg *arg;
 	char *str;
@@ -151,14 +151,15 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 
 	switch (parser->cur_type) {
 	case ARG_PARSE_ATOM:
-		/* simply save the string */
+		/* Simply save the string */
 		arg->type = MANAGESIEVE_ARG_ATOM;
 		arg->_data.str = p_strndup(parser->pool, data, size);
 		arg->str_len = size;
 		break;
 	case ARG_PARSE_STRING:
-		/* data is quoted and may contain escapes. */
-		if ((parser->flags & MANAGESIEVE_PARSE_FLAG_STRING_STREAM) != 0) {
+		/* Data is quoted and may contain escapes. */
+		if ((parser->flags &
+		     MANAGESIEVE_PARSE_FLAG_STRING_STREAM) != 0) {
 			arg->type = MANAGESIEVE_ARG_STRING_STREAM;
 			arg->_data.str_stream = parser->str_stream;
 		} else {
@@ -169,7 +170,8 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 
 			/* remove the escapes */
 			if (parser->str_first_escape >= 0 &&
-				  (parser->flags & MANAGESIEVE_PARSE_FLAG_NO_UNESCAPE) == 0)
+			    (parser->flags &
+			     MANAGESIEVE_PARSE_FLAG_NO_UNESCAPE) == 0)
 				(void)str_unescape(str);
 
 			arg->_data.str = str;
@@ -177,10 +179,12 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 		}
 		break;
 	case ARG_PARSE_LITERAL_DATA:
-		if ((parser->flags & MANAGESIEVE_PARSE_FLAG_STRING_STREAM) != 0) {
+		if ((parser->flags &
+		     MANAGESIEVE_PARSE_FLAG_STRING_STREAM) != 0) {
 			arg->type = MANAGESIEVE_ARG_STRING_STREAM;
 			arg->_data.str_stream = parser->str_stream;
-		} else if ((parser->flags & MANAGESIEVE_PARSE_FLAG_LITERAL_TYPE) != 0) {
+		} else if ((parser->flags &
+			    MANAGESIEVE_PARSE_FLAG_LITERAL_TYPE) != 0) {
 			arg->type = MANAGESIEVE_ARG_LITERAL;
 			arg->_data.str = p_strndup(parser->pool, data, size);
 			arg->str_len = size;
@@ -197,8 +201,7 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 	parser->cur_type = ARG_PARSE_NONE;
 }
 
-static bool
-is_valid_atom_char(struct managesieve_parser *parser, char chr)
+static bool is_valid_atom_char(struct managesieve_parser *parser, char chr)
 {
 	if (IS_ATOM_SPECIAL((unsigned char)chr)) {
 		parser->error = "Invalid characters in atom";
@@ -213,14 +216,14 @@ is_valid_atom_char(struct managesieve_parser *parser, char chr)
 
 static bool
 managesieve_parser_read_atom(struct managesieve_parser *parser,
-				 const unsigned char *data, size_t data_size)
+			     const unsigned char *data, size_t data_size)
 {
 	size_t i;
 
-	/* read until we've found space, CR or LF. */
+	/* Read until we've found space, CR or LF. */
 	for (i = parser->cur_pos; i < data_size; i++) {
 		if (data[i] == ' ' || data[i] == ')' ||
-			 is_linebreak(data[i])) {
+		    is_linebreak(data[i])) {
 			managesieve_parser_save_arg(parser, data, i);
 			break;
 		} else if (!is_valid_atom_char(parser, data[i]))
@@ -228,26 +231,26 @@ managesieve_parser_read_atom(struct managesieve_parser *parser,
 	}
 
 	parser->cur_pos = i;
-	return ( parser->cur_type == ARG_PARSE_NONE );
+	return (parser->cur_type == ARG_PARSE_NONE);
 }
 
 static bool
 managesieve_parser_read_string(struct managesieve_parser *parser,
-				   const unsigned char *data, size_t data_size)
+			       const unsigned char *data, size_t data_size)
 {
 	size_t i;
 
 	/* QUOTED-CHAR        = SAFE-UTF8-CHAR / "\" QUOTED-SPECIALS
-	 * quoted             = <"> *QUOTED-CHAR <">
-	 *                    ;; limited to 1024 octets between the <">s
+	   quoted             = <"> *QUOTED-CHAR <">
+	                      ;; limited to 1024 octets between the <">s
 	 */
 
-	/* read until we've found non-escaped ", CR or LF */
+	/* Read until we've found non-escaped ", CR or LF */
 	for (i = parser->cur_pos; i < data_size; i++) {
 		if (data[i] == '"') {
-
-			if ( !uni_utf8_data_is_valid(data+1, i-1) ) {
-				parser->error = "Invalid UTF-8 character in quoted-string.";
+			if (!uni_utf8_data_is_valid(data+1, i-1)) {
+				parser->error =
+					"Invalid UTF-8 character in quoted-string.";
 				return FALSE;
 			}
 
@@ -263,45 +266,43 @@ managesieve_parser_read_string(struct managesieve_parser *parser,
 
 		if (data[i] == '\\') {
 			if (i+1 == data_size) {
-				/* known data ends with '\' - leave it to
-				   next time as well if it happens to be \" */
+				/* Known data ends with '\' - leave it to next
+				   time as well if it happens to be \" */
 				break;
 			}
 
-			/* save the first escaped char */
+			/* Save the first escaped char */
 			if (parser->str_first_escape < 0)
 				parser->str_first_escape = i;
 
-			/* skip the escaped char */
+			/* Skip the escaped char */
 			i++;
 
-			if ( !IS_QUOTED_SPECIAL(data[i]) ) {
+			if (!IS_QUOTED_SPECIAL(data[i])) {
 				parser->error =
 					"Escaped quoted-string character is not a QUOTED-SPECIAL.";
 				return FALSE;
 			}
-
 			continue;
 		}
 
-		if ( (data[i] & 0x80) == 0 && !IS_SAFE_CHAR(data[i]) ) {
+		if ((data[i] & 0x80) == 0 && !IS_SAFE_CHAR(data[i])) {
 			parser->error = "String contains invalid character.";
 			return FALSE;
 		}
 	}
 
 	parser->cur_pos = i;
-	return ( parser->cur_type == ARG_PARSE_NONE );
+	return (parser->cur_type == ARG_PARSE_NONE);
 }
 
-static bool
-managesieve_parser_literal_end(struct managesieve_parser *parser)
+static bool managesieve_parser_literal_end(struct managesieve_parser *parser)
 {
 	if ((parser->flags & MANAGESIEVE_PARSE_FLAG_STRING_STREAM) == 0) {
 		if (parser->line_size >= parser->max_line_size ||
-		    parser->literal_size >
-		    	parser->max_line_size - parser->line_size) {
-			/* too long string, abort. */
+		    (parser->literal_size >
+		     (parser->max_line_size - parser->line_size))) {
+			/* Too long string, abort. */
 			parser->error = "Literal size too large";
 			parser->fatal_error = TRUE;
 			return FALSE;
@@ -317,12 +318,11 @@ managesieve_parser_literal_end(struct managesieve_parser *parser)
 
 static bool
 managesieve_parser_read_literal(struct managesieve_parser *parser,
-				    const unsigned char *data,
-				    size_t data_size)
+				const unsigned char *data, size_t data_size)
 {
 	size_t i, prev_size;
 
-	/* expecting digits + "}" */
+	/* Expecting digits + "}" */
 	for (i = parser->cur_pos; i < data_size; i++) {
 		if (data[i] == '}') {
 			parser->line_size += i+1;
@@ -350,7 +350,7 @@ managesieve_parser_read_literal(struct managesieve_parser *parser,
 		parser->literal_size = parser->literal_size*10 + (data[i]-'0');
 
 		if (parser->literal_size < prev_size) {
-			/* wrapped around, abort. */
+			/* Wrapped around, abort. */
 			parser->error = "Literal size too large";
 			return FALSE;
 		}
@@ -362,12 +362,11 @@ managesieve_parser_read_literal(struct managesieve_parser *parser,
 
 static bool
 managesieve_parser_read_literal_data(struct managesieve_parser *parser,
-					 const unsigned char *data,
-					 size_t data_size)
+				     const unsigned char *data,
+				     size_t data_size)
 {
 	if (parser->literal_skip_crlf) {
-
-		/* skip \r\n or \n, anything else gives an error */
+		/* Skip \r\n or \n, anything else gives an error */
 		if (data_size == 0)
 			return FALSE;
 
@@ -395,35 +394,36 @@ managesieve_parser_read_literal_data(struct managesieve_parser *parser,
 	}
 
 	if ((parser->flags & MANAGESIEVE_PARSE_FLAG_STRING_STREAM) == 0) {
-		/* now we just wait until we've read enough data */
+		/* Now we just wait until we've read enough data */
 		if (data_size < parser->literal_size) {
 			return FALSE;
 		} else {
-			if ( !uni_utf8_data_is_valid
-				(data, (size_t)parser->literal_size) ) {
-				parser->error = "Invalid UTF-8 character in literal string.";
+			if (!uni_utf8_data_is_valid(
+				data, (size_t)parser->literal_size)) {
+				parser->error =
+					"Invalid UTF-8 character in literal string.";
 				return FALSE;
 			}
 
-			managesieve_parser_save_arg(parser, data,
-					     (size_t)parser->literal_size);
+			managesieve_parser_save_arg(
+				parser, data, (size_t)parser->literal_size);
 			parser->cur_pos = (size_t)parser->literal_size;
 			return TRUE;
 		}
 	} else {
-		/* we don't read the data; we just create a stream for the literal */
+		/* We don't read the data; we just create a stream for the
+		   literal */
 		parser->eol = TRUE;
-		parser->str_stream = i_stream_create_limit
-			(parser->input, parser->literal_size);
+		parser->str_stream = i_stream_create_limit(
+			parser->input, parser->literal_size);
 		managesieve_parser_save_arg(parser, NULL, 0);
 		return TRUE;
 	}
 }
 
-/* Returns TRUE if argument was fully processed. Also returns TRUE if
-   an argument inside a list was processed. */
-static bool
-managesieve_parser_read_arg(struct managesieve_parser *parser)
+/* Returns TRUE if argument was fully processed. Also returns TRUE if an
+   argument inside a list was processed. */
+static bool managesieve_parser_read_arg(struct managesieve_parser *parser)
 {
 	const unsigned char *data;
 	size_t data_size;
@@ -433,7 +433,7 @@ managesieve_parser_read_arg(struct managesieve_parser *parser)
 		return FALSE;
 
 	while (parser->cur_type == ARG_PARSE_NONE) {
-		/* we haven't started parsing yet */
+		/* We haven't started parsing yet */
 		if (!managesieve_parser_skip_to_next(parser, &data, &data_size))
 			return FALSE;
 		i_assert(parser->cur_pos == 0);
@@ -441,7 +441,7 @@ managesieve_parser_read_arg(struct managesieve_parser *parser)
 		switch (data[0]) {
 		case '\r':
 		case '\n':
-			/* unexpected end of line */
+			/* Unexpected end of line */
 			parser->eol = TRUE;
 			return FALSE;
 		case '"':
@@ -459,7 +459,6 @@ managesieve_parser_read_arg(struct managesieve_parser *parser)
 			parser->cur_type = ARG_PARSE_ATOM;
 			break;
 		}
-
 		parser->cur_pos++;
 	}
 
@@ -471,15 +470,18 @@ managesieve_parser_read_arg(struct managesieve_parser *parser)
 			return FALSE;
 		break;
 	case ARG_PARSE_STRING:
-		if ((parser->flags & MANAGESIEVE_PARSE_FLAG_STRING_STREAM) != 0) {
+		if ((parser->flags &
+		     MANAGESIEVE_PARSE_FLAG_STRING_STREAM) != 0) {
 			parser->eol = TRUE;
 			parser->line_size += parser->cur_pos;
 			i_stream_skip(parser->input, parser->cur_pos);
 			parser->cur_pos = 0;
-			parser->str_stream = quoted_string_istream_create(parser);
+			parser->str_stream =
+				quoted_string_istream_create(parser);
 			managesieve_parser_save_arg(parser, NULL, 0);
 
-		} else if (!managesieve_parser_read_string(parser, data, data_size)) {
+		} else if (!managesieve_parser_read_string(parser,
+							   data, data_size)) {
 			return FALSE;
 		}
 		break;
@@ -487,13 +489,14 @@ managesieve_parser_read_arg(struct managesieve_parser *parser)
 		if (!managesieve_parser_read_literal(parser, data, data_size))
 			return FALSE;
 
-		/* pass through to parsing data. since input->skip was
+		/* Pass through to parsing data. since input->skip was
 		   modified, we need to get the data start position again. */
 		data = i_stream_get_data(parser->input, &data_size);
 
 		/* fall through */
 	case ARG_PARSE_LITERAL_DATA:
-		if (!managesieve_parser_read_literal_data(parser, data, data_size))
+		if (!managesieve_parser_read_literal_data(parser,
+							  data, data_size))
 			return FALSE;
 		break;
 	default:
@@ -509,9 +512,9 @@ managesieve_parser_read_arg(struct managesieve_parser *parser)
 	((parser)->cur_type != ARG_PARSE_NONE || \
 	(parser)->cur_list != &parser->root_list)
 
-static int finish_line
-(struct managesieve_parser *parser, unsigned int count,
-	const struct managesieve_arg **args_r)
+static int
+finish_line(struct managesieve_parser *parser, unsigned int count,
+	    const struct managesieve_arg **args_r)
 {
 	struct managesieve_arg *arg;
 	int ret = array_count(&parser->root_list);
@@ -520,7 +523,7 @@ static int finish_line
 	i_stream_skip(parser->input, parser->cur_pos);
 	parser->cur_pos = 0;
 
-	/* fill the missing parameters with NILs */
+	/* Fill the missing parameters with NILs */
 	while (count > array_count(&parser->root_list)) {
 		arg = array_append_space(&parser->root_list);
 		arg->type = MANAGESIEVE_ARG_NONE;
@@ -532,44 +535,46 @@ static int finish_line
 	return ret;
 }
 
-int managesieve_parser_read_args
-(struct managesieve_parser *parser, unsigned int count,
-	enum managesieve_parser_flags flags, const struct managesieve_arg **args_r)
+int managesieve_parser_read_args(struct managesieve_parser *parser,
+				 unsigned int count,
+				 enum managesieve_parser_flags flags,
+				 const struct managesieve_arg **args_r)
 {
 	parser->flags = flags;
 
-	while ( !parser->eol && (count == 0 || IS_UNFINISHED(parser)
-		|| array_count(&parser->root_list) < count) ) {
-		if ( !managesieve_parser_read_arg(parser) )
+	while (!parser->eol && (count == 0 || IS_UNFINISHED(parser) ||
+	       array_count(&parser->root_list) < count)) {
+		if (!managesieve_parser_read_arg(parser))
 			break;
 
-		if ( parser->line_size > parser->max_line_size ) {
+		if (parser->line_size > parser->max_line_size) {
 			parser->error = "MANAGESIEVE command line too large";
 			break;
 		}
 	}
 
-	if ( parser->error != NULL ) {
-		/* error, abort */
+	if (parser->error != NULL) {
+		/* Error, abort */
 		parser->line_size += parser->cur_pos;
 		i_stream_skip(parser->input, parser->cur_pos);
 		parser->cur_pos = 0;
 		*args_r = NULL;
 		return -1;
-	} else if ( (!IS_UNFINISHED(parser) && count > 0
-		&& array_count(&parser->root_list) >= count) || parser->eol ) {
-		/* all arguments read / end of line. */
+	} else if ((!IS_UNFINISHED(parser) && count > 0 &&
+		    array_count(&parser->root_list) >= count) || parser->eol) {
+		/* All arguments read / end of line. */
 		return finish_line(parser, count, args_r);
 	} else {
-		/* need more data */
+		/* Need more data */
 		*args_r = NULL;
 		return -2;
 	}
 }
 
-int managesieve_parser_finish_line
-(struct managesieve_parser *parser, unsigned int count,
-	enum managesieve_parser_flags flags, const struct managesieve_arg **args_r)
+int managesieve_parser_finish_line(struct managesieve_parser *parser,
+				   unsigned int count,
+				   enum managesieve_parser_flags flags,
+				   const struct managesieve_arg **args_r)
 {
 	const unsigned char *data;
 	size_t data_size;
@@ -577,7 +582,7 @@ int managesieve_parser_finish_line
 
 	ret = managesieve_parser_read_args(parser, count, flags, args_r);
 	if (ret == -2) {
-		/* we should have noticed end of everything except atom */
+		/* We should have noticed end of everything except atom */
 		if (parser->cur_type == ARG_PARSE_ATOM) {
 			data = i_stream_get_data(parser->input, &data_size);
 			managesieve_parser_save_arg(parser, data, data_size);
@@ -632,7 +637,7 @@ quoted_string_istream_read_parent(struct quoted_string_istream *qsstream,
 		ret = i_stream_read_memarea(stream->parent);
 		if (ret <= 0) {
 			if (ret == -2) {
-				/* tiny parent buffer size - shouldn't happen */
+				/* Tiny parent buffer size - shouldn't happen */
 				return -2;
 			}
 			stream->istream.stream_errno =
@@ -688,14 +693,14 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 			break;
 		} else if (data[i] == '\\') {
 			if (i+1 == size) {
-				/* not enough input for \x */
+				/* Not enough input for \x */
 				extra = 1;
 				break;
 			}
 			i++;
 
 			if (!IS_QUOTED_SPECIAL(data[i])) {
-				/* invalid string */
+				/* Invalid string */
 				io_stream_set_error(&stream->iostream,
 					"Escaped quoted-string character is not a QUOTED-SPECIAL");
 				stream->istream.stream_errno = EINVAL;
@@ -720,7 +725,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 
 	ret = dest - stream->pos;
 	if (ret == 0) {
-		/* not enough input */
+		/* Not enough input */
 		i_assert(i == 0);
 		i_assert(extra > 0);
 		ret = quoted_string_istream_read_parent(qsstream, extra+1);
@@ -733,8 +738,8 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 	return ret;
 }
 
-static struct istream *quoted_string_istream_create
-(struct managesieve_parser *parser)
+static struct
+istream *quoted_string_istream_create(struct managesieve_parser *parser)
 {
 	struct quoted_string_istream *qsstream;
 
