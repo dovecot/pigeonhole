@@ -189,6 +189,17 @@ struct sieve_trace_config {
 };
 
 /*
+ * Duplicate checking
+ */
+
+enum sieve_duplicate_check_result {
+	SIEVE_DUPLICATE_CHECK_RESULT_EXISTS = 1,
+	SIEVE_DUPLICATE_CHECK_RESULT_NOT_FOUND = 0,
+	SIEVE_DUPLICATE_CHECK_RESULT_FAILURE = -1,
+	SIEVE_DUPLICATE_CHECK_RESULT_TEMP_FAILURE = -2,
+};
+
+/*
  * Script environment
  *
  * - Environment for currently executing script
@@ -229,13 +240,17 @@ struct sieve_script_env {
 			const char **error_r);
 
 	/* Interface for marking and checking duplicates */
-	bool (*duplicate_check)
-		(const struct sieve_script_env *senv, const void *id, size_t id_size);
-	void (*duplicate_mark)
-		(const struct sieve_script_env *senv, const void *id, size_t id_size,
-			time_t time);
-	void (*duplicate_flush)
-		(const struct sieve_script_env *senv);
+	void *(*duplicate_transaction_begin)(
+		const struct sieve_script_env *senv);
+	void (*duplicate_transaction_commit)(void **_dup_trans);
+	void (*duplicate_transaction_rollback)(void **_dup_trans);
+
+	enum sieve_duplicate_check_result
+	(*duplicate_check)(void *dup_trans, const struct sieve_script_env *senv,
+			   const void *id, size_t id_size);
+	void (*duplicate_mark)(void *dup_trans,
+			       const struct sieve_script_env *senv,
+			       const void *id, size_t id_size, time_t time);
 
 	/* Interface for rejecting mail */
 	int (*reject_mail)(const struct sieve_script_env *senv,

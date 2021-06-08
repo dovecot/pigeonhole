@@ -930,7 +930,6 @@ struct sieve_result_execution {
 	struct sieve_action_execution *keep_equiv_action;
 	int keep_status;
 
-	bool dup_flushed:1;
 	bool keep_success:1;
 	bool keep_explicit:1;
 	bool keep_implicit:1;
@@ -1076,9 +1075,6 @@ static int
 sieve_result_action_start(struct sieve_result_execution *rexec,
 			  struct sieve_action_execution *aexec)
 {
-	const struct sieve_action_exec_env *aenv = &rexec->action_env;
-	const struct sieve_execute_env *eenv = aenv->exec_env;
-	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
 	int status = SIEVE_EXEC_OK;
@@ -1092,12 +1088,6 @@ sieve_result_action_start(struct sieve_result_execution *rexec,
 	/* Skip non-actions (inactive keep). */
 	if (act->def == NULL)
 		return status;
-
-	if ((act->def->flags & SIEVE_ACTFLAG_MAIL_STORAGE) != 0 &&
-	    !rexec->dup_flushed) {
-		sieve_action_duplicate_flush(senv);
-		rexec->dup_flushed = TRUE;
-	}
 
 	if (act->def->start != NULL) {
 		sieve_action_execution_pre(rexec, aexec);
@@ -1753,7 +1743,6 @@ static int sieve_result_transaction_start(struct sieve_result_execution *rexec)
 
 	e_debug(rexec->event, "Starting execution of actions");
 
-	rexec->dup_flushed = FALSE;
 	aexec = rexec->actions_head;
 	while (status == SIEVE_EXEC_OK && aexec != NULL) {
 		status = sieve_result_action_start(rexec, aexec);

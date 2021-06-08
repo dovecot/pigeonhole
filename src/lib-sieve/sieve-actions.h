@@ -260,18 +260,40 @@ int sieve_act_redirect_add_to_result(const struct sieve_runtime_env *renv,
 				     const struct smtp_address *to_address);
 
 /*
- * Action utility functions
+ * Checking for duplicates
  */
 
-/* Checking for duplicates */
+static inline bool
+sieve_action_duplicate_check_available(const struct sieve_action_exec_env *aenv)
+{
+	const struct sieve_execute_env *eenv = aenv->exec_env;
 
-bool sieve_action_duplicate_check_available(
-	const struct sieve_script_env *senv);
-bool sieve_action_duplicate_check(const struct sieve_script_env *senv,
-				  const void *id, size_t id_size);
-void sieve_action_duplicate_mark(const struct sieve_script_env *senv,
-				 const void *id, size_t id_size, time_t time);
-void sieve_action_duplicate_flush(const struct sieve_script_env *senv);
+	return sieve_execute_duplicate_check_available(eenv);
+}
+
+static inline int
+sieve_action_duplicate_check(const struct sieve_action_exec_env *aenv,
+			     const void *id, size_t id_size,
+			     bool *duplicate_r)
+{
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+
+	return sieve_execute_duplicate_check(eenv, id, id_size,
+					     duplicate_r);
+}
+
+static inline void
+sieve_action_duplicate_mark(const struct sieve_action_exec_env *aenv,
+			    const void *id, size_t id_size, time_t time)
+{
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+
+	return sieve_execute_duplicate_mark(eenv, id, id_size, time);
+}
+
+/*
+ * Action utility functions
+ */
 
 /* Rejecting mail */
 

@@ -219,32 +219,60 @@ imap_sieve_smtp_finish(const struct sieve_script_env *senv ATTR_UNUSED,
  * Duplicate checking
  */
 
-static bool
-imap_sieve_duplicate_check(const struct sieve_script_env *senv, const void *id,
-			   size_t id_size)
+static void *
+imap_sieve_duplicate_transaction_begin(const struct sieve_script_env *senv)
 {
 	struct imap_sieve_context *isctx = senv->script_context;
 
-	return mail_duplicate_check(isctx->isieve->dup_db, id, id_size,
-				    senv->user->username);
+	return mail_duplicate_transaction_begin(isctx->isieve->dup_db);
+}
+
+static void imap_sieve_duplicate_transaction_commit(void **_dup_trans)
+{
+	struct mail_duplicate_transaction *dup_trans = *_dup_trans;
+
+	*_dup_trans = NULL;
+	mail_duplicate_transaction_commit(&dup_trans);
+}
+
+static void imap_sieve_duplicate_transaction_rollback(void **_dup_trans)
+{
+	struct mail_duplicate_transaction *dup_trans = *_dup_trans;
+
+	*_dup_trans = NULL;
+	mail_duplicate_transaction_rollback(&dup_trans);
+}
+
+static enum sieve_duplicate_check_result
+imap_sieve_duplicate_check(void *_dup_trans,
+			   const struct sieve_script_env *senv,
+			   const void *id, size_t id_size)
+{
+	struct mail_duplicate_transaction *dup_trans = _dup_trans;
+
+	switch (mail_duplicate_check(dup_trans, id, id_size,
+				     senv->user->username)) {
+	case MAIL_DUPLICATE_CHECK_RESULT_EXISTS:
+		return SIEVE_DUPLICATE_CHECK_RESULT_EXISTS;
+	case MAIL_DUPLICATE_CHECK_RESULT_NOT_FOUND:
+		return SIEVE_DUPLICATE_CHECK_RESULT_NOT_FOUND;
+	case MAIL_DUPLICATE_CHECK_RESULT_DEADLOCK:
+	case MAIL_DUPLICATE_CHECK_RESULT_LOCK_TIMEOUT:
+		return SIEVE_DUPLICATE_CHECK_RESULT_TEMP_FAILURE;
+	case MAIL_DUPLICATE_CHECK_RESULT_IO_ERROR:
+	case MAIL_DUPLICATE_CHECK_RESULT_TOO_MANY_LOCKS:
+		break;
+	}
+	return SIEVE_DUPLICATE_CHECK_RESULT_FAILURE;
 }
 
 static void
-imap_sieve_duplicate_mark(const struct sieve_script_env *senv, const void *id,
-			  size_t id_size, time_t time)
+imap_sieve_duplicate_mark(void *_dup_trans, const struct sieve_script_env *senv,
+			  const void *id, size_t id_size, time_t time)
 {
-	struct imap_sieve_context *isctx = senv->script_context;
+	struct mail_duplicate_transaction *dup_trans = _dup_trans;
 
-	mail_duplicate_mark(isctx->isieve->dup_db, id, id_size,
-			    senv->user->username, time);
-}
-
-static void
-imap_sieve_duplicate_flush(const struct sieve_script_env *senv)
-{
-	struct imap_sieve_context *isctx = senv->script_context;
-
-	mail_duplicate_db_flush(isctx->isieve->dup_db);
+	mail_duplicate_mark(dup_trans, id, id_size, senv->user->username, time);
 }
 
 /*
@@ -884,9 +912,14 @@ int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 			scriptenv.smtp_send = imap_sieve_smtp_send;
 			scriptenv.smtp_abort = imap_sieve_smtp_abort;
 			scriptenv.smtp_finish = imap_sieve_smtp_finish;
+			scriptenv.duplicate_transaction_begin =
+				imap_sieve_duplicate_transaction_begin;
+			scriptenv.duplicate_transaction_commit =
+				imap_sieve_duplicate_transaction_commit;
+			scriptenv.duplicate_transaction_rollback =
+				imap_sieve_duplicate_transaction_rollback;
 			scriptenv.duplicate_mark = imap_sieve_duplicate_mark;
 			scriptenv.duplicate_check = imap_sieve_duplicate_check;
-			scriptenv.duplicate_flush = imap_sieve_duplicate_flush;
 			scriptenv.result_amend_log_message =
 				imap_sieve_result_amend_log_message;
 			scriptenv.trace_log = trace_log;

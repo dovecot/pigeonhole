@@ -671,6 +671,7 @@ int sieve_execute(struct sieve_binary *sbin,
 	/* Cleanup */
 	if (result != NULL)
 		sieve_result_unref(&result);
+	sieve_execute_finish(&eenv, ret);
 	sieve_execute_deinit(&eenv);
 	pool_unref(&pool);
 
@@ -933,6 +934,8 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 	e_debug(mscript->event, "Sequence finished (status=%s, keep=%s)",
 		sieve_execution_exitcode_to_str(status),
 		(mscript->keep ? "yes" : "no"));
+
+	sieve_execute_finish(&mscript->exec_env, status);
 
 	/* Cleanup */
 	sieve_multiscript_destroy(&mscript);

@@ -109,7 +109,6 @@ act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv,
 			  void *tr_context ATTR_UNUSED, int status)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
-	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct act_duplicate_mark_data *data =
 		(struct act_duplicate_mark_data *)aenv->action->context;
 
@@ -120,7 +119,7 @@ act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv,
 	 * message.
 	 */
 	eenv->exec_status->significant_action_executed = TRUE;
-	sieve_action_duplicate_mark(senv, data->hash, sizeof(data->hash),
+	sieve_action_duplicate_mark(aenv, data->hash, sizeof(data->hash),
 				    ioloop_time + data->period);
 }
 
@@ -168,11 +167,10 @@ ext_duplicate_hash(string_t *handle, const char *value, size_t value_len,
 
 int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 			const char *value, size_t value_len,
-			sieve_number_t period, bool last)
+			sieve_number_t period, bool last, bool *duplicate_r)
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
-	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct ext_duplicate_context *rctx;
 	bool duplicate = FALSE;
 	pool_t msg_pool = NULL, result_pool = NULL;
@@ -180,16 +178,19 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	struct ext_duplicate_hash *hash_record = NULL;
 	struct ext_duplicate_handle *handle_record = NULL;
 	struct act_duplicate_mark_data *act;
+	int ret;
 
-	if (!sieve_action_duplicate_check_available(senv)) {
+	*duplicate_r = FALSE;
+
+	if (!sieve_execute_duplicate_check_available(eenv)) {
 		sieve_runtime_warning(
 			renv, NULL, "duplicate test: "
 			"duplicate checking not available in this context");
-		return 0;
+		return SIEVE_EXEC_OK;
 	}
 
 	if (value == NULL)
-		return 0;
+		return SIEVE_EXEC_OK;
 
 	/* Create hash */
 	ext_duplicate_hash(handle, value, value_len, last, hash);
@@ -221,7 +222,9 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 				(handle == NULL ? NULL : str_c(handle));
 			if (null_strcmp(rhandle->handle, handle_str) == 0 &&
 			    rhandle->last == last)
-				return (rhandle->duplicate ? 1 : 0);
+				return (rhandle->duplicate ?
+				        SIEVE_DUPLICATE_CHECK_RESULT_EXISTS :
+					SIEVE_DUPLICATE_CHECK_RESULT_NOT_FOUND);
 		}
 	}
 
@@ -234,15 +237,25 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	act->last = last;
 
 	/* Check duplicate */
-	duplicate = sieve_action_duplicate_check(senv, hash, sizeof(hash));
-	if (!duplicate && last) {
+	ret = sieve_execute_duplicate_check(eenv, hash, sizeof(hash),
+					    &duplicate);
+	if (ret >= SIEVE_EXEC_OK && !duplicate && last) {
 		unsigned char no_last_hash[MD5_RESULTLEN];
 
 		/* Check for entry without :last */
 		ext_duplicate_hash(handle, value, value_len,
 				   FALSE, no_last_hash);
-		sieve_action_duplicate_check(senv, no_last_hash,
-					     sizeof(no_last_hash));
+		ret = sieve_execute_duplicate_check(
+			eenv, no_last_hash, sizeof(no_last_hash),
+			&duplicate);
+	}
+	if (ret < SIEVE_EXEC_OK) {
+		sieve_runtime_critical(
+			renv, NULL, "failed to check for duplicate",
+			"failed to check for duplicate%s",
+			(ret == SIEVE_EXEC_TEMP_FAILURE ?
+			 " (temporary failure)" : ""));
+		return ret;
 	}
 
 	/* We may only mark the message as duplicate when Sieve script executes
@@ -253,7 +266,7 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 		if (sieve_result_add_action(renv, NULL, NULL,
 					    &act_duplicate_mark,
 					    NULL, (void *) act, 0, FALSE) < 0)
-			return -1;
+			return SIEVE_EXEC_FAILURE;
 	}
 
 	/* Cache result */
@@ -273,6 +286,8 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	handle_record->last = last;
 	handle_record->duplicate = duplicate;
 
-	return ( duplicate ? 1 : 0 );
+	*duplicate_r = duplicate;
+
+	return SIEVE_EXEC_OK;
 }
 

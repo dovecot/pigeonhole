@@ -1233,7 +1233,6 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	struct sieve_instance *svinst = eenv->svinst;
 	const struct ext_vacation_config *config =
 		(const struct ext_vacation_config *)ext->context;
-	const struct sieve_script_env *senv = eenv->scriptenv;
 	struct act_vacation_context *ctx =
 		(struct act_vacation_context *)action->context;
 	unsigned char dupl_hash[MD5_RESULTLEN];
@@ -1302,12 +1301,23 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	}
 
 	/* Did whe respond to this user before? */
-	if (sieve_action_duplicate_check_available(senv)) {
+	if (sieve_action_duplicate_check_available(aenv)) {
+		bool duplicate;
+
 		act_vacation_hash(ctx, smtp_address_encode(sender), dupl_hash);
 
-		if (sieve_action_duplicate_check(senv, dupl_hash,
-						 sizeof(dupl_hash)))
-		{
+		ret = sieve_action_duplicate_check(aenv, dupl_hash,
+						   sizeof(dupl_hash),
+						   &duplicate);
+		if (ret < SIEVE_EXEC_OK) {
+			sieve_result_critical(
+				aenv, "failed to check for duplicate vacation response",
+				"failed to check for duplicate vacation response%s",
+				(ret == SIEVE_EXEC_TEMP_FAILURE ?
+				 " (temporaty failure)" : ""));
+			return ret;
+		}
+		if (duplicate) {
 			sieve_result_global_log(
 				aenv,
 				"discarded duplicate vacation response to <%s>",
@@ -1554,7 +1564,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 
 		/* Mark as replied */
 		if (seconds > 0) {
-			sieve_action_duplicate_mark(senv, dupl_hash,
+			sieve_action_duplicate_mark(aenv, dupl_hash,
 						    sizeof(dupl_hash),
 						    ioloop_time + seconds);
 		}

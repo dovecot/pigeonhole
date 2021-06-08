@@ -559,8 +559,7 @@ act_redirect_execute(const struct sieve_action_exec_env *aenv,
 	struct mail *mail = (action->mail != NULL ?
 			     action->mail : sieve_message_get_mail(msgctx));
 	const struct sieve_message_data *msgdata = eenv->msgdata;
-	const struct sieve_script_env *senv = eenv->scriptenv;
-	bool loop_detected = FALSE;
+	bool duplicate, loop_detected = FALSE;
 	int ret;
 
 	/*
@@ -583,8 +582,19 @@ act_redirect_execute(const struct sieve_action_exec_env *aenv,
 	i_assert(trans->dupeid != NULL);
 
 	/* Check whether we've seen this message before */
-	if (sieve_action_duplicate_check(senv, trans->dupeid,
-					 strlen(trans->dupeid))) {
+	ret = sieve_action_duplicate_check(aenv, trans->dupeid,
+					   strlen(trans->dupeid),
+					   &duplicate);
+	if (ret < SIEVE_EXEC_OK) {
+		sieve_result_critical(
+			aenv, "failed to check for duplicate forward",
+			"failed to check for duplicate forward to <%s>%s",
+			smtp_address_encode(ctx->to_address),
+			(ret == SIEVE_EXEC_TEMP_FAILURE ?
+			 " (temporaty failure)" : ""));
+		return ret;
+	}
+	if (duplicate) {
 		sieve_result_global_log(
 			aenv, "discarded duplicate forward to <%s>",
 			smtp_address_encode(ctx->to_address));
@@ -624,7 +634,6 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 	struct mail *mail = (action->mail != NULL ?
 			     action->mail : sieve_message_get_mail(msgctx));
 	struct act_redirect_transaction *trans = tr_context;
-	const struct sieve_script_env *senv = eenv->scriptenv;
 	int ret;
 
 	if (trans->skip_redirect)
@@ -639,7 +648,7 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 		/* Mark this message id as forwarded to the specified
 		   destination */
 		sieve_action_duplicate_mark(
-			senv, trans->dupeid, strlen(trans->dupeid),
+			aenv, trans->dupeid, strlen(trans->dupeid),
 			ioloop_time + svinst->redirect_duplicate_period);
 
 		eenv->exec_status->significant_action_executed = TRUE;

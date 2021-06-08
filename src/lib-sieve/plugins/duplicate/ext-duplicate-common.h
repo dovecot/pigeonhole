@@ -36,6 +36,6 @@ extern const struct sieve_operation_def tst_duplicate_operation;
 
 int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 			const char *value, size_t value_len,
-			sieve_number_t period, bool last);
+			sieve_number_t period, bool last, bool *duplicate_r);
 
 #endif

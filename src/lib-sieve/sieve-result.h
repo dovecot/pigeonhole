@@ -110,6 +110,9 @@ struct sieve_result_execution *
 sieve_result_execution_create(struct sieve_result *result, pool_t pool);
 void sieve_result_execution_destroy(struct sieve_result_execution **_rexec);
 
+void *sieve_result_execution_get_dup_transaction(
+	struct sieve_result_execution *rexec);
+
 int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 			 bool commit, struct sieve_error_handler *ehandler,
 			 bool *keep_r);

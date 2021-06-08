@@ -927,39 +927,6 @@ int sieve_act_redirect_add_to_result(const struct sieve_runtime_env *renv,
  * Action utility functions
  */
 
-/* Checking for duplicates */
-
-bool sieve_action_duplicate_check_available(
-	const struct sieve_script_env *senv)
-{
-	return (senv->duplicate_check != NULL && senv->duplicate_mark != NULL);
-}
-
-bool sieve_action_duplicate_check(const struct sieve_script_env *senv,
-				  const void *id, size_t id_size)
-{
-	if (senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
-		return FALSE;
-
-	return senv->duplicate_check(senv, id, id_size);
-}
-
-void sieve_action_duplicate_mark(const struct sieve_script_env *senv,
-				 const void *id, size_t id_size, time_t time)
-{
-	if (senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
-		return;
-
-	senv->duplicate_mark(senv, id, id_size, time);
-}
-
-void sieve_action_duplicate_flush(const struct sieve_script_env *senv)
-{
-	if (senv->duplicate_flush == NULL)
-		return;
-	senv->duplicate_flush(senv);
-}
-
 /* Rejecting the mail */
 
 static int

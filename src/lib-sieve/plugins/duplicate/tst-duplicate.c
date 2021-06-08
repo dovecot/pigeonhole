@@ -428,10 +428,10 @@ tst_duplicate_operation_execute(const struct sieve_runtime_env *renv,
 	if (val == NULL) {
 		duplicate = FALSE;
 	} else {
-		if ((ret = ext_duplicate_check(renv, handle, val, val_len,
-					       seconds, last)) < 0)
-			return SIEVE_EXEC_FAILURE;
-		duplicate = (ret > 0);
+		ret = ext_duplicate_check(renv, handle, val, val_len,
+					  seconds, last, &duplicate);
+		if (ret < SIEVE_EXEC_OK)
+			return ret;
 	}
 
 	/* Trace */

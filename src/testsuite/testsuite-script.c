@@ -147,8 +147,9 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	}
 
 	ret = sieve_interpreter_run(interp, result);
-
 	sieve_interpreter_free(&interp);
+
+	sieve_execute_finish(&exec_env, ret);
 	sieve_execute_deinit(&exec_env);
 
 	return (ret > 0 ||

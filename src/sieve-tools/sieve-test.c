@@ -107,17 +107,34 @@ sieve_smtp_finish(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
  * Dummy duplicate check implementation
  */
 
-static bool
-duplicate_check(const struct sieve_script_env *senv, const void *id ATTR_UNUSED,
-		size_t id_size ATTR_UNUSED)
+static void *
+duplicate_transaction_begin(const struct sieve_script_env *senv ATTR_UNUSED)
+{
+	return NULL;
+}
+
+static void duplicate_transaction_commit(void **_dup_trans ATTR_UNUSED)
+{
+}
+
+static void duplicate_transaction_rollback(void **_dup_trans ATTR_UNUSED)
+{
+}
+
+static int
+duplicate_check(void *_dup_trans ATTR_UNUSED,
+		const struct sieve_script_env *senv,
+		const void *id ATTR_UNUSED, size_t id_size ATTR_UNUSED)
 {
 	i_info("checked duplicate for user %s.\n", senv->user->username);
 	return 0;
 }
 
 static void
-duplicate_mark(const struct sieve_script_env *senv, const void *id ATTR_UNUSED,
-	       size_t id_size ATTR_UNUSED, time_t time ATTR_UNUSED)
+duplicate_mark(void *_dup_trans ATTR_UNUSED,
+	       const struct sieve_script_env *senv,
+	       const void *id ATTR_UNUSED, size_t id_size ATTR_UNUSED,
+	       time_t time ATTR_UNUSED)
 {
 	i_info("marked duplicate for user %s.\n", senv->user->username);
 }
@@ -342,6 +359,12 @@ int main(int argc, char **argv)
 		scriptenv.smtp_send = sieve_smtp_send;
 		scriptenv.smtp_abort = sieve_smtp_abort;
 		scriptenv.smtp_finish = sieve_smtp_finish;
+		scriptenv.duplicate_transaction_begin =
+			duplicate_transaction_begin;
+		scriptenv.duplicate_transaction_commit =
+			duplicate_transaction_commit;
+		scriptenv.duplicate_transaction_rollback =
+			duplicate_transaction_rollback;
 		scriptenv.duplicate_mark = duplicate_mark;
 		scriptenv.duplicate_check = duplicate_check;
 		scriptenv.result_amend_log_message = result_amend_log_message;
