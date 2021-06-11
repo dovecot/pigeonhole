@@ -1,4 +1,4 @@
-v0.5.15 2021-05-27  Aki Tuomi <aki.tuomi@open-xchange.com>
+v0.5.15 2021-06-21  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* CVE-2020-28200: Sieve interpreter is not protected against abusive
 	  scripts that claim excessive resource usage. Fixed by limiting the
