@@ -23,8 +23,8 @@ struct sieve_data_script {
 	struct istream *data;
 };
 
-struct sieve_script *sieve_data_script_create_from_input
-	(struct sieve_instance *svinst, const char *name,
-		struct istream *input);
+struct sieve_script *
+sieve_data_script_create_from_input(struct sieve_instance *svinst,
+				    const char *name, struct istream *input);
 
 #endif
