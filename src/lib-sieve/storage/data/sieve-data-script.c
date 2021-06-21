@@ -30,8 +30,9 @@ static struct sieve_data_script *sieve_data_script_alloc(void)
 	return dscript;
 }
 
-struct sieve_script *sieve_data_script_create_from_input
-(struct sieve_instance *svinst, const char *name, struct istream *input)
+struct sieve_script *
+sieve_data_script_create_from_input(struct sieve_instance *svinst,
+				    const char *name, struct istream *input)
 {
 	struct sieve_storage *storage;
 	struct sieve_data_script *dscript = NULL;
@@ -40,8 +41,8 @@ struct sieve_script *sieve_data_script_create_from_input
 				      "", 0, FALSE);
 
 	dscript = sieve_data_script_alloc();
-	sieve_script_init(&dscript->script,
-		storage, &sieve_data_script, "data:", name);
+	sieve_script_init(&dscript->script, storage, &sieve_data_script,
+			  "data:", name);
 
 	dscript->data = input;
 	i_stream_ref(dscript->data);
@@ -61,12 +62,12 @@ static void sieve_data_script_destroy(struct sieve_script *script)
 	i_stream_unref(&dscript->data);
 }
 
-static int sieve_data_script_get_stream
-(struct sieve_script *script, struct istream **stream_r,
-	enum sieve_error *error_r)
+static int
+sieve_data_script_get_stream(struct sieve_script *script,
+			     struct istream **stream_r,
+			     enum sieve_error *error_r)
 {
-	struct sieve_data_script *dscript =
-		(struct sieve_data_script *)script;
+	struct sieve_data_script *dscript = (struct sieve_data_script *)script;
 
 	i_stream_ref(dscript->data);
 	i_stream_seek(dscript->data, 0);
@@ -76,11 +77,11 @@ static int sieve_data_script_get_stream
 	return 0;
 }
 
-static bool sieve_data_script_equals
-(const struct sieve_script *script ATTR_UNUSED,
-	const struct sieve_script *other ATTR_UNUSED)
+static bool
+sieve_data_script_equals(const struct sieve_script *script ATTR_UNUSED,
+			 const struct sieve_script *other ATTR_UNUSED)
 {
-	return ( script == other );
+	return (script == other);
 }
 
 const struct sieve_script sieve_data_script = {
@@ -91,5 +92,5 @@ const struct sieve_script sieve_data_script = {
 		.get_stream = sieve_data_script_get_stream,
 
 		.equals = sieve_data_script_equals
-	}
+	},
 };
