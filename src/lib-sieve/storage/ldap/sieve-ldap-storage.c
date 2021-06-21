@@ -39,25 +39,25 @@ static struct sieve_storage *sieve_ldap_storage_alloc(void)
 	return &lstorage->storage;
 }
 
-static int sieve_ldap_storage_init
-(struct sieve_storage *storage, const char *const *options,
-	enum sieve_error *error_r)
+static int
+sieve_ldap_storage_init(struct sieve_storage *storage,
+			const char *const *options, enum sieve_error *error_r)
 {
 	struct sieve_ldap_storage *lstorage =
 		(struct sieve_ldap_storage *)storage;
 	struct sieve_instance *svinst = storage->svinst;
 	const char *value, *username = NULL;
 
-	if ( options != NULL ) {
-		while ( *options != NULL ) {
+	if (options != NULL) {
+		while (*options != NULL) {
 			const char *option = *options;
 
 			if (str_begins_icase(option, "user=", &value) &&
-			    *value != '\0' ) {
+			    *value != '\0') {
 				username = value;
 			} else {
-				sieve_storage_set_critical(storage,
-					"Invalid option `%s'", option);
+				sieve_storage_set_critical(
+					storage, "Invalid option `%s'", option);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
@@ -66,10 +66,10 @@ static int sieve_ldap_storage_init
 		}
 	}
 
-	if ( username == NULL ) {
-		if ( svinst->username == NULL ) {
-			sieve_storage_set_critical(storage,
-				"No username specified");
+	if (username == NULL) {
+		if (svinst->username == NULL) {
+			sieve_storage_set_critical(
+				storage, "No username specified");
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
@@ -79,27 +79,26 @@ static int sieve_ldap_storage_init
 	e_debug(storage->event, "user=%s, config=%s",
 		username, storage->location);
 
-	if ( sieve_ldap_storage_read_settings(lstorage, storage->location) < 0 )
+	if (sieve_ldap_storage_read_settings(lstorage, storage->location) < 0)
 		return -1;
 
 	lstorage->username = p_strdup(storage->pool, username);
 	lstorage->config_file = p_strdup(storage->pool, storage->location);
 	lstorage->conn = sieve_ldap_db_init(lstorage);
 
-	storage->location = p_strconcat(storage->pool,
-		SIEVE_LDAP_STORAGE_DRIVER_NAME, ":", storage->location,
-		";user=", username, NULL);
+	storage->location = p_strconcat(
+		storage->pool, SIEVE_LDAP_STORAGE_DRIVER_NAME, ":",
+		storage->location, ";user=", username, NULL);
 
 	return 0;
 }
 
-static void sieve_ldap_storage_destroy
-(struct sieve_storage *storage)
+static void sieve_ldap_storage_destroy(struct sieve_storage *storage)
 {
 	struct sieve_ldap_storage *lstorage =
 		(struct sieve_ldap_storage *)storage;
 
-	if ( lstorage->conn != NULL )
+	if (lstorage->conn != NULL)
 		sieve_ldap_db_unref(&lstorage->conn);
 }
 
@@ -107,8 +106,8 @@ static void sieve_ldap_storage_destroy
  * Script access
  */
 
-static struct sieve_script *sieve_ldap_storage_get_script
-(struct sieve_storage *storage, const char *name)
+static struct sieve_script *
+sieve_ldap_storage_get_script(struct sieve_storage *storage, const char *name)
 {
 	struct sieve_ldap_storage *lstorage =
 		(struct sieve_ldap_storage *)storage;
@@ -125,16 +124,15 @@ static struct sieve_script *sieve_ldap_storage_get_script
  * Active script
  */
 
-struct sieve_script *sieve_ldap_storage_active_script_open
-(struct sieve_storage *storage)
+struct sieve_script *
+sieve_ldap_storage_active_script_open(struct sieve_storage *storage)
 {
 	struct sieve_ldap_storage *lstorage =
 		(struct sieve_ldap_storage *)storage;
 	struct sieve_ldap_script *lscript;
 
-	lscript = sieve_ldap_script_init
-		(lstorage, storage->script_name);
-	if ( sieve_script_open(&lscript->script, NULL) < 0 ) {
+	lscript = sieve_ldap_script_init(lstorage, storage->script_name);
+	if (sieve_script_open(&lscript->script, NULL) < 0) {
 		struct sieve_script *script = &lscript->script;
 		sieve_script_unref(&script);
 		return NULL;
@@ -143,10 +141,10 @@ struct sieve_script *sieve_ldap_storage_active_script_open
 	return &lscript->script;
 }
 
-int sieve_ldap_storage_active_script_get_name
-(struct sieve_storage *storage, const char **name_r)
+int sieve_ldap_storage_active_script_get_name(struct sieve_storage *storage,
+					      const char **name_r)
 {
-	if ( storage->script_name != NULL )
+	if (storage->script_name != NULL)
 		*name_r = storage->script_name;
 	else
 		*name_r = SIEVE_LDAP_SCRIPT_DEFAULT;
@@ -179,7 +177,7 @@ const struct sieve_storage sieve_ldap_storage_plugin = {
 		.active_script_open = sieve_ldap_storage_active_script_open,
 
 		// FIXME: impement management interface
-	}
+	},
 };
 
 #ifndef SIEVE_BUILTIN_LDAP
@@ -187,30 +185,27 @@ const struct sieve_storage sieve_ldap_storage_plugin = {
 
 const char *sieve_storage_ldap_plugin_version = PIGEONHOLE_ABI_VERSION;
 
-void sieve_storage_ldap_plugin_load
-(struct sieve_instance *svinst, void **context);
-void sieve_storage_ldap_plugin_unload
-(struct sieve_instance *svinst, void *context);
+void sieve_storage_ldap_plugin_load(struct sieve_instance *svinst,
+				    void **context);
+void sieve_storage_ldap_plugin_unload(struct sieve_instance *svinst,
+				      void *context);
 void sieve_storage_ldap_plugin_init(void);
 void sieve_storage_ldap_plugin_deinit(void);
 
-void sieve_storage_ldap_plugin_load
-(struct sieve_instance *svinst, void **context ATTR_UNUSED)
+void sieve_storage_ldap_plugin_load(struct sieve_instance *svinst,
+				    void **context ATTR_UNUSED)
 {
-	sieve_storage_class_register
-		(svinst, &sieve_ldap_storage_plugin);
+	sieve_storage_class_register(svinst, &sieve_ldap_storage_plugin);
 
 	e_debug(svinst->event,
 		"Sieve LDAP storage plugin for %s version %s loaded",
 		PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 }
 
-void sieve_storage_ldap_plugin_unload
-(struct sieve_instance *svinst ATTR_UNUSED,
-	void *context ATTR_UNUSED)
+void sieve_storage_ldap_plugin_unload(struct sieve_instance *svinst ATTR_UNUSED,
+				      void *context ATTR_UNUSED)
 {
-	sieve_storage_class_unregister
-		(svinst, &sieve_ldap_storage_plugin);
+	sieve_storage_class_unregister(svinst, &sieve_ldap_storage_plugin);
 }
 
 void sieve_storage_ldap_plugin_init(void)
@@ -226,6 +221,6 @@ void sieve_storage_ldap_plugin_deinit(void)
 
 #else /* !defined(SIEVE_BUILTIN_LDAP) && !defined(PLUGIN_BUILD) */
 const struct sieve_storage sieve_ldap_storage = {
-	.driver_name = SIEVE_LDAP_STORAGE_DRIVER_NAME
+	.driver_name = SIEVE_LDAP_STORAGE_DRIVER_NAME,
 };
 #endif
