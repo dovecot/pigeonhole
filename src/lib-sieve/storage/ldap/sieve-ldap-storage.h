@@ -52,8 +52,8 @@ struct sieve_ldap_storage_settings {
 	int ldap_deref, ldap_scope, ldap_tls_require_cert;
 };
 
-int sieve_ldap_storage_read_settings
-	(struct sieve_ldap_storage *lstorage, const char *config_path);
+int sieve_ldap_storage_read_settings(struct sieve_ldap_storage *lstorage,
+				     const char *config_path);
 
 /*
  * Storage class
@@ -71,10 +71,10 @@ struct sieve_ldap_storage {
 	struct ldap_connection *conn;
 };
 
-struct sieve_script *sieve_ldap_storage_active_script_open
-	(struct sieve_storage *storage);
-int sieve_ldap_storage_active_script_get_name
-	(struct sieve_storage *storage, const char **name_r);
+struct sieve_script *
+sieve_ldap_storage_active_script_open(struct sieve_storage *storage);
+int sieve_ldap_storage_active_script_get_name(struct sieve_storage *storage,
+					      const char **name_r);
 
 /*
  * Script class
@@ -89,18 +89,20 @@ struct sieve_ldap_script {
 	const char *binpath;
 };
 
-struct sieve_ldap_script *sieve_ldap_script_init
-	(struct sieve_ldap_storage *lstorage, const char *name);
+struct sieve_ldap_script *
+sieve_ldap_script_init(struct sieve_ldap_storage *lstorage, const char *name);
 
 /*
  * Script sequence
  */
 
-struct sieve_script_sequence *sieve_ldap_storage_get_script_sequence
-	(struct sieve_storage *storage, enum sieve_error *error_r);
+struct sieve_script_sequence *
+sieve_ldap_storage_get_script_sequence(struct sieve_storage *storage,
+				       enum sieve_error *error_r);
 
-struct sieve_script *sieve_ldap_script_sequence_next
-    (struct sieve_script_sequence *seq, enum sieve_error *error_r);
+struct sieve_script *
+sieve_ldap_script_sequence_next(struct sieve_script_sequence *seq,
+				enum sieve_error *error_r);
 void sieve_ldap_script_sequence_destroy(struct sieve_script_sequence *seq);
 
 #endif
