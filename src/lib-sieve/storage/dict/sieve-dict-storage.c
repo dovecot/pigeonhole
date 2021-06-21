@@ -26,25 +26,25 @@ static struct sieve_storage *sieve_dict_storage_alloc(void)
 	return &dstorage->storage;
 }
 
-static int sieve_dict_storage_init
-(struct sieve_storage *storage, const char *const *options,
-	enum sieve_error *error_r)
+static int
+sieve_dict_storage_init(struct sieve_storage *storage,
+			const char *const *options, enum sieve_error *error_r)
 {
 	struct sieve_dict_storage *dstorage =
 		(struct sieve_dict_storage *)storage;
 	struct sieve_instance *svinst = storage->svinst;
 	const char *value, *uri = storage->location, *username = NULL;
 
-	if ( options != NULL ) {
-		while ( *options != NULL ) {
+	if (options != NULL) {
+		while (*options != NULL) {
 			const char *option = *options;
 
 			if (str_begins_icase(option, "user=", &value) &&
-			    *value != '\0' ) {
+			    *value != '\0') {
 				username = option+5;
 			} else {
-				sieve_storage_set_critical(storage,
-					"Invalid option `%s'", option);
+				sieve_storage_set_critical(
+					storage, "Invalid option `%s'", option);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
@@ -53,18 +53,19 @@ static int sieve_dict_storage_init
 		}
 	}
 
-	if ( username == NULL ) {
-		if ( svinst->username == NULL ) {
+	if (username == NULL) {
+		if (svinst->username == NULL) {
 			sieve_storage_set_critical(storage,
-				"No username specified");
+						   "No username specified");
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 		username = svinst->username;
 	}
 
-	if ( svinst->base_dir == NULL ) {
-		sieve_storage_set_critical(storage,
+	if (svinst->base_dir == NULL) {
+		sieve_storage_set_critical(
+			storage,
 			"BUG: Sieve interpreter is initialized without a base_dir");
 		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
@@ -75,16 +76,16 @@ static int sieve_dict_storage_init
 	dstorage->uri = p_strdup(storage->pool, uri);
 	dstorage->username = p_strdup(storage->pool, username);
 
-	storage->location = p_strconcat(storage->pool,
-		SIEVE_DICT_STORAGE_DRIVER_NAME, ":", storage->location,
-		";user=", username, NULL);
+	storage->location = p_strconcat(
+		storage->pool, SIEVE_DICT_STORAGE_DRIVER_NAME, ":",
+		storage->location, ";user=", username, NULL);
 
 	return 0;
 }
 
-int sieve_dict_storage_get_dict
-(struct sieve_dict_storage *dstorage, struct dict **dict_r,
-	enum sieve_error *error_r)
+int
+sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
+			    struct dict **dict_r, enum sieve_error *error_r)
 {
 	struct sieve_storage *storage = &dstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
@@ -92,11 +93,12 @@ int sieve_dict_storage_get_dict
 	const char *error;
 	int ret;
 
-	if ( dstorage->dict == NULL ) {
+	if (dstorage->dict == NULL) {
 		i_zero(&dict_set);
 		dict_set.base_dir = svinst->base_dir;
-		ret = dict_init_legacy(dstorage->uri, &dict_set, &dstorage->dict, &error);
-		if ( ret < 0 ) {
+		ret = dict_init_legacy(dstorage->uri, &dict_set,
+				       &dstorage->dict, &error);
+		if (ret < 0) {
 			sieve_storage_set_critical(storage,
 				"Failed to initialize dict with data `%s' for user `%s': %s",
 				dstorage->uri, dstorage->username, error);
@@ -114,7 +116,7 @@ static void sieve_dict_storage_destroy(struct sieve_storage *storage)
 	struct sieve_dict_storage *dstorage =
 		(struct sieve_dict_storage *)storage;
 
-	if ( dstorage->dict != NULL )
+	if (dstorage->dict != NULL)
 		dict_deinit(&dstorage->dict);
 }
 
@@ -122,8 +124,8 @@ static void sieve_dict_storage_destroy(struct sieve_storage *storage)
  * Script access
  */
 
-static struct sieve_script *sieve_dict_storage_get_script
-(struct sieve_storage *storage, const char *name)
+static struct sieve_script *
+sieve_dict_storage_get_script(struct sieve_storage *storage, const char *name)
 {
 	struct sieve_dict_storage *dstorage =
 		(struct sieve_dict_storage *)storage;
@@ -140,16 +142,15 @@ static struct sieve_script *sieve_dict_storage_get_script
  * Active script
  */
 
-struct sieve_script *sieve_dict_storage_active_script_open
-(struct sieve_storage *storage)
+struct sieve_script *
+sieve_dict_storage_active_script_open(struct sieve_storage *storage)
 {
 	struct sieve_dict_storage *dstorage =
 		(struct sieve_dict_storage *)storage;
 	struct sieve_dict_script *dscript;
 
-	dscript = sieve_dict_script_init
-		(dstorage, storage->script_name);
-	if ( sieve_script_open(&dscript->script, NULL) < 0 ) {
+	dscript = sieve_dict_script_init(dstorage, storage->script_name);
+	if (sieve_script_open(&dscript->script, NULL) < 0) {
 		struct sieve_script *script = &dscript->script;
 		sieve_script_unref(&script);
 		return NULL;
@@ -158,10 +159,10 @@ struct sieve_script *sieve_dict_storage_active_script_open
 	return &dscript->script;
 }
 
-int sieve_dict_storage_active_script_get_name
-(struct sieve_storage *storage, const char **name_r)
+int sieve_dict_storage_active_script_get_name(struct sieve_storage *storage,
+					      const char **name_r)
 {
-	if ( storage->script_name != NULL )
+	if (storage->script_name != NULL)
 		*name_r = storage->script_name;
 	else
 		*name_r = SIEVE_DICT_SCRIPT_DEFAULT;
@@ -190,5 +191,5 @@ const struct sieve_storage sieve_dict_storage = {
 		.active_script_open = sieve_dict_storage_active_script_open,
 
 		// FIXME: impement management interface
-	}
+	},
 };
