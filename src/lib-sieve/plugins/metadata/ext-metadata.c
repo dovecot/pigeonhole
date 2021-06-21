@@ -27,17 +27,19 @@ const struct sieve_operation_def *mboxmetadata_operations[] = {
 	&metadataexists_operation,
 };
 
-static bool ext_mboxmetadata_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool
+ext_mboxmetadata_validator_load(const struct sieve_extension *ext,
+				struct sieve_validator *valdtr);
 
 const struct sieve_extension_def mboxmetadata_extension = {
 	.name = "mboxmetadata",
 	.validator_load = ext_mboxmetadata_validator_load,
-	SIEVE_EXT_DEFINE_OPERATIONS(mboxmetadata_operations)
+	SIEVE_EXT_DEFINE_OPERATIONS(mboxmetadata_operations),
 };
 
-static bool ext_mboxmetadata_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_mboxmetadata_validator_load(const struct sieve_extension *ext,
+				struct sieve_validator *valdtr)
 {
 	sieve_validator_register_command(valdtr, ext, &metadata_test);
 	sieve_validator_register_command(valdtr, ext, &metadataexists_test);
@@ -61,20 +63,23 @@ const struct sieve_operation_def *servermetadata_operations[] = {
 	&servermetadataexists_operation,
 };
 
-static bool ext_servermetadata_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool
+ext_servermetadata_validator_load(const struct sieve_extension *ext,
+				  struct sieve_validator *valdtr);
 
 const struct sieve_extension_def servermetadata_extension = {
 	.name = "servermetadata",
 	.validator_load = ext_servermetadata_validator_load,
-	SIEVE_EXT_DEFINE_OPERATIONS(servermetadata_operations)
+	SIEVE_EXT_DEFINE_OPERATIONS(servermetadata_operations),
 };
 
-static bool ext_servermetadata_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_servermetadata_validator_load(const struct sieve_extension *ext,
+				  struct sieve_validator *valdtr)
 {
 	sieve_validator_register_command(valdtr, ext, &servermetadata_test);
-	sieve_validator_register_command(valdtr, ext, &servermetadataexists_test);
+	sieve_validator_register_command(valdtr, ext,
+					 &servermetadataexists_test);
 
 	return TRUE;
 }
