@@ -30,28 +30,30 @@
 const struct sieve_operation_def *ext_foreverypart_operations[] = {
 	&foreverypart_begin_operation,
 	&foreverypart_end_operation,
-	&break_operation
+	&break_operation,
 };
 
 /*
  * Extension
  */
 
-static bool ext_foreverypart_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool
+ext_foreverypart_validator_load(const struct sieve_extension *ext,
+				struct sieve_validator *valdtr);
 
 const struct sieve_extension_def foreverypart_extension = {
 	.name = "foreverypart",
 	.validator_load = ext_foreverypart_validator_load,
-	SIEVE_EXT_DEFINE_OPERATIONS(ext_foreverypart_operations)
+	SIEVE_EXT_DEFINE_OPERATIONS(ext_foreverypart_operations),
 };
 
 /*
  * Extension validation
  */
 
-static bool ext_foreverypart_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_foreverypart_validator_load(const struct sieve_extension *ext,
+				struct sieve_validator *valdtr)
 {
 	/* Register new commands */
 	sieve_validator_register_command(valdtr, ext, &cmd_foreverypart);
