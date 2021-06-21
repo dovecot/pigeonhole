@@ -107,7 +107,6 @@ int ldap_tls_require_cert_from_str(const char *str, int *opt_x_tls_r)
 }
 #endif
 
-
 static int ldap_get_errno(struct ldap_connection *conn)
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
@@ -168,7 +167,7 @@ static int ldap_handle_error(struct ldap_connection *conn)
 	case LDAP_IS_LEAF:
 	case LDAP_ALIAS_DEREF_PROBLEM:
 	case LDAP_FILTER_ERROR:
-		/* invalid input */
+		/* Invalid input */
 		return -1;
 	case LDAP_SERVER_DOWN:
 	case LDAP_TIMEOUT:
@@ -181,7 +180,7 @@ static int ldap_handle_error(struct ldap_connection *conn)
 	case LDAP_INVALID_CREDENTIALS:
 	case LDAP_OPERATIONS_ERROR:
 	default:
-		/* connection problems */
+		/* Connection problems */
 		ldap_conn_reconnect(conn);
 		return 0;
 	}
@@ -204,7 +203,7 @@ static int db_ldap_request_search(struct ldap_connection *conn,
 			"ldap_search(%s) parsing failed: %s",
 			request->filter, ldap_get_error(conn));
 		if (ldap_handle_error(conn) < 0) {
-			/* broken request, remove it */
+			/* Broken request, remove it */
 			return 0;
 		}
 		return -1;
@@ -217,17 +216,17 @@ static bool db_ldap_request_queue_next(struct ldap_connection *conn)
 	struct ldap_request *const *requestp, *request;
 	int ret = -1;
 
-	/* connecting may call db_ldap_connect_finish(), which gets us back
+	/* Connecting may call db_ldap_connect_finish(), which gets us back
 	   here. so do the connection before checking the request queue. */
 	if (sieve_ldap_db_connect(conn) < 0)
 		return FALSE;
 
 	if (conn->pending_count == aqueue_count(conn->request_queue)) {
-		/* no non-pending requests */
+		/* No non-pending requests */
 		return FALSE;
 	}
 	if (conn->pending_count > DB_LDAP_MAX_PENDING_REQUESTS) {
-		/* wait until server has replied to some requests */
+		/* Wait until server has replied to some requests */
 		return FALSE;
 	}
 
@@ -239,32 +238,31 @@ static bool db_ldap_request_queue_next(struct ldap_connection *conn)
 	switch (conn->conn_state) {
 	case LDAP_CONN_STATE_DISCONNECTED:
 	case LDAP_CONN_STATE_BINDING:
-		/* wait until we're in bound state */
+		/* Wait until we're in bound state */
 		return FALSE;
 	case LDAP_CONN_STATE_BOUND:
-		/* we can do anything in this state */
+		/* We can do anything in this state */
 		break;
 	}
 
 	ret = db_ldap_request_search(conn, request);
 	if (ret > 0) {
-		/* success */
+		/* Success */
 		i_assert(request->msgid != -1);
 		conn->pending_count++;
 		return TRUE;
 	} else if (ret < 0) {
-		/* disconnected */
+		/* Disconnected */
 		return FALSE;
 	} else {
-		/* broken request, remove from queue */
+		/* Broken request, remove from queue */
 		aqueue_delete_tail(conn->request_queue);
 		request->callback(conn, request, NULL);
 		return TRUE;
 	}
 }
 
-static bool
-db_ldap_check_limits(struct ldap_connection *conn)
+static bool db_ldap_check_limits(struct ldap_connection *conn)
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct ldap_request *const *first_requestp;
@@ -332,8 +330,9 @@ static int db_ldap_connect_finish(struct ldap_connection *conn, int ret)
 	return 0;
 }
 
-static void db_ldap_default_bind_finished(struct ldap_connection *conn,
-					  struct db_ldap_result *res)
+static void
+db_ldap_default_bind_finished(struct ldap_connection *conn,
+			      struct db_ldap_result *res)
 {
 	int ret;
 
@@ -342,15 +341,14 @@ static void db_ldap_default_bind_finished(struct ldap_connection *conn,
 
 	ret = ldap_result2error(conn->ld, res->msg, FALSE);
 	if (db_ldap_connect_finish(conn, ret) < 0) {
-		/* lost connection, close it */
+		/* Lost connection, close it */
 		db_ldap_conn_close(conn);
 	}
 }
 
-static void db_ldap_abort_requests(struct ldap_connection *conn,
-				   unsigned int max_count,
-				   unsigned int timeout_secs,
-				   bool error, const char *reason)
+static void
+db_ldap_abort_requests(struct ldap_connection *conn, unsigned int max_count,
+		       unsigned int timeout_secs, bool error, const char *reason)
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct ldap_request *const *requestp, *request;
@@ -421,7 +419,7 @@ db_ldap_handle_request_result(struct ldap_connection *conn,
 	case LDAP_RES_SEARCH_RESULT:
 		break;
 	case LDAP_RES_SEARCH_REFERENCE:
-		/* we're going to ignore this */
+		/* We're going to ignore this */
 		return FALSE;
 	default:
 		e_error(storage->event, "db: Reply with unexpected type %d",
@@ -437,7 +435,7 @@ db_ldap_handle_request_result(struct ldap_connection *conn,
 		ret = ldap_result2error(conn->ld, res->msg, 0);
 	}
 	if (ret != LDAP_SUCCESS) {
-		/* handle search failures here */
+		/* Handle search failures here */
 		e_error(storage->event, "db: "
 			"ldap_search(base=%s filter=%s) failed: %s",
 			request->base, request->filter,
@@ -452,7 +450,7 @@ db_ldap_handle_request_result(struct ldap_connection *conn,
 		}
 	}
 	if (res == NULL && !final_result) {
-		/* wait for the final reply */
+		/* Wait for the final reply */
 		request->failed = TRUE;
 		return TRUE;
 	}
@@ -468,7 +466,7 @@ db_ldap_handle_request_result(struct ldap_connection *conn,
 	} T_END;
 
 	if (idx > 0) {
-		/* see if there are timed out requests */
+		/* See if there are timed out requests */
 		db_ldap_abort_requests(conn, idx,
 				       DB_LDAP_REQUEST_LOST_TIMEOUT_SECS,
 				       TRUE, "Request lost");
@@ -488,8 +486,7 @@ static void db_ldap_result_unref(struct db_ldap_result **_res)
 	}
 }
 
-static void
-db_ldap_request_free(struct ldap_request *request)
+static void db_ldap_request_free(struct ldap_request *request)
 {
 	if (request->result != NULL)
 		db_ldap_result_unref(&request->result);
@@ -537,7 +534,7 @@ static void ldap_input(struct ldap_connection *conn)
 		ret = ldap_result(conn->ld, LDAP_RES_ANY, 0, &timeout, &msg);
 #ifdef OPENLDAP_ASYNC_WORKAROUND
 		if (ret == 0) {
-			/* try again, there may be another in buffer */
+			/* Try again, there may be another in buffer */
 			ret = ldap_result(conn->ld, LDAP_RES_ANY, 0,
 					  &timeout, &msg);
 		}
@@ -556,10 +553,10 @@ static void ldap_input(struct ldap_connection *conn)
 	conn->last_reply_stamp = ioloop_time;
 
 	if (ret > 0) {
-		/* input disabled, continue once it's enabled */
+		/* Input disabled, continue once it's enabled */
 		i_assert(conn->io == NULL);
 	} else if (ret == 0) {
-		/* send more requests */
+		/* Send more requests */
 		while (db_ldap_request_queue_next(conn))
 			;
 	} else if (ldap_get_errno(conn) != LDAP_SERVER_DOWN) {
@@ -572,7 +569,7 @@ static void ldap_input(struct ldap_connection *conn)
 			"db: Connection lost to LDAP server, reconnecting");
 		ldap_conn_reconnect(conn);
 	} else {
-		/* server probably disconnected an idle connection. don't
+		/* Server probably disconnected an idle connection. don't
 		   reconnect until the next request comes. */
 		db_ldap_conn_close(conn);
 	}
@@ -609,7 +606,6 @@ sasl_interact(LDAP *ld ATTR_UNUSED, unsigned flags ATTR_UNUSED,
 			in->len = strlen(str);
 			in->result = str;
 		}
-
 	}
 	return LDAP_SUCCESS;
 }
@@ -638,7 +634,7 @@ static int db_ldap_bind(struct ldap_connection *conn)
 	if (msgid == -1) {
 		i_assert(ldap_get_errno(conn) != LDAP_SUCCESS);
 		if (db_ldap_connect_finish(conn, ldap_get_errno(conn)) < 0) {
-			/* lost connection, close it */
+			/* Lost connection, close it */
 			db_ldap_conn_close(conn);
 		}
 		return -1;
@@ -658,7 +654,7 @@ static int db_ldap_get_fd(struct ldap_connection *conn)
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	int ret;
 
-	/* get the connection's fd */
+	/* Get the connection's fd */
 	ret = ldap_get_option(conn->ld, LDAP_OPT_DESC, (void *)&conn->fd);
 	if (ret != LDAP_SUCCESS) {
 		e_error(storage->event, "db: Can't get connection fd: %s",
@@ -711,24 +707,25 @@ static int db_ldap_set_tls_options(struct ldap_connection *conn)
 
 #ifdef OPENLDAP_TLS_OPTIONS
 	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CACERTFILE,
-			    set->tls_ca_cert_file, "tls_ca_cert_file") < 0)
+				set->tls_ca_cert_file, "tls_ca_cert_file") < 0)
 		return -1;
 	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CACERTDIR,
-			    set->tls_ca_cert_dir, "tls_ca_cert_dir") < 0)
+				set->tls_ca_cert_dir, "tls_ca_cert_dir") < 0)
 		return -1;
 	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CERTFILE,
-			    set->tls_cert_file, "tls_cert_file") < 0)
+				set->tls_cert_file, "tls_cert_file") < 0)
 		return -1;
 	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_KEYFILE,
-			    set->tls_key_file, "tls_key_file") < 0)
+				set->tls_key_file, "tls_key_file") < 0)
 		return -1;
 	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CIPHER_SUITE,
-			    set->tls_cipher_suite, "tls_cipher_suite") < 0)
+				set->tls_cipher_suite, "tls_cipher_suite") < 0)
 		return -1;
 	if (set->tls_require_cert != NULL) {
 		if (db_ldap_set_opt(conn, LDAP_OPT_X_TLS_REQUIRE_CERT,
-				&set->ldap_tls_require_cert,
-				"tls_require_cert", set->tls_require_cert) < 0)
+				    &set->ldap_tls_require_cert,
+				    "tls_require_cert",
+				    set->tls_require_cert) < 0)
 			return -1;
 	}
 #else
@@ -753,12 +750,12 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 	int value;
 
 	if (db_ldap_set_opt(conn, LDAP_OPT_DEREF, &set->ldap_deref,
-			"deref", set->deref) < 0)
+			    "deref", set->deref) < 0)
 		return -1;
 #ifdef LDAP_OPT_DEBUG_LEVEL
 	if (str_to_int(set->debug_level, &value) >= 0 && value != 0) {
 		if (db_ldap_set_opt(conn, LDAP_OPT_DEBUG_LEVEL, &value,
-				"debug_level", set->debug_level) < 0)
+				    "debug_level", set->debug_level) < 0)
 			return -1;
 	}
 #endif
@@ -809,7 +806,8 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 	if (conn->ld == NULL) {
 		if (set->uris != NULL) {
 #ifdef LDAP_HAVE_INITIALIZE
-			if (ldap_initialize(&conn->ld, set->uris) != LDAP_SUCCESS)
+			if (ldap_initialize(&conn->ld,
+					    set->uris) != LDAP_SUCCESS)
 				conn->ld = NULL;
 #else
 			e_error(storage->event, "db: "
@@ -822,7 +820,8 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 
 		if (conn->ld == NULL) {
 			e_error(storage->event, "db: "
-				"ldap_init() failed with hosts: %s",	set->hosts);
+				"ldap_init() failed with hosts: %s",
+				set->hosts);
 			return -1;
 		}
 
@@ -944,13 +943,14 @@ static void db_ldap_conn_close(struct ldap_connection *conn)
 	}
 	conn->fd = -1;
 
-	/* the fd may have already been closed before ldap_unbind(),
-	   so we'll have to use io_remove_closed(). */
+	/* The fd may have already been closed before ldap_unbind(), so we'll
+	   have to use io_remove_closed(). */
 	io_remove_closed(&conn->io);
 
 	if (aqueue_count(conn->request_queue) > 0) {
-		conn->to = timeout_add(DB_LDAP_REQUEST_DISCONNECT_TIMEOUT_SECS *
-				       1000/2, db_ldap_disconnect_timeout, conn);
+		conn->to = timeout_add(
+			DB_LDAP_REQUEST_DISCONNECT_TIMEOUT_SECS * 1000/2,
+			db_ldap_disconnect_timeout, conn);
 	}
 }
 
@@ -986,8 +986,7 @@ const char *ldap_escape(const char *str)
 	return str_c(ret);
 }
 
-struct ldap_connection *
-sieve_ldap_db_init(struct sieve_ldap_storage *lstorage)
+struct ldap_connection *sieve_ldap_db_init(struct sieve_ldap_storage *lstorage)
 {
 	struct ldap_connection *conn;
 	pool_t pool;
@@ -1058,7 +1057,7 @@ static void db_ldap_wait(struct ldap_connection *conn)
 
 	conn->ioloop = io_loop_create();
 	db_ldap_switch_ioloop(conn);
-	/* either we're waiting for network I/O or we're getting out of a
+	/* Either we're waiting for network I/O or we're getting out of a
 	   callback using timeout_add_short(0) */
 	i_assert(io_loop_have_ios(conn->ioloop) ||
 		 io_loop_have_immediate_timeouts(conn->ioloop));
@@ -1066,7 +1065,7 @@ static void db_ldap_wait(struct ldap_connection *conn)
 	do {
 		e_debug(storage->event, "db: "
 			"Waiting for %d requests to finish",
-			aqueue_count(conn->request_queue) );
+			aqueue_count(conn->request_queue));
 		io_loop_run(conn->ioloop);
 	} while (aqueue_count(conn->request_queue) > 0);
 
@@ -1085,7 +1084,8 @@ static void sieve_ldap_db_script_free(unsigned char *script)
 
 static int
 sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
-	LDAPMessage *entry, pool_t pool, const char **modattr_r)
+				 LDAPMessage *entry, pool_t pool,
+				 const char **modattr_r)
 {
 	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
@@ -1104,7 +1104,8 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 			if (vals[1] != NULL) {
 				e_warning(storage->event, "db: "
 					  "Search returned more than one Sieve modified attribute `%s'; "
-					  "using only the first one.", set->sieve_ldap_mod_attr);
+					  "using only the first one.",
+					  set->sieve_ldap_mod_attr);
 			}
 
 			*modattr_r = p_strdup(pool, vals[0]);
@@ -1122,8 +1123,8 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 }
 
 static int
-sieve_ldap_db_get_script(struct ldap_connection *conn,
-	LDAPMessage *entry, struct istream **script_r)
+sieve_ldap_db_get_script(struct ldap_connection *conn, LDAPMessage *entry,
+			 struct istream **script_r)
 {
 	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
@@ -1143,7 +1144,8 @@ sieve_ldap_db_get_script(struct ldap_connection *conn,
 			if (vals[1] != NULL) {
 				e_warning(storage->event, "db: "
 					  "Search returned more than one Sieve script attribute `%s'; "
-					  "using only the first one.", set->sieve_ldap_script_attr);
+					  "using only the first one.",
+					  set->sieve_ldap_script_attr);
 			}
 
 			size = vals[0]->bv_len;
@@ -1158,8 +1160,8 @@ sieve_ldap_db_get_script(struct ldap_connection *conn,
 			ldap_memfree(attr);
 
 			*script_r = i_stream_create_from_data(data, size);
-			i_stream_add_destroy_callback
-				(*script_r,	sieve_ldap_db_script_free, data);
+			i_stream_add_destroy_callback(
+				*script_r, sieve_ldap_db_script_free, data);
 			return 1;
 		}
 		ldap_memfree(attr);
@@ -1181,8 +1183,7 @@ auth_request_var_expand_static_tab[] = {
 };
 
 static const struct var_expand_table *
-db_ldap_get_var_expand_table(struct ldap_connection *conn,
-	const char *name)
+db_ldap_get_var_expand_table(struct ldap_connection *conn, const char *name)
 {
 	struct sieve_ldap_storage *lstorage = conn->lstorage;
 	struct sieve_instance *svinst = lstorage->storage.svinst;
@@ -1190,7 +1191,7 @@ db_ldap_get_var_expand_table(struct ldap_connection *conn,
 		N_ELEMENTS(auth_request_var_expand_static_tab);
 	struct var_expand_table *tab;
 
-	/* keep the extra fields at the beginning. the last static_tab field
+	/* Keep the extra fields at the beginning. the last static_tab field
 	   contains the ending NULL-fields. */
 	tab = t_malloc_no0((auth_count) * sizeof(*tab));
 
@@ -1217,7 +1218,8 @@ struct sieve_ldap_script_lookup_request {
 
 static void
 sieve_ldap_lookup_script_callback(struct ldap_connection *conn,
-			  struct ldap_request *request, LDAPMessage *res)
+				  struct ldap_request *request,
+				  LDAPMessage *res)
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct sieve_ldap_script_lookup_request *srequest =
@@ -1230,10 +1232,11 @@ sieve_ldap_lookup_script_callback(struct ldap_connection *conn,
 
 	if (ldap_msgtype(res) != LDAP_RES_SEARCH_RESULT) {
 		if (srequest->result_dn == NULL) {
-			srequest->result_dn = p_strdup
-				(request->pool, ldap_get_dn(conn->ld, res));
-			(void)sieve_ldap_db_get_script_modattr
-				(conn, res, request->pool, &srequest->result_modattr);
+			srequest->result_dn = p_strdup(
+				request->pool, ldap_get_dn(conn->ld, res));
+			(void)sieve_ldap_db_get_script_modattr(
+				conn, res, request->pool,
+				&srequest->result_modattr);
 		} else if (srequest->entries++ == 0) {
 			e_warning(storage->event, "db: "
 				  "Search returned more than one entry for Sieve script; "
@@ -1245,8 +1248,8 @@ sieve_ldap_lookup_script_callback(struct ldap_connection *conn,
 	}
 }
 
-int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
-	const char *name, const char **dn_r, const char **modattr_r)
+int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
+				const char **dn_r, const char **modattr_r)
 {
 	struct sieve_ldap_storage *lstorage = conn->lstorage;
 	struct sieve_storage *storage = &lstorage->storage;
@@ -1256,8 +1259,8 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	const char *error;
 	string_t *str;
 
-	pool_t pool = pool_alloconly_create
-		("sieve_ldap_script_lookup_request", 512);
+	pool_t pool = pool_alloconly_create(
+		"sieve_ldap_script_lookup_request", 512);
 	request = p_new(pool, struct sieve_ldap_script_lookup_request, 1);
 	request->request.pool = pool;
 
@@ -1313,7 +1316,7 @@ struct sieve_ldap_script_read_request {
 
 static void
 sieve_ldap_read_script_callback(struct ldap_connection *conn,
-			  struct ldap_request *request, LDAPMessage *res)
+				struct ldap_request *request, LDAPMessage *res)
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct sieve_ldap_script_read_request *srequest =
@@ -1325,9 +1328,9 @@ sieve_ldap_read_script_callback(struct ldap_connection *conn,
 	}
 
 	if (ldap_msgtype(res) != LDAP_RES_SEARCH_RESULT) {
-
 		if (srequest->result == NULL) {
-			(void)sieve_ldap_db_get_script(conn, res, &srequest->result);
+			(void)sieve_ldap_db_get_script(conn, res,
+						       &srequest->result);
 		} else {
 			e_error(storage->event, "db: "
 				"Search returned more than one entry for Sieve script DN");
@@ -1341,7 +1344,7 @@ sieve_ldap_read_script_callback(struct ldap_connection *conn,
 }
 
 int sieve_ldap_db_read_script(struct ldap_connection *conn,
-	const char *dn, struct istream **script_r)
+			      const char *dn, struct istream **script_r)
 {
 	struct sieve_ldap_storage *lstorage = conn->lstorage;
 	struct sieve_storage *storage = &lstorage->storage;
@@ -1349,8 +1352,8 @@ int sieve_ldap_db_read_script(struct ldap_connection *conn,
 	struct sieve_ldap_script_read_request *request;
 	char **attr_names;
 
-	pool_t pool = pool_alloconly_create
-		("sieve_ldap_script_read_request", 512);
+	pool_t pool = pool_alloconly_create(
+		"sieve_ldap_script_read_request", 512);
 	request = p_new(pool, struct sieve_ldap_script_read_request, 1);
 	request->request.pool = pool;
 	request->request.base = p_strdup(pool, dn);
@@ -1374,6 +1377,5 @@ int sieve_ldap_db_read_script(struct ldap_connection *conn,
 	pool_unref(&request->request.pool);
 	return (*script_r == NULL ? 0 : 1);
 }
-
 
 #endif
