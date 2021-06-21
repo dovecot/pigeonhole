@@ -6,15 +6,14 @@
 #include "ext-mime-common.h"
 
 struct ext_foreverypart_runtime_loop *
-ext_foreverypart_runtime_loop_get_current
-(const struct sieve_runtime_env *renv)
+ext_foreverypart_runtime_loop_get_current(const struct sieve_runtime_env *renv)
 {
 	struct sieve_interpreter_loop *loop;
 	struct ext_foreverypart_runtime_loop *fploop;
 
-	loop = sieve_interpreter_loop_get_global
-		(renv->interp, NULL, &foreverypart_extension);
-	if ( loop == NULL ) {
+	loop = sieve_interpreter_loop_get_global(renv->interp, NULL,
+						 &foreverypart_extension);
+	if (loop == NULL) {
 		fploop = NULL;
 	} else {
 		fploop = (struct ext_foreverypart_runtime_loop *)
