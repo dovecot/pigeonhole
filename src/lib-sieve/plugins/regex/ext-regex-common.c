@@ -16,6 +16,5 @@ const struct sieve_operand_def regex_match_type_operand = {
 	.name = "regex match",
 	.ext_def = &regex_extension,
 	.class = &sieve_match_type_operand_class,
-	.interface = &ext_match_types
+	.interface = &ext_match_types,
 };
-
