@@ -29,7 +29,7 @@ extern const struct sieve_command_def servermetadataexists_test;
 
 enum ext_metadata_opcode {
 	EXT_METADATA_OPERATION_METADATA,
-	EXT_METADATA_OPERATION_METADATAEXISTS
+	EXT_METADATA_OPERATION_METADATAEXISTS,
 };
 
 extern const struct sieve_operation_def metadata_operation;
