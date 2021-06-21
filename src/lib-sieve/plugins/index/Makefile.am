@@ -5,7 +5,6 @@ AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE)
 
 libsieve_ext_index_la_SOURCES = \
-	ext-index-common.c \
 	ext-index.c \
 	tag-index.c
 
