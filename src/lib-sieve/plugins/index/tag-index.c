@@ -32,7 +32,7 @@ tag_index_generate(const struct sieve_codegen_env *cgenv,
 const struct sieve_argument_def index_tag = {
 	.identifier = "index",
 	.validate = tag_index_validate,
-	.generate = tag_index_generate
+	.generate = tag_index_generate,
 };
 
 static bool
@@ -66,7 +66,7 @@ const struct sieve_message_override_def index_header_override = {
 	.sequence = SIEVE_EXT_INDEX_HDR_OVERRIDE_SEQUENCE,
 	.dump_context = svmo_index_dump_context,
 	.read_context = svmo_index_read_context,
-	.header_override = svmo_index_header_override
+	.header_override = svmo_index_header_override,
 };
 
 /*
@@ -184,7 +184,7 @@ tag_index_generate(const struct sieve_codegen_env *cgenv,
 	sieve_opr_message_override_emit(cgenv->sblock, arg->argument->ext,
 					&index_header_override);
 
-	(void)sieve_binary_emit_integer	(cgenv->sblock, data->fieldno);
+	(void)sieve_binary_emit_integer(cgenv->sblock, data->fieldno);
 	(void)sieve_binary_emit_byte(cgenv->sblock, (data->last ? 1 : 0));
 	return TRUE;
 }
