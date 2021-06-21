@@ -52,8 +52,7 @@ struct mail_raw_user {
  * Raw mail implementation
  */
 
-static int seekable_fd_callback
-(const char **path_r, void *context)
+static int seekable_fd_callback(const char **path_r, void *context)
 {
 	struct mail_user *ruser = (struct mail_user *)context;
 	string_t *path;
@@ -78,8 +77,9 @@ static int seekable_fd_callback
 	return fd;
 }
 
-static struct istream *mail_raw_create_stream
-(struct mail_user *ruser, int fd, time_t *mtime_r, const char **sender)
+static struct istream *
+mail_raw_create_stream(struct mail_user *ruser, int fd, time_t *mtime_r,
+		       const char **sender)
 {
 	struct istream *input, *input2, *input_list[2];
 	const unsigned char *data;
@@ -95,15 +95,16 @@ static struct istream *mail_raw_create_stream
 	/* If input begins with a From-line, drop it */
 	ret = i_stream_read_bytes(input, &data, &size, 5);
 	if (ret > 0 && memcmp(data, "From ", 5) == 0) {
-		/* skip until the first LF */
+		/* Skip until the first LF */
 		i_stream_skip(input, 5);
-		while ( i_stream_read_more(input, &data, &size) > 0 ) {
+		while (i_stream_read_more(input, &data, &size) > 0) {
 			for (i = 0; i < size; i++) {
 				if (data[i] == '\n')
 					break;
 			}
 			if (i != size) {
-				(void)mbox_from_parse(data, i, mtime_r, &tz, &env_sender);
+				(void)mbox_from_parse(data, i, mtime_r,
+						      &tz, &env_sender);
 				i_stream_skip(input, i + 1);
 				break;
 			}
@@ -111,9 +112,8 @@ static struct istream *mail_raw_create_stream
 		}
 	}
 
-	if (env_sender != NULL && sender != NULL) {
+	if (env_sender != NULL && sender != NULL)
 		*sender = t_strdup(env_sender);
-	}
 	i_free(env_sender);
 
 	if (input->v_offset == 0) {
@@ -126,7 +126,7 @@ static struct istream *mail_raw_create_stream
 
 	input_list[0] = input2; input_list[1] = NULL;
 	input = i_stream_create_seekable(input_list, MAIL_MAX_MEMORY_BUFFER,
-		seekable_fd_callback, (void*)ruser);
+					 seekable_fd_callback, (void *)ruser);
 	i_stream_unref(&input2);
 	return input;
 }
@@ -149,24 +149,24 @@ struct mail_user *mail_raw_user_create(struct mail_user *mail_user)
  * Open raw mail data
  */
 
-static struct mail_raw *mail_raw_create
-(struct mail_user *ruser, struct istream *input,
-	const char *mailfile, const char *sender, time_t mtime)
+static struct mail_raw *
+mail_raw_create(struct mail_user *ruser, struct istream *input,
+		const char *mailfile, const char *sender, time_t mtime)
 {
 	struct mail_raw *mailr;
 	struct mailbox_header_lookup_ctx *headers_ctx;
 	const char *envelope_sender, *error;
 	int ret;
 
-	if ( mailfile != NULL && *mailfile != '/' )
+	if (mailfile != NULL && *mailfile != '/') {
 		if (t_abspath(mailfile, &mailfile, &error) < 0)
-			i_fatal("t_abspath(%s) failed: %s",
-				mailfile, error);
+			i_fatal("t_abspath(%s) failed: %s", mailfile, error);
+	}
 
 	mailr = i_new(struct mail_raw, 1);
 
 	envelope_sender = sender != NULL ? sender : DEFAULT_ENVELOPE_SENDER;
-	if ( mailfile == NULL ) {
+	if (mailfile == NULL) {
 		ret = raw_mailbox_alloc_stream(ruser, input, mtime,
 					       envelope_sender, &mailr->box);
 	} else {
@@ -174,13 +174,16 @@ static struct mail_raw *mail_raw_create
 					     envelope_sender, &mailr->box);
 	}
 
-	if ( ret < 0 ) {
-		if ( mailfile == NULL ) {
+	if (ret < 0) {
+		if (mailfile == NULL) {
 			i_fatal("Can't open delivery mail as raw: %s",
-				mailbox_get_last_internal_error(mailr->box, NULL));
+				mailbox_get_last_internal_error(
+					mailr->box, NULL));
 		} else {
 			i_fatal("Can't open delivery mail as raw (file=%s): %s",
-				mailfile, mailbox_get_last_internal_error(mailr->box, NULL));
+				mailfile,
+				mailbox_get_last_internal_error(
+					mailr->box, NULL));
 		}
 	}
 
@@ -193,8 +196,8 @@ static struct mail_raw *mail_raw_create
 	return mailr;
 }
 
-struct mail_raw *mail_raw_open_stream
-(struct mail_user *ruser, struct istream *input)
+struct mail_raw *
+mail_raw_open_stream(struct mail_user *ruser, struct istream *input)
 {
 	struct mail_raw *mailr;
 
@@ -205,13 +208,14 @@ struct mail_raw *mail_raw_open_stream
 	return mailr;
 }
 
-struct mail_raw *mail_raw_open_data
-(struct mail_user *ruser, string_t *mail_data)
+struct mail_raw *
+mail_raw_open_data(struct mail_user *ruser, string_t *mail_data)
 {
 	struct mail_raw *mailr;
 	struct istream *input;
 
-	input = i_stream_create_from_data(str_data(mail_data), str_len(mail_data));
+	input = i_stream_create_from_data(str_data(mail_data),
+					  str_len(mail_data));
 
 	mailr = mail_raw_open_stream(ruser, input);
 
@@ -219,15 +223,14 @@ struct mail_raw *mail_raw_open_data
 	return mailr;
 }
 
-struct mail_raw *mail_raw_open_file
-(struct mail_user *ruser, const char *path)
+struct mail_raw *mail_raw_open_file(struct mail_user *ruser, const char *path)
 {
 	struct mail_raw *mailr;
 	struct istream *input = NULL;
 	time_t mtime = (time_t)-1;
 	const char *sender = NULL;
 
-	if ( path == NULL || strcmp(path, "-") == 0 ) {
+	if (path == NULL || strcmp(path, "-") == 0) {
 		path = NULL;
 		input = mail_raw_create_stream(ruser, 0, &mtime, &sender);
 	}
@@ -247,4 +250,3 @@ void mail_raw_close(struct mail_raw **mailr)
 	i_free(*mailr);
 	*mailr = NULL;
 }
-
