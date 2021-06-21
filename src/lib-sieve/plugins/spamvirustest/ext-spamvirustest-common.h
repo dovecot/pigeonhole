@@ -21,9 +21,9 @@ void ext_spamvirustest_unload(const struct sieve_extension *ext);
 extern const struct sieve_command_def spamtest_test;
 extern const struct sieve_command_def virustest_test;
 
-int ext_spamvirustest_get_value
-(const struct sieve_runtime_env *renv, const struct sieve_extension *ext,
-	 bool percent, const char **value_r);
+int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
+				const struct sieve_extension *ext,
+				bool percent, const char **value_r);
 
 /*
  * Operations
