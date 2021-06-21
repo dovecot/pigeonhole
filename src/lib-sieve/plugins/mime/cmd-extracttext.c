@@ -28,13 +28,16 @@
  *    extracttext [MODIFIER] [":first" number] <varname: string>
  */
 
-static bool cmd_extracttext_registered
-	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-		struct sieve_command_registration *cmd_reg);
-static bool cmd_extracttext_validate
-	(struct sieve_validator *valdtr, struct sieve_command *cmd);
-static bool cmd_extracttext_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
+static bool
+cmd_extracttext_registered(struct sieve_validator *valdtr,
+			   const struct sieve_extension *ext,
+			   struct sieve_command_registration *cmd_reg);
+static bool
+cmd_extracttext_validate(struct sieve_validator *valdtr,
+			 struct sieve_command *cmd);
+static bool
+cmd_extracttext_generate(const struct sieve_codegen_env *cgenv,
+			 struct sieve_command *ctx);
 
 const struct sieve_command_def cmd_extracttext = {
 	.identifier = "extracttext",
@@ -45,7 +48,7 @@ const struct sieve_command_def cmd_extracttext = {
 	.block_required = FALSE,
 	.registered = cmd_extracttext_registered,
 	.validate = cmd_extracttext_validate,
-	.generate = cmd_extracttext_generate
+	.generate = cmd_extracttext_generate,
 };
 
 /*
@@ -57,29 +60,32 @@ enum cmd_extracttext_optional {
 	CMD_EXTRACTTEXT_OPT_FIRST
 };
 
-static bool cmd_extracttext_validate_first_tag
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command *cmd);
+static bool
+cmd_extracttext_validate_first_tag(struct sieve_validator *valdtr,
+				   struct sieve_ast_argument **arg,
+				   struct sieve_command *cmd);
 
 static const struct sieve_argument_def extracttext_from_tag = {
 	.identifier = "first",
-	.validate = cmd_extracttext_validate_first_tag
+	.validate = cmd_extracttext_validate_first_tag,
 };
 
 /*
  * Extracttext operation
  */
 
-static bool cmd_extracttext_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int cmd_extracttext_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+cmd_extracttext_operation_dump(const struct sieve_dumptime_env *denv,
+			       sieve_size_t *address);
+static int
+cmd_extracttext_operation_execute(const struct sieve_runtime_env *renv,
+				  sieve_size_t *address);
 
 const struct sieve_operation_def extracttext_operation = {
 	.mnemonic = "EXTRACTTEXT",
 	.ext_def = &extracttext_extension,
 	.dump = cmd_extracttext_operation_dump,
-	.execute = cmd_extracttext_operation_execute
+	.execute = cmd_extracttext_operation_execute,
 };
 
 /*
@@ -94,9 +100,10 @@ struct cmd_extracttext_context {
  * Tag validation
  */
 
-static bool cmd_extracttext_validate_first_tag
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-	struct sieve_command *cmd)
+static bool
+cmd_extracttext_validate_first_tag(struct sieve_validator *valdtr,
+				   struct sieve_ast_argument **arg,
+				   struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 
@@ -106,8 +113,8 @@ static bool cmd_extracttext_validate_first_tag
 	/* Check syntax:
 	 *   :first <number>
 	 */
-	if ( !sieve_validate_tag_parameter
-		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_NUMBER, FALSE) )
+	if (!sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, NULL, 0,
+					  SAAT_NUMBER, FALSE) )
 		return FALSE;
 
 	/* Skip parameter */
@@ -118,17 +125,18 @@ static bool cmd_extracttext_validate_first_tag
 
 /* Command registration */
 
-static bool cmd_extracttext_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-	struct sieve_command_registration *cmd_reg)
+static bool
+cmd_extracttext_registered(struct sieve_validator *valdtr,
+			   const struct sieve_extension *ext,
+			   struct sieve_command_registration *cmd_reg)
 {
 	struct ext_extracttext_context *ectx =
 		(struct ext_extracttext_context *)ext->context;
 
-	sieve_validator_register_tag(valdtr, cmd_reg, ext,
-		&extracttext_from_tag, CMD_EXTRACTTEXT_OPT_FIRST);
-	sieve_variables_modifiers_link_tag
-		(valdtr, ectx->var_ext, cmd_reg);
+	sieve_validator_register_tag(
+		valdtr, cmd_reg, ext, &extracttext_from_tag,
+		CMD_EXTRACTTEXT_OPT_FIRST);
+	sieve_variables_modifiers_link_tag(valdtr, ectx->var_ext, cmd_reg);
 	return TRUE;
 }
 
@@ -136,8 +144,9 @@ static bool cmd_extracttext_registered
  * Command validation
  */
 
-static bool cmd_extracttext_validate(struct sieve_validator *valdtr,
-	struct sieve_command *cmd)
+static bool
+cmd_extracttext_validate(struct sieve_validator *valdtr,
+			 struct sieve_command *cmd)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
 	struct ext_extracttext_context *ectx =
@@ -153,30 +162,29 @@ static bool cmd_extracttext_validate(struct sieve_validator *valdtr,
 	cmd->data = (void *) sctx;
 
 	/* Validate modifiers */
-	if ( !sieve_variables_modifiers_validate
-		(valdtr, cmd, &sctx->modifiers) )
+	if (!sieve_variables_modifiers_validate(valdtr, cmd, &sctx->modifiers))
 		return FALSE;
 
 	/* Validate varname argument */
-	if ( !sieve_validate_positional_argument
-		(valdtr, cmd, arg, "varname", 1, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "varname", 1,
+						SAAT_STRING))
 		return FALSE;
-	}
-	if ( !sieve_variable_argument_activate
-		(ectx->var_ext, ectx->var_ext, valdtr, cmd, arg, TRUE) )
+	if (!sieve_variable_argument_activate(ectx->var_ext, ectx->var_ext,
+					      valdtr, cmd, arg, TRUE))
 		return FALSE;
 
 	/* Check foreverypart context */
 	i_assert(node != NULL);
-	while ( node != NULL ) {
-		if ( node->command != NULL &&
-			sieve_command_is(node->command, cmd_foreverypart) )
+	while (node != NULL) {
+		if (node->command != NULL &&
+		    sieve_command_is(node->command, cmd_foreverypart))
 			break;
 		node = sieve_ast_node_parent(node);
 	}
 
-	if ( node == NULL ) {
-		sieve_command_validate_error(valdtr, cmd,
+	if (node == NULL) {
+		sieve_command_validate_error(
+			valdtr, cmd,
 			"the extracttext command is not placed inside "
 			"a foreverypart loop");
 		return FALSE;
@@ -188,8 +196,9 @@ static bool cmd_extracttext_validate(struct sieve_validator *valdtr,
  * Code generation
  */
 
-static bool cmd_extracttext_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+static bool
+cmd_extracttext_generate(const struct sieve_codegen_env *cgenv,
+			 struct sieve_command *cmd)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
 	struct sieve_binary_block *sblock = cgenv->sblock;
@@ -199,12 +208,11 @@ static bool cmd_extracttext_generate
 	sieve_operation_emit(sblock, this_ext, &extracttext_operation);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
+	if (!sieve_generate_arguments(cgenv, cmd, NULL))
 		return FALSE;
 
 	/* Generate modifiers */
-	if ( !sieve_variables_modifiers_generate
-		(cgenv, &sctx->modifiers) )
+	if (!sieve_variables_modifiers_generate(cgenv, &sctx->modifiers))
 		return FALSE;
 
 	return TRUE;
@@ -214,8 +222,9 @@ static bool cmd_extracttext_generate
  * Code dump
  */
 
-static bool cmd_extracttext_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+cmd_extracttext_operation_dump(const struct sieve_dumptime_env *denv,
+			       sieve_size_t *address)
 {
 	int opt_code = 0;
 
@@ -228,22 +237,25 @@ static bool cmd_extracttext_operation_dump
 		int opt;
 		bool opok = TRUE;
 
-		if ( (opt=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+		opt = sieve_opr_optional_dump(denv, address, &opt_code);
+		if (opt < 0)
 			return FALSE;
-		if ( opt == 0 ) break;
+		if (opt == 0)
+			break;
 
-		switch ( opt_code ) {
+		switch (opt_code) {
 		case CMD_EXTRACTTEXT_OPT_FIRST:
 			opok = sieve_opr_number_dump(denv, address, "first");
 			break;
 		default:
 			return FALSE;
 		}
-		if ( !opok ) return FALSE;
+		if (!opok)
+			return FALSE;
 	}
 
 	/* Print both variable name and string value */
-	if ( !sieve_opr_string_dump(denv, address, "varname") )
+	if (!sieve_opr_string_dump(denv, address, "varname"))
 		return FALSE;
 
 	return sieve_variables_modifiers_code_dump(denv, address);
@@ -253,8 +265,9 @@ static bool cmd_extracttext_operation_dump
  * Code execution
  */
 
-static int cmd_extracttext_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+cmd_extracttext_operation_execute(const struct sieve_runtime_env *renv,
+				  sieve_size_t *address)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_extracttext_context *ectx =
@@ -280,34 +293,39 @@ static int cmd_extracttext_operation_execute
 	for (;;) {
 		int opt;
 
-		if ( (opt=sieve_opr_optional_read
-			(renv, address, &opt_code)) < 0 )
+		opt = sieve_opr_optional_read(renv, address, &opt_code);
+		if (opt < 0)
 			return SIEVE_EXEC_BIN_CORRUPT;
-		if ( opt == 0 ) break;
+		if (opt == 0)
+			break;
 
-		switch ( opt_code ) {
+		switch (opt_code) {
 		case CMD_EXTRACTTEXT_OPT_FIRST:
-			ret = sieve_opr_number_read
-				(renv, address, "first", &first);
+			ret = sieve_opr_number_read(renv, address, "first",
+						    &first);
 			have_first = TRUE;
 			break;
 		default:
-			sieve_runtime_trace_error(renv, "unknown optional operand");
+			sieve_runtime_trace_error(
+				renv, "unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
-		if ( ret <= 0 ) return ret;
+		if (ret <= 0)
+			return ret;
 	}
 
 	/* Varname operand */
 
-	if ( (ret=sieve_variable_operand_read
-		(renv, address, "varname", &storage, &var_index)) <= 0 )
+	ret = sieve_variable_operand_read(renv, address, "varname",
+					  &storage, &var_index);
+	if (ret <= 0)
 		return ret;
 
 	/* Modifiers */
 
-	if ( (ret=sieve_variables_modifiers_code_read
-		(renv, ectx->var_ext, address, &modifiers)) <= 0 )
+	ret = sieve_variables_modifiers_code_read(renv, ectx->var_ext, address,
+						  &modifiers);
+	if (ret <= 0)
 		return ret;
 
 	/*
@@ -318,21 +336,20 @@ static int cmd_extracttext_operation_execute
 	sieve_runtime_trace_descend(renv);
 
 	sfploop = ext_foreverypart_runtime_loop_get_current(renv);
-	if ( sfploop == NULL ) {
-		sieve_runtime_trace_error(renv,
-			"outside foreverypart context");
+	if (sfploop == NULL) {
+		sieve_runtime_trace_error(renv,	"outside foreverypart context");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
 	/* Get current message part */
 	mpart = sieve_message_part_iter_current(&sfploop->part_iter);
-	i_assert( mpart != NULL );
+	i_assert(mpart != NULL);
 
 	/* Get message part content */
 	sieve_message_part_get_data(mpart, &mpart_data, TRUE);
 
 	/* Apply ":first" limit, if any */
-	if ( !have_first || (size_t)first > mpart_data.size ) {
+	if (!have_first || (size_t)first > mpart_data.size) {
 		value = t_str_new_const(mpart_data.content, mpart_data.size);
 	} else {
 		value = t_str_new((size_t)first);
@@ -340,31 +357,27 @@ static int cmd_extracttext_operation_execute
 	}
 
 	/* Apply modifiers */
-	if ( (ret=sieve_variables_modifiers_apply
-		(renv, ectx->var_ext, &modifiers, &value)) <= 0 )
+	ret = sieve_variables_modifiers_apply(renv, ectx->var_ext,
+					      &modifiers, &value);
+	if (ret <= 0)
 		return ret;
 
 	/* Actually assign the value if all is well */
-	i_assert ( value != NULL );
-	if ( !sieve_variable_assign(storage, var_index, value) )
+	i_assert (value != NULL);
+	if (!sieve_variable_assign(storage, var_index, value))
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Trace */
-	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
 		const char *var_name, *var_id;
 
-		(void)sieve_variable_get_identifier(storage, var_index, &var_name);
+		(void)sieve_variable_get_identifier(storage, var_index,
+						    &var_name);
 		var_id = sieve_variable_get_varid(storage, var_index);
 
 		sieve_runtime_trace_here(renv, 0, "assign `%s' [%s] = \"%s\"",
-			var_name, var_id, str_c(value));
+					 var_name, var_id, str_c(value));
 	}
 
 	return SIEVE_EXEC_OK;
 }
-
-
-
-
-
-
