@@ -64,7 +64,7 @@ enum ext_mime_option {
 	EXT_MIME_OPTION_TYPE,
 	EXT_MIME_OPTION_SUBTYPE,
 	EXT_MIME_OPTION_CONTENTTYPE,
-	EXT_MIME_OPTION_PARAM
+	EXT_MIME_OPTION_PARAM,
 };
 
 extern const struct sieve_operand_def mime_operand;
@@ -79,7 +79,6 @@ struct ext_foreverypart_runtime_loop {
 };
 
 struct ext_foreverypart_runtime_loop *
-ext_foreverypart_runtime_loop_get_current
-(const struct sieve_runtime_env *renv);
+ext_foreverypart_runtime_loop_get_current(const struct sieve_runtime_env *renv);
 
 #endif
