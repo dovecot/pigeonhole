@@ -1,19 +1,19 @@
 #ifndef DB_LDAP_H
 #define DB_LDAP_H
 
-/* Functions like ldap_bind() have been deprecated in OpenLDAP 2.3
-   This define enables them until the code here can be refactored */
+/* Functions like ldap_bind() have been deprecated in OpenLDAP 2.3 This define
+   enables them until the code here can be refactored. */
 #define LDAP_DEPRECATED 1
 
 /* Maximum number of pending requests before delaying new requests. */
 #define DB_LDAP_MAX_PENDING_REQUESTS 8
 /* If LDAP connection is down, fail requests after waiting for this long. */
 #define DB_LDAP_REQUEST_DISCONNECT_TIMEOUT_SECS 4
-/* If request is still in queue after this many seconds and other requests
-   have been replied, assume the request was lost and abort it. */
+/* If request is still in queue after this many seconds and other requests have
+   been replied, assume the request was lost and abort it. */
 #define DB_LDAP_REQUEST_LOST_TIMEOUT_SECS 60
-/* If server disconnects us, don't reconnect if no requests have been sent
-   for this many seconds. */
+/* If server disconnects us, don't reconnect if no requests have been sent for
+   this many seconds. */
 #define DB_LDAP_IDLE_RECONNECT_SECS 60
 
 #include <ldap.h>
@@ -50,9 +50,10 @@
 struct ldap_connection;
 struct ldap_request;
 
-typedef void db_search_callback_t(struct ldap_connection *conn,
-				  struct ldap_request *request,
-				  LDAPMessage *res);
+typedef void
+db_search_callback_t(struct ldap_connection *conn, struct ldap_request *request,
+		     LDAPMessage *res);
+
 struct ldap_request {
 	pool_t pool;
 
@@ -132,9 +133,9 @@ struct ldap_connection *
 sieve_ldap_db_init(struct sieve_ldap_storage *lstorage);
 void sieve_ldap_db_unref(struct ldap_connection **conn);
 
-int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
-	const char *name, const char **dn_r, const char **modattr_r);
-int sieve_ldap_db_read_script(struct ldap_connection *conn,
-	const char *dn, struct istream **script_r);
+int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
+				const char **dn_r, const char **modattr_r);
+int sieve_ldap_db_read_script(struct ldap_connection *conn, const char *dn,
+			      struct istream **script_r);
 
 #endif
