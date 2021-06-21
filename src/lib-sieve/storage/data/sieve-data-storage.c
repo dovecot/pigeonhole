@@ -25,10 +25,10 @@ static struct sieve_storage *sieve_data_storage_alloc(void)
 	return &dstorage->storage;
 }
 
-static int sieve_data_storage_init
-(struct sieve_storage *storage ATTR_UNUSED,
-	const char *const *options ATTR_UNUSED,
-	enum sieve_error *error_r ATTR_UNUSED)
+static int
+sieve_data_storage_init(struct sieve_storage *storage ATTR_UNUSED,
+			const char *const *options ATTR_UNUSED,
+			enum sieve_error *error_r ATTR_UNUSED)
 {
 	return 0;
 }
@@ -43,5 +43,5 @@ const struct sieve_storage sieve_data_storage = {
 	.v = {
 		.alloc = sieve_data_storage_alloc,
 		.init = sieve_data_storage_init,
-	}
+	},
 };
