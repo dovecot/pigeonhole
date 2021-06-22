@@ -18,15 +18,14 @@ struct doveadm_sieve_cmd_context {
 	struct doveadm_sieve_cmd_vfuncs v;
 };
 
-void doveadm_sieve_cmd_failed_error
-(struct doveadm_sieve_cmd_context *ctx, enum sieve_error error);
-void doveadm_sieve_cmd_failed_storage
-(struct doveadm_sieve_cmd_context *ctx,	 struct sieve_storage *storage);
+void doveadm_sieve_cmd_failed_error(struct doveadm_sieve_cmd_context *ctx,
+				    enum sieve_error error);
+void doveadm_sieve_cmd_failed_storage(struct doveadm_sieve_cmd_context *ctx,
+				      struct sieve_storage *storage);
 
 #define doveadm_sieve_cmd_alloc(type) \
 	(type *)doveadm_sieve_cmd_alloc_size(sizeof(type))
-struct doveadm_sieve_cmd_context *
-doveadm_sieve_cmd_alloc_size(size_t size);
+struct doveadm_sieve_cmd_context *doveadm_sieve_cmd_alloc_size(size_t size);
 
 void doveadm_sieve_cmd_scriptnames_check(const char *const args[]);
 
