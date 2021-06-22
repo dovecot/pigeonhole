@@ -8,7 +8,6 @@
 #include "managesieve-common.h"
 #include "managesieve-commands.h"
 
-
 bool cmd_noop(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
@@ -42,4 +41,3 @@ bool cmd_noop(struct client_command_context *cmd)
 	client_send_okresp(client, str_c(resp_code), "Done");
 	return TRUE;
 }
-
