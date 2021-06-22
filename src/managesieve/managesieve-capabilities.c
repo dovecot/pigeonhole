@@ -52,7 +52,7 @@ static const char *sieve_get_setting(void *context, const char *identifier)
 
 static const struct sieve_callbacks sieve_callbacks = {
 	NULL,
-	sieve_get_setting
+	sieve_get_setting,
 };
 
 /*
@@ -74,7 +74,7 @@ void managesieve_capabilities_dump(void)
 
 	/* Initialize Sieve engine */
 
-	memset((void*)&svenv, 0, sizeof(svenv));
+	memset((void *)&svenv, 0, sizeof(svenv));
 	svenv.home_dir = "/tmp";
 
 	svinst = sieve_init(&svenv, &sieve_callbacks,
