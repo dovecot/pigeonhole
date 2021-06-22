@@ -51,4 +51,3 @@ bool cmd_renamescript(struct client_command_context *cmd)
 	sieve_script_unref(&script);
 	return TRUE;
 }
-
