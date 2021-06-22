@@ -39,8 +39,8 @@ sieve_variables_get_max_scope_size(const struct sieve_extension *var_ext)
 	return config->max_scope_size;
 }
 
-size_t
-sieve_variables_get_max_variable_size(const struct sieve_extension *var_ext)
+size_t sieve_variables_get_max_variable_size(
+	const struct sieve_extension *var_ext)
 {
 	const struct ext_variables_config *config =
 		ext_variables_get_config(var_ext);
@@ -52,8 +52,7 @@ sieve_variables_get_max_variable_size(const struct sieve_extension *var_ext)
  * Extension configuration
  */
 
-bool
-ext_variables_load(const struct sieve_extension *ext, void **context)
+bool ext_variables_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_variables_config *config;
@@ -76,7 +75,8 @@ ext_variables_load(const struct sieve_extension *ext, void **context)
 				  "setting sieve_variables_max_scope_size "
 				  "is lower than required by standards "
 				  "(>= %llu items)",
-				  (unsigned long long)EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE);
+				  (unsigned long long)
+					EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE);
 		} else {
 			config->max_scope_size = (unsigned int)uint_setting;
 		}
@@ -303,7 +303,7 @@ unsigned int sieve_variable_scope_size(struct sieve_variable_scope *scope)
 	return array_count(&scope->variable_index);
 }
 
-struct sieve_variable * const *
+struct sieve_variable *const *
 sieve_variable_scope_get_variables(struct sieve_variable_scope *scope,
 				   unsigned int *size_r)
 {
@@ -314,7 +314,7 @@ struct sieve_variable *
 sieve_variable_scope_get_indexed(struct sieve_variable_scope *scope,
 				 unsigned int index)
 {
-	struct sieve_variable * const *var;
+	struct sieve_variable *const *var;
 
 	if (index >= array_count(&scope->variable_index))
 		return NULL;
@@ -541,7 +541,7 @@ sieve_variable_valid(struct sieve_variable_storage *storage,
 bool sieve_variable_get_identifier(struct sieve_variable_storage *storage,
 				   unsigned int index, const char **identifier)
 {
-	struct sieve_variable * const *var;
+	struct sieve_variable *const *var;
 
 	*identifier = NULL;
 
@@ -588,7 +588,7 @@ bool sieve_variable_get(struct sieve_variable_storage *storage,
 	*value = NULL;
 
 	if (index < array_count(&storage->var_values)) {
-		string_t * const *varent;
+		string_t *const *varent;
 
 		varent = array_idx(&storage->var_values, index);
 
@@ -674,8 +674,8 @@ ext_variables_ast_free(const struct sieve_extension *ext ATTR_UNUSED,
 }
 
 static const struct sieve_ast_extension variables_ast_extension = {
-    &variables_extension,
-    ext_variables_ast_free
+	&variables_extension,
+	ext_variables_ast_free,
 };
 
 static struct sieve_variable_scope *
@@ -850,14 +850,14 @@ ext_variables_interpreter_free(const struct sieve_extension *ext ATTR_UNUSED,
 static struct sieve_interpreter_extension
 variables_interpreter_extension = {
 	.ext_def = &variables_extension,
-	.free = ext_variables_interpreter_free
+	.free = ext_variables_interpreter_free,
 };
 
 static struct ext_variables_interpreter_context *
 ext_variables_interpreter_context_create(
 	const struct sieve_extension *this_ext,
 	struct sieve_interpreter *interp,
-					struct sieve_variable_scope_binary *scpbin)
+	struct sieve_variable_scope_binary *scpbin)
 {
 	pool_t pool = sieve_interpreter_pool(interp);
 	struct ext_variables_interpreter_context *ctx;
@@ -918,7 +918,7 @@ sieve_ext_variables_runtime_get_storage(const struct sieve_extension *var_ext,
 {
 	struct ext_variables_interpreter_context *ctx =
 		ext_variables_interpreter_context_get(var_ext, renv->interp);
-	struct sieve_variable_storage * const *storage;
+	struct sieve_variable_storage *const *storage;
 
 	if (ext == NULL)
 		return ctx->local_storage;
