@@ -25,15 +25,16 @@ bool cmd_listscripts(struct client_command_context *cmd)
 	if (!client_read_no_args(cmd))
 		return FALSE;
 
-	if ((ctx = sieve_storage_list_init(client->storage)) == NULL) {
+	ctx = sieve_storage_list_init(client->storage);
+	if (ctx == NULL) {
 		client_command_storage_error(
 			cmd, "Failed to list scripts");
 		return TRUE;
 	}
 
 	/* FIXME: This will be quite slow for large script lists. Implement
-	 * some buffering to fix this. Wont truely be an issue with managesieve
-	 * though.
+	   some buffering to fix this. Wont truely be an issue with managesieve
+	   though.
 	 */
 	while ((scriptname = sieve_storage_list_next(ctx, &active)) != NULL) {
 		T_BEGIN {
