@@ -203,4 +203,3 @@ const char *managesieve_args_to_str(const struct managesieve_arg *args)
 	managesieve_write_args(str, args);
 	return str_c(str);
 }
-
