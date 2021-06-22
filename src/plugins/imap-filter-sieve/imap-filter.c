@@ -10,8 +10,9 @@
 #include "imap-filter.h"
 #include "imap-filter-sieve.h"
 
-static void imap_filter_args_check(struct imap_filter_context *ctx,
-				   const struct mail_search_arg *sargs)
+static void
+imap_filter_args_check(struct imap_filter_context *ctx,
+		       const struct mail_search_arg *sargs)
 {
 	for (; sargs != NULL; sargs = sargs->next) {
 		switch (sargs->type) {
@@ -63,11 +64,9 @@ imap_filter_mail(struct client_command_context *cmd, struct mail *mail)
 	/* Handle the result */
 	if (ret < 0) {
 		/* Sieve error; keep */
-	} else {
-		if (ret > 0) {
-			/* Discard */
-			mail_update_flags(mail, MODIFY_ADD, MAIL_DELETED);
-		}
+	} else if (ret > 0) {
+		/* Discard */
+		mail_update_flags(mail, MODIFY_ADD, MAIL_DELETED);
 	}
 
 	return !fatal;
@@ -145,8 +144,8 @@ imap_filter_start(struct imap_filter_context *ctx,
 		(void)client_enable(cmd->client, MAILBOX_FEATURE_CONDSTORE);
 
 	ctx->box = cmd->client->mailbox;
-	ctx->trans = mailbox_transaction_begin(ctx->box, 0,
-					       imap_client_command_get_reason(cmd));
+	ctx->trans = mailbox_transaction_begin(
+		ctx->box, 0, imap_client_command_get_reason(cmd));
 	ctx->sargs = sargs;
 	ctx->search_ctx = mailbox_search_init(ctx->trans, sargs, NULL, 0, NULL);
 
@@ -156,8 +155,8 @@ imap_filter_start(struct imap_filter_context *ctx,
 
 		o_stream_nsend_str(cmd->client->output,
 			t_strdup_printf("* FILTER (TAG %s) "
-				"ERRORS {%zu}\r\n%s\r\n",
-				cmd->tag, strlen(error), error));
+					"ERRORS {%zu}\r\n%s\r\n",
+					cmd->tag, strlen(error), error));
 		client_send_tagline(cmd,
 			"NO Failed to initialize script execution");
 		(void)imap_filter_deinit(ctx);
@@ -170,7 +169,7 @@ imap_filter_start(struct imap_filter_context *ctx,
 	if (imap_filter_more(cmd))
 		return TRUE;
 
-	/* we may have moved onto syncing by now */
+	/* We may have moved onto syncing by now */
 	if (cmd->func == imap_filter_more) {
 		ctx->to = timeout_add(0, imap_filter_more_callback, cmd);
 		cmd->state = CLIENT_COMMAND_STATE_WAIT_EXTERNAL;
@@ -268,6 +267,3 @@ void imap_filter_context_free(struct imap_filter_context *ctx)
 {
 	imap_filter_sieve_context_free(&ctx->sieve);
 }
-
-
-
