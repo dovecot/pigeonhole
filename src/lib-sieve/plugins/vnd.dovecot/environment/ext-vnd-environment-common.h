@@ -24,14 +24,14 @@ extern const struct sieve_operand_def environment_namespace_operand;
  * Environment items
  */
 
-void ext_vnd_environment_items_register
-(const struct sieve_extension *ext, const struct sieve_runtime_env *renv);
+void ext_vnd_environment_items_register(const struct sieve_extension *ext,
+					const struct sieve_runtime_env *renv);
 
 /*
  * Variables
  */
 
-void ext_environment_variables_init
-(const struct sieve_extension *this_ext, struct sieve_validator *valdtr);
+void ext_environment_variables_init(const struct sieve_extension *this_ext,
+				    struct sieve_validator *valdtr);
 
 #endif
