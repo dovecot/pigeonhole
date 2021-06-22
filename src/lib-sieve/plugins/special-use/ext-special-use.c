@@ -35,7 +35,7 @@ const struct sieve_extension_def special_use_extension = {
 	.name = "special-use",
 	.validator_load = ext_special_use_validator_load,
 	SIEVE_EXT_DEFINE_OPERATION(specialuse_exists_operation),
-	SIEVE_EXT_DEFINE_OPERAND(specialuse_operand)
+	SIEVE_EXT_DEFINE_OPERAND(specialuse_operand),
 };
 
 static bool
