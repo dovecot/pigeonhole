@@ -31,12 +31,13 @@
  * Extension
  */
 
-static bool ext_debug_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *validator);
-static bool ext_debug_interpreter_load
-	(const struct sieve_extension *ext ATTR_UNUSED,
-		const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED);
-
+static bool
+ext_debug_validator_load(const struct sieve_extension *ext,
+			 struct sieve_validator *validator);
+static bool
+ext_debug_interpreter_load(const struct sieve_extension *ext ATTR_UNUSED,
+			   const struct sieve_runtime_env *renv,
+			   sieve_size_t *address ATTR_UNUSED);
 
 const struct sieve_extension_def vnd_debug_extension = {
 	.name = "vnd.dovecot.debug",
@@ -45,8 +46,9 @@ const struct sieve_extension_def vnd_debug_extension = {
 	SIEVE_EXT_DEFINE_OPERATION(debug_log_operation),
 };
 
-static bool ext_debug_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *validator)
+static bool
+ext_debug_validator_load(const struct sieve_extension *ext,
+			 struct sieve_validator *validator)
 {
 	/* Register new test */
 	sieve_validator_register_command(validator, ext, &debug_log_command);
@@ -54,16 +56,13 @@ static bool ext_debug_validator_load
 	return TRUE;
 }
 
-static bool ext_debug_interpreter_load
-(const struct sieve_extension *ext ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
+static bool
+ext_debug_interpreter_load(const struct sieve_extension *ext ATTR_UNUSED,
+			   const struct sieve_runtime_env *renv,
+			   sieve_size_t *address ATTR_UNUSED)
 {
-	if ( renv->ehandler != NULL ) {
+	if (renv->ehandler != NULL)
 		sieve_error_handler_accept_infolog(renv->ehandler, TRUE);
-	}
 
 	return TRUE;
 }
-
-
-
