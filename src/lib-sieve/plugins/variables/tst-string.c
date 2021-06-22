@@ -22,13 +22,15 @@
  *     <source: string-list> <key-list: string-list>
  */
 
-static bool tst_string_registered
-	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-		struct sieve_command_registration *cmd_reg);
-static bool tst_string_validate
-	(struct sieve_validator *valdtr, struct sieve_command *tst);
-static bool tst_string_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
+static bool
+tst_string_registered(struct sieve_validator *valdtr,
+		      const struct sieve_extension *ext,
+		      struct sieve_command_registration *cmd_reg);
+static bool
+tst_string_validate(struct sieve_validator *valdtr, struct sieve_command *tst);
+static bool
+tst_string_generate(const struct sieve_codegen_env *cgenv,
+		    struct sieve_command *ctx);
 
 const struct sieve_command_def tst_string = {
 	.identifier = "string",
@@ -39,24 +41,26 @@ const struct sieve_command_def tst_string = {
 	.block_required = FALSE,
 	.registered = tst_string_registered,
 	.validate = tst_string_validate,
-	.generate = tst_string_generate
+	.generate = tst_string_generate,
 };
 
 /*
  * String operation
  */
 
-static bool tst_string_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int tst_string_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+tst_string_operation_dump(const struct sieve_dumptime_env *denv,
+			  sieve_size_t *address);
+static int
+tst_string_operation_execute(const struct sieve_runtime_env *renv,
+			     sieve_size_t *address);
 
 const struct sieve_operation_def tst_string_operation = {
 	.mnemonic = "STRING",
 	.ext_def = &variables_extension,
 	.code = EXT_VARIABLES_OPERATION_STRING,
 	.dump = tst_string_operation_dump,
-	.execute = tst_string_operation_execute
+	.execute = tst_string_operation_execute,
 };
 
 /*
@@ -73,9 +77,10 @@ enum tst_string_optional {
  * Test registration
  */
 
-static bool tst_string_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED,
-	struct sieve_command_registration *cmd_reg)
+static bool
+tst_string_registered(struct sieve_validator *valdtr,
+		      const struct sieve_extension *ext ATTR_UNUSED,
+		      struct sieve_command_registration *cmd_reg)
 {
 	/* The order of these is not significant */
 	sieve_comparators_link_tag(valdtr, cmd_reg, OPT_COMPARATOR);
@@ -88,8 +93,8 @@ static bool tst_string_registered
  * Test validation
  */
 
-static bool tst_string_validate
-(struct sieve_validator *valdtr, struct sieve_command *tst)
+static bool
+tst_string_validate(struct sieve_validator *valdtr, struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
 	const struct sieve_match_type mcht_default =
@@ -97,42 +102,38 @@ static bool tst_string_validate
 	const struct sieve_comparator cmp_default =
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "source", 1, SAAT_STRING_LIST) ) {
+	if (!sieve_validate_positional_argument(valdtr, tst, arg, "source",
+						1, SAAT_STRING_LIST))
 		return FALSE;
-	}
-
-	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+	if (!sieve_validator_argument_activate(valdtr, tst, arg, FALSE))
 		return FALSE;
 
 	arg = sieve_ast_argument_next(arg);
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
+	if (!sieve_validate_positional_argument(valdtr, tst, arg, "key list",
+						2, SAAT_STRING_LIST))
 		return FALSE;
-	}
-
-	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+	if (!sieve_validator_argument_activate(valdtr, tst, arg, FALSE))
 		return FALSE;
 
 	/* Validate the key argument to a specified match type */
-	return sieve_match_type_validate
-		(valdtr, tst, arg, &mcht_default, &cmp_default);
+	return sieve_match_type_validate(valdtr, tst, arg,
+					 &mcht_default, &cmp_default);
 }
 
 /*
  * Test generation
  */
 
-static bool tst_string_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+static bool
+tst_string_generate(const struct sieve_codegen_env *cgenv,
+		    struct sieve_command *cmd)
 {
 	sieve_operation_emit(cgenv->sblock, cmd->ext, &tst_string_operation);
 
  	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
+	if (!sieve_generate_arguments(cgenv, cmd, NULL))
 		return FALSE;
-
 	return TRUE;
 }
 
@@ -140,31 +141,30 @@ static bool tst_string_generate
  * Code dump
  */
 
-static bool tst_string_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+tst_string_operation_dump(const struct sieve_dumptime_env *denv,
+			  sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "STRING-TEST");
 	sieve_code_descend(denv);
 
 	/* Optional operands */
-	if ( sieve_match_opr_optional_dump(denv, address, NULL) != 0 )
+	if (sieve_match_opr_optional_dump(denv, address, NULL) != 0)
 		return FALSE;
 
-	return
-		sieve_opr_stringlist_dump(denv, address, "source") &&
-		sieve_opr_stringlist_dump(denv, address, "key list");
+	return (sieve_opr_stringlist_dump(denv, address, "source") &&
+		sieve_opr_stringlist_dump(denv, address, "key list"));
 }
 
 /*
  * Code execution
  */
 
-static int tst_string_stringlist_next_item
-	(struct sieve_stringlist *_strlist, string_t **str_r);
-static void tst_string_stringlist_reset
-	(struct sieve_stringlist *_strlist);
-static int tst_string_stringlist_get_length
-	(struct sieve_stringlist *_strlist);
+static int
+tst_string_stringlist_next_item(struct sieve_stringlist *_strlist,
+				string_t **str_r);
+static void tst_string_stringlist_reset(struct sieve_stringlist *_strlist);
+static int tst_string_stringlist_get_length(struct sieve_stringlist *_strlist);
 
 struct tst_string_stringlist {
 	struct sieve_stringlist strlist;
@@ -172,8 +172,9 @@ struct tst_string_stringlist {
 	struct sieve_stringlist *value_list;
 };
 
-static struct sieve_stringlist *tst_string_stringlist_create
-(const struct sieve_runtime_env *renv, struct sieve_stringlist *value_list)
+static struct sieve_stringlist *
+tst_string_stringlist_create(const struct sieve_runtime_env *renv,
+			     struct sieve_stringlist *value_list)
 {
 	struct tst_string_stringlist *strlist;
 
@@ -188,8 +189,9 @@ static struct sieve_stringlist *tst_string_stringlist_create
 	return &strlist->strlist;
 }
 
-static int tst_string_stringlist_next_item
-(struct sieve_stringlist *_strlist, string_t **str_r)
+static int
+tst_string_stringlist_next_item(struct sieve_stringlist *_strlist,
+				string_t **str_r)
 {
 	struct tst_string_stringlist *strlist =
 		(struct tst_string_stringlist *)_strlist;
@@ -197,8 +199,7 @@ static int tst_string_stringlist_next_item
 	return sieve_stringlist_next_item(strlist->value_list, str_r);
 }
 
-static void tst_string_stringlist_reset
-(struct sieve_stringlist *_strlist)
+static void tst_string_stringlist_reset(struct sieve_stringlist *_strlist)
 {
 	struct tst_string_stringlist *strlist =
 		(struct tst_string_stringlist *)_strlist;
@@ -206,8 +207,7 @@ static void tst_string_stringlist_reset
 	sieve_stringlist_reset(strlist->value_list);
 }
 
-static int tst_string_stringlist_get_length
-(struct sieve_stringlist *_strlist)
+static int tst_string_stringlist_get_length(struct sieve_stringlist *_strlist)
 {
 	struct tst_string_stringlist *strlist =
 		(struct tst_string_stringlist *)_strlist;
@@ -215,16 +215,17 @@ static int tst_string_stringlist_get_length
 	int length = 0;
 	int ret;
 
-	while ( (ret=sieve_stringlist_next_item(strlist->value_list, &item)) > 0 ) {
-		if ( str_len(item) > 0 )
+	while ((ret = sieve_stringlist_next_item(strlist->value_list,
+						 &item)) > 0) {
+		if (str_len(item) > 0)
 			length++;
 	}
-
-	return ( ret < 0 ? -1 : length );
+	return (ret < 0 ? -1 : length);
 }
 
-static int tst_string_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+tst_string_operation_execute(const struct sieve_runtime_env *renv,
+			     sieve_size_t *address)
 {
 	struct sieve_match_type mcht =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
@@ -238,17 +239,18 @@ static int tst_string_operation_execute
 	 */
 
 	/* Handle match-type and comparator operands */
-	if ( sieve_match_opr_optional_read
-		(renv, address, NULL, &ret, &cmp, &mcht) < 0 )
+	if (sieve_match_opr_optional_read(renv, address, NULL,
+					  &ret, &cmp, &mcht) < 0)
 		return ret;
 
 	/* Read source */
-	if ( (ret=sieve_opr_stringlist_read(renv, address, "source", &source)) <= 0 )
+	ret = sieve_opr_stringlist_read(renv, address, "source", &source);
+	if (ret <= 0)
 		return ret;
 
 	/* Read key-list */
-	if ( (ret=sieve_opr_stringlist_read(renv, address, "key-list", &key_list))
-		<= 0 )
+	ret = sieve_opr_stringlist_read(renv, address, "key-list", &key_list);
+	if (ret <= 0)
 		return ret;
 
 	/*
@@ -261,7 +263,8 @@ static int tst_string_operation_execute
 	value_list = tst_string_stringlist_create(renv, source);
 
 	/* Perform match */
-	if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )
+	match = sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret);
+	if (match < 0)
 		return ret;
 
 	/* Set test result for subsequent conditional jump */
