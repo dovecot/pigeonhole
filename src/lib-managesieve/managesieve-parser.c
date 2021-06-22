@@ -22,20 +22,20 @@ enum arg_parse_type {
 };
 
 struct managesieve_parser {
-	/* permanent */
+	/* Permanent */
 	pool_t pool;
 	struct istream *input;
 	size_t max_line_size;
 	enum managesieve_parser_flags flags;
 
-	/* reset by managesieve_parser_reset(): */
+	/* Reset by managesieve_parser_reset(): */
 	size_t line_size;
 	ARRAY_TYPE(managesieve_arg_list) root_list;
 	ARRAY_TYPE(managesieve_arg_list) *cur_list;
 	struct managesieve_arg *list_arg;
 
 	enum arg_parse_type cur_type;
-	size_t cur_pos; /* parser position in input buffer */
+	size_t cur_pos; /* Parser position in input buffer */
 
 	int str_first_escape; /* ARG_PARSE_STRING: index to first '\' */
 	uoff_t literal_size; /* ARG_PARSE_LITERAL: string size */
@@ -50,8 +50,8 @@ struct managesieve_parser {
 	bool fatal_error:1;
 };
 
-static struct istream *quoted_string_istream_create
-	(struct managesieve_parser *parser);
+static struct istream *
+quoted_string_istream_create(struct managesieve_parser *parser);
 
 struct managesieve_parser *
 managesieve_parser_create(struct istream *input, size_t max_line_size)
@@ -168,7 +168,7 @@ managesieve_parser_save_arg(struct managesieve_parser *parser,
 			arg->type = MANAGESIEVE_ARG_STRING;
 			str = p_strndup(parser->pool, data+1, size-1);
 
-			/* remove the escapes */
+			/* Remove the escapes */
 			if (parser->str_first_escape >= 0 &&
 			    (parser->flags &
 			     MANAGESIEVE_PARSE_FLAG_NO_UNESCAPE) == 0)
@@ -226,8 +226,9 @@ managesieve_parser_read_atom(struct managesieve_parser *parser,
 		    is_linebreak(data[i])) {
 			managesieve_parser_save_arg(parser, data, i);
 			break;
-		} else if (!is_valid_atom_char(parser, data[i]))
+		} else if (!is_valid_atom_char(parser, data[i])) {
 			return FALSE;
+		}
 	}
 
 	parser->cur_pos = i;
@@ -353,8 +354,8 @@ managesieve_parser_read_literal(struct managesieve_parser *parser,
 				return FALSE;
 			}
 		}
-		parser->literal_size = parser->literal_size * 10 +
-				       (data[i] - '0');
+		parser->literal_size = (parser->literal_size * 10 +
+				        (data[i] - '0'));
 	}
 
 	parser->cur_pos = i;
@@ -511,7 +512,7 @@ static bool managesieve_parser_read_arg(struct managesieve_parser *parser)
 /* ARG_PARSE_NONE checks that last argument isn't only partially parsed. */
 #define IS_UNFINISHED(parser) \
 	((parser)->cur_type != ARG_PARSE_NONE || \
-	(parser)->cur_list != &parser->root_list)
+	 (parser)->cur_list != &parser->root_list)
 
 static int
 finish_line(struct managesieve_parser *parser, unsigned int count,
@@ -682,7 +683,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 	extra = 0;
 
 	data = i_stream_get_data(stream->parent, &size);
-	for (i = 0; i < size && dest < stream->buffer_size; ) {
+	for (i = 0; i < size && dest < stream->buffer_size;) {
 		if (data[i] == '"') {
 			i++;
 			qsstream->str_end = TRUE;
@@ -739,8 +740,8 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 	return ret;
 }
 
-static struct
-istream *quoted_string_istream_create(struct managesieve_parser *parser)
+static struct istream *
+quoted_string_istream_create(struct managesieve_parser *parser)
 {
 	struct quoted_string_istream *qsstream;
 
