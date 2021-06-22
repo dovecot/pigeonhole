@@ -24,10 +24,11 @@
  * Extension
  */
 
-bool ext_vacation_seconds_load
-	(const struct sieve_extension *ext, void **context);
-static bool ext_vacation_seconds_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+bool ext_vacation_seconds_load(const struct sieve_extension *ext,
+			       void **context);
+static bool
+ext_vacation_seconds_validator_load(const struct sieve_extension *ext,
+				    struct sieve_validator *valdtr);
 
 const struct sieve_extension_def vacation_seconds_extension = {
 	.name = "vacation-seconds",
@@ -35,29 +36,30 @@ const struct sieve_extension_def vacation_seconds_extension = {
 	.validator_load = ext_vacation_seconds_validator_load,
 };
 
-bool ext_vacation_seconds_load
-(const struct sieve_extension *ext, void **context)
+bool ext_vacation_seconds_load(const struct sieve_extension *ext,
+			       void **context)
 {
-	if ( *context == NULL ) {
+	if (*context == NULL) {
 		/* Make sure vacation extension is registered */
 		*context = (void *)
-			sieve_extension_require(ext->svinst, &vacation_extension, TRUE);
+			sieve_extension_require(ext->svinst,
+						&vacation_extension, TRUE);
 	}
-
 	return TRUE;
 }
 
-static bool ext_vacation_seconds_validator_load
-(const struct sieve_extension *ext ATTR_UNUSED, struct sieve_validator *valdtr)
+static bool
+ext_vacation_seconds_validator_load(
+	const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_validator *valdtr)
 {
 	const struct sieve_extension *vacation_ext;
 
 	/* Load vacation extension implicitly */
 
-	vacation_ext = sieve_validator_extension_load_implicit
-		(valdtr, vacation_extension.name);
-
-	if ( vacation_ext == NULL )
+	vacation_ext = sieve_validator_extension_load_implicit(
+		valdtr, vacation_extension.name);
+	if (vacation_ext == NULL)
 		return FALSE;
 
 	/* Add seconds tag to vacation command */
