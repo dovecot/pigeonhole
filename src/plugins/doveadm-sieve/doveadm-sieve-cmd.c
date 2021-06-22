@@ -12,13 +12,13 @@
 
 #include "doveadm-sieve-cmd.h"
 
-void doveadm_sieve_cmd_failed_error
-(struct doveadm_sieve_cmd_context *ctx, enum sieve_error error)
+void doveadm_sieve_cmd_failed_error(struct doveadm_sieve_cmd_context *ctx,
+				    enum sieve_error error)
 {
 	struct doveadm_mail_cmd_context *mctx = &ctx->ctx;
 	int exit_code = 0;
 
-	switch ( error ) {
+	switch (error) {
 	case SIEVE_ERROR_NONE:
 		i_unreached();
 		return;
@@ -46,14 +46,14 @@ void doveadm_sieve_cmd_failed_error
 	default:
 		i_unreached();
 	}
-	/* tempfail overrides all other exit codes, otherwise use whatever
+	/* Tempfail overrides all other exit codes, otherwise use whatever
 	   error happened first */
-	if ( mctx->exit_code == 0 || exit_code == EX_TEMPFAIL )
+	if (mctx->exit_code == 0 || exit_code == EX_TEMPFAIL)
 		mctx->exit_code = exit_code;
 }
 
-void doveadm_sieve_cmd_failed_storage
-(struct doveadm_sieve_cmd_context *ctx,	 struct sieve_storage *storage)
+void doveadm_sieve_cmd_failed_storage(struct doveadm_sieve_cmd_context *ctx,
+				      struct sieve_storage *storage)
 {
 	enum sieve_error error;
 
@@ -61,23 +61,23 @@ void doveadm_sieve_cmd_failed_storage
 	doveadm_sieve_cmd_failed_error(ctx, error);
 }
 
-static const char *doveadm_sieve_cmd_get_setting
-(void *context, const char *identifier)
+static const char *
+doveadm_sieve_cmd_get_setting(void *context, const char *identifier)
 {
 	struct doveadm_sieve_cmd_context *ctx =
-		(struct doveadm_sieve_cmd_context *) context;
+		(struct doveadm_sieve_cmd_context *)context;
 
 	return mail_user_plugin_getenv(ctx->ctx.cur_mail_user, identifier);
 }
 
 static const struct sieve_callbacks sieve_callbacks = {
 	NULL,
-	doveadm_sieve_cmd_get_setting
+	doveadm_sieve_cmd_get_setting,
 };
 
-static bool doveadm_sieve_cmd_parse_arg
-(struct doveadm_mail_cmd_context *_ctx ATTR_UNUSED,
-	int c ATTR_UNUSED)
+static bool
+doveadm_sieve_cmd_parse_arg(struct doveadm_mail_cmd_context *_ctx ATTR_UNUSED,
+			    int c ATTR_UNUSED)
 {
 	return FALSE;
 }
@@ -89,19 +89,20 @@ void doveadm_sieve_cmd_scriptnames_check(const char *const args[])
 	for (i = 0; args[i] != NULL; i++) {
 		if (!uni_utf8_str_is_valid(args[i])) {
 			i_fatal_status(EX_DATAERR,
-				"Sieve script name not valid UTF-8: %s", args[i]);
+				       "Sieve script name not valid UTF-8: %s",
+				       args[i]);
 		}
-		if ( !sieve_script_name_is_valid(args[i]) ) {
+		if (!sieve_script_name_is_valid(args[i])) {
 			i_fatal_status(EX_DATAERR,
-				"Sieve script name not valid: %s", args[i]);
+				       "Sieve script name not valid: %s",
+				       args[i]);
 		}
 	}
 }
 
 static int
-doveadm_sieve_cmd_run
-(struct doveadm_mail_cmd_context *_ctx,
-	struct mail_user *user)
+doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
+		      struct mail_user *user)
 {
 	struct doveadm_sieve_cmd_context *ctx =
 		(struct doveadm_sieve_cmd_context *)_ctx;
@@ -115,13 +116,13 @@ doveadm_sieve_cmd_run
 	svenv.base_dir = user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
-	ctx->svinst = sieve_init
-		(&svenv, &sieve_callbacks, (void *)ctx, user->mail_debug);
+	ctx->svinst = sieve_init(&svenv, &sieve_callbacks, (void *)ctx,
+				 user->mail_debug);
 
-	ctx->storage = sieve_storage_create_main
-		(ctx->svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error);
-	if ( ctx->storage == NULL ) {
-		switch ( error ) {
+	ctx->storage = sieve_storage_create_main(
+		ctx->svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error);
+	if (ctx->storage == NULL) {
+		switch (error) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
 			error = SIEVE_ERROR_NOT_FOUND;
 			i_error("Failed to open Sieve storage: "
@@ -136,9 +137,8 @@ doveadm_sieve_cmd_run
 		}
 		doveadm_sieve_cmd_failed_error(ctx, error);
 		ret =  -1;
-
 	} else {
-		i_assert( ctx->v.run != NULL );
+		i_assert(ctx->v.run != NULL);
 		ret = ctx->v.run(ctx);
 		sieve_storage_unref(&ctx->storage);
 	}
@@ -147,8 +147,7 @@ doveadm_sieve_cmd_run
 	return ret;
 }
 
-struct doveadm_sieve_cmd_context *
-doveadm_sieve_cmd_alloc_size(size_t size)
+struct doveadm_sieve_cmd_context *doveadm_sieve_cmd_alloc_size(size_t size)
 {
 	struct doveadm_sieve_cmd_context *ctx;
 
@@ -167,7 +166,7 @@ static struct doveadm_cmd_ver2 *doveadm_sieve_commands[] = {
 	&doveadm_sieve_cmd_delete,
 	&doveadm_sieve_cmd_activate,
 	&doveadm_sieve_cmd_deactivate,
-	&doveadm_sieve_cmd_rename
+	&doveadm_sieve_cmd_rename,
 };
 
 void doveadm_sieve_cmds_init(void)
