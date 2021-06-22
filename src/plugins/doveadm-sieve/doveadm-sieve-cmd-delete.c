@@ -18,8 +18,7 @@ struct doveadm_sieve_delete_cmd_context {
 	bool ignore_active:1;
 };
 
-static int
-cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
+static int cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_delete_cmd_context *ctx =
 		(struct doveadm_sieve_delete_cmd_context *)_ctx;
@@ -33,18 +32,19 @@ cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 	array_foreach_elem(scriptnames, scriptname) {
 		int sret = 0;
 
-		script = sieve_storage_open_script
-			(storage, scriptname, NULL);
+		script = sieve_storage_open_script(storage, scriptname, NULL);
 		if (script == NULL) {
 			sret =  -1;
 		} else {
-			if (sieve_script_delete(script, ctx->ignore_active) < 0) {
-				(void)sieve_storage_get_last_error(storage, &error);
+			if (sieve_script_delete(script,
+						ctx->ignore_active) < 0) {
+				(void)sieve_storage_get_last_error(
+					storage, &error);
 				sret = -1;
 			}
 			sieve_script_unref(&script);
 		}
-			
+
 		if (sret < 0) {
 			i_error("Failed to delete Sieve script: %s",
 				sieve_storage_get_last_error(storage, &error));
@@ -55,9 +55,9 @@ cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 	return ret;
 }
 
-static void cmd_sieve_delete_init
-(struct doveadm_mail_cmd_context *_ctx,
-	const char *const args[])
+static void
+cmd_sieve_delete_init(struct doveadm_mail_cmd_context *_ctx,
+		      const char *const args[])
 {
 	struct doveadm_sieve_delete_cmd_context *ctx =
 		(struct doveadm_sieve_delete_cmd_context *)_ctx;
@@ -80,7 +80,7 @@ cmd_sieve_delete_parse_arg(struct doveadm_mail_cmd_context *_ctx, int c)
 	struct doveadm_sieve_delete_cmd_context *ctx =
 		(struct doveadm_sieve_delete_cmd_context *)_ctx;
 
-	switch ( c ) {
+	switch (c) {
 	case 'a':
 		ctx->ignore_active = TRUE;
 		break;
@@ -90,8 +90,7 @@ cmd_sieve_delete_parse_arg(struct doveadm_mail_cmd_context *_ctx, int c)
 	return TRUE;
 }
 
-static struct doveadm_mail_cmd_context *
-cmd_sieve_delete_alloc(void)
+static struct doveadm_mail_cmd_context *cmd_sieve_delete_alloc(void)
 {
 	struct doveadm_sieve_delete_cmd_context *ctx;
 
