@@ -33,7 +33,7 @@ tag_specialuse_generate(const struct sieve_codegen_env *cgenv,
 const struct sieve_argument_def specialuse_tag = {
 	.identifier = "specialuse",
 	.validate = tag_specialuse_validate,
-	.generate = tag_specialuse_generate
+	.generate = tag_specialuse_generate,
 };
 
 /*
@@ -74,7 +74,7 @@ const struct sieve_side_effect_def specialuse_side_effect = {
 	.read_context = seff_specialuse_read_context,
 	.merge = seff_specialuse_merge,
 	.print = seff_specialuse_print,
-	.pre_execute = seff_specialuse_pre_execute
+	.pre_execute = seff_specialuse_pre_execute,
 };
 
 /*
@@ -88,7 +88,7 @@ const struct sieve_operand_def specialuse_operand = {
 	.name = "specialuse operand",
 	.ext_def = &special_use_extension,
 	.class = &sieve_side_effect_operand_class,
-	.interface = &ext_side_effects
+	.interface = &ext_side_effects,
 };
 
 /*
