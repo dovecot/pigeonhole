@@ -110,37 +110,37 @@ cmd_vacation_validate_mime_tag(struct sieve_validator *valdtr,
 
 static const struct sieve_argument_def vacation_days_tag = {
 	.identifier = "days",
-	.validate = cmd_vacation_validate_number_tag
+	.validate = cmd_vacation_validate_number_tag,
 };
 
 static const struct sieve_argument_def vacation_seconds_tag = {
 	.identifier = "seconds",
-	.validate = cmd_vacation_validate_number_tag
+	.validate = cmd_vacation_validate_number_tag,
 };
 
 static const struct sieve_argument_def vacation_subject_tag = {
 	.identifier = "subject",
-	.validate = cmd_vacation_validate_string_tag
+	.validate = cmd_vacation_validate_string_tag,
 };
 
 static const struct sieve_argument_def vacation_from_tag = {
 	.identifier = "from",
-	.validate = cmd_vacation_validate_string_tag
+	.validate = cmd_vacation_validate_string_tag,
 };
 
 static const struct sieve_argument_def vacation_addresses_tag = {
 	.identifier = "addresses",
-	.validate = cmd_vacation_validate_stringlist_tag
+	.validate = cmd_vacation_validate_stringlist_tag,
 };
 
 static const struct sieve_argument_def vacation_mime_tag = {
 	.identifier = "mime",
-	.validate = cmd_vacation_validate_mime_tag
+	.validate = cmd_vacation_validate_mime_tag,
 };
 
 static const struct sieve_argument_def vacation_handle_tag = {
 	.identifier = "handle",
-	.validate = cmd_vacation_validate_string_tag
+	.validate = cmd_vacation_validate_string_tag,
 };
 
 /* Codes for optional arguments */
@@ -151,7 +151,7 @@ enum cmd_vacation_optional {
 	OPT_SUBJECT,
 	OPT_FROM,
 	OPT_ADDRESSES,
-	OPT_MIME
+	OPT_MIME,
 };
 
 /*
@@ -169,7 +169,7 @@ const struct sieve_operation_def vacation_operation = {
 	.mnemonic = "VACATION",
 	.ext_def = &vacation_extension,
 	.dump = ext_vacation_operation_dump,
-	.execute = ext_vacation_operation_execute
+	.execute = ext_vacation_operation_execute,
 };
 
 /*
@@ -199,7 +199,7 @@ const struct sieve_action_def act_vacation = {
 	.check_duplicate = act_vacation_check_duplicate,
 	.check_conflict = act_vacation_check_conflict,
 	.print = act_vacation_print,
-	.commit = act_vacation_commit
+	.commit = act_vacation_commit,
 };
 
 /* Action context information */
@@ -663,10 +663,11 @@ ext_vacation_operation_execute(const struct sieve_runtime_env *renv,
 
 	/* Fixed operands */
 
-	if ((ret  =sieve_opr_string_read(renv, address,
-					 "reason", &reason)) <= 0 ||
-	    (ret = sieve_opr_string_read(renv, address,
-					 "handle", &handle)) <= 0)
+	ret = sieve_opr_string_read(renv, address, "reason", &reason);
+	if (ret <= 0)
+		return ret;
+	ret = sieve_opr_string_read(renv, address, "handle", &handle);
+	if (ret <= 0)
 		return ret;
 
 	/*
@@ -834,7 +835,7 @@ static void act_vacation_print(const struct sieve_action *action ATTR_UNUSED,
 
 /* Headers known to be associated with mailing lists
  */
-static const char * const _list_headers[] = {
+static const char *const _list_headers[] = {
 	"list-id",
 	"list-owner",
 	"list-subscribe",
@@ -848,7 +849,7 @@ static const char * const _list_headers[] = {
 /* Headers that should be searched for the user's own mail address(es)
  */
 
-static const char * const _my_address_headers[] = {
+static const char *const _my_address_headers[] = {
 	"to",
 	"cc",
 	"bcc",
@@ -861,7 +862,7 @@ static const char * const _my_address_headers[] = {
 /* Headers that should be searched for the full sender address
  */
 
-static const char * const _sender_headers[] = {
+static const char *const _sender_headers[] = {
 	"sender",
 	"resent-from",
 	"from",
@@ -916,7 +917,7 @@ _header_contains_my_address(const char *header_val,
 }
 
 static inline bool
-_contains_my_address(const char * const *headers,
+_contains_my_address(const char *const *headers,
 		     const struct smtp_address *my_address)
 {
 	const char *const *hdsp = headers;
@@ -993,8 +994,8 @@ _get_full_reply_recipient(const struct sieve_action_exec_env *aenv,
 	for (; *hdsp != NULL; hdsp++) {
 		const char *header;
 
-		if ((ret = mail_get_first_header(msgdata->mail, *hdsp,
-						 &header)) < 0) {
+		ret = mail_get_first_header(msgdata->mail, *hdsp, &header);
+		if (ret < 0) {
 			return sieve_result_mail_error(
 				aenv, msgdata->mail,
 				"failed to read header field `%s'", *hdsp);
@@ -1037,8 +1038,8 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 
 	*subject_r = (config->default_subject == NULL ?
 		      "Automated reply" : config->default_subject);
-	if ((ret = mail_get_first_header_utf8(msgdata->mail, "subject",
-					      &header)) < 0) {
+	ret = mail_get_first_header_utf8(msgdata->mail, "subject", &header);
+	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, msgdata->mail,
 			"failed to read header field `subject'");
@@ -1096,8 +1097,8 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 	/* Make sure we have a subject for our reply */
 
 	if (ctx->subject == NULL || *(ctx->subject) == '\0') {
-		if ((ret = act_vacation_get_default_subject(aenv, config,
-							    &subject)) <= 0)
+		ret = act_vacation_get_default_subject(aenv, config, &subject);
+		if (ret <= 0)
 			return ret;
 	} else {
 		subject = ctx->subject;
@@ -1111,8 +1112,8 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 	i_zero(&reply_to);
 	reply_to.mailbox = smtp_to->localpart;
 	reply_to.domain = smtp_to->domain;
-	if ((ret = _get_full_reply_recipient(aenv, config, smtp_to,
-					     &reply_to)) <= 0)
+	ret = _get_full_reply_recipient(aenv, config, smtp_to, &reply_to);
+	if (ret <= 0)
 		return ret;
 
 	/* Open smtp session */
@@ -1149,8 +1150,8 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 
 	/* Compose proper in-reply-to and references headers */
 
-	if ((ret = mail_get_first_header(msgdata->mail, "references",
-					 &header)) < 0) {
+	ret = mail_get_first_header(msgdata->mail, "references", &header);
+	if (ret < 0) {
 		sieve_smtp_abort(sctx);
 		return sieve_result_mail_error(
 			aenv, msgdata->mail,
@@ -1190,7 +1191,8 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 	o_stream_nsend(output, str_data(msg), str_len(msg));
 
 	/* Close smtp session */
-	if ((ret = sieve_smtp_finish(sctx, &error)) <= 0) {
+	ret = sieve_smtp_finish(sctx, &error);
+	if (ret <= 0) {
 		if (ret < 0) {
 			sieve_result_global_error(
 				aenv, "failed to send vacation response to %s: "
@@ -1288,7 +1290,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	/* Are we perhaps trying to respond to one of our alternative :addresses?
 	 */
 	if (ctx->addresses != NULL) {
-		const struct smtp_address * const *alt_address;
+		const struct smtp_address *const *alt_address;
 
 		alt_address = ctx->addresses;
 		while (*alt_address != NULL) {
@@ -1333,7 +1335,8 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	/* Are we trying to respond to a mailing list ? */
 	hdsp = _list_headers;
 	while (*hdsp != NULL) {
-		if ((ret = mail_get_headers(mail, *hdsp, &headers)) < 0) {
+		ret = mail_get_headers(mail, *hdsp, &headers);
+		if (ret < 0) {
 			return sieve_result_mail_error(
 				aenv, mail,
 				"failed to read header field `%s'", *hdsp);
@@ -1351,7 +1354,8 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	}
 
 	/* Is the message that we are replying to an automatic reply ? */
-	if ((ret = mail_get_headers(mail, "auto-submitted", &headers)) < 0) {
+	ret = mail_get_headers(mail, "auto-submitted", &headers);
+	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, mail,
 			"failed to read header field `auto-submitted'");
@@ -1372,7 +1376,8 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	}
 
 	/* Check for the (non-standard) precedence header */
-	if ((ret = mail_get_headers(mail, "precedence", &headers)) < 0) {
+	ret = mail_get_headers(mail, "precedence", &headers);
+	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, mail, "failed to read header field `precedence'");
 	}
@@ -1394,8 +1399,8 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	}
 
 	/* Check for the (non-standard) Microsoft X-Auto-Response-Suppress header */
-	if ((ret = mail_get_headers(mail, "x-auto-response-suppress",
-				    &headers)) < 0) {
+	ret = mail_get_headers(mail, "x-auto-response-suppress", &headers);
+	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, mail,
 			"failed to read header field `x-auto-response-suppress'");
@@ -1443,7 +1448,8 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	 */
 	hdsp = _my_address_headers;
 	while (*hdsp != NULL) {
-		if ((ret = mail_get_headers(mail, *hdsp, &headers)) < 0) {
+		ret = mail_get_headers(mail, *hdsp, &headers);
+		if (ret < 0) {
 			return sieve_result_mail_error(
 				aenv, mail, "failed to read header field `%s'",
 				*hdsp);
@@ -1469,7 +1475,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 			/* User-provided :addresses listed in headers? */
 			if (ctx->addresses != NULL) {
 				bool found = FALSE;
-				const struct smtp_address * const *my_address;
+				const struct smtp_address *const *my_address;
 
 				my_address = ctx->addresses;
 				while (!found && *my_address != NULL) {
