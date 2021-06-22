@@ -7,7 +7,7 @@ enum managesieve_parser_flags {
 	/* Set this flag if you want to read a string argument as as stream.
 	   Useful when you need to deal with large strings. The string must be
 	   the last read argument. */
-	MANAGESIEVE_PARSE_FLAG_STRING_STREAM = 0x01,
+	MANAGESIEVE_PARSE_FLAG_STRING_STREAM    = 0x01,
 	/* Don't remove '\' chars from string arguments */
 	MANAGESIEVE_PARSE_FLAG_NO_UNESCAPE	= 0x02,
 	/* Return literals as MANAGESIEVE_ARG_LITERAL instead of
