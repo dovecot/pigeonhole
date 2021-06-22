@@ -73,4 +73,3 @@ bool cmd_capability(struct client_command_context *cmd)
 	return TRUE;
 
 }
-
