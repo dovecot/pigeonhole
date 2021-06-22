@@ -381,8 +381,8 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 	if (t->box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
 	    str_begins_with(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
-		time_t ts = value->last_change != 0 ?
-			    value->last_change : ioloop_time;
+		time_t ts = (value->last_change != 0 ?
+			     value->last_change : ioloop_time);
 
 		if (sieve_attribute_set_sieve(t->box->storage, key, value) < 0)
 			return -1;
