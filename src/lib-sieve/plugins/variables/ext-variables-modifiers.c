@@ -376,7 +376,7 @@ tag_modifier_is_instance_of(struct sieve_validator *valdtr,
 	if (modf == NULL)
 		return FALSE;
 
-	*data = (void *) modf;
+	*data = (void *)modf;
 	return TRUE;
 }
 
