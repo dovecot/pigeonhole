@@ -43,16 +43,15 @@ extern const struct sieve_operation_def vacation_operation;
 
 extern const struct sieve_extension_def vacation_extension;
 
-bool ext_vacation_load
-	(const struct sieve_extension *ext, void **context);
-void ext_vacation_unload
-	(const struct sieve_extension *ext);
+bool ext_vacation_load(const struct sieve_extension *ext, void **context);
+void ext_vacation_unload(const struct sieve_extension *ext);
 
 /* Vacation-seconds */
 
 extern const struct sieve_extension_def vacation_seconds_extension;
 
-bool ext_vacation_register_seconds_tag
-	(struct sieve_validator *valdtr, const struct sieve_extension *vacation_ext);
+bool ext_vacation_register_seconds_tag(
+	struct sieve_validator *valdtr,
+	const struct sieve_extension *vacation_ext);
 
 #endif
