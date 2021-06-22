@@ -4,7 +4,6 @@
 void imap_sieve_storage_init(struct module *module);
 void imap_sieve_storage_deinit(void);
 
-void imap_sieve_storage_client_created(struct client *client,
-	bool user_script);
+void imap_sieve_storage_client_created(struct client *client, bool user_script);
 
 #endif
