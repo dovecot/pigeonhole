@@ -70,7 +70,7 @@ struct sieve_tool *sieve_tool;
 static const char *
 sieve_tool_sieve_get_setting(void *context, const char *identifier)
 {
-	struct sieve_tool *tool = (struct sieve_tool *) context;
+	struct sieve_tool *tool = (struct sieve_tool *)context;
 
 	if (tool->setting_callback != NULL) {
 		return tool->setting_callback(tool->setting_callback_context,
@@ -85,14 +85,14 @@ sieve_tool_sieve_get_setting(void *context, const char *identifier)
 
 static const char *sieve_tool_sieve_get_homedir(void *context)
 {
-	struct sieve_tool *tool = (struct sieve_tool *) context;
+	struct sieve_tool *tool = (struct sieve_tool *)context;
 
 	return sieve_tool_get_homedir(tool);
 }
 
 const struct sieve_callbacks sieve_tool_callbacks = {
 	sieve_tool_sieve_get_homedir,
-	sieve_tool_sieve_get_setting
+	sieve_tool_sieve_get_setting,
 };
 
 /*
@@ -110,7 +110,8 @@ sieve_tool_get_user_data(const char **username_r, const char **homedir_r)
 	home = getenv("HOME");
 
 	if (user == NULL || *user == '\0' || home == NULL || *home == '\0') {
-		if ((pw = getpwuid(process_euid)) != NULL) {
+		pw = getpwuid(process_euid);
+		if (pw != NULL) {
 			user = pw->pw_name;
 			home = pw->pw_dir;
 		}
@@ -160,7 +161,7 @@ int sieve_tool_getopt(struct sieve_tool *tool)
 	while ((c = master_getopt(master_service)) > 0) {
 		switch (c) {
 		case 'x':
-			/* extensions */
+			/* Extensions */
 			if (tool->sieve_extensions != NULL) {
 				i_fatal_status(
 					EX_USAGE,
@@ -173,15 +174,14 @@ int sieve_tool_getopt(struct sieve_tool *tool)
 			if (tool->username == NULL)
 				tool->username = i_strdup(optarg);
 			break;
-		case 'P':
+		case 'P': {
 			/* Plugin */
-			{
-				const char *plugin;
+			const char *plugin;
 
-				plugin = t_strdup(optarg);
-				array_append(&tool->sieve_plugins, &plugin, 1);
-			}
+			plugin = t_strdup(optarg);
+			array_append(&tool->sieve_plugins, &plugin, 1);
 			break;
+		}
 		case 'D':
 			tool->debug = TRUE;
 			break;
@@ -196,7 +196,7 @@ int sieve_tool_getopt(struct sieve_tool *tool)
 static void sieve_tool_load_plugins(struct sieve_tool *tool)
 {
 	unsigned int i, count;
-	const char * const *plugins;
+	const char *const *plugins;
 
 	plugins = array_get(&tool->sieve_plugins, &count);
 	for (i = 0; i < count; i++) {
@@ -275,8 +275,9 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_POST;
 
 	/* Initialize Sieve Engine */
-	if ((tool->svinst = sieve_init(&svenv, &sieve_tool_callbacks,
-				       tool, tool->debug)) == NULL)
+	tool->svinst = sieve_init(&svenv, &sieve_tool_callbacks, tool,
+				  tool->debug);
+	if (tool->svinst == NULL)
 		i_fatal("failed to initialize sieve implementation");
 
 	/* Load Sieve plugins */
@@ -351,7 +352,8 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool)
 	const char *home = NULL, *errstr = NULL;
 
 	struct settings_instance *set_instance =
-		mail_storage_service_user_get_settings_instance(mail_user_dovecot->service_user);
+		mail_storage_service_user_get_settings_instance(
+			mail_user_dovecot->service_user);
 	struct mail_storage_service_input input = {
 		.username = username,
 		.set_instance = set_instance,
@@ -361,7 +363,8 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool)
 					     &tool->mail_user, &errstr) < 0)
 		i_fatal("Test user lookup failed: %s", errstr);
 
-	if ((home = sieve_tool_get_homedir(sieve_tool)) != NULL)
+	home = sieve_tool_get_homedir(sieve_tool);
+	if (home != NULL)
 		mail_user_set_home(tool->mail_user, home);
 
 	if (mail_user_init(tool->mail_user, &errstr) < 0)
@@ -564,8 +567,8 @@ struct ostream *sieve_tool_open_output_stream(const char *filename)
 	if (strcmp(filename, "-") == 0)
 		outstream = o_stream_create_fd(1, 0);
 	else {
-		if ((fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT,
-			       0600)) < 0)
+		fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+		if (fd < 0)
 			i_fatal("failed to open file for writing: %m");
 
 		outstream = o_stream_create_fd_autoclose(&fd, 0);
@@ -589,8 +592,8 @@ sieve_tool_script_compile(struct sieve_instance *svinst,
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
-	if ((sbin = sieve_compile(svinst, filename, name, ehandler,
-				  0, NULL)) == NULL)
+	sbin = sieve_compile(svinst, filename, name, ehandler, 0, NULL);
+	if (sbin == NULL)
 		i_fatal("failed to compile sieve script '%s'", filename);
 
 	sieve_error_handler_unref(&ehandler);
@@ -607,8 +610,8 @@ sieve_tool_script_open(struct sieve_instance *svinst, const char *filename)
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
-	if ((sbin = sieve_open(svinst, filename, NULL, ehandler,
-			       0, NULL)) == NULL) {
+	sbin = sieve_open(svinst, filename, NULL, ehandler, 0, NULL);
+	if (sbin == NULL) {
 		sieve_error_handler_unref(&ehandler);
 		i_fatal("failed to compile sieve script");
 	}
