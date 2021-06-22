@@ -2,7 +2,7 @@
  */
 
 /* NOTE: this file also contains the checkscript command due to its obvious
- * similarities.
+   similarities.
  */
 
 #include "lib.h"
@@ -55,7 +55,7 @@ static void client_input_putscript(struct client *client)
 
 	switch (i_stream_read(client->input)) {
 	case -1:
-		/* disconnected */
+		/* Disconnected */
 		cmd_putscript_finish(cmd->context);
 		/* Reset command so that client_destroy() doesn't try to call
 		   cmd_putscript_continue_script() anymore. */
@@ -65,14 +65,15 @@ static void client_input_putscript(struct client *client)
 	case -2:
 		cmd_putscript_finish(cmd->context);
 		if (client->command_pending) {
-			/* uploaded script data, this is handled internally by
+			/* Uploaded script data, this is handled internally by
 			   mailbox_save_continue() */
 			break;
 		}
 
-		/* parameter word is longer than max. input buffer size.
-		   this is most likely an error, so skip the new data
-		   until newline is found. */
+		/* Parameter word is longer than max. input buffer size. This is
+		   most likely an error, so skip the new data until newline is
+		   found.
+		 */
 		client->input_skip_line = TRUE;
 
 		client_send_command_error(cmd, "Too long argument.");
@@ -82,12 +83,12 @@ static void client_input_putscript(struct client *client)
 	}
 
 	if (cmd->func(cmd)) {
-		/* command execution was finished. Note that if cmd_sync()
-		   didn't finish, we didn't get here but the input handler
-		   has already been moved. So don't do anything important
-		   here..
+		/* Command execution was finished. Note that if cmd_sync()
+		   didn't finish, we didn't get here but the input handler has
+		   already been moved. So don't do anything important here..
 
-		   reset command once again to reset cmd_sync()'s changes. */
+		   Reset command once again to reset cmd_sync()'s changes.
+		 */
 		_client_reset_command(client);
 
 		if (client->input_pending)
@@ -135,7 +136,7 @@ static bool cmd_putscript_cancel(struct cmd_putscript_context *ctx, bool skip)
 		return TRUE;
 	}
 
-	/* we have to read the nonsynced literal so we don't treat the uploaded
+	/* We have to read the nonsynced literal so we don't treat the uploaded
 	   script as commands. */
 	ctx->client->command_pending = TRUE;
 	ctx->cmd->func = cmd_putscript_continue_cancel;
@@ -147,9 +148,9 @@ static void cmd_putscript_storage_error(struct cmd_putscript_context *ctx)
 {
 	struct client_command_context *cmd = ctx->cmd;
 
-	if (ctx->scriptname == NULL) {
+	if (ctx->scriptname == NULL)
 		client_command_storage_error(cmd, "Failed to check script");
-	} else {
+	else {
 		client_command_storage_error(cmd, "Failed to store script `%s'",
 					     ctx->scriptname);
 	}
@@ -369,7 +370,7 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 	const struct managesieve_arg *args;
 	int ret;
 
-	/* if error occurs, the CRLF is already read. */
+	/* If error occurs, the CRLF is already read. */
 	client->input_skip_line = FALSE;
 
 	/* <script literal> */
@@ -383,7 +384,7 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 		return TRUE;
 	}
 	if (ret < 0) {
-		/* need more data */
+		/* Need more data */
 		return FALSE;
 	}
 
@@ -412,17 +413,16 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 			managesieve_quota_max_script_size(client);
 	}
 
-	/* save the script */
+	/* Save the script */
 	ctx->save_ctx = sieve_storage_save_init(ctx->storage, ctx->scriptname,
 						ctx->input);
-
 	if (ctx->save_ctx == NULL) {
-		/* save initialization failed */
+		/* Save initialization failed */
 		cmd_putscript_storage_error(ctx);
 		return cmd_putscript_cancel(ctx, TRUE);
 	}
 
-	/* after literal comes CRLF, if we fail make sure we eat it away */
+	/* After literal comes CRLF, if we fail make sure we eat it away */
 	client->input_skip_line = TRUE;
 
 	client->command_pending = TRUE;
@@ -453,8 +453,9 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 			if ((ret != -1 || ctx->input->stream_errno != EINVAL ||
 			     client->input->eof) &&
 			    sieve_storage_save_continue(ctx->save_ctx) < 0) {
-				/* we still have to finish reading the script
-			   	  from client */
+				/* We still have to finish reading the script
+			   	   from client.
+				 */
 				sieve_storage_save_cancel(&ctx->save_ctx);
 				break;
 			}
@@ -490,17 +491,18 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 			all_written = (ctx->input->v_offset == ctx->script_size);
 		}
 
-		/* finished */
+		/* Finished */
 		ctx->input = NULL;
 
 		if (!failed) {
 			if (ctx->save_ctx == NULL) {
-				/* failed above */
+				/* Failed above */
 				cmd_putscript_storage_error(ctx);
 				failed = TRUE;
 			} else if (!all_written) {
-				/* client disconnected before it finished sending the
-					 whole script. */
+				/* Client disconnected before it finished
+				   sending the whole script.
+				 */
 				failed = TRUE;
 				sieve_storage_save_cancel(&ctx->save_ctx);
 				const char *reason = t_strdup_printf(
@@ -521,7 +523,7 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 			return TRUE;
 		}
 
-		/* finish */
+		/* Finish */
 		client->command_pending = FALSE;
 		managesieve_parser_reset(ctx->save_parser);
 		cmd->func = cmd_putscript_finish_parsing;
@@ -546,9 +548,10 @@ cmd_putscript_start(struct client_command_context *cmd, const char *scriptname)
 	io_remove(&client->io);
 	client->io = io_add(i_stream_get_fd(client->input), IO_READ,
 			    client_input_putscript, client);
-	/* putscript is special because we're only waiting on client input, not
+	/* PUTSCRIPT is special because we're only waiting on client input, not
 	   client output, so disable the standard output handler until we're
-	   finished */
+	   finished.
+	 */
 	o_stream_unset_flush_callback(client->output);
 
 	ctx->save_parser = managesieve_parser_create(
