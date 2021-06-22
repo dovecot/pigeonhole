@@ -63,7 +63,7 @@ const struct sieve_command_def cmd_report = {
 	.block_required = FALSE,
 	.registered = cmd_report_registered,
 	.validate = cmd_report_validate,
-	.generate = cmd_report_generate
+	.generate = cmd_report_generate,
 };
 
 /*
@@ -71,7 +71,7 @@ const struct sieve_command_def cmd_report = {
  */
 
 static const struct sieve_argument_def report_headers_only_tag = {
-	.identifier = "headers_only"
+	.identifier = "headers_only",
 };
 
 /*
@@ -90,14 +90,14 @@ const struct sieve_operation_def report_operation = {
 	.ext_def = &vnd_report_extension,
 	.code = 0,
 	.dump = cmd_report_operation_dump,
-	.execute = cmd_report_operation_execute
+	.execute = cmd_report_operation_execute,
 };
 
 /* Codes for optional operands */
 
 enum cmd_report_optional {
-  OPT_END,
-  OPT_HEADERS_ONLY
+	OPT_END,
+	OPT_HEADERS_ONLY,
 };
 
 /*
@@ -122,7 +122,7 @@ const struct sieve_action_def act_report = {
 	.name = "report",
 	.check_duplicate = act_report_check_duplicate,
 	.print = act_report_print,
-	.commit = act_report_commit
+	.commit = act_report_commit,
 };
 
 /* Action data */
@@ -261,10 +261,9 @@ cmd_report_operation_dump(const struct sieve_dumptime_env *denv,
 	for (;;) {
 		int opt;
 
-		if ((opt = sieve_opr_optional_dump(denv, address,
-						   &opt_code)) < 0)
+		opt = sieve_opr_optional_dump(denv, address, &opt_code);
+		if (opt < 0)
 			return FALSE;
-
 		if (opt == 0)
 			break;
 
@@ -309,10 +308,9 @@ cmd_report_operation_execute(const struct sieve_runtime_env *renv,
 	for (;;) {
 		int opt;
 
-		if ((opt = sieve_opr_optional_read(renv, address,
-						   &opt_code)) < 0)
+		opt = sieve_opr_optional_read(renv, address, &opt_code);
+		if (opt < 0)
 			return SIEVE_EXEC_BIN_CORRUPT;
-
 		if (opt == 0)
 			break;
 
@@ -329,14 +327,14 @@ cmd_report_operation_execute(const struct sieve_runtime_env *renv,
 
 	/* Fixed operands */
 
-	if ((ret = sieve_opr_string_read(renv, address, "feedback-type",
-					 &fbtype)) <= 0)
+	ret = sieve_opr_string_read(renv, address, "feedback-type", &fbtype);
+	if (ret <= 0)
 		return ret;
-	if ((ret = sieve_opr_string_read(renv, address, "message",
-					 &message)) <= 0)
+	ret = sieve_opr_string_read(renv, address, "message", &message);
+	if (ret <= 0)
 		return ret;
-	if ((ret = sieve_opr_string_read(renv, address, "address",
-					 &to_address)) <= 0)
+	ret = sieve_opr_string_read(renv, address, "address", &to_address);
+	if (ret <= 0)
 		return ret;
 
 	/*
@@ -473,8 +471,8 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	}
 
 	/* Make sure we have a subject for our report */
-	if ((ret = mail_get_headers_utf8(msgdata->mail, "subject",
-					 &headers)) < 0) {
+	ret = mail_get_headers_utf8(msgdata->mail, "subject", &headers);
+	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, msgdata->mail,
 			"failed to read header field `subject'");
@@ -633,7 +631,8 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	o_stream_nsend(output, str_data(msg), str_len(msg));
 
 	/* Finish sending message */
-	if ((ret = sieve_smtp_finish(sctx, &error)) <= 0) {
+	ret = sieve_smtp_finish(sctx, &error);
+	if (ret <= 0) {
 		if (ret < 0) {
 			sieve_result_global_error(
 				aenv, "failed to send `%s' report to <%s>: %s "
@@ -664,7 +663,6 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 				       str_sanitize(act->feedback_type, 32),
 				       smtp_address_encode(act->to_address));
 	}
-
 	return SIEVE_EXEC_OK;
 }
 
