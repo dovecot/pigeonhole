@@ -16,8 +16,7 @@ struct doveadm_sieve_rename_cmd_context {
 	const char *oldname, *newname;
 };
 
-static int
-cmd_sieve_rename_run(struct doveadm_sieve_cmd_context *_ctx)
+static int cmd_sieve_rename_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_rename_cmd_context *ctx =
 		(struct doveadm_sieve_rename_cmd_context *)_ctx;
@@ -26,33 +25,32 @@ cmd_sieve_rename_run(struct doveadm_sieve_cmd_context *_ctx)
 	enum sieve_error error;
 	int ret = 0;
 
-	script = sieve_storage_open_script
-		(storage, ctx->oldname, NULL);
-	if ( script == NULL ) {
+	script = sieve_storage_open_script(storage, ctx->oldname, NULL);
+	if (script == NULL) {
 		i_error("Failed to rename Sieve script: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		ret = -1;
-	} else if ( sieve_script_rename(script, ctx->newname) < 0 ) {
+	} else if (sieve_script_rename(script, ctx->newname) < 0) {
 		i_error("Failed to rename Sieve script: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		ret = -1;
 	}
 
-	if ( script != NULL )
+	if (script != NULL)
 		sieve_script_unref(&script);
 	return ret;
 }
 
-static void cmd_sieve_rename_init
-(struct doveadm_mail_cmd_context *_ctx,
-	const char *const args[])
+static void
+cmd_sieve_rename_init(struct doveadm_mail_cmd_context *_ctx,
+		      const char *const args[])
 {
 	struct doveadm_sieve_rename_cmd_context *ctx =
 		(struct doveadm_sieve_rename_cmd_context *)_ctx;
 
-	if ( str_array_length(args) != 2 )
+	if (str_array_length(args) != 2)
 		doveadm_mail_help_name("sieve rename");
 	doveadm_sieve_cmd_scriptnames_check(args);
 
@@ -60,8 +58,7 @@ static void cmd_sieve_rename_init
 	ctx->newname = p_strdup(ctx->ctx.ctx.pool, args[1]);
 }
 
-static struct doveadm_mail_cmd_context *
-cmd_sieve_rename_alloc(void)
+static struct doveadm_mail_cmd_context *cmd_sieve_rename_alloc(void)
 {
 	struct doveadm_sieve_rename_cmd_context *ctx;
 
