@@ -35,15 +35,17 @@
  * Extension
  */
 
-static bool ext_vnd_environment_load
-	(const struct sieve_extension *ext, void **context);
-static void ext_vnd_environment_unload
-	(const struct sieve_extension *ext);
-static bool ext_vnd_environment_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
-static bool ext_vnd_environment_interpreter_load
-	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
-		sieve_size_t *address);
+static bool
+ext_vnd_environment_load(const struct sieve_extension *ext, void **context);
+static void
+ext_vnd_environment_unload(const struct sieve_extension *ext);
+static bool
+ext_vnd_environment_validator_load(const struct sieve_extension *ext,
+				   struct sieve_validator *valdtr);
+static bool
+ext_vnd_environment_interpreter_load(const struct sieve_extension *ext,
+				     const struct sieve_runtime_env *renv,
+				     sieve_size_t *address);
 
 const struct sieve_extension_def vnd_environment_extension = {
 	.name = "vnd.dovecot.environment",
@@ -51,30 +53,28 @@ const struct sieve_extension_def vnd_environment_extension = {
 	.unload = ext_vnd_environment_unload,
 	.validator_load = ext_vnd_environment_validator_load,
 	.interpreter_load = ext_vnd_environment_interpreter_load,
-	SIEVE_EXT_DEFINE_OPERAND(environment_namespace_operand)
+	SIEVE_EXT_DEFINE_OPERAND(environment_namespace_operand),
 };
 
-static bool ext_vnd_environment_load
-(const struct sieve_extension *ext, void **context)
+static bool
+ext_vnd_environment_load(const struct sieve_extension *ext, void **context)
 {
 	struct ext_vnd_environment_context *ectx;
 
-	if ( *context != NULL )
+	if (*context != NULL)
 		ext_vnd_environment_unload(ext);
 
 	ectx = i_new(struct ext_vnd_environment_context, 1);
 	ectx->env_ext = sieve_ext_environment_require_extension(ext->svinst);
 	ectx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
-	*context = (void *) ectx;
-
+	*context = (void *)ectx;
 	return TRUE;
 }
 
-static void ext_vnd_environment_unload
-(const struct sieve_extension *ext)
+static void ext_vnd_environment_unload(const struct sieve_extension *ext)
 {
 	struct ext_vnd_environment_context *ectx =
-		(struct ext_vnd_environment_context *) ext->context;
+		(struct ext_vnd_environment_context *)ext->context;
 
 	i_free(ectx);
 }
@@ -83,16 +83,17 @@ static void ext_vnd_environment_unload
  * Validator
  */
 
-static bool ext_vnd_environment_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_vnd_environment_validator_load(const struct sieve_extension *ext,
+				   struct sieve_validator *valdtr)
 {
 	const struct sieve_extension *env_ext;
 
 	/* Load environment extension implicitly */
 
-	env_ext = sieve_validator_extension_load_implicit
-		(valdtr, environment_extension.name);
-	if ( env_ext == NULL )
+	env_ext = sieve_validator_extension_load_implicit(
+		valdtr, environment_extension.name);
+	if (env_ext == NULL)
 		return FALSE;
 
 	ext_environment_variables_init(ext, valdtr);
@@ -103,9 +104,10 @@ static bool ext_vnd_environment_validator_load
  * Interpreter
  */
 
-static bool ext_vnd_environment_interpreter_load
-(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
-	sieve_size_t *address ATTR_UNUSED)
+static bool
+ext_vnd_environment_interpreter_load(const struct sieve_extension *ext,
+				     const struct sieve_runtime_env *renv,
+				     sieve_size_t *address ATTR_UNUSED)
 {
 	ext_vnd_environment_items_register(ext, renv);
 	return TRUE;
