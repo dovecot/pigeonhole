@@ -17,8 +17,7 @@ struct doveadm_sieve_get_cmd_context {
 	const char *scriptname;
 };
 
-static int
-cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
+static int cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_get_cmd_context *ctx =
 		(struct doveadm_sieve_get_cmd_context *)_ctx;
@@ -27,10 +26,10 @@ cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 	enum sieve_error error;
 	int ret;
 
-	script = sieve_storage_open_script
-		(_ctx->storage, ctx->scriptname, &error);
-	if ( script == NULL || sieve_script_get_stream
-		(script, &input, &error) < 0 ) {
+	script = sieve_storage_open_script(_ctx->storage, ctx->scriptname,
+					  &error);
+	if (script == NULL ||
+	    sieve_script_get_stream(script, &input, &error) < 0 ) {
 		i_error("Failed to open Sieve script: %s",
 			sieve_storage_get_last_error(_ctx->storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
@@ -44,14 +43,14 @@ cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 	return ret;
 }
 
-static void cmd_sieve_get_init
-(struct doveadm_mail_cmd_context *_ctx,
-	const char *const args[])
+static void
+cmd_sieve_get_init(struct doveadm_mail_cmd_context *_ctx,
+		   const char *const args[])
 {
 	struct doveadm_sieve_get_cmd_context *ctx =
 		(struct doveadm_sieve_get_cmd_context *)_ctx;
 
-	if ( str_array_length(args) != 1 )
+	if (str_array_length(args) != 1)
 		doveadm_mail_help_name("sieve get");
 	doveadm_sieve_cmd_scriptnames_check(args);
 
@@ -60,8 +59,7 @@ static void cmd_sieve_get_init
 	doveadm_print_header_simple("sieve script");
 }
 
-static struct doveadm_mail_cmd_context *
-cmd_sieve_get_alloc(void)
+static struct doveadm_mail_cmd_context *cmd_sieve_get_alloc(void)
 {
 	struct doveadm_sieve_get_cmd_context *ctx;
 
