@@ -10,6 +10,7 @@
 #include "mail-duplicate.h"
 #include "mail-storage-private.h"
 #include "smtp-submit.h"
+
 #include "sieve.h"
 #include "sieve-storage.h"
 #include "sieve-script.h"
@@ -133,15 +134,18 @@ imap_filter_sieve_init_trace_log(struct imap_filter_sieve_context *sctx,
 	}
 
 	/* Write header for trace file */
-	sieve_trace_log_printf(sctx->trace_log,
+	sieve_trace_log_printf(
+		sctx->trace_log,
 		"Sieve trace log for IMAP FILTER=SIEVE:\n"
 		"\n"
 		"  Username: %s\n", user->username);
 	if (user->session_id != NULL) {
 		sieve_trace_log_printf(sctx->trace_log,
-			"  Session ID: %s\n", user->session_id);
+				       "  Session ID: %s\n",
+				       user->session_id);
 	}
-	sieve_trace_log_printf(sctx->trace_log,
+	sieve_trace_log_printf(
+		sctx->trace_log,
 		"  Mailbox: %s\n"
 		"  Command: %s %s %s\n\n",
 		mailbox_get_vname(sctx->filter_context->box),
@@ -316,7 +320,9 @@ imap_filter_sieve_create_error_handler(struct imap_filter_sieve_context *sctx)
 		sctx->errors = str_new(default_pool, 1024);
 	else
 		str_truncate(sctx->errors, 0);
-	return sieve_strbuf_ehandler_create(svinst, sctx->errors, TRUE,
+
+	return sieve_strbuf_ehandler_create(
+		svinst, sctx->errors, TRUE,
 		10 /* client->set->_max_compile_errors */);
 }
 
@@ -432,7 +438,7 @@ int imap_filter_sieve_compile(struct imap_filter_sieve_context *sctx,
 
 		scripts[i].binary =
 			imap_sieve_filter_open_script(sctx, script, 0, ehandler,
-						     FALSE, &error);
+						      FALSE, &error);
 		if (scripts[i].binary == NULL) {
 			if (error != SIEVE_ERROR_NOT_VALID) {
 				const char *errormsg =
@@ -906,8 +912,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 	}
 
 	/* Don't log additional messages about compile failure */
-	if (compile_error != SIEVE_ERROR_NONE &&
-	    ret == SIEVE_EXEC_FAILURE) {
+	if (compile_error != SIEVE_ERROR_NONE && ret == SIEVE_EXEC_FAILURE) {
 		e_info(sieve_get_event(svinst),
 		       "Aborted script execution sequence "
 		       "with successful implicit keep");
@@ -916,7 +921,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 
 	if (last_script == NULL && ret == SIEVE_EXEC_OK)
 		return 0;
-	i_assert(last_script != NULL); /* at least one script is executed */
+	i_assert(last_script != NULL); /* At least one script is executed */
 	return imap_sieve_filter_handle_exec_status(sctx, last_script, ret,
 						    scriptenv->exec_status,
 						    fatal_r);
@@ -1175,5 +1180,3 @@ void imap_filter_sieve_deinit(void)
 {
 	mail_storage_hooks_remove(&imap_filter_sieve_mail_storage_hooks);
 }
-
-
