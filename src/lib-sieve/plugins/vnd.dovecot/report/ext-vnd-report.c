@@ -28,22 +28,24 @@
  * Extension
  */
 
-static bool ext_report_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
+static bool
+ext_report_validator_load(const struct sieve_extension *ext,
+			  struct sieve_validator *valdtr);
 
 const struct sieve_extension_def vnd_report_extension = {
 	.name = "vnd.dovecot.report",
 	.load = ext_report_load,
 	.validator_load = ext_report_validator_load,
-	SIEVE_EXT_DEFINE_OPERATION(report_operation)
+	SIEVE_EXT_DEFINE_OPERATION(report_operation),
 };
 
 /*
  * Extension validation
  */
 
-static bool ext_report_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_report_validator_load(const struct sieve_extension *ext,
+			  struct sieve_validator *valdtr)
 {
 	/* Register new commands */
 	sieve_validator_register_command(valdtr, ext, &cmd_report);
