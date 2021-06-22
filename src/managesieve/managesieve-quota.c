@@ -95,4 +95,3 @@ bool managesieve_quota_check_all(struct client_command_context *cmd,
 
 	return FALSE;
 }
-
