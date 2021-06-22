@@ -56,7 +56,7 @@ struct service_settings managesieve_login_settings_service_settings = {
 	.unix_listeners = ARRAY_INIT,
 	.fifo_listeners = ARRAY_INIT,
 	.inet_listeners = { { &managesieve_login_inet_listeners_buf,
-		sizeof(managesieve_login_inet_listeners[0]) } }
+			      sizeof(managesieve_login_inet_listeners[0]) } }
 };
 
 #undef DEF
@@ -101,4 +101,3 @@ const struct setting_parser_info *managesieve_login_settings_set_roots[] = {
 	&managesieve_login_setting_parser_info,
 	NULL
 };
-
