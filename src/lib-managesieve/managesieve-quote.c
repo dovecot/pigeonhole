@@ -7,19 +7,16 @@
 #include "managesieve-quote.h"
 
 /* Turn the value string into a valid MANAGESIEVE string or literal, no matter
- * what. QUOTED-SPECIALS are escaped, but any invalid (UTF-8) character
- * is simply removed. Linebreak characters are not considered invalid, but
- * they do force the generation of a string literal.
+   what. QUOTED-SPECIALS are escaped, but any invalid (UTF-8) character is
+   simply removed. Linebreak characters are not considered invalid, but they do
+   force the generation of a string literal.
  */
 void managesieve_quote_append(string_t *str, const unsigned char *value,
-		       size_t value_len, bool compress_lwsp)
+			      size_t value_len, bool compress_lwsp)
 {
 	size_t i, extra = 0, escape = 0;
 	string_t *tmp;
-	bool
-		last_lwsp = TRUE,
-		literal = FALSE,
-		modify = FALSE;
+	bool last_lwsp = TRUE, literal = FALSE, modify = FALSE;
 
  	if (value == NULL) {
 		str_append(str, "\"\"");
@@ -55,10 +52,10 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 	}
 
 	if (!literal) {
-		/* no linebreak chars, return as (escaped) "string" */
+		/* No linebreak chars, return as (escaped) "string" */
 		str_append_c(str, '"');
 	} else {
-		/* return as literal */
+		/* Return as literal */
 		str_printfa(str, "{%zu}\r\n", value_len - extra);
 	}
 
@@ -95,14 +92,15 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 		}
 	}
 
-	if ( uni_utf8_get_valid_data(str_data(tmp), str_len(tmp), str) )
+	if (uni_utf8_get_valid_data(str_data(tmp), str_len(tmp), str))
 		str_append_str(str, tmp);
 
 	if (!literal)
 		str_append_c(str, '"');
 }
 
-char *managesieve_quote(pool_t pool, const unsigned char *value, size_t value_len)
+char *managesieve_quote(pool_t pool, const unsigned char *value,
+			size_t value_len)
 {
 	string_t *str;
 	char *ret;
