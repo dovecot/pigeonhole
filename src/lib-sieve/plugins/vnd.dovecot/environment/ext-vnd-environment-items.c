@@ -37,7 +37,7 @@ envit_default_mailbox_get_value(const struct sieve_runtime_env *renv,
 
 const struct sieve_environment_item default_mailbox_env_item = {
 	.name = "vnd.dovecot.default-mailbox",
-	.get_value = envit_default_mailbox_get_value
+	.get_value = envit_default_mailbox_get_value,
 };
 
 /* username */
@@ -53,7 +53,7 @@ envit_username_get_value(const struct sieve_runtime_env *renv,
 
 const struct sieve_environment_item username_env_item = {
 	.name = "vnd.dovecot.username",
-	.get_value = envit_username_get_value
+	.get_value = envit_username_get_value,
 };
 
 /* config.* */
@@ -73,7 +73,7 @@ envit_config_get_value(const struct sieve_runtime_env *renv, const char *name)
 const struct sieve_environment_item config_env_item = {
 	.name = "vnd.dovecot.config",
 	.prefix = TRUE,
-	.get_value = envit_config_get_value
+	.get_value = envit_config_get_value,
 };
 
 /*
