@@ -48,56 +48,54 @@ static struct sieve_operand_def subaddress_operand;
  * Extension
  */
 
-static bool ext_subaddress_load
-	(const struct sieve_extension *ext, void **context);
-static void ext_subaddress_unload
-	(const struct sieve_extension *ext);
-static bool ext_subaddress_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *validator);
+static bool
+ext_subaddress_load(const struct sieve_extension *ext, void **context);
+static void ext_subaddress_unload(const struct sieve_extension *ext);
+static bool
+ext_subaddress_validator_load(const struct sieve_extension *ext,
+			      struct sieve_validator *validator);
 
 const struct sieve_extension_def subaddress_extension = {
 	.name = "subaddress",
 	.load = ext_subaddress_load,
 	.unload = ext_subaddress_unload,
 	.validator_load = ext_subaddress_validator_load,
-	SIEVE_EXT_DEFINE_OPERAND(subaddress_operand)
+	SIEVE_EXT_DEFINE_OPERAND(subaddress_operand),
 };
 
-static bool ext_subaddress_load
-(const struct sieve_extension *ext, void **context)
+static bool
+ext_subaddress_load(const struct sieve_extension *ext, void **context)
 {
 	struct ext_subaddress_config *config;
 	const char *delim;
 
-	if ( *context != NULL ) {
+	if (*context != NULL)
 		ext_subaddress_unload(ext);
-	}
 
 	delim = sieve_setting_get(ext->svinst, "recipient_delimiter");
 
-	if ( delim == NULL )
+	if (delim == NULL)
 		delim = SUBADDRESS_DEFAULT_DELIM;
 
 	config = i_new(struct ext_subaddress_config, 1);
 	config->delimiter = i_strdup(delim);
 
 	*context = (void *) config;
-
 	return TRUE;
 }
 
-static void ext_subaddress_unload
-(const struct sieve_extension *ext)
+static void ext_subaddress_unload(const struct sieve_extension *ext)
 {
 	struct ext_subaddress_config *config =
-		(struct ext_subaddress_config *) ext->context;
+		(struct ext_subaddress_config *)ext->context;
 
 	i_free(config->delimiter);
 	i_free(config);
 }
 
-static bool ext_subaddress_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *validator)
+static bool
+ext_subaddress_validator_load(const struct sieve_extension *ext,
+			      struct sieve_validator *validator)
 {
 	sieve_address_part_register(validator, ext, &user_address_part);
 	sieve_address_part_register(validator, ext, &detail_address_part);
@@ -110,63 +108,68 @@ static bool ext_subaddress_validator_load
  */
 
 enum ext_subaddress_address_part {
-  SUBADDRESS_USER,
-  SUBADDRESS_DETAIL
+	SUBADDRESS_USER,
+	SUBADDRESS_DETAIL
 };
 
 /* Forward declarations */
 
-static const char *subaddress_user_extract_from
-	(const struct sieve_address_part *addrp, const struct smtp_address *address);
-static const char *subaddress_detail_extract_from
-	(const struct sieve_address_part *addrp, const struct smtp_address *address);
+static const char *
+subaddress_user_extract_from(const struct sieve_address_part *addrp,
+			     const struct smtp_address *address);
+static const char *
+subaddress_detail_extract_from(const struct sieve_address_part *addrp,
+			       const struct smtp_address *address);
 
 /* Address part objects */
 
 const struct sieve_address_part_def user_address_part = {
-	SIEVE_OBJECT("user",
-		&subaddress_operand, SUBADDRESS_USER),
-	subaddress_user_extract_from
+	SIEVE_OBJECT("user", &subaddress_operand, SUBADDRESS_USER),
+	subaddress_user_extract_from,
 };
 
 const struct sieve_address_part_def detail_address_part = {
-	SIEVE_OBJECT("detail",
-		&subaddress_operand, SUBADDRESS_DETAIL),
-	.extract_from = subaddress_detail_extract_from
+	SIEVE_OBJECT("detail", &subaddress_operand, SUBADDRESS_DETAIL),
+	.extract_from = subaddress_detail_extract_from,
 };
 
 /* Address part implementation */
 
-static const char *subaddress_user_extract_from
-(const struct sieve_address_part *addrp, const struct smtp_address *address)
+static const char *
+subaddress_user_extract_from(const struct sieve_address_part *addrp,
+			     const struct smtp_address *address)
 {
 	struct ext_subaddress_config *config =
-		(struct ext_subaddress_config *) addrp->object.ext->context;
+		(struct ext_subaddress_config *)addrp->object.ext->context;
 	const char *delim;
 	size_t idx;
 
 	idx = strcspn(address->localpart, config->delimiter);
-	delim = address->localpart[idx] != '\0' ? address->localpart + idx : NULL;
+	delim = (address->localpart[idx] != '\0' ?
+		 address->localpart + idx : NULL);
 
-	if ( delim == NULL ) return address->localpart;
+	if (delim == NULL)
+		return address->localpart;
 
 	return t_strdup_until(address->localpart, delim);
 }
 
-static const char *subaddress_detail_extract_from
-(const struct sieve_address_part *addrp, const struct smtp_address *address)
+static const char *
+subaddress_detail_extract_from(const struct sieve_address_part *addrp,
+			       const struct smtp_address *address)
 {
 	struct ext_subaddress_config *config =
-		(struct ext_subaddress_config *) addrp->object.ext->context;
+		(struct ext_subaddress_config *)addrp->object.ext->context;
 	const char *delim;
 	size_t idx;
 
 	idx = strcspn(address->localpart, config->delimiter);
-	delim = address->localpart[idx] != '\0' ? address->localpart + idx + 1: NULL;
+	delim = (address->localpart[idx] != '\0' ?
+		 address->localpart + idx + 1: NULL);
 
 	/* Just to be sure */
-	if ( delim == NULL ||
-		delim > (address->localpart + strlen(address->localpart)) )
+	if (delim == NULL ||
+	    delim > (address->localpart + strlen(address->localpart)))
 		return NULL;
 	return delim;
 }
@@ -176,7 +179,8 @@ static const char *subaddress_detail_extract_from
  */
 
 const struct sieve_address_part_def *ext_subaddress_parts[] = {
-	&user_address_part, &detail_address_part
+	&user_address_part,
+	&detail_address_part,
 };
 
 static const struct sieve_extension_objects ext_address_parts =
@@ -186,6 +190,5 @@ static struct sieve_operand_def subaddress_operand = {
 	.name = "address-part",
 	.ext_def = &subaddress_extension,
 	.class = &sieve_address_part_operand_class,
-	.interface = &ext_address_parts
+	.interface = &ext_address_parts,
 };
-
