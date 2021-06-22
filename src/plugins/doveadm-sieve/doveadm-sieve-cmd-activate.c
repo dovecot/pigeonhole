@@ -16,8 +16,7 @@ struct doveadm_sieve_activate_cmd_context {
 	const char *scriptname;
 };
 
-static int
-cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
+static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_activate_cmd_context *ctx =
 		(struct doveadm_sieve_activate_cmd_context *)_ctx;
@@ -26,29 +25,29 @@ cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 	enum sieve_error error;
 	int ret = 0;
 
-	script = sieve_storage_open_script
-		(storage, ctx->scriptname, NULL);
-	if ( script == NULL ) {
+	script = sieve_storage_open_script(storage, ctx->scriptname, NULL);
+	if (script == NULL) {
 		i_error("Failed to activate Sieve script: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		return -1;
 	}
 
-	if ( sieve_script_is_active(script) <= 0 ) {
-		/* Script is first being activated; compile it again without the UPLOAD
-		 * flag.
+	if (sieve_script_is_active(script) <= 0) {
+		/* Script is first being activated; compile it again without the
+		   UPLOAD flag.
 		 */
 		struct sieve_error_handler *ehandler;
 		enum sieve_compile_flags cpflags =
-			SIEVE_COMPILE_FLAG_NOGLOBAL | SIEVE_COMPILE_FLAG_ACTIVATED;
+			SIEVE_COMPILE_FLAG_NOGLOBAL |
+			SIEVE_COMPILE_FLAG_ACTIVATED;
 		struct sieve_binary *sbin;
 		enum sieve_error error;
 
 		/* Compile */
 		ehandler = sieve_master_ehandler_create(ctx->ctx.svinst, 0);
-		if ( (sbin=sieve_compile_script
-			(script, ehandler, cpflags, &error)) == NULL ) {
+		sbin = sieve_compile_script(script, ehandler, cpflags, &error);
+		if (sbin == NULL) {
 			doveadm_sieve_cmd_failed_error(_ctx, error);
 			ret = -1;
 		} else {
@@ -58,12 +57,12 @@ cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 	}
 
 	/* Activate only when script is valid (or already active) */
-	if ( ret == 0 ) {
-		/* Refresh activation no matter what; this can also resolve some erroneous
-		 * situations.
+	if (ret == 0) {
+		/* Refresh activation no matter what; this can also resolve some
+		   erroneous situations.
 		 */
 		ret = sieve_script_activate(script, (time_t)-1);
-		if ( ret < 0 ) {
+		if (ret < 0) {
 			i_error("Failed to activate Sieve script: %s",
 				sieve_storage_get_last_error(storage, &error));
 			doveadm_sieve_cmd_failed_error(_ctx, error);
@@ -75,8 +74,7 @@ cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 	return ret;
 }
 
-static int cmd_sieve_deactivate_run
-(struct doveadm_sieve_cmd_context *_ctx)
+static int cmd_sieve_deactivate_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct sieve_storage *storage = _ctx->storage;
 	enum sieve_error error;
@@ -90,9 +88,9 @@ static int cmd_sieve_deactivate_run
 	return 0;
 }
 
-static void cmd_sieve_activate_init
-(struct doveadm_mail_cmd_context *_ctx,
-	const char *const args[])
+static void
+cmd_sieve_activate_init(struct doveadm_mail_cmd_context *_ctx,
+			const char *const args[])
 {
 	struct doveadm_sieve_activate_cmd_context *ctx =
 		(struct doveadm_sieve_activate_cmd_context *)_ctx;
@@ -104,19 +102,18 @@ static void cmd_sieve_activate_init
 	ctx->scriptname = p_strdup(ctx->ctx.ctx.pool, args[0]);
 }
 
-static struct doveadm_mail_cmd_context *
-cmd_sieve_activate_alloc(void)
+static struct doveadm_mail_cmd_context *cmd_sieve_activate_alloc(void)
 {
 	struct doveadm_sieve_activate_cmd_context *ctx;
 
-	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_activate_cmd_context);
+	ctx = doveadm_sieve_cmd_alloc(
+		struct doveadm_sieve_activate_cmd_context);
 	ctx->ctx.ctx.v.init = cmd_sieve_activate_init;
 	ctx->ctx.v.run = cmd_sieve_activate_run;
 	return &ctx->ctx.ctx;
 }
 
-static struct doveadm_mail_cmd_context *
-cmd_sieve_deactivate_alloc(void)
+static struct doveadm_mail_cmd_context *cmd_sieve_deactivate_alloc(void)
 {
 	struct doveadm_sieve_cmd_context *ctx;
 
