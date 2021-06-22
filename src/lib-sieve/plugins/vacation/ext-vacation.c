@@ -52,17 +52,17 @@ const struct sieve_extension_def vacation_extension = {
 	.unload = ext_vacation_unload,
 	.validator_load = ext_vacation_validator_load,
 	.interpreter_load = ext_vacation_interpreter_load,
-	SIEVE_EXT_DEFINE_OPERATION(vacation_operation)
+	SIEVE_EXT_DEFINE_OPERATION(vacation_operation),
 };
 const struct sieve_validator_extension
 vacation_validator_extension = {
 	.ext = &vacation_extension,
-	.validate = ext_vacation_validator_validate
+	.validate = ext_vacation_validator_validate,
 };
 const struct sieve_interpreter_extension
 vacation_interpreter_extension = {
 	.ext_def = &vacation_extension,
-	.run = ext_vacation_interpreter_run
+	.run = ext_vacation_interpreter_run,
 };
 
 static bool
