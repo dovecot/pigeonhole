@@ -20,15 +20,14 @@ struct _plugin_context {
 
 const char *sieve_imapsieve_plugin_version = PIGEONHOLE_ABI_VERSION;
 
-void sieve_imapsieve_plugin_load
-(struct sieve_instance *svinst, void **context)
+void sieve_imapsieve_plugin_load(struct sieve_instance *svinst, void **context)
 {
 	struct _plugin_context *pctx = i_new(struct _plugin_context, 1);
 
-	pctx->ext_imapsieve = sieve_extension_register
-		(svinst, &imapsieve_extension_dummy, TRUE);
-	pctx->ext_vnd_imapsieve = sieve_extension_register
-		(svinst, &vnd_imapsieve_extension_dummy, TRUE);
+	pctx->ext_imapsieve = sieve_extension_register(
+		svinst, &imapsieve_extension_dummy, TRUE);
+	pctx->ext_vnd_imapsieve = sieve_extension_register(
+		svinst, &vnd_imapsieve_extension_dummy, TRUE);
 
 	e_debug(sieve_get_event(svinst),
 		"Sieve imapsieve plugin for %s version %s loaded",
@@ -37,15 +36,15 @@ void sieve_imapsieve_plugin_load
 	*context = (void *)pctx;
 }
 
-void sieve_imapsieve_plugin_unload
-(struct sieve_instance *svinst ATTR_UNUSED, void *context)
+void sieve_imapsieve_plugin_unload(struct sieve_instance *svinst ATTR_UNUSED,
+				   void *context)
 {
 	struct _plugin_context *pctx = (struct _plugin_context *)context;
 
 	sieve_extension_unregister(pctx->ext_imapsieve);
 	sieve_extension_unregister(pctx->ext_vnd_imapsieve);
-
-	i_free(pctx);}
+	i_free(pctx);
+}
 
 /*
  * Module interface
