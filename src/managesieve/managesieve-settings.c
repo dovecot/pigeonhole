@@ -14,8 +14,8 @@
 #include <stddef.h>
 #include <unistd.h>
 
-static bool managesieve_settings_verify(void *_set, pool_t pool,
-				 const char **error_r);
+static bool
+managesieve_settings_verify(void *_set, pool_t pool, const char **error_r);
 
 struct service_settings managesieve_settings_service_settings = {
 	.name = "managesieve",
@@ -65,7 +65,6 @@ static struct setting_define managesieve_setting_defines[] = {
 	DEF(STR, managesieve_client_workarounds),
 	DEF(STR_NOVARS, managesieve_logout_format),
 	DEF(UINT, managesieve_max_compile_errors),
-
 
 	SETTING_DEFINE_LIST_END
 };
