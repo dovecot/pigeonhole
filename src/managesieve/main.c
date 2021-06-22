@@ -289,7 +289,7 @@ static const struct master_admin_client_callback admin_callbacks = {
 
 static void client_connected(struct master_service_connection *conn)
 {
-	/* when running standalone, we shouldn't even get here */
+	/* When running standalone, we shouldn't even get here */
 	i_assert(login_server != NULL);
 
 	master_service_client_connection_accept(conn);
@@ -345,7 +345,8 @@ int main(int argc, char *argv[])
 	master_admin_clients_init(&admin_callbacks);
 	master_service_set_die_callback(master_service, managesieve_die);
 
-	/* plugins may want to add commands, so this needs to be called early */
+	/* Plugins may want to add commands, so this needs to be called early.
+	 */
 	commands_init();
 
 	/* Dump capabilities if requested */
@@ -390,8 +391,9 @@ int main(int argc, char *argv[])
 	/* NOTE: login_set.*_socket_path are now invalid due to data stack
 	   having been freed */
 
-	/* fake that we're running, so we know if client was destroyed
-		while handling its initial input */
+	/* Fake that we're running, so we know if client was destroyed while
+	   handling its initial input.
+	 */
 	io_loop_set_running(current_ioloop);
 
 	if (IS_STANDALONE()) {
