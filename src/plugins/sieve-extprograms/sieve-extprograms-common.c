@@ -56,8 +56,8 @@
  * Pipe Extension Context
  */
 
-struct sieve_extprograms_config *sieve_extprograms_config_init
-(const struct sieve_extension *ext)
+struct sieve_extprograms_config *
+sieve_extprograms_config_init(const struct sieve_extension *ext)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct sieve_extprograms_config *ext_config;
@@ -69,18 +69,18 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 	i_assert(extname != NULL);
 	extname++;
 
-	bin_dir = sieve_setting_get
-		(svinst, t_strdup_printf("sieve_%s_bin_dir", extname));
-	socket_dir = sieve_setting_get
-		(svinst, t_strdup_printf("sieve_%s_socket_dir", extname));
-	input_eol = sieve_setting_get
-		(svinst, t_strdup_printf("sieve_%s_input_eol", extname));
-	
+	bin_dir = sieve_setting_get(
+		svinst, t_strdup_printf("sieve_%s_bin_dir", extname));
+	socket_dir = sieve_setting_get(
+		svinst, t_strdup_printf("sieve_%s_socket_dir", extname));
+	input_eol = sieve_setting_get(
+		svinst, t_strdup_printf("sieve_%s_input_eol", extname));
+
 	ext_config = i_new(struct sieve_extprograms_config, 1);
-	ext_config->execute_timeout = 
+	ext_config->execute_timeout =
 		SIEVE_EXTPROGRAMS_DEFAULT_EXEC_TIMEOUT_SECS;
 
-	if ( bin_dir == NULL && socket_dir == NULL ) {
+	if (bin_dir == NULL && socket_dir == NULL) {
 		e_debug(svinst->event, "%s extension: "
 			"no bin or socket directory specified; extension is unconfigured "
 			"(both sieve_%s_bin_dir and sieve_%s_socket_dir are not set)",
@@ -89,28 +89,33 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 		ext_config->bin_dir = i_strdup(bin_dir);
 		ext_config->socket_dir = i_strdup(socket_dir);
 
-		if (sieve_setting_get_duration_value
-			(svinst, t_strdup_printf("sieve_%s_exec_timeout", extname),
-				&execute_timeout)) {
+		if (sieve_setting_get_duration_value(
+			svinst, t_strdup_printf("sieve_%s_exec_timeout",
+						extname), &execute_timeout))
 			ext_config->execute_timeout = execute_timeout;
-		}
 
 		ext_config->default_input_eol = SIEVE_EXTPROGRAMS_EOL_CRLF;
-		if (input_eol != NULL && strcasecmp(input_eol, "lf") == 0)
-			ext_config->default_input_eol = SIEVE_EXTPROGRAMS_EOL_LF;
+		if (input_eol != NULL && strcasecmp(input_eol, "lf") == 0) {
+			ext_config->default_input_eol =
+				SIEVE_EXTPROGRAMS_EOL_LF;
+		}
 	}
 
-	if ( sieve_extension_is(ext, sieve_ext_vnd_pipe) ) 
-		ext_config->copy_ext = sieve_ext_copy_get_extension(ext->svinst);
-	if ( sieve_extension_is(ext, sieve_ext_vnd_execute) ) 
-		ext_config->var_ext = sieve_ext_variables_get_extension(ext->svinst);
+	if (sieve_extension_is(ext, sieve_ext_vnd_pipe)) {
+		ext_config->copy_ext =
+			sieve_ext_copy_get_extension(ext->svinst);
+	}
+	if (sieve_extension_is(ext, sieve_ext_vnd_execute)) {
+		ext_config->var_ext =
+			sieve_ext_variables_get_extension(ext->svinst);
+	}
 	return ext_config;
 }
 
-void sieve_extprograms_config_deinit
-(struct sieve_extprograms_config **ext_config)
+void sieve_extprograms_config_deinit(
+	struct sieve_extprograms_config **ext_config)
 {
-	if ( *ext_config == NULL )
+	if (*ext_config == NULL)
 		return;
 
 	i_free((*ext_config)->bin_dir);
@@ -132,55 +137,49 @@ bool sieve_extprogram_name_is_valid(string_t *name)
 	size_t namelen = str_len(name);
 
 	/* Check minimum length */
-	if ( namelen == 0 )
+	if (namelen == 0)
 		return FALSE;
 
 	/* Check worst-case maximum length */
-	if ( namelen > SIEVE_EXTPROGRAMS_MAX_PROGRAM_NAME_LEN * 4 )
+	if (namelen > SIEVE_EXTPROGRAMS_MAX_PROGRAM_NAME_LEN * 4)
 		return FALSE;
 
 	/* Intialize array for unicode characters */
 	t_array_init(&uni_name, namelen * 4);
 
 	/* Convert UTF-8 to UCS4/UTF-32 */
-	if ( uni_utf8_to_ucs4_n(str_data(name), namelen, &uni_name) < 0 )
+	if (uni_utf8_to_ucs4_n(str_data(name), namelen, &uni_name) < 0)
 		return FALSE;
 	name_chars = array_get(&uni_name, &count);
 
 	/* Check true maximum length */
-	if ( count > SIEVE_EXTPROGRAMS_MAX_PROGRAM_NAME_LEN )
+	if (count > SIEVE_EXTPROGRAMS_MAX_PROGRAM_NAME_LEN)
 		return FALSE;
 
 	/* Scan name for invalid characters
-	 *   FIXME: compliance with Net-Unicode Definition (Section 2 of
-	 *          RFC 5198) is not checked fully and no normalization
-	 *          is performed.
+	     FIXME: compliance with Net-Unicode Definition (Section 2 of
+	            RFC 5198) is not checked fully and no normalization
+	            is performed.
 	 */
-	for ( i = 0; i < count; i++ ) {
-
+	for (i = 0; i < count; i++) {
 		/* 0000-001F; [CONTROL CHARACTERS] */
-		if ( name_chars[i] <= 0x001f )
+		if (name_chars[i] <= 0x001f)
 			return FALSE;
-
 		/* 002F; SLASH */
-		if ( name_chars[i] == 0x002f )
+		if (name_chars[i] == 0x002f)
 			return FALSE;
-
 		/* 007F; DELETE */
-		if ( name_chars[i] == 0x007f )
+		if (name_chars[i] == 0x007f)
 			return FALSE;
-
 		/* 0080-009F; [CONTROL CHARACTERS] */
-		if ( name_chars[i] >= 0x0080 && name_chars[i] <= 0x009f )
+		if (name_chars[i] >= 0x0080 && name_chars[i] <= 0x009f)
 			return FALSE;
-
 		/* 00FF */
-		if ( name_chars[i] == 0x00ff )
+		if (name_chars[i] == 0x00ff)
 			return FALSE;
-
 		/* 2028; LINE SEPARATOR */
 		/* 2029; PARAGRAPH SEPARATOR */
-		if ( name_chars[i] == 0x2028 || name_chars[i] == 0x2029 )
+		if (name_chars[i] == 0x2028 || name_chars[i] == 0x2029)
 			return FALSE;
 	}
 
@@ -193,21 +192,19 @@ bool sieve_extprogram_arg_is_valid(string_t *arg)
 	unsigned int i;
 
 	/* Check maximum length */
-	if ( str_len(arg) > SIEVE_EXTPROGRAMS_MAX_PROGRAM_ARG_LEN )
+	if (str_len(arg) > SIEVE_EXTPROGRAMS_MAX_PROGRAM_ARG_LEN)
 		return FALSE;
 
 	/* Check invalid characters */
 	chars = str_data(arg);
-	for ( i = 0; i < str_len(arg); i++ ) {
+	for (i = 0; i < str_len(arg); i++) {
 		/* 0010; CR */
-		if ( chars[i] == 0x0D )
+		if (chars[i] == 0x0D)
 			return FALSE;
-
 		/* 0010; LF */
-		if ( chars[i] == 0x0A )
+		if (chars[i] == 0x0A)
 			return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -220,67 +217,71 @@ struct _arg_validate_context {
 	struct sieve_command *cmd;
 };
 
-static int _arg_validate
-(void *context, struct sieve_ast_argument *item)
+static int
+_arg_validate(void *context, struct sieve_ast_argument *item)
 {
-	struct _arg_validate_context *actx = (struct _arg_validate_context *) context;
+	struct _arg_validate_context *actx =
+		(struct _arg_validate_context *)context;
 
-	if ( sieve_argument_is_string_literal(item) ) {
+	if (sieve_argument_is_string_literal(item)) {
 		string_t *arg = sieve_ast_argument_str(item);
 
-		if ( !sieve_extprogram_arg_is_valid(arg) ) {
-			sieve_argument_validate_error(actx->valdtr, item,
+		if (!sieve_extprogram_arg_is_valid(arg)) {
+			sieve_argument_validate_error(
+				actx->valdtr, item,
 				"%s %s: specified external program argument `%s' is invalid",
-				sieve_command_identifier(actx->cmd), sieve_command_type_name(actx->cmd),
+				sieve_command_identifier(actx->cmd),
+				sieve_command_type_name(actx->cmd),
 				str_sanitize(str_c(arg), 128));
-
 			return -1;
 		}
 	}
-
 	return 1;
 }
 
-bool sieve_extprogram_command_validate
-(struct sieve_validator *valdtr, struct sieve_command *cmd)
+bool sieve_extprogram_command_validate(struct sieve_validator *valdtr,
+				       struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct sieve_ast_argument *stritem;
 	struct _arg_validate_context actx;
 	string_t *program_name;
 
-	if ( arg == NULL ) {
-		sieve_command_validate_error(valdtr, cmd, 
-			"the %s %s expects at least one positional argument, but none was found", 
-			sieve_command_identifier(cmd), sieve_command_type_name(cmd));
+	if (arg == NULL) {
+		sieve_command_validate_error(
+			valdtr, cmd,
+			"the %s %s expects at least one positional argument, "
+			"but none was found",
+			sieve_command_identifier(cmd),
+			sieve_command_type_name(cmd));
 		return FALSE;
 	}
 
 	/* <program-name: string> argument */
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, cmd, arg, "program-name", 1, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(
+		valdtr, cmd, arg, "program-name", 1, SAAT_STRING))
 		return FALSE;
-	}
-	
-	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
+	if (!sieve_validator_argument_activate(valdtr, cmd, arg, FALSE))
 		return FALSE;
 
 	/* Variables are not allowed */
-	if ( !sieve_argument_is_string_literal(arg) ) {
-		sieve_argument_validate_error(valdtr, arg, 
+	if (!sieve_argument_is_string_literal(arg)) {
+		sieve_argument_validate_error(valdtr, arg,
 			"the %s %s requires a constant string "
 			"for its program-name argument",
-			sieve_command_identifier(cmd), sieve_command_type_name(cmd));
+			sieve_command_identifier(cmd),
+			sieve_command_type_name(cmd));
 		return FALSE;
 	}
 
 	/* Check program name */
 	program_name = sieve_ast_argument_str(arg);
-	if ( !sieve_extprogram_name_is_valid(program_name) ) {
+	if (!sieve_extprogram_name_is_valid(program_name)) {
  		sieve_argument_validate_error(valdtr, arg,
 			"%s %s: invalid program name '%s'",
-			sieve_command_identifier(cmd), sieve_command_type_name(cmd),
+			sieve_command_identifier(cmd),
+			sieve_command_type_name(cmd),
 			str_sanitize(str_c(program_name), 80));
 		return FALSE;
 	}
@@ -288,33 +289,31 @@ bool sieve_extprogram_command_validate
 	/* Optional <arguments: string-list> argument */
 
 	arg = sieve_ast_argument_next(arg);
-	if ( arg == NULL )
+	if (arg == NULL)
 		return TRUE;
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, cmd, arg, "arguments", 2, SAAT_STRING_LIST) ) {
+	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "arguments",
+						2, SAAT_STRING_LIST))
 		return FALSE;
-	}
-
-	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
+	if (!sieve_validator_argument_activate(valdtr, cmd, arg, FALSE))
 		return FALSE;
 
 	/* Check arguments */
 	actx.valdtr = valdtr;
 	actx.cmd = cmd;
 	stritem = arg;
-	if ( sieve_ast_stringlist_map
-		(&stritem, (void *)&actx, _arg_validate) <= 0 ) {
+	if (sieve_ast_stringlist_map(&stritem, (void *)&actx,
+				     _arg_validate) <= 0)
+		return FALSE;
+
+	if (sieve_ast_argument_next(arg) != NULL) {
+		sieve_command_validate_error(valdtr, cmd,
+			"the %s %s expects at most two positional arguments, "
+			"but more were found",
+			sieve_command_identifier(cmd),
+			sieve_command_type_name(cmd));
 		return FALSE;
 	}
-
-	if ( sieve_ast_argument_next(arg) != NULL ) {
-		sieve_command_validate_error(valdtr, cmd, 
-			"the %s %s expects at most two positional arguments, but more were found", 
-			sieve_command_identifier(cmd), sieve_command_type_name(cmd));
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -322,10 +321,10 @@ bool sieve_extprogram_command_validate
  * Common command operands
  */
 
-int sieve_extprogram_command_read_operands
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
+int sieve_extprogram_command_read_operands(
+	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	string_t **pname_r, struct sieve_stringlist **args_list_r)
-{	
+{
 	string_t *arg;
 	int ret;
 
@@ -333,30 +332,29 @@ int sieve_extprogram_command_read_operands
 	 * Read fixed operands
 	 */
 
-	if ( (ret=sieve_opr_string_read
-		(renv, address, "program-name", pname_r)) <= 0 )
+	ret = sieve_opr_string_read(renv, address, "program-name", pname_r);
+	if (ret <= 0)
+		return ret;
+	ret = sieve_opr_stringlist_read_ex(renv, address, "arguments", TRUE,
+					   args_list_r);
+	if (ret <= 0)
 		return ret;
 
-	if ( (ret=sieve_opr_stringlist_read_ex
-		(renv, address, "arguments", TRUE, args_list_r)) <= 0 )
-		return ret;
-		
 	/*
 	 * Check operands
 	 */
 
 	arg = NULL;
-	while ( *args_list_r != NULL &&
-		(ret=sieve_stringlist_next_item(*args_list_r, &arg)) > 0 ) {
-		if ( !sieve_extprogram_arg_is_valid(arg) ) {
+	while (*args_list_r != NULL &&
+	       (ret = sieve_stringlist_next_item(*args_list_r, &arg)) > 0) {
+		if (!sieve_extprogram_arg_is_valid(arg)) {
 			sieve_runtime_error(renv, NULL,
 				"specified :args item `%s' is invalid",
 				str_sanitize(str_c(arg), 128));
 			return SIEVE_EXEC_FAILURE;
 		}
 	}
-
-	if ( ret < 0 ) {
+	if (ret < 0) {
 		sieve_runtime_trace_error(renv, "invalid args-list item");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
@@ -376,9 +374,8 @@ struct sieve_extprogram {
 	struct program_client *program_client;
 };
 
-void sieve_extprogram_exec_error
-(struct sieve_error_handler *ehandler, const char *location,
-	const char *fmt, ...)
+void sieve_extprogram_exec_error(struct sieve_error_handler *ehandler,
+				 const char *location, const char *fmt, ...)
 {
 	char str[256];
 	struct tm *tm;
@@ -387,15 +384,16 @@ void sieve_extprogram_exec_error
 	tm = localtime(&ioloop_time);
 
 	timestamp =
-		( strftime(str, sizeof(str), " [%Y-%m-%d %H:%M:%S]", tm) > 0 ? str : "" );
+		(strftime(str, sizeof(str), " [%Y-%m-%d %H:%M:%S]", tm) > 0 ?
+		 str : "");
 
 	va_list args;
 	va_start(args, fmt);
 
 	T_BEGIN {
 		sieve_error(ehandler, location,
-			"%s: refer to server log for more information.%s",
-			t_strdup_vprintf(fmt, args), timestamp);
+			    "%s: refer to server log for more information.%s",
+			    t_strdup_vprintf(fmt, args), timestamp);
 	} T_END;
 
 	va_end(args);
@@ -403,15 +401,16 @@ void sieve_extprogram_exec_error
 
 /* API */
 
-struct sieve_extprogram *sieve_extprogram_create
-(const struct sieve_extension *ext, const struct sieve_script_env *senv,
-	const struct sieve_message_data *msgdata, const char *action,
-	const char *program_name, const char * const *args,
-	enum sieve_error *error_r)
+struct sieve_extprogram *
+sieve_extprogram_create(const struct sieve_extension *ext,
+			const struct sieve_script_env *senv,
+			const struct sieve_message_data *msgdata,
+			const char *action, const char *program_name,
+			const char *const *args, enum sieve_error *error_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct sieve_extprograms_config *ext_config =
-		(struct sieve_extprograms_config *) ext->context;
+		(struct sieve_extprograms_config *)ext->context;
 	const struct smtp_address *sender, *recipient, *orig_recipient;
 	struct sieve_extprogram *sprog;
 	const char *path = NULL;
@@ -421,8 +420,8 @@ struct sieve_extprogram *sieve_extprogram_create
 	e_debug(svinst->event, "action %s: "
 		"running program: %s", action, program_name);
 
-	if ( ext_config == NULL ||
-		(ext_config->bin_dir == NULL && ext_config->socket_dir == NULL) ) {
+	if (ext_config == NULL ||
+	    (ext_config->bin_dir == NULL && ext_config->socket_dir == NULL)) {
 		e_error(svinst->event, "action %s: "
 			"failed to execute program `%s': "
 			"vnd.dovecot.%s extension is unconfigured",
@@ -432,11 +431,12 @@ struct sieve_extprogram *sieve_extprogram_create
 	}
 
 	/* Try socket first */
-	if ( ext_config->socket_dir != NULL ) {
+	if (ext_config->socket_dir != NULL) {
 		path = t_strconcat(senv->user->set->base_dir, "/",
-			ext_config->socket_dir, "/", program_name, NULL);
-		if ( stat(path, &st) < 0 ) {
-			switch ( errno ) {
+				   ext_config->socket_dir, "/", program_name,
+				   NULL);
+		if (stat(path, &st) < 0) {
+			switch (errno) {
 			case ENOENT:
 				e_debug(svinst->event, "action %s: "
 					"socket path `%s' for program `%s' not found",
@@ -456,7 +456,7 @@ struct sieve_extprogram *sieve_extprogram_create
 				return NULL;
 			}
 			path = NULL;
-		} else if ( !S_ISSOCK(st.st_mode) ) {
+		} else if (!S_ISSOCK(st.st_mode)) {
 			e_error(svinst->event, "action %s: "
 				"socket path `%s' for program `%s' is not a socket",
 				action, path, program_name);
@@ -464,13 +464,14 @@ struct sieve_extprogram *sieve_extprogram_create
 			return NULL;
 		}
 	}
-		
+
 	/* Try executable next */
-	if ( path == NULL && ext_config->bin_dir != NULL ) {
+	if (path == NULL && ext_config->bin_dir != NULL) {
 		fork = TRUE;
-		path = t_strconcat(ext_config->bin_dir, "/", program_name, NULL);
-		if ( stat(path, &st) < 0 ) {
-			switch ( errno ) {
+		path = t_strconcat(ext_config->bin_dir, "/",
+				   program_name, NULL);
+		if (stat(path, &st) < 0) {
+			switch (errno) {
 			case ENOENT:
 				e_debug(svinst->event, "action %s: "
 					"executable path `%s' for program `%s' not found",
@@ -492,13 +493,13 @@ struct sieve_extprogram *sieve_extprogram_create
 			}
 
 			return NULL;
-		} else if ( !S_ISREG(st.st_mode) ) {
+		} else if (!S_ISREG(st.st_mode)) {
 			e_error(svinst->event, "action %s: "
 				"executable `%s' for program `%s' is not a regular file",
 				action, path, program_name);
 			*error_r = SIEVE_ERROR_NOT_POSSIBLE;
 			return NULL;
-		} else if ( (st.st_mode & S_IWOTH) != 0 ) {
+		} else if ((st.st_mode & S_IWOTH) != 0) {
 			e_error(svinst->event, "action %s: "
 				"executable `%s' for program `%s' is world-writable",
 				action, path, program_name);
@@ -508,7 +509,7 @@ struct sieve_extprogram *sieve_extprogram_create
 	}
 
 	/* None found ? */
-	if ( path == NULL ) {
+	if (path == NULL) {
 		e_error(svinst->event, "action %s: "
 			"program `%s' not found", action, program_name);
 		*error_r = SIEVE_ERROR_NOT_FOUND;
@@ -526,36 +527,42 @@ struct sieve_extprogram *sieve_extprogram_create
 		.input_idle_timeout_msecs = ext_config->execute_timeout * 1000,
 	};
 
-	if ( fork ) {
-		sprog->program_client =
-			program_client_local_create(svinst->event, path, args, &pc_params);
+	if (fork) {
+		sprog->program_client =	program_client_local_create(
+			svinst->event, path, args, &pc_params);
 	} else {
-		sprog->program_client =
-			program_client_unix_create(svinst->event, path, args, &pc_params);
+		sprog->program_client = program_client_unix_create(
+			svinst->event, path, args, &pc_params);
 	}
 
-	if ( svinst->username != NULL )
-		program_client_set_env(sprog->program_client, "USER", svinst->username);
-	if ( svinst->home_dir != NULL )
-		program_client_set_env(sprog->program_client, "HOME", svinst->home_dir);
-	if ( svinst->hostname != NULL )
-		program_client_set_env(sprog->program_client, "HOST", svinst->hostname);
+	if (svinst->username != NULL) {
+		program_client_set_env(sprog->program_client, "USER",
+				       svinst->username);
+	}
+	if (svinst->home_dir != NULL) {
+		program_client_set_env(sprog->program_client, "HOME",
+				       svinst->home_dir);
+	}
+	if (svinst->hostname != NULL) {
+		program_client_set_env(sprog->program_client, "HOST",
+				       svinst->hostname);
+	}
 
 	sender = msgdata->envelope.mail_from;
 	recipient = msgdata->envelope.rcpt_to;
 	orig_recipient = NULL;
-	if ( msgdata->envelope.rcpt_params != NULL )
+	if (msgdata->envelope.rcpt_params != NULL)
 		orig_recipient = msgdata->envelope.rcpt_params->orcpt.addr;
 
-	if ( !smtp_address_isnull(sender) ) {
+	if (!smtp_address_isnull(sender)) {
 		program_client_set_env(sprog->program_client, "SENDER",
 				       smtp_address_encode(sender));
 	}
-	if ( !smtp_address_isnull(recipient) ) {
+	if (!smtp_address_isnull(recipient)) {
 		program_client_set_env(sprog->program_client, "RECIPIENT",
 				       smtp_address_encode(recipient));
 	}
-	if ( !smtp_address_isnull(orig_recipient) ) {
+	if (!smtp_address_isnull(orig_recipient)) {
 		program_client_set_env(sprog->program_client, "ORIG_RECIPIENT",
 				       smtp_address_encode(orig_recipient));
 	}
@@ -574,14 +581,14 @@ void sieve_extprogram_destroy(struct sieve_extprogram **_sprog)
 
 /* I/0 */
 
-void sieve_extprogram_set_output
-(struct sieve_extprogram *sprog, struct ostream *output)
+void sieve_extprogram_set_output(struct sieve_extprogram *sprog,
+				 struct ostream *output)
 {
 	program_client_set_output(sprog->program_client, output);
 }
 
-void sieve_extprogram_set_input
-(struct sieve_extprogram *sprog, struct istream *input)
+void sieve_extprogram_set_input(struct sieve_extprogram *sprog,
+				struct istream *input)
 {
 	switch (sprog->ext_config->default_input_eol) {
 	case SIEVE_EXTPROGRAMS_EOL_LF:
@@ -599,24 +606,24 @@ void sieve_extprogram_set_input
 	i_stream_unref(&input);
 }
 
-void sieve_extprogram_set_output_seekable
-(struct sieve_extprogram *sprog)
+void sieve_extprogram_set_output_seekable(struct sieve_extprogram *sprog)
 {
 	string_t *prefix;
 	prefix = t_str_new(128);
 	mail_user_set_get_temp_prefix(prefix, sprog->scriptenv->user->set);
 
-	program_client_set_output_seekable(sprog->program_client, str_c(prefix));
+	program_client_set_output_seekable(sprog->program_client,
+					   str_c(prefix));
 }
 
-struct istream *sieve_extprogram_get_output_seekable
-(struct sieve_extprogram *sprog)
+struct istream *
+sieve_extprogram_get_output_seekable(struct sieve_extprogram *sprog)
 {
 	return program_client_get_output_seekable(sprog->program_client);
 }
 
-int sieve_extprogram_set_input_mail
-(struct sieve_extprogram *sprog, struct mail *mail)
+int sieve_extprogram_set_input_mail(struct sieve_extprogram *sprog,
+				    struct mail *mail)
 {
 	struct istream *input;
 
@@ -639,4 +646,3 @@ int sieve_extprogram_run(struct sieve_extprogram *sprog)
 	}
 	i_unreached();
 }
-
