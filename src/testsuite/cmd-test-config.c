@@ -41,7 +41,7 @@ const struct sieve_command_def cmd_test_config_set = {
 	.block_allowed = FALSE,
 	.block_required = FALSE,
 	.validate = cmd_test_config_set_validate,
-	.generate = cmd_test_config_generate
+	.generate = cmd_test_config_generate,
 };
 
 /* Test_config_unset command
@@ -84,7 +84,7 @@ const struct sieve_command_def cmd_test_config_reload = {
 	.block_allowed = FALSE,
 	.block_required = FALSE,
 	.registered = cmd_test_config_reload_registered,
-	.generate = cmd_test_config_generate
+	.generate = cmd_test_config_generate,
 };
 
 /*
@@ -109,7 +109,7 @@ static const struct sieve_argument_def test_config_reload_extension_tag = {
 
 enum cmd_test_config_optional {
 	OPT_END,
-	OPT_EXTENSION
+	OPT_EXTENSION,
 };
 
 /*
@@ -130,7 +130,7 @@ const struct sieve_operation_def test_config_set_operation = {
 	.ext_def = &testsuite_extension,
 	.code = TESTSUITE_OPERATION_TEST_CONFIG_SET,
 	.dump = cmd_test_config_set_operation_dump,
-	.execute = cmd_test_config_set_operation_execute
+	.execute = cmd_test_config_set_operation_execute,
 };
 
 /* Test_config_unset operation */
@@ -147,7 +147,7 @@ const struct sieve_operation_def test_config_unset_operation = {
 	.ext_def = &testsuite_extension,
 	.code = TESTSUITE_OPERATION_TEST_CONFIG_UNSET,
 	.dump = cmd_test_config_unset_operation_dump,
-	.execute = cmd_test_config_unset_operation_execute
+	.execute = cmd_test_config_unset_operation_execute,
 };
 
 /* Test_config_read operation */
@@ -164,7 +164,7 @@ const struct sieve_operation_def test_config_reload_operation = {
 	.ext_def = &testsuite_extension,
 	.code = TESTSUITE_OPERATION_TEST_CONFIG_RELOAD,
 	.dump = cmd_test_config_reload_operation_dump,
-	.execute = cmd_test_config_reload_operation_execute
+	.execute = cmd_test_config_reload_operation_execute,
 };
 
 /*
@@ -226,7 +226,6 @@ cmd_test_config_set_validate(struct sieve_validator *valdtr,
 	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "setting",
 						1, SAAT_STRING))
 		return FALSE;
-
 	if (!sieve_validator_argument_activate(valdtr, cmd, arg, FALSE))
 		return FALSE;
 
@@ -235,7 +234,6 @@ cmd_test_config_set_validate(struct sieve_validator *valdtr,
 	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "value", 2,
 						SAAT_STRING))
 		return FALSE;
-
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
@@ -251,7 +249,6 @@ cmd_test_config_unset_validate(struct sieve_validator *valdtr,
 	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "setting", 1,
 						SAAT_STRING))
 		return FALSE;
-
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
@@ -324,10 +321,9 @@ cmd_test_config_reload_operation_dump(const struct sieve_dumptime_env *denv,
 		int opt;
 		bool opok = TRUE;
 
-		if ((opt = sieve_opr_optional_dump(denv, address,
-						   &opt_code)) < 0)
+		opt = sieve_opr_optional_dump(denv, address, &opt_code);
+		if (opt < 0)
 			return FALSE;
-
 		if (opt == 0)
 			break;
 
@@ -365,13 +361,13 @@ cmd_test_config_set_operation_execute(const struct sieve_runtime_env *renv,
 	 */
 
 	/* Setting */
-	if ((ret = sieve_opr_string_read(renv, address, "setting",
-					 &setting)) <= 0)
+	ret = sieve_opr_string_read(renv, address, "setting", &setting);
+	if (ret <= 0)
 		return ret;
 
 	/* Value */
-	if ((ret = sieve_opr_string_read(renv, address, "value",
-					 &value)) <= 0)
+	ret = sieve_opr_string_read(renv, address, "value", &value);
+	if (ret <= 0)
 		return ret;
 
 	/*
@@ -404,8 +400,8 @@ cmd_test_config_unset_operation_execute(const struct sieve_runtime_env *renv,
 	 */
 
 	/* Setting */
-	if ((ret = sieve_opr_string_read(renv, address, "setting",
-					 &setting)) <= 0)
+	ret = sieve_opr_string_read(renv, address, "setting", &setting);
+	if (ret <= 0)
 		return ret;
 
 	/*
@@ -443,10 +439,9 @@ cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 	for (;;) {
 		int opt;
 
-		if ((opt = sieve_opr_optional_read(renv, address,
-						   &opt_code)) < 0)
+		opt = sieve_opr_optional_read(renv, address, &opt_code);
+		if (opt < 0)
 			return SIEVE_EXEC_BIN_CORRUPT;
-
 		if (opt == 0)
 			break;
 
