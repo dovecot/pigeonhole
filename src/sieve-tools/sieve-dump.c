@@ -45,7 +45,8 @@ int main(int argc, char **argv)
 	int exit_status = EXIT_SUCCESS;
 	int c;
 
-	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv, "DhP:x:", FALSE);
+	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv,
+				     "DhP:x:", FALSE);
 
 	outfile = NULL;
 
@@ -62,16 +63,15 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if ( optind < argc ) {
+	if (optind < argc) {
 		binfile = argv[optind++];
 	} else {
 		print_help();
 		i_fatal_status(EX_USAGE, "Missing <script-file> argument");
 	}
 
-	if ( optind < argc ) {
+	if (optind < argc)
 		outfile = argv[optind++];
-	}
 
 	/* Finish tool initialization */
 	svinst = sieve_tool_init_finish(sieve_tool, FALSE, TRUE);
@@ -81,9 +81,10 @@ int main(int argc, char **argv)
 
 	/* Dump binary */
 	sbin = sieve_load(svinst, binfile, NULL);
-	if ( sbin != NULL ) {
-		sieve_tool_dump_binary_to(sbin, outfile == NULL ? "-" : outfile, hexdump);
-
+	if (sbin != NULL) {
+		sieve_tool_dump_binary_to(sbin,
+					  (outfile == NULL ? "-" : outfile),
+					  hexdump);
 		sieve_close(&sbin);
 	} else {
 		i_error("failed to load binary: %s", binfile);
@@ -91,7 +92,5 @@ int main(int argc, char **argv)
 	}
 
 	sieve_tool_deinit(&sieve_tool);
-
 	return exit_status;
 }
-
