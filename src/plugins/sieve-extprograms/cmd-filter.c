@@ -48,11 +48,11 @@ const struct sieve_command_def sieve_cmd_filter = {
 	.block_allowed = FALSE,
 	.block_required = FALSE,
 	.validate = sieve_extprogram_command_validate,
-	.generate = cmd_filter_generate
+	.generate = cmd_filter_generate,
 };
 
-/* 
- * Filter operation 
+/*
+ * Filter operation
  */
 
 static bool
@@ -65,8 +65,8 @@ cmd_filter_operation_execute(const struct sieve_runtime_env *renv,
 const struct sieve_operation_def sieve_opr_filter = {
 	.mnemonic = "FILTER",
 	.ext_def = &sieve_ext_vnd_filter,
-	.dump = cmd_filter_operation_dump, 
-	.execute = cmd_filter_operation_execute
+	.dump = cmd_filter_operation_dump,
+	.execute = cmd_filter_operation_execute,
 };
 
 /*
@@ -94,14 +94,14 @@ cmd_filter_generate(const struct sieve_codegen_env *cgenv,
 	return TRUE;
 }
 
-/* 
+/*
  * Code dump
  */
- 
+
 static bool
 cmd_filter_operation_dump(const struct sieve_dumptime_env *denv,
 			  sieve_size_t *address)
-{	
+{
 	unsigned int is_test = 0;
 
 	/* Read is_test flag */
@@ -110,7 +110,7 @@ cmd_filter_operation_dump(const struct sieve_dumptime_env *denv,
 
 	sieve_code_dumpf(denv, "FILTER (%s)",
 			 (is_test > 0 ? "test" : "command"));
-	sieve_code_descend(denv);		
+	sieve_code_descend(denv);
 
 	/* Dump optional operands */
 	if (sieve_action_opr_optional_dump(denv, address, NULL) != 0)
@@ -122,7 +122,7 @@ cmd_filter_operation_dump(const struct sieve_dumptime_env *denv,
 	return sieve_opr_stringlist_dump_ex(denv, address, "arguments", "");
 }
 
-/* 
+/*
  * Code execution
  */
 
@@ -153,7 +153,7 @@ cmd_filter_operation_execute(const struct sieve_runtime_env *renv,
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	/* Optional operands */	
+	/* Optional operands */
 
 	if (sieve_action_opr_optional_read(renv, address, NULL,
 					   &ret, NULL) != 0)
@@ -161,8 +161,9 @@ cmd_filter_operation_execute(const struct sieve_runtime_env *renv,
 
 	/* Fixed operands */
 
-	if ((ret = sieve_extprogram_command_read_operands(renv, address, &pname,
-							  &args_list)) <= 0)
+	ret = sieve_extprogram_command_read_operands(renv, address, &pname,
+						     &args_list);
+	if (ret <= 0)
 		return ret;
 
 	program_name = str_c(pname);
@@ -221,7 +222,7 @@ cmd_filter_operation_execute(const struct sieve_runtime_env *renv,
 		} else {
 			sieve_runtime_critical(renv, NULL, "filter action",
 					       "filter action: "
-					       "failed to substitute message"); 
+					       "failed to substitute message");
 		}
 
 		i_stream_unref(&newmsg);
