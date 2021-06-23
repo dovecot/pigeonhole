@@ -5,10 +5,10 @@
  * Plugin interface
  */
 
-void sieve_extprograms_plugin_load
-	(struct sieve_instance *svinst, void **context);
-void sieve_extprograms_plugin_unload
-	(struct sieve_instance *svinst, void *context);
+void sieve_extprograms_plugin_load(struct sieve_instance *svinst,
+				   void **context);
+void sieve_extprograms_plugin_unload(struct sieve_instance *svinst,
+				     void *context);
 
 /*
  * Module interface
