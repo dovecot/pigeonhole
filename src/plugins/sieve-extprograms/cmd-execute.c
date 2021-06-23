@@ -107,15 +107,15 @@ const struct sieve_operation_def sieve_opr_execute = {
 	.mnemonic = "EXECUTE",
 	.ext_def = &sieve_ext_vnd_execute,
 	.dump = cmd_execute_operation_dump,
-	.execute = cmd_execute_operation_execute
+	.execute = cmd_execute_operation_execute,
 };
 
 /* Codes for optional operands */
 
 enum cmd_execute_optional {
-  OPT_END,
-  OPT_INPUT,
-  OPT_OUTPUT
+	OPT_END,
+	OPT_INPUT,
+	OPT_OUTPUT
 };
 
 /*
@@ -276,10 +276,9 @@ cmd_execute_operation_dump(const struct sieve_dumptime_env *denv,
 		int opt;
 		bool opok = TRUE;
 
-		if ((opt = sieve_action_opr_optional_dump(denv, address,
-							  &opt_code)) < 0)
+		opt = sieve_action_opr_optional_dump(denv, address, &opt_code);
+		if (opt < 0)
 			return FALSE;
-
 		if (opt == 0)
 			break;
 
@@ -345,10 +344,10 @@ cmd_execute_operation_execute(const struct sieve_runtime_env *renv,
 	for (;;) {
 		int opt;
 
-		if ((opt = sieve_action_opr_optional_read(
-			renv, address, &opt_code, &ret, &slist)) < 0)
+		opt = sieve_action_opr_optional_read(renv, address, &opt_code,
+						     &ret, &slist);
+		if (opt < 0)
 			return ret;
-
 		if (opt == 0)
 			break;
 
@@ -375,8 +374,9 @@ cmd_execute_operation_execute(const struct sieve_runtime_env *renv,
 
 	/* Fixed operands */
 
-	if ((ret = sieve_extprogram_command_read_operands(
-		renv, address, &pname, &args_list)) <= 0)
+	ret = sieve_extprogram_command_read_operands(renv, address,
+						     &pname, &args_list);
+	if (ret <= 0)
 		return ret;
 
 	program_name = str_c(pname);
@@ -457,7 +457,6 @@ cmd_execute_operation_execute(const struct sieve_runtime_env *renv,
 						    "assigned output variable");
 			} // FIXME: handle failure
 		}
-
 	} else if (ret < 0) {
 		if (error == SIEVE_ERROR_NOT_FOUND) {
 			sieve_runtime_error(
