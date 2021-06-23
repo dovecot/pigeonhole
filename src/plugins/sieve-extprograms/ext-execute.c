@@ -30,15 +30,16 @@
 
 static bool ext_execute_load(const struct sieve_extension *ext, void **context);
 static void ext_execute_unload(const struct sieve_extension *ext);
-static bool ext_execute_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
-	
+static bool
+ext_execute_validator_load(const struct sieve_extension *ext,
+			   struct sieve_validator *valdtr);
+
 const struct sieve_extension_def sieve_ext_vnd_execute = {
 	.name = "vnd.dovecot.execute",
 	.load = ext_execute_load,
 	.unload = ext_execute_unload,
 	.validator_load = ext_execute_validator_load,
-	SIEVE_EXT_DEFINE_OPERATION(sieve_opr_execute)
+	SIEVE_EXT_DEFINE_OPERATION(sieve_opr_execute),
 };
 
 /*
@@ -47,7 +48,7 @@ const struct sieve_extension_def sieve_ext_vnd_execute = {
 
 static bool ext_execute_load(const struct sieve_extension *ext, void **context)
 {
-	if ( *context != NULL ) {
+	if (*context != NULL) {
 		ext_execute_unload(ext);
 		*context = NULL;
 	}
@@ -58,10 +59,11 @@ static bool ext_execute_load(const struct sieve_extension *ext, void **context)
 
 static void ext_execute_unload(const struct sieve_extension *ext)
 {
-	struct sieve_extprograms_config *ext_config = 
+	struct sieve_extprograms_config *ext_config =
 		(struct sieve_extprograms_config *)ext->context;
 
-	if ( ext_config == NULL ) return;
+	if (ext_config == NULL)
+		return;
 
 	sieve_extprograms_config_deinit(&ext_config);
 }
@@ -70,8 +72,9 @@ static void ext_execute_unload(const struct sieve_extension *ext)
  * Validation
  */
 
-static bool ext_execute_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_execute_validator_load(const struct sieve_extension *ext,
+			   struct sieve_validator *valdtr)
 {
 	/* Register commands */
 	sieve_validator_register_command(valdtr, ext, &sieve_cmd_execute);
