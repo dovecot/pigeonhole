@@ -124,7 +124,7 @@ const struct sieve_action_def act_pipe = {
 
 struct ext_pipe_action {
 	const char *program_name;
-	const char * const *args;
+	const char *const *args;
 	bool try;
 };
 
@@ -179,10 +179,9 @@ cmd_pipe_operation_dump(const struct sieve_dumptime_env *denv,
 	for (;;) {
 		int opt;
 
-		if ((opt = sieve_action_opr_optional_dump(denv, address,
-							  &opt_code)) < 0)
+		opt = sieve_action_opr_optional_dump(denv, address, &opt_code);
+		if (opt < 0)
 			return FALSE;
-
 		if (opt == 0)
 			break;
 
@@ -228,11 +227,10 @@ cmd_pipe_operation_execute(const struct sieve_runtime_env *renv,
 	for (;;) {
 		int opt;
 
-		if ((opt = sieve_action_opr_optional_read(renv, address,
-							  &opt_code, &ret,
-							  &slist)) < 0)
+		opt = sieve_action_opr_optional_read(renv, address,
+						     &opt_code, &ret, &slist);
+		if (ret < 0)
 			return ret;
-
 		if (opt == 0)
 			break;
 
@@ -249,8 +247,9 @@ cmd_pipe_operation_execute(const struct sieve_runtime_env *renv,
 
 	/* Fixed operands */
 
-	if ((ret = sieve_extprogram_command_read_operands(renv, address, &pname,
-							  &args_list)) <= 0)
+	ret = sieve_extprogram_command_read_operands(renv, address,
+						     &pname, &args_list);
+	if (ret <= 0)
 		return ret;
 
 	/*
