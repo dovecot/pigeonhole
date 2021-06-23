@@ -64,16 +64,16 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if ( optind < argc ) {
+	if (optind < argc) {
 		scriptfile = argv[optind++];
 	} else {
 		print_help();
 		i_fatal_status(EX_USAGE, "Missing <script-file> argument");
 	}
 
-	if ( optind < argc ) {
+	if (optind < argc) {
 		outfile = argv[optind++];
-	} else if ( dump ) {
+	} else if (dump) {
 		outfile = "-";
 	}
 
@@ -82,46 +82,49 @@ int main(int argc, char **argv)
 	/* Enable debug extension */
 	sieve_enable_debug_extension(svinst);
 
-	if ( stat(scriptfile, &st) == 0 && S_ISDIR(st.st_mode) ) {
+	if (stat(scriptfile, &st) == 0 && S_ISDIR(st.st_mode)) {
 		/* Script directory */
 		DIR *dirp;
 		struct dirent *dp;
 
 		/* Sanity checks on some of the arguments */
 
-		if ( dump )
+		if (dump)
 			i_fatal_status(EX_USAGE,
 				"the -d option is not allowed when scriptfile is a directory.");
 
-		if ( outfile != NULL )
+		if (outfile != NULL)
 			i_fatal_status(EX_USAGE,
 				"the outfile argument is not allowed when scriptfile is a directory.");
 
 		/* Open the directory */
-		if ( (dirp = opendir(scriptfile)) == NULL )
+		dirp = opendir(scriptfile);
+		if (dirp == NULL)
 			i_fatal("opendir(%s) failed: %m", scriptfile);
 
 		/* Compile each sieve file */
 		for (;;) {
-
 			errno = 0;
-			if ( (dp = readdir(dirp)) == NULL ) {
-				if ( errno != 0 )
-					i_fatal("readdir(%s) failed: %m", scriptfile);
+			dp = readdir(dirp);
+			if (dp == NULL) {
+				if (errno != 0) {
+					i_fatal("readdir(%s) failed: %m",
+						scriptfile);
+				}
 				break;
 			}
 
-			if ( sieve_script_file_has_extension(dp->d_name) ) {
+			if (sieve_script_file_has_extension(dp->d_name)) {
 				const char *file;
 
-				if ( scriptfile[strlen(scriptfile)-1] == '/' )
+				if (scriptfile[strlen(scriptfile)-1] == '/')
 					file = t_strconcat(scriptfile, dp->d_name, NULL);
 				else
 					file = t_strconcat(scriptfile, "/", dp->d_name, NULL);
 
 				sbin = sieve_tool_script_compile(svinst, file, NULL);
 
-				if ( sbin != NULL ) {
+				if (sbin != NULL) {
 					sieve_save(sbin, TRUE, NULL);
 					sieve_close(&sbin);
 				}
@@ -129,21 +132,19 @@ int main(int argc, char **argv)
 		}
 
 		/* Close the directory */
-		if ( closedir(dirp) < 0 )
+		if (closedir(dirp) < 0)
 			i_fatal("closedir(%s) failed: %m", scriptfile);
 	} else {
 		/* Script file (i.e. not a directory)
-		 *
-		 *   NOTE: For consistency, stat errors are handled here as well
+
+		   NOTE: For consistency, stat errors are handled here as well
 		 */
 		sbin = sieve_tool_script_compile(svinst, scriptfile, NULL);
-
-		if ( sbin != NULL ) {
-			if ( dump )
+		if (sbin != NULL) {
+			if (dump)
 				sieve_tool_dump_binary_to(sbin, outfile, FALSE);
-			else {	
+			else
 				sieve_save_as(sbin, outfile, TRUE, 0600, NULL);
-			}
 
 			sieve_close(&sbin);
 		} else {
