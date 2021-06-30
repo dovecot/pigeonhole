@@ -20,14 +20,14 @@ struct testsuite_setting {
 
 static HASH_TABLE(const char *, struct testsuite_setting *) settings;
 
-static const char *testsuite_setting_get
-	(void *context, const char *identifier);
+static const char *testsuite_setting_get(void *context, const char *identifier);
 
 void testsuite_settings_init(void)
 {
 	hash_table_create(&settings, default_pool, 0, str_hash, strcmp);
 
-	sieve_tool_set_setting_callback(sieve_tool, testsuite_setting_get, NULL);
+	sieve_tool_set_setting_callback(sieve_tool,
+					testsuite_setting_get, NULL);
 }
 
 void testsuite_settings_deinit(void)
@@ -37,7 +37,7 @@ void testsuite_settings_deinit(void)
 	const char *key;
 	struct testsuite_setting *setting;
 
-	while ( hash_table_iterate(itx, settings, &key, &setting) ) {
+	while (hash_table_iterate(itx, settings, &key, &setting)) {
 		i_free(setting->identifier);
 		i_free(setting->value);
 		i_free(setting);
@@ -48,18 +48,18 @@ void testsuite_settings_deinit(void)
 	hash_table_destroy(&settings);
 }
 
-static const char *testsuite_setting_get
-(void *context ATTR_UNUSED, const char *identifier)
+static const char *
+testsuite_setting_get(void *context ATTR_UNUSED, const char *identifier)
 {
 	struct testsuite_setting *setting;
 	struct mail_user *user;
 
 	setting = hash_table_lookup(settings, identifier);
-	if ( setting != NULL )
+	if (setting != NULL)
 		return setting->value;
 
 	user = testsuite_mailstore_get_user();
-	if ( user == NULL )
+	if (user == NULL)
 		return NULL;
 	return mail_user_plugin_getenv(user, identifier);
 }
@@ -69,7 +69,7 @@ void testsuite_setting_set(const char *identifier, const char *value)
 	struct testsuite_setting *setting =
 		hash_table_lookup(settings, identifier);
 
-	if ( setting != NULL ) {
+	if (setting != NULL) {
 		i_free(setting->value);
 		setting->value = i_strdup(value);
 	} else {
@@ -86,7 +86,7 @@ void testsuite_setting_unset(const char *identifier)
 	struct testsuite_setting *setting =
 		hash_table_lookup(settings, identifier);
 
-	if ( setting != NULL ) {
+	if (setting != NULL) {
 		i_free(setting->identifier);
 		i_free(setting->value);
 		i_free(setting);
