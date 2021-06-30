@@ -9,26 +9,25 @@
  *
  */
 
-/*
- * Purpose: This custom extension is used to add sieve commands and tests that
- *          act the Sieve engine and on the test suite itself. This practically
- *          provides the means to completely control and thereby test the Sieve
- *          compiler and interpreter. This extension transforms the basic Sieve
- *          language into something much more powerful and suitable to perform
- *          complex self-test operations. Of course, this extension is only
- *          available (as vnd.dovecot.testsuite) when the sieve engine is used
- *          from within the testsuite commandline tool. Test scripts have the
- *          extension .svtest by convention to distinguish them from any normal
- *          sieve scripts that may reside in the same directory.
- *
- * WARNING: Although this code can serve as an example on how to write
- *          extensions to the Sieve interpreter, it is generally _NOT_ to be
- *          used as a source for ideas on new Sieve extensions. Many of the
- *          commands and tests that this extension introduces conflict with the
- *          goal and the implied restrictions of the Sieve language. These
- *          restrictions were put in place with good reason. Therefore, do
- *          _NOT_ export functionality provided by this testsuite extension to
- *          your custom extensions that are to be put to general use.
+/* Purpose: This custom extension is used to add sieve commands and tests that
+            act the Sieve engine and on the test suite itself. This practically
+            provides the means to completely control and thereby test the Sieve
+            compiler and interpreter. This extension transforms the basic Sieve
+            language into something much more powerful and suitable to perform
+            complex self-test operations. Of course, this extension is only
+            available (as vnd.dovecot.testsuite) when the sieve engine is used
+            from within the testsuite commandline tool. Test scripts have the
+            extension .svtest by convention to distinguish them from any normal
+            sieve scripts that may reside in the same directory.
+
+   WARNING: Although this code can serve as an example on how to write
+            extensions to the Sieve interpreter, it is generally _NOT_ to be
+            used as a source for ideas on new Sieve extensions. Many of the
+            commands and tests that this extension introduces conflict with the
+            goal and the implied restrictions of the Sieve language. These
+            restrictions were put in place with good reason. Therefore, do
+            _NOT_ export functionality provided by this testsuite extension to
+            your custom extensions that are to be put to general use.
  */
 
 #include <stdio.h>
@@ -74,7 +73,7 @@ const struct sieve_operation_def *testsuite_operations[] = {
 	&test_mailbox_delete_operation,
 	&test_binary_load_operation,
 	&test_binary_save_operation,
-	&test_imap_metadata_set_operation
+	&test_imap_metadata_set_operation,
 };
 
 /*
@@ -84,7 +83,7 @@ const struct sieve_operation_def *testsuite_operations[] = {
 const struct sieve_operand_def *testsuite_operands[] = {
 	&testsuite_object_operand,
 	&testsuite_substitution_operand,
-	&testsuite_namespace_operand
+	&testsuite_namespace_operand,
 };
 
 /*
@@ -93,15 +92,19 @@ const struct sieve_operand_def *testsuite_operands[] = {
 
 /* Forward declarations */
 
-static bool ext_testsuite_validator_load
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
-static bool ext_testsuite_generator_load
-	(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv);
-static bool ext_testsuite_interpreter_load
-	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
-		sieve_size_t *address);
-static bool ext_testsuite_binary_load
-	(const struct sieve_extension *ext, struct sieve_binary *sbin);
+static bool
+ext_testsuite_validator_load(const struct sieve_extension *ext,
+			     struct sieve_validator *valdtr);
+static bool
+ext_testsuite_generator_load(const struct sieve_extension *ext,
+			     const struct sieve_codegen_env *cgenv);
+static bool
+ext_testsuite_interpreter_load(const struct sieve_extension *ext,
+			       const struct sieve_runtime_env *renv,
+			       sieve_size_t *address);
+static bool
+ext_testsuite_binary_load(const struct sieve_extension *ext,
+			  struct sieve_binary *sbin);
 
 /* Extension object */
 
@@ -112,13 +115,14 @@ const struct sieve_extension_def testsuite_extension = {
 	.interpreter_load = ext_testsuite_interpreter_load,
 	.binary_load = ext_testsuite_binary_load,
 	SIEVE_EXT_DEFINE_OPERATIONS(testsuite_operations),
-	SIEVE_EXT_DEFINE_OPERANDS(testsuite_operands)
+	SIEVE_EXT_DEFINE_OPERANDS(testsuite_operands),
 };
 
 /* Extension implementation */
 
-static bool ext_testsuite_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *valdtr)
+static bool
+ext_testsuite_validator_load(const struct sieve_extension *ext,
+			     struct sieve_validator *valdtr)
 {
 	sieve_validator_register_command(valdtr, ext, &cmd_test);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_fail);
@@ -134,7 +138,8 @@ static bool ext_testsuite_validator_load
 	sieve_validator_register_command(valdtr, ext, &cmd_test_mailbox_delete);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_binary_load);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_binary_save);
-	sieve_validator_register_command(valdtr, ext, &cmd_test_imap_metadata_set);
+	sieve_validator_register_command(valdtr, ext,
+					 &cmd_test_imap_metadata_set);
 
 	sieve_validator_register_command(valdtr, ext, &tst_test_script_compile);
 	sieve_validator_register_command(valdtr, ext, &tst_test_script_run);
@@ -143,32 +148,34 @@ static bool ext_testsuite_validator_load
 	sieve_validator_register_command(valdtr, ext, &tst_test_result_action);
 	sieve_validator_register_command(valdtr, ext, &tst_test_result_execute);
 
-/*	sieve_validator_argument_override(valdtr, SAT_VAR_STRING, ext,
-		&testsuite_string_argument);*/
+#if 0
+	sieve_validator_argument_override(valdtr, SAT_VAR_STRING, ext,
+					  &testsuite_string_argument);
+#endif
 
 	testsuite_variables_init(ext, valdtr);
 
 	return testsuite_validator_context_initialize(valdtr);
 }
 
-static bool ext_testsuite_generator_load
-(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv)
+static bool
+ext_testsuite_generator_load(const struct sieve_extension *ext,
+			     const struct sieve_codegen_env *cgenv)
 {
 	return testsuite_generator_context_initialize(cgenv->gentr, ext);
 }
 
-static bool ext_testsuite_interpreter_load
-(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
-	sieve_size_t *address ATTR_UNUSED)
+static bool
+ext_testsuite_interpreter_load(const struct sieve_extension *ext,
+			       const struct sieve_runtime_env *renv,
+			       sieve_size_t *address ATTR_UNUSED)
 {
 	return testsuite_interpreter_context_initialize(renv->interp, ext);
 }
 
-static bool ext_testsuite_binary_load
-(const struct sieve_extension *ext ATTR_UNUSED, struct sieve_binary *sbin ATTR_UNUSED)
+static bool
+ext_testsuite_binary_load(const struct sieve_extension *ext ATTR_UNUSED,
+			  struct sieve_binary *sbin ATTR_UNUSED)
 {
 	return TRUE;
 }
-
-
-
