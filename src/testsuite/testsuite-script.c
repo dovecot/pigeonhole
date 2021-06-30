@@ -47,8 +47,9 @@ _testsuite_script_compile(const struct sieve_runtime_env *renv,
 		return NULL;
 
 	script_path = t_strconcat(script_path, "/", script, NULL);
-	if ((sbin = sieve_compile(svinst, script_path, NULL,
-				  testsuite_log_ehandler, 0, NULL)) == NULL)
+	sbin = sieve_compile(svinst, script_path, NULL, testsuite_log_ehandler,
+			     0, NULL);
+	if (sbin == NULL)
 		return NULL;
 
 	return sbin;
@@ -64,7 +65,8 @@ bool testsuite_script_compile(const struct sieve_runtime_env *renv,
 	i_assert(ictx != NULL);
 	testsuite_log_clear_messages();
 
-	if ((sbin = _testsuite_script_compile(renv, script)) == NULL)
+	sbin = _testsuite_script_compile(renv, script);
+	if (sbin == NULL)
 		return FALSE;
 
 	sieve_binary_unref(&ictx->compiled_script);
@@ -234,7 +236,8 @@ bool testsuite_script_multiscript(const struct sieve_runtime_env *renv,
 		const char *script = scripts[i];
 
 		/* Open */
-		if ((sbin = _testsuite_script_compile(renv, script)) == NULL) {
+		sbin = _testsuite_script_compile(renv, script);
+		if (sbin == NULL) {
 			result = FALSE;
 			break;
 		}
