@@ -175,8 +175,8 @@ testsuite_result_stringlist_next_item(struct sieve_stringlist *_strlist,
 		return 0;
 
 	do {
-		if ((action = sieve_result_iterate_next(strlist->result_iter,
-							&keep)) == NULL)
+		action = sieve_result_iterate_next(strlist->result_iter, &keep);
+		if (action == NULL)
 			return 0;
 
 		strlist->pos++;
