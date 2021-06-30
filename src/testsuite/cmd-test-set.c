@@ -22,16 +22,18 @@
 #include <stdio.h>
 
 /*
- * Test_set command
- *
- * Syntax
- *   test_set <testsuite object (member): string> <value: string>
+   Test_set command
+
+   Syntax
+     test_set <testsuite object (member): string> <value: string>
  */
 
-static bool cmd_test_set_validate
-	(struct sieve_validator *valdtr, struct sieve_command *cmd);
-static bool cmd_test_set_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
+static bool
+cmd_test_set_validate(struct sieve_validator *valdtr,
+		      struct sieve_command *cmd);
+static bool
+cmd_test_set_generate(const struct sieve_codegen_env *cgenv,
+		      struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_test_set = {
 	.identifier = "test_set",
@@ -41,52 +43,50 @@ const struct sieve_command_def cmd_test_set = {
 	.block_allowed = FALSE,
 	.block_required = FALSE,
 	.validate = cmd_test_set_validate,
-	.generate = cmd_test_set_generate
+	.generate = cmd_test_set_generate,
 };
 
 /*
  * Test_set operation
  */
 
-static bool cmd_test_set_operation_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int cmd_test_set_operation_execute
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool
+cmd_test_set_operation_dump(const struct sieve_dumptime_env *denv,
+			    sieve_size_t *address);
+static int
+cmd_test_set_operation_execute(const struct sieve_runtime_env *renv,
+			       sieve_size_t *address);
 
 const struct sieve_operation_def test_set_operation = {
 	.mnemonic = "TEST_SET",
 	.ext_def = &testsuite_extension,
 	.code = TESTSUITE_OPERATION_TEST_SET,
 	.dump = cmd_test_set_operation_dump,
-	.execute = cmd_test_set_operation_execute
+	.execute = cmd_test_set_operation_execute,
 };
 
 /*
  * Validation
  */
 
-static bool cmd_test_set_validate
-(struct sieve_validator *valdtr, struct sieve_command *cmd)
+static bool
+cmd_test_set_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
 	/* Check arguments */
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, cmd, arg, "object", 1, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "object",
+						1, SAAT_STRING))
 		return FALSE;
-	}
-
-	if ( !testsuite_object_argument_activate(valdtr, arg, cmd) )
+	if (!testsuite_object_argument_activate(valdtr, arg, cmd))
 		return FALSE;
 
 	arg = sieve_ast_argument_next(arg);
 
-	if ( !sieve_validate_positional_argument
-		(valdtr, cmd, arg, "value", 2, SAAT_STRING) ) {
+	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "value",
+						2, SAAT_STRING))
 		return FALSE;
-	}
-
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
@@ -94,8 +94,9 @@ static bool cmd_test_set_validate
  * Code generation
  */
 
-static bool cmd_test_set_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+static bool
+cmd_test_set_generate(const struct sieve_codegen_env *cgenv,
+		      struct sieve_command *cmd)
 {
 	sieve_operation_emit(cgenv->sblock, cmd->ext, &test_set_operation);
 
@@ -107,54 +108,56 @@ static bool cmd_test_set_generate
  * Code dump
  */
 
-static bool cmd_test_set_operation_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static bool
+cmd_test_set_operation_dump(const struct sieve_dumptime_env *denv,
+			    sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "TEST SET:");
 	sieve_code_descend(denv);
 
-	return
-		testsuite_object_dump(denv, address) &&
-		sieve_opr_string_dump(denv, address, "value");
+	return (testsuite_object_dump(denv, address) &&
+		sieve_opr_string_dump(denv, address, "value"));
 }
 
 /*
  * Intepretation
  */
 
-static int cmd_test_set_operation_execute
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+static int
+cmd_test_set_operation_execute(const struct sieve_runtime_env *renv,
+			       sieve_size_t *address)
 {
 	struct testsuite_object tobj;
 	string_t *value;
 	int member_id;
 	int ret;
 
-	if ( !testsuite_object_read_member
-		(renv->sblock, address, &tobj, &member_id) ) {
-		sieve_runtime_trace_error(renv, "invalid testsuite object member");
+	if (!testsuite_object_read_member(renv->sblock, address,
+					  &tobj, &member_id)) {
+		sieve_runtime_trace_error(
+			renv, "invalid testsuite object member");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	if ( (ret=sieve_opr_string_read(renv, address, "string", &value)) <= 0 )
+	ret = sieve_opr_string_read(renv, address, "string", &value);
+	if (ret <= 0)
 		return ret;
 
-	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
 		sieve_runtime_trace(renv, 0, "testsuite: test_set command");
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(renv, 0,
 			"set test parameter '%s' = \"%s\"",
-				testsuite_object_member_name(&tobj, member_id), str_c(value));
+			testsuite_object_member_name(&tobj, member_id),
+			str_c(value));
 	}
 
-	if ( tobj.def == NULL || tobj.def->set_member == NULL ) {
-		sieve_runtime_trace_error(renv, "unimplemented testsuite object");
+	if (tobj.def == NULL || tobj.def->set_member == NULL) {
+		sieve_runtime_trace_error(
+			renv, "unimplemented testsuite object");
 		return SIEVE_EXEC_FAILURE;
 	}
 
 	tobj.def->set_member(renv, member_id, value);
 	return SIEVE_EXEC_OK;
 }
-
-
-
