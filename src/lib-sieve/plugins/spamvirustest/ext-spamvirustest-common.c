@@ -532,7 +532,7 @@ int ext_spamvirustest_get_value
 				if ( regexec(&max_header->regexp, header_value, 2, match_values, 0)
 					!= 0 ) {
 					sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-						"regexp for header '%s' did not match "
+						"max_header regexp for header '%s' did not match "
 						"on value '%s'", max_header->header_name, header_value);
 					goto failed;
 				}
@@ -589,7 +589,7 @@ int ext_spamvirustest_get_value
 		if ( regexec(&status_header->regexp, header_value, 2, match_values, 0)
 			!= 0 ) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-				"regexp for header '%s' did not match on value '%s'",
+				"status_header regexp for header '%s' did not match on value '%s'",
 				status_header->header_name, header_value);
 			goto failed;
 		}
