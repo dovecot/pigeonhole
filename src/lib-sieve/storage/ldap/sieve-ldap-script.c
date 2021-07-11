@@ -132,7 +132,7 @@ static int sieve_ldap_script_binary_read_metadata
 	string_t *dn, *modattr;
 
 	/* config file changed? */
-	if ( bmtime <= lstorage->set_mtime ) {
+	if ( bmtime < lstorage->set_mtime ) {
 		if ( svinst->debug ) {
 			e_debug(script->event,
 				"Sieve binary `%s' is not newer "
