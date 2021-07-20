@@ -1285,6 +1285,8 @@ bool sieve_resource_usage_is_excessive(
 	const struct sieve_resource_usage *rusage)
 {
 	i_assert(svinst->max_cpu_time_secs <= (UINT_MAX / 1000));
+	if (svinst->max_cpu_time_secs == 0)
+		return FALSE;
 	return (rusage->cpu_time_msecs > (svinst->max_cpu_time_secs * 1000));
 }
 
