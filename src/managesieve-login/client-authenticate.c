@@ -64,9 +64,10 @@ void managesieve_client_auth_result(struct client *client,
 		*/
 		referral = t_str_new(128);
 		str_printfa(referral, "REFERRAL sieve://%s;AUTH=%s@%s",
-			    reply->destuser, client->auth_mech_name, reply->host);
-		if ( reply->port != 4190 )
-			str_printfa(referral, ":%u", reply->port);
+			    reply->proxy.username, client->auth_mech_name,
+			    reply->proxy.host);
+		if (reply->proxy.port != 4190)
+			str_printfa(referral, ":%u", reply->proxy.port);
 
 		if ( result == CLIENT_AUTH_RESULT_REFERRAL_SUCCESS ) {
 			client_send_okresp(client, str_c(referral), text);;

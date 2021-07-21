@@ -448,7 +448,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 	struct managesieve_client *msieve_client =
 		(struct managesieve_client *)client;
 	struct ostream *output;
-	enum login_proxy_ssl_flags ssl_flags;
+	enum auth_proxy_ssl_flags ssl_flags;
 	managesieve_response_t response = MANAGESIEVE_RESPONSE_NONE;
 	string_t *command;
 	int ret = 0;
@@ -473,7 +473,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 			command = t_str_new(128);
 
 			ssl_flags = login_proxy_get_ssl_flags(client->login_proxy);
-			if ((ssl_flags & PROXY_SSL_FLAG_STARTTLS) != 0) {
+			if ((ssl_flags & AUTH_PROXY_SSL_FLAG_STARTTLS) != 0) {
 				if (!msieve_client->proxy_starttls) {
 					login_proxy_failed(client->login_proxy,
 						login_proxy_get_event(client->login_proxy),
@@ -649,6 +649,7 @@ managesieve_proxy_send_failure_reply(struct client *client,
 	case LOGIN_PROXY_FAILURE_TYPE_INTERNAL:
 	case LOGIN_PROXY_FAILURE_TYPE_REMOTE:
 	case LOGIN_PROXY_FAILURE_TYPE_PROTOCOL:
+	case LOGIN_PROXY_FAILURE_TYPE_AUTH_REDIRECT:
 		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
 				       "TRYLATER", LOGIN_PROXY_FAILURE_MSG);
 		break;
