@@ -1,3 +1,12 @@
+v0.5.16 2021-08-06  Timo Sirainen <timo.sirainen@open-xchange.com>
+
+	* .dovecot.sieve.log file now includes year in the header.
+	* Change Sieve script result execution to delay definitive action
+	  execution to the end of a successful Sieve script execution session.
+	  This is part of an effort to solve problems with the Sieve duplicate
+	  test. As a side-effect, some rare temporary-error cases yield
+	  different results, in which partial failure is more likely.
+
 v0.5.15 2021-06-21  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* CVE-2020-28200: Sieve interpreter is not protected against abusive
