@@ -196,7 +196,7 @@ void sieve_binary_get_resource_usage(struct sieve_binary *sbin,
 	time_t update_time = header->resource_usage.update_time;
 	unsigned int timeout = sbin->svinst->resource_usage_timeout_secs;
 
-	if (update_time != 0 && (ioloop_time - update_time) > timeout)
+	if (update_time != 0 && (ioloop_time - update_time) > (time_t)timeout)
 		i_zero(&header->resource_usage);
 
 	sieve_resource_usage_init(rusage_r);
