@@ -1539,10 +1539,13 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 
 	/* Scan for deferred keep */
 	aexec = rexec->actions_tail;
-	while (aexec != NULL &&
-	       aexec->state >= SIEVE_ACTION_EXECUTION_STATE_EXECUTED) {
+	while (aexec != NULL) {
 		struct sieve_result_action *rac = aexec->action;
 
+		if (aexec->state < SIEVE_ACTION_EXECUTION_STATE_EXECUTED) {
+			aexec = NULL;
+			break;
+		}
 		if (rac->action.keep && rac->action.def == NULL)
 			break;
 		aexec = aexec->prev;
