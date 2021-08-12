@@ -155,8 +155,6 @@ cmd_redirect_validate(struct sieve_validator *validator,
 	return TRUE;
 }
 
-
-
 /*
  * Code generation
  */
@@ -615,5 +613,3 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv,
 
 	return ret;
 }
-
-
