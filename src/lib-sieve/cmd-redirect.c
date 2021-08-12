@@ -462,6 +462,8 @@ act_redirect_get_duplicate_id(struct act_redirect_context *ctx,
 	else
 		recipient = sieve_get_user_email(eenv->svinst);
 
+	pool_t pool = sieve_result_pool(aenv->result);
+
 	/* Base the duplicate ID on:
 	   - the message id
 	   - the recipient running this Sieve script
@@ -470,8 +472,8 @@ act_redirect_get_duplicate_id(struct act_redirect_context *ctx,
 		   the original message
 	   - if the message came through a mailing list: the mailinglist ID
 	 */
-	*dupeid_r = t_strdup_printf(
-		"%s-%s-%s-%s-%s", msg_id,
+	*dupeid_r = p_strdup_printf(
+		pool, "%s-%s-%s-%s-%s", msg_id,
 		(recipient != NULL ? smtp_address_encode(recipient) : ""),
 		smtp_address_encode(ctx->to_address),
 		(resent_id != NULL ? resent_id : ""),
@@ -566,7 +568,6 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv,
 			     action->mail : sieve_message_get_mail(msgctx));
 	const struct sieve_message_data *msgdata = eenv->msgdata;
 	const struct sieve_script_env *senv = eenv->scriptenv;
-	const char *dupeid = NULL;
 	bool loop_detected = FALSE;
 	int ret;
 
@@ -583,13 +584,15 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv,
 	}
 
 	/* Create ID for duplicate database lookup */
-	ret = act_redirect_get_duplicate_id(ctx, aenv, trans->msg_id, &dupeid);
+	ret = act_redirect_get_duplicate_id(ctx, aenv, trans->msg_id,
+					    &trans->dupeid);
 	if (ret != SIEVE_EXEC_OK)
 		return ret;
 	i_assert(trans->dupeid != NULL);
 
 	/* Check whether we've seen this message before */
-	if (sieve_action_duplicate_check(senv, dupeid, strlen(dupeid))) {
+	if (sieve_action_duplicate_check(senv, trans->dupeid,
+					 strlen(trans->dupeid))) {
 		sieve_result_global_log(
 			aenv, "discarded duplicate forward to <%s>",
 			smtp_address_encode(ctx->to_address));
