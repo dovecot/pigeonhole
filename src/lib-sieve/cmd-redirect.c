@@ -259,6 +259,8 @@ cmd_redirect_operation_execute(const struct sieve_runtime_env *renv,
 struct act_redirect_transaction {
 	const char *msg_id, *new_msg_id;
 	const char *dupeid;
+
+	bool skip_redirect:1;
 };
 
 static bool
@@ -544,18 +546,8 @@ act_redirect_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 }
 
 static int
-act_redirect_execute(const struct sieve_action_exec_env *aenv ATTR_UNUSED,
-		     void *tr_context ATTR_UNUSED, bool *keep)
-{
-	/* Cancel implicit keep */
-	*keep = FALSE;
-
-	return SIEVE_EXEC_OK;
-}
-
-static int
-act_redirect_commit(const struct sieve_action_exec_env *aenv,
-		    void *tr_context ATTR_UNUSED)
+act_redirect_execute(const struct sieve_action_exec_env *aenv,
+		     void *tr_context, bool *keep)
 {
 	const struct sieve_action *action = aenv->action;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
@@ -596,6 +588,7 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv,
 		sieve_result_global_log(
 			aenv, "discarded duplicate forward to <%s>",
 			smtp_address_encode(ctx->to_address));
+		trans->skip_redirect = TRUE;
 		return SIEVE_EXEC_OK;
 	}
 
@@ -609,8 +602,33 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv,
 			aenv, "not forwarding message to <%s>: "
 			"the `x-sieve-redirected-from' header indicates a mail loop",
 			smtp_address_encode(ctx->to_address));
+		trans->skip_redirect = TRUE;
 		return SIEVE_EXEC_OK;
 	}
+
+	/* Cancel implicit keep */
+	*keep = FALSE;
+
+	return SIEVE_EXEC_OK;
+}
+
+static int
+act_redirect_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
+{
+	const struct sieve_action *action = aenv->action;
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct sieve_instance *svinst = eenv->svinst;
+	struct act_redirect_context *ctx =
+		(struct act_redirect_context *)action->context;
+	struct sieve_message_context *msgctx = aenv->msgctx;
+	struct mail *mail = (action->mail != NULL ?
+			     action->mail : sieve_message_get_mail(msgctx));
+	struct act_redirect_transaction *trans = tr_context;
+	const struct sieve_script_env *senv = eenv->scriptenv;
+	int ret;
+
+	if (trans->skip_redirect)
+		return SIEVE_EXEC_OK;
 
 	/*
 	 * Try to forward the message
