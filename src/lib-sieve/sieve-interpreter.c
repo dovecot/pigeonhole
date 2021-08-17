@@ -1003,8 +1003,8 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 		}
 		e_debug(e->event(), "Finished running script `%s' "
 			"(status=%s, resource usage: %s)",
-			sieve_execution_exitcode_to_str(ret),
 			sieve_binary_source(interp->runenv.sbin),
+			sieve_execution_exitcode_to_str(ret),
 			sieve_resource_usage_get_summary(&interp->rusage));
 		interp->running = FALSE;
 	}
