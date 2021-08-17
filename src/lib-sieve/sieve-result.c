@@ -1475,8 +1475,7 @@ void sieve_result_execution_destroy(struct sieve_result_execution **_rexec)
 }
 
 static void
-sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
-				   bool success)
+sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec)
 {
 	const struct sieve_action_exec_env *aenv = &rexec->action_env;
 	struct sieve_result *result = aenv->result;
@@ -1486,6 +1485,7 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 	struct sieve_action_execution *aexec_keep = &rexec->keep;
 	struct sieve_result_action *ract_keep = &rexec->keep_action;
 	struct sieve_action *act_keep = &ract_keep->action;
+	bool success = (rexec->status == SIEVE_EXEC_OK);
 
 	if (rexec->keep_equiv_action != NULL) {
 		e_debug(rexec->event, "No implicit keep needed "
@@ -1579,8 +1579,8 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec,
 		}
 	}
 
-	e_debug(rexec->event, "Execute implicit keep (failure=%s)",
-		(!success ? "yes" : "no"));
+	e_debug(rexec->event, "Execute implicit keep (status=%s)",
+		sieve_execution_exitcode_to_str(rexec->status));
 
 	/* Initialize side effects */
 	sieve_action_execution_add_side_effects(rexec, aexec_keep, ract_keep);
@@ -1633,7 +1633,7 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 	/* Start keep if necessary */
 	if (act_keep->def == NULL ||
 	    aexec_keep->state != SIEVE_ACTION_EXECUTION_STATE_EXECUTED) {
-		sieve_result_implicit_keep_execute(rexec, success);
+		sieve_result_implicit_keep_execute(rexec);
 	/* Switch to failure keep if necessary. */
 	} else if (rexec->keep_success && !success){
 		e_debug(rexec->event, "Switch to failure implicit keep");
@@ -1645,7 +1645,7 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec,
 		i_zero(aexec_keep);
 
 		/* Start failure keep action. */
-		sieve_result_implicit_keep_execute(rexec, success);
+		sieve_result_implicit_keep_execute(rexec);
 	}
 	if (act_keep->def == NULL)
 		return rexec->keep_status;
@@ -1931,10 +1931,8 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 		/* Execute implicit keep if the transaction failed or when the
 		   implicit keep was not canceled during transaction.
 		 */
-		if (rexec->status != SIEVE_EXEC_OK || rexec->keep_implicit) {
-			sieve_result_implicit_keep_execute(
-				rexec, (rexec->status == SIEVE_EXEC_OK));
-		}
+		if (rexec->status != SIEVE_EXEC_OK || rexec->keep_implicit)
+			sieve_result_implicit_keep_execute(rexec);
 	}
 
 	/* Transaction commit/rollback */
