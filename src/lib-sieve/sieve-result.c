@@ -1859,10 +1859,11 @@ sieve_result_transaction_commit_or_rollback(
 	}
 
 	e_debug(rexec->event, "Finished finalizing actions "
-		"(status=%s, keep=%s)",
+		"(status=%s, keep=%s, committed=%s)",
 		sieve_execution_exitcode_to_str(status),
 		(rexec->keep_explicit ? "explicit" :
-		 (rexec->keep_implicit ? "implicit" : "none")));
+		 (rexec->keep_implicit ? "implicit" : "none")),
+		(rexec->committed ? "yes" : "no"));
 
 	return commit_status;
 }
