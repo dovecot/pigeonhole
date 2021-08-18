@@ -50,7 +50,7 @@ struct sieve_lexer {
 
 	enum sieve_token_type token_type;
 	string_t *token_str_value;
-	int token_int_value;
+	sieve_number_t token_int_value;
 
 	int token_line;
 };
@@ -94,7 +94,8 @@ sieve_lexer_token_ident(const struct sieve_lexer *lexer)
 	return str_c(lexer->token_str_value);
 }
 
-static inline int sieve_lexer_token_int(const struct sieve_lexer *lexer)
+static inline sieve_number_t
+sieve_lexer_token_int(const struct sieve_lexer *lexer)
 {
 	i_assert(lexer->token_type == STT_NUMBER);
 
