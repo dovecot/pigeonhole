@@ -1796,10 +1796,11 @@ sieve_result_transaction_execute(struct sieve_result_execution *rexec,
 	}
 
 	e_debug(rexec->event, "Finished executing actions "
-		"(status=%s, keep=%s)",
+		"(status=%s, keep=%s, executed=%s)",
 		sieve_execution_exitcode_to_str(status),
 		(rexec->keep_explicit ? "explicit" :
-		 (rexec->keep_implicit ? "implicit" : "none")));
+		 (rexec->keep_implicit ? "implicit" : "none")),
+		(rexec->executed ? "yes" : "no"));
 	return status;
 }
 
