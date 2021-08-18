@@ -1494,8 +1494,6 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec)
 		break;
 	case SIEVE_EXEC_TEMP_FAILURE:
 	case SIEVE_EXEC_RESOURCE_LIMIT:
-		if (rexec->executed)
-			break;
 		if (rexec->committed)
 			break;
 		if (rexec->keep_finalizing)
