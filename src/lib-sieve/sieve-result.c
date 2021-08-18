@@ -1627,7 +1627,7 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 	struct sieve_result_action *ract_keep = &rexec->keep_action;
 	struct sieve_action *act_keep = &ract_keep->action;
 	int commit_status = SIEVE_EXEC_OK;
-	bool success = FALSE;
+	bool success = FALSE, temp_failure = FALSE;
 
 	switch (rexec->status) {
 	case SIEVE_EXEC_OK:
@@ -1637,7 +1637,15 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 	case SIEVE_EXEC_RESOURCE_LIMIT:
 		if (rexec->committed)
 			break;
-		return rexec->status;
+
+		if (aexec_keep->state !=
+		    SIEVE_ACTION_EXECUTION_STATE_EXECUTED)
+			return rexec->status;
+		/* Roll back for temporary failure when no other action
+		   is committed. */
+		commit_status = rexec->status;
+		temp_failure = TRUE;
+		break;
 	default:
 		break;
 	}
@@ -1662,8 +1670,10 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 	rexec->keep_finalizing = TRUE;
 
 	/* Start keep if necessary */
-	if (act_keep->def == NULL ||
-	    aexec_keep->state != SIEVE_ACTION_EXECUTION_STATE_EXECUTED) {
+	if (temp_failure) {
+		rexec->keep_status = rexec->status;
+	} else if (act_keep->def == NULL ||
+		   aexec_keep->state != SIEVE_ACTION_EXECUTION_STATE_EXECUTED) {
 		sieve_result_implicit_keep_execute(rexec);
 	/* Switch to failure keep if necessary. */
 	} else if (rexec->keep_success && !success){
