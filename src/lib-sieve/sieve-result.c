@@ -1629,7 +1629,20 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 	struct sieve_result_action *ract_keep = &rexec->keep_action;
 	struct sieve_action *act_keep = &ract_keep->action;
 	int commit_status = SIEVE_EXEC_OK;
-	bool success = (rexec->status == SIEVE_EXEC_OK);
+	bool success = FALSE;
+
+	switch (rexec->status) {
+	case SIEVE_EXEC_OK:
+		success = TRUE;
+		break;
+	case SIEVE_EXEC_TEMP_FAILURE:
+	case SIEVE_EXEC_RESOURCE_LIMIT:
+		if (rexec->committed)
+			break;
+		return rexec->status;
+	default:
+		break;
+	}
 
 	if (rexec->keep_equiv_action != NULL) {
 		struct sieve_action_execution *ke_aexec =
@@ -1957,32 +1970,29 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 	/* Commit implicit keep if necessary */
 
 	result_status = rexec->status;
-	if (rexec->committed ||
-	    (rexec->status != SIEVE_EXEC_TEMP_FAILURE &&
-	     rexec->status != SIEVE_EXEC_RESOURCE_LIMIT)) {
-		/* Commit implicit keep if the transaction failed or when the
-		   implicit keep was not canceled during transaction.
-		 */
-		if (rexec->status != SIEVE_EXEC_OK || rexec->keep_implicit) {
-			ret = sieve_result_implicit_keep_finalize(rexec);
-			switch (ret) {
-			case SIEVE_EXEC_OK:
-				if (result_status == SIEVE_EXEC_TEMP_FAILURE)
-					result_status = SIEVE_EXEC_FAILURE;
+
+	/* Commit implicit keep if the transaction failed or when the
+	   implicit keep was not canceled during transaction.
+	 */
+	if (rexec->status != SIEVE_EXEC_OK || rexec->keep_implicit) {
+		ret = sieve_result_implicit_keep_finalize(rexec);
+		switch (ret) {
+		case SIEVE_EXEC_OK:
+			if (result_status == SIEVE_EXEC_TEMP_FAILURE)
+				result_status = SIEVE_EXEC_FAILURE;
+			break;
+		case SIEVE_EXEC_TEMP_FAILURE:
+			if (!rexec->committed) {
+				result_status = ret;
 				break;
-			case SIEVE_EXEC_TEMP_FAILURE:
-				if (!rexec->committed) {
-					result_status = ret;
-					break;
-				}
-				/* fall through */
-			default:
-				result_status = SIEVE_EXEC_KEEP_FAILED;
 			}
+			/* fall through */
+		default:
+			result_status = SIEVE_EXEC_KEEP_FAILED;
 		}
-		if (rexec->status == SIEVE_EXEC_OK)
-			rexec->status = result_status;
 	}
+	if (rexec->status == SIEVE_EXEC_OK)
+		rexec->status = result_status;
 
 	/* Finish execution */
 
