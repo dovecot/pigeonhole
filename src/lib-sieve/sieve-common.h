@@ -16,6 +16,7 @@ typedef uint32_t sieve_offset_t;
 typedef uint64_t sieve_number_t;
 
 #define SIEVE_MAX_NUMBER ((sieve_number_t)-1)
+#define SIEVE_PRI_NUMBER PRIu64
 
 /*
  * Forward declarations
