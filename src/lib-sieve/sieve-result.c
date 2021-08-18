@@ -1691,6 +1691,8 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 	if (act_keep->def == NULL)
 		return rexec->keep_status;
 
+	i_assert(aexec_keep->state == SIEVE_ACTION_EXECUTION_STATE_EXECUTED);
+
 	/* Finalize keep action */
 	rexec->keep_status = sieve_result_action_commit_or_rollback(
 		rexec, aexec_keep, rexec->keep_status, &commit_status);
