@@ -934,6 +934,7 @@ struct sieve_result_execution {
 	bool keep_success:1;
 	bool keep_explicit:1;
 	bool keep_implicit:1;
+	bool keep_finalizing:1;
 	bool seen_delivery:1;
 	bool executed:1;
 	bool executed_delivery:1;
@@ -1485,7 +1486,24 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec)
 	struct sieve_action_execution *aexec_keep = &rexec->keep;
 	struct sieve_result_action *ract_keep = &rexec->keep_action;
 	struct sieve_action *act_keep = &ract_keep->action;
-	bool success = (rexec->status == SIEVE_EXEC_OK);
+	bool success = FALSE;
+
+	switch (rexec->status) {
+	case SIEVE_EXEC_OK:
+		success = TRUE;
+		break;
+	case SIEVE_EXEC_TEMP_FAILURE:
+	case SIEVE_EXEC_RESOURCE_LIMIT:
+		if (rexec->executed)
+			break;
+		if (rexec->committed)
+			break;
+		if (rexec->keep_finalizing)
+			break;
+		return;
+	default:
+		break;
+	}
 
 	if (rexec->keep_equiv_action != NULL) {
 		e_debug(rexec->event, "No implicit keep needed "
@@ -1629,6 +1647,8 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 
 	e_debug(rexec->event, "Finalize implicit keep (status=%s)",
 		sieve_execution_exitcode_to_str(rexec->status));
+
+	rexec->keep_finalizing = TRUE;
 
 	/* Start keep if necessary */
 	if (act_keep->def == NULL ||
@@ -1923,17 +1943,11 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 		return rexec->status;
 	}
 
-	/* Execute implicit keep if necessary */
-
-	if (rexec->executed ||
-	    (rexec->status != SIEVE_EXEC_TEMP_FAILURE &&
-	     rexec->status != SIEVE_EXEC_RESOURCE_LIMIT)) {
-		/* Execute implicit keep if the transaction failed or when the
-		   implicit keep was not canceled during transaction.
-		 */
-		if (rexec->status != SIEVE_EXEC_OK || rexec->keep_implicit)
-			sieve_result_implicit_keep_execute(rexec);
-	}
+	/* Execute implicit keep if the transaction failed or when the
+	   implicit keep was not canceled during transaction.
+	 */
+	if (rexec->status != SIEVE_EXEC_OK || rexec->keep_implicit)
+		sieve_result_implicit_keep_execute(rexec);
 
 	/* Transaction commit/rollback */
 
