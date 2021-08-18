@@ -1494,10 +1494,21 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec)
 		break;
 	case SIEVE_EXEC_TEMP_FAILURE:
 	case SIEVE_EXEC_RESOURCE_LIMIT:
-		if (rexec->committed)
+		if (rexec->committed) {
+			e_debug(rexec->event,
+				"Temporary failure occurred (status=%s), "
+				"but other actions were already committed: "
+				"execute failure implicit keep",
+				sieve_execution_exitcode_to_str(rexec->status));
 			break;
+		}
 		if (rexec->keep_finalizing)
 			break;
+
+		e_debug(rexec->event,
+			"Skip implicit keep for temporary failure "
+			"(state=execute, status=%s)",
+			sieve_execution_exitcode_to_str(rexec->status));
 		return;
 	default:
 		break;
@@ -1635,12 +1646,23 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 		break;
 	case SIEVE_EXEC_TEMP_FAILURE:
 	case SIEVE_EXEC_RESOURCE_LIMIT:
-		if (rexec->committed)
+		if (rexec->committed) {
+			e_debug(rexec->event,
+				"Temporary failure occurred (status=%s), "
+				"but other actions were already committed: "
+				"commit failure implicit keep",
+				sieve_execution_exitcode_to_str(rexec->status));
 			break;
+		}
 
 		if (aexec_keep->state !=
-		    SIEVE_ACTION_EXECUTION_STATE_EXECUTED)
+		    SIEVE_ACTION_EXECUTION_STATE_EXECUTED) {
+			e_debug(rexec->event,
+				"Skip implicit keep for temporary failure "
+				"(state=commit, status=%s)",
+				sieve_execution_exitcode_to_str(rexec->status));
 			return rexec->status;
+		}
 		/* Roll back for temporary failure when no other action
 		   is committed. */
 		commit_status = rexec->status;
