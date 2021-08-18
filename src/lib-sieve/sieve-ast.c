@@ -585,7 +585,7 @@ void sieve_ast_argument_string_setc(struct sieve_ast_argument *argument,
 }
 
 void sieve_ast_argument_number_substitute(struct sieve_ast_argument *argument,
-					  unsigned int number)
+					  sieve_number_t number)
 {
 	argument->type = SAAT_NUMBER;
 	argument->_value.number = number;
@@ -714,7 +714,8 @@ sieve_ast_argument_tag_insert(struct sieve_ast_argument *before,
 
 struct sieve_ast_argument *
 sieve_ast_argument_number_create(struct sieve_ast_node *node,
-				 unsigned int number, unsigned int source_line)
+				 sieve_number_t number,
+				 unsigned int source_line)
 {
 	struct sieve_ast_argument *argument =
 		sieve_ast_argument_create(node->ast, source_line);
@@ -728,7 +729,7 @@ sieve_ast_argument_number_create(struct sieve_ast_node *node,
 }
 
 void sieve_ast_argument_number_set(struct sieve_ast_argument *argument,
-				   unsigned int newnum)
+				   sieve_number_t newnum)
 {
 	i_assert(argument->type == SAAT_NUMBER);
 	argument->_value.number = newnum;
@@ -993,7 +994,8 @@ sieve_ast_unparse_argument(struct sieve_ast_argument *argument, int level)
 		sieve_ast_unparse_stringlist(argument, level+1);
 		break;
 	case SAAT_NUMBER:
-		printf("%d", sieve_ast_argument_number(argument));
+		printf("%"SIEVE_PRI_NUMBER,
+		       sieve_ast_argument_number(argument));
 		break;
 	case SAAT_TAG:
 		printf(":%s", sieve_ast_argument_tag(argument));

@@ -93,7 +93,7 @@ struct sieve_ast_argument {
 		string_t *str;
 		struct sieve_ast_arg_list *strlist;
 		const char *tag;
-		unsigned int number;
+		sieve_number_t number;
 	} _value;
 
 	unsigned int source_line;
@@ -251,7 +251,8 @@ sieve_ast_argument_tag_create(struct sieve_ast_node *node, const char *tag,
 
 struct sieve_ast_argument *
 sieve_ast_argument_number_create(struct sieve_ast_node *node,
-				 unsigned int number, unsigned int source_line);
+				 sieve_number_t number,
+				 unsigned int source_line);
 
 void sieve_ast_argument_string_set(struct sieve_ast_argument *argument,
 				   string_t *newstr);
@@ -259,9 +260,9 @@ void sieve_ast_argument_string_setc(struct sieve_ast_argument *argument,
 				    const char *newstr);
 
 void sieve_ast_argument_number_set(struct sieve_ast_argument *argument,
-				   unsigned int newnum);
+				   sieve_number_t newnum);
 void sieve_ast_argument_number_substitute(struct sieve_ast_argument *argument,
-					  unsigned int number);
+					  sieve_number_t number);
 
 struct sieve_ast_argument *
 sieve_ast_argument_tag_insert(struct sieve_ast_argument *before,
