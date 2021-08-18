@@ -1980,6 +1980,7 @@ int sieve_result_execute(struct sieve_result_execution *rexec, int status,
 				result_status = SIEVE_EXEC_FAILURE;
 			break;
 		case SIEVE_EXEC_TEMP_FAILURE:
+		case SIEVE_EXEC_RESOURCE_LIMIT:
 			if (!rexec->committed) {
 				result_status = ret;
 				break;
