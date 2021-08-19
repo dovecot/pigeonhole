@@ -530,9 +530,9 @@ int ext_include_generate_include(
 	if (included != NULL) {
 		/* Yes, only update flags */
 		if ((flags & EXT_INCLUDE_FLAG_OPTIONAL) == 0)
-			included->flags &= ~EXT_INCLUDE_FLAG_OPTIONAL;
+			included->flags &= ENUM_NEGATE(EXT_INCLUDE_FLAG_OPTIONAL);
 		if ((flags & EXT_INCLUDE_FLAG_ONCE) == 0)
-			included->flags &= ~EXT_INCLUDE_FLAG_ONCE;
+			included->flags &= ENUM_NEGATE(EXT_INCLUDE_FLAG_ONCE);
 	} else 	{
 		const char *script_name = sieve_script_name(script);
 		enum sieve_compile_flags cpflags = cgenv->flags;
@@ -583,10 +583,12 @@ int ext_include_generate_include(
 			(void)ext_include_create_ast_context(
 				this_ext, ast, cmd->ast_node->ast);
 
-			if (location == EXT_INCLUDE_LOCATION_GLOBAL)
-				cpflags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
-			else
+			if (location == EXT_INCLUDE_LOCATION_GLOBAL) {
+				cpflags &=
+					ENUM_NEGATE(SIEVE_EXECUTE_FLAG_NOGLOBAL);
+			} else {
 				cpflags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
+			}
 
 			/* Validate */
 			if (!sieve_validate(ast, ehandler, cpflags, NULL)) {
@@ -737,8 +739,10 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 
 			if (included->location != EXT_INCLUDE_LOCATION_GLOBAL)
 				eenv_new.flags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
-			else
-				eenv_new.flags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
+			else {
+				eenv_new.flags &=
+					ENUM_NEGATE(SIEVE_EXECUTE_FLAG_NOGLOBAL);
+			}
 
 			/* Create interpreter for top-level included script
 			   (first sub-interpreter)
@@ -808,8 +812,10 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 
 							if (curctx->include->location != EXT_INCLUDE_LOCATION_GLOBAL)
 								eenv_new.flags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
-							else
-								eenv_new.flags &= ~SIEVE_EXECUTE_FLAG_NOGLOBAL;
+							else {
+								eenv_new.flags &=
+									ENUM_NEGATE(SIEVE_EXECUTE_FLAG_NOGLOBAL);
+							}
 
 							/* Create sub-interpreter */
 							subinterp = sieve_interpreter_create_for_block(
