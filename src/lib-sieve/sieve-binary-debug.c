@@ -40,8 +40,8 @@ struct sieve_binary_debug_writer {
 	struct sieve_binary_block *sblock;
 
 	sieve_size_t address;
-	unsigned long int line;
-	unsigned long int column;
+	unsigned int line;
+	unsigned int column;
 };
 
 struct sieve_binary_debug_writer *
@@ -66,13 +66,18 @@ void sieve_binary_debug_emit(struct sieve_binary_debug_writer *dwriter,
 			     sieve_size_t code_address, unsigned int code_line,
 			     unsigned int code_column)
 {
+	i_assert(code_address >= dwriter->address);
+
 	struct sieve_binary_block *sblock = dwriter->sblock;
 	sieve_size_t address_inc = code_address - dwriter->address;
-	unsigned int line_inc = code_line - dwriter->line;
+	int line_inc = (code_line > dwriter->line ?
+			(int)(code_line - dwriter->line) :
+			-(int)(dwriter->line - code_line));
 	unsigned int sp_opcode = 0;
 
 	/* Check for applicability of special opcode */
-	if ((LINPROG_LINE_BASE + LINPROG_LINE_RANGE - 1) >= line_inc) {
+	if (line_inc > 0 &&
+	    (LINPROG_LINE_BASE + LINPROG_LINE_RANGE - 1) >= line_inc) {
 		sp_opcode = LINPROG_OP_SPECIAL_BASE +
 			(line_inc - LINPROG_LINE_BASE) +
 			(LINPROG_LINE_RANGE * address_inc);
@@ -83,10 +88,11 @@ void sieve_binary_debug_emit(struct sieve_binary_debug_writer *dwriter,
 
 	/* Update line and address */
 	if (sp_opcode == 0) {
-		if (line_inc > 0) {
+		if (line_inc != 0) {
 			(void)sieve_binary_emit_byte(sblock,
 						     LINPROG_OP_ADVANCE_LINE);
-			(void)sieve_binary_emit_unsigned(sblock, line_inc);
+			(void)sieve_binary_emit_unsigned(
+				sblock, (unsigned int)line_inc);
 		}
 
 		if (address_inc > 0) {
@@ -120,9 +126,9 @@ struct sieve_binary_debug_reader {
 	struct sieve_binary_block *sblock;
 
 	sieve_size_t address, last_address;
-	unsigned long int line, last_line;
+	unsigned int line, last_line;
 
-	unsigned long int column;
+	unsigned int column;
 
 	sieve_size_t state;
 };
@@ -159,7 +165,7 @@ sieve_binary_debug_read_line(struct sieve_binary_debug_reader *dreader,
 {
 	size_t linprog_size;
 	sieve_size_t address;
-	unsigned long int line;
+	unsigned int line;
 
 	if (code_address < dreader->last_address)
 		sieve_binary_debug_reader_reset(dreader);
@@ -183,6 +189,7 @@ sieve_binary_debug_read_line(struct sieve_binary_debug_reader *dreader,
 	while (dreader->state < linprog_size) {
 		unsigned int opcode;
 		unsigned int value;
+		int line_inc;
 
 		if (sieve_binary_read_byte(dreader->sblock,
 					   &dreader->state, &opcode)) {
@@ -224,8 +231,11 @@ sieve_binary_debug_read_line(struct sieve_binary_debug_reader *dreader,
 					sieve_binary_debug_reader_reset(dreader);
 					return 0;
 				}
-				debug_printf("        : + %d\n", value);
-				line += value;
+				line_inc = (int)value;
+				debug_printf("        : + %d\n", line_inc);
+				line = (line_inc > 0 ?
+					line + (unsigned int)line_inc :
+					line - (unsigned int)-line_inc);
 				break;
 			case LINPROG_OP_SET_COLUMN:
 				debug_printf("%08llx: SET_COL\n",
