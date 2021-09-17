@@ -112,8 +112,13 @@ act_duplicate_mark_finish(const struct sieve_action_exec_env *aenv,
 	struct act_duplicate_mark_data *data =
 		(struct act_duplicate_mark_data *)aenv->action->context;
 
-	if (status != SIEVE_EXEC_OK)
+	if (status != SIEVE_EXEC_OK) {
+		e_debug(aenv->event, "Not marking duplicate (status=%s)",
+			sieve_execution_exitcode_to_str(status));
 		return;
+	}
+
+	e_debug(aenv->event, "Marking duplicate");
 
 	/* Message was handled successfully, so track duplicate for this
 	 * message.
