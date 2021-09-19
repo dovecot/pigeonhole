@@ -985,11 +985,16 @@ sieve_binary_file_do_update_resource_usage(
 {
 	struct sieve_binary_header *header = &sbin->header;
 	struct file_lock *lock;
+	const char *error;
 	int ret;
 
-	ret = file_wait_lock(fd, sbin->path, F_WRLCK, FILE_LOCK_METHOD_FCNTL,
-			     SIEVE_BINARY_FILE_LOCK_TIMEOUT, &lock);
+	struct file_lock_settings lock_set = {
+		.lock_method = FILE_LOCK_METHOD_FCNTL,
+	};
+	ret = file_wait_lock(fd, sbin->path, F_WRLCK, &lock_set,
+			     SIEVE_BINARY_FILE_LOCK_TIMEOUT, &lock, &error);
 	if (ret <= 0) {
+		e_error(sbin->event, "%s", error);
 		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
