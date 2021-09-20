@@ -581,6 +581,7 @@ imap_sieve_mailbox_run_copy_source(
 		return;
 
 	i_assert(ismt->src_mail_trans->box == src_box);
+	i_assert(mevent->src_mail_uid > 0);
 
 	if (*src_mail == NULL)
 		*src_mail = mail_alloc(ismt->src_mail_trans, 0, NULL);
@@ -741,11 +742,18 @@ imap_sieve_mailbox_transaction_run(
 		bool fatal;
 
 		/* Determine UID for saved message */
-		if (mevent->dest_mail_uid > 0 ||
-			!seq_range_array_iter_nth(&siter, mevent->save_seq, &uid))
+		if (mevent->dest_mail_uid > 0)
 			uid = mevent->dest_mail_uid;
+		else if (!seq_range_array_iter_nth(&siter, mevent->save_seq,
+						   &uid)) {
+			/* already gone for some reason */
+			imap_sieve_mailbox_debug(
+				sbox, "Message for Sieve event gone");
+			continue;
+		}
 
 		/* Select event message */
+		i_assert(uid > 0);
 		if (!mail_set_uid(mail, uid) || mail->expunged) {
 			/* already gone for some reason */
 			imap_sieve_mailbox_debug(sbox,
