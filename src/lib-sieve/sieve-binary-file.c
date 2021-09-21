@@ -398,6 +398,12 @@ sieve_binary_save_to_stream(struct sieve_binary *sbin, struct ostream *stream)
 			return FALSE;
 	}
 
+	if (o_stream_finish(stream) <= 0) {
+		e_error(sbin->event, "save: "
+			"failed to finish output stream: %s",
+			o_stream_get_error(stream));
+		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -462,6 +468,7 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 		result = -1;
 		if (error_r != NULL)
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		o_stream_ignore_last_errors(stream);
 	}
 	o_stream_destroy(&stream);
 
