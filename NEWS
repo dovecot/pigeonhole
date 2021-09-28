@@ -1,3 +1,26 @@
+v0.5.17 2021-10-28  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	- duplicate: The Sieve duplicate test is prone to false negatives when
+	  the user receives many e-mails concurrently, meaning that duplicate
+	  deliveries can still occur.
+	- fileinto: v2.3.16 regression: Sieve delivery crashes if mail is
+	  delivered to non-existing and existing folder.
+	- imap-filter-sieve: v2.3.15 regression: The CPU limits on Sieve
+	  execution are too easily exceeded in IMAP context (the IMAPSieve and
+	  FILTER=SIEVE capabilities). Changed the default to unlimited CPU time
+	  for IMAP context, since similar excessive resource usage can be caused
+	  by other means as well. The CPU limits on Sieve scripts executed at
+	  LDA/LMTP delivery are still enforced by default.
+	- redirect:  The Sieve redirect action has protections against users
+	  triggering mail loops. Unfortunately, the detection of a redirect mail
+	  loop sometimes causes the message to get lost if no other Sieve action
+	  is applied that delivers the message somewhere else.
+	- redirect: v2.3.16 regression: With certain Sieve scripts if redirect
+	  fails due to temporary failure, the lmtp process may crash after the
+	  delivery. Fixes:
+	  Panic: file mail-user.c: line 229 (mail_user_deinit):
+	  assertion failed: ((*user)->refcount == 1).
+
 v0.5.16 2021-08-06  Timo Sirainen <timo.sirainen@open-xchange.com>
 
 	* .dovecot.sieve.log file now includes year in the header.
