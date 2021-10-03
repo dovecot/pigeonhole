@@ -8,35 +8,35 @@
 #include "sieve-error.h"
 
 /*
-	Abstract Syntax Tree (AST) structure:
+  Abstract Syntax Tree (AST) structure:
 
-	sieve_ast (root)
-	[*command]
-	 |
-	 +-- command:
-	 |   ....
-	 +-- command:
-	 |	 [identifier *argument                      *test *command]
-	 |                +-- argument:                 |     \--> as from root
-	 |                |   ....                      |
- 	 |                +-- argument:                 V (continued below)
-	 |                |   [number | tag | *string]
-	 |                .
-	 .
+  sieve_ast (root)
+  [*command]
+   |
+   +-- command:
+   |   ....
+   +-- command:
+   |    [identifier *argument                     *test *command]
+   |                +-- argument:                 |     \--> as from root
+   |                |   ....                      |
+   |                +-- argument:                 V (continued below)
+   |                |   [number | tag | *string]
+   |                .
+   .
 
-	 *test
-	 +-- test:
-	 |   ....
-	 +-- test:
-	 |   [identifier *argument                     *test]
-	 |               +-- argument:                 \-->  as from the top
-	 .               |   ....                              of this tree
-	                 +-- argument:
-	                 |   [number | tag | *string]
-	                 .
+   *test
+   +-- test:
+   |   ....
+   +-- test:
+   |   [identifier *argument                     *test]
+   |               +-- argument:                 \-->  as from the top
+   .               |   ....                              of this tree
+                   +-- argument:
+                   |   [number | tag | *string]
+                   .
 
-	 Tests and commands are defined using the same structure: sieve_ast_node.
-	 However, arguments and string-lists are described using sieve_ast_argument.
+   Tests and commands are defined using the same structure: sieve_ast_node.
+   However, arguments and string-lists are described using sieve_ast_argument.
 */
 
 /* IMPORTANT NOTICE: Do not decorate the AST with objects other than those
@@ -186,7 +186,7 @@ struct sieve_ast_extension {
 void sieve_ast_extension_link(struct sieve_ast *ast,
 			      const struct sieve_extension *ext,
 			      bool required);
-const struct sieve_extension * const *
+const struct sieve_extension *const *
 sieve_ast_extensions_get(struct sieve_ast *ast, unsigned int *count_r);
 
 void sieve_ast_extension_register(struct sieve_ast *ast,
