@@ -20,6 +20,7 @@
 #include "managesieve-quote.h"
 #include "managesieve-proxy.h"
 #include "managesieve-parser.h"
+#include "managesieve-url.h"
 
 typedef enum {
 	MANAGESIEVE_RESPONSE_NONE,
@@ -442,6 +443,34 @@ managesieve_proxy_parse_auth_reply(const char *line,
 	managesieve_parser_destroy(&parser);
 }
 
+static bool
+auth_resp_code_parse_referral(struct client *client, const char *resp_code,
+			      const char **userhostport_r)
+{
+	struct managesieve_url *url;
+	const char *referral, *error;
+
+	if (resp_code == NULL || strncasecmp(resp_code, "REFERRAL ", 9) != 0)
+		return FALSE;
+	referral = resp_code + 9;
+
+	if (managesieve_url_parse(referral, MANAGESIEVE_URL_ALLOW_USERINFO_PART,
+				  pool_datastack_create(), &url, &error) < 0) {
+		e_debug(login_proxy_get_event(client->login_proxy),
+			"Couldn't parse REFERRAL '%s': %s", referral, error);
+		return FALSE;
+	}
+
+	string_t *str = t_str_new(128);
+	if (url->user != NULL)
+		str_printfa(str, "%s@", url->user);
+	str_append(str, url->host.name);
+	if (url->port != 0)
+		str_printfa(str, ":%u", url->port);
+	*userhostport_r = str_c(str);
+	return TRUE;
+}
+
 int managesieve_proxy_parse_line(struct client *client, const char *line)
 {
 	struct managesieve_client *msieve_client =
@@ -608,6 +637,9 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		enum login_proxy_failure_type failure_type;
 		if (null_strcasecmp(resp_code, "TRYLATER") == 0)
 			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL;
+		else if (auth_resp_code_parse_referral(client, resp_code,
+						       &reason))
+			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_REDIRECT;
 		else {
 			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH;
 			client_send_no(client, AUTH_FAILED_MSG);
