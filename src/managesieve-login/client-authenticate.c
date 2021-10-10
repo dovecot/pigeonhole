@@ -13,6 +13,7 @@
 #include "auth-client.h"
 
 #include "managesieve-parser.h"
+#include "managesieve-protocol.h"
 #include "managesieve-quote.h"
 #include "client.h"
 
@@ -65,7 +66,7 @@ void managesieve_client_auth_result(struct client *client,
 		str_printfa(referral, "REFERRAL sieve://%s;AUTH=%s@%s",
 			    reply->proxy.username, client->auth_mech_name,
 			    reply->proxy.host);
-		if (reply->proxy.port != 4190)
+		if (reply->proxy.port != MANAGESIEVE_DEFAULT_PORT)
 			str_printfa(referral, ":%u", reply->proxy.port);
 
 		if (result == CLIENT_AUTH_RESULT_REFERRAL_SUCCESS)

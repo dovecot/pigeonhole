@@ -10,6 +10,7 @@ libmanagesieve_la_SOURCES = \
 	managesieve-parser.c
 
 noinst_HEADERS = \
+	managesieve-protocol.h \
 	managesieve-arg.h \
 	managesieve-quote.h \
 	managesieve-parser.h

@@ -15,6 +15,7 @@
 #include "auth-client.h"
 
 #include "managesieve-parser.h"
+#include "managesieve-protocol.h"
 #include "managesieve-quote.h"
 
 #include "client.h"
@@ -554,7 +555,7 @@ static struct client_vfuncs managesieve_client_vfuncs = {
 static struct login_binary managesieve_login_binary = {
 	.protocol = "sieve",
 	.process_name = "managesieve-login",
-	.default_port = 4190,
+	.default_port = MANAGESIEVE_DEFAULT_PORT,
 
 	.event_category = {
 		.name = "managesieve",

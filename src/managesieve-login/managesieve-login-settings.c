@@ -11,6 +11,7 @@
 #include "login-settings.h"
 
 #include "pigeonhole-config.h"
+#include "managesieve-protocol.h"
 
 #include "managesieve-login-settings.h"
 
@@ -22,7 +23,7 @@
 /* <settings checks> */
 
 static struct inet_listener_settings managesieve_login_inet_listeners_array[] = {
-    { .name = "sieve", .address = "", .port = 4190 },
+    { .name = "sieve", .address = "", .port = MANAGESIEVE_DEFAULT_PORT },
 };
 static struct inet_listener_settings *managesieve_login_inet_listeners[] = {
 	&managesieve_login_inet_listeners_array[0]
