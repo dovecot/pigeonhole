@@ -15,6 +15,7 @@
 #include "managesieve-parser.h"
 #include "managesieve-protocol.h"
 #include "managesieve-quote.h"
+#include "managesieve-url.h"
 #include "client.h"
 
 #include "client-authenticate.h"
@@ -45,6 +46,7 @@ void managesieve_client_auth_result(struct client *client,
 {
 	struct managesieve_client *msieve_client =
 		(struct managesieve_client *)client;
+	struct managesieve_url url;
 	string_t *referral;
 
 	switch (result) {
@@ -63,11 +65,13 @@ void managesieve_client_auth_result(struct client *client,
 		   .. [REFERRAL ..] Reason from auth server
 		*/
 		referral = t_str_new(128);
-		str_printfa(referral, "REFERRAL sieve://%s;AUTH=%s@%s",
-			    reply->proxy.username, client->auth_mech_name,
-			    reply->proxy.host);
-		if (reply->proxy.port != MANAGESIEVE_DEFAULT_PORT)
-			str_printfa(referral, ":%u", reply->proxy.port);
+
+		i_zero(&url);
+		url.user = reply->proxy.username;
+		url.host.name = reply->proxy.host;
+		url.port = reply->proxy.port;
+		str_append(referral, "REFERRAL ");
+		str_append(referral, managesieve_url_create(&url));
 
 		if (result == CLIENT_AUTH_RESULT_REFERRAL_SUCCESS)
 			client_send_okresp(client, str_c(referral), text);
