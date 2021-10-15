@@ -400,7 +400,8 @@ proxy_input_capability(struct managesieve_client *client, const char *line,
 
 static void
 managesieve_proxy_parse_auth_reply(const char *line,
-				   const char **reason_r, bool *trylater_r)
+				   const char **reason_r,
+				   const char **resp_code_r)
 {
 	struct managesieve_parser *parser;
 	const struct managesieve_arg *args;
@@ -408,7 +409,7 @@ managesieve_proxy_parse_auth_reply(const char *line,
 	const char *reason;
 	int ret;
 
-	*trylater_r = FALSE;
+	*resp_code_r = NULL;
 
 	if (strncasecmp(line, "NO ", 3) != 0) {
 		*reason_r = line;
@@ -418,19 +419,17 @@ managesieve_proxy_parse_auth_reply(const char *line,
 	*reason_r = line;
 
 	if (line[0] == '(') {
+		const char *rend;
+
 		/* Parse optional resp-code. FIXME: The current
 		   managesieve-parser can't really handle this properly, so
 		   we'll just assume that there aren't any strings with ')'
 		   in them. */
-		if (strncasecmp(line, "(TRYLATER) ", 11) == 0) {
-			*trylater_r = TRUE;
-			line += 11;
-		} else {
-			line = strstr(line, ") ");
-			if (line == NULL)
-				return;
-			line += 2;
-		}
+		rend = strstr(line, ") ");
+		if (rend == NULL)
+			return;
+		*resp_code_r = t_strdup_until(line + 1, rend);
+		line = rend + 2;
 	}
 
 	/* Parse the string */
@@ -599,16 +598,15 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		}
 
 		/* Authentication failed */
-		bool try_later;
-		(void)managesieve_proxy_parse_auth_reply(line, &reason,
-							 &try_later);
+		const char *resp_code;
+		managesieve_proxy_parse_auth_reply(line, &reason, &resp_code);
 
 		/* Login failed. Send our own failure reply so client can't
 		   figure out if user exists or not just by looking at the reply
 		   string.
 		 */
 		enum login_proxy_failure_type failure_type;
-		if (try_later)
+		if (null_strcasecmp(resp_code, "TRYLATER") == 0)
 			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL;
 		else {
 			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH;
