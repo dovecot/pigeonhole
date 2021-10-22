@@ -8,6 +8,7 @@
 #include "ostream.h"
 #include "str.h"
 #include "str-sanitize.h"
+#include "strescape.h"
 #include "safe-memset.h"
 #include "buffer.h"
 #include "base64.h"
@@ -31,13 +32,43 @@ static const char *managesieve_proxy_state_names[MSIEVE_PROXY_STATE_COUNT] = {
 	"none", "tls-start", "tls-ready", "xclient", "auth"
 };
 
+static string_t *
+proxy_compose_xclient_forward(struct managesieve_client *client)
+{
+	const char *const *arg;
+	string_t *str;
+
+	if (*client->common.auth_passdb_args == NULL)
+		return NULL;
+
+	str = t_str_new(128);
+	for (arg = client->common.auth_passdb_args; *arg != NULL; arg++) {
+		if (strncasecmp(*arg, "forward_", 8) == 0) {
+			if (str_len(str) > 0)
+				str_append_c(str, '\t');
+			str_append_tabescaped(str, (*arg)+8);
+		}
+	}
+	if (str_len(str) == 0)
+		return NULL;
+
+	return str;
+}
+
 static void
 proxy_write_xclient(struct managesieve_client *client, string_t *str)
 {
-	str_printfa(str, "XCLIENT ADDR=%s PORT=%u SESSION=%s TTL=%u\r\n",
+	string_t *fwd = proxy_compose_xclient_forward(client);
+
+	str_printfa(str, "XCLIENT ADDR=%s PORT=%u SESSION=%s TTL=%u",
 		    net_ip2addr(&client->common.ip), client->common.remote_port,
 		    client_get_session_id(&client->common),
 		    client->common.proxy_ttl - 1);
+	if (fwd != NULL) {
+		str_append(str, " FORWARD=");
+		base64_encode(str_data(fwd), str_len(fwd), str);
+	}
+	str_append(str, "\r\n");
 }
 
 static void
