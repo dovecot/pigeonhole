@@ -9,6 +9,7 @@
 #include "safe-memset.h"
 #include "str.h"
 #include "strescape.h"
+#include "base64.h"
 #include "master-service.h"
 #include "master-auth.h"
 #include "auth-client.h"
@@ -158,6 +159,26 @@ cmd_logout(struct managesieve_client *client,
 }
 
 static int
+cmd_xclient_parse_forward(struct managesieve_client *client, const char *value)
+{
+	size_t value_len = strlen(value);
+
+	if (client->common.forward_fields != NULL)
+		str_truncate(client->common.forward_fields, 0);
+	else {
+		client->common.forward_fields =	str_new(
+			client->common.preproxy_pool,
+			MAX_BASE64_DECODED_SIZE(value_len));
+	}
+
+	if (base64_decode(value, value_len, NULL,
+			  client->common.forward_fields) < 0)
+		return -1;
+
+	return 0;
+}
+
+static int
 cmd_xclient(struct managesieve_client *client,
 	    const struct managesieve_arg *args)
 {
@@ -172,6 +193,9 @@ cmd_xclient(struct managesieve_client *client,
 		managesieve_arg_get_atom(&args[0], &arg)) {
 		if (strncasecmp(arg, "ADDR=", 5) == 0) {
 			if (net_addr2ip(arg + 5, &client->common.ip) < 0)
+				args_ok = FALSE;
+		} else if (strncasecmp(arg, "FORWARD=", 8)  == 0) {
+			if (cmd_xclient_parse_forward(client, arg + 8) < 0)
 				args_ok = FALSE;
 		} else if (strncasecmp(arg, "PORT=", 5) == 0) {
 			if (net_str2port(arg + 5,
