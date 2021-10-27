@@ -1676,9 +1676,6 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 		return rexec->keep_status;
 	}
 
-	e_debug(rexec->event, "Finalize implicit keep (status=%s)",
-		sieve_execution_exitcode_to_str(rexec->status));
-
 	rexec->keep_finalizing = TRUE;
 
 	/* Start keep if necessary */
@@ -1702,6 +1699,9 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 	}
 	if (act_keep->def == NULL)
 		return rexec->keep_status;
+
+	e_debug(rexec->event, "Finalize implicit keep (status=%s)",
+		sieve_execution_exitcode_to_str(rexec->status));
 
 	i_assert(aexec_keep->state == SIEVE_ACTION_EXECUTION_STATE_EXECUTED);
 
