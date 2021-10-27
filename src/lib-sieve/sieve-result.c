@@ -1662,15 +1662,6 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 		break;
 	}
 
-	if (rexec->keep_equiv_action != NULL) {
-		struct sieve_action_execution *ke_aexec =
-			rexec->keep_equiv_action;
-
-		e_debug(rexec->event, "No implicit keep needed "
-			"(equivalent %s action already executed)",
-			sieve_action_name(&ke_aexec->action->action));
-		return ke_aexec->status;
-	}
 	if ((eenv->flags & SIEVE_EXECUTE_FLAG_DEFER_KEEP) != 0) {
 		e_debug(rexec->event, "Execution of implicit keep is deferred");
 		return rexec->keep_status;
@@ -1699,6 +1690,19 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 	}
 	if (act_keep->def == NULL)
 		return rexec->keep_status;
+
+	if (rexec->keep_equiv_action != NULL) {
+		struct sieve_action_execution *ke_aexec =
+			rexec->keep_equiv_action;
+
+		i_assert(ke_aexec->state >=
+			 SIEVE_ACTION_EXECUTION_STATE_FINALIZED);
+
+		e_debug(rexec->event, "No implicit keep needed "
+			"(equivalent %s action already finalized)",
+			sieve_action_name(&ke_aexec->action->action));
+		return ke_aexec->status;
+	}
 
 	e_debug(rexec->event, "Finalize implicit keep (status=%s)",
 		sieve_execution_exitcode_to_str(rexec->status));
