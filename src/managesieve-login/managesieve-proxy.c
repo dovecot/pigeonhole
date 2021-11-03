@@ -563,7 +563,6 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 			o_stream_nsend(client->output, str_data(str),
 				       str_len(str));
 
-			(void)client_skip_line(msieve_client);
 			client_proxy_finish_destroy_client(client);
 			return 1;
 		}
