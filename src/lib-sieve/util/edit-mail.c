@@ -1915,8 +1915,11 @@ static ssize_t merge_modified_headers(struct edit_mail_istream *edstream)
 		size = edstream->cur_header->field->size - appended;
 		if (size > 0) {
 			/* Determine how much we can write */
-			if (!i_stream_try_alloc(stream, size, &avail))
-				return -2;
+			if (!i_stream_try_alloc(stream, size, &avail)) {
+				if (written == 0)
+					return -2;
+				break;
+			}
 			wsize = (size >= avail ? avail : size);
 
 			/* Write (part of) the header to buffer */
