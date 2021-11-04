@@ -740,11 +740,81 @@ static void test_edit_mail_big_header(void)
 	test_end();
 }
 
+static void test_edit_mail_small_buffer(void)
+{
+	static const char *message =
+		"X-A: AAAA\n"
+		"X-B: BBBB\n"
+		"\n"
+		"Frop!\n";
+	struct istream *input_msg, *input_mail;
+	buffer_t *buffer;
+	struct mail_raw *rawmail;
+	struct edit_mail *edmail;
+	struct mail *mail;
+	const char *value;
+	unsigned int i;
+
+	test_begin("edit-mail - small buffer");
+	test_init();
+
+	/* compose the message */
+
+	input_msg = i_stream_create_from_data(message, strlen(message));
+	i_stream_set_max_buffer_size(input_msg, 16);
+
+	rawmail = mail_raw_open_stream(test_raw_mail_user, input_msg);
+
+	edmail = edit_mail_wrap(rawmail->mail);
+
+	/* add headers */
+
+	for (i = 0; i < 16; i++) {
+		edit_mail_header_add(edmail, "X-F", "FF", FALSE);
+		edit_mail_header_add(edmail, "X-L", "LL", TRUE);
+	}
+
+	mail = edit_mail_get_mail(edmail);
+
+	/* prepare tests */
+
+	if (mail_get_stream(mail, NULL, NULL, &input_mail) < 0) {
+		i_fatal("Failed to open mail stream: %s",
+			mailbox_get_last_internal_error(mail->box, NULL));
+	}
+
+	buffer = buffer_create_dynamic(default_pool, 1024);
+
+	/* evaluate modified header */
+
+	test_assert(mail_get_first_header_utf8(mail, "X-F", &value) > 0);
+	test_assert(mail_get_first_header_utf8(mail, "X-A", &value) > 0);
+	test_assert(mail_get_first_header_utf8(mail, "X-B", &value) > 0);
+	test_assert(mail_get_first_header_utf8(mail, "X-L", &value) > 0);
+
+	/* check stream read */
+
+	i_stream_seek(input_mail, 0);
+	buffer_set_used_size(buffer, 0);
+
+	test_stream_data(input_mail, buffer);
+
+	/* clean up */
+
+	buffer_free(&buffer);
+	edit_mail_unwrap(&edmail);
+	mail_raw_close(&rawmail);
+	i_stream_unref(&input_msg);
+	test_deinit();
+	test_end();
+}
+
 int main(int argc, char *argv[])
 {
 	static void (*test_functions[])(void) = {
 		test_edit_mail_concatenated,
 		test_edit_mail_big_header,
+		test_edit_mail_small_buffer,
 		NULL
 	};
 	const enum master_service_flags service_flags =
