@@ -16,6 +16,22 @@
 
 #include "imap-sieve.h"
 #include "imap-sieve-storage.h"
+#include "array.h"
+
+struct virtual_transaction_context {
+	struct mailbox_transaction_context t;
+
+	ARRAY(struct mailbox_transaction_context *) backend_transactions;
+};
+
+struct virtual_save_context {
+	struct mail_save_context ctx;
+	struct mail_save_context *backend_save_ctx;
+	struct mailbox *backend_box;
+	char *open_errstr;
+	enum mail_error open_error;
+};
+
 
 #define MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT "imapsieve/script"
 #define MAIL_SERVER_ATTRIBUTE_IMAPSIEVE_SCRIPT "imapsieve/script"
@@ -306,6 +322,53 @@ imap_sieve_create_mailbox_event
 	return event;
 }
 
+struct mailbox_transaction_context *
+virtual_get_backend_transaction(struct mailbox_transaction_context *trans)
+{
+	struct virtual_transaction_context *vt =
+		(struct virtual_transaction_context *)trans;
+	struct mailbox_transaction_context *const *bt;
+	unsigned int count;
+
+	bt = array_get(&vt->backend_transactions, &count);
+	if (count) {
+		return bt[0];
+	}
+	return 0;
+}
+
+static struct imap_sieve_mailbox_event *
+imap_sieve_create_virtual_mailbox_event
+(struct mailbox_transaction_context *t, struct mail *src_mail)
+{
+	struct imap_sieve_mailbox_transaction *ismt;
+	struct imap_sieve_mailbox_event *event;
+	struct mailbox_transaction_context *bt;
+
+	// struct virtual_transaction_context *vt = (struct virtual_transaction_context *)t;
+	// struct virtual_save_context *save_ctx = (struct virtual_save_context *)t->save_ctx;
+	// struct mail *dest_mail = save_ctx->backend_save_ctx->dest_mail;
+
+	bt = virtual_get_backend_transaction(t);
+
+	if (!bt) {
+		return 0;
+	}
+
+	ismt = IMAP_SIEVE_CONTEXT_REQUIRE(bt);
+
+	ismt->src_box = src_mail->box;
+	ismt->src_mail_trans = src_mail->transaction;
+
+	if (!array_is_created(&ismt->events))
+		i_array_init(&ismt->events, 64);
+
+	event = array_append_space(&ismt->events);
+	event->save_seq = t->save_count; // get savecount from virtual transaction
+	event->dest_mail_uid = bt->save_ctx->dest_mail->uid;
+	return event;
+}
+
 static void imap_sieve_add_mailbox_event
 (struct mailbox_transaction_context *t,
 	struct mail *dest_mail, struct mailbox *src_box,
@@ -335,7 +398,11 @@ static void imap_sieve_add_mailbox_copy_event
 	ismt->src_box = src_mail->box;
 	ismt->src_mail_trans = src_mail->transaction;
 
-	event = imap_sieve_create_mailbox_event(t, dest_mail);
+	if (strcmp(t->save_ctx->transaction->box->storage->name,"virtual") == 0) {
+		event = imap_sieve_create_virtual_mailbox_event(t, src_mail);
+	} else {
+		event = imap_sieve_create_mailbox_event(t, dest_mail);
+	}
 	event->src_mail_uid = src_mail->uid;
 }
 
