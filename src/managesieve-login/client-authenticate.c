@@ -69,6 +69,7 @@ void managesieve_client_auth_result(struct client *client,
 		i_zero(&url);
 		url.user = reply->proxy.username;
 		url.host.name = reply->proxy.host;
+		url.host.ip = reply->proxy.host_ip;
 		url.port = reply->proxy.port;
 		str_append(referral, "REFERRAL ");
 		str_append(referral, managesieve_url_create(&url));
