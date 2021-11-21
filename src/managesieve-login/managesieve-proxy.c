@@ -457,7 +457,8 @@ auth_resp_code_parse_referral(struct client *client, const char *resp_code,
 	if (managesieve_url_parse(referral, MANAGESIEVE_URL_ALLOW_USERINFO_PART,
 				  pool_datastack_create(), &url, &error) < 0) {
 		e_debug(login_proxy_get_event(client->login_proxy),
-			"Couldn't parse REFERRAL '%s': %s", referral, error);
+			"Couldn't parse REFERRAL '%s': %s",
+			str_sanitize(referral, 160), error);
 		return FALSE;
 	}
 
