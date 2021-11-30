@@ -1,3 +1,8 @@
+v0.5.17.1 2021-12-07  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	- managesieve: Dovecot failed to start if ssl_ca was too large.
+	- lib-sieve-tool: Binaries failed to run if ssl_ca was too large.
+
 v0.5.17 2021-10-28  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	- duplicate: The Sieve duplicate test is prone to false negatives when
