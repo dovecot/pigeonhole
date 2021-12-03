@@ -138,7 +138,8 @@ sieve_tool_init(const char *name, int *argc, char **argv[],
 	enum master_service_flags service_flags =
 		MASTER_SERVICE_FLAG_STANDALONE |
 		MASTER_SERVICE_FLAG_DONT_SEND_STATS |
-		MASTER_SERVICE_FLAG_NO_INIT_DATASTACK_FRAME;
+		MASTER_SERVICE_FLAG_NO_INIT_DATASTACK_FRAME |
+		MASTER_SERVICE_FLAG_DISABLE_SSL_SET;
 
 	if (no_config)
 		service_flags |= MASTER_SERVICE_FLAG_NO_CONFIG_SETTINGS;
