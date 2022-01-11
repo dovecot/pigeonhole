@@ -1,6 +1,7 @@
 #ifndef MANAGESIEVE_CLIENT_H
 #define MANAGESIEVE_CLIENT_H
 
+#include "guid.h"
 #include "managesieve-commands.h"
 
 struct client;
@@ -45,6 +46,7 @@ struct client {
 	struct istream *input;
 	struct ostream *output;
 	struct timeout *to_idle, *to_idle_output;
+	guid_128_t anvil_conn_guid;
 
 	pool_t pool;
 	struct mail_storage_service_user *service_user;

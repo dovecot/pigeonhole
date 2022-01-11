@@ -108,7 +108,6 @@ client_create(int fd_in, int fd_out, const char *session_id,
 	      const struct managesieve_settings *set)
 {
 	struct client *client;
-	const char *ident;
 	struct sieve_environment svenv;
 	struct sieve_instance *svinst;
 	struct sieve_storage *storage;
@@ -167,14 +166,11 @@ client_create(int fd_in, int fd_out, const char *session_id,
 	client->svinst = svinst;
 	client->storage = storage;
 
-	ident = mail_user_get_anvil_userip_ident(client->user);
-	if (ident != NULL) {
-		master_service_anvil_send(
-			master_service, t_strconcat("CONNECT\t", my_pid,
-						    "\tsieve/", ident,
-						    "\n", NULL));
+	struct master_service_anvil_session anvil_session;
+	mail_user_get_anvil_session(client->user, &anvil_session);
+	if (master_service_anvil_connect(master_service, &anvil_session, TRUE,
+					 client->anvil_conn_guid))
 		client->anvil_sent = TRUE;
-	}
 
 	managesieve_client_count++;
 	DLLIST_PREPEND(&managesieve_clients, client);
@@ -254,11 +250,10 @@ void client_destroy(struct client *client, const char *reason)
 	}
 
 	if (client->anvil_sent) {
-		master_service_anvil_send(
-			master_service, t_strconcat(
-				"DISCONNECT\t", my_pid, "\tsieve/",
-				mail_user_get_anvil_userip_ident(client->user),
-				"\n", NULL));
+		struct master_service_anvil_session anvil_session;
+		mail_user_get_anvil_session(client->user, &anvil_session);
+		master_service_anvil_disconnect(master_service, &anvil_session,
+						client->anvil_conn_guid);
 	}
 
 	managesieve_parser_destroy(&client->parser);
