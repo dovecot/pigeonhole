@@ -1,3 +1,19 @@
+v0.5.18  2022-02-03  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	- duplicate: Users without a home directory can crash with Sieve when
+	  using duplicate database. v2.3.17 regression.
+	- imapsieve: When mail was expunged when processing imapsieve events, a
+	  crash could occur. Fixes Panic: file mail-index-map.c:
+	  line 558 (mail_index_map_lookup_seq_range): assertion failed: (first_uid > 0)
+	- managesieve-login: Proxy didn't support forwarding the forward_* passdb fields.
+	- redirect: Sieve would crash if redirect after keep-equivalent action failed.
+	- sieve: Interpreter crashes when the Sieve index extension is used with
+	  index zero.
+	- vnd.dovecot.filter: Envelope sender string may become corrupted when
+	  Sieve scripts are using vnd.dovecot.filter. This could end up
+	  corrupting mbox's From line and return wrong envelope sender string in
+	  Sieve tests.
+
 v0.5.17.1 2021-12-07  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	- managesieve: Dovecot failed to start if ssl_ca was too large.
