@@ -21,6 +21,16 @@
 #include <sysexits.h>
 
 /* <settings checks> */
+static struct file_listener_settings managesieve_login_unix_listeners_array[] = {
+	{ "srv.managesieve-login/%{pid}", 0600, "", "" },
+};
+static struct file_listener_settings *managesieve_login_unix_listeners[] = {
+	&managesieve_login_unix_listeners_array[0],
+};
+static buffer_t managesieve_login_unix_listeners_buf = {
+	{ { managesieve_login_unix_listeners,
+	    sizeof(managesieve_login_unix_listeners) } }
+};
 
 static struct inet_listener_settings managesieve_login_inet_listeners_array[] = {
     { .name = "sieve", .address = "", .port = MANAGESIEVE_DEFAULT_PORT },
@@ -54,7 +64,8 @@ struct service_settings managesieve_login_settings_service_settings = {
 	.idle_kill = 0,
 	.vsz_limit = (uoff_t)-1,
 
-	.unix_listeners = ARRAY_INIT,
+	.unix_listeners = { { &managesieve_login_unix_listeners_buf,
+			      sizeof(managesieve_login_unix_listeners[0]) } },
 	.fifo_listeners = ARRAY_INIT,
 	.inet_listeners = { { &managesieve_login_inet_listeners_buf,
 			      sizeof(managesieve_login_inet_listeners[0]) } }
