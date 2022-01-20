@@ -14,6 +14,7 @@
 #include "restrict-access.h"
 #include "settings-parser.h"
 #include "master-interface.h"
+#include "master-admin-client.h"
 #include "master-service.h"
 #include "master-login.h"
 #include "mail-user.h"
@@ -276,6 +277,26 @@ login_client_failed(const struct master_login_client *client,
 	}
 }
 
+static unsigned int
+master_admin_cmd_kick_user(const char *user, const guid_128_t conn_guid)
+{
+	struct client *client, *next;
+	unsigned int count = 0;
+
+	for (client = managesieve_clients; client != NULL; client = next) {
+		next = client->next;
+		if (strcmp(client->user->username, user) == 0 &&
+		    (guid_128_is_empty(conn_guid) ||
+		     guid_128_cmp(client->anvil_conn_guid, conn_guid) == 0))
+			client_kick(client);
+	}
+	return count;
+}
+
+static const struct master_admin_client_callback admin_callbacks = {
+	.cmd_kick_user = master_admin_cmd_kick_user,
+};
+
 static void client_connected(struct master_service_connection *conn)
 {
 	/* when running standalone, we shouldn't even get here */
@@ -338,6 +359,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	master_admin_clients_init(&admin_callbacks);
 	master_service_set_die_callback(master_service, managesieve_die);
 
 	/* plugins may want to add commands, so this needs to be called early */

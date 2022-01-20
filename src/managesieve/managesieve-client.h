@@ -159,6 +159,7 @@ void _client_reset_command(struct client *client);
 void client_input(struct client *client);
 int client_output(struct client *client);
 
+void client_kick(struct client *client);
 void clients_destroy_all(void);
 
 #endif

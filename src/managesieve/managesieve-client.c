@@ -777,11 +777,16 @@ int client_output(struct client *client)
 	return ret;
 }
 
+void client_kick(struct client *client)
+{
+	mail_storage_service_io_activate_user(client->service_user);
+	if (!client->command_pending)
+		client_send_bye(client, "Server shutting down.");
+	client_destroy(client, "Server shutting down.");
+}
+
 void clients_destroy_all(void)
 {
-	while (managesieve_clients != NULL) {
-		mail_storage_service_io_activate_user(managesieve_clients->service_user);
-		client_send_bye(managesieve_clients, "Server shutting down.");
-		client_destroy(managesieve_clients, "Server shutting down.");
-	}
+	while (managesieve_clients != NULL)
+		client_kick(managesieve_clients);
 }
