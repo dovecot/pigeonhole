@@ -1,4 +1,4 @@
-v0.5.18  2022-02-01  Aki Tuomi <aki.tuomi@open-xchange.com>
+v0.5.18  2022-02-03  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	- duplicate: Users without a home directory can crash with Sieve when
 	  using duplicate database. v2.3.17 regression.
