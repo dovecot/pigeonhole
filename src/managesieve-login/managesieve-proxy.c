@@ -441,6 +441,7 @@ managesieve_proxy_parse_auth_reply(const char *line,
 	if (ret == 1 && managesieve_arg_get_string(&args[0], &reason))
 		*reason_r = t_strdup(reason);
 	managesieve_parser_destroy(&parser);
+	i_stream_destroy(&input);
 }
 
 int managesieve_proxy_parse_line(struct client *client, const char *line)
