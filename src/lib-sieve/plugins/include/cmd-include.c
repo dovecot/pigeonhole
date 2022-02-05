@@ -356,8 +356,19 @@ static bool opc_include_dump(const struct sieve_dumptime_env *denv,
 
 	binctx = ext_include_binary_get_context(denv->oprtn->ext, denv->sbin);
 	included = ext_include_binary_script_get_included(binctx, include_id);
-	if (included == NULL || included->block == NULL)
+	if (included == NULL)
 		return FALSE;
+	if (included->block == NULL) {
+		if (!HAS_ALL_BITS(included->flags, EXT_INCLUDE_FLAG_OPTIONAL))
+			return FALSE;
+
+		sieve_code_descend(denv);
+		sieve_code_dumpf(
+			denv, "script: %s(optional) [ID: %d, BLOCK: -]",
+			((flags & EXT_INCLUDE_FLAG_ONCE) != 0 ? "(once) " : ""),
+			include_id);
+		return TRUE;
+	}
 
 	sieve_code_descend(denv);
 	sieve_code_dumpf(

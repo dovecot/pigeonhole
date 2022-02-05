@@ -708,10 +708,21 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 
 	/* Check for invalid include id (== corrupt binary) */
 	included = ext_include_binary_script_get_included(binctx, include_id);
-	if (included == NULL || included->block == NULL) {
+	if (included == NULL) {
 		sieve_runtime_trace_error(
 			renv, "include: include id %d is invalid", include_id);
 		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+	if (included->block == NULL) {
+		if (!HAS_ALL_BITS(included->flags, EXT_INCLUDE_FLAG_OPTIONAL)) {
+			sieve_runtime_trace_error(
+				renv, "include: include record %d is corrupt "
+				"(block is missing while include is not optional)",
+				include_id);
+			return SIEVE_EXEC_BIN_CORRUPT;
+
+		}
+		return SIEVE_EXEC_OK;
 	}
 
 	ctx = ext_include_get_interpreter_context(this_ext, renv->interp);
