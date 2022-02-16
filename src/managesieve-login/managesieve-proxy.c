@@ -217,7 +217,7 @@ proxy_write_auth_response(struct managesieve_client *client,
 	const char *error;
 	int ret;
 
-	if (base64_decode(challenge, strlen(challenge), NULL, str) < 0) {
+	if (base64_decode(challenge, strlen(challenge), str) < 0) {
 		login_proxy_failed(client->common.login_proxy,
 			login_proxy_get_event(client->common.login_proxy),
 			LOGIN_PROXY_FAILURE_TYPE_PROTOCOL,

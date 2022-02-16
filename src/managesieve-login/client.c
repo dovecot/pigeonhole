@@ -172,8 +172,7 @@ cmd_xclient_parse_forward(struct managesieve_client *client, const char *value)
 			MAX_BASE64_DECODED_SIZE(value_len));
 	}
 
-	if (base64_decode(value, value_len, NULL,
-			  client->common.forward_fields) < 0)
+	if (base64_decode(value, value_len, client->common.forward_fields) < 0)
 		return -1;
 
 	return 0;
