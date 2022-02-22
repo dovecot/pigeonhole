@@ -5,9 +5,9 @@ AC_PREREQ([2.59])
 AC_INIT([Pigeonhole], [0.6.devel], [dovecot@dovecot.org], [dovecot-2.4-pigeonhole])
 AC_DEFINE_UNQUOTED([PIGEONHOLE_ABI_VERSION], "0.6.ABIv0($PACKAGE_VERSION)", [Pigeonhole ABI version])
 
-AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([build-aux])
 
 # Autoheader is not needed and does more harm than good for this package. However, it is
 # tightly integrated in autoconf/automake and therefore it is difficult not to use it. As
