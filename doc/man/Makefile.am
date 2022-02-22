@@ -37,10 +37,10 @@ EXTRA_DIST = \
 CLEANFILES = $(nodist_man1_MANS) $(nodist_man7_MANS)
 
 .1.in.1: $(man_includefiles) Makefile
-	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
+	$(AM_V_GEN)$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
 		$(pkglibexecdir) < $< > $@
 .7.in.7: $(man_includefiles) Makefile
-	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
+	$(AM_V_GEN)$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
 		$(pkglibexecdir) < $< > $@
 
 
