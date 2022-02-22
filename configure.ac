@@ -239,6 +239,7 @@ src/sieve-tools/Makefile
 src/managesieve/Makefile
 src/managesieve-login/Makefile
 src/testsuite/Makefile
+build-aux/run-test.sh
 stamp.h])
 
 AC_OUTPUT
