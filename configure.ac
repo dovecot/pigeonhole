@@ -180,6 +180,9 @@ AM_CONDITIONAL(LDAP_PLUGIN, test "$have_ldap_plugin" = "yes")
 CFLAGS="$CFLAGS $EXTRA_CFLAGS"
 LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
 
+AS_IF([test "$AR_FLAGS" = "cru"], [AR_FLAGS="cr"], [])
+AC_SUBST([AR_FLAGS])
+
 AC_CONFIG_FILES([
 Makefile
 doc/Makefile
