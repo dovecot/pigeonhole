@@ -1,8 +1,17 @@
+m4_define([pigeonhole_VERSION],
+    m4_esyscmd_s([build-aux/git-version-gen]))))
+
+m4_define([pigeonhole_ABI_VERSION],
+    m4_esyscmd_s([build-aux/git-abi-version-gen]))))
+
+m4_define([pigeonhole_TAR_VERSION],
+    m4_esyscmd_s([build-aux/git-tarname-version-gen]))))
+
 AC_PREREQ([2.59])
 
 # Be sure to update ABI version also if anything changes that might require
 # recompiling plugins. Most importantly that means if any structs are changed.
-AC_INIT([Pigeonhole], [0.6.devel], [dovecot@dovecot.org], [dovecot-2.4-pigeonhole])
+AC_INIT([Pigeonhole], m4_defn([pigeonhole_VERSION]), [dovecot@dovecot.org], m4_defn([pigeonhole_TAR_VERSION]))
 AC_DEFINE_UNQUOTED([PIGEONHOLE_ABI_VERSION], "0.6.ABIv0($PACKAGE_VERSION)", [Pigeonhole ABI version])
 
 AC_CONFIG_SRCDIR([src])
