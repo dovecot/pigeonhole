@@ -30,7 +30,7 @@ AC_DEFINE_UNQUOTED(PIGEONHOLE_VERSION, "$PACKAGE_VERSION",
 	[Define to the version of Pigeonhole for Dovecot.])
 
 AM_INIT_AUTOMAKE([no-define foreign tar-ustar])
-AM_SILENT_RULES([yes])/
+AM_SILENT_RULES([yes])
 
 AM_MAINTAINER_MODE
 
