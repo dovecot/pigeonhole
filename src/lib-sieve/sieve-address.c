@@ -449,7 +449,7 @@ parse_mailbox_address(struct sieve_message_address_parser *ctx,
 	if (ctx->parser.data != ctx->parser.end) {
 		if (*ctx->parser.data == ',') {
 			sieve_address_error(
-				ctx, "not a single addres (found ',')");
+				ctx, "not a single address (found ',')");
 		} else {
 			sieve_address_error(
 				ctx, "address ends in invalid characters");
