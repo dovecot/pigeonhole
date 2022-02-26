@@ -14,6 +14,7 @@
 #include "restrict-access.h"
 #include "settings-parser.h"
 #include "master-interface.h"
+#include "master-service-settings.h"
 #include "master-admin-client.h"
 #include "master-service.h"
 #include "login-server.h"
@@ -168,7 +169,8 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	}
 	restrict_access_allow_coredumps(TRUE);
 
-	set = mail_storage_service_user_get_set(user)[1];
+	set = master_service_settings_get_root_set(master_service,
+		&managesieve_setting_parser_info);
 	if (set->verbose_proctitle)
 		verbose_proctitle = TRUE;
 

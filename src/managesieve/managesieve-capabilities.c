@@ -60,8 +60,8 @@ static struct plugin_settings *plugin_settings_read(void)
 		master_service, plugin_set_roots, &error) < 0)
 		i_fatal("Error reading configuration: %s", error);
 
-	return (struct plugin_settings *)
-		master_service_settings_get_others(master_service)[0];
+	return master_service_settings_get_root_set(master_service,
+				plugin_set_roots[0]);
 }
 
 static const char *

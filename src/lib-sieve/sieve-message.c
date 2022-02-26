@@ -343,10 +343,11 @@ int sieve_message_substitute
 	i_assert(input->blocking);
 
 	if ( msgctx->raw_mail_user == NULL ) {
-		void **sets = master_service_settings_get_others(master_service);
-
+		const struct mail_user_settings *user_set =
+			master_service_settings_get_root_set(master_service,
+				&mail_user_setting_parser_info);
 		msgctx->raw_mail_user =
-			raw_storage_create_from_set(mail_user->set_info, sets[0]);
+			raw_storage_create_from_set(mail_user->set_info, user_set);
 	}
 
 	i_stream_seek(input, 0);
