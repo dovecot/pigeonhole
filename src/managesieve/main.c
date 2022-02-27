@@ -174,10 +174,8 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	if (set->verbose_proctitle)
 		verbose_proctitle = TRUE;
 
-	if (settings_var_expand(&managesieve_setting_parser_info, set,
-				mail_user->pool,
-				mail_user_var_expand_table(mail_user),
-				&error) <= 0) {
+	if (mail_user_var_expand(mail_user, &managesieve_setting_parser_info,
+				 set, &error) <= 0) {
 		i_error("Failed to expand settings: %s", error);
 		mail_storage_service_user_unref(&user);
 		mail_user_unref(&mail_user);
