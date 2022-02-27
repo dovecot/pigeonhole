@@ -48,11 +48,8 @@ static unsigned int edit_mail_refcount = 0;
 static struct mail_user *edit_mail_raw_storage_get(struct mail_user *mail_user)
 {
 	if (edit_mail_user == NULL) {
-		const struct mail_user_settings *user_set =
-			master_service_settings_get_root_set(master_service,
-				&mail_user_setting_parser_info);
-		edit_mail_user = raw_storage_create_from_set(
-			mail_user->set_info, user_set);
+		edit_mail_user =
+			raw_storage_create_from_set(mail_user->unexpanded_set_parser);
 	}
 
 	edit_mail_refcount++;

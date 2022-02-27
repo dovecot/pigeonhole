@@ -102,8 +102,7 @@ static void test_init(void)
 	test_pool = pool_alloconly_create(MEMPOOL_GROWING"test pool", 128);
 
 	test_init_mail_user();
-	test_raw_mail_user =
-		mail_raw_user_create(master_service, test_mail_user);
+	test_raw_mail_user = mail_raw_user_create(test_mail_user);
 }
 
 static void test_deinit(void)

@@ -359,8 +359,7 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 	const char *home = NULL, *errstr = NULL;
 
 	tool->mail_user = mail_user_alloc(NULL, username,
-					  mail_user_dovecot->set_info,
-					  mail_user_dovecot->unexpanded_set);
+					  mail_user_dovecot->unexpanded_set_parser);
 
 	if ((home = sieve_tool_get_homedir(sieve_tool)) != NULL)
 		mail_user_set_home(tool->mail_user, home);
@@ -380,7 +379,7 @@ static void sieve_tool_init_mail_raw_user(struct sieve_tool *tool)
 {
 	if (tool->mail_raw_user == NULL) {
 		tool->mail_raw_user = mail_raw_user_create(
-			master_service, tool->mail_user_dovecot);
+			tool->mail_user_dovecot);
 	}
 }
 

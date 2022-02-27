@@ -134,13 +134,9 @@ static struct istream *mail_raw_create_stream
  * Init/Deinit
  */
 
-struct mail_user *mail_raw_user_create
-(struct master_service *service, struct mail_user *mail_user)
+struct mail_user *mail_raw_user_create(struct mail_user *mail_user)
 {
-	const struct mail_user_settings *user_set =
-		master_service_settings_get_root_set(service,
-			&mail_user_setting_parser_info);
-	return raw_storage_create_from_set(mail_user->set_info, user_set);
+	return raw_storage_create_from_set(mail_user->unexpanded_set_parser);
 }
 
 /*
