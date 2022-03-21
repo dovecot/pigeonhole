@@ -175,7 +175,7 @@ ext_environment_item_lookup(struct ext_environment_interpreter_context *ctx,
 				*_name = &name[prefix_len+1];
 				return item;
 			} else if (name[prefix_len] == '\0') {
-				*_name = &name[prefix_len+1];
+				*_name = &name[prefix_len];
 				return item;
 			}
 		}
