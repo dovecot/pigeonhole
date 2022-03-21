@@ -361,7 +361,7 @@ content_type_param_next(struct content_header_stringlist *strlist)
 
 		/* Iterate over all interesting parameter names */
 		for ( ; *params != NULL; params++ ) {
-			size_t plen = strlen(*params);
+			const size_t plen = strlen(*params);
 
 			if ( plen != nlen &&
 				(nlen != plen + 1 || name[nlen-1] != '*') )
@@ -386,7 +386,7 @@ content_type_param_next(struct content_header_stringlist *strlist)
 						*params);
 				}
 
-				if ( strncasecmp(name, *params, plen) == 0 ) {
+				if (str_begins_icase_with(name, *params)) {
 					string_t *result = NULL;
 
 					strlist->param_values = values + 2;

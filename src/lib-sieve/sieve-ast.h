@@ -336,9 +336,9 @@ sieve_ast_stringlist_join(struct sieve_ast_argument *list,
 #define sieve_ast_command_next(command) __AST_LIST_NEXT(command)
 
 /* Compare the identifier of the previous command */
-#define sieve_ast_prev_cmd_is(cmd, id) \
-	((cmd)->prev == NULL ? FALSE : \
-	 strncasecmp((cmd)->prev->identifier, id, sizeof(id)-1) == 0)
+#define sieve_ast_prev_cmd_is(cmd, id) 				\
+	((cmd)->prev != NULL && 				\
+	 str_begins_icase_with((cmd)->prev->identifier, id))
 
 /* AST test macros */
 #define sieve_ast_test_count(node) __AST_NODE_LIST_COUNT(node, tests)

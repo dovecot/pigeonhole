@@ -176,7 +176,8 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 			 const char **location_r, const char *const **options_r)
 {
 	ARRAY_TYPE(const_string) options;
-	const char *const *tmp;
+	const char *const *args;
+	const char *value;
 
 	if (*data == '\0') {
 		*options_r = NULL;
@@ -185,18 +186,18 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 	}
 
 	/* <location> */
-	tmp = t_strsplit(data, ";");
-	*location_r = split_next_arg(&tmp);
+	args = t_strsplit(data, ";");
+	*location_r = split_next_arg(&args);
 
 	if (options_r != NULL) {
 		t_array_init(&options, 8);
 
 		/* [<option> *(';' <option>)] */
-		while (*tmp != NULL) {
-			const char *option = split_next_arg(&tmp);
+		while (*args != NULL) {
+			const char *option = split_next_arg(&args);
 
-			if (strncasecmp(option, "name=", 5) == 0) {
-				if (option[5] == '\0') {
+			if (str_begins_icase(option, "name=", &value)) {
+				if (*value == '\0') {
 					e_error(storage->event,
 						"Failed to parse storage location: "
 						"Empty name not allowed");
@@ -204,33 +205,31 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 				}
 
 				if (storage->script_name == NULL) {
-					if (!sieve_script_name_is_valid(option+5)) {
+					if (!sieve_script_name_is_valid(value)) {
 						e_error(storage->event,
 							"Failed to parse storage location: "
 							"Invalid script name `%s'.",
-							str_sanitize(option+5, 80));
+							str_sanitize(value, 80));
 						return -1;
 					}
-					storage->script_name = p_strdup(storage->pool, option+5);
+					storage->script_name = p_strdup(storage->pool, value);
 				}
 
-			} else if (strncasecmp(option, "bindir=", 7) == 0) {
-				const char *bin_dir = option+7;
-
-				if (bin_dir[0] == '\0') {
+			} else if (str_begins_icase(option, "bindir=", &value)) {
+				if (value[0] == '\0') {
 					e_error(storage->event,
 						"Failed to parse storage location: "
 						"Empty bindir not allowed");
 					return -1;
 				}
 
-				if (bin_dir[0] == '~') {
+				if (value[0] == '~') {
 					/* home-relative path. change to absolute. */
 					const char *home = sieve_environment_get_homedir(storage->svinst);
 
 					if (home != NULL) {
-						bin_dir = home_expand_tilde(bin_dir, home);
-					} else if (bin_dir[1] == '/' || bin_dir[1] == '\0') {
+						value = home_expand_tilde(value, home);
+					} else if (value[1] == '/' || value[1] == '\0') {
 						e_error(storage->event,
 							"Failed to parse storage location: "
 							"bindir is relative to home directory (~/), "
@@ -239,7 +238,7 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 					}
 				}
 
-				storage->bin_dir = p_strdup(storage->pool, bin_dir);
+				storage->bin_dir = p_strdup(storage->pool, value);
 			} else {
 				array_append(&options, &option, 1);
 			}

@@ -46,14 +46,15 @@ static int sieve_ldap_storage_init
 	struct sieve_ldap_storage *lstorage =
 		(struct sieve_ldap_storage *)storage;
 	struct sieve_instance *svinst = storage->svinst;
-	const char *username = NULL;
+	const char *value, *username = NULL;
 
 	if ( options != NULL ) {
 		while ( *options != NULL ) {
 			const char *option = *options;
 
-			if ( strncasecmp(option, "user=", 5) == 0 && option[5] != '\0' ) {
-				username = option+5;
+			if (str_begins_icase(option, "user=", &value) &&
+			    *value != '\0' ) {
+				username = value;
 			} else {
 				sieve_storage_set_critical(storage,
 					"Invalid option `%s'", option);

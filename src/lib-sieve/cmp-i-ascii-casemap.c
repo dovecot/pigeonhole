@@ -50,25 +50,9 @@ static int cmp_i_ascii_casemap_compare(
 	const struct sieve_comparator *cmp ATTR_UNUSED,
 	const char *val1, size_t val1_size, const char *val2, size_t val2_size)
 {
-	int result;
-
-	if ( val1_size == val2_size ) {
-		return strncasecmp(val1, val2, val1_size);
-	}
-
-	if ( val1_size > val2_size ) {
-		result = strncasecmp(val1, val2, val2_size);
-
-		if ( result == 0 ) return 1;
-
-		return result;
-	}
-
-	result = strncasecmp(val1, val2, val1_size);
-
-	if ( result == 0 ) return -1;
-
-	return result;
+	size_t size = I_MIN(val1_size, val2_size);
+	int ret = strncasecmp(val1, val2, size);
+	return ret != 0 ? ret : (int)val1_size - (int)val2_size;
 }
 
 static bool cmp_i_ascii_casemap_char_match

@@ -182,7 +182,7 @@ static int
 cmd_xclient(struct managesieve_client *client,
 	    const struct managesieve_arg *args)
 {
-	const char *arg;
+	const char *value, *arg;
 	bool args_ok = TRUE;
 
 	if (!client->common.trusted) {
@@ -191,25 +191,22 @@ cmd_xclient(struct managesieve_client *client,
 	}
 	while (!MANAGESIEVE_ARG_IS_EOL(&args[0]) &&
 		managesieve_arg_get_atom(&args[0], &arg)) {
-		if (strncasecmp(arg, "ADDR=", 5) == 0) {
-			if (net_addr2ip(arg + 5, &client->common.ip) < 0)
+		if (str_begins_icase(arg, "ADDR=", &value)) {
+			if (net_addr2ip(value, &client->common.ip) < 0)
 				args_ok = FALSE;
-		} else if (strncasecmp(arg, "FORWARD=", 8)  == 0) {
-			if (cmd_xclient_parse_forward(client, arg + 8) < 0)
+		} else if (str_begins_icase(arg, "FORWARD=", &value)) {
+			if (cmd_xclient_parse_forward(client, value) < 0)
 				args_ok = FALSE;
-		} else if (strncasecmp(arg, "PORT=", 5) == 0) {
-			if (net_str2port(arg + 5,
-					 &client->common.remote_port) < 0)
+		} else if (str_begins_icase(arg, "PORT=", &value)) {
+			if (net_str2port(value, &client->common.remote_port) < 0)
 				args_ok = FALSE;
-		} else if (strncasecmp(arg, "SESSION=", 8) == 0) {
-			const char *value = arg + 8;
-
+		} else if (str_begins_icase(arg, "SESSION=", &value)) {
 			if (strlen(value) <= LOGIN_MAX_SESSION_ID_LEN) {
 				client->common.session_id =
 					p_strdup(client->common.pool, value);
 			}
-		} else if (strncasecmp(arg, "TTL=", 4)  == 0) {
-			if (str_to_uint(arg + 4, &client->common.proxy_ttl) < 0)
+		} else if (str_begins_icase(arg, "TTL=", &value)) {
+			if (str_to_uint(value, &client->common.proxy_ttl) < 0)
 				args_ok = FALSE;
 		}
 		args++;

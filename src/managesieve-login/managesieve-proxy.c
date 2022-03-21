@@ -44,7 +44,7 @@ proxy_compose_xclient_forward(struct managesieve_client *client)
 
 	str = t_str_new(128);
 	for (arg = client->common.auth_passdb_args; *arg != NULL; arg++) {
-		if (strncasecmp(*arg, "forward_", 8) == 0) {
+		if (str_begins_icase_with(*arg, "forward_")) {
 			if (str_len(str) > 0)
 				str_append_c(str, '\t');
 			str_append_tabescaped(str, (*arg)+8);
@@ -412,7 +412,7 @@ managesieve_proxy_parse_auth_reply(const char *line,
 
 	*resp_code_r = NULL;
 
-	if (strncasecmp(line, "NO ", 3) != 0) {
+	if (!str_begins_icase_with(line, "NO ")) {
 		*reason_r = line;
 		return;
 	}
@@ -449,17 +449,17 @@ auth_resp_code_parse_referral(struct client *client, const char *resp_code,
 			      const char **userhostport_r)
 {
 	struct managesieve_url *url;
-	const char *referral, *error;
+	const char *error;
 
-	if (resp_code == NULL || strncasecmp(resp_code, "REFERRAL ", 9) != 0)
+	if (resp_code == NULL ||
+	    !str_begins_icase(resp_code, "REFERRAL ", &resp_code))
 		return FALSE;
-	referral = resp_code + 9;
 
-	if (managesieve_url_parse(referral, MANAGESIEVE_URL_ALLOW_USERINFO_PART,
+	if (managesieve_url_parse(resp_code, MANAGESIEVE_URL_ALLOW_USERINFO_PART,
 				  pool_datastack_create(), &url, &error) < 0) {
 		e_debug(login_proxy_get_event(client->login_proxy),
 			"Couldn't parse REFERRAL '%s': %s",
-			str_sanitize(referral, 160), error);
+			str_sanitize(resp_code, 160), error);
 		return FALSE;
 	}
 
@@ -481,6 +481,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 	enum auth_proxy_ssl_flags ssl_flags;
 	managesieve_response_t response = MANAGESIEVE_RESPONSE_NONE;
 	string_t *command;
+	const char *suffix;
 	int ret = 0;
 
 	i_assert(!client->destroyed);
@@ -527,8 +528,8 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		}
 		return 0;
 	case MSIEVE_PROXY_STATE_TLS_START:
-		if (strncasecmp(line, "OK", 2) == 0 &&
-		    (strlen(line) == 2 || line[2] == ' ')) {
+		if (str_begins_icase(line, "OK", &suffix) &&
+		    (*suffix == '\0' || *suffix == ' ')) {
 			/* STARTTLS successful, begin TLS negotiation. */
 			if (login_proxy_starttls(client->login_proxy) < 0)
 				return -1;
@@ -573,8 +574,8 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		}
 		return 0;
 	case MSIEVE_PROXY_STATE_XCLIENT:
-		if (strncasecmp(line, "OK", 2) == 0 &&
-		    (strlen(line) == 2 || line[2] == ' ')) {
+		if (str_begins_icase(line, "OK", &suffix) &&
+		    (*suffix == '\0' || *suffix == ' ')) {
 			command = t_str_new(128);
 			if (proxy_write_auth(msieve_client, command) < 0)
 				return -1;
@@ -608,8 +609,8 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		}
 
 		/* Check login status */
-		if (strncasecmp(line, "OK", 2) == 0 &&
-		    (strlen(line) == 2 || line[2] == ' ')) {
+		if (str_begins_icase(line, "OK", &suffix) &&
+		    (*suffix == '\0' || *suffix == ' ')) {
 			string_t *str = t_str_new(128);
 
 			/* Login successful */

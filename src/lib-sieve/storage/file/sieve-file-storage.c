@@ -492,15 +492,16 @@ static int sieve_file_storage_init
 	struct sieve_file_storage *fstorage =
 		(struct sieve_file_storage *)storage;
 	const char *storage_path = storage->location;
-	const char *active_path = "";
+	const char *value, *active_path = "";
 	bool exists = FALSE;
 
 	if ( options != NULL ) {
 		while ( *options != NULL ) {
 			const char *option = *options;
 
-			if ( strncasecmp(option, "active=", 7) == 0 && option[7] != '\0' ) {
-				active_path = option+7;
+			if (str_begins_icase(option, "active=", &value) &&
+			    *value != '\0' ) {
+				active_path = value;
 			} else {
 				sieve_storage_set_critical(storage,
 					"Invalid option `%s'", option);

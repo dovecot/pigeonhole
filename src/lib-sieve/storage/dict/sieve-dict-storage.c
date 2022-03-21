@@ -33,13 +33,14 @@ static int sieve_dict_storage_init
 	struct sieve_dict_storage *dstorage =
 		(struct sieve_dict_storage *)storage;
 	struct sieve_instance *svinst = storage->svinst;
-	const char *uri = storage->location, *username = NULL;
+	const char *value, *uri = storage->location, *username = NULL;
 
 	if ( options != NULL ) {
 		while ( *options != NULL ) {
 			const char *option = *options;
 
-			if ( strncasecmp(option, "user=", 5) == 0 && option[5] != '\0' ) {
+			if (str_begins_icase(option, "user=", &value) &&
+			    *value != '\0' ) {
 				username = option+5;
 			} else {
 				sieve_storage_set_critical(storage,

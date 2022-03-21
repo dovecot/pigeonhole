@@ -276,9 +276,7 @@ int ext_notify_construct_message(const struct sieve_runtime_env *renv,
 	while (*p != '\0') {
 		const char *header;
 
-		if (strncasecmp(p, "$from$", 6) == 0) {
-			p += 6;
-
+		if (str_begins_icase(p, "$from$", &p)) {
 			/* Fetch sender from original message */
 			if ((ret = mail_get_first_header_utf8(
 				msgdata->mail, "from", &header)) < 0) {
@@ -288,14 +286,10 @@ int ext_notify_construct_message(const struct sieve_runtime_env *renv,
 			}
 			if (ret > 0)
 				str_append(out_msg, header);
-		} else if (strncasecmp(p, "$env-from$", 10) == 0) {
-			p += 10;
-
+		} else if (str_begins_icase(p, "$env-from$", &p)) {
 			if (return_path != NULL)
 				smtp_address_write(out_msg, return_path);
-		} else if (strncasecmp(p, "$subject$", 9) == 0) {
-			p += 9;
-
+		} else if (str_begins_icase(p, "$subject$", &p)) {
 			/* Fetch sender from oriinal message */
 			if ((ret = mail_get_first_header_utf8(
 				msgdata->mail, "subject", &header)) < 0) {
@@ -305,13 +299,12 @@ int ext_notify_construct_message(const struct sieve_runtime_env *renv,
 			}
 			if (ret > 0)
 				 str_append(out_msg, header);
-		} else if (strncasecmp(p, "$text", 5) == 0 &&
-			   (p[5] == '[' || p[5] == '$')) {
+		} else if (str_begins_icase(p, "$text", &p) &&
+			   (*p == '[' || *p == '$')) {
 			size_t num = 0;
 			const char *begin = p;
 			bool valid = TRUE;
 
-			p += 5;
 			if (*p == '[') {
 				p += 1;
 

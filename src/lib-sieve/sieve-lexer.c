@@ -727,8 +727,9 @@ sieve_lexer_scan_raw_token(struct sieve_lexical_scanner *scanner)
 
 			/* Is this in fact a multiline text string ? */
 			if (sieve_lexer_curchar(scanner) == ':' &&
-			    type == STT_IDENTIFIER && str_len(str) == 4 &&
-			    strncasecmp(str_c(str), "text", 4) == 0) {
+			    type == STT_IDENTIFIER &&
+			    str_len(str) == 4 &&
+			    str_begins_icase_with(str_c(str), "text")) {
 				sieve_lexer_shift(scanner); // discard colon
 
 				/* Discard SP and HTAB whitespace */
