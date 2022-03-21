@@ -333,7 +333,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 		return NULL;
 	}
 
-	T_BEGIN {	
+	T_BEGIN {
 		storage = sieve_storage_alloc(svinst, event, storage_class,
 					      data, flags, main);
 

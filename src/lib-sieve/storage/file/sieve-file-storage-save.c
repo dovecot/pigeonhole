@@ -336,7 +336,7 @@ struct sieve_script *sieve_file_storage_save_get_tempscript
 {
 	struct sieve_file_save_context *fsctx =
 		(struct sieve_file_save_context *)sctx;
-	struct sieve_file_storage *fstorage = 
+	struct sieve_file_storage *fstorage =
 		(struct sieve_file_storage *)sctx->storage;
 	struct sieve_file_script *tmpscript;
 	enum sieve_error error;
@@ -376,7 +376,7 @@ static void sieve_file_storage_update_mtime
 	struct utimbuf times = { .actime = mtime, .modtime = mtime };
 
 	if ( utime(path, &times) < 0 ) {
-		switch ( errno ) {	
+		switch ( errno ) {
 		case ENOENT:
 			break;
 		case EACCES:
@@ -411,7 +411,7 @@ int sieve_file_storage_save_commit
 		if ( sctx->mtime != (time_t)-1 )
 			sieve_file_storage_update_mtime(storage, dest_path, sctx->mtime);
 	} T_END;
-	
+
 	return ( failed ? -1 : 0 );
 }
 

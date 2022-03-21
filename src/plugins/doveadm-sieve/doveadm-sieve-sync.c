@@ -110,7 +110,7 @@ static int sieve_attribute_unset_script(struct mail_storage *storage,
 	int ret = 0;
 
 	script = sieve_storage_open_script(svstorage, scriptname, NULL);
-	if (script == NULL) { 
+	if (script == NULL) {
 		ret = -1;
 	} else {
 		ret = sieve_script_delete(script, TRUE);
@@ -416,7 +416,7 @@ sieve_attribute_retrieve_script(struct mail_storage *storage,
 		*errorstr_r = sieve_storage_get_last_error(svstorage, &error);
 	else if (sieve_script_get_stream(script, &input, &error) < 0)
 		sieve_script_unref(&script);
-	
+
 	if (script == NULL) {
 		if (error == SIEVE_ERROR_NOT_FOUND) {
 			/* already deleted, but return the last_change */
@@ -552,7 +552,7 @@ sieve_attribute_get(struct mailbox *box,
 			struct tm *tm = localtime(&value_r->last_change);
 			char str[256];
 			const char *timestamp = "";
-	
+
 			if (strftime(str, sizeof(str),
 				" (last change: %Y-%m-%d %H:%M:%S)", tm) > 0)
 				timestamp = str;

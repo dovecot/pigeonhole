@@ -70,7 +70,7 @@ int ldap_deref_from_str(const char *str, int *deref_r)
 		*deref_r = LDAP_DEREF_FINDING;
 	else if (strcasecmp(str, "always") == 0)
 		*deref_r = LDAP_DEREF_ALWAYS;
-	else 
+	else
 		return -1;
 	return 0;
 }
@@ -609,7 +609,7 @@ sasl_interact(LDAP *ld ATTR_UNUSED, unsigned flags ATTR_UNUSED,
 			in->len = strlen(str);
 			in->result = str;
 		}
-		
+
 	}
 	return LDAP_SUCCESS;
 }
@@ -1105,10 +1105,10 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 				e_warning(storage->event, "db: "
 					  "Search returned more than one Sieve modified attribute `%s'; "
 					  "using only the first one.", set->sieve_ldap_mod_attr);
-			} 
+			}
 
 			*modattr_r = p_strdup(pool, vals[0]);
-		
+
 			ldap_value_free(vals);
 			ldap_memfree(attr);
 			return 1;
@@ -1144,7 +1144,7 @@ sieve_ldap_db_get_script(struct ldap_connection *conn,
 				e_warning(storage->event, "db: "
 					  "Search returned more than one Sieve script attribute `%s'; "
 					  "using only the first one.", set->sieve_ldap_script_attr);
-			} 
+			}
 
 			size = vals[0]->bv_len;
 			data = i_malloc(size);
@@ -1153,7 +1153,7 @@ sieve_ldap_db_get_script(struct ldap_connection *conn,
 				"Found script with length %zu", size);
 
 			memcpy(data, vals[0]->bv_val, size);
-		
+
 			ldap_value_free_len(vals);
 			ldap_memfree(attr);
 

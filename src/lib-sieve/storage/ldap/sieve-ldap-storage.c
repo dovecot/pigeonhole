@@ -197,7 +197,7 @@ void sieve_storage_ldap_plugin_load
 (struct sieve_instance *svinst, void **context ATTR_UNUSED)
 {
 	sieve_storage_class_register
-		(svinst, &sieve_ldap_storage_plugin);	
+		(svinst, &sieve_ldap_storage_plugin);
 
 	e_debug(svinst->event,
 		"Sieve LDAP storage plugin for %s version %s loaded",
@@ -209,7 +209,7 @@ void sieve_storage_ldap_plugin_unload
 	void *context ATTR_UNUSED)
 {
 	sieve_storage_class_unregister
-		(svinst, &sieve_ldap_storage_plugin);	
+		(svinst, &sieve_ldap_storage_plugin);
 }
 
 void sieve_storage_ldap_plugin_init(void)

@@ -342,12 +342,12 @@ static int sieve_file_storage_init_common
 					"(path=%s): %s", active_dir, error);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
-			} 
+			}
 			e_debug(storage->event,
 				"Failed to normalize active script directory "
 				"(path=%s): "
 				"Part of the path does not exist (yet)",
-				active_dir);			
+				active_dir);
 		} else {
 			active_path = t_abspath_to(active_fname, active_dir);
 		}
@@ -564,7 +564,7 @@ static int sieve_file_storage_init
 				}
 				active_path = storage_path;
 				storage_path = NULL;
-			} 
+			}
 		}
 	}
 
@@ -621,7 +621,7 @@ static int sieve_file_storage_do_init_legacy
 	bool explicit = FALSE, exists = FALSE;
 
 	if ( storage_path == NULL || *storage_path == '\0' ) {
-		/* Try autodectection */	
+		/* Try autodectection */
 		sieve_file_storage_autodetect(fstorage, &storage_path);
 
 		if ( storage_path != NULL && *storage_path != '\0') {
@@ -647,7 +647,7 @@ static int sieve_file_storage_do_init_legacy
 			return -1;
 		}
 
-	} else { 
+	} else {
 		/* Get full storage path */
 		if ( sieve_file_storage_get_full_path
 			(fstorage, &storage_path, error_r) < 0 )
@@ -662,7 +662,7 @@ static int sieve_file_storage_do_init_legacy
 		} else {
 			exists = TRUE;
 		}
-	
+
 		/* Storage path must be a directory */
 		if ( exists && !S_ISDIR(fstorage->st.st_mode) ) {
 			sieve_storage_set_critical(storage,
@@ -692,7 +692,7 @@ static int sieve_file_storage_do_init_legacy
 		active_path != NULL && *active_path != '\0' &&
 		(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0 )
 		storage_path = NULL;
-	
+
 	if ( sieve_file_storage_init_common
 		(fstorage, active_path, storage_path, exists, error_r) < 0 )
 		return -1;
@@ -734,7 +734,7 @@ struct sieve_file_storage *sieve_file_storage_init_from_path
 	storage = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
 				      "", flags, FALSE);
 	fstorage = (struct sieve_file_storage *)storage;
-	
+
 	T_BEGIN {
 		if ( sieve_file_storage_init_common
 			(fstorage, path, NULL, FALSE, error_r) < 0 ) {
@@ -803,7 +803,7 @@ static int sieve_file_storage_get_last_change
 
 		fstorage->prev_mtime = st.st_mtime;
 	}
-		
+
 	if ( last_change_r != NULL )
 		*last_change_r = fstorage->prev_mtime;
 	return 0;

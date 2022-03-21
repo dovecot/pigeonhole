@@ -346,7 +346,7 @@ content_type_param_decode(const char *value)
 
 static string_t *
 content_type_param_next(struct content_header_stringlist *strlist)
-{	
+{
 	const struct sieve_runtime_env *renv = strlist->strlist.runenv;
 	const char *const *values = strlist->param_values;
 	bool trace = strlist->strlist.trace;
@@ -442,7 +442,7 @@ content_header_parse(struct content_header_stringlist *strlist,
 
 	/* Parse content type/disposition */
 	content = t_str_new(64);
-	if ( is_ctype ){ 
+	if ( is_ctype ){
 		if (rfc822_parse_content_type(&parser, content) < 0) {
 			str_truncate(content, 0);
 			return content;
@@ -489,7 +489,7 @@ content_header_parse(struct content_header_stringlist *strlist,
 				i_assert( is_ctype );
 				str_truncate(content, (p - type));
 			}
-			break;	
+			break;
 		case EXT_MIME_OPTION_SUBTYPE:
 			if ( p == NULL ) {
 				i_assert( !is_ctype );
@@ -507,7 +507,7 @@ content_header_parse(struct content_header_stringlist *strlist,
 					"extracted MIME sub-type");
 			}
 			str_delete(content, 0, (p - type) + 1);
-			break;	
+			break;
 		case EXT_MIME_OPTION_CONTENTTYPE:
 			sieve_runtime_trace(renv, 0,
 				"extracted full MIME contenttype");
