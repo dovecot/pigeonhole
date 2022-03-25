@@ -25,7 +25,7 @@ Makefile.in
 /libtool
 /build-aux/ltmain.sh
 /build-aux/missing
-/run-test.sh
+/build-aux/run-test.sh
 /aclocal.m4
 /version
 /stamp.h
