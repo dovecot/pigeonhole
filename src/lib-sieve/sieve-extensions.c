@@ -164,11 +164,9 @@ const unsigned int sieve_extra_extensions_count =
  * Deprecated extensions
  */
 
-extern const struct sieve_extension_def imapflags_extension;
 extern const struct sieve_extension_def vnd_duplicate_extension;
 
 const struct sieve_extension_def *sieve_deprecated_extensions[] = {
-	&imapflags_extension,
 	&vnd_duplicate_extension
 };
 

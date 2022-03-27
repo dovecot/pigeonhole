@@ -19,8 +19,7 @@ libsieve_ext_imap4flags_la_SOURCES = \
 	$(commands) \
 	$(tests) \
 	$(tags) \
-	ext-imap4flags.c \
-	ext-imapflags.c
+	ext-imap4flags.c
 
 public_headers = \
 	sieve-ext-imap4flags.h
