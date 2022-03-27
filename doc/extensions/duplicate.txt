@@ -18,10 +18,7 @@ IDs from previously delivered messages.  For more complex applications, the
 parts of the message.
 
 Refer to doc/rfc/duplicate.rfc7352.txt for a specification of the Sieve language
-extension. Previously, this extension was Dovecot-specific and available under
-the name "vnd.dovecot.duplicate". That implementation differs significantly from
-what is now published as an RFC, but for backwards compatibility the original
-extension is still supported.
+extension.
 
 Configuration
 =============
