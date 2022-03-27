@@ -67,7 +67,6 @@ plugins = \
 	$(extdir)/body/libsieve_ext_body.la \
 	$(extdir)/variables/libsieve_ext_variables.la \
 	$(extdir)/enotify/libsieve_ext_enotify.la \
-	$(extdir)/notify/libsieve_ext_notify.la \
 	$(extdir)/environment/libsieve_ext_environment.la \
 	$(extdir)/mailbox/libsieve_ext_mailbox.la \
 	$(extdir)/date/libsieve_ext_date.la \

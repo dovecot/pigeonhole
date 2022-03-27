@@ -214,7 +214,6 @@ src/lib-sieve/plugins/body/Makefile
 src/lib-sieve/plugins/variables/Makefile
 src/lib-sieve/plugins/enotify/Makefile
 src/lib-sieve/plugins/enotify/mailto/Makefile
-src/lib-sieve/plugins/notify/Makefile
 src/lib-sieve/plugins/environment/Makefile
 src/lib-sieve/plugins/mailbox/Makefile
 src/lib-sieve/plugins/date/Makefile

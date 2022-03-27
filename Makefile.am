@@ -182,11 +182,6 @@ test_cases = \
 	tests/extensions/vnd.dovecot/environment/variables.svtest \
 	tests/extensions/vnd.dovecot/report/errors.svtest \
 	tests/extensions/vnd.dovecot/report/execute.svtest \
-	tests/deprecated/notify/basic.svtest \
-	tests/deprecated/notify/mailto.svtest \
-	tests/deprecated/notify/errors.svtest \
-	tests/deprecated/notify/execute.svtest \
-	tests/deprecated/notify/denotify.svtest \
 	tests/deprecated/imapflags/execute.svtest \
 	tests/deprecated/imapflags/errors.svtest \
 	$(test_unfinished)
