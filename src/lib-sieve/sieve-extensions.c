@@ -161,19 +161,6 @@ const unsigned int sieve_extra_extensions_count =
 	N_ELEMENTS(sieve_extra_extensions);
 
 /*
- * Deprecated extensions
- */
-
-extern const struct sieve_extension_def vnd_duplicate_extension;
-
-const struct sieve_extension_def *sieve_deprecated_extensions[] = {
-	&vnd_duplicate_extension
-};
-
-const unsigned int sieve_deprecated_extensions_count =
-	N_ELEMENTS(sieve_deprecated_extensions);
-
-/*
  * Unfinished extensions
  */
 
@@ -242,13 +229,6 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	for ( i = 0; i < sieve_extra_extensions_count; i++ ) {
 		if ( sieve_extension_register
 			(svinst, sieve_extra_extensions[i], FALSE) == NULL )
-			return FALSE;
-	}
-
-	/* Register deprecated extensions */
-	for ( i = 0; i < sieve_deprecated_extensions_count; i++ ) {
-		if ( sieve_extension_register
-			(svinst, sieve_deprecated_extensions[i], FALSE) == NULL )
 			return FALSE;
 	}
 

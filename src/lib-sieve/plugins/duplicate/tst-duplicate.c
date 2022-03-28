@@ -71,11 +71,6 @@ static const struct sieve_argument_def duplicate_uniqueid_tag = {
 	.validate = tst_duplicate_validate_string_tag
 };
 
-static const struct sieve_argument_def duplicate_value_tag = {
-	.identifier = "value", /* vnd.dovecot.duplicate (deprecated) */
-	.validate = tst_duplicate_validate_string_tag
-};
-
 static const struct sieve_argument_def duplicate_handle_tag = {
 	.identifier = "handle",
 	.validate = tst_duplicate_validate_string_tag
@@ -198,10 +193,6 @@ tst_duplicate_validate_string_tag(struct sieve_validator *valdtr,
 	} else if (sieve_argument_is(tag, duplicate_uniqueid_tag)) {
 		i_assert(sieve_extension_is(ext, duplicate_extension));
 		cmd->data = (void *)TRUE;
-	/* :value <value: string> (vnd.dovecot.duplicate) */
-	} else if (sieve_argument_is(tag, duplicate_value_tag)) {
-		i_assert(sieve_extension_is(ext, vnd_duplicate_extension));
-		cmd->data = (void *)TRUE;
 	} else {
 		i_unreached();
 	}
@@ -226,15 +217,9 @@ tst_duplicate_registered(struct sieve_validator *valdtr,
 				     &duplicate_last_tag, OPT_LAST);
 	sieve_validator_register_tag(valdtr, cmd_reg, ext,
 				     &duplicate_header_tag, OPT_HEADER);
-	if (sieve_extension_is(ext, duplicate_extension)) {
-		sieve_validator_register_tag(valdtr, cmd_reg, ext,
-					     &duplicate_uniqueid_tag,
-					     OPT_UNIQUEID);
-	} else {
-		sieve_validator_register_tag(valdtr, cmd_reg, ext,
-					     &duplicate_value_tag,
-					     OPT_UNIQUEID);
-	}
+	sieve_validator_register_tag(valdtr, cmd_reg, ext,
+				     &duplicate_uniqueid_tag,
+				     OPT_UNIQUEID);
 	sieve_validator_register_tag(valdtr, cmd_reg, ext,
 				     &duplicate_handle_tag, OPT_HANDLE);
 	return TRUE;

@@ -163,7 +163,6 @@ test_cases = \
 	tests/extensions/editheader/execute.svtest \
 	tests/extensions/duplicate/errors.svtest \
 	tests/extensions/duplicate/execute.svtest \
-	tests/extensions/duplicate/execute-vnd.svtest \
 	tests/extensions/metadata/execute.svtest \
 	tests/extensions/metadata/errors.svtest \
 	tests/extensions/mime/errors.svtest \

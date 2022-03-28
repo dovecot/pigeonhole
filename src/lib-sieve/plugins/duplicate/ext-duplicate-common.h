@@ -16,7 +16,6 @@ bool ext_duplicate_load(const struct sieve_extension *ext, void **context);
 void ext_duplicate_unload(const struct sieve_extension *ext);
 
 extern const struct sieve_extension_def duplicate_extension;
-extern const struct sieve_extension_def vnd_duplicate_extension;
 
 /*
  * Tests

@@ -566,8 +566,7 @@ Sieve Interpreter - Extension Configuration
   e.g. as caused by mailinglists when people reply both to the mailinglist and
   the user directly.
 
-  Refer to doc/extensions/vnd.dovecot.duplicate.txt for configuration
-  information.
+  Refer to doc/extensions/duplicate.txt for configuration information.
 
 - Dovecot environment extension:
 
