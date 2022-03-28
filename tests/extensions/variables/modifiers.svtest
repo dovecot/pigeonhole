@@ -9,7 +9,7 @@ require "encoded-character";
 test "Modifier :lower" {
 	set :lower "test" "VaLuE";
 
-	if not string :is "${test}" "value" {
+	if not string :comparator "i;octet" :is "${test}" "value" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -17,11 +17,11 @@ test "Modifier :lower" {
 test "Modifiers :lower :upperfirst" {
 	set :lower :upperfirst "test" "vAlUe";
 
-	if string :is "${test}" "value" {
+	if string :comparator "i;octet" :is "${test}" "value" {
 		test_fail "modifiers applied with wrong precedence";
 	}
 
-	if not string :is "${test}" "Value" {
+	if not string :comparator "i;octet" :is "${test}" "Value" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -29,11 +29,11 @@ test "Modifiers :lower :upperfirst" {
 test "Modifiers :upperfirst :lower" {
 	set :upperfirst :lower "test" "vAlUe";
 
-	if string :is "${test}" "value" {
+	if string :comparator "i;octet" :is "${test}" "value" {
 		test_fail "modifiers applied with wrong precedence";
 	}
 
-	if not string :is "${test}" "Value" {
+	if not string :comparator "i;octet" :is "${test}" "Value" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -41,7 +41,7 @@ test "Modifiers :upperfirst :lower" {
 test "Modifier :upper" {
 	set :upper "test" "vAlUe";
 
-	if not string :is "${test}" "VALUE" {
+	if not string :comparator "i;octet" :is "${test}" "VALUE" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -49,11 +49,11 @@ test "Modifier :upper" {
 test "Modifiers :upper :lowerfirst" {
 	set :upper :lowerfirst "test" "VaLuE";
 
-	if string :is "${test}" "VALUE" {
+	if string :comparator "i;octet" :is "${test}" "VALUE" {
 		test_fail "modifiers applied with wrong precedence";
 	}
 
-	if not string :is "${test}" "vALUE" {
+	if not string :comparator "i;octet" :is "${test}" "vALUE" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -61,11 +61,11 @@ test "Modifiers :upper :lowerfirst" {
 test "Modifiers :lowerfirst :upper" {
 	set :lowerfirst :upper "test" "VaLuE";
 
-	if string :is "${test}" "VALUE" {
+	if string :comparator "i;octet" :is "${test}" "VALUE" {
 		test_fail "modifiers applied with wrong precedence";
 	}
 
-	if not string :is "${test}" "vALUE" {
+	if not string :comparator "i;octet" :is "${test}" "vALUE" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -73,7 +73,7 @@ test "Modifiers :lowerfirst :upper" {
 test "Modifier :length (empty)" {
 	set :length "test" "";
 
-	if not string :is "${test}" "0" {
+	if not string :comparator "i;octet" :is "${test}" "0" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -81,7 +81,7 @@ test "Modifier :length (empty)" {
 test "Modifier :length (simple)" {
 	set :length "test" "VaLuE";
 
-	if not string :is "${test}" "5" {
+	if not string :comparator "i;octet" :is "${test}" "5" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -91,7 +91,7 @@ test "Modifier :length (elaborate)" {
 	set "b" "1234567890";
 	set :length "test" " ${a}:${b}  ";
 
-	if not string :is "${test}" "40" {
+	if not string :comparator "i;octet" :is "${test}" "40" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -99,7 +99,7 @@ test "Modifier :length (elaborate)" {
 test "Modifier :quotewildcard" {
 	set :quotewildcard "test" "^^***??**^^";
 
-	if not string :is "${test}" "^^\\*\\*\\*\\?\\?\\*\\*^^" {
+	if not string :comparator "i;octet" :is "${test}" "^^\\*\\*\\*\\?\\?\\*\\*^^" {
 		test_fail "modified variable assignment failed";
 	}
 }
@@ -107,43 +107,43 @@ test "Modifier :quotewildcard" {
 test "Modifier :length :quotewildcard" {
 	set :length :quotewildcard "test" "^^***??**^^";
 
-	if string :is "${test}" "11" {
+	if string :comparator "i;octet" :is "${test}" "11" {
 		test_fail "modifiers applied with wrong precedence";
 	}
 
-	if not string :is "${test}" "18" {
+	if not string :comparator "i;octet" :is "${test}" "18" {
 		test_fail "modified variable assignment failed";
 	}
 }
 
 test "RFC examples" {
 	set "a" "juMBlEd lETteRS";             # => "juMBlEd lETteRS"
-	if not string "${a}" "juMBlEd lETteRS" {
+	if not string :comparator "i;octet" "${a}" "juMBlEd lETteRS" {
 		test_fail "modified assignment failed (1): ${a}";
 	}
 
 	set :length "b" "${a}";                # => "15"
-	if not string "${b}" "15" {
+	if not string :comparator "i;octet" "${b}" "15" {
 		test_fail "modified assignment failed (2): ${a}";
 	}
 
 	set :lower "b" "${a}";                 #  => "jumbled letters"
-	if not string "${b}" "jumbled letters" {
+	if not string :comparator "i;octet" "${b}" "jumbled letters" {
 		test_fail "modified assignment failed (3): ${a}";
 	}
 
     set :upperfirst "b" "${a}";            # => "JuMBlEd lETteRS"
-	if not string "${b}" "JuMBlEd lETteRS" {
+	if not string :comparator "i;octet" "${b}" "JuMBlEd lETteRS" {
 		test_fail "modified assignment failed (4): ${a}";
 	}
 
 	set :upperfirst :lower "b" "${a}";     # => "Jumbled letters"
-	if not string "${b}" "Jumbled letters" {
+	if not string :comparator "i;octet" "${b}" "Jumbled letters" {
 		test_fail "modified assignment failed (5): ${a}";
 	}
 
 	set :quotewildcard "b" "Rock*";        # => "Rock\*"
-	if not string "${b}" "Rock\\*" {
+	if not string :comparator "i;octet" "${b}" "Rock\\*" {
 		test_fail "modified assignment failed (6): ${a}";
 	}
 }
@@ -154,7 +154,7 @@ test "Modifier :length utf8" {
 	set "a" "Das ist ${unicode: 00fc}berhaupt nicht m${unicode: 00f6}glich.";
 
 	set :length "b" "${a}";
-    if not string "${b}" "32" {
+    if not string :comparator "i;octet" "${b}" "32" {
         test_fail "incorrect number of unicode characters reported: ${b}/32";
     }
 }

@@ -99,7 +99,7 @@ test "Basic assignment" {
 		test_fail "variable assignment failed";
 	}
 
-	if string :is "${test}" "value" {
+	if string :is :comparator "i;octet" "${test}" "value" {
 		test_fail "string test failed";
 	}
 }

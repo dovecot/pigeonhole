@@ -4,11 +4,11 @@ require "encoded-character";
 require "variables";
 
 test "HEX equality one" {
-	if not string "${hex:42}" "B" {
+	if not string :comparator "i;octet" "${hex:42}" "B" {
 		test_fail "failed to match the string 'B'";
 	}
 
-	if string "${hex:42}" "b" {
+	if string :comparator "i;octet" "${hex:42}" "b" {
 		test_fail "matched nonsense";
 	}
 
@@ -18,11 +18,11 @@ test "HEX equality one" {
 }
 
 test "HEX equality one middle" {
-	if not string " ${hex:42} " " B " {
+	if not string :comparator "i;octet" " ${hex:42} " " B " {
 		test_fail "failed to match the string ' B '";
 	}
 
-	if string " ${hex:42} " " b " {
+	if string :comparator "i;octet" " ${hex:42} " " b " {
 		test_fail "matched nonsense";
 	}
 
@@ -32,11 +32,11 @@ test "HEX equality one middle" {
 }
 
 test "HEX equality one begin" {
-	if not string "${hex:42} " "B " {
+	if not string :comparator "i;octet" "${hex:42} " "B " {
 		test_fail "failed to match the string 'B '";
 	}
 
-	if string "${hex:42} " " b" {
+	if string :comparator "i;octet" "${hex:42} " " b" {
 		test_fail "matched nonsense";
 	}
 
@@ -46,11 +46,11 @@ test "HEX equality one begin" {
 }
 
 test "HEX equality one end" {
-	if not string " ${hex:42}" " B" {
+	if not string :comparator "i;octet" " ${hex:42}" " B" {
 		test_fail "failed to match the string ' B'";
 	}
 
-	if string " ${hex:42}" " b " {
+	if string :comparator "i;octet" " ${hex:42}" " b " {
 		test_fail "matched nonsense";
 	}
 

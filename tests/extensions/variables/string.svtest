@@ -35,3 +35,21 @@ test "No whitespace stripping" {
 		test_fail "string test seems to have stripped white space";
 	}
 }
+
+test "Case sensitivity" {
+	if not string :comparator "i;octet" :is "fropfropfrop" "fropfropfrop" {
+		test_fail "exact match fails";
+	}
+
+	if not string :is "fropfropfrop" "FrOpfropfRoP" {
+		test_fail "string test is case-sensitive by default";
+	}
+
+	if string :comparator "i;octet" :is "frop" "FrOp" {
+		test_fail "string test is not using comparator definition";
+	}
+
+	if not string :is :comparator "i;ascii-casemap" "frop" "FrOp" {
+		test_fail "string test is case-sensitive even with i;ascii-casemap";
+	}
+}
