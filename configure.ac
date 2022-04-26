@@ -2,8 +2,8 @@ AC_PREREQ([2.59])
 
 # Be sure to update ABI version also if anything changes that might require
 # recompiling plugins. Most importantly that means if any structs are changed.
-AC_INIT([Pigeonhole], [0.5.100.devel], [dovecot@dovecot.org], [dovecot-2.3-pigeonhole])
-AC_DEFINE_UNQUOTED([PIGEONHOLE_ABI_VERSION], "0.5.ABIv100($PACKAGE_VERSION)", [Pigeonhole ABI version])
+AC_INIT([Pigeonhole], [0.5.19], [dovecot@dovecot.org], [dovecot-2.3-pigeonhole])
+AC_DEFINE_UNQUOTED([PIGEONHOLE_ABI_VERSION], "0.5.ABIv19($PACKAGE_VERSION)", [Pigeonhole ABI version])
 
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_SRCDIR([src])
