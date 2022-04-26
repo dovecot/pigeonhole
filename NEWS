@@ -1,3 +1,7 @@
+v0.5.19  2022-05-04  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	* No changes - release done to keep version numbers synced.
+
 v0.5.18  2022-02-03  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	- duplicate: Users without a home directory can crash with Sieve when
