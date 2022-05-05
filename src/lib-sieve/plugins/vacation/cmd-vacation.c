@@ -17,6 +17,7 @@
 #include "rfc2822.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-address.h"
@@ -1100,7 +1101,8 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 		subject = ctx->subject;
 	}
 
-	subject = str_sanitize_utf8(subject, config->max_subject_codepoints);
+	subject = str_sanitize_utf8(
+		subject, SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS);
 
 	/* Obtain full To address for reply */
 

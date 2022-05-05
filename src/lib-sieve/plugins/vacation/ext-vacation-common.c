@@ -4,7 +4,6 @@
 #include "lib.h"
 
 #include "sieve-common.h"
-#include "sieve-limits.h"
 #include "sieve-error.h"
 #include "sieve-settings.h"
 #include "sieve-extensions.h"
@@ -19,7 +18,6 @@ bool ext_vacation_load
 	sieve_number_t min_period, max_period, default_period;
 	bool use_original_recipient, dont_check_recipient, send_from_recipient,
 		to_header_ignore_envelope;
-	unsigned long long max_subject_codepoints;
 	const char *default_subject, *default_subject_template;
 
 	if ( *context != NULL ) {
@@ -60,11 +58,6 @@ bool ext_vacation_load
 	default_subject_template = sieve_setting_get(
 		svinst, "sieve_vacation_default_subject_template");
 
-	if ( !sieve_setting_get_uint_value
-		(svinst, "sieve_vacation_max_subject_codepoints", &max_subject_codepoints) ) {
-		max_subject_codepoints = SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS;
-	}
-
 	if ( !sieve_setting_get_bool_value
 		(svinst, "sieve_vacation_use_original_recipient", &use_original_recipient) ) {
 		use_original_recipient = FALSE;
@@ -90,7 +83,6 @@ bool ext_vacation_load
 	config->min_period = min_period;
 	config->max_period = max_period;
 	config->default_period = default_period;
-	config->max_subject_codepoints = max_subject_codepoints;
 	config->default_subject = i_strdup_empty(default_subject);
 	config->default_subject_template = i_strdup_empty(default_subject_template);
 	config->use_original_recipient = use_original_recipient;

@@ -15,7 +15,6 @@ struct ext_vacation_config {
 	unsigned int min_period;
 	unsigned int max_period;
 	unsigned int default_period;
-	unsigned long long max_subject_codepoints;
 	char *default_subject;
 	char *default_subject_template;
 	bool use_original_recipient;
