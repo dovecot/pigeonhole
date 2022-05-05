@@ -4,6 +4,7 @@
 #include "lib.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-error.h"
 #include "sieve-settings.h"
 #include "sieve-extensions.h"
@@ -61,7 +62,7 @@ bool ext_vacation_load
 
 	if ( !sieve_setting_get_uint_value
 		(svinst, "sieve_vacation_max_subject_codepoints", &max_subject_codepoints) ) {
-		max_subject_codepoints = EXT_VACATION_DEFAULT_MAX_SUBJECT_CODEPOINTS;
+		max_subject_codepoints = SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS;
 	}
 
 	if ( !sieve_setting_get_bool_value

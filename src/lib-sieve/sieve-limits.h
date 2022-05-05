@@ -42,4 +42,6 @@
 #define SIEVE_DEFAULT_MAX_ACTIONS                       32
 #define SIEVE_DEFAULT_MAX_REDIRECTS                     4
 
+#define SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS             256
+
 #endif

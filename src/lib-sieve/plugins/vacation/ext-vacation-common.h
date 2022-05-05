@@ -10,7 +10,6 @@
 #define EXT_VACATION_DEFAULT_PERIOD (7*24*60*60)
 #define EXT_VACATION_DEFAULT_MIN_PERIOD (24*60*60)
 #define EXT_VACATION_DEFAULT_MAX_PERIOD 0
-#define EXT_VACATION_DEFAULT_MAX_SUBJECT_CODEPOINTS 256
 
 struct ext_vacation_config {
 	unsigned int min_period;

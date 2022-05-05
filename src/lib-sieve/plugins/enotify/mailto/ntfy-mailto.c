@@ -28,6 +28,7 @@
 #include "mail-storage.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-address.h"
 #include "sieve-address-source.h"
 #include "sieve-message.h"
@@ -46,7 +47,6 @@
 
 #define NTFY_MAILTO_MAX_RECIPIENTS  8
 #define NTFY_MAILTO_MAX_HEADERS     16
-#define NTFY_MAILTO_MAX_SUBJECT     256
 
 /*
  * Mailto notification configuration
@@ -608,8 +608,8 @@ ntfy_mailto_send(const struct sieve_enotify_exec_env *nenv,
 
 	/* Determine subject */
 	if (nact->message != NULL) {
-		subject = str_sanitize_utf8(nact->message,
-					    NTFY_MAILTO_MAX_SUBJECT);
+		subject = str_sanitize_utf8(
+			nact->message, SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS);
 	} else if (subject == NULL) {
 		const char *const *hsubject;
 
@@ -618,7 +618,7 @@ ntfy_mailto_send(const struct sieve_enotify_exec_env *nenv,
 					  &hsubject) > 0) {
 			subject = str_sanitize_utf8(
 				t_strdup_printf("Notification: %s", hsubject[0]),
-				NTFY_MAILTO_MAX_SUBJECT);
+				SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS);
 		} else {
 			subject = "Notification: (no subject)";
 		}
