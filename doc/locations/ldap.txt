@@ -46,7 +46,8 @@ If the name of the Script is left unspecified and not otherwise provided by the
 Sieve interpreter, the name defaults to `default'.
 
 The configuration file is based on the auth userdb/passdb LDAP configuration
-(refer to Dovecot wiki at http://wiki2.dovecot.org/AuthDatabase/LDAP). The
+(refer to Dovecot documentation at
+https://doc.dovecot.org/configuration_manual/authentication/passwd/). The
 following options are specific to the Sieve ldap location type:
 
   sieve_ldap_filter = (&(objectClass=posixAccount)(uid=%u))

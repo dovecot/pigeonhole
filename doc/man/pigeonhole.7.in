@@ -51,8 +51,8 @@ commands for management of Sieve filtering.
 .PP
 The functionality and configuration of the LDA Sieve plugin and the ManageSieve
 service is described in detail in the README and INSTALL files contained in the
-Pigeonhole package and in the Dovecot Wiki
-<http://wiki2.dovecot.org/Pigeonhole>.
+Pigeonhole package and in the Dovecot documentation
+<https://doc.dovecot.org/configuration_manual/sieve/>.
 .PP
 The following command line tools are available outside of
 .BR doveadm :
@@ -93,7 +93,7 @@ LGPLv2.1 license, which is the same license as Dovecot, see
 Additional resources:
 .IP "Dovecot website"
 http://www.dovecot.org
-.IP "Dovecot v2.x Wiki"
-http://wiki2.dovecot.org/Pigeonhole
+.IP "Dovecot documentation"
+https://doc.dovecot.org/configuration_manual/sieve/
 .IP "Pigeonhole website"
 http://pigeonhole.dovecot.org
