@@ -293,27 +293,8 @@ listed here:
 ManageSieve
 -----------
 
-* Although this ManageSieve server should comply with the draft specification of
-  the ManageSieve protocol, quite a few clients don't. This is particularly true
-  for the TLS support. However, now that Cyrus' Timsieved has changed its
-  behavior towards protocol compliance, all those clients will follow
-  eventually.
-
-  Clients known to have TLS issues:
-	- Thunderbird Sieve add-on: fixed as per version 0.1.5
-	- AvelSieve: patch on the wiki:	http://wiki.dovecot.org/ManageSieve
-	- KMail + kio_sieve: TLS broken for old versions. This issue is fixed at
-	  least in kmail 1.9.9 / kde 3.5.9.
-
-  Unfortunately, there is no reliable way to provide a workaround for this
-  problem. We will have to wait for the authors of these clients to make the
-  proper adjustments.
-
-* Other client issues:
-
-	- SmartSieve, WebSieve:
-	  These clients are specifically written for Cyrus timsieved and fail on
-	  multiple stages of the protocol when connected to Pigeonhole ManageSieve.
+For up to date information please visit
+https://doc.dovecot.org/admin_manual/pigeonhole_managesieve_server/
 
 Authors
 =======
