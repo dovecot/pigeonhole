@@ -608,15 +608,15 @@ ntfy_mailto_send(const struct sieve_enotify_exec_env *nenv,
 
 	/* Determine subject */
 	if (nact->message != NULL) {
-		/* FIXME: handle UTF-8 */
-		subject = str_sanitize(nact->message, NTFY_MAILTO_MAX_SUBJECT);
+		subject = str_sanitize_utf8(nact->message,
+					    NTFY_MAILTO_MAX_SUBJECT);
 	} else if (subject == NULL) {
 		const char *const *hsubject;
 
 		/* Fetch subject from original message */
 		if (mail_get_headers_utf8(msgdata->mail, "subject",
 					  &hsubject) > 0) {
-			subject = str_sanitize(
+			subject = str_sanitize_utf8(
 				t_strdup_printf("Notification: %s", hsubject[0]),
 				NTFY_MAILTO_MAX_SUBJECT);
 		} else {

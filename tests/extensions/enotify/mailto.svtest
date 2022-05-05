@@ -1,4 +1,5 @@
 require "vnd.dovecot.testsuite";
+require "encoded-character";
 require "enotify";
 require "relational";
 require "envelope";
@@ -537,5 +538,45 @@ expected: ${expected}
 decoded: ${decoded}
 .
 ;
+	}
+}
+
+/*
+ * Long message
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.org
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Long message" {
+	notify :message "以つわづ聞65絵げま公存ょ愛益イラヌ旅絵平ネ聞玉ゆッ夜能セメヲ映紙ナネヲラ記50聞3里ヤ配石スりを先天ヤヌオク沢天7統併イよけげ最処輪金直ちス。揮わ却写よゃ限傷じば豊銘らぽのほ談造げ発変だ際記タヨリ構始月ヨセ表軽すづル理特院ざれ男録カチ毎応ひくトこ人復比イふ。日ミノエ置止イ記場クウ見月リシヒス書電ほん開学井ワス逃6賞割セツ政転あトほれ撮追緩せばほ護区私丘甘めょはつ。交ルク秀57俸愚牡獣1定ネ投式チホイフ会2掲ねトぼて保品とじざち直金アチヒ調校タ更下べとー士聞テケオ軽記ホカ名北りまげほ弁分じク崎脅ねめン格抱診露竜わルぶイ。佐かだ可管ユラネ起呈佐ぞりづせ出階ふ方膨さびぞ中声不終多散れよどら何集あ砂岡ワ変愛細く。陣あず続的ルん得法をけり科同索ゃうン屋戸51俸愚牡獣8常ヱアケ択先レフ度前ヌカヒ本拡ケモ私但へやドび系球域メタヨネ全能ツヒ書指挙患慣づ。"
+		"mailto:stephan@example.org";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not allof(
+		header :contains "subject"
+			"以つわづ聞65絵げま公存ょ愛益イラヌ旅絵平ネ聞玉ゆッ夜能セメヲ映紙ナネヲ",
+		header :contains "subject"
+			"金アチヒ調校タ更下べとー士聞テケオ軽記ホカ名北りまげほ弁分じク崎脅ねめン格抱") {
+		test_fail "Subject header is too limited";
+	}
+	if header :contains "subject" "ねめン格抱診露" {
+		test_fail "Subject header is unlimited";
+	}
+	if not header :matches "subject" "*${unicode:2026}" {
+		test_fail "Subject is missing ellipsis";
 	}
 }
