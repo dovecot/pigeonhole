@@ -43,19 +43,16 @@ static int cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 	return ret;
 }
 
-static void
-cmd_sieve_get_init(struct doveadm_mail_cmd_context *_ctx,
-		   const char *const args[])
+static void cmd_sieve_get_init(struct doveadm_mail_cmd_context *_ctx)
 {
 	struct doveadm_sieve_get_cmd_context *ctx =
 		(struct doveadm_sieve_get_cmd_context *)_ctx;
+	struct doveadm_cmd_context *cctx = _ctx->cctx;
 
-	if (str_array_length(args) != 1)
+	if (!doveadm_cmd_param_str(cctx, "scriptname", &ctx->scriptname))
 		doveadm_mail_help_name("sieve get");
-	doveadm_sieve_cmd_scriptnames_check(args);
 
-	ctx->scriptname = p_strdup(ctx->ctx.ctx.pool, args[0]);
-
+	doveadm_sieve_cmd_scriptname_check(ctx->scriptname);
 	doveadm_print_header_simple("sieve script");
 }
 

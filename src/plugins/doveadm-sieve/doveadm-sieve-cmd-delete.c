@@ -55,39 +55,18 @@ static int cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 	return ret;
 }
 
-static void
-cmd_sieve_delete_init(struct doveadm_mail_cmd_context *_ctx,
-		      const char *const args[])
+static void cmd_sieve_delete_init(struct doveadm_mail_cmd_context *_ctx)
 {
 	struct doveadm_sieve_delete_cmd_context *ctx =
 		(struct doveadm_sieve_delete_cmd_context *)_ctx;
-	const char *name;
-	unsigned int i;
+	struct doveadm_cmd_context *cctx = _ctx->cctx;
 
-	if (args[0] == NULL)
+	ctx->ignore_active = doveadm_cmd_param_flag(cctx, "ignore-active");
+
+	if (!doveadm_cmd_param_array_append(cctx, "scriptname", &ctx->scriptnames))
 		doveadm_mail_help_name("sieve delete");
-	doveadm_sieve_cmd_scriptnames_check(args);
 
-	for (i = 0; args[i] != NULL; i++) {
-		name = p_strdup(ctx->ctx.ctx.pool, args[i]);
-		array_append(&ctx->scriptnames, &name, 1);
-	}
-}
-
-static bool
-cmd_sieve_delete_parse_arg(struct doveadm_mail_cmd_context *_ctx, int c)
-{
-	struct doveadm_sieve_delete_cmd_context *ctx =
-		(struct doveadm_sieve_delete_cmd_context *)_ctx;
-
-	switch (c) {
-	case 'a':
-		ctx->ignore_active = TRUE;
-		break;
-	default:
-		return FALSE;
-	}
-	return TRUE;
+	doveadm_sieve_cmd_scriptnames_check(&ctx->scriptnames);
 }
 
 static struct doveadm_mail_cmd_context *cmd_sieve_delete_alloc(void)
@@ -95,8 +74,6 @@ static struct doveadm_mail_cmd_context *cmd_sieve_delete_alloc(void)
 	struct doveadm_sieve_delete_cmd_context *ctx;
 
 	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_delete_cmd_context);
-	ctx->ctx.ctx.getopt_args = "a";
-	ctx->ctx.ctx.v.parse_arg = cmd_sieve_delete_parse_arg;
 	ctx->ctx.ctx.v.init = cmd_sieve_delete_init;
 	ctx->ctx.v.run = cmd_sieve_delete_run;
 	p_array_init(&ctx->scriptnames, ctx->ctx.ctx.pool, 16);

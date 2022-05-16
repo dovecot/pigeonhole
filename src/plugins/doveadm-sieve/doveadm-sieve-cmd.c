@@ -75,29 +75,23 @@ static const struct sieve_callbacks sieve_callbacks = {
 	doveadm_sieve_cmd_get_setting,
 };
 
-static bool
-doveadm_sieve_cmd_parse_arg(struct doveadm_mail_cmd_context *_ctx ATTR_UNUSED,
-			    int c ATTR_UNUSED)
+void doveadm_sieve_cmd_scriptname_check(const char *arg)
 {
-	return FALSE;
+	if (!uni_utf8_str_is_valid(arg))
+		i_fatal_status(EX_DATAERR,
+			"Sieve script name not valid UTF-8: %s", arg);
+
+	if (!sieve_script_name_is_valid(arg) )
+		i_fatal_status(EX_DATAERR,
+			"Sieve script name not valid: %s", arg);
+
 }
 
-void doveadm_sieve_cmd_scriptnames_check(const char *const args[])
+void doveadm_sieve_cmd_scriptnames_check(ARRAY_TYPE(const_string) *args)
 {
-	unsigned int i;
-
-	for (i = 0; args[i] != NULL; i++) {
-		if (!uni_utf8_str_is_valid(args[i])) {
-			i_fatal_status(EX_DATAERR,
-				       "Sieve script name not valid UTF-8: %s",
-				       args[i]);
-		}
-		if (!sieve_script_name_is_valid(args[i])) {
-			i_fatal_status(EX_DATAERR,
-				       "Sieve script name not valid: %s",
-				       args[i]);
-		}
-	}
+	const char *const *arg;
+	array_foreach(args, arg)
+		doveadm_sieve_cmd_scriptname_check(*arg);
 }
 
 static int
@@ -153,8 +147,6 @@ struct doveadm_sieve_cmd_context *doveadm_sieve_cmd_alloc_size(size_t size)
 
 	ctx = (struct doveadm_sieve_cmd_context *)
 		doveadm_mail_cmd_alloc_size(size);
-	ctx->ctx.getopt_args = "s";
-	ctx->ctx.v.parse_arg = doveadm_sieve_cmd_parse_arg;
 	ctx->ctx.v.run = doveadm_sieve_cmd_run;
 	return ctx;
 }

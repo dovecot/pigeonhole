@@ -27,7 +27,8 @@ void doveadm_sieve_cmd_failed_storage(struct doveadm_sieve_cmd_context *ctx,
 	(type *)doveadm_sieve_cmd_alloc_size(sizeof(type))
 struct doveadm_sieve_cmd_context *doveadm_sieve_cmd_alloc_size(size_t size);
 
-void doveadm_sieve_cmd_scriptnames_check(const char *const args[]);
+void doveadm_sieve_cmd_scriptname_check(const char *arg);
+void doveadm_sieve_cmd_scriptnames_check(ARRAY_TYPE(const_string) *args);
 
 extern struct doveadm_cmd_ver2 doveadm_sieve_cmd_list;
 extern struct doveadm_cmd_ver2 doveadm_sieve_cmd_get;

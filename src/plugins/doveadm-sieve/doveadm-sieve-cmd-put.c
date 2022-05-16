@@ -139,45 +139,25 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 	return ret < 0 ? -1 : 0;
 }
 
-static void
-cmd_sieve_put_init(struct doveadm_mail_cmd_context *_ctx,
-		    const char *const args[])
+static void cmd_sieve_put_init(struct doveadm_mail_cmd_context *_ctx)
 {
 	struct doveadm_sieve_put_cmd_context *ctx =
 		(struct doveadm_sieve_put_cmd_context *)_ctx;
+	struct doveadm_cmd_context *cctx = _ctx->cctx;
 
-	if (str_array_length(args) != 1)
+	ctx->activate = doveadm_cmd_param_flag(cctx, "activate");
+	if (!doveadm_cmd_param_str(cctx, "scriptname", &ctx->scriptname))
 		doveadm_mail_help_name("sieve put");
-	doveadm_sieve_cmd_scriptnames_check(args);
-
-	ctx->scriptname = p_strdup(ctx->ctx.ctx.pool, args[0]);
-
+	doveadm_sieve_cmd_scriptname_check(ctx->scriptname);
 	doveadm_mail_get_input(_ctx);
 }
 
-static bool
-cmd_sieve_put_parse_arg(struct doveadm_mail_cmd_context *_ctx, int c)
-{
-	struct doveadm_sieve_put_cmd_context *ctx =
-		(struct doveadm_sieve_put_cmd_context *)_ctx;
-
-	switch (c) {
-	case 'a':
-		ctx->activate = TRUE;
-		break;
-	default:
-		return FALSE;
-	}
-	return TRUE;
-}
-
-static struct doveadm_mail_cmd_context *cmd_sieve_put_alloc(void)
+static struct doveadm_mail_cmd_context *
+cmd_sieve_put_alloc(void)
 {
 	struct doveadm_sieve_put_cmd_context *ctx;
 
 	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_put_cmd_context);
-	ctx->ctx.ctx.getopt_args = "a";
-	ctx->ctx.ctx.v.parse_arg = cmd_sieve_put_parse_arg;
 	ctx->ctx.ctx.v.init = cmd_sieve_put_init;
 	ctx->ctx.v.run = cmd_sieve_put_run;
 	return &ctx->ctx.ctx;

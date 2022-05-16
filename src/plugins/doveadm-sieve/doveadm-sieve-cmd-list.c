@@ -44,8 +44,7 @@ static int cmd_sieve_list_run(struct doveadm_sieve_cmd_context *_ctx)
 }
 
 static void
-cmd_sieve_list_init(struct doveadm_mail_cmd_context *_ctx ATTR_UNUSED,
-		    const char *const args[] ATTR_UNUSED)
+cmd_sieve_list_init(struct doveadm_mail_cmd_context *_ctx ATTR_UNUSED)
 {
 	doveadm_print_header("script", "script",
 			     DOVEADM_PRINT_HEADER_FLAG_HIDE_TITLE);
@@ -59,7 +58,6 @@ static struct doveadm_mail_cmd_context *cmd_sieve_list_alloc(void)
 
 	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_cmd_context);
 	ctx->ctx.v.init = cmd_sieve_list_init;
-	ctx->ctx.getopt_args = "s";
 	ctx->v.run = cmd_sieve_list_run;
 	doveadm_print_init(DOVEADM_PRINT_TYPE_FLOW);
 	return &ctx->ctx;

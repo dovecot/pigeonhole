@@ -43,19 +43,17 @@ static int cmd_sieve_rename_run(struct doveadm_sieve_cmd_context *_ctx)
 	return ret;
 }
 
-static void
-cmd_sieve_rename_init(struct doveadm_mail_cmd_context *_ctx,
-		      const char *const args[])
+static void cmd_sieve_rename_init(struct doveadm_mail_cmd_context *_ctx)
 {
 	struct doveadm_sieve_rename_cmd_context *ctx =
 		(struct doveadm_sieve_rename_cmd_context *)_ctx;
+	struct doveadm_cmd_context *cctx = _ctx->cctx;
 
-	if (str_array_length(args) != 2)
+	if (!doveadm_cmd_param_str(cctx, "oldname", &ctx->oldname) ||
+	    !doveadm_cmd_param_str(cctx, "newname", &ctx->newname))
 		doveadm_mail_help_name("sieve rename");
-	doveadm_sieve_cmd_scriptnames_check(args);
-
-	ctx->oldname = p_strdup(ctx->ctx.ctx.pool, args[0]);
-	ctx->newname = p_strdup(ctx->ctx.ctx.pool, args[1]);
+	doveadm_sieve_cmd_scriptname_check(ctx->oldname);
+	doveadm_sieve_cmd_scriptname_check(ctx->newname);
 }
 
 static struct doveadm_mail_cmd_context *cmd_sieve_rename_alloc(void)
