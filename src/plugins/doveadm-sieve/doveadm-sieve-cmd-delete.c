@@ -21,7 +21,8 @@ struct doveadm_sieve_delete_cmd_context {
 static int cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_delete_cmd_context *ctx =
-		(struct doveadm_sieve_delete_cmd_context *)_ctx;
+		container_of(_ctx, struct doveadm_sieve_delete_cmd_context, ctx);
+
 	struct sieve_storage *storage = _ctx->storage;
 	const ARRAY_TYPE(const_string) *scriptnames = &ctx->scriptnames;
 	const char *scriptname;
@@ -57,9 +58,9 @@ static int cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 
 static void cmd_sieve_delete_init(struct doveadm_mail_cmd_context *_ctx)
 {
-	struct doveadm_sieve_delete_cmd_context *ctx =
-		(struct doveadm_sieve_delete_cmd_context *)_ctx;
 	struct doveadm_cmd_context *cctx = _ctx->cctx;
+	struct doveadm_sieve_delete_cmd_context *ctx =
+		container_of(_ctx, struct doveadm_sieve_delete_cmd_context, ctx.ctx);
 
 	ctx->ignore_active = doveadm_cmd_param_flag(cctx, "ignore-active");
 

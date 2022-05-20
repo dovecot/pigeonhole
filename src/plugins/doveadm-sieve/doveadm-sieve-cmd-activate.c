@@ -19,7 +19,8 @@ struct doveadm_sieve_activate_cmd_context {
 static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_activate_cmd_context *ctx =
-		(struct doveadm_sieve_activate_cmd_context *)_ctx;
+		container_of(_ctx, struct doveadm_sieve_activate_cmd_context, ctx);
+
 	struct sieve_storage *storage = _ctx->storage;
 	struct sieve_script *script;
 	enum sieve_error error;
@@ -91,9 +92,9 @@ static int cmd_sieve_deactivate_run(struct doveadm_sieve_cmd_context *_ctx)
 
 static void cmd_sieve_activate_init(struct doveadm_mail_cmd_context *_ctx)
 {
-	struct doveadm_sieve_activate_cmd_context *ctx =
-		(struct doveadm_sieve_activate_cmd_context *)_ctx;
 	struct doveadm_cmd_context *cctx = _ctx->cctx;
+	struct doveadm_sieve_activate_cmd_context *ctx =
+		container_of(_ctx, struct doveadm_sieve_activate_cmd_context, ctx.ctx);
 
 	if (!doveadm_cmd_param_str(cctx, "scriptname", &ctx->scriptname))
 		doveadm_mail_help_name("sieve activate");

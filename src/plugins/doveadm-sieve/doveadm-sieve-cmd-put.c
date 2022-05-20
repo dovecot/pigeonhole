@@ -22,7 +22,8 @@ struct doveadm_sieve_put_cmd_context {
 static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_put_cmd_context *ctx =
-		(struct doveadm_sieve_put_cmd_context *)_ctx;
+		container_of(_ctx, struct doveadm_sieve_put_cmd_context, ctx);
+
 	struct sieve_storage_save_context *save_ctx;
 	struct sieve_storage *storage = _ctx->storage;
 	struct istream *input = _ctx->ctx.cmd_input;
@@ -141,9 +142,9 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 
 static void cmd_sieve_put_init(struct doveadm_mail_cmd_context *_ctx)
 {
-	struct doveadm_sieve_put_cmd_context *ctx =
-		(struct doveadm_sieve_put_cmd_context *)_ctx;
 	struct doveadm_cmd_context *cctx = _ctx->cctx;
+	struct doveadm_sieve_put_cmd_context *ctx =
+		container_of(_ctx, struct doveadm_sieve_put_cmd_context, ctx.ctx);
 
 	ctx->activate = doveadm_cmd_param_flag(cctx, "activate");
 	if (!doveadm_cmd_param_str(cctx, "scriptname", &ctx->scriptname))

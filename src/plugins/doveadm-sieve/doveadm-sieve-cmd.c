@@ -99,7 +99,8 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 		      struct mail_user *user)
 {
 	struct doveadm_sieve_cmd_context *ctx =
-		(struct doveadm_sieve_cmd_context *)_ctx;
+		container_of(_ctx, struct doveadm_sieve_cmd_context, ctx);
+
 	struct sieve_environment svenv;
 	enum sieve_error error;
 	int ret;
