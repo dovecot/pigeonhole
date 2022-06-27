@@ -159,25 +159,6 @@ cmd_logout(struct managesieve_client *client,
 }
 
 static int
-cmd_xclient_parse_forward(struct managesieve_client *client, const char *value)
-{
-	size_t value_len = strlen(value);
-
-	if (client->common.forward_fields != NULL)
-		str_truncate(client->common.forward_fields, 0);
-	else {
-		client->common.forward_fields =	str_new(
-			client->common.preproxy_pool,
-			MAX_BASE64_DECODED_SIZE(value_len));
-	}
-
-	if (base64_decode(value, value_len, client->common.forward_fields) < 0)
-		return -1;
-
-	return 0;
-}
-
-static int
 cmd_xclient(struct managesieve_client *client,
 	    const struct managesieve_arg *args)
 {
@@ -194,7 +175,7 @@ cmd_xclient(struct managesieve_client *client,
 			if (net_addr2ip(value, &client->common.ip) < 0)
 				args_ok = FALSE;
 		} else if (str_begins_icase(arg, "FORWARD=", &value)) {
-			if (cmd_xclient_parse_forward(client, value) < 0)
+			if (!client_forward_decode_base64(&client->common, value))
 				args_ok = FALSE;
 		} else if (str_begins_icase(arg, "PORT=", &value)) {
 			if (net_str2port(value, &client->common.remote_port) < 0)
