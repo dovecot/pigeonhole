@@ -255,7 +255,31 @@ Bcc: joop@hooibaal.ex
 Sender: s.bosch@friep.frop
 Resent-From: ivo@boer.ex
 Resent-To: idioot@dombo.ex
-Subject: Berichtje
+Reply-To: aaaa@friep.frop
+Resent-Reply-To: bbbb@friep.frop
+Resent-Sender: cccc@friep.frop
+Resent-Cc: dddd@friep.frop
+Resent-Bcc: eeee@friep.frop
+For-Approval: ffff@friep.frop
+For-Handling: gggg@friep.frop
+For-Comment: hhhh@friep.frop
+Apparently-To: iiii@friep.frop
+Errors-To: jjjj@friep.frop
+Delivered-To: kkkk@friep.frop
+return-receipt-to: llll@friep.frop
+X-Admin: mmmm@friep.frop
+Read-Receipt-To: nnnn@friep.frop
+X-Confirm-Reading-To: oooo@friep.frop
+Return-Receipt-Requested: pppp@friep.frop
+Registered-Mail-Reply-Requested-By: qqqq@friep.frop
+Mail-Followup-To: rrrr@friep.frop
+Mail-Reply-To: ssss@friep.frop
+Abuse-Reports-To: tttt@friep.frop
+X-Complaints-To: uuuu@friep.frop
+X-Report-Abuse-To: vvvv@friep.frop
+X-BeenThere: wwww@friep.frop
+X-Original-To: yyyy@friep.frop
+Subject: Berichtje:
 
 Test.
 .
@@ -263,6 +287,8 @@ Test.
 
 
 test "Address headers" {
+	/* Required */
+
 	if not address "from" "stephan@friep.frop" {
 		test_fail "from header not recognized";
 	}
@@ -289,6 +315,107 @@ test "Address headers" {
 
 	if not address "resent-to" "idioot@dombo.ex" {
 		test_fail "resent-to header not recognized";
+	}
+
+	/* Additional (RFC 822 / RFC 2822) */
+
+	if not address "reply-to" "aaaa@friep.frop" {
+		test_fail "reply-to header not recognized";
+	}
+
+	if not address "resent-reply-to" "bbbb@friep.frop" {
+		test_fail "resent-reply-to header not recognized";
+	}
+
+	if not address "resent-sender" "cccc@friep.frop" {
+		test_fail "resent-sender header not recognized";
+	}
+
+	if not address "resent-cc" "dddd@friep.frop" {
+		test_fail "resent-cc header not recognized";
+	}
+
+	if not address "resent-bcc" "eeee@friep.frop" {
+		test_fail "resent-bcc header not recognized";
+	}
+
+	/* Non-standard (RFC 2076, draft-palme-mailext-headers-08.txt) */
+
+	if not address "for-approval" "ffff@friep.frop" {
+		test_fail "for-approval header not recognized";
+	}
+
+	if not address "for-handling" "gggg@friep.frop" {
+		test_fail "for-handling header not recognized";
+	}
+
+	if not address "for-comment" "hhhh@friep.frop" {
+		test_fail "for-comment header not recognized";
+	}
+	if not address "apparently-to" "iiii@friep.frop" {
+		test_fail "apparently-to header not recognized";
+	}
+	
+	if not address "errors-to" "jjjj@friep.frop" {
+		test_fail "errors-to header not recognized";
+	}
+	
+	if not address "delivered-to" "kkkk@friep.frop" {
+		test_fail "delivered-to header not recognized";
+	}
+	
+	if not address "return-receipt-to" "llll@friep.frop" {
+		test_fail "return-receipt-to header not recognized";
+	}
+
+	if not address "x-admin" "mmmm@friep.frop" {
+		test_fail "x-admin header not recognized";
+	}
+	
+	if not address "read-receipt-to" "nnnn@friep.frop" {
+		test_fail "read-receipt-to header not recognized";
+	}
+	
+	if not address "x-confirm-reading-to" "oooo@friep.frop" {
+		test_fail "x-confirm-reading-to header not recognized";
+	}
+
+	if not address "return-receipt-requested" "pppp@friep.frop" {
+		test_fail "return-receipt-requested header not recognized";
+	}
+
+	if not address "registered-mail-reply-requested-by" "qqqq@friep.frop" {
+		test_fail "registered-mail-reply-requested-by header not recognized";
+	}
+	
+	if not address "mail-followup-to" "rrrr@friep.frop" {
+		test_fail "mail-followup-to header not recognized";
+	}
+	
+	if not address "mail-reply-to" "ssss@friep.frop" {
+		test_fail "mail-reply-to header not recognized";
+	}
+	
+	if not address "abuse-reports-to" "tttt@friep.frop" {
+		test_fail "abuse-reports-to header not recognized";
+	}
+
+	if not address "x-complaints-to" "uuuu@friep.frop" {
+		test_fail "x-complaints-to header not recognized";
+	}
+	
+	if not address "x-report-abuse-to" "vvvv@friep.frop" {
+		test_fail "x-report-abuse-to header not recognized";
+	}
+
+	/* Undocumented */
+	
+	if not address "x-beenthere" "wwww@friep.frop" {
+		test_fail "x-beenthere header not recognized";
+	}
+	
+	if not address "x-original-to" "yyyy@friep.frop" {
+		test_fail "x-original-to header not recognized";
 	}
 }
 
