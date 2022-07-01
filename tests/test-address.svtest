@@ -278,6 +278,7 @@ Abuse-Reports-To: tttt@friep.frop
 X-Complaints-To: uuuu@friep.frop
 X-Report-Abuse-To: vvvv@friep.frop
 X-BeenThere: wwww@friep.frop
+X-Original-From: xxxx@friep.frop
 X-Original-To: yyyy@friep.frop
 Subject: Berichtje:
 
@@ -413,7 +414,11 @@ test "Address headers" {
 	if not address "x-beenthere" "wwww@friep.frop" {
 		test_fail "x-beenthere header not recognized";
 	}
-	
+
+	if not address "x-original-from" "xxxx@friep.frop" {
+		test_fail "x-original-from header not recognized";
+	}
+
 	if not address "x-original-to" "yyyy@friep.frop" {
 		test_fail "x-original-to header not recognized";
 	}

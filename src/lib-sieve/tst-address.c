@@ -121,7 +121,7 @@ static const char * const _allowed_headers[] = {
 	"x-report-abuse-to",
 
 	/* Undocumented */
-	"x-beenthere", "x-original-to",
+	"x-beenthere", "x-original-from", "x-original-to",
 
 	NULL
 };
