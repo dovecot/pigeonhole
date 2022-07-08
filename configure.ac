@@ -7,11 +7,11 @@ m4_define([pigeonhole_ABI_VERSION],
 m4_define([pigeonhole_TAR_VERSION],
     m4_esyscmd_s([build-aux/git-tarname-version-gen]))))
 
-AC_PREREQ([2.59])
+AC_PREREQ([2.69])
 
 # Be sure to update ABI version also if anything changes that might require
 # recompiling plugins. Most importantly that means if any structs are changed.
-AC_INIT([Pigeonhole], m4_defn([pigeonhole_VERSION]), [dovecot@dovecot.org], m4_defn([pigeonhole_TAR_VERSION]))
+AC_INIT([Pigeonhole], [m4_defn([pigeonhole_VERSION])], [dovecot@dovecot.org], [m4_defn([pigeonhole_TAR_VERSION])])
 AC_DEFINE_UNQUOTED([PIGEONHOLE_ABI_VERSION], "0.6.ABIv0($PACKAGE_VERSION)", [Pigeonhole ABI version])
 
 AC_CONFIG_SRCDIR([src])
@@ -36,7 +36,7 @@ AM_MAINTAINER_MODE
 
 AC_PROG_CC
 AC_PROG_CPP
-AC_PROG_LIBTOOL
+LT_INIT
 
 # Couple with Dovecot
 #
@@ -89,13 +89,13 @@ AC_DEFUN([TEST_WITH], [
     if test "$3" = plugin; then
       eval $want=plugin
     else
-      AC_ERROR([--with-$1=plugin not supported])
+      AC_MSG_ERROR([--with-$1=plugin not supported])
     fi
   elif `echo $2|grep '^/' >/dev/null`; then
-    AC_ERROR([--with-$1=path not supported. You may want to use instead:
+    AC_MSG_ERROR([--with-$1=path not supported. You may want to use instead:
 CPPFLAGS=-I$2/include LDFLAGS=-L$2/lib ./configure --with-$1])
   else
-    AC_ERROR([--with-$1: Unknown value: $2])
+    AC_MSG_ERROR([--with-$1: Unknown value: $2])
   fi
 ])
 
@@ -156,12 +156,12 @@ if test $want_ldap != no; then
 			have_ldap=yes
 		], [
 		  if test $want_ldap != auto; then
-		    AC_ERROR([Can't build with LDAP support: ldap.h not found])
+		    AC_MSG_ERROR([cannot build with LDAP support: ldap.h not found])
 		  fi
 		])
 	], [
 	  if test $want_ldap != auto; then
-	    AC_ERROR([Can't build with LDAP support: libldap not found])
+	    AC_MSG_ERROR([cannot build with LDAP support: libldap not found])
 	  fi
 	])
 fi
