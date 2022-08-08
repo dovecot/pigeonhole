@@ -62,7 +62,7 @@ AC_SUBST(sieve_docdir)
 #
 
 AC_ARG_WITH(unfinished-features,
-[AC_HELP_STRING([--with-unfinished-features],
+[AS_HELP_STRING([--with-unfinished-features],
 	[Build unfinished new features/extensions [default=no]])],
         if test x$withval = xno || test x$withval = xauto; then
                 want_unfinished_features=$withval
@@ -110,7 +110,7 @@ AC_ARG_WITH(docs,
 AM_CONDITIONAL(BUILD_DOCS, test "$want_docs" = "yes")
 
 AC_ARG_WITH(managesieve,
-[AC_HELP_STRING([--with-managesieve],
+[AS_HELP_STRING([--with-managesieve],
 	[Build ManageSieve service [default=yes]])],
         if test x$withval = xno || test x$withval = xauto; then
                 want_managesieve=$withval
