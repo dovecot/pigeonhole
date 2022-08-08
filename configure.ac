@@ -62,14 +62,9 @@ AC_SUBST(sieve_docdir)
 #
 
 AC_ARG_WITH(unfinished-features,
-[AS_HELP_STRING([--with-unfinished-features],
-	[Build unfinished new features/extensions [default=no]])],
-        if test x$withval = xno || test x$withval = xauto; then
-                want_unfinished_features=$withval
-        else
-                want_unfinished_features=yes
-        fi,
-        want_unfinished_features=no)
+AS_HELP_STRING([--with-unfinished-features], [Build unfinished new features/extensions (default=no)]),
+  TEST_WITH(unfinished_features, $withval),
+  want_unfinished_features=no)
 AM_CONDITIONAL(BUILD_UNFINISHED, test "$want_unfinished_features" = "yes")
 
 if test "$want_unfinished_features" = "yes"; then
@@ -78,28 +73,19 @@ if test "$want_unfinished_features" = "yes"; then
 fi
 
 AC_ARG_WITH(docs,
-[  --with-docs             Install documentation (default)],
-    if test x$withval = xno; then
-        want_docs=no
-    else
-        want_docs=yes
-    fi,
-    want_docs=yes)
+AS_HELP_STRING([--with-docs], [Install documentation (default=yes)]),
+  TEST_WITH(docs, $withval),
+  want_docs=yes)
 AM_CONDITIONAL(BUILD_DOCS, test "$want_docs" = "yes")
 
 AC_ARG_WITH(managesieve,
-[AS_HELP_STRING([--with-managesieve],
-	[Build ManageSieve service [default=yes]])],
-        if test x$withval = xno || test x$withval = xauto; then
-                want_managesieve=$withval
-        else
-                want_managesieve=yes
-        fi,
-        want_managesieve=yes)
+AS_HELP_STRING([--with-managesieve], [Build ManageSieve service (default=yes)]),
+  TEST_WITH(managesieve, $withval),
+  want_managesieve=yes)
 AM_CONDITIONAL(BUILD_MANAGESIEVE, test "$want_managesieve" = "yes")
 
 AC_ARG_WITH(ldap,
-AS_HELP_STRING([--with-ldap=yes|plugin], [Build with LDAP support]),
+AS_HELP_STRING([--with-ldap=yes|plugin], [Build with LDAP support (default=no)]),
   TEST_WITH(ldap, $withval, plugin),
   want_ldap=no)
 
