@@ -1180,7 +1180,7 @@ sieve_result_action_execute(struct sieve_result_execution *rexec,
 			  "implicit" : "canceled")));
 	}
 
-	if (status == SIEVE_EXEC_OK &&
+	if (status == SIEVE_EXEC_OK && act->def != NULL &&
 	    (act->def->flags & SIEVE_ACTFLAG_TRIES_DELIVER) != 0)
 		rexec->seen_delivery = TRUE;
 
