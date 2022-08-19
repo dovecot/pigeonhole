@@ -203,7 +203,8 @@ managesieve_url_parse_path_segment(struct managesieve_url_parser *url_parser,
 		if (*parser->cur == '%') {
 			unsigned char ch = 0;
 
-			if (segment != NULL) {
+			if (segment_r != NULL) {
+				i_assert(segment != NULL);
 				str_append_data(segment, offset,
 						parser->cur - offset);
 			}
@@ -213,8 +214,10 @@ managesieve_url_parse_path_segment(struct managesieve_url_parser *url_parser,
 				return -1;
 			i_assert(ret > 0);
 
-			if (segment != NULL)
+			if (segment_r != NULL) {
+				i_assert(segment != NULL);
 				str_append_c(segment, ch);
+			}
 			offset = parser->cur;
 			continue;
 		}
@@ -223,8 +226,10 @@ managesieve_url_parse_path_segment(struct managesieve_url_parser *url_parser,
 			break;
 		parser->cur++;
 	}
-	if (segment != NULL)
+	if (segment_r != NULL) {
+		i_assert(segment != NULL);
 		str_append_data(segment, offset, parser->cur - offset);
+	}
 
 	if (parser->cur < parser->end && *parser->cur != '/' &&
 	    *parser->cur != '?' && *parser->cur != '#') {
@@ -237,8 +242,10 @@ managesieve_url_parse_path_segment(struct managesieve_url_parser *url_parser,
 	if (first == parser->cur)
 		return 0;
 
-	if (segment != NULL)
+	if (segment_r != NULL) {
+		i_assert(segment != NULL);
 		*segment_r = p_strdup(parser->pool, str_c(segment));
+	}
 	return 1;
 }
 
