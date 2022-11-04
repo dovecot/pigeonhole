@@ -80,14 +80,14 @@ static void client_send_capabilities(struct client *client)
 						    "\"\r\n", NULL));
 
 		/* STARTTLS */
-		if (login_ssl_initialized && !client->tls)
+		if (login_ssl_initialized && !client->connection_tls_secured)
 			client_send_raw(client, "\"STARTTLS\"\r\n");
 
 		/* Protocol version */
 		client_send_raw(client, "\"VERSION\" \"1.0\"\r\n");
 
 		/* XCLIENT */
-		if (client->trusted)
+		if (client->connection_trusted)
 			client_send_raw(client, "\"XCLIENT\"\r\n");
 	} T_END;
 }
@@ -165,7 +165,7 @@ cmd_xclient(struct managesieve_client *client,
 	const char *value, *arg;
 	bool args_ok = TRUE;
 
-	if (!client->common.trusted) {
+	if (!client->common.connection_trusted) {
 		client_send_no(&client->common, "You are not from trusted IP");
 		return 1;
 	}
