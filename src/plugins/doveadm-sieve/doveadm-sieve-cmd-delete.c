@@ -23,6 +23,7 @@ static int cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 	struct doveadm_sieve_delete_cmd_context *ctx =
 		container_of(_ctx, struct doveadm_sieve_delete_cmd_context,
 			     ctx);
+	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_storage *storage = _ctx->storage;
 	const ARRAY_TYPE(const_string) *scriptnames = &ctx->scriptnames;
 	const char *scriptname;
@@ -47,7 +48,7 @@ static int cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 		}
 
 		if (sret < 0) {
-			i_error("Failed to delete Sieve script: %s",
+			e_error(event, "Failed to delete Sieve script: %s",
 				sieve_storage_get_last_error(storage, &error));
 			doveadm_sieve_cmd_failed_error(_ctx, error);
 			ret = -1;

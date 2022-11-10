@@ -21,6 +21,7 @@ static int cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_get_cmd_context *ctx =
 		container_of(_ctx, struct doveadm_sieve_get_cmd_context, ctx);
+	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_script *script;
 	struct istream *input;
 	enum sieve_error error;
@@ -30,7 +31,7 @@ static int cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 					  &error);
 	if (script == NULL ||
 	    sieve_script_get_stream(script, &input, &error) < 0 ) {
-		i_error("Failed to open Sieve script: %s",
+		e_error(event, "Failed to open Sieve script: %s",
 			sieve_storage_get_last_error(_ctx->storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		if (script != NULL)

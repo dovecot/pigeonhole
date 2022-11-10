@@ -100,6 +100,7 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 {
 	struct doveadm_sieve_cmd_context *ctx =
 		container_of(_ctx, struct doveadm_sieve_cmd_context, ctx);
+	struct event *event = _ctx->cctx->event;
 
 	struct sieve_environment svenv;
 	enum sieve_error error;
@@ -120,15 +121,15 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 		switch (error) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
 			error = SIEVE_ERROR_NOT_FOUND;
-			i_error("Failed to open Sieve storage: "
+			e_error(event, "Failed to open Sieve storage: "
 				"Sieve is disabled for this user");
 			break;
 		case SIEVE_ERROR_NOT_FOUND:
-			i_error("Failed to open Sieve storage: "
+			e_error(event, "Failed to open Sieve storage: "
 				"User cannot manage personal Sieve scripts.");
 			break;
 		default:
-			i_error("Failed to open Sieve storage.");
+			e_error(event, "Failed to open Sieve storage.");
 		}
 		doveadm_sieve_cmd_failed_error(ctx, error);
 		ret =  -1;

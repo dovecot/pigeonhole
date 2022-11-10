@@ -21,6 +21,7 @@ static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 	struct doveadm_sieve_activate_cmd_context *ctx =
 		container_of(_ctx, struct doveadm_sieve_activate_cmd_context,
 			     ctx);
+	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_storage *storage = _ctx->storage;
 	struct sieve_script *script;
 	enum sieve_error error;
@@ -28,7 +29,7 @@ static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 
 	script = sieve_storage_open_script(storage, ctx->scriptname, NULL);
 	if (script == NULL) {
-		i_error("Failed to activate Sieve script: %s",
+		e_error(event, "Failed to activate Sieve script: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		return -1;
@@ -64,7 +65,7 @@ static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 		 */
 		ret = sieve_script_activate(script, (time_t)-1);
 		if (ret < 0) {
-			i_error("Failed to activate Sieve script: %s",
+			e_error(event, "Failed to activate Sieve script: %s",
 				sieve_storage_get_last_error(storage, &error));
 			doveadm_sieve_cmd_failed_error(_ctx, error);
 			ret = -1;
@@ -77,11 +78,12 @@ static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 
 static int cmd_sieve_deactivate_run(struct doveadm_sieve_cmd_context *_ctx)
 {
+	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_storage *storage = _ctx->storage;
 	enum sieve_error error;
 
 	if (sieve_storage_deactivate(storage, (time_t)-1) < 0) {
-		i_error("Failed to deactivate Sieve script: %s",
+		e_error(event, "Failed to deactivate Sieve script: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		return -1;

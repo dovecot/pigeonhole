@@ -12,6 +12,7 @@
 
 static int cmd_sieve_list_run(struct doveadm_sieve_cmd_context *_ctx)
 {
+	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_storage *storage = _ctx->storage;
 	struct sieve_storage_list_context *lctx;
 	enum sieve_error error;
@@ -20,7 +21,7 @@ static int cmd_sieve_list_run(struct doveadm_sieve_cmd_context *_ctx)
 
 	lctx = sieve_storage_list_init(storage);
 	if (lctx == NULL) {
-		i_error("Listing Sieve scripts failed: %s",
+		e_error(event, "Listing Sieve scripts failed: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		return -1;
@@ -35,7 +36,7 @@ static int cmd_sieve_list_run(struct doveadm_sieve_cmd_context *_ctx)
 	}
 
 	if (sieve_storage_list_deinit(&lctx) < 0) {
-		i_error("Listing Sieve scripts failed: %s",
+		e_error(event, "Listing Sieve scripts failed: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		return -1;

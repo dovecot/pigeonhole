@@ -21,6 +21,7 @@ static int cmd_sieve_rename_run(struct doveadm_sieve_cmd_context *_ctx)
 	struct doveadm_sieve_rename_cmd_context *ctx =
 		container_of(_ctx, struct doveadm_sieve_rename_cmd_context,
 			     ctx);
+	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_storage *storage = _ctx->storage;
 	struct sieve_script *script;
 	enum sieve_error error;
@@ -28,12 +29,12 @@ static int cmd_sieve_rename_run(struct doveadm_sieve_cmd_context *_ctx)
 
 	script = sieve_storage_open_script(storage, ctx->oldname, NULL);
 	if (script == NULL) {
-		i_error("Failed to rename Sieve script: %s",
+		e_error(event, "Failed to rename Sieve script: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		ret = -1;
 	} else if (sieve_script_rename(script, ctx->newname) < 0) {
-		i_error("Failed to rename Sieve script: %s",
+		e_error(event, "Failed to rename Sieve script: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		ret = -1;

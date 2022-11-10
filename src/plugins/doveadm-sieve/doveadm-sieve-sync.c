@@ -22,6 +22,7 @@
 
 struct sieve_mail_user {
 	union mail_user_module_context module_ctx;
+	struct event *event;
 
 	struct sieve_instance *svinst;
 	struct sieve_storage *sieve_storage;
@@ -66,6 +67,7 @@ static void mail_sieve_user_deinit(struct mail_user *user)
 		sieve_deinit(&suser->svinst);
 	}
 
+	event_unref(&suser->event);
 	suser->module_ctx.super.deinit(user);
 }
 
@@ -376,6 +378,7 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 		    const struct mail_attribute_value *value)
 {
 	struct mail_user *user = t->box->storage->user;
+	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(t->box);
 
 	if (t->box->storage->user->dsyncing &&
@@ -383,24 +386,22 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 	    str_begins_with(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
 		time_t ts = (value->last_change != 0 ?
 			     value->last_change : ioloop_time);
+		const char *change;
 
 		if (sieve_attribute_set_sieve(t->box->storage, key, value) < 0)
 			return -1;
-
-		if (user->mail_debug) {
-			const char *change;
-			if (value->last_change != 0) {
-				change = t_strflocaltime(
-					"(last change: %Y-%m-%d %H:%M:%S)",
-					value->last_change);
-			} else {
-				change = t_strflocaltime(
-					"(time: %Y-%m-%d %H:%M:%S)",
-					ioloop_time);
-			}
-			i_debug("doveadm-sieve: Assigned value for key `%s' %s",
-				key, change);
+		
+		if (value->last_change != 0) {
+			change = t_strflocaltime(
+				"(last change: %Y-%m-%d %H:%M:%S)",
+				value->last_change);
+		} else {
+			change = t_strflocaltime(
+				"(time: %Y-%m-%d %H:%M:%S)",
+				ioloop_time);
 		}
+		e_debug(suser->event, "Assigned value for key `%s' %s",
+			key, change);
 
 		/* FIXME: set value len to sieve script size / active name
 		   length */
@@ -564,13 +565,14 @@ sieve_attribute_get(struct mailbox *box,
 {
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(box);
 	struct mail_user *user = box->storage->user;
+	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
 	int ret;
 
 	if (box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
 	    str_begins_with(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) {
 		ret = sieve_attribute_get_sieve(box->storage, key, value_r);
-		if (ret >= 0 && user->mail_debug) {
+		if (ret >= 0) {
 			struct tm *tm = localtime(&value_r->last_change);
 			char str[256];
 			const char *timestamp = "";
@@ -581,11 +583,11 @@ sieve_attribute_get(struct mailbox *box,
 				timestamp = str;
 
 			if (ret > 0) {
-				i_debug("doveadm-sieve: "
+				e_debug(user->event,
 					"Retrieved value for key `%s'%s",
 					key, timestamp);
 			} else {
-				i_debug("doveadm-sieve: "
+				e_debug(suser->event,
 					"Value missing for key `%s'%s",
 					key, timestamp);
 			}
@@ -599,11 +601,11 @@ static int
 sieve_attribute_iter_script_init(struct sieve_mailbox_attribute_iter *siter)
 {
 	struct mail_user *user = siter->iter.box->storage->user;
+	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
 	struct sieve_storage *svstorage;
 	int ret;
 
-	if (user->mail_debug)
-		i_debug("doveadm-sieve: Iterating Sieve mailbox attributes");
+	e_debug(suser->event, "Iterating Sieve mailbox attributes");
 
 	ret = mail_sieve_user_init(user, &svstorage);
 	if (ret <= 0)
@@ -698,16 +700,14 @@ sieve_attribute_iter_next(struct mailbox_attribute_iter *iter)
 		(struct sieve_mailbox_attribute_iter *)iter;
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(iter->box);
 	struct mail_user *user = iter->box->storage->user;
+	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
 	const char *key;
 
 	if (siter->sieve_list != NULL) {
 		key = sieve_attribute_iter_next_script(siter);
 		if (key != NULL) {
-			if (user->mail_debug) {
-				i_debug("doveadm-sieve: "
-					"Iterating Sieve mailbox attribute: %s",
-					key);
-			}
+			e_debug(suser->event,
+				"Iterating Sieve mailbox attribute: %s", key);
 			return key;
 		}
 	}
@@ -743,6 +743,9 @@ static void sieve_mail_user_created(struct mail_user *user)
 	user->vlast = &suser->module_ctx.super;
 	v->deinit = mail_sieve_user_deinit;
 	MODULE_CONTEXT_SET(user, sieve_user_module, suser);
+
+	suser->event = event_create(user->event);
+	event_set_append_log_prefix(suser->event, "doveadm-sieve: ");
 }
 
 static void sieve_mailbox_allocated(struct mailbox *box)

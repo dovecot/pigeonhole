@@ -23,6 +23,7 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_put_cmd_context *ctx =
 		container_of(_ctx, struct doveadm_sieve_put_cmd_context, ctx);
+	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_storage_save_context *save_ctx;
 	struct sieve_storage *storage = _ctx->storage;
 	struct istream *input = _ctx->ctx.cmd_input;
@@ -32,7 +33,7 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 
 	save_ctx = sieve_storage_save_init(storage, ctx->scriptname, input);
 	if (save_ctx == NULL) {
-		i_error("Saving failed: %s",
+		e_error(event, "Saving failed: %s",
 			sieve_storage_get_last_error(storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
 		return -1;
@@ -48,16 +49,16 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 	i_assert(ret == -1);
 
 	if (input->stream_errno != 0) {
-		i_error("read(script input) failed: %s",
+		e_error(event, "read(script input) failed: %s",
 			i_stream_get_error(input));
 		doveadm_sieve_cmd_failed_error(&ctx->ctx,
 					       SIEVE_ERROR_TEMP_FAILURE);
 	} else if (save_failed) {
-		i_error("Saving failed: %s",
+		e_error(event, "Saving failed: %s",
 			sieve_storage_get_last_error(storage, NULL));
 		doveadm_sieve_cmd_failed_storage(&ctx->ctx, storage);
 	} else if (sieve_storage_save_finish(save_ctx) < 0) {
-		i_error("Saving failed: %s",
+		e_error(event, "Saving failed: %s",
 			sieve_storage_get_last_error(storage, NULL));
 		doveadm_sieve_cmd_failed_storage(&ctx->ctx, storage);
 	} else {
@@ -78,7 +79,7 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 
 		/* Check result */
 		if (script == NULL) {
-			i_error("Saving failed: %s",
+			e_error(event, "Saving failed: %s",
 				sieve_storage_get_last_error(storage, &error));
 			doveadm_sieve_cmd_failed_error(_ctx, error);
 			ret = -1;
@@ -105,7 +106,7 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 				/* Script is valid; commit it to storage */
 				ret = sieve_storage_save_commit(&save_ctx);
 				if (ret < 0) {
-					i_error("Saving failed: %s",
+					e_error(event, "Saving failed: %s",
 						sieve_storage_get_last_error(
 							storage, &error));
 					doveadm_sieve_cmd_failed_error(
@@ -126,7 +127,7 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 						  NULL);
 		if (script == NULL ||
 		    sieve_script_activate(script, (time_t)-1) < 0) {
-			i_error("Failed to activate Sieve script: %s",
+			e_error(event, "Failed to activate Sieve script: %s",
 				sieve_storage_get_last_error(storage, &error));
 			doveadm_sieve_cmd_failed_error(_ctx, error);
 			ret = -1;
