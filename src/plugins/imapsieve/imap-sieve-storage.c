@@ -79,6 +79,11 @@ struct imap_sieve_user {
 	bool expunge_discarded:1;
 };
 
+struct imap_sieve_mailbox {
+	union mailbox_module_context module_ctx;
+	struct imap_sieve_user *user;
+};
+
 struct imap_sieve_mailbox_event {
 	uint32_t dest_mail_uid, src_mail_uid;
 	unsigned int save_seq;
@@ -458,10 +463,10 @@ imap_sieve_mailbox_copy(struct mail_save_context *ctx, struct mail *mail)
 	struct mail_storage *storage = t->box->storage;
 	struct mail_user *user = storage->user;
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
-	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT_REQUIRE(t->box);
+	struct imap_sieve_mailbox *isbox = IMAP_SIEVE_CONTEXT_REQUIRE(t->box);
 	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
 
-	if (lbox->super.copy(ctx, mail) < 0)
+	if (isbox->module_ctx.super.copy(ctx, mail) < 0)
 		return -1;
 
 	if (ismt != NULL && !isuser->sieve_active &&
@@ -484,12 +489,12 @@ static int imap_sieve_mailbox_save_finish(struct mail_save_context *ctx)
 	struct mailbox_transaction_context *t = ctx->transaction;
 	struct mailbox *box = t->box;
 	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
-	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT_REQUIRE(box);
+	struct imap_sieve_mailbox *isbox = IMAP_SIEVE_CONTEXT_REQUIRE(box);
 	struct mail_user *user = box->storage->user;
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
 	struct mail *dest_mail = ctx->copying_via_save ? NULL : ctx->dest_mail;
 
-	if (lbox->super.save_finish(ctx) < 0)
+	if (isbox->module_ctx.super.save_finish(ctx) < 0)
 		return -1;
 
 	if (ismt != NULL && !isuser->sieve_active &&
@@ -510,7 +515,7 @@ imap_sieve_mailbox_transaction_begin(struct mailbox *box,
 				     enum mailbox_transaction_flags flags,
 				     const char *reason)
 {
-	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT_REQUIRE(box);
+	struct imap_sieve_mailbox *isbox = IMAP_SIEVE_CONTEXT_REQUIRE(box);
 	struct mail_user *user = box->storage->user;
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT(user);
 	struct mailbox_transaction_context *t;
@@ -518,7 +523,7 @@ imap_sieve_mailbox_transaction_begin(struct mailbox *box,
 	pool_t pool;
 
 	/* Commence parent transaction */
-	t = lbox->super.transaction_begin(box, flags, reason);
+	t = isbox->module_ctx.super.transaction_begin(box, flags, reason);
 
 	if (isuser == NULL || isuser->sieve_active ||
 	    isuser->cur_cmd == IMAP_SIEVE_CMD_NONE)
@@ -789,11 +794,11 @@ imap_sieve_mailbox_transaction_commit(
 	struct mailbox *box = t->box;
 	struct mail_user *user = box->storage->user;
 	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
-	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT_REQUIRE(t->box);
+	struct imap_sieve_mailbox *isbox = IMAP_SIEVE_CONTEXT_REQUIRE(t->box);
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
 	int ret = 0;
 
-	if ((lbox->super.transaction_commit(t, changes_r)) < 0)
+	if ((isbox->module_ctx.super.transaction_commit(t, changes_r)) < 0)
 		ret = -1;
 	else if (ismt != NULL) {
 		isuser->sieve_active = TRUE;
@@ -812,9 +817,9 @@ static void
 imap_sieve_mailbox_transaction_rollback(struct mailbox_transaction_context *t)
 {
 	struct imap_sieve_mailbox_transaction *ismt = IMAP_SIEVE_CONTEXT(t);
-	union mailbox_module_context *lbox = IMAP_SIEVE_CONTEXT_REQUIRE(t->box);
+	struct imap_sieve_mailbox *isbox = IMAP_SIEVE_CONTEXT_REQUIRE(t->box);
 
-	lbox->super.transaction_rollback(t);
+	isbox->module_ctx.super.transaction_rollback(t);
 
 	if (ismt != NULL)
 		imap_sieve_mailbox_transaction_free(ismt);
@@ -825,22 +830,23 @@ static void imap_sieve_mailbox_allocated(struct mailbox *box)
 	struct mail_user *user = box->storage->user;
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
 	struct mailbox_vfuncs *v = box->vlast;
-	union mailbox_module_context *lbox;
+	struct imap_sieve_mailbox *isbox;
 
 	if (isuser->client == NULL || isuser->sieve_active ||
 	    (box->flags & MAILBOX_FLAG_READONLY) != 0)
 		return;
 
-	lbox = p_new(box->pool, union mailbox_module_context, 1);
-	lbox->super = *v;
-	box->vlast = &lbox->super;
+	isbox = p_new(box->pool, struct imap_sieve_mailbox, 1);
+	isbox->user = isuser;
+	isbox->module_ctx.super = *v;
+	box->vlast = &isbox->module_ctx.super;
 
 	v->copy = imap_sieve_mailbox_copy;
 	v->save_finish = imap_sieve_mailbox_save_finish;
 	v->transaction_begin = imap_sieve_mailbox_transaction_begin;
 	v->transaction_commit = imap_sieve_mailbox_transaction_commit;
 	v->transaction_rollback = imap_sieve_mailbox_transaction_rollback;
-	MODULE_CONTEXT_SET_SELF(box, imap_sieve_storage_module, lbox);
+	MODULE_CONTEXT_SET(box, imap_sieve_storage_module, isbox);
 }
 
 /*
