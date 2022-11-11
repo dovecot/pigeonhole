@@ -19,8 +19,8 @@ struct doveadm_sieve_rename_cmd_context {
 static int cmd_sieve_rename_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_rename_cmd_context *ctx =
-		container_of(_ctx, struct doveadm_sieve_rename_cmd_context, ctx);
-
+		container_of(_ctx, struct doveadm_sieve_rename_cmd_context,
+			     ctx);
 	struct sieve_storage *storage = _ctx->storage;
 	struct sieve_script *script;
 	enum sieve_error error;
@@ -48,7 +48,8 @@ static void cmd_sieve_rename_init(struct doveadm_mail_cmd_context *_ctx)
 {
 	struct doveadm_cmd_context *cctx = _ctx->cctx;
 	struct doveadm_sieve_rename_cmd_context *ctx =
-		container_of(_ctx, struct doveadm_sieve_rename_cmd_context, ctx.ctx);
+		container_of(_ctx, struct doveadm_sieve_rename_cmd_context,
+			     ctx.ctx);
 
 	if (!doveadm_cmd_param_str(cctx, "oldname", &ctx->oldname) ||
 	    !doveadm_cmd_param_str(cctx, "newname", &ctx->newname))
