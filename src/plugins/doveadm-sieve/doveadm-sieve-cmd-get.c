@@ -21,7 +21,6 @@ static int cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct doveadm_sieve_get_cmd_context *ctx =
 		container_of(_ctx, struct doveadm_sieve_get_cmd_context, ctx);
-
 	struct sieve_script *script;
 	struct istream *input;
 	enum sieve_error error;
@@ -48,7 +47,8 @@ static void cmd_sieve_get_init(struct doveadm_mail_cmd_context *_ctx)
 {
 	struct doveadm_cmd_context *cctx = _ctx->cctx;
 	struct doveadm_sieve_get_cmd_context *ctx =
-		container_of(_ctx, struct doveadm_sieve_get_cmd_context, ctx.ctx);
+		container_of(_ctx, struct doveadm_sieve_get_cmd_context,
+			     ctx.ctx);
 
 	if (!doveadm_cmd_param_str(cctx, "scriptname", &ctx->scriptname))
 		doveadm_mail_help_name("sieve get");
