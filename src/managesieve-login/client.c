@@ -188,6 +188,10 @@ cmd_xclient(struct managesieve_client *client,
 		} else if (str_begins_icase(arg, "TTL=", &value)) {
 			if (str_to_uint(value, &client->common.proxy_ttl) < 0)
 				args_ok = FALSE;
+		} else if (str_begins_icase(arg, "CLIENT-TRANSPORT=", &value)) {
+			client->common.end_client_tls_secured_set = TRUE;
+			client->common.end_client_tls_secured =
+				str_begins_with(value, CLIENT_TRANSPORT_TLS);
 		}
 		args++;
 	}

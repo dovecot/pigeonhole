@@ -61,10 +61,13 @@ proxy_write_xclient(struct managesieve_client *client, string_t *str)
 {
 	string_t *fwd = proxy_compose_xclient_forward(client);
 
-	str_printfa(str, "XCLIENT ADDR=%s PORT=%u SESSION=%s TTL=%u",
+	str_printfa(str, "XCLIENT ADDR=%s PORT=%u SESSION=%s TTL=%u "
+		    "CLIENT-TRANSPORT=%s",
 		    net_ip2addr(&client->common.ip), client->common.remote_port,
 		    client_get_session_id(&client->common),
-		    client->common.proxy_ttl - 1);
+		    client->common.proxy_ttl - 1,
+		    client->common.end_client_tls_secured ?
+		    CLIENT_TRANSPORT_TLS : CLIENT_TRANSPORT_INSECURE);
 	if (fwd != NULL) {
 		str_append(str, " FORWARD=");
 		base64_encode(str_data(fwd), str_len(fwd), str);
