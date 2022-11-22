@@ -27,6 +27,7 @@ static struct file_listener_settings managesieve_unix_listeners_array[] = {
 	},
 	{
 		.path = "srv.managesieve/%{pid}",
+		.type = "admin",
 		.mode = 0600,
 		.user = "",
 		.group = "",
