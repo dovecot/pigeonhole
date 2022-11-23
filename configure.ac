@@ -57,6 +57,7 @@ AC_SUBST(LIBDOVECOT_INCLUDE)
 
 sieve_docdir='${dovecot_docdir}/sieve'
 AC_SUBST(sieve_docdir)
+AM_MISSING_PROG([WGET], [wget])
 
 # Extensions under development
 #
