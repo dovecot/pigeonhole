@@ -36,7 +36,9 @@ enum ext_variables_modifier_code {
     EXT_VARIABLES_MODIFIER_LOWERFIRST,
     EXT_VARIABLES_MODIFIER_UPPERFIRST,
     EXT_VARIABLES_MODIFIER_QUOTEWILDCARD,
-    EXT_VARIABLES_MODIFIER_LENGTH
+    EXT_VARIABLES_MODIFIER_LENGTH,
+
+    EXT_VARIABLES_MODIFIER_COUNT
 };
 
 const struct sieve_variables_modifier_def *ext_variables_core_modifiers[] = {
@@ -47,6 +49,8 @@ const struct sieve_variables_modifier_def *ext_variables_core_modifiers[] = {
 	&quotewildcard_modifier,
 	&length_modifier
 };
+static_assert_array_size(ext_variables_core_modifiers,
+			 EXT_VARIABLES_MODIFIER_COUNT);
 
 const unsigned int ext_variables_core_modifiers_count =
     N_ELEMENTS(ext_variables_core_modifiers);

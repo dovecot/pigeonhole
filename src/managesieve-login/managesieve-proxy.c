@@ -29,9 +29,11 @@ typedef enum {
 	MANAGESIEVE_RESPONSE_BYE
 } managesieve_response_t;
 
-static const char *managesieve_proxy_state_names[MSIEVE_PROXY_STATE_COUNT] = {
+static const char *managesieve_proxy_state_names[] = {
 	"none", "tls-start", "tls-ready", "xclient", "auth"
 };
+static_assert_array_size(managesieve_proxy_state_names,
+			 MSIEVE_PROXY_STATE_COUNT);
 
 static string_t *
 proxy_compose_xclient_forward(struct managesieve_client *client)
