@@ -140,8 +140,9 @@ struct mail_user *mail_raw_user_create(struct mail_user *mail_user)
 	struct mail_storage_service_ctx *storage_service =
 		mail_storage_service_user_get_service_ctx(
 			mail_user->service_user);
-	return raw_storage_create_from_set(storage_service,
-					   mail_user->unexpanded_set_parser);
+	struct master_service_settings_instance *set_instance =
+		mail_storage_service_user_get_settings_instance(mail_user->service_user);
+	return raw_storage_create_from_set(storage_service, set_instance);
 }
 
 /*

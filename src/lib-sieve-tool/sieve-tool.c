@@ -258,7 +258,7 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 	service_input.username = username;
 
 	tool->storage_service = mail_storage_service_init(
-		master_service, NULL, storage_service_flags);
+		master_service, storage_service_flags);
 	if (mail_storage_service_lookup_next(
 		tool->storage_service, &service_input,
 		&tool->mail_user_dovecot, &errstr) <= 0)
@@ -350,9 +350,11 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 	struct mail_namespace *ns = NULL;
 	const char *home = NULL, *errstr = NULL;
 
+	struct master_service_settings_instance *set_instance =
+		mail_storage_service_user_get_settings_instance(mail_user_dovecot->service_user);
 	struct mail_storage_service_input input = {
 		.username = username,
-		.unexpanded_set_parser = mail_user_dovecot->unexpanded_set_parser,
+		.set_instance = set_instance,
 		.no_userdb_lookup = TRUE,
 	};
 	if (mail_storage_service_lookup_next(tool->storage_service, &input,

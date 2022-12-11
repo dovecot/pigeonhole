@@ -52,9 +52,10 @@ static struct mail_user *edit_mail_raw_storage_get(struct mail_user *mail_user)
 		struct mail_storage_service_ctx *storage_service =
 			mail_storage_service_user_get_service_ctx(
 				mail_user->service_user);
+		struct master_service_settings_instance *set_instance =
+			mail_storage_service_user_get_settings_instance(mail_user->service_user);
 		edit_mail_user =
-			raw_storage_create_from_set(storage_service,
-				mail_user->unexpanded_set_parser);
+			raw_storage_create_from_set(storage_service, set_instance);
 	}
 
 	edit_mail_refcount++;

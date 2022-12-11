@@ -11,6 +11,7 @@
 
 #include "sieve.h"
 
+#include "managesieve-settings.h"
 #include "managesieve-capabilities.h"
 
 #include <stddef.h>
@@ -20,52 +21,16 @@
  * Global plugin settings
  */
 
-struct plugin_settings {
-	ARRAY(const char *) plugin_envs;
-};
 
-static const struct setting_parser_info **plugin_set_roots;
-
-static const struct setting_define plugin_setting_defines[] = {
-	{ .type = SET_STRLIST, .key = "plugin",
-	  .offset = offsetof(struct plugin_settings, plugin_envs) },
-
-	SETTING_DEFINE_LIST_END
-};
-
-static const struct setting_parser_info plugin_setting_parser_info = {
-	.module_name = "managesieve",
-	.defines = plugin_setting_defines,
-
-	.type_offset = (size_t)-1,
-	.struct_size = sizeof(struct plugin_settings),
-
-	.parent_offset = (size_t)-1,
-};
-
-static const struct setting_parser_info *default_plugin_set_roots[] = {
-	&plugin_setting_parser_info,
-	NULL
-};
-
-static const struct setting_parser_info **plugin_set_roots =
-	default_plugin_set_roots;
-
-static struct plugin_settings *plugin_settings_read(void)
+static const struct plugin_settings *plugin_settings_read(void)
 {
-	struct master_service_settings_input input;
-	struct master_service_settings_output output;
 	const char *error;
 
-	i_zero(&input);
-	input.roots = plugin_set_roots;
-	input.disable_check_settings = TRUE;
-	if (master_service_settings_read(master_service, &input,
-					 &output, &error) < 0)
+	if (master_service_settings_read_simple(master_service, &error) < 0)
 		i_fatal("Error reading configuration: %s", error);
 
-	return master_service_settings_get_root_set(master_service,
-				plugin_set_roots[0]);
+	return master_service_settings_get_or_fatal(NULL,
+		&managesieve_plugin_setting_parser_info);
 }
 
 static const char *
@@ -136,5 +101,6 @@ void managesieve_capabilities_dump(void)
 		       sieve_get_capabilities(svinst, "notify"));
 	}
 
+	master_service_settings_free(global_plugin_settings);
 	sieve_deinit(&svinst);
 }

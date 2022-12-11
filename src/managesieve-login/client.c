@@ -11,6 +11,7 @@
 #include "strescape.h"
 #include "base64.h"
 #include "master-service.h"
+#include "master-service-settings.h"
 #include "auth-client.h"
 
 #include "managesieve-parser.h"
@@ -373,15 +374,22 @@ static struct client *managesieve_client_alloc(pool_t pool)
 	return &msieve_client->common;
 }
 
-static void managesieve_client_create(struct client *client, void **other_sets)
+static int managesieve_client_create(struct client *client)
 {
 	struct managesieve_client *msieve_client =
 		(struct managesieve_client *)client;
+	const char *error;
 
-	msieve_client->set = other_sets[0];
+	if (master_service_settings_get(client->event,
+			&managesieve_login_setting_parser_info, 0,
+			&msieve_client->set, &error) < 0) {
+		e_error(client->event, "%s", error);
+		return -1;
+	}
 	msieve_client->parser = managesieve_parser_create(
 		msieve_client->common.input, MAX_MANAGESIEVE_LINE);
 	client->io = io_add(client->fd, IO_READ, client_input, client);
+	return 0;
 }
 
 static void managesieve_client_destroy(struct client *client)
@@ -390,6 +398,7 @@ static void managesieve_client_destroy(struct client *client)
 		(struct managesieve_client *)client;
 
 	managesieve_parser_destroy(&managesieve_client->parser);
+	master_service_settings_free(managesieve_client->set);
 }
 
 static void managesieve_client_notify_auth_ready(struct client *client)
@@ -499,7 +508,6 @@ managesieve_client_notify_disconnect(struct client *client,
 
 static void managesieve_login_preinit(void)
 {
-	login_set_roots = managesieve_login_settings_set_roots;
 }
 
 static void managesieve_login_init(void)

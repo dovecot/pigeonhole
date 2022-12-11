@@ -86,9 +86,11 @@ void testsuite_mailstore_init(void)
 		t_strconcat("home=", cwd, NULL),
 		NULL,
 	};
+	struct master_service_settings_instance *set_instance =
+		mail_storage_service_user_get_settings_instance(mail_user_dovecot->service_user);
 	struct mail_storage_service_input input = {
 		.username = "testsuite-mail-user@example.org",
-		.unexpanded_set_parser = mail_user_dovecot->unexpanded_set_parser,
+		.set_instance = set_instance,
 		.no_userdb_lookup = TRUE,
 		.userdb_fields = userdb_fields,
 	};

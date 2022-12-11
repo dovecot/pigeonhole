@@ -149,7 +149,6 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	struct client *client;
 	struct managesieve_settings *set;
 	struct event *event;
-	const char *error;
 
 	event = event_create(NULL);
 	event_add_category(event, &event_category_managesieve);
@@ -168,18 +167,16 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	}
 	restrict_access_allow_coredumps(TRUE);
 
-	set = master_service_settings_get_root_set(master_service,
-		&managesieve_setting_parser_info);
-	if (set->verbose_proctitle)
-		verbose_proctitle = TRUE;
-
-	if (mail_user_var_expand(mail_user, &managesieve_setting_parser_info,
-				 set, &error) <= 0) {
-		e_error(event, "Failed to expand settings: %s", error);
+	if (master_service_settings_instance_get(mail_user->event,
+			mail_user->set_instance,
+			&managesieve_setting_parser_info, 0,
+			&set, error_r) < 0) {
 		mail_user_unref(&mail_user);
 		event_unref(&event);
 		return -1;
 	}
+	if (set->verbose_proctitle)
+		verbose_proctitle = TRUE;
 
 	client = client_create(fd_in, fd_out, input->session_id,
 			       event, mail_user, set);
@@ -302,10 +299,6 @@ static void client_connected(struct master_service_connection *conn)
 
 int main(int argc, char *argv[])
 {
-	static const struct setting_parser_info *set_roots[] = {
-		&managesieve_setting_parser_info,
-		NULL
-	};
 	struct login_server_settings login_set;
 	enum master_service_flags service_flags = 0;
 	enum mail_storage_service_flags storage_service_flags = 0;
@@ -382,7 +375,7 @@ int main(int argc, char *argv[])
 
 	storage_service =
 		mail_storage_service_init(master_service,
-					  set_roots, storage_service_flags);
+					  storage_service_flags);
 	master_service_init_finish(master_service);
 	/* NOTE: login_set.*_socket_path are now invalid due to data stack
 	   having been freed */

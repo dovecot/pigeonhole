@@ -79,20 +79,17 @@ imap_filter_sieve_get_svinst(struct imap_filter_sieve_context *sctx)
 	struct imap_filter_sieve_user *ifsuser =
 		IMAP_FILTER_SIEVE_USER_CONTEXT_REQUIRE(user);
 	struct sieve_environment svenv;
-	const struct mail_storage_settings *mail_set;
-	bool debug = user->mail_debug;
+	bool debug = user->set->mail_debug;
 
 	if (ifsuser->svinst != NULL)
 		return ifsuser->svinst;
-
-	mail_set = mail_user_set_get_storage_set(user);
 
 	ifsuser->dup_db = mail_duplicate_db_init(user, DUPLICATE_DB_NAME);
 
 	i_zero(&svenv);
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
-	svenv.hostname = mail_set->hostname;
+	svenv.hostname = user->set->hostname;
 	svenv.base_dir = user->set->base_dir;
 	svenv.event_parent = ifsuser->client->event;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
@@ -570,14 +567,10 @@ imap_filter_sieve_smtp_start(const struct sieve_script_env *senv,
 	struct imap_filter_sieve_user *ifsuser =
 		IMAP_FILTER_SIEVE_USER_CONTEXT_REQUIRE(user);
 	const struct smtp_submit_settings *smtp_set = ifsuser->client->smtp_set;
-	struct ssl_iostream_settings ssl_set;
 	struct smtp_submit_input submit_input;
 
-	i_zero(&ssl_set);
-	mail_user_init_ssl_client_settings(user, &ssl_set);
-
 	i_zero(&submit_input);
-	submit_input.ssl = &ssl_set;
+	submit_input.ssl = user->ssl_set;
 
 	return (void *)smtp_submit_init_simple(&submit_input, smtp_set,
 					       mail_from);

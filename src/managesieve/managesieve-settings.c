@@ -108,22 +108,38 @@ static const struct setting_parser_info *managesieve_setting_dependencies[] = {
 };
 
 const struct setting_parser_info managesieve_setting_parser_info = {
-	.module_name = "managesieve",
+	.name = "managesieve",
+
 	.defines = managesieve_setting_defines,
 	.defaults = &managesieve_default_settings,
 
-	.type_offset = (size_t)-1,
 	.struct_size = sizeof(struct managesieve_settings),
-
-	.parent_offset = (size_t)-1,
+	.pool_offset1 = 1 + offsetof(struct managesieve_settings, pool),
 	.parent = NULL,
 
 	.check_func = managesieve_settings_verify,
 	.dependencies = managesieve_setting_dependencies
 };
 
+static const struct setting_define plugin_setting_defines[] = {
+	{ .type = SET_STRLIST, .key = "plugin",
+	  .offset = offsetof(struct plugin_settings, plugin_envs) },
+
+	SETTING_DEFINE_LIST_END
+};
+
+const struct setting_parser_info managesieve_plugin_setting_parser_info = {
+	.name = "managesieve_plugin",
+
+	.defines = plugin_setting_defines,
+
+	.struct_size = sizeof(struct plugin_settings),
+	.pool_offset1 = 1 + offsetof(struct plugin_settings, pool),
+};
+
 const struct setting_parser_info *managesieve_settings_set_roots[] = {
 	&managesieve_setting_parser_info,
+	&managesieve_plugin_setting_parser_info,
 	NULL
 };
 

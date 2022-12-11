@@ -67,9 +67,7 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 	struct sieve_environment svenv;
 	struct imap_sieve *isieve;
 	struct mail_user *user = client->user;
-	const struct mail_storage_settings *mail_set =
-		mail_user_set_get_storage_set(user);
-	bool debug = user->mail_debug;
+	bool debug = user->set->mail_debug;
 	pool_t pool;
 
 	pool = pool_alloconly_create("imap_sieve", 256);
@@ -82,7 +80,7 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 	i_zero(&svenv);
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
-	svenv.hostname = mail_set->hostname;
+	svenv.hostname = user->set->hostname;
 	svenv.base_dir = user->set->base_dir;
 	svenv.event_parent = client->event;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
@@ -164,14 +162,10 @@ imap_sieve_smtp_start(const struct sieve_script_env *senv,
 	struct imap_sieve *isieve = isctx->isieve;
 	struct mail_user *user = isieve->client->user;
 	const struct smtp_submit_settings *smtp_set = isieve->client->smtp_set;
-	struct ssl_iostream_settings ssl_set;
 	struct smtp_submit_input submit_input;
 	
-	i_zero(&ssl_set);
-	mail_user_init_ssl_client_settings(user, &ssl_set);
-
 	i_zero(&submit_input);
-	submit_input.ssl = &ssl_set;
+	submit_input.ssl = user->ssl_set;
 
 	return smtp_submit_init_simple(&submit_input, smtp_set, mail_from);
 }

@@ -113,7 +113,7 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
 	ctx->svinst = sieve_init(&svenv, &sieve_callbacks, (void *)ctx,
-				 user->mail_debug);
+				 user->set->mail_debug);
 
 	ctx->storage = sieve_storage_create_main(
 		ctx->svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error);

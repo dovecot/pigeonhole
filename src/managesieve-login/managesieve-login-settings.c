@@ -104,22 +104,20 @@ static const struct setting_parser_info *managesieve_login_setting_dependencies[
 	NULL
 };
 
-static const struct setting_parser_info managesieve_login_setting_parser_info = {
-	.module_name = "managesieve-login",
+const struct setting_parser_info managesieve_login_setting_parser_info = {
+	.name = "managesieve_login",
+
 	.defines = managesieve_login_setting_defines,
 	.defaults = &managesieve_login_default_settings,
 
-	.type_offset = (size_t)-1,
 	.struct_size = sizeof(struct managesieve_login_settings),
-
-	.parent_offset = (size_t)-1,
+	.pool_offset1 = 1 + offsetof(struct managesieve_login_settings, pool),
 	.parent = NULL,
 
 	.dependencies = managesieve_login_setting_dependencies
 };
 
 const struct setting_parser_info *managesieve_login_settings_set_roots[] = {
-	&login_setting_parser_info,
 	&managesieve_login_setting_parser_info,
 	NULL
 };

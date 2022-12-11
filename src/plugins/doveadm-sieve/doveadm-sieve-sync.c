@@ -93,7 +93,7 @@ mail_sieve_user_init(struct mail_user *user, struct sieve_storage **svstorage_r)
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
 	suser->svinst = sieve_init(&svenv, &mail_sieve_callbacks,
-				   user, user->mail_debug);
+				   user, user->set->mail_debug);
 	suser->sieve_storage =
 		sieve_storage_create_main(suser->svinst, user,
 					  storage_flags, NULL);

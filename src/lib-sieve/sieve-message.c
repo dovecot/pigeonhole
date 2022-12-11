@@ -347,9 +347,10 @@ int sieve_message_substitute
 		struct mail_storage_service_ctx *storage_service =
 			mail_storage_service_user_get_service_ctx(
 				mail_user->service_user);
+		struct master_service_settings_instance *set_instance =
+			mail_storage_service_user_get_settings_instance(mail_user->service_user);
 		msgctx->raw_mail_user =
-			raw_storage_create_from_set(storage_service,
-				mail_user->unexpanded_set_parser);
+			raw_storage_create_from_set(storage_service, set_instance);
 	}
 
 	i_stream_seek(input, 0);

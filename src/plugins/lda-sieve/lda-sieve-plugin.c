@@ -81,14 +81,10 @@ lda_sieve_smtp_start(const struct sieve_script_env *senv,
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *)senv->script_context;
 	struct mail_user *user = dctx->rcpt_user;
-	struct ssl_iostream_settings ssl_set;
 	struct smtp_submit_input submit_input;
-	
-	i_zero(&ssl_set);
-	mail_user_init_ssl_client_settings(user, &ssl_set);
 
 	i_zero(&submit_input);
-	submit_input.ssl = &ssl_set;
+	submit_input.ssl = user->ssl_set;
 
 	return (void *)smtp_submit_init_simple(&submit_input, dctx->smtp_set,
 					       mail_from);
@@ -1049,9 +1045,7 @@ lda_sieve_deliver_mail(struct mail_deliver_context *mdctx,
 		       struct mail_storage **storage_r)
 {
 	struct lda_sieve_run_context srctx;
-	const struct mail_storage_settings *mail_set =
-		mail_user_set_get_storage_set(mdctx->rcpt_user);
-	bool debug = mdctx->rcpt_user->mail_debug;
+	bool debug = mdctx->rcpt_user->set->mail_debug;
 	struct sieve_environment svenv;
 	int ret = 0;
 
@@ -1066,7 +1060,7 @@ lda_sieve_deliver_mail(struct mail_deliver_context *mdctx,
 	memset((void*)&svenv, 0, sizeof(svenv));
 	svenv.username = mdctx->rcpt_user->username;
 	svenv.home_dir = srctx.home_dir;
-	svenv.hostname = mail_set->hostname;
+	svenv.hostname = mdctx->rcpt_user->set->hostname;
 	svenv.base_dir = mdctx->rcpt_user->set->base_dir;
 	svenv.temp_dir = mdctx->rcpt_user->set->mail_temp_dir;
 	svenv.event_parent = mdctx->event;

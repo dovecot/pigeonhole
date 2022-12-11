@@ -14,6 +14,7 @@
 #include "var-expand.h"
 #include "time-util.h"
 #include "master-service.h"
+#include "master-service-settings.h"
 #include "mail-storage-service.h"
 #include "mail-namespace.h"
 
@@ -280,6 +281,7 @@ void client_destroy(struct client *client, const char *reason)
 
 	event_unref(&client->cmd.event);
 	pool_unref(&client->cmd.pool);
+	master_service_settings_free(client->set);
 
 	managesieve_client_count--;
 	DLLIST_REMOVE(&managesieve_clients, client);

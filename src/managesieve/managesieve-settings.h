@@ -10,6 +10,7 @@ enum managesieve_client_workarounds {
 /* </settings checks> */
 
 struct managesieve_settings {
+	pool_t pool;
 	bool mail_debug;
 	bool verbose_proctitle;
 	const char *rawlog_dir;
@@ -24,6 +25,12 @@ struct managesieve_settings {
 	enum managesieve_client_workarounds parsed_workarounds;
 };
 
+struct plugin_settings {
+	pool_t pool;
+	ARRAY(const char *) plugin_envs;
+};
+
 extern const struct setting_parser_info managesieve_setting_parser_info;
+extern const struct setting_parser_info managesieve_plugin_setting_parser_info;
 
 #endif
