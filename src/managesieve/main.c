@@ -200,7 +200,6 @@ static void main_stdio_run(const char *username)
 	buffer_t *input_buf;
 
 	i_zero(&input);
-	input.module = "managesieve";
 	input.service = "sieve";
 	input.username =  username != NULL ? username : getenv("USER");
 	if (input.username == NULL && IS_STANDALONE())
@@ -232,7 +231,6 @@ login_request_finished(const struct login_server_request *request,
 	buffer_t input_buf;
 
 	i_zero(&input);
-	input.module = "managesieve";
 	input.service = "sieve";
 	input.local_ip = request->auth_req.local_ip;
 	input.remote_ip = request->auth_req.remote_ip;
@@ -328,13 +326,9 @@ int main(int argc, char *argv[])
 	if (IS_STANDALONE() || getenv("DUMP_CAPABILITY") != NULL) {
 		service_flags |= MASTER_SERVICE_FLAG_STANDALONE |
 				 MASTER_SERVICE_FLAG_STD_CLIENT;
-	} else {
-		service_flags |= MASTER_SERVICE_FLAG_KEEP_CONFIG_OPEN;
 	}
-	if (getenv("DUMP_CAPABILITY") != NULL) {
-		service_flags |= MASTER_SERVICE_FLAG_DONT_SEND_STATS |
-			MASTER_SERVICE_FLAG_DISABLE_SSL_SET;
-	}
+	if (getenv("DUMP_CAPABILITY") != NULL)
+		service_flags |= MASTER_SERVICE_FLAG_DONT_SEND_STATS;
 
 	master_service = master_service_init("managesieve", service_flags,
 					     &argc, &argv, "t:u:");

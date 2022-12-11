@@ -137,8 +137,7 @@ sieve_tool_init(const char *name, int *argc, char **argv[],
 	enum master_service_flags service_flags =
 		MASTER_SERVICE_FLAG_STANDALONE |
 		MASTER_SERVICE_FLAG_DONT_SEND_STATS |
-		MASTER_SERVICE_FLAG_NO_INIT_DATASTACK_FRAME |
-		MASTER_SERVICE_FLAG_DISABLE_SSL_SET;
+		MASTER_SERVICE_FLAG_NO_INIT_DATASTACK_FRAME;
 
 	if (no_config)
 		service_flags |= MASTER_SERVICE_FLAG_NO_CONFIG_SETTINGS;
@@ -255,7 +254,6 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 			MAIL_STORAGE_SERVICE_FLAG_NO_NAMESPACES;
 
 	i_zero(&service_input);
-	service_input.module = "mail";
 	service_input.service = tool->name;
 	service_input.username = username;
 

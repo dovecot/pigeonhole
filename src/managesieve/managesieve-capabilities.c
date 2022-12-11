@@ -8,7 +8,6 @@
 #include "settings-parser.h"
 #include "master-service.h"
 #include "master-service-settings.h"
-#include "master-service-settings-cache.h"
 
 #include "sieve.h"
 
