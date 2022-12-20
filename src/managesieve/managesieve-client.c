@@ -61,8 +61,8 @@ static void client_idle_timeout(struct client *client)
 }
 
 static struct sieve_storage *
-client_get_storage(struct sieve_instance *svinst, struct mail_user *user,
-		   int fd_out)
+client_get_storage(struct sieve_instance *svinst, struct event *event,
+		   struct mail_user *user, int fd_out)
 {
 	struct sieve_storage *storage;
 	enum sieve_error error;
@@ -93,7 +93,7 @@ client_get_storage(struct sieve_instance *svinst, struct mail_user *user,
 
 		if (write(fd_out, byemsg, strlen(byemsg)) < 0) {
 			if (errno != EAGAIN && errno != EPIPE)
-				i_error("write(client) failed: %m");
+				e_error(event, "write(client) failed: %m");
 		}
 		i_fatal("%s", errormsg);
 	}
@@ -127,7 +127,7 @@ client_create(int fd_in, int fd_out, const char *session_id,
 
 	/* Get Sieve storage */
 
-	storage = client_get_storage(svinst, user, fd_out);
+	storage = client_get_storage(svinst, event, user, fd_out);
 
 	/* always use nonblocking I/O */
 	net_set_nonblock(fd_in, TRUE);
@@ -220,7 +220,8 @@ static const char *client_stats(struct client *client)
 	if (var_expand_with_funcs(str, client->set->managesieve_logout_format,
 				  tab, mail_user_var_expand_func_table,
 				  client->user, &error) < 0) {
-		i_error("Failed to expand managesieve_logout_format=%s: %s",
+		e_error(client->event,
+			"Failed to expand managesieve_logout_format=%s: %s",
 			client->set->managesieve_logout_format, error);
 	}
 	return str_c(str);
@@ -304,9 +305,10 @@ void client_disconnect(struct client *client, const char *reason)
 	if (reason == NULL) {
 		reason = io_stream_get_disconnect_reason(client->input,
 							 client->output);
-		i_info("%s %s", reason, client_stats(client));
+		e_info(client->event, "%s %s", reason, client_stats(client));
 	} else {
-		i_info("Disconnected: %s %s", reason, client_stats(client));
+		e_info(client->event, "Disconnected: %s %s",
+		       reason, client_stats(client));
 	}
 	client->disconnected = TRUE;
 	o_stream_flush(client->output);

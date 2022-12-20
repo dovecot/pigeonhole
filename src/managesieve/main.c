@@ -176,7 +176,7 @@ client_create_from_input(const struct mail_storage_service_input *input,
 
 	if (mail_user_var_expand(mail_user, &managesieve_setting_parser_info,
 				 set, &error) <= 0) {
-		i_error("Failed to expand settings: %s", error);
+		e_error(event, "Failed to expand settings: %s", error);
 		mail_storage_service_user_unref(&user);
 		mail_user_unref(&mail_user);
 		event_unref(&event);
