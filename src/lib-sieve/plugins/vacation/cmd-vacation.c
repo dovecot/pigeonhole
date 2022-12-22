@@ -1055,7 +1055,8 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 	tab = _get_var_expand_table(aenv, header);
 	if (var_expand(str, config->default_subject_template,
 		       tab, &error) <= 0) {
-		i_error("Failed to expand deliver_log_format=%s: %s",
+		e_error(aenv->event,
+			"Failed to expand deliver_log_format=%s: %s",
 			config->default_subject_template, error);
 		*subject_r = t_strconcat("Auto: ", header, NULL);
 		return SIEVE_EXEC_OK;
