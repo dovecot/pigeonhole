@@ -54,10 +54,15 @@ static const struct setting_parser_info **plugin_set_roots =
 
 static struct plugin_settings *plugin_settings_read(void)
 {
+	struct master_service_settings_input input;
+	struct master_service_settings_output output;
 	const char *error;
 
-	if (master_service_settings_read_simple(
-		master_service, plugin_set_roots, &error) < 0)
+	i_zero(&input);
+	input.roots = plugin_set_roots;
+	input.disable_check_settings = TRUE;
+	if (master_service_settings_read(master_service, &input,
+					 &output, &error) < 0)
 		i_fatal("Error reading configuration: %s", error);
 
 	return master_service_settings_get_root_set(master_service,
