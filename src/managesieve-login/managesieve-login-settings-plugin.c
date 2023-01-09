@@ -111,6 +111,13 @@ static bool capability_dump(void)
 	if ( getenv("DUMP_CAPABILITY") != NULL )
 		return TRUE;
 
+	/* We want to dump capability only when doing the main config parsing
+	   (config and doveconf processes) and managesieve process (started
+	   from command line). We especially don't want to dump capability
+	   every time when running doveadm. */
+	const char *service = getenv("DOVECONF_SERVICE");
+	if (service != NULL && strcmp(service, "sieve") != 0)
+		return TRUE;
 	if ( pipe(fd) < 0 ) {
 		i_error("managesieve-login: dump-capability pipe() failed: %m");
 		return FALSE;
