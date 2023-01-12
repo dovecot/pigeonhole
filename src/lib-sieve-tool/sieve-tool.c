@@ -354,12 +354,20 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 			       const char *mail_location)
 {
 	struct mail_user *mail_user_dovecot = tool->mail_user_dovecot;
+	struct mail_storage_service_user *service_user;
 	const char *username = tool->username;
 	struct mail_namespace *ns = NULL;
 	const char *home = NULL, *errstr = NULL;
 
-	tool->mail_user = mail_user_alloc(NULL, username,
-					  mail_user_dovecot->unexpanded_set_parser);
+	struct mail_storage_service_input input = {
+		.username = username,
+		.unexpanded_set_parser = mail_user_dovecot->unexpanded_set_parser,
+		.no_userdb_lookup = TRUE,
+	};
+	if (mail_storage_service_lookup_next(tool->storage_service,
+					     &input, &service_user,
+					     &tool->mail_user, &errstr) < 0)
+		i_fatal("Test user lookup failed: %s", errstr);
 
 	if ((home = sieve_tool_get_homedir(sieve_tool)) != NULL)
 		mail_user_set_home(tool->mail_user, home);
