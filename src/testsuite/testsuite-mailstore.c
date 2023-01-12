@@ -10,6 +10,7 @@
 #include "path-util.h"
 #include "unlink-directory.h"
 #include "env-util.h"
+#include "mail-storage-service.h"
 #include "mail-namespace.h"
 #include "mail-storage.h"
 #include "imap-metadata.h"
@@ -60,6 +61,7 @@ static char *testsuite_mailstore_attrs = NULL;
 
 void testsuite_mailstore_init(void)
 {
+	struct mail_storage_service_user *service_user;
 	struct mail_user *mail_user_dovecot, *mail_user;
 	struct mail_namespace *ns;
 	struct mail_namespace_settings *ns_set;
@@ -78,14 +80,25 @@ void testsuite_mailstore_init(void)
 	}
 	
 	mail_user_dovecot = sieve_tool_get_mail_user(sieve_tool);
-	mail_user = mail_user_alloc(NULL, "testsuite-mail-user@example.org",
-				    mail_user_dovecot->unexpanded_set_parser);
-	mail_user->autocreated = TRUE;
+
 	if (t_get_working_dir(&cwd, &error) < 0)
 		i_fatal("Failed to get working directory: %s", error);
-	mail_user_set_home(mail_user, cwd);
-	if (mail_user_init(mail_user, &error) < 0)
-		i_fatal("Testsuite user initialization failed: %s", error);
+	const char *const userdb_fields[] = {
+		t_strconcat("home=", cwd, NULL),
+		NULL,
+	};
+	struct mail_storage_service_input input = {
+		.username = "testsuite-mail-user@example.org",
+		.unexpanded_set_parser = mail_user_dovecot->unexpanded_set_parser,
+		.no_userdb_lookup = TRUE,
+		.userdb_fields = userdb_fields,
+	};
+	if (mail_storage_service_lookup_next(
+			sieve_tool_get_mail_storage_service(sieve_tool),
+			&input, &service_user, &mail_user, &error) < 0)
+		i_fatal("Test user initialization failed: %s", error);
+	mail_storage_service_user_unref(&service_user);
+	mail_user->autocreated = TRUE;
 
 	ns_set = p_new(mail_user->pool, struct mail_namespace_settings, 1);
 	ns_set->location = testsuite_mailstore_location;
