@@ -104,7 +104,6 @@ client_get_storage(struct sieve_instance *svinst, struct event *event,
 struct client *
 client_create(int fd_in, int fd_out, const char *session_id,
 	      struct event *event, struct mail_user *user,
-	      struct mail_storage_service_user *service_user,
 	      const struct managesieve_settings *set)
 {
 	struct client *client;
@@ -139,7 +138,6 @@ client_create(int fd_in, int fd_out, const char *session_id,
 	client->event = event;
 	event_ref(client->event);
 	client->set = set;
-	client->service_user = service_user;
 	client->session_id = p_strdup(pool, session_id);
 	client->fd_in = fd_in;
 	client->fd_out = fd_out;
@@ -281,7 +279,6 @@ void client_destroy(struct client *client, const char *reason)
 
 	event_unref(&client->cmd.event);
 	pool_unref(&client->cmd.pool);
-	mail_storage_service_user_unref(&client->service_user);
 
 	managesieve_client_count--;
 	DLLIST_REMOVE(&managesieve_clients, client);
@@ -781,7 +778,7 @@ int client_output(struct client *client)
 
 void client_kick(struct client *client)
 {
-	mail_storage_service_io_activate_user(client->service_user);
+	mail_storage_service_io_activate_user(client->user->service_user);
 	if (!client->command_pending)
 		client_send_bye(client, MASTER_SERVICE_SHUTTING_DOWN_MSG".");
 	client_destroy(client, MASTER_SERVICE_SHUTTING_DOWN_MSG);

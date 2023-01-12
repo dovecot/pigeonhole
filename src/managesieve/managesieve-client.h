@@ -49,7 +49,6 @@ struct client {
 	guid_128_t anvil_conn_guid;
 
 	pool_t pool;
-	struct mail_storage_service_user *service_user;
 	const struct managesieve_settings *set;
 
 	struct mail_user *user;
@@ -91,7 +90,6 @@ extern unsigned int managesieve_client_count;
 struct client *
 client_create(int fd_in, int fd_out, const char *session_id,
 	      struct event *event, struct mail_user *user,
-	      struct mail_storage_service_user *service_user,
 	      const struct managesieve_settings *set);
 void client_create_finish(struct client *client);
 void client_destroy(struct client *client, const char *reason);

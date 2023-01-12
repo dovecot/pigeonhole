@@ -61,7 +61,6 @@ static char *testsuite_mailstore_attrs = NULL;
 
 void testsuite_mailstore_init(void)
 {
-	struct mail_storage_service_user *service_user;
 	struct mail_user *mail_user_dovecot, *mail_user;
 	struct mail_namespace *ns;
 	struct mail_namespace_settings *ns_set;
@@ -95,9 +94,8 @@ void testsuite_mailstore_init(void)
 	};
 	if (mail_storage_service_lookup_next(
 			sieve_tool_get_mail_storage_service(sieve_tool),
-			&input, &service_user, &mail_user, &error) < 0)
+			&input, &mail_user, &error) < 0)
 		i_fatal("Test user initialization failed: %s", error);
-	mail_storage_service_user_unref(&service_user);
 	mail_user->autocreated = TRUE;
 
 	ns_set = p_new(mail_user->pool, struct mail_namespace_settings, 1);

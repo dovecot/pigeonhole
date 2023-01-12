@@ -52,7 +52,6 @@ struct sieve_tool {
 	struct sieve_instance *svinst;
 
 	struct mail_storage_service_ctx *storage_service;
-	struct mail_storage_service_user *service_user;
 	struct mail_user *mail_user_dovecot;
 	struct mail_user *mail_user;
 
@@ -263,7 +262,7 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 	tool->storage_service = mail_storage_service_init(
 		master_service, NULL, storage_service_flags);
 	if (mail_storage_service_lookup_next(
-		tool->storage_service, &service_input, &tool->service_user,
+		tool->storage_service, &service_input,
 		&tool->mail_user_dovecot, &errstr) <= 0)
 		i_fatal("%s", errstr);
 
@@ -334,7 +333,6 @@ void sieve_tool_deinit(struct sieve_tool **_tool)
 	if (tool->mail_user_dovecot != NULL)
 		mail_user_unref(&tool->mail_user_dovecot);
 
-	mail_storage_service_user_unref(&tool->service_user);
 	mail_storage_service_deinit(&tool->storage_service);
 
 	/* Free sieve tool object */
@@ -354,7 +352,6 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 			       const char *mail_location)
 {
 	struct mail_user *mail_user_dovecot = tool->mail_user_dovecot;
-	struct mail_storage_service_user *service_user;
 	const char *username = tool->username;
 	struct mail_namespace *ns = NULL;
 	const char *home = NULL, *errstr = NULL;
@@ -364,8 +361,7 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 		.unexpanded_set_parser = mail_user_dovecot->unexpanded_set_parser,
 		.no_userdb_lookup = TRUE,
 	};
-	if (mail_storage_service_lookup_next(tool->storage_service,
-					     &input, &service_user,
+	if (mail_storage_service_lookup_next(tool->storage_service, &input,
 					     &tool->mail_user, &errstr) < 0)
 		i_fatal("Test user lookup failed: %s", errstr);
 

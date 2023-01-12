@@ -82,7 +82,7 @@ void managesieve_refresh_proctitle(void)
 
 static void client_kill_idle(struct client *client)
 {
-	mail_storage_service_io_activate_user(client->service_user);
+	mail_storage_service_io_activate_user(client->user->service_user);
 	client_send_bye(client, MASTER_SERVICE_SHUTTING_DOWN_MSG".");
 	client_destroy(client, MASTER_SERVICE_SHUTTING_DOWN_MSG);
 }
@@ -145,7 +145,6 @@ client_create_from_input(const struct mail_storage_service_input *input,
 			 const char **error_r)
 {
 	struct mail_storage_service_input service_input;
-	struct mail_storage_service_user *user;
 	struct mail_user *mail_user;
 	struct client *client;
 	struct managesieve_settings *set;
@@ -163,7 +162,7 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	service_input = *input;
 	service_input.event_parent = event;
 	if (mail_storage_service_lookup_next(storage_service, &service_input,
-					     &user, &mail_user, error_r) <= 0) {
+					     &mail_user, error_r) <= 0) {
 		event_unref(&event);
 		return -1;
 	}
@@ -177,14 +176,13 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	if (mail_user_var_expand(mail_user, &managesieve_setting_parser_info,
 				 set, &error) <= 0) {
 		e_error(event, "Failed to expand settings: %s", error);
-		mail_storage_service_user_unref(&user);
 		mail_user_unref(&mail_user);
 		event_unref(&event);
 		return -1;
 	}
 
 	client = client_create(fd_in, fd_out, input->session_id,
-			       event, mail_user, user, set);
+			       event, mail_user, set);
 	if (input_buf != NULL && input_buf->used > 0)
 		client_add_istream_prefix(client, input_buf);
 	client_create_finish(client);
