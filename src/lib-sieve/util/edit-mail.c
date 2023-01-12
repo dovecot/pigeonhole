@@ -13,6 +13,7 @@
 #include "message-header-encode.h"
 #include "message-header-decode.h"
 #include "mail-user.h"
+#include "mail-storage-service.h"
 #include "mail-storage-private.h"
 #include "index-mail.h"
 #include "raw-storage.h"
@@ -48,8 +49,12 @@ static unsigned int edit_mail_refcount = 0;
 static struct mail_user *edit_mail_raw_storage_get(struct mail_user *mail_user)
 {
 	if (edit_mail_user == NULL) {
+		struct mail_storage_service_ctx *storage_service =
+			mail_storage_service_user_get_service_ctx(
+				mail_user->service_user);
 		edit_mail_user =
-			raw_storage_create_from_set(mail_user->unexpanded_set_parser);
+			raw_storage_create_from_set(storage_service,
+				mail_user->unexpanded_set_parser);
 	}
 
 	edit_mail_refcount++;

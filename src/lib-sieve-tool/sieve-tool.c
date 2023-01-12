@@ -489,6 +489,13 @@ struct mail_user *sieve_tool_get_mail_raw_user(struct sieve_tool *tool)
 	return tool->mail_raw_user;
 }
 
+struct mail_storage_service_ctx *
+sieve_tool_get_mail_storage_service(struct sieve_tool *tool)
+{
+	sieve_tool_init_mail_raw_user(tool);
+	return tool->storage_service;
+}
+
 /*
  * Commonly needed functionality
  */

@@ -16,6 +16,7 @@
 #include "message-header-decode.h"
 #include "mail-html2text.h"
 #include "mail-storage.h"
+#include "mail-storage-service.h"
 #include "mail-user.h"
 #include "smtp-params.h"
 #include "master-service.h"
@@ -343,8 +344,12 @@ int sieve_message_substitute
 	i_assert(input->blocking);
 
 	if ( msgctx->raw_mail_user == NULL ) {
+		struct mail_storage_service_ctx *storage_service =
+			mail_storage_service_user_get_service_ctx(
+				mail_user->service_user);
 		msgctx->raw_mail_user =
-			raw_storage_create_from_set(mail_user->unexpanded_set_parser);
+			raw_storage_create_from_set(storage_service,
+				mail_user->unexpanded_set_parser);
 	}
 
 	i_stream_seek(input, 0);

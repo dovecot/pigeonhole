@@ -52,6 +52,8 @@ const char *sieve_tool_get_username(struct sieve_tool *tool);
 const char *sieve_tool_get_homedir(struct sieve_tool *tool);
 struct mail_user *sieve_tool_get_mail_user(struct sieve_tool *tool);
 struct mail_user *sieve_tool_get_mail_raw_user(struct sieve_tool *tool);
+struct mail_storage_service_ctx *
+sieve_tool_get_mail_storage_service(struct sieve_tool *tool);
 
 /*
  * Configuration

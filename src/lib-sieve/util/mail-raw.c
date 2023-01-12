@@ -12,6 +12,7 @@
 #include "message-address.h"
 #include "mbox-from.h"
 #include "raw-storage.h"
+#include "mail-storage-service.h"
 #include "mail-namespace.h"
 #include "master-service.h"
 #include "master-service-settings.h"
@@ -136,7 +137,11 @@ static struct istream *mail_raw_create_stream
 
 struct mail_user *mail_raw_user_create(struct mail_user *mail_user)
 {
-	return raw_storage_create_from_set(mail_user->unexpanded_set_parser);
+	struct mail_storage_service_ctx *storage_service =
+		mail_storage_service_user_get_service_ctx(
+			mail_user->service_user);
+	return raw_storage_create_from_set(storage_service,
+					   mail_user->unexpanded_set_parser);
 }
 
 /*
