@@ -21,6 +21,10 @@ struct client_command_context {
 	   client sent them. */
 	const char *args;
 
+	struct {
+		uint64_t bytes_in;
+		uint64_t bytes_out;
+	} stats;
 	command_func_t *func;
 	void *context;
 

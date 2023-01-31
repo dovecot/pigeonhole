@@ -378,9 +378,15 @@ void client_send_response(struct client *client, const char *oknobye,
 struct event_passthrough *
 client_command_create_finish_event(struct client_command_context *cmd)
 {
+	uint64_t bytes_in = i_stream_get_absolute_offset(cmd->client->input) -
+			    cmd->stats.bytes_in;
+	uint64_t bytes_out = cmd->client->output->offset - cmd->stats.bytes_out;
+
 	struct event_passthrough *e =
 		event_create_passthrough(cmd->event)->
-		set_name("managesieve_command_finished");
+		set_name("managesieve_command_finished")->
+		add_int("net_in_bytes", bytes_in)->
+		add_int("net_out_bytes", bytes_out);
 	return e;
 }
 
@@ -683,6 +689,8 @@ static bool client_handle_input(struct client_command_context *cmd)
 		i_assert(!client->disconnected);
 
 		event_add_str(cmd->event, "cmd_name", t_str_ucase(cmd->name));
+		cmd->stats.bytes_in = i_stream_get_absolute_offset(client->input);
+		cmd->stats.bytes_out = client->output->offset;
 		client_handle_input(cmd);
 	}
 
