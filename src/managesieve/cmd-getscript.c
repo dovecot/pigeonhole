@@ -48,7 +48,8 @@ static bool cmd_getscript_finish(struct cmd_getscript_context *ctx)
 	client->get_bytes += ctx->script_size;
 
 	struct event_passthrough *e =
-		client_command_create_finish_event(cmd);
+		client_command_create_finish_event(cmd)->
+		add_int("script_size", ctx->script_size);
 	e_debug(e->event(), "Retrieved script `%s'", ctx->scriptname);
 
 	client_send_line(client, "");

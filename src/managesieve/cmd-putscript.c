@@ -257,6 +257,7 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 
 		struct event_passthrough *e =
 			client_command_create_finish_event(cmd)->
+			add_int("script_size", ctx->script_size)->
 			add_int("compile_warnings",
 				sieve_get_warnings(ehandler));
 		if (ctx->scriptname != NULL) {
