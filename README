@@ -171,9 +171,6 @@ following list outlines the implementation status of each supported extension:
     These extensions will be added as soon as the necessary infrastructure is
     available.
 
-Check the TODO file for an up-to-date list of open issues and current
-development. 
-
 Compiling and Configuring
 =========================
 
