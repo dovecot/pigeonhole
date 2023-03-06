@@ -496,10 +496,6 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 
 	/* Determine location for default script */
 	set_default = sieve_setting_get(svinst, "sieve_default");
-	if (set_default == NULL) {
-		/* For backwards compatibility */
-		set_default = sieve_setting_get(svinst, "sieve_global_path");
-	}
 
 	/* Attempt to locate user's main storage */
 	storage = sieve_storage_do_create_main(svinst, user, flags, error_r);
