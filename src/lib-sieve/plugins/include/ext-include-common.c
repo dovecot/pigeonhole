@@ -85,8 +85,6 @@ bool ext_include_load(const struct sieve_extension *ext, void **context)
 
 	/* Get location for :global scripts */
 	location = sieve_setting_get(svinst, "sieve_global");
-	if (location == NULL)
-		location = sieve_setting_get(svinst, "sieve_global_dir");
 
 	if (location == NULL) {
 		e_debug(svinst->event, "include: "
