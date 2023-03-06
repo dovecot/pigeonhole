@@ -80,7 +80,7 @@ testsuite_run(struct sieve_binary *sbin, struct sieve_error_handler *ehandler)
 int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
-	const char *scriptfile, *dumpfile, *tracefile;
+	const char *abspath, *scriptfile, *dumpfile, *tracefile;
 	struct sieve_trace_config trace_config;
 	struct sieve_binary *sbin;
 	const char *sieve_dir, *cwd, *error;
@@ -145,17 +145,22 @@ int main(int argc, char **argv)
 	/* Initialize settings environment */
 	testsuite_settings_init();
 
-	/* Currently needed for include (FIXME) */
-	sieve_dir = strrchr(scriptfile, '/');
+	/* Manually setup the absolute sieve storage path for the executed
+	   test script. */
+	if (t_abspath(scriptfile, &abspath, &error) < 0)
+		i_fatal("Failed to retrieve absolute path from test script: %s",
+			error);
+	sieve_dir = strrchr(abspath, '/');
 	if (sieve_dir == NULL)
-		sieve_dir = "./";
+		sieve_dir = ".";
 	else
-		sieve_dir = t_strdup_until(scriptfile, sieve_dir+1);
+		sieve_dir = t_strdup_until(abspath, sieve_dir);
 
-	testsuite_setting_set("sieve_dir",
-			      t_strconcat(sieve_dir, "included", NULL));
-	testsuite_setting_set("sieve_global_dir",
-			      t_strconcat(sieve_dir, "included-global", NULL));
+	testsuite_setting_set("sieve",
+			      t_strdup_printf("file:%s/included;active=~/.dovecot.sieve",
+					      sieve_dir));
+	testsuite_setting_set("sieve_global",
+			      t_strdup_printf("%s/included-global", sieve_dir));
 
 	/* Finish testsuite initialization */
 	svinst = sieve_tool_init_finish(sieve_tool, FALSE, FALSE);
