@@ -90,10 +90,6 @@ ext_include_validator_load(const struct sieve_extension *ext,
 	sieve_validator_register_command(valdtr, ext, &cmd_return);
 	sieve_validator_register_command(valdtr, ext, &cmd_global);
 
-	/* DEPRICATED */
-	sieve_validator_register_command(valdtr, ext, &cmd_import);
-	sieve_validator_register_command(valdtr, ext, &cmd_export);
-
 	/* Initialize global variables namespace */
 	ext_include_variables_global_namespace_init(ext, valdtr);
 

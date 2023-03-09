@@ -64,10 +64,6 @@ extern const struct sieve_command_def cmd_include;
 extern const struct sieve_command_def cmd_return;
 extern const struct sieve_command_def cmd_global;
 
-/* DEPRICATED */
-extern const struct sieve_command_def cmd_import;
-extern const struct sieve_command_def cmd_export;
-
 /*
  * Operations
  */

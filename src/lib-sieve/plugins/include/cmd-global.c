@@ -39,41 +39,6 @@ const struct sieve_command_def cmd_global = {
 	.generate = cmd_global_generate,
 };
 
-/* DEPRICATED:
- */
-
-/* Import command
- *
- * Syntax
- *   import
- */
-const struct sieve_command_def cmd_import = {
-	.identifier = "import",
-	.type = SCT_COMMAND,
-	.positional_args = 1,
-	.subtests = 0,
-	.block_allowed = FALSE,
-	.block_required = FALSE,
-	.validate = cmd_global_validate,
-	.generate = cmd_global_generate,
-};
-
-/* Export command
- *
- * Syntax
- *   export
- */
-const struct sieve_command_def cmd_export = {
-	.identifier = "export",
-	.type = SCT_COMMAND,
-	.positional_args = 1,
-	.subtests = 0,
-	.block_allowed = FALSE,
-	.block_required = FALSE,
-	.validate = cmd_global_validate,
-	.generate = cmd_global_generate,
-};
-
 /*
  * Operations
  */
@@ -114,22 +79,6 @@ cmd_global_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 	const struct sieve_extension *this_ext = cmd->ext;
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct sieve_command *prev = sieve_command_prev(cmd);
-
-	/* DEPRECATED: Check valid command placement */
-	if (!sieve_command_is(cmd, cmd_global)) {
-		if (!sieve_command_is_toplevel(cmd) ||
-		    (!sieve_command_is_first(cmd) && prev != NULL &&
-		     !sieve_command_is(prev, cmd_require) &&
-		     !sieve_command_is(prev, cmd_import) &&
-		     !sieve_command_is(prev, cmd_export))) {
-			sieve_command_validate_error(valdtr, cmd,
-				"the DEPRECATED %s command can only be placed at top level "
-				"at the beginning of the file after any require or "
-				"import/export commands",
-				sieve_command_identifier(cmd));
-			return FALSE;
-		}
-	}
 
 	/* Check for use of variables extension */
 	if (!ext_include_validator_have_variables(this_ext, valdtr)) {

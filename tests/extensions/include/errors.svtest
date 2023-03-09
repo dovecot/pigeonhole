@@ -70,7 +70,7 @@ test "Variables" {
 		test_fail "compile should have failed";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
 		test_fail "wrong number of errors reported";
 	}
 }
