@@ -264,10 +264,6 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 		&tool->mail_user_dovecot, &errstr) <= 0)
 		i_fatal("%s", errstr);
 
-	if (master_service_set(master_service,
-			       "mail_full_filesystem_access=yes") < 0)
-		i_unreached();
-
 	memset((void *)&svenv, 0, sizeof(svenv));
 	svenv.username = username;
 	(void)mail_user_get_home(tool->mail_user_dovecot, &svenv.home_dir);
