@@ -349,6 +349,9 @@ int main(int argc, char *argv[])
 	/* plugins may want to add commands, so this needs to be called early */
 	commands_init();
 
+	if (master_service_settings_read_simple(master_service, &error) < 0)
+		i_fatal("%s", error);
+
 	/* Dump capabilities if requested */
 	if (getenv("DUMP_CAPABILITY") != NULL) {
 		i_set_debug_file("/dev/null");

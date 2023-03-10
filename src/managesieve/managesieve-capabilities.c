@@ -22,17 +22,6 @@
  */
 
 
-static const struct plugin_settings *plugin_settings_read(void)
-{
-	const char *error;
-
-	if (master_service_settings_read_simple(master_service, &error) < 0)
-		i_fatal("Error reading configuration: %s", error);
-
-	return master_service_settings_get_or_fatal(NULL,
-		&managesieve_plugin_setting_parser_info);
-}
-
 static const char *
 plugin_settings_get(const struct plugin_settings *set, const char *identifier)
 {
@@ -79,7 +68,8 @@ void managesieve_capabilities_dump(void)
 
 	/* Read plugin settings */
 
-	global_plugin_settings = plugin_settings_read();
+	global_plugin_settings = master_service_settings_get_or_fatal(NULL,
+		&managesieve_plugin_setting_parser_info);
 
 	/* Initialize Sieve engine */
 

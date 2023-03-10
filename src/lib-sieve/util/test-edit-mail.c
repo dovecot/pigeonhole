@@ -10,6 +10,7 @@
 #include "istream-crlf.h"
 #include "unlink-directory.h"
 #include "master-service.h"
+#include "master-service-settings.h"
 #include "istream-header-filter.h"
 #include "mail-storage.h"
 #include "mail-storage-service.h"
@@ -882,6 +883,8 @@ int main(int argc, char *argv[])
 
 	master_service = master_service_init("test-edit-header", service_flags,
 					     &argc, &argv, "");
+	if (master_service_settings_read_simple(master_service, &error) < 0)
+		i_fatal("%s", error);
 	master_service_init_finish(master_service);
 
 	if (t_get_working_dir(&cwd, &error) < 0)
