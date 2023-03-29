@@ -345,6 +345,7 @@ int main(int argc, char *argv[])
 
 	/* Dump capabilities if requested */
 	if (getenv("DUMP_CAPABILITY") != NULL) {
+		i_set_debug_file("/dev/null");
 		managesieve_capabilities_dump();
 		commands_deinit();
 		master_service_deinit(&master_service);
