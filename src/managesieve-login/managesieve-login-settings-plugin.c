@@ -115,8 +115,8 @@ static bool capability_dump(void)
 	   (config and doveconf processes) and managesieve process (started
 	   from command line). We especially don't want to dump capability
 	   every time when running doveadm. */
-	const char *service = getenv("DOVECONF_SERVICE");
-	if (service != NULL && strcmp(service, "sieve") != 0)
+	const char *protocol = getenv("DOVECONF_PROTOCOL");
+	if (protocol != NULL && strcmp(protocol, "sieve") != 0)
 		return TRUE;
 	if ( pipe(fd) < 0 ) {
 		i_error("managesieve-login: dump-capability pipe() failed: %m");
