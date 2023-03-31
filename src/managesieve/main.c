@@ -349,17 +349,25 @@ int main(int argc, char *argv[])
 	/* plugins may want to add commands, so this needs to be called early */
 	commands_init();
 
-	if (master_service_settings_read_simple(master_service, &error) < 0)
-		i_fatal("%s", error);
-
 	/* Dump capabilities if requested */
 	if (getenv("DUMP_CAPABILITY") != NULL) {
+		struct master_service_settings_input set_input = {
+			.hide_obsolete_warnings = TRUE,
+		};
+		struct master_service_settings_output set_output;
+		if (master_service_settings_read(master_service, &set_input,
+						 &set_output, &error) < 0)
+			i_fatal("%s", error);
+
 		i_set_debug_file("/dev/null");
 		managesieve_capabilities_dump();
 		commands_deinit();
 		master_service_deinit(&master_service);
 		exit(0);
 	}
+
+	if (master_service_settings_read_simple(master_service, &error) < 0)
+		i_fatal("%s", error);
 
 	if (t_abspath("auth-master", &login_set.auth_socket_path, &error) < 0)
 		i_fatal("t_abspath(%s) failed: %s", "auth-master", error);
