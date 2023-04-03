@@ -636,69 +636,37 @@ sieve_file_storage_autodetect(struct sieve_file_storage *fstorage,
 }
 
 static int
-sieve_file_storage_do_init_legacy(struct sieve_file_storage *fstorage,
-				  const char *active_path,
-				  const char *storage_path,
-				  enum sieve_error *error_r)
+sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
+				   const char *active_path,
+				   enum sieve_error *error_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
-	bool explicit = FALSE, exists = FALSE;
+	const char *storage_path;
+	bool exists = FALSE;
 
-	if (storage_path == NULL || *storage_path == '\0') {
-		/* Try autodectection */
-		sieve_file_storage_autodetect(fstorage, &storage_path);
+	sieve_file_storage_autodetect(fstorage, &storage_path);
 
-		if (storage_path != NULL && *storage_path != '\0') {
-			/* Got something: stat it */
-			if (sieve_file_storage_stat(fstorage, storage_path,
-						    error_r) < 0) {
-				if (*error_r != SIEVE_ERROR_NOT_FOUND) {
-					/* Error */
-					return -1;
-				}
-			} else 	if (S_ISDIR(fstorage->st.st_mode)) {
-				/* Success */
-				exists = TRUE;
-			}
-		}
-
-		if ((storage_path == NULL || *storage_path == '\0') &&
-		    (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
-			sieve_storage_set_critical(storage,
-				"Could not find storage root directory for write access; "
-				"path was left unconfigured and autodetection failed");
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
-			return -1;
-		}
-
-	} else {
-		/* Get full storage path */
-		if (sieve_file_storage_get_full_path(fstorage, &storage_path,
-						     error_r) < 0)
-			return -1;
-
-		/* Stat storage directory */
+	if (storage_path != NULL && *storage_path != '\0') {
+		/* Got something: stat it */
 		if (sieve_file_storage_stat(fstorage, storage_path,
 					    error_r) < 0) {
-			if (*error_r != SIEVE_ERROR_NOT_FOUND)
+			if (*error_r != SIEVE_ERROR_NOT_FOUND) {
+				/* Error */
 				return -1;
-			if ((storage->flags &
-			     SIEVE_STORAGE_FLAG_READWRITE) == 0)
-				storage_path = NULL;
-		} else {
+			}
+		} else 	if (S_ISDIR(fstorage->st.st_mode)) {
+			/* Success */
 			exists = TRUE;
 		}
+	}
 
-		/* Storage path must be a directory */
-		if (exists && !S_ISDIR(fstorage->st.st_mode)) {
-			sieve_storage_set_critical(storage,
-				"Sieve storage path `%s' configured using sieve_dir "
-				"is not a directory", storage_path);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
-			return -1;
-		}
-
-		explicit = TRUE;
+	if ((storage_path == NULL || *storage_path == '\0') &&
+	    (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
+		sieve_storage_set_critical(storage,
+			"Could not find storage root directory for write access; "
+			"path was left unconfigured and autodetection failed");
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		return -1;
 	}
 
 	if (active_path == NULL || *active_path == '\0') {
@@ -714,8 +682,7 @@ sieve_file_storage_do_init_legacy(struct sieve_file_storage *fstorage,
 		}
 	}
 
-	if (!explicit && !exists &&
-	    active_path != NULL && *active_path != '\0' &&
+	if (!exists && active_path != NULL && *active_path != '\0' &&
 	    (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0)
 		storage_path = NULL;
 
@@ -726,10 +693,10 @@ sieve_file_storage_do_init_legacy(struct sieve_file_storage *fstorage,
 }
 
 struct sieve_storage *
-sieve_file_storage_init_legacy(struct sieve_instance *svinst,
-			       const char *active_path, const char *storage_path,
-			       enum sieve_storage_flags flags,
-			       enum sieve_error *error_r)
+sieve_file_storage_init_default(struct sieve_instance *svinst,
+				const char *active_path,
+				enum sieve_storage_flags flags,
+				enum sieve_error *error_r)
 {
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
@@ -739,9 +706,8 @@ sieve_file_storage_init_legacy(struct sieve_instance *svinst,
 	fstorage = (struct sieve_file_storage *)storage;
 
 	T_BEGIN {
-		if (sieve_file_storage_do_init_legacy(fstorage, active_path,
-						      storage_path,
-						      error_r) < 0) {
+		if (sieve_file_storage_do_init_default(fstorage, active_path,
+						       error_r) < 0) {
 			sieve_storage_unref(&storage);
 			storage = NULL;
 		}

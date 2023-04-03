@@ -397,11 +397,8 @@ sieve_storage_do_create_main(struct sieve_instance *svinst,
 			     enum sieve_error *error_r)
 {
 	struct sieve_storage *storage = NULL;
-	const struct sieve_storage
-		*sieve_class = NULL,
-		*sieve_dir_class = NULL;
-	const char *set_sieve, *set_sieve_dir;
-	const char *data, *storage_path;
+	const struct sieve_storage *sieve_class = NULL;
+	const char *set_sieve, *data;
 	unsigned long long int uint_setting;
 	size_t size_setting;
 	int ret;
@@ -438,43 +435,8 @@ sieve_storage_do_create_main(struct sieve_instance *svinst,
 	}
 
 	if (storage == NULL) {
-		/* Script storage directory configuration (deprecated) */
-
-		set_sieve_dir = sieve_setting_get(svinst, "sieve_dir");
-		if (set_sieve_dir == NULL) {
-			set_sieve_dir = sieve_setting_get(svinst,
-							  "sieve_storage");
-		}
-
-		if (set_sieve_dir == NULL || *set_sieve_dir == '\0') {
-			storage_path = "";
-		} else {
-			const char *p;
-
-			/* Parse and check driver */
-			storage_path = set_sieve_dir;
-			if ((ret = sieve_storage_driver_parse(
-				svinst, &storage_path, &sieve_dir_class)) < 0) {
-				*error_r = SIEVE_ERROR_TEMP_FAILURE;
-				return NULL;
-			}
-
-			if (ret > 0 && sieve_dir_class != &sieve_file_storage) {
-				e_error(svinst->event, "storage: "
-					"Cannot use deprecated sieve_dir= setting "
-					"with `%s' driver for main Sieve storage",
-					sieve_dir_class->driver_name);
-			}
-
-			/* Ignore any options */
-			p = strchr(storage_path, ';');
-			if (p != NULL)
-				storage_path = t_strdup_until(storage_path, p);
-		}
-
-		storage = sieve_file_storage_init_legacy(svinst, set_sieve,
-							 storage_path, flags,
-							 error_r);
+		storage = sieve_file_storage_init_default(svinst, set_sieve,
+							  flags, error_r);
 	}
 
 	if (storage == NULL)

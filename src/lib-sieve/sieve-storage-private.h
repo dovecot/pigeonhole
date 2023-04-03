@@ -208,11 +208,10 @@ extern const struct sieve_storage sieve_data_storage;
 extern const struct sieve_storage sieve_file_storage;
 
 struct sieve_storage *
-sieve_file_storage_init_legacy(struct sieve_instance *svinst,
-			       const char *active_path,
-			       const char *storage_path,
-			       enum sieve_storage_flags flags,
-			       enum sieve_error *error_r) ATTR_NULL(6);
+sieve_file_storage_init_default(struct sieve_instance *svinst,
+				const char *active_path,
+				enum sieve_storage_flags flags,
+				enum sieve_error *error_r) ATTR_NULL(4);
 
 /* dict */
 
