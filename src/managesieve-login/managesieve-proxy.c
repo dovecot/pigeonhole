@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include "login-common.h"
+#include "connection.h"
 #include "ioloop.h"
 #include "istream.h"
 #include "ostream.h"
@@ -61,6 +62,11 @@ proxy_compose_xclient_forward(struct managesieve_client *client)
 static void
 proxy_write_xclient(struct managesieve_client *client, string_t *str)
 {
+	/* Already checked in login_proxy_connect() that the local_name
+	   won't have any characters that would require escaping. */
+	i_assert(client->common.local_name == NULL ||
+		 connection_is_valid_dns_name(client->common.local_name));
+
 	string_t *fwd = proxy_compose_xclient_forward(client);
 
 	str_printfa(str, "XCLIENT ADDR=%s PORT=%u SESSION=%s TTL=%u "
@@ -70,6 +76,10 @@ proxy_write_xclient(struct managesieve_client *client, string_t *str)
 		    client->common.proxy_ttl - 1,
 		    client->common.end_client_tls_secured ?
 		    CLIENT_TRANSPORT_TLS : CLIENT_TRANSPORT_INSECURE);
+	if (client->common.local_name != NULL) {
+		str_append(str, " DESTNAME=");
+		str_append(str, client->common.local_name);
+	}
 	if (fwd != NULL) {
 		str_append(str, " FORWARD=");
 		base64_encode(str_data(fwd), str_len(fwd), str);
