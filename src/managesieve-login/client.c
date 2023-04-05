@@ -3,6 +3,7 @@
 
 #include "login-common.h"
 #include "buffer.h"
+#include "connection.h"
 #include "ioloop.h"
 #include "istream.h"
 #include "ostream.h"
@@ -193,6 +194,13 @@ cmd_xclient(struct managesieve_client *client,
 			client->common.end_client_tls_secured_set = TRUE;
 			client->common.end_client_tls_secured =
 				str_begins_with(value, CLIENT_TRANSPORT_TLS);
+		} else if (str_begins_icase(arg, "DESTNAME=", &value)) {
+			if (connection_is_valid_dns_name(value)) {
+				client->common.local_name =
+					p_strdup(client->common.pool, value);
+			} else {
+				args_ok = FALSE;
+			}
 		}
 		args++;
 	}
