@@ -631,6 +631,8 @@ sieve_file_storage_autodetect(struct sieve_file_storage *fstorage,
 			*storage_path_r = "/sieve";
 			e_debug(storage->event,
 				"Directory `/sieve' exists, assuming chroot");
+		} else {
+			*storage_path_r = NULL;
 		}
 	}
 }
