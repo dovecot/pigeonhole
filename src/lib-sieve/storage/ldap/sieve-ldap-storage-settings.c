@@ -3,7 +3,7 @@
 
 #include "lib.h"
 #include "env-util.h"
-#include "settings.h"
+#include "settings-legacy.h"
 
 #include "sieve-common.h"
 

@@ -10,8 +10,8 @@
 #include "str.h"
 #include "strescape.h"
 #include "base64.h"
+#include "settings.h"
 #include "master-service.h"
-#include "master-service-settings.h"
 #include "auth-client.h"
 
 #include "managesieve-parser.h"
@@ -380,9 +380,8 @@ static int managesieve_client_create(struct client *client)
 		(struct managesieve_client *)client;
 	const char *error;
 
-	if (master_service_settings_get(client->event,
-			&managesieve_login_setting_parser_info, 0,
-			&msieve_client->set, &error) < 0) {
+	if (settings_get(client->event, &managesieve_login_setting_parser_info, 0,
+			 &msieve_client->set, &error) < 0) {
 		e_error(client->event, "%s", error);
 		return -1;
 	}
@@ -398,7 +397,7 @@ static void managesieve_client_destroy(struct client *client)
 		(struct managesieve_client *)client;
 
 	managesieve_parser_destroy(&managesieve_client->parser);
-	master_service_settings_free(managesieve_client->set);
+	settings_free(managesieve_client->set);
 }
 
 static void managesieve_client_notify_auth_ready(struct client *client)

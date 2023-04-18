@@ -352,7 +352,7 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 	struct mail_namespace *ns = NULL;
 	const char *home = NULL, *errstr = NULL;
 
-	struct master_service_settings_instance *set_instance =
+	struct settings_instance *set_instance =
 		mail_storage_service_user_get_settings_instance(mail_user_dovecot->service_user);
 	struct mail_storage_service_input input = {
 		.username = username,

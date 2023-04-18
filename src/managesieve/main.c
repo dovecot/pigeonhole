@@ -12,6 +12,7 @@
 #include "base64.h"
 #include "process-title.h"
 #include "restrict-access.h"
+#include "settings.h"
 #include "settings-parser.h"
 #include "master-interface.h"
 #include "master-service-settings.h"
@@ -167,10 +168,8 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	}
 	restrict_access_allow_coredumps(TRUE);
 
-	if (master_service_settings_instance_get(mail_user->event,
-			mail_user->set_instance,
-			&managesieve_setting_parser_info, 0,
-			&set, error_r) < 0) {
+	if (settings_get(mail_user->event, &managesieve_setting_parser_info, 0,
+			 &set, error_r) < 0) {
 		mail_user_unref(&mail_user);
 		event_unref(&event);
 		return -1;

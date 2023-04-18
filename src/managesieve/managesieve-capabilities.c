@@ -5,9 +5,9 @@
 #include "array.h"
 #include "hostpid.h"
 #include "var-expand.h"
+#include "settings.h"
 #include "settings-parser.h"
 #include "master-service.h"
-#include "master-service-settings.h"
 
 #include "sieve.h"
 
@@ -68,7 +68,8 @@ void managesieve_capabilities_dump(void)
 
 	/* Read plugin settings */
 
-	global_plugin_settings = master_service_settings_get_or_fatal(NULL,
+	global_plugin_settings = settings_get_or_fatal(
+		master_service_get_event(master_service),
 		&managesieve_plugin_setting_parser_info);
 
 	/* Initialize Sieve engine */
@@ -91,6 +92,6 @@ void managesieve_capabilities_dump(void)
 		       sieve_get_capabilities(svinst, "notify"));
 	}
 
-	master_service_settings_free(global_plugin_settings);
+	settings_free(global_plugin_settings);
 	sieve_deinit(&svinst);
 }
