@@ -267,9 +267,8 @@ void client_destroy(struct client *client, const char *reason)
 	/* i/ostreams are already closed at this stage, so fd can be closed */
 	fd_close_maybe_stdio(&client->fd_in, &client->fd_out);
 
-	/* Free the user after client is already disconnected. It may start
-	   some background work like autoexpunging. */
-	mail_user_unref(&client->user);
+	/* Free the user after client is already disconnected. */
+	mail_user_deinit(&client->user);
 
 	/* free the i/ostreams after mail_user_unref(), which could trigger
 	   mail_storage_callbacks notifications that write to the ostream. */
