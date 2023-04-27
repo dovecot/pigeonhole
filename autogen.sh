@@ -5,11 +5,9 @@
 
 for dir in $GETTEXT_DIR /usr/share/gettext; do
   if test -f $dir/config.rpath; then
-    cp -f $dir/config.rpath build-aux/
+    /bin/cp -f $dir/config.rpath build-aux/
     break
   fi
 done
 
-autoreconf -i
-
-rm -f ChangeLog
+autoreconf -vif
