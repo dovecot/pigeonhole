@@ -1,3 +1,4 @@
+AC_PREREQ([2.69])
 m4_define([pigeonhole_VERSION],
     m4_esyscmd_s([build-aux/git-version-gen]))))
 
@@ -6,8 +7,6 @@ m4_define([pigeonhole_ABI_VERSION],
 
 m4_define([pigeonhole_TAR_VERSION],
     m4_esyscmd_s([build-aux/git-tarname-version-gen]))))
-
-AC_PREREQ([2.69])
 
 # Be sure to update ABI version also if anything changes that might require
 # recompiling plugins. Most importantly that means if any structs are changed.
