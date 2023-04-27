@@ -9,7 +9,7 @@ m4_define([pigeonhole_ABI_VERSION],
 # Be sure to update ABI version also if anything changes that might require
 # recompiling plugins. Most importantly that means if any structs are changed.
 AC_INIT([dovecot-pigeonhole], [m4_defn([pigeonhole_VERSION])], [dovecot@dovecot.org])
-AC_DEFINE_UNQUOTED([PIGEONHOLE_ABI_VERSION], "0.6.ABIv0($PACKAGE_VERSION)", [Pigeonhole ABI version])
+AC_DEFINE_UNQUOTED([PIGEONHOLE_ABI_VERSION], [m4_defn([pigeonhole_ABI_VERSION])], [Pigeonhole ABI version])
 
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_MACRO_DIR([m4])
