@@ -21,7 +21,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 # real config header ourselves.
 AC_CONFIG_HEADERS([dummy-config.h pigeonhole-config.h])
 
-AC_DEFINE_UNQUOTED(PIGEONHOLE_NAME, "$PACKAGE_NAME",
+AC_DEFINE_UNQUOTED(PIGEONHOLE_NAME, "Pigeonhole",
 	[Define to the full name of Pigeonhole for Dovecot.])
 AC_DEFINE_UNQUOTED(PIGEONHOLE_VERSION, "$PACKAGE_VERSION",
 	[Define to the version of Pigeonhole for Dovecot.])
