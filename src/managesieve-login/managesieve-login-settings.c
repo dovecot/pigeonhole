@@ -20,40 +20,6 @@
 #include <sys/wait.h>
 #include <sysexits.h>
 
-/* <settings checks> */
-static struct file_listener_settings managesieve_login_unix_listeners_array[] = {
-	{
-		.path = "srv.managesieve-login/%{pid}",
-		.type = "admin",
-		.mode = 0600,
-		.user = "",
-		.group = ""
-	},
-};
-static struct file_listener_settings *managesieve_login_unix_listeners[] = {
-	&managesieve_login_unix_listeners_array[0],
-};
-static buffer_t managesieve_login_unix_listeners_buf = {
-	{ { managesieve_login_unix_listeners,
-	    sizeof(managesieve_login_unix_listeners) } }
-};
-
-static struct inet_listener_settings managesieve_login_inet_listeners_array[] = {
-	{
-		.name = "sieve",
-		.address = "",
-		.port = MANAGESIEVE_DEFAULT_PORT,
-	},
-};
-static struct inet_listener_settings *managesieve_login_inet_listeners[] = {
-	&managesieve_login_inet_listeners_array[0]
-};
-static buffer_t managesieve_login_inet_listeners_buf = {
-	{ { managesieve_login_inet_listeners,
-	    sizeof(managesieve_login_inet_listeners) } }
-};
-/* </settings checks> */
-
 struct service_settings managesieve_login_settings_service_settings = {
 	.name = "managesieve-login",
 	.protocol = "sieve",
@@ -74,13 +40,24 @@ struct service_settings managesieve_login_settings_service_settings = {
 	.idle_kill = 0,
 	.vsz_limit = (uoff_t)-1,
 
-	.unix_listeners = { { &managesieve_login_unix_listeners_buf,
-			      sizeof(managesieve_login_unix_listeners[0]) } },
+	.unix_listeners = ARRAY_INIT,
 	.fifo_listeners = ARRAY_INIT,
-	.inet_listeners = { { &managesieve_login_inet_listeners_buf,
-			      sizeof(managesieve_login_inet_listeners[0]) } }
+	.inet_listeners = ARRAY_INIT,
 };
 
+const struct setting_keyvalue managesieve_login_settings_service_settings_defaults[] = {
+	{ "unix_listener", "srv.managesieve-login\\s%{pid}" },
+
+	{ "unix_listener/srv.managesieve-login\\s%{pid}/path", "srv.managesieve-login/%{pid}" },
+	{ "unix_listener/srv.managesieve-login\\s%{pid}/type", "admin" },
+	{ "unix_listener/srv.managesieve-login\\s%{pid}/mode", "0600" },
+
+	{ "inet_listener", "sieve" },
+
+	{ "inet_listener/sieve/port", "4190" },
+
+	{ NULL, NULL }
+};
 #undef DEF
 #define DEF(type, name) \
 	SETTING_DEFINE_STRUCT_##type(#name, name, struct managesieve_login_settings)
@@ -99,11 +76,6 @@ static const struct managesieve_login_settings managesieve_login_default_setting
 	.managesieve_notify_capability = NULL
 };
 
-static const struct setting_parser_info *managesieve_login_setting_dependencies[] = {
-	&login_setting_parser_info,
-	NULL
-};
-
 const struct setting_parser_info managesieve_login_setting_parser_info = {
 	.name = "managesieve_login",
 
@@ -113,8 +85,6 @@ const struct setting_parser_info managesieve_login_setting_parser_info = {
 	.struct_size = sizeof(struct managesieve_login_settings),
 	.pool_offset1 = 1 + offsetof(struct managesieve_login_settings, pool),
 	.parent = NULL,
-
-	.dependencies = managesieve_login_setting_dependencies
 };
 
 const struct setting_parser_info *managesieve_login_settings_set_roots[] = {

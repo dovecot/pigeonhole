@@ -17,31 +17,6 @@
 static bool managesieve_settings_verify(void *_set, pool_t pool,
 				 const char **error_r);
 
-/* <settings checks> */
-static struct file_listener_settings managesieve_unix_listeners_array[] = {
-	{
-		.path = "login/sieve",
-		.mode = 0666,
-		.user = "",
-		.group = "",
-	},
-	{
-		.path = "srv.managesieve/%{pid}",
-		.type = "admin",
-		.mode = 0600,
-		.user = "",
-		.group = "",
-	},
-};
-static struct file_listener_settings *managesieve_unix_listeners[] = {
-	&managesieve_unix_listeners_array[0],
-	&managesieve_unix_listeners_array[1],
-};
-static buffer_t managesieve_unix_listeners_buf = {
-	{ { managesieve_unix_listeners, sizeof(managesieve_unix_listeners) } }
-};
-/* </settings checks> */
-
 struct service_settings managesieve_settings_service_settings = {
 	.name = "managesieve",
 	.protocol = "sieve",
@@ -62,10 +37,22 @@ struct service_settings managesieve_settings_service_settings = {
 	.idle_kill = 0,
 	.vsz_limit = (uoff_t)-1,
 
-	.unix_listeners = { { &managesieve_unix_listeners_buf,
-				   sizeof(managesieve_unix_listeners[0]) } },
+	.unix_listeners = ARRAY_INIT,
 	.fifo_listeners = ARRAY_INIT,
 	.inet_listeners = ARRAY_INIT
+};
+
+const struct setting_keyvalue managesieve_settings_service_settings_defaults[] = {
+	{ "unix_listener", "login\\ssieve srv.managesieve\\s%{pid}" },
+
+	{ "unix_listener/login\\ssieve/path", "login/sieve" },
+	{ "unix_listener/login\\ssieve/mode", "0666" },
+
+	{ "unix_listener/srv.managesieve\\s%{pid}/path", "srv.managesieve/%{pid}" },
+	{ "unix_listener/srv.managesieve\\s%{pid}/type", "admin" },
+	{ "unix_listener/srv.managesieve\\s%{pid}/mode", "0600" },
+
+	{ NULL, NULL }
 };
 
 #undef DEF
@@ -102,11 +89,6 @@ static struct managesieve_settings managesieve_default_settings = {
 	.managesieve_max_compile_errors = 5
 };
 
-static const struct setting_parser_info *managesieve_setting_dependencies[] = {
-	&mail_user_setting_parser_info,
-	NULL
-};
-
 const struct setting_parser_info managesieve_setting_parser_info = {
 	.name = "managesieve",
 
@@ -118,7 +100,6 @@ const struct setting_parser_info managesieve_setting_parser_info = {
 	.parent = NULL,
 
 	.check_func = managesieve_settings_verify,
-	.dependencies = managesieve_setting_dependencies
 };
 
 static const struct setting_define plugin_setting_defines[] = {
