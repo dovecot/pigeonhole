@@ -570,8 +570,13 @@ act_redirect_execute(const struct sieve_action_exec_env *aenv,
 	trans->msg_id = msgdata->id;
 	if (trans->msg_id == NULL) {
 		pool_t pool = sieve_result_pool(aenv->result);
-		trans->msg_id = trans->new_msg_id =
-			p_strdup(pool, sieve_message_get_new_id(svinst));
+		const char *msg_id;
+		if (mail_get_message_id_no_validation(msgdata->mail, &msg_id) > 0)
+			trans->msg_id = p_strdup(pool, msg_id);
+		else {
+			msg_id = sieve_message_get_new_id(svinst);
+			trans->msg_id = trans->new_msg_id = p_strdup(pool, msg_id);
+		}
 	}
 
 	/* Create ID for duplicate database lookup */
