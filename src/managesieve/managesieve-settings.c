@@ -97,7 +97,6 @@ const struct setting_parser_info managesieve_setting_parser_info = {
 
 	.struct_size = sizeof(struct managesieve_settings),
 	.pool_offset1 = 1 + offsetof(struct managesieve_settings, pool),
-	.parent = NULL,
 
 	.check_func = managesieve_settings_verify,
 };

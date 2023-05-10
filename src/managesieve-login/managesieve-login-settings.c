@@ -84,7 +84,6 @@ const struct setting_parser_info managesieve_login_setting_parser_info = {
 
 	.struct_size = sizeof(struct managesieve_login_settings),
 	.pool_offset1 = 1 + offsetof(struct managesieve_login_settings, pool),
-	.parent = NULL,
 };
 
 const struct setting_parser_info *managesieve_login_settings_set_roots[] = {
