@@ -117,7 +117,7 @@ const struct setting_parser_info managesieve_plugin_setting_parser_info = {
 	.pool_offset1 = 1 + offsetof(struct plugin_settings, pool),
 };
 
-const struct setting_parser_info *managesieve_settings_set_roots[] = {
+const struct setting_parser_info *managesieve_settings_set_infos[] = {
 	&managesieve_setting_parser_info,
 	&managesieve_plugin_setting_parser_info,
 	NULL
