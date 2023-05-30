@@ -778,8 +778,7 @@ static void imap_sieve_mailbox_allocated(struct mailbox *box)
 	struct mailbox_vfuncs *v = box->vlast;
 	struct imap_sieve_mailbox *isbox;
 
-	if (isuser->client == NULL || isuser->sieve_active ||
-	    (box->flags & MAILBOX_FLAG_READONLY) != 0)
+	if (isuser->client == NULL || isuser->sieve_active)
 		return;
 
 	isbox = p_new(box->pool, struct imap_sieve_mailbox, 1);
