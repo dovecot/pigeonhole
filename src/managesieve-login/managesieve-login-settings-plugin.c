@@ -13,6 +13,7 @@
 
 #include <stddef.h>
 #include <unistd.h>
+#include <time.h>
 #include <sys/wait.h>
 #include <sysexits.h>
 
@@ -154,13 +155,26 @@ static bool capability_dump(void)
 
 	(void)close(fd[1]);
 
+	time_t start_time = time(NULL);
 	alarm(60);
-	if (wait(&status) == -1) {
-		i_error("managesieve-login: dump-capability failed: process %d got stuck",
-			(int)pid);
+	pid_t wait_ret = wait(&status);
+	alarm(0);
+
+	if (wait_ret >= 0)
+		; /* success */
+	else if (errno != ECHILD) {
+		i_error("managesieve-login: dump-capability failed: "
+			"wait() failed: %m");
+		return FALSE;
+	} else {
+		i_error("managesieve-login: dump-capability failed: "
+			"process %d got stuck (waited %"PRIdTIME_T" seconds) - "
+			"killing sig SIGABRT",
+			(int)pid, (time(NULL) - start_time));
+		if (kill(pid, SIGABRT) < 0)
+			i_error("kill(%d) failed: %m", (int)pid);
 		return FALSE;
 	}
-	alarm(0);
 
 	if (status != 0) {
 		(void)close(fd[0]);
