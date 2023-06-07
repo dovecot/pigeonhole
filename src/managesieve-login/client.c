@@ -72,7 +72,7 @@ static void client_send_capabilities(struct client *client)
 			"\"SIEVE\" \"",
 			msieve_client->set->managesieve_sieve_capability,
 			"\"\r\n", NULL));
-		if (msieve_client->set->managesieve_notify_capability != NULL) {
+		if (msieve_client->set->managesieve_notify_capability[0] != '\0') {
 			client_send_raw(client, t_strconcat(
 				"\"NOTIFY\" \"",
 				msieve_client->set->managesieve_notify_capability,

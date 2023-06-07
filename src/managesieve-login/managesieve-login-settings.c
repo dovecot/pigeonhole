@@ -68,7 +68,7 @@ static const struct setting_define managesieve_login_setting_defines[] = {
 static const struct managesieve_login_settings managesieve_login_default_settings = {
 	.managesieve_implementation_string = DOVECOT_NAME " " PIGEONHOLE_NAME,
 	.managesieve_sieve_capability = "",
-	.managesieve_notify_capability = NULL
+	.managesieve_notify_capability = "",
 };
 
 const struct setting_parser_info managesieve_login_setting_parser_info = {
