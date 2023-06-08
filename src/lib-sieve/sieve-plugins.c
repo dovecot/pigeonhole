@@ -84,7 +84,7 @@ void sieve_plugins_load
 	/* Load missing plugin modules */
 
 	sieve_modules = module_dir_load_missing
-		(sieve_modules, path, plugins, &mod_set);
+		(sieve_modules, path, t_strsplit_spaces(plugins, ", "), &mod_set);
 
 	/* Call plugin load functions for this Sieve instance */
 
