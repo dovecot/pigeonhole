@@ -15,7 +15,6 @@
 #include "mail-duplicate.h"
 #include "smtp-submit.h"
 #include "mail-send.h"
-#include "iostream-ssl.h"
 #include "lda-settings.h"
 
 #include "sieve.h"
@@ -80,11 +79,9 @@ lda_sieve_smtp_start(const struct sieve_script_env *senv,
 {
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *)senv->script_context;
-	struct mail_user *user = dctx->rcpt_user;
 	struct smtp_submit_input submit_input;
 
 	i_zero(&submit_input);
-	submit_input.ssl = user->ssl_set;
 
 	return (void *)smtp_submit_init_simple(&submit_input, dctx->smtp_set,
 					       mail_from);
