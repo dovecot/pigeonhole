@@ -9,7 +9,6 @@
 #include "mail-storage.h"
 #include "mail-user.h"
 #include "mail-duplicate.h"
-#include "iostream-ssl.h"
 #include "imap-client.h"
 #include "imap-settings.h"
 
@@ -160,12 +159,10 @@ imap_sieve_smtp_start(const struct sieve_script_env *senv,
 {
 	struct imap_sieve_context *isctx = senv->script_context;
 	struct imap_sieve *isieve = isctx->isieve;
-	struct mail_user *user = isieve->client->user;
 	const struct smtp_submit_settings *smtp_set = isieve->client->smtp_set;
 	struct smtp_submit_input submit_input;
 	
 	i_zero(&submit_input);
-	submit_input.ssl = user->ssl_set;
 
 	return smtp_submit_init_simple(&submit_input, smtp_set, mail_from);
 }

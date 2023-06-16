@@ -9,7 +9,6 @@
 #include "mail-user.h"
 #include "mail-duplicate.h"
 #include "mail-storage-private.h"
-#include "iostream-ssl.h"
 #include "smtp-submit.h"
 #include "sieve.h"
 #include "sieve-storage.h"
@@ -570,7 +569,6 @@ imap_filter_sieve_smtp_start(const struct sieve_script_env *senv,
 	struct smtp_submit_input submit_input;
 
 	i_zero(&submit_input);
-	submit_input.ssl = user->ssl_set;
 
 	return (void *)smtp_submit_init_simple(&submit_input, smtp_set,
 					       mail_from);
