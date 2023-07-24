@@ -359,7 +359,7 @@ filter_mailbox(const struct sieve_filter_data *sfdata, struct mailbox *src_box)
 	/* Sync mailbox */
 
 	if (sfdata->execute) {
-		if (mailbox_sync(src_box, MAILBOX_SYNC_FLAG_FULL_WRITE) < 0) {
+		if (mailbox_sync(src_box, 0) < 0) {
 			sieve_error(ehandler, NULL,
 				    "failed to sync source mailbox");
 			return -1;
