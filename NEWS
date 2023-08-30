@@ -1,3 +1,16 @@
+v0.5.21 2023-08-15  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	- sieve: Using the deleteheader action on a message with a broken/invalid
+	  header can cause the Sieve interpreter to crash with an assert panic.
+	  This can happen e.g. when the message is missing the empty EOH line
+	  between the headers and the body of the message. Fixes:
+	  Panic: file edit-mail.c: line 820 (edit_mail_headers_parse):
+	  assertion failed: (body_offset > 0).
+	- sieve: Pigeonhole added an extra Message-ID header during mail
+	  forwarding when the existing one was invalid. Now it adds the
+	  Message-ID only if it is entirely missing. Existing Message-ID(s) are
+	  left unchanged.
+
 v0.5.20 2022-12-12  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* No changes - release done to keep version numbers synced.
