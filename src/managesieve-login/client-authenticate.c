@@ -242,7 +242,7 @@ managesieve_client_auth_read_response(struct managesieve_client *msieve_client,
 	return 1;
 }
 
-void managesieve_client_auth_parse_response(struct client *client)
+bool managesieve_client_auth_parse_response(struct client *client)
 {
 	struct managesieve_client *msieve_client =
 		(struct managesieve_client *)client;
@@ -254,20 +254,11 @@ void managesieve_client_auth_parse_response(struct client *client)
 	if (ret < 0) {
 		if (error != NULL)
 			client_auth_fail(client, error);
-		return;
+		return FALSE;
 	}
 	if (ret == 0)
-		return;
-
-	if (strcmp(str_c(client->auth_response), "*") == 0) {
-		client_auth_abort(client);
-		return;
-	}
-
-	client_auth_respond(client, str_c(client->auth_response));
-
-	memset(str_c_modifiable(client->auth_response), 0,
-	       str_len(client->auth_response));
+		return FALSE;
+	return TRUE;
 }
 
 int cmd_authenticate(struct managesieve_client *msieve_client,

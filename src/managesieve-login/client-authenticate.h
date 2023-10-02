@@ -12,7 +12,7 @@ void managesieve_client_auth_result(struct client *client,
 
 void managesieve_client_auth_send_challenge(struct client *client,
 					    const char *data);
-void managesieve_client_auth_parse_response(struct client *client);
+bool managesieve_client_auth_parse_response(struct client *client);
 
 int cmd_authenticate(struct managesieve_client *client,
 		     const struct managesieve_arg *args);
