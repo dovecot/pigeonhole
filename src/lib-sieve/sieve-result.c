@@ -1274,6 +1274,7 @@ sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
 {
 	struct sieve_result_action *rac = aexec->action;
 	struct sieve_action *act = &rac->action;
+	const struct sieve_execute_env *exec_env = rexec->action_env.exec_env;
 
 	/* Skip actions that are already finalized. */
 	if (aexec->state >= SIEVE_ACTION_EXECUTION_STATE_FINALIZED)
@@ -1312,9 +1313,14 @@ sieve_result_action_commit_or_rollback(struct sieve_result_execution *rexec,
 			/* This is bad; try to salvage as much as possible */
 			if (*commit_status == SIEVE_EXEC_OK) {
 				*commit_status = cstatus;
-				if (!rexec->committed) {
-					/* We haven't executed anything yet;
-					   continue as rollback */
+				if (!rexec->committed ||
+				    exec_env->exec_status->store_failed) {
+					/* We haven't executed anything yet,
+					   or storing mail locally failed;
+					   continue as rollback. We generally
+					   don't want to fail entirely, e.g.
+					   a failed mail forward shouldn't
+					   cause duplicate local deliveries. */
 					status = cstatus;
 				}
 			}
