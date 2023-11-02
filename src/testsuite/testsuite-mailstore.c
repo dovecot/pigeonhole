@@ -64,7 +64,6 @@ void testsuite_mailstore_init(void)
 	struct mail_user *mail_user_dovecot, *mail_user;
 	struct mail_namespace *ns;
 	struct mail_namespace_settings *ns_set;
-	struct mail_storage_settings *mail_set;
 	const char *tmpdir, *error, *cwd;
 
 	tmpdir = testsuite_tmp_dir_get();
@@ -84,6 +83,8 @@ void testsuite_mailstore_init(void)
 		i_fatal("Failed to get working directory: %s", error);
 	const char *const userdb_fields[] = {
 		t_strconcat("home=", cwd, NULL),
+		t_strconcat("mail_location=maildir:",
+			    testsuite_mailstore_location, NULL),
 		"mail_attribute/dict_driver=file",
 		t_strconcat("dict_file_path=", testsuite_mailstore_attrs, NULL),
 		NULL,
@@ -103,21 +104,13 @@ void testsuite_mailstore_init(void)
 	mail_user->autocreated = TRUE;
 
 	ns_set = p_new(mail_user->pool, struct mail_namespace_settings, 1);
-	ns_set->location = testsuite_mailstore_location;
 	ns_set->separator = ".";
 
 	ns = mail_namespaces_init_empty(mail_user);
 	ns->flags |= NAMESPACE_FLAG_INBOX_USER;
 	ns->set = ns_set;
-	/* absolute paths are ok with raw storage */
-	mail_set = p_new(mail_user->pool, struct mail_storage_settings, 1);
-	*mail_set = *ns->mail_set;
-	mail_set->mail_location = p_strconcat(
-		mail_user->pool, "maildir:",
-		testsuite_mailstore_location, NULL);
-	ns->mail_set = mail_set;
 
-	if (mail_storage_create(ns, "maildir", 0, &error) < 0)
+	if (mail_storage_create(ns, mail_user->event, 0, &error) < 0)
 		i_fatal("Couldn't create testsuite storage: %s", error);
 	if (mail_namespaces_init_finish(ns, &error) < 0)
 		i_fatal("Couldn't create testsuite namespace: %s", error);
