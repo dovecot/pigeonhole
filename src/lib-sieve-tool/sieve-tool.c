@@ -353,10 +353,15 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 
 	struct settings_instance *set_instance =
 		mail_storage_service_user_get_settings_instance(mail_user_dovecot->service_user);
+	const char *const code_override_fields[] = {
+		t_strdup_printf("mail_location=%s", mail_location),
+		NULL,
+	};
 	struct mail_storage_service_input input = {
 		.username = username,
 		.set_instance = set_instance,
 		.no_userdb_lookup = TRUE,
+		.code_override_fields = code_override_fields,
 	};
 	if (mail_storage_service_lookup_next(tool->storage_service, &input,
 					     &tool->mail_user, &errstr) < 0)
@@ -368,8 +373,8 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 	if (mail_user_init(tool->mail_user, &errstr) < 0)
  		i_fatal("Test user initialization failed: %s", errstr);
 
-	if (mail_namespaces_init_location(tool->mail_user, mail_location,
-					  &errstr) < 0)
+	if (mail_namespaces_init_location(tool->mail_user,
+					  tool->mail_user->event, &errstr) < 0)
 		i_fatal("Test storage creation failed: %s", errstr);
 
 	ns = tool->mail_user->namespaces;
