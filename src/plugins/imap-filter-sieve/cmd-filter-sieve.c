@@ -61,7 +61,7 @@ static bool cmd_filter_sieve_delivery(struct client_command_context *cmd)
 					      &error, &error_string);
 	if (ret < 0) {
 		client_send_tagline(
-			cmd, imap_get_error_string(cmd, error_string, error));
+			cmd, imap_get_error_string(error_string, error));
 		imap_filter_deinit(ctx);
 		return TRUE;
 	}
@@ -167,7 +167,7 @@ cmd_filter_sieve_script_parse_name(struct client_command_context *cmd)
 	}
 	if (ret < 0) {
 		client_send_tagline(
-			cmd, imap_get_error_string(cmd, error_string, error));
+			cmd, imap_get_error_string(error_string, error));
 		imap_filter_deinit(ctx);
 		return TRUE;
 	}
