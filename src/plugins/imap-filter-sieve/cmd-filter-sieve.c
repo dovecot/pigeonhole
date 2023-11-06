@@ -24,7 +24,7 @@ static int cmd_filter_sieve_compile_script(struct imap_filter_context *ctx)
 	ret = imap_filter_sieve_compile(sctx, &errors, &have_warnings);
 	if (ret >= 0 && !have_warnings)
 		return 0;
-		
+
 	o_stream_nsend_str(client->output,
 		t_strdup_printf("* FILTER (TAG %s) "
 				"%s {%zu}\r\n",
@@ -33,7 +33,7 @@ static int cmd_filter_sieve_compile_script(struct imap_filter_context *ctx)
 	o_stream_nsend(client->output,
 		       str_data(errors), str_len(errors));
 	o_stream_nsend_str(client->output, "\r\n");
-	
+
 	if (ret < 0) {
 		ctx->compile_failure = TRUE;
 		ctx->failed = TRUE;

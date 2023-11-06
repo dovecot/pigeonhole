@@ -390,7 +390,7 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 
 		if (sieve_attribute_set_sieve(t->box->storage, key, value) < 0)
 			return -1;
-		
+
 		if (value->last_change != 0) {
 			change = t_strflocaltime(
 				"(last change: %Y-%m-%d %H:%M:%S)",
