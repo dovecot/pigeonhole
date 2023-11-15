@@ -28,7 +28,7 @@ struct service_settings managesieve_login_settings_service_settings = {
 	.user = "$SET:default_login_user",
 	.group = "",
 	.privileged_group = "",
-	.extra_groups = "",
+	.extra_groups = ARRAY_INIT,
 	.chroot = "login",
 
 	.drop_priv_before_exec = FALSE,
