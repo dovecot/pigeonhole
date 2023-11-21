@@ -63,7 +63,7 @@ static struct setting_define managesieve_setting_defines[] = {
 	DEF(SIZE, managesieve_max_line_length),
 	DEF(STR, managesieve_implementation_string),
 	DEF(STR, managesieve_client_workarounds),
-	DEF(STR, managesieve_logout_format),
+	DEF(STR_NOVARS, managesieve_logout_format),
 	DEF(UINT, managesieve_max_compile_errors),
 
 
