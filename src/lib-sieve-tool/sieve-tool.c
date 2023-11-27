@@ -343,8 +343,7 @@ void sieve_tool_deinit(struct sieve_tool **_tool)
  * Mail environment
  */
 
-void sieve_tool_init_mail_user(struct sieve_tool *tool,
-			       const char *mail_location)
+void sieve_tool_init_mail_user(struct sieve_tool *tool)
 {
 	struct mail_user *mail_user_dovecot = tool->mail_user_dovecot;
 	const char *username = tool->username;
@@ -353,15 +352,10 @@ void sieve_tool_init_mail_user(struct sieve_tool *tool,
 
 	struct settings_instance *set_instance =
 		mail_storage_service_user_get_settings_instance(mail_user_dovecot->service_user);
-	const char *const code_override_fields[] = {
-		t_strdup_printf("mail_location=%s", mail_location),
-		NULL,
-	};
 	struct mail_storage_service_input input = {
 		.username = username,
 		.set_instance = set_instance,
 		.no_userdb_lookup = TRUE,
-		.code_override_fields = code_override_fields,
 	};
 	if (mail_storage_service_lookup_next(tool->storage_service, &input,
 					     &tool->mail_user, &errstr) < 0)
