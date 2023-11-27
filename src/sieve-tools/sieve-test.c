@@ -171,7 +171,7 @@ int main(int argc, char **argv)
 	struct sieve_instance *svinst;
 	ARRAY_TYPE (const_string) scriptfiles;
 	const char *scriptfile, *mailbox, *dumpfile, *tracefile, *mailfile,
-		*mailloc, *errstr;
+		*errstr;
 	struct smtp_address *rcpt_to, *final_rcpt_to, *mail_from;
 	struct sieve_trace_config trace_config;
 	struct mail *mail;
@@ -188,13 +188,13 @@ int main(int argc, char **argv)
 	int ret, c;
 
 	sieve_tool = sieve_tool_init("sieve-test", &argc, &argv,
-				     "r:a:f:m:d:l:s:eCt:T:DP:x:u:", FALSE);
+				     "r:a:f:m:d:s:eCt:T:DP:x:u:", FALSE);
 
 	ehandler = NULL;
 	t_array_init(&scriptfiles, 16);
 
 	/* Parse arguments */
-	mailbox = dumpfile = tracefile = mailloc = NULL;
+	mailbox = dumpfile = tracefile = NULL;
 	mail_from = final_rcpt_to = rcpt_to = NULL;
 	i_zero(&trace_config);
 	trace_config.level = SIEVE_TRLVL_ACTIONS;
@@ -226,10 +226,6 @@ int main(int argc, char **argv)
 		case 'm':
 			/* default mailbox (keep box) */
 			mailbox = optarg;
-			break;
-		case 'l':
-			/* mail location */
-			mailloc = optarg;
 			break;
 		case 't':
 			/* trace file */
@@ -288,7 +284,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Finish tool initialization */
-	svinst = sieve_tool_init_finish(sieve_tool, mailloc == NULL, FALSE);
+	svinst = sieve_tool_init_finish(sieve_tool, TRUE, FALSE);
 
 	/* Enable debug extension */
 	sieve_enable_debug_extension(svinst);
@@ -312,10 +308,6 @@ int main(int argc, char **argv)
 	} else {
 		/* Dump script */
 		sieve_tool_dump_binary_to(main_sbin, dumpfile, FALSE);
-
-		/* Obtain mail namespaces from -l argument */
-		if (mailloc != NULL)
-			sieve_tool_init_mail_user(sieve_tool, mailloc);
 
 		/* Initialize raw mail object */
 		mail = sieve_tool_open_file_as_mail(sieve_tool, mailfile);
