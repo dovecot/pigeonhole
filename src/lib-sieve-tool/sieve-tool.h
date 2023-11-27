@@ -36,8 +36,7 @@ void sieve_tool_deinit(struct sieve_tool **_tool);
  * Mail environment
  */
 
-void sieve_tool_init_mail_user(struct sieve_tool *tool,
-			       const char *mail_location);
+void sieve_tool_init_mail_user(struct sieve_tool *tool);
 
 struct mail *
 sieve_tool_open_file_as_mail(struct sieve_tool *tool, const char *path);
