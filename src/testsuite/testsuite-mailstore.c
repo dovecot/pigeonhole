@@ -83,8 +83,8 @@ void testsuite_mailstore_init(void)
 		i_fatal("Failed to get working directory: %s", error);
 	const char *const userdb_fields[] = {
 		t_strconcat("home=", cwd, NULL),
-		t_strconcat("mail_location=maildir:",
-			    testsuite_mailstore_location, NULL),
+		"mail_driver=maildir",
+		t_strconcat("mail_path=", testsuite_mailstore_location, NULL),
 		"mail_attribute/dict_driver=file",
 		t_strconcat("dict_file_path=", testsuite_mailstore_attrs, NULL),
 		NULL,
