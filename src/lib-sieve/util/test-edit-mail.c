@@ -55,7 +55,8 @@ static int test_init_mail_user(void)
 
 	struct mail_storage_service_input input = {
 		.userdb_fields = (const char*const[]){
-			t_strdup_printf("mail=maildir:~/"),
+			"mail_driver=maildir",
+			"mail_path=~/",
 			t_strdup_printf("home=%s", mail_home),
 			NULL
 		},
