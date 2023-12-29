@@ -64,6 +64,7 @@ void testsuite_mailstore_init(void)
 	struct mail_user *mail_user_dovecot, *mail_user;
 	struct mail_namespace *ns;
 	struct mail_namespace_settings *ns_set;
+	struct mail_storage *storage;
 	const char *tmpdir, *error, *cwd;
 
 	tmpdir = testsuite_tmp_dir_get();
@@ -110,7 +111,7 @@ void testsuite_mailstore_init(void)
 	ns->flags |= NAMESPACE_FLAG_INBOX_USER;
 	ns->set = ns_set;
 
-	if (mail_storage_create(ns, mail_user->event, 0, &error) < 0)
+	if (mail_storage_create(ns, mail_user->event, 0, &storage, &error) < 0)
 		i_fatal("Couldn't create testsuite storage: %s", error);
 	if (mail_namespaces_init_finish(ns, &error) < 0)
 		i_fatal("Couldn't create testsuite namespace: %s", error);
