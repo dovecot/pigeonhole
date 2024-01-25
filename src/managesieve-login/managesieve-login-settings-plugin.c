@@ -214,7 +214,7 @@ static bool capability_dump(void)
 static void managesieve_login_config_set
 (struct config_parser_context *ctx, const char *key, const char *value)
 {
-	config_parser_set_change_counter(ctx, CONFIG_PARSER_CHANGE_INTERNAL);
+	config_parser_set_change_counter(ctx, CONFIG_PARSER_CHANGE_DEFAULTS);
 	config_apply_line(ctx, key, value, NULL);
 	config_parser_set_change_counter(ctx, CONFIG_PARSER_CHANGE_EXPLICIT);
 }
