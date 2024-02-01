@@ -57,7 +57,7 @@ bool client_skip_line(struct managesieve_client *msieve_client)
 static void client_send_capabilities(struct client *client)
 {
 	struct managesieve_client *msieve_client =
-		(struct managesieve_client *)client;
+		container_of(client, struct managesieve_client, common);
 	const char *saslcap;
 
 	T_BEGIN {
@@ -281,7 +281,7 @@ static bool client_handle_input(struct managesieve_client *msieve_client)
 static bool managesieve_client_input_next_cmd(struct client *client)
 {
 	struct managesieve_client *msieve_client =
-		(struct managesieve_client *)client;
+		container_of(client, struct managesieve_client, common);
 	const struct managesieve_arg *args = NULL;
 	const char *msg;
 	int ret = 1;
@@ -357,7 +357,7 @@ static bool managesieve_client_input_next_cmd(struct client *client)
 static void managesieve_client_input(struct client *client)
 {
 	struct managesieve_client *msieve_client =
-		(struct managesieve_client *)client;
+		container_of(client, struct managesieve_client, common);
 
 	if (!client_read(client))
 		return;
@@ -396,7 +396,7 @@ static struct client *managesieve_client_alloc(pool_t pool)
 static int managesieve_client_create(struct client *client)
 {
 	struct managesieve_client *msieve_client =
-		(struct managesieve_client *)client;
+		container_of(client, struct managesieve_client, common);
 	const char *error;
 
 	if (settings_get(client->event, &managesieve_login_setting_parser_info, 0,
@@ -413,7 +413,7 @@ static int managesieve_client_create(struct client *client)
 static void managesieve_client_destroy(struct client *client)
 {
 	struct managesieve_client *msieve_client =
-		(struct managesieve_client *)client;
+		container_of(client, struct managesieve_client, common);
 
 	managesieve_parser_destroy(&msieve_client->parser);
 	settings_free(msieve_client->set);
@@ -438,7 +438,7 @@ static void managesieve_client_notify_auth_ready(struct client *client)
 static void managesieve_client_starttls(struct client *client)
 {
 	struct managesieve_client *msieve_client =
-		(struct managesieve_client *)client;
+		container_of(client, struct managesieve_client, common);
 
 	managesieve_parser_destroy(&msieve_client->parser);
 	msieve_client->parser = managesieve_parser_create(client->input,
