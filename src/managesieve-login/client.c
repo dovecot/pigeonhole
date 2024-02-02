@@ -417,6 +417,18 @@ static void managesieve_client_destroy(struct client *client)
 	settings_free(msieve_client->set);
 }
 
+static int
+managesieve_client_reload_config(struct client *client, const char **error_r)
+{
+	struct managesieve_client *msieve_client =
+		container_of(client, struct managesieve_client, common);
+
+	settings_free(msieve_client->set);
+	return settings_get(client->event,
+			    &managesieve_login_setting_parser_info, 0,
+			    &msieve_client->set, error_r);
+}
+
 static void managesieve_client_notify_auth_ready(struct client *client)
 {
 	/* Cork the stream to send the capability data as a single tcp frame
@@ -539,6 +551,7 @@ static struct client_vfuncs managesieve_client_vfuncs = {
 	.alloc = managesieve_client_alloc,
 	.create = managesieve_client_create,
 	.destroy = managesieve_client_destroy,
+	.reload_config = managesieve_client_reload_config,
 	.notify_auth_ready = managesieve_client_notify_auth_ready,
 	.notify_disconnect = managesieve_client_notify_disconnect,
 	.notify_starttls = managesieve_client_notify_starttls,
