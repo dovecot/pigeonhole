@@ -13,7 +13,6 @@
 #include "process-title.h"
 #include "restrict-access.h"
 #include "settings.h"
-#include "settings-parser.h"
 #include "master-interface.h"
 #include "master-service-settings.h"
 #include "master-admin-client.h"
