@@ -136,6 +136,10 @@ void sieve_deinit(struct sieve_instance **_svinst)
 {
 	struct sieve_instance *svinst = *_svinst;
 
+	if (svinst == NULL)
+		return;
+	*_svinst = NULL;
+
 	sieve_plugins_unload(svinst);
 	sieve_storages_deinit(svinst);
 	sieve_extensions_deinit(svinst);
@@ -144,7 +148,6 @@ void sieve_deinit(struct sieve_instance **_svinst)
 	event_unref(&svinst->event);
 
 	pool_unref(&(svinst)->pool);
-	*_svinst = NULL;
 }
 
 void sieve_set_extensions(struct sieve_instance *svinst, const char *extensions)
