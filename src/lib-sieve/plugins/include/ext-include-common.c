@@ -7,7 +7,7 @@
 #include "home-expand.h"
 
 #include "sieve-common.h"
-#include "sieve-settings.h"
+#include "sieve-settings.old.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
 #include "sieve-storage.h"

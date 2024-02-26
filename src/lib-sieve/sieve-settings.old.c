@@ -8,7 +8,7 @@
 #include "sieve-error.h"
 #include "sieve-address.h"
 #include "sieve-address-source.h"
-#include "sieve-settings.h"
+#include "sieve-settings.old.h"
 
 #include <ctype.h>
 

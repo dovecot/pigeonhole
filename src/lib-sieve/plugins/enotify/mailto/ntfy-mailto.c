@@ -33,7 +33,7 @@
 #include "sieve-address-source.h"
 #include "sieve-message.h"
 #include "sieve-smtp.h"
-#include "sieve-settings.h"
+#include "sieve-settings.old.h"
 
 #include "sieve-ext-enotify.h"
 

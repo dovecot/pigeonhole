@@ -1,5 +1,5 @@
-#ifndef SIEVE_SETTINGS_H
-#define SIEVE_SETTINGS_H
+#ifndef SIEVE_SETTINGS_OLD_H
+#define SIEVE_SETTINGS_OLD_H
 
 #include "sieve-common.h"
 

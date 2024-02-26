@@ -13,7 +13,7 @@
 #include "message-address.h"
 #include "mail-user.h"
 
-#include "sieve-settings.h"
+#include "sieve-settings.old.h"
 #include "sieve-extensions.h"
 #include "sieve-plugins.h"
 

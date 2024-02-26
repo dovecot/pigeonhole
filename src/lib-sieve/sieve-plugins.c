@@ -5,7 +5,7 @@
 #include "str.h"
 #include "module-dir.h"
 
-#include "sieve-settings.h"
+#include "sieve-settings.old.h"
 #include "sieve-extensions.h"
 
 #include "sieve-common.h"

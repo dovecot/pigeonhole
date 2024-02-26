@@ -97,7 +97,7 @@ libdovecot_sieve_la_LIBADD = \
 	$(LIBDOVECOT)
 
 libdovecot_sieve_la_SOURCES = \
-	sieve-settings.c \
+	sieve-settings.old.c \
 	sieve-message.c \
 	sieve-smtp.c \
 	sieve-lexer.c \
@@ -144,7 +144,7 @@ headers = \
 	sieve-types.h \
 	sieve-common.h \
 	sieve-limits.h \
-	sieve-settings.h \
+	sieve-settings.old.h \
 	sieve-message.h \
 	sieve-smtp.h \
 	sieve-lexer.h \
