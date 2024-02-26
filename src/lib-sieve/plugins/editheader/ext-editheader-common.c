@@ -9,7 +9,7 @@
 
 #include "sieve-common.h"
 #include "sieve-error.h"
-#include "sieve-settings.h"
+#include "sieve-settings.old.h"
 #include "sieve-extensions.h"
 
 #include "ext-editheader-limits.h"

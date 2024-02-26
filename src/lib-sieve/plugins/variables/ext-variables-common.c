@@ -7,7 +7,7 @@
 #include "array.h"
 
 #include "sieve-common.h"
-#include "sieve-settings.h"
+#include "sieve-settings.old.h"
 
 #include "sieve-ast.h"
 #include "sieve-binary.h"

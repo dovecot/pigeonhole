@@ -9,7 +9,7 @@
 #include "array.h"
 
 #include "sieve-common.h"
-#include "sieve-settings.h"
+#include "sieve-settings.old.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
 #include "sieve-message.h"

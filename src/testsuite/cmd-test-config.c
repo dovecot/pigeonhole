@@ -2,7 +2,7 @@
  */
 
 #include "sieve-common.h"
-#include "sieve-settings.h"
+#include "sieve-settings.old.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
