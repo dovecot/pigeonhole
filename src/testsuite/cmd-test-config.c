@@ -477,7 +477,11 @@ cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 				"reload configuration for sieve engine");
 		}
 
-		sieve_settings_load(eenv->svinst);
+		if (sieve_settings_reload(eenv->svinst) < 0) {
+			return testsuite_test_fail_cstr(
+				renv, "test_config_reload: "
+				"failed to reload sieve engine settings");
+		}
 	} else {
 		if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
 			sieve_runtime_trace(

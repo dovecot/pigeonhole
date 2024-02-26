@@ -10,6 +10,7 @@
 #include "eacces-error.h"
 #include "home-expand.h"
 #include "hostpid.h"
+#include "settings.h"
 #include "message-address.h"
 #include "mail-user.h"
 
@@ -57,6 +58,8 @@ int sieve_init(const struct sieve_environment *env,
 {
 	struct event *event;
 	struct sieve_instance *svinst;
+	const char *error;
+	struct sieve_settings *set;
 	const char *domain;
 	pool_t pool;
 
@@ -67,6 +70,13 @@ int sieve_init(const struct sieve_environment *env,
 	event_set_forced_debug(event, debug);
 	event_set_append_log_prefix(event, "sieve: ");
 	event_add_str(event, "user", env->username);
+	event_set_ptr(event, SETTINGS_EVENT_FILTER_NAME, SIEVE_SETTINGS_FILTER);
+	if (settings_get(event, &sieve_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(event, "%s", error);
+		event_unref(&event);
+		return -1;
+	}
 
 	/* Create Sieve engine instance */
 	pool = pool_alloconly_create("sieve", 8192);
@@ -83,6 +93,7 @@ int sieve_init(const struct sieve_environment *env,
 	svinst->env_location = env->location;
 	svinst->delivery_phase = env->delivery_phase;
 	svinst->event = event;
+	svinst->set = set;
 
 	/* Determine domain */
 	if (env->domainname != NULL && *(env->domainname) != '\0')
@@ -113,10 +124,6 @@ int sieve_init(const struct sieve_environment *env,
 
 	e_debug(event, "%s version %s initializing",
 		PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
-
-	/* Read configuration */
-
-	sieve_settings_load(svinst);
 
 	/* Initialize extensions */
 	if (sieve_extensions_init(svinst) < 0) {
@@ -150,9 +157,26 @@ void sieve_deinit(struct sieve_instance **_svinst)
 	sieve_extensions_deinit(svinst);
 	sieve_errors_deinit(svinst);
 
+	settings_free(svinst->set);
 	event_unref(&svinst->event);
 
 	pool_unref(&(svinst)->pool);
+}
+
+int sieve_settings_reload(struct sieve_instance *svinst)
+{
+	struct sieve_settings *set;
+	const char *error;
+
+	if (settings_get(svinst->event, &sieve_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
+	}
+
+	settings_free(svinst->set);
+	svinst->set = set;
+	return 0;
 }
 
 void sieve_set_extensions(struct sieve_instance *svinst, const char *extensions)
@@ -974,17 +998,17 @@ int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 
 unsigned int sieve_max_redirects(struct sieve_instance *svinst)
 {
-	return svinst->max_redirects;
+	return svinst->set->max_redirects;
 }
 
 unsigned int sieve_max_actions(struct sieve_instance *svinst)
 {
-	return svinst->max_actions;
+	return svinst->set->max_actions;
 }
 
 size_t sieve_max_script_size(struct sieve_instance *svinst)
 {
-	return svinst->max_script_size;
+	return svinst->set->max_script_size;
 }
 
 /*
@@ -995,10 +1019,10 @@ const char *
 sieve_user_get_log_path(struct sieve_instance *svinst,
 			struct sieve_script *user_script)
 {
-	const char *log_path = NULL;
+	const char *log_path = (*svinst->set->user_log == '\0' ?
+				NULL : svinst->set->user_log);
 
 	/* Determine user log file path */
-	log_path = sieve_setting_get(svinst, "sieve_user_log");
 	if (log_path == NULL) {
 		const char *path;
 
@@ -1095,11 +1119,10 @@ int sieve_trace_log_create_dir(struct sieve_instance *svinst, const char *dir,
 int sieve_trace_log_open(struct sieve_instance *svinst,
 			 struct sieve_trace_log **trace_log_r)
 {
-	const char *trace_dir =
-		sieve_setting_get(svinst, "sieve_trace_dir");
+	const char *trace_dir = svinst->set->trace_dir;
 
 	*trace_log_r = NULL;
-	if (trace_dir == NULL)
+	if (*trace_dir == '\0')
 		return -1;
 
 	if (svinst->home_dir != NULL) {
@@ -1165,14 +1188,11 @@ void sieve_trace_log_free(struct sieve_trace_log **_trace_log)
 int sieve_trace_config_get(struct sieve_instance *svinst,
 			   struct sieve_trace_config *tr_config)
 {
-	const char *tr_level =
-		sieve_setting_get(svinst, "sieve_trace_level");
-	bool tr_debug, tr_addresses;
+	const char *tr_level = svinst->set->trace_level;
 
 	i_zero(tr_config);
 
-	if (tr_level == NULL || *tr_level == '\0' ||
-	    strcasecmp(tr_level, "none") == 0)
+	if (*tr_level == '\0' || strcasecmp(tr_level, "none") == 0)
 		return -1;
 
 	if (strcasecmp(tr_level, "actions") == 0)
@@ -1188,16 +1208,9 @@ int sieve_trace_config_get(struct sieve_instance *svinst,
 		return -1;
 	}
 
-	tr_debug = FALSE;
-	(void)sieve_setting_get_bool_value(svinst, "sieve_trace_debug",
-					   &tr_debug);
-	tr_addresses = FALSE;
-	(void)sieve_setting_get_bool_value(svinst, "sieve_trace_addresses",
-					   &tr_addresses);
-
-	if (tr_debug)
+	if (svinst->set->trace_debug)
 		tr_config->flags |= SIEVE_TRFLG_DEBUG;
-	if (tr_addresses)
+	if (svinst->set->trace_addresses)
 		tr_config->flags |= SIEVE_TRFLG_ADDRESSES;
 	return 0;
 }
@@ -1236,8 +1249,8 @@ const struct smtp_address *sieve_get_user_email(struct sieve_instance *svinst)
 
 	if (svinst->user_email_implicit != NULL)
 		return svinst->user_email_implicit;
-	if (svinst->user_email != NULL)
-		return svinst->user_email;
+	if (svinst->set->parsed.user_email != NULL)
+		return svinst->set->parsed.user_email;
 
 	if (smtp_address_parse_mailbox(svinst->pool, username, 0,
 				       &address, NULL) >= 0) {
@@ -1314,10 +1327,11 @@ bool sieve_resource_usage_is_excessive(
 	struct sieve_instance *svinst,
 	const struct sieve_resource_usage *rusage)
 {
-	i_assert(svinst->max_cpu_time_secs <= (UINT_MAX / 1000));
-	if (svinst->max_cpu_time_secs == 0)
+	i_assert(svinst->set->max_cpu_time <= (UINT_MAX / 1000));
+	if (svinst->set->max_cpu_time == 0)
 		return FALSE;
-	return (rusage->cpu_time_msecs > (svinst->max_cpu_time_secs * 1000));
+	return (rusage->cpu_time_msecs >
+		(svinst->set->max_cpu_time * 1000));
 }
 
 const char *

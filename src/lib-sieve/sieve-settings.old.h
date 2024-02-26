@@ -32,12 +32,6 @@ bool sieve_setting_get_duration_value(struct sieve_instance *svinst,
 				      sieve_number_t *value_r);
 
 /*
- * Main Sieve engine settings
- */
-
-void sieve_settings_load(struct sieve_instance *svinst);
-
-/*
  * Home directory
  */
 

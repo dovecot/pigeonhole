@@ -77,7 +77,7 @@ int sieve_address_source_get_address(struct sieve_address_source *asrc,
 	enum sieve_address_source_type type = asrc->type;
 
 	if (type == SIEVE_ADDRESS_SOURCE_USER_EMAIL &&
-	    svinst->user_email == NULL)
+	    svinst->set->parsed.user_email == NULL)
 		type = SIEVE_ADDRESS_SOURCE_RECIPIENT;
 
 	if ((flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0) {
@@ -104,7 +104,7 @@ int sieve_address_source_get_address(struct sieve_address_source *asrc,
 		*addr_r = sieve_message_get_orig_recipient(msgctx);
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_USER_EMAIL:
-		*addr_r = svinst->user_email;
+		*addr_r = svinst->set->parsed.user_email;
 		return 1;
 	case SIEVE_ADDRESS_SOURCE_POSTMASTER:
 		*addr_r = sieve_get_postmaster_smtp(senv);

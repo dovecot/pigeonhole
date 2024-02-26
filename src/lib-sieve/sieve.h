@@ -21,6 +21,9 @@ int sieve_init(const struct sieve_environment *env,
 /* Free all memory allocated by the sieve engine. */
 void sieve_deinit(struct sieve_instance **_svinst);
 
+/* Reload main engine settings */
+int sieve_settings_reload(struct sieve_instance *svinst);
+
 /* Get capability string for a particular extension. */
 const char *
 sieve_get_capabilities(struct sieve_instance *svinst, const char *name);

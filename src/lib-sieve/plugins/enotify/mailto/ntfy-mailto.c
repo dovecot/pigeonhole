@@ -575,8 +575,8 @@ ntfy_mailto_send(const struct sieve_enotify_exec_env *nenv,
 	} else if (ret == 0) {
 		if (mtactx->from_address != NULL)
 			from_smtp = mtactx->from_address;
-		else if (svinst->user_email != NULL)
-			from_smtp = svinst->user_email;
+		else if (svinst->set->parsed.user_email != NULL)
+			from_smtp = svinst->set->parsed.user_email;
 		else {
 			from_smtp = sieve_get_postmaster_smtp(senv);
 			if (from == NULL)
@@ -763,7 +763,7 @@ ntfy_mailto_action_execute(const struct sieve_enotify_exec_env *nenv,
 	const char *const *hdsp;
 	int ret;
 
-	owner_email = svinst->user_email;
+	owner_email = svinst->set->parsed.user_email;
 	if (owner_email == NULL &&
 	    (nenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
 		owner_email = sieve_message_get_final_recipient(nenv->msgctx);

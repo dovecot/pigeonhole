@@ -935,8 +935,8 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 	if (interrupted != NULL)
 		*interrupted = FALSE;
 
-	if (svinst->max_cpu_time_secs > 0) {
-		climit = cpu_limit_init(svinst->max_cpu_time_secs,
+	if (svinst->set->max_cpu_time > 0) {
+		climit = cpu_limit_init(svinst->set->max_cpu_time,
 					CPU_LIMIT_TYPE_USER);
 	}
 

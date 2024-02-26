@@ -4,6 +4,9 @@
 #include "lib.h"
 
 #include "sieve.h"
+#ifndef SETTINGS_PLUGIN
+#include "sieve-settings.h"
+#endif
 
 #include <sys/types.h>
 
@@ -162,8 +165,6 @@ extern struct event_category event_category_sieve;
  * Sieve engine instance
  */
 
-#include "sieve-address-source.h"
-
 struct sieve_instance {
 	/* Main engine pool */
 	pool_t pool;
@@ -201,14 +202,8 @@ struct sieve_instance {
 	enum sieve_delivery_phase delivery_phase;
 
 	/* Settings */
-	size_t max_script_size;
-	unsigned int max_actions;
-	unsigned int max_redirects;
-	unsigned int max_cpu_time_secs;
-	unsigned int resource_usage_timeout_secs;
-	const struct smtp_address *user_email, *user_email_implicit;
-	struct sieve_address_source redirect_from;
-	unsigned int redirect_duplicate_period;
+	const struct sieve_settings *set;
+	const struct smtp_address *user_email_implicit;
 };
 
 /*

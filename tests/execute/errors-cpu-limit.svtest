@@ -1,6 +1,6 @@
 require "vnd.dovecot.testsuite";
 
-test_config_set "sieve_max_cpu_time" "2";
+test_config_set "sieve_max_cpu_time" "2s";
 test_config_reload;
 
 test_set "message" text:

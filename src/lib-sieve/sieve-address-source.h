@@ -3,6 +3,8 @@
 
 #include "sieve-common.h"
 
+struct sieve_message_context;
+
 enum sieve_address_source_type {
 	SIEVE_ADDRESS_SOURCE_DEFAULT = 0,
 	SIEVE_ADDRESS_SOURCE_SENDER,

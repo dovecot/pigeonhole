@@ -1437,8 +1437,8 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	if (extctx->use_original_recipient)
 		orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
 	/* Fetch explicitly configured user email address */
-	if (svinst->user_email != NULL)
-		user_email = svinst->user_email;
+	if (svinst->set->parsed.user_email != NULL)
+		user_email = svinst->set->parsed.user_email;
 
 	/* Is the original message directly addressed to the user or the addresses
 	 * specified using the :addresses tag?

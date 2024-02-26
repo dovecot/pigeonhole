@@ -151,7 +151,7 @@ cmd_redirect_validate(struct sieve_validator *validator,
 		return result;
 	}
 
-	if (svinst->max_redirects == 0) {
+	if (svinst->set->max_redirects == 0) {
 		sieve_command_validate_error(validator, cmd,
 			"local policy prohibits the use of a redirect action");
 		return FALSE;
@@ -233,7 +233,7 @@ cmd_redirect_operation_execute(const struct sieve_runtime_env *renv,
 		return SIEVE_EXEC_FAILURE;
 	}
 
-	if (svinst->max_redirects == 0) {
+	if (svinst->set->max_redirects == 0) {
 		sieve_runtime_error(renv, NULL,
 			"local policy prohibits the use of a redirect action");
 		return SIEVE_EXEC_FAILURE;
@@ -309,7 +309,8 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 	struct sieve_instance *svinst = eenv->svinst;
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = eenv->scriptenv;
-	struct sieve_address_source env_from = svinst->redirect_from;
+	struct sieve_address_source env_from =
+		svinst->set->parsed.redirect_envelope_from;
 	struct istream *input;
 	struct ostream *output;
 	const struct smtp_address *sender;
@@ -357,7 +358,7 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 		if (ret < 0)
 			sender = NULL;
 		else if (ret == 0)
-			sender = svinst->user_email;
+			sender = svinst->set->parsed.user_email;
 	}
 
 	/* Open SMTP transport */
@@ -376,7 +377,7 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 		/* Prepend sieve headers (should not affect signatures) */
 		rfc2822_header_append(hdr, "X-Sieve", SIEVE_IMPLEMENTATION,
 				      FALSE, NULL);
-		if (svinst->user_email == NULL &&
+		if (svinst->set->parsed.user_email == NULL &&
 		    (eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
 			user_email = sieve_message_get_final_recipient(msgctx);
 		else
@@ -654,7 +655,7 @@ act_redirect_commit(const struct sieve_action_exec_env *aenv, void *tr_context)
 		   destination */
 		sieve_action_duplicate_mark(
 			aenv, trans->dupeid, strlen(trans->dupeid),
-			ioloop_time + svinst->redirect_duplicate_period);
+			ioloop_time + svinst->set->redirect_duplicate_period);
 
 		eenv->exec_status->significant_action_executed = TRUE;
 
