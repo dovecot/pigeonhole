@@ -537,14 +537,15 @@ _sieve_result_add_action(const struct sieve_runtime_env *renv,
 		raction = kaction;
 	} else {
 		/* Check policy limit on total number of actions */
-		if (svinst->max_actions > 0 &&
-		    result->action_count >= svinst->max_actions)
+		if (svinst->set->max_actions > 0 &&
+		    result->action_count >= svinst->set->max_actions)
 		{
 			sieve_runtime_error(
 				renv, action.location,
 				"total number of actions exceeds policy limit "
 				"(%u > %u)",
-				result->action_count+1, svinst->max_actions);
+				result->action_count+1,
+				svinst->set->max_actions);
 			return -1;
 		}
 

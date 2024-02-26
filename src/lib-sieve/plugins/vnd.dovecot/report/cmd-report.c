@@ -566,8 +566,8 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 				smtp_address_encode_path(orig_recipient));
 		}
 	}
-	if (svinst->user_email != NULL)
-		user = svinst->user_email;
+	if (svinst->set->parsed.user_email != NULL)
+		user = svinst->set->parsed.user_email;
 	else if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) != 0 ||
 		 (user = sieve_message_get_orig_recipient(msgctx)) == NULL)
 		user = sieve_get_user_email(svinst);

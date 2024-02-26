@@ -1041,8 +1041,8 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 		       "Failed to parse Delivered-To header");
 	}
 	if (rcpt_to == NULL) {
-		if (svinst->user_email != NULL)
-			rcpt_to = svinst->user_email;
+		if (svinst->set->parsed.user_email != NULL)
+			rcpt_to = svinst->set->parsed.user_email;
 		else if (smtp_address_parse_username(sctx->pool, user->username,
 						     &user_addr, &error) < 0) {
 			e_warning(sieve_get_event(svinst),

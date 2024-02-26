@@ -492,7 +492,7 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 				  enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = NULL;
-	const char *set_enabled, *set_default, *set_default_name;
+	const char *set_default, *set_default_name;
 	enum sieve_error error_code;
 	int ret;
 
@@ -503,8 +503,7 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 		error_code_r = &error_code;
 
 	/* Check whether Sieve is disabled for this user */
-	if ((set_enabled = sieve_setting_get(svinst, "sieve_enabled")) != NULL &&
-	    strcasecmp(set_enabled, "no") == 0) {
+	if (!svinst->set->enabled) {
 		e_debug(svinst->event,
 			"Sieve is disabled for this user");
 		*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;

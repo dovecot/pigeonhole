@@ -916,7 +916,7 @@ int sieve_act_redirect_add_to_result(const struct sieve_runtime_env *renv,
 	act->to_address = smtp_address_clone(pool, to_address);
 
 	if (sieve_result_add_action(renv, NULL, name, &act_redirect, seffects,
-				    act, svinst->max_redirects,
+				    act, svinst->set->max_redirects,
 				    TRUE) < 0)
 		return SIEVE_EXEC_FAILURE;
 
