@@ -62,7 +62,8 @@ void doveadm_sieve_cmd_failed_storage(struct doveadm_sieve_cmd_context *ctx,
 }
 
 static const char *
-doveadm_sieve_cmd_get_setting(void *context, const char *identifier)
+doveadm_sieve_cmd_get_setting(struct sieve_instance *svinst ATTR_UNUSED,
+			      void *context, const char *identifier)
 {
 	struct doveadm_sieve_cmd_context *ctx =
 		(struct doveadm_sieve_cmd_context *)context;

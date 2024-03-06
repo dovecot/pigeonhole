@@ -45,7 +45,8 @@ static deliver_mail_func_t *next_deliver_mail;
  */
 
 static const char *
-lda_sieve_get_setting(void *context, const char *identifier)
+lda_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED, void *context,
+		      const char *identifier)
 {
 	struct mail_deliver_context *mdctx =
 		(struct mail_deliver_context *)context;

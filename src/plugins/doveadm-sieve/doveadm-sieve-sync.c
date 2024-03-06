@@ -45,7 +45,8 @@ static MODULE_CONTEXT_DEFINE_INIT(sieve_user_module,
 				  &mail_user_module_register);
 
 static const char *
-mail_sieve_get_setting(void *context, const char *identifier)
+mail_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED, void *context,
+		       const char *identifier)
 {
 	struct mail_user *mail_user = context;
 

@@ -20,7 +20,9 @@ struct testsuite_setting {
 
 static HASH_TABLE(const char *, struct testsuite_setting *) settings;
 
-static const char *testsuite_setting_get(void *context, const char *identifier);
+static const char *
+testsuite_setting_get(struct sieve_instance *svinst, void *context,
+		      const char *identifier);
 
 void testsuite_settings_init(void)
 {
@@ -49,7 +51,8 @@ void testsuite_settings_deinit(void)
 }
 
 static const char *
-testsuite_setting_get(void *context ATTR_UNUSED, const char *identifier)
+testsuite_setting_get(struct sieve_instance *svinst ATTR_UNUSED,
+		      void *context ATTR_UNUSED, const char *identifier)
 {
 	struct testsuite_setting *setting;
 	struct mail_user *user;
