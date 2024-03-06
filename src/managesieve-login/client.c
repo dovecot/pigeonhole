@@ -58,10 +58,10 @@ static void client_send_capabilities(struct client *client)
 {
 	struct managesieve_client *msieve_client =
 		container_of(client, struct managesieve_client, common);
-	const char *saslcap;
+	const char *sasl_cap;
 
 	T_BEGIN {
-		saslcap = client_authenticate_get_capabilities(client);
+		sasl_cap = client_authenticate_get_capabilities(client);
 
 		/* Default capabilities */
 		client_send_raw(client, t_strconcat(
@@ -78,7 +78,7 @@ static void client_send_capabilities(struct client *client)
 				msieve_client->set->managesieve_notify_capability,
 				"\"\r\n", NULL));
 		}
-		client_send_raw(client, t_strconcat("\"SASL\" \"", saslcap,
+		client_send_raw(client, t_strconcat("\"SASL\" \"", sasl_cap,
 						    "\"\r\n", NULL));
 
 		/* STARTTLS */
