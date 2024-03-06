@@ -49,6 +49,9 @@ sieve_file_storage_path_extend(struct sieve_file_storage *fstorage,
 			       const char *filename);
 
 int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
+				      const char *cause,
+				      const char *script_type,
+				      const char *storage_name,
 				      const char *path,
 				      enum sieve_storage_flags flags,
 				      struct sieve_file_storage **fstorage_r,

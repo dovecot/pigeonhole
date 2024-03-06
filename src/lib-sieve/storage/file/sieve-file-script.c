@@ -3,11 +3,13 @@
 
 #include "lib.h"
 #include "mempool.h"
+#include "str.h"
 #include "path-util.h"
 #include "istream.h"
 #include "time-util.h"
 #include "eacces-error.h"
 
+#include "sieve-dump.h"
 #include "sieve-binary.h"
 #include "sieve-script-private.h"
 
@@ -125,9 +127,11 @@ int sieve_file_script_init_from_filename(struct sieve_file_storage *fstorage,
 
 	fscript = sieve_file_script_alloc();
 	sieve_script_init(&fscript->script, storage, &sieve_file_script,
-			  sieve_file_storage_path_extend(fstorage, filename),
 			  scriptname);
 	fscript->filename = p_strdup(fscript->script.pool, filename);
+
+	event_add_str(fscript->script.event, "sieve_script_file_path",
+		      sieve_file_storage_path_extend(fstorage, filename));
 
 	*fscript_r = fscript;
 	return 0;
@@ -173,8 +177,11 @@ int sieve_file_script_init_from_name(struct sieve_file_storage *fstorage,
 	}
 
 	fscript = sieve_file_script_alloc();
-	sieve_script_init(&fscript->script, storage, &sieve_file_script,
-			  fstorage->active_path, name);
+	sieve_script_init(&fscript->script, storage, &sieve_file_script, name);
+
+	event_add_str(fscript->script.event, "sieve_script_file_path",
+		      fstorage->active_path);
+
 	*fscript_r = fscript;
 	return 0;
 }
@@ -215,7 +222,9 @@ int sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
 
 	*fscript_r = NULL;
 
-	if (sieve_file_storage_init_from_path(svinst, path, 0, &fsubstorage,
+	if (sieve_file_storage_init_from_path(svinst, storage->cause,
+					      storage->type, storage->name,
+					      path, 0, &fsubstorage,
 					      &error_code, &error) < 0) {
 		sieve_storage_set_error(storage, error_code, "%s", error);
 		return -1;
@@ -224,8 +233,11 @@ int sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
 
 	fscript = sieve_file_script_alloc();
 	sieve_script_init(&fscript->script, substorage, &sieve_file_script,
-			  path, scriptname);
+			  scriptname);
 	sieve_storage_unref(&substorage);
+
+	event_add_str(fscript->script.event, "sieve_script_file_path",
+		      fstorage->active_path);
 
 	*fscript_r = fscript;
 	return 0;
@@ -309,7 +321,8 @@ static int sieve_file_script_open(struct sieve_script *script)
 	st = fstorage->st;
 	lnk_st = fstorage->lnk_st;
 
-	if (name == NULL)
+	if (name == NULL && storage->script_name != NULL &&
+	    *storage->script_name != '\0')
 		name = storage->script_name;
 
 	T_BEGIN {
@@ -411,10 +424,11 @@ static int sieve_file_script_open(struct sieve_script *script)
 			fscript->bin_path = p_strdup(pool, bin_path);
 			fscript->bin_prefix = p_strdup(pool, bin_prefix);
 
-			fscript->script.location = fscript->path;
-
 			if (fscript->script.name == NULL)
 				fscript->script.name = p_strdup(pool, basename);
+
+			event_add_str(script->event, "sieve_script_file_path",
+				      fscript->path);
 		}
 	} T_END;
 
@@ -477,12 +491,36 @@ sieve_file_script_get_stream(struct sieve_script *script,
 static int
 sieve_file_script_binary_read_metadata(struct sieve_script *script,
 				       struct sieve_binary_block *sblock,
-				       sieve_size_t *offset ATTR_UNUSED)
+				       sieve_size_t *offset)
 {
+	struct sieve_instance *svinst = script->storage->svinst;
 	struct sieve_file_script *fscript =
 		container_of(script, struct sieve_file_script, script);
-	struct sieve_instance *svinst = script->storage->svinst;
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
+	string_t *path;
+
+	/* Open if not open already */
+	if (sieve_script_open(script, NULL) < 0)
+		return 0;
+
+	/* Metadata: path */
+	if (!sieve_binary_read_string(sblock, offset, &path)) {
+		e_error(script->event,
+			"Binary '%s' has invalid metadata for script '%s': "
+			"Invalid file path",
+			sieve_binary_path(sbin), sieve_script_label(script));
+		return -1;
+	}
+	i_assert(fscript->path != NULL);
+	if (strcmp(str_c(path), fscript->path) != 0) {
+		e_debug(script->event,
+			"Binary '%s' reports different file path for script '%s' "
+			"('%s' rather than '%s')",
+			sieve_binary_path(sbin), sieve_script_label(script),
+			str_c(path), fscript->path);
+		return 0;
+	}
+
 	const struct stat *sstat, *bstat;
 
 	bstat = sieve_binary_stat(sbin);
@@ -514,6 +552,31 @@ sieve_file_script_binary_read_metadata(struct sieve_script *script,
 	}
 
 	return 1;
+}
+
+static void
+sieve_file_script_binary_write_metadata(struct sieve_script *script,
+					struct sieve_binary_block *sblock)
+{
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
+
+	sieve_binary_emit_cstring(sblock, fscript->path);
+}
+
+static bool
+sieve_file_script_binary_dump_metadata(struct sieve_script *script ATTR_UNUSED,
+				       struct sieve_dumptime_env *denv,
+				       struct sieve_binary_block *sblock,
+				       sieve_size_t *offset)
+{
+	string_t *path;
+
+	if (!sieve_binary_read_string(sblock, offset, &path))
+		return FALSE;
+	sieve_binary_dumpf(denv, "file.path = %s\n", str_c(path));
+
+	return TRUE;
 }
 
 static int
@@ -851,6 +914,9 @@ const struct sieve_script sieve_file_script = {
 		.get_stream = sieve_file_script_get_stream,
 
 		.binary_read_metadata = sieve_file_script_binary_read_metadata,
+		.binary_write_metadata =
+			sieve_file_script_binary_write_metadata,
+		.binary_dump_metadata = sieve_file_script_binary_dump_metadata,
 		.binary_load = sieve_file_script_binary_load,
 		.binary_save = sieve_file_script_binary_save,
 		.binary_get_prefix = sieve_file_script_binary_get_prefix,

@@ -31,6 +31,8 @@ struct sieve_trace_log;
 enum sieve_flag {
 	/* Relative paths are resolved to HOME */
 	SIEVE_FLAG_HOME_RELATIVE = (1 << 0),
+	/* Sieve is running in command line tool */
+	SIEVE_FLAG_COMMAND_LINE = (1 << 1),
 };
 
 /* Sieve evaluation can be performed at various different points as messages
@@ -203,6 +205,13 @@ enum sieve_duplicate_check_result {
 	SIEVE_DUPLICATE_CHECK_RESULT_FAILURE = -1,
 	SIEVE_DUPLICATE_CHECK_RESULT_TEMP_FAILURE = -2,
 };
+
+/*
+ * Script invocation cause
+ */
+
+#define SIEVE_SCRIPT_CAUSE_ANY "any"
+#define SIEVE_SCRIPT_CAUSE_DELIVERY "delivery"
 
 /*
  * Script environment

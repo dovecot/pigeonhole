@@ -3,12 +3,14 @@
 
 #include "lib.h"
 #include "array.h"
+#include "str.h"
 #include "str-sanitize.h"
 #include "hash.h"
 #include "home-expand.h"
 #include "eacces-error.h"
 #include "mkdir-parents.h"
 #include "ioloop.h"
+#include "settings.h"
 
 #include "sieve-common.h"
 #include "sieve-settings.old.h"
@@ -27,6 +29,15 @@ struct event_category event_category_sieve_storage = {
 	.parent = &event_category_sieve,
 	.name = "sieve-storage",
 };
+
+/*
+ * Storage name
+ */
+
+bool sieve_storage_name_is_valid(const char *name)
+{
+	return sieve_script_name_is_valid(name);
+}
 
 /*
  * Storage class
@@ -118,17 +129,37 @@ bool sieve_storage_class_exists(struct sieve_instance *svinst,
  * Storage event
  */
 
+static void
+sieve_storage_update_event_prefix(struct event *event, const char *storage_name,
+				  bool is_default)
+{
+	string_t *prefix = t_str_new(128);
+
+	str_append(prefix, "storage");
+	if (storage_name != NULL && *storage_name != '\0') {
+		str_append_c(prefix, ' ');
+		str_append(prefix, storage_name);
+	}
+	if (is_default)
+		str_append(prefix, " (default)");
+	str_append(prefix, ": ");
+	event_set_append_log_prefix(event, str_c(prefix));
+}
+
 static struct event *
 sieve_storage_create_event(struct sieve_instance *svinst,
-			   struct event *event_parent)
+			   struct event *event_parent,
+			   const char *storage_name)
 {
 	struct event *event;
 
 	event = event_create(event_parent == NULL ?
 			     svinst->event : event_parent);
+	if (event_parent != svinst->event)
+		event_add_category(event, &event_category_sieve);
 	event_add_category(event, &event_category_sieve_storage);
-	event_set_append_log_prefix(event, "storage: ");
 
+	sieve_storage_update_event_prefix(event, storage_name, FALSE);
 	return event;
 }
 
@@ -147,146 +178,6 @@ sieve_storage_create_driver_event(struct event *event_parent,
 }
 
 /*
- * Storage options
- */
-
-static const char *split_next_arg(const char *const **_args)
-{
-	const char *const *args = *_args;
-	const char *str = args[0];
-
-	/* join arguments for escaped ";" separator */
-
-	args++;
-	while (*args != NULL && **args == '\0') {
-		args++;
-		if (*args == NULL) {
-			/* string ends with ";", just ignore it. */
-			break;
-		}
-		str = t_strconcat(str, ";", *args, NULL);
-		args++;
-	}
-	*_args = args;
-	return str;
-}
-
-static int
-sieve_storage_driver_parse(struct sieve_instance *svinst, const char **data,
-			   const struct sieve_storage **driver_r)
-{
-	const struct sieve_storage *storage_class = NULL;
-	const char *p;
-
-	p = strchr(*data, ':');
-	if (p == NULL)
-		return 0;
-
-	/* Lookup storage driver */
-	T_BEGIN {
-		const char *driver;
-
-		driver = t_strdup_until(*data, p);
-		*data = p+1;
-
-		storage_class = sieve_storage_class_find(svinst, driver);
-		if (storage_class == NULL) {
-			e_error(svinst->event,
-				"Unknown storage driver module '%s'",
-				driver);
-		} else if (storage_class->v.alloc == NULL) {
-			e_error(svinst->event,
-				"Support not compiled in for storage driver '%s'",
-				driver);
-			storage_class = NULL;
-		}
-	} T_END;
-
-	*driver_r = storage_class;
-	return (storage_class == NULL ? -1 : 1);
-}
-
-static int
-sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
-			 const char **location_r, const char *const **options_r)
-{
-	ARRAY_TYPE(const_string) options;
-	const char *const *args;
-	const char *value;
-
-	if (*data == '\0') {
-		*options_r = NULL;
-		*location_r = data;
-		return 0;
-	}
-
-	/* <location> */
-	args = t_strsplit(data, ";");
-	*location_r = split_next_arg(&args);
-
-	if (options_r != NULL) {
-		t_array_init(&options, 8);
-
-		/* [<option> *(';' <option>)] */
-		while (*args != NULL) {
-			const char *option = split_next_arg(&args);
-
-			if (str_begins_icase(option, "name=", &value)) {
-				if (*value == '\0') {
-					e_error(storage->event,
-						"Failed to parse storage location: "
-						"Empty name not allowed");
-					return -1;
-				}
-
-				if (storage->script_name == NULL) {
-					if (!sieve_script_name_is_valid(value)) {
-						e_error(storage->event,
-							"Failed to parse storage location: "
-							"Invalid script name '%s'.",
-							str_sanitize(value, 80));
-						return -1;
-					}
-					storage->script_name = p_strdup(storage->pool, value);
-				}
-
-			} else if (str_begins_icase(option, "bindir=", &value)) {
-				if (value[0] == '\0') {
-					e_error(storage->event,
-						"Failed to parse storage location: "
-						"Empty bindir not allowed");
-					return -1;
-				}
-
-				if (value[0] == '~') {
-					/* home-relative path. change to absolute. */
-					const char *home = sieve_environment_get_homedir(storage->svinst);
-
-					if (home != NULL) {
-						value = home_expand_tilde(value, home);
-					} else if (value[1] == '/' || value[1] == '\0') {
-						e_error(storage->event,
-							"Failed to parse storage location: "
-							"bindir is relative to home directory (~/), "
-							"but home directory cannot be determined");
-						return -1;
-					}
-				}
-
-				storage->bin_path = p_strdup(storage->pool, value);
-			} else {
-				array_append(&options, &option, 1);
-			}
-		}
-
-		(void)array_append_space(&options);
-		*options_r = array_idx(&options, 0);
-	}
-
-	return 0;
-}
-
-/*
  * Storage instance
  */
 
@@ -294,7 +185,9 @@ static int
 sieve_storage_alloc_from_class(struct sieve_instance *svinst,
 			       struct event *event,
 			       const struct sieve_storage *storage_class,
-			       const char *data,
+			       const char *cause, const char *script_type,
+			       const char *storage_name,
+			       const char *script_name,
 			       enum sieve_storage_flags flags,
 			       struct sieve_storage **storage_r,
 			       enum sieve_error *error_code_r,
@@ -307,7 +200,7 @@ sieve_storage_alloc_from_class(struct sieve_instance *svinst,
 	if (storage_class->v.alloc == NULL) {
 		e_error(event, "Support not compiled in for this driver");
 		sieve_error_create_script_not_found(
-			NULL, error_code_r, error_r);
+			script_name, error_code_r, error_r);
 		return -1;
 	}
 
@@ -328,8 +221,17 @@ sieve_storage_alloc_from_class(struct sieve_instance *svinst,
 	storage->storage_class = storage_class;
 	storage->refcount = 1;
 	storage->svinst = svinst;
-	storage->data = p_strdup_empty(storage->pool, data);
+	storage->cause = p_strdup(storage->pool, cause);
+	storage->type = p_strdup(storage->pool, script_type);
+	storage->script_name = p_strdup(storage->pool, script_name);
 	storage->flags = flags;
+
+	if (storage_name != NULL && *storage_name != '\0')
+		storage->name = p_strdup(storage->pool, storage_name);
+	else {
+		storage->name = p_strconcat(
+			storage->pool, "auto:", storage->type, NULL);
+	}
 
 	storage->event = event;
 	event_ref(event);
@@ -341,53 +243,62 @@ sieve_storage_alloc_from_class(struct sieve_instance *svinst,
 int sieve_storage_alloc(struct sieve_instance *svinst,
 			struct event *event_parent,
 			const struct sieve_storage *storage_class,
-			const char *data, enum sieve_storage_flags flags,
-			bool main, struct sieve_storage **storage_r,
+			const char *cause, const char *script_type,
+			const char *storage_name, const char *script_name,
+			enum sieve_storage_flags flags,
+			struct sieve_storage **storage_r,
 			enum sieve_error *error_code_r, const char **error_r)
 {
 	struct event *storage_event, *event;
+	int ret;
+
+	*storage_r = NULL;
+	sieve_error_args_init(&error_code_r, &error_r);
+
+	storage_event = sieve_storage_create_event(svinst, event_parent,
+						   storage_name);
+	event = sieve_storage_create_driver_event(storage_event,
+						  storage_class->driver_name);
+	event_unref(&storage_event);
+
+	ret = sieve_storage_alloc_from_class(svinst, event, storage_class,
+					     cause, script_type,
+					     storage_name, script_name, flags,
+					     storage_r, error_code_r, error_r);
+
+	event_unref(&event);
+
+	return ret;
+}
+
+int sieve_storage_alloc_with_settings(struct sieve_instance *svinst,
+				      struct event *event_parent,
+				      const struct sieve_storage *storage_class,
+				      const char *cause,
+				      const struct sieve_storage_settings *set,
+				      enum sieve_storage_flags flags,
+				      struct sieve_storage **storage_r,
+				      enum sieve_error *error_code_r,
+				      const char **error_r)
+{
 	struct sieve_storage *storage;
 	int ret;
 
 	*storage_r = NULL;
 	sieve_error_args_init(&error_code_r, &error_r);
 
-	storage_event = sieve_storage_create_event(svinst, event_parent);
-	event = sieve_storage_create_driver_event(storage_event,
-						  storage_class->driver_name);
-	event_unref(&storage_event);
-
-	ret = sieve_storage_alloc_from_class(svinst, event, storage_class,
-					     data, flags,
+	ret = sieve_storage_alloc_from_class(svinst, event_parent,
+					     storage_class,
+					     cause, set->script_type,
+					     set->script_storage,
+					     set->script_name, flags,
 					     &storage, error_code_r, error_r);
-	if (ret == 0)
-		storage->main_storage = main;
+	if (ret < 0)
+		return -1;
 
-	event_unref(&event);
-
-	*storage_r = storage;
-	return ret;
-}
-
-static void sieve_storage_get_quota_settings(struct sieve_storage *storage)
-{
-	struct sieve_instance *svinst = storage->svinst;
-	unsigned long long int uint_setting;
-	size_t size_setting;
-
-	/* Get quota settings if storage driver provides none */
-
-	if (storage->max_storage == 0 &&
-	    sieve_setting_get_size_value(svinst, "sieve_quota_max_storage",
-					 &size_setting)) {
-		storage->max_storage = size_setting;
-	}
-
-	if (storage->max_scripts == 0 &&
-	    sieve_setting_get_uint_value(svinst, "sieve_quota_max_scripts",
-					 &uint_setting)) {
-		storage->max_scripts = uint_setting;
-	}
+	storage->bin_path = p_strdup_empty(storage->pool, set->script_bin_path);
+	storage->max_storage = set->quota_max_storage;
+	storage->max_scripts = set->quota_max_scripts;
 
 	if (storage->max_storage > 0) {
 		e_debug(storage->event, "quota: "
@@ -399,47 +310,205 @@ static void sieve_storage_get_quota_settings(struct sieve_storage *storage)
 			"Script count limit: %u scripts",
 			storage->max_scripts);
 	}
+
+	*storage_r = storage;
+	return 0;
+}
+
+static int
+sieve_storage_alloc_from_settings(struct sieve_instance *svinst,
+				  struct event *event_parent, const char *cause,
+				  const struct sieve_storage_settings *set,
+				  enum sieve_storage_flags flags,
+				  struct sieve_storage **storage_r,
+				  enum sieve_error *error_code_r,
+				  const char **error_r)
+{
+	const struct sieve_storage *storage_class;
+	struct event *event = event_parent;
+	int ret;
+
+	*storage_r = NULL;
+
+	if (!sieve_storage_settings_match_script_cause(set, cause))
+		return 0;
+
+	storage_class = sieve_storage_class_find(svinst, set->script_driver);
+	// FIXME: add support for automatic module loading (no such modules yet)
+	if (storage_class == NULL) {
+		e_error(event, "Unknown storage driver: %s",
+			set->script_driver);
+		sieve_error_create_script_not_found(set->script_name,
+						    error_code_r, error_r);
+		event_unref(&event);
+		return -1;
+	}
+
+	event = sieve_storage_create_driver_event(event_parent,
+						  storage_class->driver_name);
+
+	ret = sieve_storage_alloc_with_settings(svinst, event, storage_class,
+						cause, set, flags,
+						storage_r, error_code_r,
+						error_r);
+
+	event_unref(&event);
+
+	if (ret < 0)
+		return -1;
+	return 1;
+}
+
+static int
+sieve_storage_autodetect(struct sieve_instance *svinst, struct event *event,
+			 const char *cause, const char *type,
+			 const struct sieve_storage_settings *set,
+			 enum sieve_storage_flags flags,
+			 struct sieve_storage **storage_r,
+			 enum sieve_error *error_code_r, const char **error_r)
+{
+	struct sieve_storage_class_registry *reg = svinst->storage_reg;
+	int ret;
+
+	*storage_r = NULL;
+	sieve_error_args_init(&error_code_r, &error_r);
+
+	if (!sieve_storage_settings_match_script_cause(set, cause))
+		return 0;
+	if (!sieve_storage_settings_match_script_type(set, type))
+		return 0;
+
+	const struct sieve_storage *const *classes;
+	unsigned int i, count;
+
+	classes = array_get(&reg->storage_classes, &count);
+	ret = 0;
+	for (i = 0; i < count; i++) {
+		if (classes[i]->v.autodetect == NULL)
+			continue;
+		if (set->script_driver[0] != '\0' &&
+		    strcasecmp(set->script_driver,
+			       classes[i]->driver_name) != 0)
+			continue;
+
+		struct event *driver_event =
+			sieve_storage_create_driver_event(
+				event, classes[i]->driver_name);
+
+		*storage_r = NULL;
+		ret = classes[i]->v.autodetect(svinst, driver_event,
+					       cause, set, flags,
+					       storage_r, error_code_r,
+					       error_r);
+
+		event_unref(&driver_event);
+
+		if (ret < 0) {
+			i_assert(*error_code_r != SIEVE_ERROR_NONE);
+			i_assert(*error_r != NULL);
+			if (*error_code_r == SIEVE_ERROR_NOT_FOUND) {
+				*error_code_r = SIEVE_ERROR_NONE;
+				*error_r = NULL;
+				ret = 0;
+			}
+		}
+		i_assert(ret <= 0 || *storage_r != NULL);
+		if (ret != 0)
+			break;
+	}
+
+	if (ret == 0)
+		e_debug(event, "Autodetection failed");
+	return ret;
+}
+
+static int
+sieve_storage_autodetect_any(struct sieve_instance *svinst,
+			     struct event *event_parent,
+			     const char *cause, const char *type,
+			     const struct sieve_storage_settings *set,
+			     enum sieve_storage_flags flags,
+			     struct sieve_storage **storage_r,
+			     enum sieve_error *error_code_r,
+			     const char **error_r)
+{
+	struct event *event;
+	int ret;
+
+	event = sieve_storage_create_event(svinst, event_parent, NULL);
+
+	ret = sieve_storage_autodetect(svinst, event, cause, type, set,
+				       flags, storage_r, error_code_r, error_r);
+
+	event_unref(&event);
+	return ret;
 }
 
 static int
 sieve_storage_init_real(struct sieve_instance *svinst, struct event *event,
-			const struct sieve_storage *storage_class,
-			const char *data,
-			enum sieve_storage_flags flags, bool main,
+			const char *cause, const char *type,
+			const char *storage_name, bool try,
+			enum sieve_storage_flags flags,
 			struct sieve_storage **storage_r,
 			enum sieve_error *error_code_r, const char **error_r)
 {
+	const struct sieve_storage_settings *set;
 	struct sieve_storage *storage;
-	struct event *driver_event;
-	const char *const *options;
-	const char *location;
+	const char *error;
 	int ret;
 
-	driver_event = sieve_storage_create_driver_event(
-		event, storage_class->driver_name);
-	ret = sieve_storage_alloc(svinst, driver_event, storage_class,
-				  data, flags, main, &storage,
-				  error_code_r, error_r);
-	event_unref(&driver_event);
-	if (ret < 0)
+	if (try) {
+		ret = settings_try_get_filter(
+			event, "sieve_script", storage_name,
+			&sieve_storage_setting_parser_info, 0,
+			&set, &error);
+		if (ret == 0)
+			return 0;
+	} else {
+		ret = settings_get_filter(
+			event, "sieve_script", storage_name,
+			&sieve_storage_setting_parser_info, 0,
+			&set, &error);
+	}
+	if (ret < 0) {
+		e_error(event, "%s", error);
+		sieve_error_create_internal(error_code_r, error_r);
 		return -1;
+	}
+
+	if (!sieve_storage_settings_match_script_type(set, type)) {
+		settings_free(set);
+		return 0;
+	}
+
+	event_add_str(event, "sieve_script", storage_name);
+	if (set->script_driver[0] == '\0') {
+		ret = sieve_storage_autodetect(svinst, event, cause, type,
+					       set, flags, storage_r,
+					       error_code_r, error_r);
+		if (ret != 0) {
+			settings_free(set);
+			return ret;
+		}
+		e_error(event, "sieve_script_driver is empty");
+		sieve_error_create_script_not_found(set->script_name,
+						    error_code_r, error_r);
+		settings_free(set);
+		return -1;
+	}
+
+	ret = sieve_storage_alloc_from_settings(svinst, event, cause,
+						set, flags, &storage,
+						error_code_r, error_r);
+	settings_free(set);
+	if (ret <= 0)
+		return ret;
 	i_assert(storage != NULL);
 	i_assert(storage->v.init != NULL);
 
 	T_BEGIN {
-		if (sieve_storage_data_parse(storage, data,
-					     &location, &options) < 0) {
-			sieve_error_create_internal(error_code_r, error_r);
-			ret = -1;
-		} else {
-			storage->location = p_strdup(storage->pool, location);
-
-			event_add_str(event, "script_location",
-				      storage->location);
-
-			ret = storage_class->v.init(storage, options);
-			i_assert(ret <= 0);
-		}
+		ret = storage->v.init(storage);
+		i_assert(ret <= 0);
 	} T_END;
 	if (ret < 0) {
 		i_assert(storage->error_code != SIEVE_ERROR_NONE);
@@ -450,13 +519,14 @@ sieve_storage_init_real(struct sieve_instance *svinst, struct event *event,
 		return -1;
 	}
 	*storage_r = storage;
-	return 0;
+	return 1;
 }
 
 static int
 sieve_storage_init(struct sieve_instance *svinst, struct event *event_parent,
-		   const struct sieve_storage *storage_class, const char *data,
-		   enum sieve_storage_flags flags, bool main,
+		   const char *cause, const char *type,
+		   const char *storage_name, bool try,
+		   enum sieve_storage_flags flags,
 		   struct sieve_storage **storage_r,
 		   enum sieve_error *error_code_r, const char **error_r)
 {
@@ -465,10 +535,10 @@ sieve_storage_init(struct sieve_instance *svinst, struct event *event_parent,
 
 	*storage_r = NULL;
 
-	event = sieve_storage_create_event(svinst, event_parent);
+	event = sieve_storage_create_event(svinst, event_parent, storage_name);
 
-	ret = sieve_storage_init_real(svinst, event, storage_class,
-				      data, flags, main,
+	ret = sieve_storage_init_real(svinst, event, cause, type,
+				      storage_name, try, flags,
 				      storage_r, error_code_r, error_r);
 
 	event_unref(&event);
@@ -476,40 +546,112 @@ sieve_storage_init(struct sieve_instance *svinst, struct event *event_parent,
 	return ret;
 }
 
-int sieve_storage_create(struct sieve_instance *svinst, struct event *event,
-			 const char *location,
+int sieve_storage_create(struct sieve_instance *svinst,
+			 struct event *event, const char *cause,
+			 const char *storage_name,
 			 enum sieve_storage_flags flags,
 			 struct sieve_storage **storage_r,
 			 enum sieve_error *error_code_r, const char **error_r)
 {
-	const struct sieve_storage *storage_class;
-	const char *data;
+	struct sieve_storage *storage;
 	int ret;
-
-	/* Dont use this function for creating a synchronizing storage */
-	i_assert((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0);
 
 	*storage_r = NULL;
 	sieve_error_args_init(&error_code_r, &error_r);
 
-	data = location;
-	if ((ret = sieve_storage_driver_parse(svinst, &data,
-					      &storage_class)) < 0) {
+	ret = sieve_storage_init(svinst, event, cause, SIEVE_STORAGE_TYPE_ANY,
+				 storage_name, TRUE, flags,
+				 &storage, error_code_r, error_r);
+	if (ret < 0) {
+		if (*error_code_r != SIEVE_ERROR_NOT_FOUND)
+			return -1;
+		ret = 0;
+	}
+	if (ret == 0) {
+		e_debug(event, "Sieve script storage '%s' not found (cause=%s)",
+			storage_name, cause);
+		sieve_error_create_script_not_found(
+			NULL, error_code_r, error_r);
+		return -1;
+	}
+	i_assert(storage != NULL);
+	*storage_r = storage;
+	return 0;
+}
+
+int sieve_storage_create_auto(struct sieve_instance *svinst,
+			      struct event *event,
+			      const char *cause, const char *type,
+			      enum sieve_storage_flags flags,
+			      struct sieve_storage **storage_r,
+			      enum sieve_error *error_code_r,
+			      const char **error_r)
+{
+	const struct sieve_storage_settings *storage_set;
+	const char *const *storage_names;
+	unsigned int i, count;
+	const char *error;
+
+	*storage_r = NULL;
+	sieve_error_args_init(&error_code_r, &error_r);
+
+	if (settings_get(event, &sieve_storage_setting_parser_info,
+			 SETTINGS_GET_FLAG_SORT_FILTER_ARRAYS,
+			 &storage_set, &error) < 0) {
+		e_error(event, "%s", error);
 		sieve_error_create_internal(error_code_r, error_r);
 		return -1;
 	}
+	if (array_is_created(&storage_set->storages))
+		storage_names = array_get(&storage_set->storages, &count);
+	else {
+		storage_names = NULL;
+		count = 0;
+	}
 
-	if (ret == 0)
-		storage_class = &sieve_file_storage;
+	struct sieve_storage *storage = NULL;
+	int ret = 0;
 
-	return sieve_storage_init(svinst, event, storage_class,
-				  data, flags, FALSE,
-				  storage_r, error_code_r, error_r);
+	for (i = 0; i < count; i++) {
+		ret = sieve_storage_init(svinst, event, cause, type,
+					 storage_names[i], FALSE, flags,
+					 &storage, error_code_r, error_r);
+		if (ret < 0 && *error_code_r != SIEVE_ERROR_NOT_FOUND) {
+			settings_free(storage_set);
+			return -1;
+		}
+		if (ret > 0) {
+			i_assert(storage != NULL);
+			break;
+		}
+	}
+	if (ret <= 0) {
+		ret = sieve_storage_autodetect_any(svinst, event, cause, type,
+						   storage_set, flags, &storage,
+						   error_code_r, error_r);
+		if (ret < 0) {
+			settings_free(storage_set);
+			return -1;
+		}
+	}
+	settings_free(storage_set);
+	if (ret <= 0) {
+		e_debug(event,
+			"storage: No matching Sieve storage configured "
+			"(type=%s and cause=%s)",
+			type, cause);
+		sieve_error_create_script_not_found(
+			NULL, error_code_r, error_r);
+		return -1;
+	}
+	i_assert(storage != NULL);
+	*storage_r = storage;
+	return 0;
 }
 
 static int
 sieve_storage_create_default(struct sieve_instance *svinst,
-			     struct event *event, const char *location,
+			     struct event *event, const char *cause,
 			     enum sieve_storage_flags flags,
 			     struct sieve_storage **storage_r,
 			     enum sieve_error *error_code_r,
@@ -522,33 +664,27 @@ sieve_storage_create_default(struct sieve_instance *svinst,
 	*storage_r = NULL;
 	sieve_error_args_init(&error_code_r, &error_r);
 
-	if (location == NULL) {
-		sieve_error_create_script_not_found(
-			NULL, error_code_r, error_r);
-		return -1;
-	}
-
-	ret = sieve_storage_create(svinst, event, location, flags,
-				   &storage, &error_code, error_r);
+	ret = sieve_storage_create_auto(svinst, event, cause,
+					SIEVE_STORAGE_TYPE_DEFAULT, flags,
+					&storage, &error_code, error_r);
 	if (ret >= 0) {
 		storage->is_default = TRUE;
+		sieve_storage_update_event_prefix(
+			event_get_parent(storage->event), storage->name, TRUE);
 	} else {
 		switch (error_code) {
 		case SIEVE_ERROR_NOT_FOUND:
 			e_debug(event, "storage: "
-				"Default script location '%s' not found",
-				location);
+				"Default script not found");
 			break;
 		case SIEVE_ERROR_TEMP_FAILURE:
 			e_error(event, "storage: "
-				"Failed to access default script location '%s' "
-				"(temporary failure)",
-				location);
+				"Failed to access default script "
+				"(temporary failure)");
 			break;
 		default:
 			e_error(event, "storage: "
-				"Failed to access default script location '%s'",
-				location);
+				"Failed to access default script");
 			break;
 		}
 		*error_code_r = error_code;
@@ -573,20 +709,13 @@ sieve_storage_create_default_for(struct sieve_storage *storage,
 		return 0;
 	}
 
-	if (storage->default_name == NULL) {
-		sieve_storage_set_not_found_error(storage, NULL);
-		*error_code_r = storage->error_code;
-		*error_r = storage->error;
-		return -1;
-	}
-
 	struct sieve_instance *svinst = storage->svinst;
 	enum sieve_error error_code;
 	const char *error;
 
 	i_assert(storage->default_storage_for == NULL);
 	if (sieve_storage_create_default(svinst, svinst->event,
-					 storage->default_location, 0,
+					 storage->cause, 0,
 					 &storage->default_storage,
 					 &error_code, &error) < 0) {
 		sieve_storage_set_error(storage, error_code, "%s", error);
@@ -602,77 +731,13 @@ sieve_storage_create_default_for(struct sieve_storage *storage,
 	return 0;
 }
 
-static int
-sieve_storage_do_create_personal(struct sieve_instance *svinst,
-				 enum sieve_storage_flags flags,
-				 struct sieve_storage **storage_r,
-				 enum sieve_error *error_code_r)
-{
-	struct sieve_storage *storage = NULL;
-	const struct sieve_storage *sieve_class = NULL;
-	const char *set_sieve, *data;
-	int ret;
-
-	/* Sieve storage location */
-
-	set_sieve = sieve_setting_get(svinst, "sieve");
-
-	if (set_sieve != NULL) {
-		if (*set_sieve == '\0') {
-			/* disabled */
-			e_debug(svinst->event, "storage: "
-				"Personal storage is disabled (sieve=\"\")");
-			*error_code_r = SIEVE_ERROR_NOT_FOUND;
-			return -1;
-		}
-
-		data = set_sieve;
-		if ((ret = sieve_storage_driver_parse(svinst, &data,
-						      &sieve_class)) < 0) {
-			sieve_error_create_internal(error_code_r, NULL);
-			return -1;
-		}
-
-		if (ret > 0) {
-			/* The normal case: explicit driver name */
-			if (sieve_storage_init(svinst, svinst->event,
-					       sieve_class, data, flags, TRUE,
-					       &storage, error_code_r,
-					       NULL) < 0)
-				return -1;
-		}
-
-		/* No driver name */
-	}
-
-	if (storage == NULL) {
-		const char *error;
-
-		i_assert(sieve_file_storage.v.autodetect != NULL);
-		if (sieve_file_storage.v.autodetect(svinst, set_sieve, flags,
-						    &storage, error_code_r,
-						    &error) < 0)
-			return -1;
-		i_assert(storage != NULL);
-	}
-
-	if (storage == NULL)
-		return -1;
-
-	sieve_storage_get_quota_settings(storage);
-
-	*storage_r = storage;
-	return 0;
-}
-
 int sieve_storage_create_personal(struct sieve_instance *svinst,
-				  struct mail_user *user,
+				  struct mail_user *user, const char *cause,
 				  enum sieve_storage_flags flags,
 				  struct sieve_storage **storage_r,
 				  enum sieve_error *error_code_r)
 {
-	struct sieve_storage *storage = NULL;
-	const char *set_default, *set_default_name;
+	struct sieve_storage *storage;
 	int ret;
 
 	*storage_r = NULL;
@@ -686,54 +751,20 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 		return -1;
 	}
 
-	/* Determine location for default script */
-	set_default = sieve_setting_get(svinst, "sieve_default");
-
 	/* Attempt to locate user's main storage */
-	ret = sieve_storage_do_create_personal(svinst, flags,
-					       &storage, error_code_r);
+	ret = sieve_storage_create_auto(svinst, svinst->event, cause,
+					SIEVE_STORAGE_TYPE_PERSONAL, flags,
+					&storage, error_code_r, NULL);
 	if (ret == 0) {
 		(void)sieve_storage_sync_init(storage, user);
-
-		/* Success; record default script location for later use */
-		storage->default_location =
-			p_strdup_empty(storage->pool, set_default);
-
-		set_default_name =
-			sieve_setting_get(svinst, "sieve_default_name");
-		if (set_default_name != NULL && *set_default_name != '\0' &&
-		    !sieve_script_name_is_valid(set_default_name)) {
-			e_error(storage->event,
-				"Invalid script name '%s' for 'sieve_default_name' setting.",
-				str_sanitize(set_default_name, 80));
-			set_default_name = NULL;
-		}
-		storage->default_name =
-			p_strdup_empty(storage->pool, set_default_name);
-
-		if (storage->default_location != NULL &&
-			storage->default_name != NULL) {
-			e_debug(storage->event,
-				"Default script at '%s' is visible by name '%s'",
-				storage->default_location, storage->default_name);
-		}
 	} else if (*error_code_r != SIEVE_ERROR_TEMP_FAILURE &&
 		   (flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
 		   (flags & SIEVE_STORAGE_FLAG_READWRITE) == 0) {
 
 		/* Failed; try using default script location
 		   (not for temporary failures, read/write access, or dsync) */
-		if (set_default == NULL) {
-			e_debug(svinst->event, "storage: "
-				"No default script location configured");
-		} else {
-			e_debug(svinst->event, "storage: "
-				"Trying default script location '%s'",
-				set_default);
-		}
-
 		ret = sieve_storage_create_default(svinst, svinst->event,
-						   set_default, 0, &storage,
+						   cause, flags, &storage,
 						   error_code_r, NULL);
 	}
 	*storage_r = storage;
@@ -864,6 +895,8 @@ void sieve_storage_set_modified(struct sieve_storage *storage, time_t mtime)
 int sieve_storage_cmp(const struct sieve_storage *storage1,
 		      const struct sieve_storage *storage2)
 {
+	int ret;
+
 	if (storage1 == storage2)
 		return 0;
 	if (storage1 == NULL || storage2 == NULL)
@@ -872,7 +905,10 @@ int sieve_storage_cmp(const struct sieve_storage *storage1,
 		return (storage1->storage_class > storage2->storage_class ?
 			1 : -1);
 	}
-	return null_strcmp(storage1->location, storage2->location);
+	ret = null_strcmp(storage1->type, storage2->type);
+	if (ret != 0)
+		return (ret > 0 ? 1 : -1);
+	return null_strcmp(storage1->name, storage2->name);
 }
 
 unsigned int sieve_storage_hash(const struct sieve_storage *storage)
@@ -880,7 +916,8 @@ unsigned int sieve_storage_hash(const struct sieve_storage *storage)
 	unsigned int hash = 0;
 
 	hash ^= POINTER_CAST_TO(storage->storage_class, unsigned int);
-	hash ^= str_hash(storage->location);
+	hash ^= str_hash(storage->type);
+	hash ^= str_hash(storage->name);
 
 	return hash;
 }
@@ -905,6 +942,8 @@ int sieve_storage_get_script_direct(struct sieve_storage *storage,
 		*error_code_r = storage->error_code;
 		return -1;
 	}
+	if (name == NULL)
+		name = storage->script_name;
 
 	i_assert(storage->v.get_script != NULL);
 	ret = storage->v.get_script(storage, name, script_r);
@@ -927,7 +966,8 @@ sieve_storage_get_default_script(struct sieve_storage *storage,
 	int ret;
 
 	if (*error_code_r != SIEVE_ERROR_NOT_FOUND ||
-	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0)
+	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 ||
+	    !sieve_storage_is_personal(storage))
 		return -1;
 
 	/* Not found; if this name maps to the default script,
@@ -941,7 +981,7 @@ sieve_storage_get_default_script(struct sieve_storage *storage,
 	if (ret < 0)
 		return -1;
 
-	if (strcmp(storage->default_name, name) != 0) {
+	if (strcmp(def_storage->script_name, name) != 0) {
 		sieve_storage_set_error(storage,
 			SIEVE_ERROR_NOT_FOUND,
 			"Default script '%s' not found",
@@ -1089,10 +1129,10 @@ sieve_storage_active_script_do_get_name(struct sieve_storage *storage,
 	if (ret < 0)
 		return -1;
 
-	*name_r = storage->default_name;
+	*name_r = def_storage->script_name;
 
 	ret = sieve_storage_check_script(def_storage,
-					 storage->default_name, NULL);
+					 def_storage->script_name, NULL);
 	if (ret < 0) {
 		sieve_storage_copy_error(storage, def_storage);
 		i_assert(storage->error_code != SIEVE_ERROR_NONE);
@@ -1267,13 +1307,13 @@ sieve_storage_list_next(struct sieve_storage_list_context *lctx, bool *active_r)
 
 	struct sieve_storage *def_storage = lctx->def_storage;
 	bool have_default = (def_storage != NULL &&
-			     storage->default_name != NULL);
+			     def_storage->script_name != NULL);
 
 	if (scriptname != NULL) {
 		/* Remember when we see that the storage has its own script for
 		   default */
 		if (have_default &&
-		    strcmp(scriptname, storage->default_name) == 0)
+		    strcmp(scriptname, def_storage->script_name) == 0)
 			lctx->seen_default = TRUE;
 
 	} else if (have_default && !lctx->seen_default &&
@@ -1282,7 +1322,7 @@ sieve_storage_list_next(struct sieve_storage_list_context *lctx, bool *active_r)
 		/* Return default script at the end if it was not listed
 		   thus far (storage backend has no script under default
 		   name) */
-		scriptname = storage->default_name;
+		scriptname = def_storage->script_name;
 		lctx->seen_default = TRUE;
 
 		/* Mark default as active if no normal script is active */
@@ -1519,8 +1559,6 @@ sieve_storage_save_is_activating_default(
 {
 	struct sieve_storage *storage = sctx->storage;
 
-	if (storage->default_name == NULL || storage->default_location == NULL)
-		return 0;
 	if ((storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0)
 		return 0;
 	if (!sieve_storage_save_will_activate(sctx))
@@ -1537,9 +1575,9 @@ sieve_storage_save_is_activating_default(
 		return -1;
 	}
 
-	if (strcmp(sctx->scriptname, storage->default_name) == 0) {
+	if (strcmp(sctx->scriptname, def_storage->script_name) == 0) {
 		ret = sieve_storage_check_script_direct(
-			storage, storage->default_name, &error_code);
+			storage, def_storage->script_name, &error_code);
 		if (ret == 0 ||
 		    (ret < 0 && error_code == SIEVE_ERROR_NOT_FOUND))
 			ret = 1;
@@ -1793,14 +1831,19 @@ int sieve_storage_quota_havespace(struct sieve_storage *storage,
  * Properties
  */
 
-const char *sieve_storage_location(const struct sieve_storage *storage)
+const char *sieve_storage_name(const struct sieve_storage *storage)
 {
-	return storage->location;
+	return storage->name;
 }
 
 bool sieve_storage_is_default(const struct sieve_storage *storage)
 {
 	return storage->is_default;
+}
+
+bool sieve_storage_is_personal(struct sieve_storage *storage)
+{
+	return (strcasecmp(storage->type, SIEVE_STORAGE_TYPE_PERSONAL) == 0);
 }
 
 /*
@@ -1910,19 +1953,43 @@ sieve_storage_get_last_error(struct sieve_storage *storage,
 
 int sieve_storage_sequence_create(struct sieve_instance *svinst,
 				  struct event *event_parent,
-				  const char *location,
+				  const char *cause, const char *type,
 				  struct sieve_storage_sequence **sseq_r,
 				  enum sieve_error *error_code_r,
 				  const char **error_r)
 {
+	const struct sieve_storage_settings *storage_set;
+	const char *const *storage_names;
+	unsigned int storage_count;
+	const char *error;
+
 	*sseq_r = NULL;
 	sieve_error_args_init(&error_code_r, &error_r);
+
+	if (settings_get(event_parent, &sieve_storage_setting_parser_info,
+			 SETTINGS_GET_FLAG_SORT_FILTER_ARRAYS,
+			 &storage_set, &error) < 0) {
+		e_error(event_parent, "%s", error);
+		sieve_error_create_internal(error_code_r, error_r);
+		return -1;
+	}
+	if (array_is_created(&storage_set->storages))
+		storage_names = array_get(&storage_set->storages,
+					  &storage_count);
+	else {
+		storage_names = empty_str_array;
+		storage_count = 0;
+	}
 
 	struct sieve_storage_sequence *sseq;
 
 	sseq = i_new(struct sieve_storage_sequence, 1);
 	sseq->svinst = svinst;
-	sseq->location = i_strdup(location);
+	sseq->cause = i_strdup(cause);
+	sseq->type = i_strdup(type);
+	sseq->storage_set = storage_set;
+	sseq->storage_names = p_strarray_dup(default_pool, storage_names);
+	sseq->storage_count = storage_count;
 
 	sseq->event_parent = event_parent;
 	event_ref(event_parent);
@@ -1937,18 +2004,33 @@ int sieve_storage_sequence_next(struct sieve_storage_sequence *sseq,
 				const char **error_r)
 {
 	struct sieve_instance *svinst = sseq->svinst;
+	int ret;
 
 	*storage_r = NULL;
 	sieve_error_args_init(&error_code_r, &error_r);
 
-	if (sseq->done)
-		return 0;
-	sseq->done = TRUE;
+	while (sseq->storage_index < sseq->storage_count) {
+		unsigned int index = sseq->storage_index++;
 
-	if (sieve_storage_create(svinst, sseq->event_parent, sseq->location, 0,
-				 storage_r, error_code_r, error_r) < 0)
-		return -1;
-	return 1;
+		ret = sieve_storage_init(svinst, sseq->event_parent,
+					 sseq->cause, sseq->type,
+					 sseq->storage_names[index], TRUE, 0,
+					 storage_r, error_code_r, error_r);
+		if (ret < 0) {
+			if (*error_code_r == SIEVE_ERROR_NOT_FOUND) {
+				*error_code_r = SIEVE_ERROR_NONE;
+				*error_r = NULL;
+				continue;
+			}
+			return -1;
+		}
+		if (ret > 0) {
+			i_assert(*storage_r != NULL);
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 void sieve_storage_sequence_free(struct sieve_storage_sequence **_sseq)
@@ -1960,6 +2042,9 @@ void sieve_storage_sequence_free(struct sieve_storage_sequence **_sseq)
 	*_sseq = NULL;
 
 	event_unref(&sseq->event_parent);
-	i_free(sseq->location);
+	i_free(sseq->cause);
+	i_free(sseq->type);
+	settings_free(sseq->storage_set);
+	i_free(sseq->storage_names);
 	i_free(sseq);
 }

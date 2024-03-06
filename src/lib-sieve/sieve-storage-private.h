@@ -5,6 +5,7 @@
 #include "sieve-error-private.h"
 
 #include "sieve-storage.h"
+#include "sieve-storage-settings.h"
 
 #define MAILBOX_ATTRIBUTE_PREFIX_SIEVE \
 	MAILBOX_ATTRIBUTE_PREFIX_DOVECOT_PVT_SERVER"sieve/"
@@ -23,10 +24,11 @@ ARRAY_DEFINE_TYPE(sieve_storage_class, const struct sieve_storage *);
 struct sieve_storage_vfuncs {
 	struct sieve_storage *(*alloc)(void);
 	void (*destroy)(struct sieve_storage *storage);
-	int (*init)(struct sieve_storage *storage, const char *const *options);
+	int (*init)(struct sieve_storage *storage);
 
 	int (*autodetect)(struct sieve_instance *svinst,
-			  const char *active_path,
+			  struct event *event, const char *cause,
+			  const struct sieve_storage_settings *storage_set,
 			  enum sieve_storage_flags flags,
 			  struct sieve_storage **storage_r,
 			  enum sieve_error *error_code_r,
@@ -100,8 +102,9 @@ struct sieve_storage {
 	const struct sieve_storage *storage_class;
 	struct sieve_storage_vfuncs v;
 
-	const char *data;
-	const char *location;
+	const char *name;
+	const char *cause;
+	const char *type;
 	const char *script_name;
 	const char *bin_path;
 
@@ -111,25 +114,33 @@ struct sieve_storage {
 	char *error;
 	enum sieve_error error_code;
 
-	const char *default_name;
-	const char *default_location;
 	struct sieve_storage *default_storage, *default_storage_for;
 
 	struct mail_namespace *sync_inbox_ns;
 
 	enum sieve_storage_flags flags;
 
-	/* this is the main personal storage */
-	bool main_storage:1;
 	bool allows_synchronization:1;
 	bool is_default:1;
 };
 
-int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
+int sieve_storage_alloc(struct sieve_instance *svinst,
+			struct event *event_parent,
 			const struct sieve_storage *storage_class,
-			const char *data, enum sieve_storage_flags flags,
-			bool main, struct sieve_storage **storage_r,
+			const char *cause, const char *script_type,
+			const char *storage_name, const char *script_name,
+			enum sieve_storage_flags flags,
+			struct sieve_storage **storage_r,
 			enum sieve_error *error_code_r, const char **error_r);
+int sieve_storage_alloc_with_settings(struct sieve_instance *svinst,
+				      struct event *event_parent,
+				      const struct sieve_storage *storage_class,
+				      const char *cause,
+				      const struct sieve_storage_settings *set,
+				      enum sieve_storage_flags flags,
+				      struct sieve_storage **storage_r,
+				      enum sieve_error *error_code_r,
+				      const char **error_r);
 
 int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode);
 
@@ -186,9 +197,12 @@ struct sieve_storage_save_context {
 struct sieve_storage_sequence {
 	struct sieve_instance *svinst;
 	struct event *event_parent;
-	char *location;
+	char *cause;
+	char *type;
 
-	bool done:1;
+	const struct sieve_storage_settings *storage_set;
+	const char **storage_names;
+	unsigned int storage_count, storage_index;
 };
 
 /*

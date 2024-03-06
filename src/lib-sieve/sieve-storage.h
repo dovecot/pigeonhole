@@ -1,6 +1,8 @@
 #ifndef SIEVE_STORAGE_H
 #define SIEVE_STORAGE_H
 
+#include "sieve-common.h"
+
 #define MAILBOX_ATTRIBUTE_PREFIX_SIEVE \
 	MAILBOX_ATTRIBUTE_PREFIX_DOVECOT_PVT_SERVER"sieve/"
 #define MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES \
@@ -10,6 +12,25 @@
 
 #define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK 'L'
 #define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT 'S'
+
+/*
+ * Storage name
+ */
+
+bool sieve_storage_name_is_valid(const char *name);
+
+/*
+ * Storage type
+ */
+
+/* Common storage types; others may be defined in specific contexts. */
+#define SIEVE_STORAGE_TYPE_ANY "any"
+#define SIEVE_STORAGE_TYPE_PERSONAL "personal"
+#define SIEVE_STORAGE_TYPE_DEFAULT "default"
+#define SIEVE_STORAGE_TYPE_GLOBAL "global"
+#define SIEVE_STORAGE_TYPE_BEFORE "before"
+#define SIEVE_STORAGE_TYPE_AFTER "after"
+#define SIEVE_STORAGE_TYPE_DISCARD "discard"
 
 /*
  * Storage object
@@ -29,13 +50,21 @@ struct sieve_storage;
 bool sieve_storage_class_exists(struct sieve_instance *svinst,
 				const char *name);
 
-int sieve_storage_create(struct sieve_instance *svinst, struct event *event,
-			 const char *location,
+int sieve_storage_create(struct sieve_instance *svinst,
+			 struct event *event, const char *cause,
+			 const char *storage_name,
 			 enum sieve_storage_flags flags,
 			 struct sieve_storage **storage_r,
 			 enum sieve_error *error_code_r, const char **error_r);
+int sieve_storage_create_auto(struct sieve_instance *svinst,
+			      struct event *event,
+			      const char *cause, const char *type,
+			      enum sieve_storage_flags flags,
+			      struct sieve_storage **storage_r,
+			      enum sieve_error *error_code_r,
+			      const char **error_r);
 int sieve_storage_create_personal(struct sieve_instance *svinst,
-				  struct mail_user *user,
+				  struct mail_user *user, const char *cause,
 				  enum sieve_storage_flags flags,
 				  struct sieve_storage **storage_r,
 				  enum sieve_error *error_code_r);
@@ -160,6 +189,7 @@ const char *sieve_storage_name(const struct sieve_storage *storage) ATTR_PURE;
 const char *sieve_storage_location(const struct sieve_storage *storage)
 	ATTR_PURE;
 bool sieve_storage_is_default(const struct sieve_storage *storage) ATTR_PURE;
+bool sieve_storage_is_personal(struct sieve_storage *storage) ATTR_PURE;
 
 int sieve_storage_is_singular(struct sieve_storage *storage);
 
@@ -195,7 +225,7 @@ struct sieve_storage_sequence;
 
 int sieve_storage_sequence_create(struct sieve_instance *svinst,
 				  struct event *event_parent,
-				  const char *location,
+				  const char *cause, const char *type,
 				  struct sieve_storage_sequence **sseq_r,
 				  enum sieve_error *error_code_r,
 				  const char **error_r);

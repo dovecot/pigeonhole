@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "settings.h"
 //#include "ldap.h"
 
 #include "sieve-common.h"
@@ -41,43 +42,43 @@ static struct sieve_storage *sieve_ldap_storage_alloc(void)
 }
 
 static int
-sieve_ldap_storage_init(struct sieve_storage *storage,
-			const char *const *options)
+sieve_ldap_storage_init(struct sieve_storage *storage)
 {
 	struct sieve_ldap_storage *lstorage =
 		container_of(storage, struct sieve_ldap_storage, storage);
-	struct sieve_instance *svinst = storage->svinst;
-	const char *value;
+	const struct sieve_ldap_settings *ldap_set;
+	const struct sieve_ldap_storage_settings *set;
+	const char *error;
+	int ret;
 
-	if (options != NULL) {
-		while (*options != NULL) {
-			const char *option = *options;
-
-			if (str_begins_icase(option, "user=", &value) &&
-			    *value != '\0') {
-				/* Ignore */
-			} else {
-				sieve_storage_set_critical(
-					storage, "Invalid option '%s'", option);
-				return -1;
-			}
-
-			options++;
-		}
+	struct event *event = event_create(storage->event);
+	event_set_ptr(event, SETTINGS_EVENT_FILTER_NAME, "ldap");
+	ret = settings_get(event, &sieve_ldap_setting_parser_info, 0,
+			   &ldap_set, &error);
+	event_unref(&event);
+	if (ret < 0) {
+		sieve_storage_set_critical(storage, "%s", error);
+		return -1;
+	}
+	if (*ldap_set->uris == '\0' && *ldap_set->hosts == '\0') {
+		sieve_storage_set_critical(storage,
+			"sieve_script %s { ldap_uris / ldap_hosts } not set",
+			storage->name);
+		settings_free(ldap_set);
+		return -1;
 	}
 
-	e_debug(storage->event, "user=%s, config=%s",
-		svinst->username, storage->location);
-
-	if (sieve_ldap_storage_read_settings(lstorage, storage->location) < 0)
+	if (settings_get(storage->event,
+			 &sieve_ldap_storage_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		sieve_storage_set_critical(storage, "%s", error);
+		settings_free(ldap_set);
 		return -1;
+	}
 
-	lstorage->config_file = p_strdup(storage->pool, storage->location);
+	lstorage->ldap_set = ldap_set;
+	lstorage->set = set;
 	lstorage->conn = sieve_ldap_db_init(lstorage);
-
-	storage->location = p_strconcat(
-		storage->pool, SIEVE_LDAP_STORAGE_DRIVER_NAME, ":",
-		storage->location, ";user=", svinst->username, NULL);
 
 	return 0;
 }
@@ -88,6 +89,8 @@ static void sieve_ldap_storage_destroy(struct sieve_storage *storage)
 		container_of(storage, struct sieve_ldap_storage, storage);
 
 	sieve_ldap_db_unref(&lstorage->conn);
+	settings_free(lstorage->ldap_set);
+	settings_free(lstorage->set);
 }
 
 /*

@@ -257,7 +257,8 @@ lda_sieve_get_personal_storage(struct sieve_instance *svinst,
 			       struct sieve_storage **storage_r,
 			       enum sieve_error *error_code_r)
 {
-	if (sieve_storage_create_personal(svinst, user, 0,
+	if (sieve_storage_create_personal(svinst, user,
+					  SIEVE_SCRIPT_CAUSE_DELIVERY, 0,
 					  storage_r, error_code_r) < 0) {
 		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
@@ -279,15 +280,13 @@ lda_sieve_get_personal_storage(struct sieve_instance *svinst,
 }
 
 static void
-lda_sieve_multiscript_log_error(struct event *event,
-				const char *label, const char *location,
+lda_sieve_multiscript_log_error(struct event *event, const char *type,
 				enum sieve_error error_code)
 {
 	switch (error_code) {
 	case SIEVE_ERROR_TEMP_FAILURE:
-		e_error(event, "Failed to access %s script from '%s' "
-			"(temporary failure)",
-			label, location);
+		e_error(event, "Failed to access '%s' script sequence"
+			"(temporary failure)", type);
 		break;
 	default:
 		break;
@@ -296,7 +295,7 @@ lda_sieve_multiscript_log_error(struct event *event,
 
 static int
 lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
-				  const char *label, const char *location,
+				  const char *type,
 				  ARRAY_TYPE(sieve_script) *scripts,
 				  enum sieve_error *error_code_r)
 {
@@ -304,14 +303,15 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 	struct sieve_script *script;
 	int ret;
 
-	ret = sieve_script_sequence_create(svinst, location,
+	ret = sieve_script_sequence_create(svinst, svinst->event,
+					   SIEVE_SCRIPT_CAUSE_DELIVERY, type,
 					   &sseq, error_code_r, NULL);
 	if (ret < 0) {
 		if (*error_code_r == SIEVE_ERROR_NOT_FOUND) {
 			*error_code_r = SIEVE_ERROR_NONE;
 			return 0;
 		}
-		lda_sieve_multiscript_log_error(svinst->event, label, location,
+		lda_sieve_multiscript_log_error(svinst->event, type,
 						*error_code_r);
 		return -1;
 	}
@@ -322,7 +322,7 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 
 	sieve_script_sequence_free(&sseq);
 	if (ret < 0) {
-		lda_sieve_multiscript_log_error(svinst->event, label, location,
+		lda_sieve_multiscript_log_error(svinst->event, type,
 						*error_code_r);
 		return -1;
 	}
@@ -718,8 +718,6 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	struct mail_deliver_context *mdctx = srctx->mdctx;
 	struct sieve_instance *svinst = srctx->svinst;
 	struct sieve_storage *main_storage;
-	const char *sieve_before, *sieve_after, *sieve_discard;
-	const char *setting_name;
 	enum sieve_error error_code;
 	ARRAY_TYPE(sieve_script) script_sequence;
 	struct sieve_script *const *scripts;
@@ -740,20 +738,22 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 		switch (error_code) {
 		case SIEVE_ERROR_NOT_FOUND:
 			e_debug(sieve_get_event(svinst),
-				"User has no active script in storage '%s'",
-				sieve_storage_location(main_storage));
+				"User has no active script in personal storage '%s'",
+				sieve_storage_name(main_storage));
 			break;
 		case SIEVE_ERROR_TEMP_FAILURE:
 			e_error(sieve_get_event(svinst),
-				"Failed to access active Sieve script in user storage '%s' "
+				"Failed to access active Sieve script in parsonal storage '%s': %s "
 				"(temporary failure)",
-				sieve_storage_location(main_storage));
+				sieve_storage_name(main_storage),
+				sieve_storage_get_last_error(main_storage, NULL));
 			ret = -1;
 			break;
 		default:
 			e_error(sieve_get_event(svinst),
-				"Failed to access active Sieve script in user storage '%s'",
-				sieve_storage_location(main_storage));
+				"Failed to access active Sieve script in personal storage '%s': %s",
+				sieve_storage_name(main_storage),
+				sieve_storage_get_last_error(main_storage, NULL));
 			break;
 		}
 	} else if (!sieve_script_is_default(srctx->main_script)) {
@@ -772,29 +772,9 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 
 	/* before */
 	if (ret >= 0) {
-		i = 2;
-		setting_name = "sieve_before";
-		sieve_before = mail_user_plugin_getenv(
-			mdctx->rcpt_user, setting_name);
-		while (ret >= 0 &&
-		       sieve_before != NULL && *sieve_before != '\0') {
-			ret = lda_sieve_multiscript_get_scripts(
-				svinst, setting_name, sieve_before,
-				&script_sequence, &error_code);
-			if (ret < 0 && error_code == SIEVE_ERROR_TEMP_FAILURE) {
-				ret = -1;
-				break;
-			} else if (ret == 0) {
-				e_debug(sieve_get_event(svinst),
-					"Location for %s not found: %s",
-					setting_name, sieve_before);
-			}
-			ret = 0;
-			setting_name = t_strdup_printf("sieve_before%u", i++);
-			sieve_before = mail_user_plugin_getenv(
-				mdctx->rcpt_user, setting_name);
-		}
-
+		ret = lda_sieve_multiscript_get_scripts(
+			svinst, SIEVE_STORAGE_TYPE_BEFORE,
+			&script_sequence, &error_code);
 		if (ret >= 0) {
 			scripts = array_get(&script_sequence, &count);
 			for (i = 0; i < count; i ++) {
@@ -820,27 +800,9 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 
 	/* after */
 	if (ret >= 0) {
-		i = 2;
-		setting_name = "sieve_after";
-		sieve_after = mail_user_plugin_getenv(mdctx->rcpt_user, setting_name);
-		while (sieve_after != NULL && *sieve_after != '\0') {
-			ret = lda_sieve_multiscript_get_scripts(
-				svinst, setting_name, sieve_after,
-				&script_sequence, &error_code);
-			if (ret < 0 && error_code == SIEVE_ERROR_TEMP_FAILURE) {
-				ret = -1;
-				break;
-			} else if (ret == 0) {
-				e_debug(sieve_get_event(svinst),
-					"Location for %s not found: %s",
-					setting_name, sieve_after);
-			}
-			ret = 0;
-			setting_name = t_strdup_printf("sieve_after%u", i++);
-			sieve_after = mail_user_plugin_getenv(
-				mdctx->rcpt_user, setting_name);
-		}
-
+		ret = lda_sieve_multiscript_get_scripts(
+			svinst, SIEVE_STORAGE_TYPE_AFTER,
+			&script_sequence, &error_code);
 		if (ret >= 0) {
 			scripts = array_get(&script_sequence, &count);
 			for ( i = after_index; i < count; i ++ ) {
@@ -852,25 +814,13 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	}
 
 	/* discard */
-	sieve_discard = mail_user_plugin_getenv(
-		mdctx->rcpt_user, "sieve_discard");
-	if (sieve_discard != NULL && *sieve_discard != '\0') {
-		if (sieve_script_create_open(svinst, sieve_discard, NULL,
-					     &srctx->discard_script,
-					     &error_code, NULL) < 0) {
-			switch (error_code) {
-			case SIEVE_ERROR_NOT_FOUND:
-				e_debug(sieve_get_event(svinst),
-					"Location for sieve_discard not found: %s",
-					sieve_discard);
-				break;
-			case SIEVE_ERROR_TEMP_FAILURE:
-				ret = -1;
-				break;
-			default:
-				break;
-			}
-		}
+	if (ret >= 0) {
+		ret = sieve_script_create_open(
+			svinst, SIEVE_SCRIPT_CAUSE_DELIVERY,
+			SIEVE_STORAGE_TYPE_DISCARD, NULL,
+			&srctx->discard_script, &error_code, NULL);
+		if (error_code == SIEVE_ERROR_NOT_FOUND)
+			ret = 0;
 	}
 
 	if (ret < 0) {

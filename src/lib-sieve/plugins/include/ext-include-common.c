@@ -78,7 +78,6 @@ int ext_include_load(const struct sieve_extension *ext, void **context_r)
 	struct sieve_instance *svinst = ext->svinst;
 	const struct sieve_extension *var_ext;
 	struct ext_include_context *extctx;
-	const char *location;
 	unsigned long long int uint_setting;
 
 	/* Extension dependencies */
@@ -87,17 +86,6 @@ int ext_include_load(const struct sieve_extension *ext, void **context_r)
 
 	extctx = i_new(struct ext_include_context, 1);
 	extctx->var_ext = var_ext;
-
-	/* Get location for :global scripts */
-	location = sieve_setting_get(svinst, "sieve_global");
-
-	if (location == NULL) {
-		e_debug(svinst->event, "include: "
-			"sieve_global is not set; "
-			"it is currently not possible to include ':global' scripts.");
-	}
-
-	extctx->global_location = i_strdup(location);
 
 	/* Get limits */
 	extctx->max_nesting_depth = EXT_INCLUDE_DEFAULT_MAX_NESTING_DEPTH;
@@ -119,8 +107,6 @@ void ext_include_unload(const struct sieve_extension *ext)
 	struct ext_include_context *extctx = ext->context;
 
 	sieve_storage_unref(&extctx->personal_storage);
-
-	i_free(extctx->global_location);
 	i_free(extctx);
 }
 
@@ -131,12 +117,12 @@ void ext_include_unload(const struct sieve_extension *ext)
 static int
 ext_include_open_script_personal(struct sieve_instance *svinst,
 				 struct ext_include_context *extctx,
-				 const char *script_name,
+				 const char *cause, const char *script_name,
 				 struct sieve_script **script_r,
 				 enum sieve_error *error_code_r)
 {
 	if (extctx->personal_storage == NULL &&
-	    sieve_storage_create_personal(svinst, NULL, 0,
+	    sieve_storage_create_personal(svinst, NULL, cause, 0,
 					  &extctx->personal_storage,
 					  error_code_r) < 0)
 		return -1;
@@ -147,29 +133,18 @@ ext_include_open_script_personal(struct sieve_instance *svinst,
 
 static int
 ext_include_open_script_global(struct sieve_instance *svinst,
-			       struct ext_include_context *extctx,
-			       const char *script_name,
+			       const char *cause, const char *script_name,
 			       struct sieve_script **script_r,
 			       enum sieve_error *error_code_r)
 {
-	if (extctx->global_location == NULL) {
-		e_info(svinst->event, "include: "
-			"sieve_global is unconfigured; "
-			"include of ':global' script '%s' is therefore not possible",
-			str_sanitize(script_name, 80));
-		if (error_code_r != NULL)
-			*error_code_r = SIEVE_ERROR_NOT_FOUND;
-		return -1;
-	}
-
-	return sieve_script_create_open(svinst, extctx->global_location,
-					script_name,
+	return sieve_script_create_open(svinst, cause,
+					SIEVE_STORAGE_TYPE_GLOBAL, script_name,
 					script_r, error_code_r, NULL);
 }
 
 int ext_include_open_script(const struct sieve_extension *ext,
 			    enum ext_include_script_location location,
-			    const char *script_name,
+			    const char *cause, const char *script_name,
 			    struct sieve_script **script_r,
 			    enum sieve_error *error_code_r)
 {
@@ -180,13 +155,12 @@ int ext_include_open_script(const struct sieve_extension *ext,
 	*script_r = NULL;
 	switch (location) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
-		ret = ext_include_open_script_personal(svinst, extctx,
+		ret = ext_include_open_script_personal(svinst, extctx, cause,
 						       script_name,
 						       script_r, error_code_r);
 		break;
 	case EXT_INCLUDE_LOCATION_GLOBAL:
-		ret = ext_include_open_script_global(svinst, extctx,
-						     script_name,
+		ret = ext_include_open_script_global(svinst, cause, script_name,
 						     script_r, error_code_r);
 		break;
 	default:
@@ -346,8 +320,22 @@ void ext_include_register_generator_context(
 	/* Initialize generator context if necessary */
 	if (ctx == NULL) {
 		i_assert(cgenv->script != NULL);
+
+		enum ext_include_script_location location;
+		const char *storage_type =
+			sieve_script_storage_type(cgenv->script);
+
+		if (strcasecmp(storage_type,
+			       SIEVE_STORAGE_TYPE_PERSONAL) == 0)
+			location = EXT_INCLUDE_LOCATION_PERSONAL;
+		else if (strcasecmp(storage_type,
+				    SIEVE_STORAGE_TYPE_GLOBAL) == 0)
+			location = EXT_INCLUDE_LOCATION_GLOBAL;
+		else
+			location = EXT_INCLUDE_LOCATION_INVALID;
+
 		ctx = ext_include_create_generator_context(
-			cgenv->gentr, NULL, EXT_INCLUDE_LOCATION_PERSONAL,
+			cgenv->gentr, NULL, location,
 			sieve_script_name(cgenv->script), cgenv->script);
 
 		sieve_generator_extension_set_context(

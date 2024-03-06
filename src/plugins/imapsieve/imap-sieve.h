@@ -1,6 +1,8 @@
 #ifndef IMAP_SIEVE_H
 #define IMAP_SIEVE_H
 
+#include "sieve-storage.h"
+
 struct client;
 
 /*
@@ -43,13 +45,13 @@ void imap_sieve_deinit(struct imap_sieve **_isieve);
 
 struct imap_sieve_run;
 
-int imap_sieve_run_init(struct imap_sieve *isieve, struct mailbox *dest_mailbox,
-			struct mailbox *src_mailbox, const char *cause,
-			const char *script_name,
-			const char *const *scripts_before,
-			const char *const *scripts_after,
-			struct imap_sieve_run **isrun_r)
-			ATTR_NULL(4, 5, 6);
+int imap_sieve_run_init(struct imap_sieve *isieve,
+			struct event *dest_mbox_event,
+			struct mailbox *dest_mailbox,
+			struct mailbox *src_mailbox,
+			const char *cause, const char *script_name,
+			const char *before_type, const char *after_type,
+			struct imap_sieve_run **isrun_r);
 
 int imap_sieve_run_mail(struct imap_sieve_run *isrun, struct mail *mail,
 			const char *changed_flags, bool *fatal_r);

@@ -56,7 +56,6 @@ struct sieve_script {
 	struct sieve_script_vfuncs v;
 
 	const char *name;
-	const char *location;
 
 	/* Stream */
 	struct istream *stream;
@@ -67,7 +66,7 @@ struct sieve_script {
 void sieve_script_init(struct sieve_script *script,
 		       struct sieve_storage *storage,
 		       const struct sieve_script *script_class,
-		       const char *location, const char *name);
+		       const char *name);
 
 /*
  * Binary

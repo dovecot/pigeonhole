@@ -258,6 +258,7 @@ cmd_include_validate(struct sieve_validator *valdtr,
 
 	/* Open script */
 	if (ext_include_open_script(this_ext, ctx_data->location,
+				    sieve_validator_script_cause(valdtr),
 				    script_name, &script, &error_code) < 0) {
 		if (error_code != SIEVE_ERROR_NOT_FOUND) {
 			sieve_argument_validate_error(

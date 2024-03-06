@@ -36,18 +36,12 @@ sieve_dict_script_init(struct sieve_dict_storage *dstorage, const char *name)
 {
 	struct sieve_storage *storage = &dstorage->storage;
 	struct sieve_dict_script *dscript = NULL;
-	const char *location;
 
-	if (name == NULL) {
+	if (name == NULL || *name == '\0')
 		name = SIEVE_DICT_SCRIPT_DEFAULT;
-		location = storage->location;
-	} else {
-		location = t_strconcat(storage->location, ";name=", name, NULL);
-	}
 
 	dscript = sieve_dict_script_alloc();
-	sieve_script_init(&dscript->script, storage, &sieve_dict_script,
-			  location, name);
+	sieve_script_init(&dscript->script, storage, &sieve_dict_script, name);
 
 	return dscript;
 }

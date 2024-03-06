@@ -18,12 +18,20 @@ static const struct setting_define imap_sieve_setting_defines[] = {
 	DEF(STR, url),
 	DEF(BOOL, expunge_discarded),
 
+	{ .type = SET_FILTER_ARRAY, .key = "imapsieve_from",
+	   .offset = offsetof(struct imap_sieve_settings, from),
+	   .filter_array_field_name = "imapsieve_from_name" },
+	DEF(STR, from_name),
+
 	SETTING_DEFINE_LIST_END,
 };
 
 static const struct imap_sieve_settings imap_sieve_default_settings = {
 	.url = "",
 	.expunge_discarded = FALSE,
+
+	.from = ARRAY_INIT,
+	.from_name = "",
 };
 
 static bool

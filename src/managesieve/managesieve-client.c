@@ -74,6 +74,7 @@ client_get_storage(struct sieve_instance *svinst, struct mail_user *user,
 
 	/* Open personal script storage */
 	if (sieve_storage_create_personal(svinst, user,
+					  SIEVE_SCRIPT_CAUSE_DELIVERY,
 					  SIEVE_STORAGE_FLAG_READWRITE,
 					  &storage, &error_code) < 0) {
 		switch (error_code) {

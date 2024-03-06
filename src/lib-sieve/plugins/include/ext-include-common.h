@@ -6,6 +6,7 @@
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
+#include "sieve-storage.h"
 
 /*
  * Forward declarations
@@ -84,7 +85,7 @@ extern const struct sieve_operation_def global_operation;
 
 int ext_include_open_script(const struct sieve_extension *ext,
 			    enum ext_include_script_location location,
-			    const char *script_name,
+			    const char *cause, const char *script_name,
 			    struct sieve_script **script_r,
 			    enum sieve_error *error_code_r);
 
@@ -97,9 +98,6 @@ int ext_include_open_script(const struct sieve_extension *ext,
 struct ext_include_context {
 	/* Extension dependencies */
 	const struct sieve_extension *var_ext;
-
-	/* Configuration */
- 	char *global_location;
 
 	struct sieve_storage *personal_storage;
 

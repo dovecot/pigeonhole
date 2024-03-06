@@ -7,6 +7,7 @@
 #include "ioloop.h"
 #include "ostream.h"
 #include "hostpid.h"
+#include "settings.h"
 #include "dict.h"
 #include "mail-namespace.h"
 #include "mail-storage.h"
@@ -20,6 +21,7 @@
 #include "sieve.h"
 #include "sieve-plugins.h"
 #include "sieve-extensions.h"
+#include "sieve-storage.h"
 
 #include "mail-raw.h"
 
@@ -285,6 +287,8 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 	svenv.hostname = my_hostdomain();
 	svenv.base_dir = tool->mail_user_dovecot->set->base_dir;
 	svenv.temp_dir = tool->mail_user_dovecot->set->mail_temp_dir;
+	svenv.event_parent = tool->mail_user_dovecot->event;
+	svenv.flags = SIEVE_FLAG_COMMAND_LINE;
 	svenv.location = SIEVE_ENV_LOCATION_MS;
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_POST;
 
@@ -578,19 +582,77 @@ struct ostream *sieve_tool_open_output_stream(const char *filename)
  * Sieve script handling
  */
 
+static void
+sieve_tool_script_parse_location(struct sieve_tool *tool, const char *location,
+				 const char **storage_name_r)
+{
+	struct sieve_instance *svinst = tool->svinst;
+	const char *data = strchr(location, ':');
+	const char *script_driver = "file";
+	const char *script_path = NULL;
+	const char *storage_name = "_file";
+
+	if (data != NULL) {
+		script_driver = t_strdup_until(location, data++);
+		if (strcmp(script_driver, "file") == 0)
+			script_path = data;
+		else
+			storage_name = data;
+	} else {
+		script_path = location;
+	}
+
+	struct settings_instance *set_instance =
+		settings_instance_find(svinst->event);
+	const char *prefix = t_strdup_printf("sieve_script/%s", storage_name);
+
+	settings_override(set_instance, "sieve_script", storage_name,
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  t_strdup_printf("%s/sieve_script_storage", prefix),
+			  storage_name, SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  t_strdup_printf("%s/sieve_script_type", prefix),
+			  "command-line", SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  t_strdup_printf("%s/sieve_script_driver", prefix),
+			  script_driver, SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	if (script_path != NULL) {
+		settings_override(
+			set_instance, t_strdup_printf("%s/sieve_script_path",
+						      prefix),
+			script_path, SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	}
+
+	*storage_name_r = storage_name;
+}
+
 struct sieve_binary *
 sieve_tool_script_compile(struct sieve_tool *tool, const char *location)
 {
 	struct sieve_instance *svinst = tool->svinst;
 	struct sieve_error_handler *ehandler;
-	struct sieve_binary *sbin;
+	enum sieve_error error_code;
+	struct sieve_binary *sbin = NULL;
 
 	ehandler = sieve_stderr_ehandler_create(svinst, 0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
-	if (sieve_compile(svinst, location, NULL, ehandler, 0, &sbin, NULL) < 0)
-		i_fatal("failed to compile sieve script '%s'", location);
+	if (sieve_storage_name_is_valid(location) &&
+	    sieve_compile(svinst, SIEVE_SCRIPT_CAUSE_ANY, location, NULL,
+			  ehandler, 0, &sbin, &error_code) < 0 &&
+	    error_code != SIEVE_ERROR_NOT_FOUND)
+		i_fatal("failed to compile sieve script storage");
+
+	if (sbin == NULL) {
+		const char *storage_name;
+
+		sieve_tool_script_parse_location(tool, location, &storage_name);
+		if (sieve_compile(svinst, SIEVE_SCRIPT_CAUSE_ANY, storage_name,
+				  NULL, ehandler, 0, &sbin, NULL) < 0)
+			i_fatal("failed to compile sieve script");
+	}
 	i_assert(sbin != NULL);
 
 	sieve_error_handler_unref(&ehandler);
@@ -602,14 +664,27 @@ sieve_tool_script_open(struct sieve_tool *tool, const char *location)
 {
 	struct sieve_instance *svinst = tool->svinst;
 	struct sieve_error_handler *ehandler;
-	struct sieve_binary *sbin;
+	enum sieve_error error_code;
+	struct sieve_binary *sbin = NULL;
 
 	ehandler = sieve_stderr_ehandler_create(svinst, 0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
-	if (sieve_open(svinst, location, NULL, ehandler, 0, &sbin, NULL) < 0)
-		i_fatal("failed to compile sieve script");
+	if (sieve_storage_name_is_valid(location) &&
+	    sieve_open(svinst, SIEVE_SCRIPT_CAUSE_ANY, location, NULL,
+		       ehandler, 0, &sbin, &error_code) < 0 &&
+	    error_code != SIEVE_ERROR_NOT_FOUND)
+		i_fatal("failed to open sieve script storage");
+
+	if  (sbin == NULL) {
+		const char *storage_name;
+
+		sieve_tool_script_parse_location(tool, location, &storage_name);
+		if (sieve_open(svinst, SIEVE_SCRIPT_CAUSE_ANY, storage_name,
+			       NULL, ehandler, 0, &sbin, NULL) < 0)
+			i_fatal("failed to open sieve script");
+	}
 	i_assert(sbin != NULL);
 
 	sieve_error_handler_unref(&ehandler);
