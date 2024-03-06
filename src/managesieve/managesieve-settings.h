@@ -11,7 +11,6 @@ enum managesieve_client_workarounds {
 
 struct managesieve_settings {
 	pool_t pool;
-	bool mail_debug;
 	bool verbose_proctitle;
 	const char *rawlog_dir;
 
