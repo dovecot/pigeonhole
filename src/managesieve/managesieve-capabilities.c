@@ -43,7 +43,9 @@ plugin_settings_get(const struct plugin_settings *set, const char *identifier)
  * Sieve environment
  */
 
-static const char *sieve_get_setting(void *context, const char *identifier)
+static const char *
+sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED, void *context,
+		  const char *identifier)
 {
 	const struct plugin_settings *set = context;
 

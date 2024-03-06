@@ -35,7 +35,8 @@ struct client *managesieve_clients = NULL;
 unsigned int managesieve_client_count = 0;
 
 static const char *
-managesieve_sieve_get_setting(void *context, const char *identifier)
+managesieve_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED,
+			      void *context, const char *identifier)
 {
 	struct mail_user *mail_user = (struct mail_user *) context;
 

@@ -15,7 +15,7 @@ sieve_setting_get(struct sieve_instance *svinst, const char *identifier)
 	if (callbacks == NULL || callbacks->get_setting == NULL)
 		return NULL;
 
-	return callbacks->get_setting(svinst->context, identifier);
+	return callbacks->get_setting(svinst, svinst->context, identifier);
 }
 
 bool sieve_setting_get_uint_value(struct sieve_instance *svinst,
@@ -51,7 +51,7 @@ sieve_environment_get_homedir(struct sieve_instance *svinst)
 	if (callbacks == NULL || callbacks->get_homedir == NULL)
 		return NULL;
 
-	return callbacks->get_homedir(svinst->context);
+	return callbacks->get_homedir(svinst, svinst->context);
 }
 
 #endif

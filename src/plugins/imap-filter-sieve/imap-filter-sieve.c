@@ -59,7 +59,8 @@ static MODULE_CONTEXT_DEFINE_INIT(imap_filter_sieve_user_module,
  */
 
 static const char *
-imap_filter_sieve_get_setting(void *context, const char *identifier)
+imap_filter_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED,
+			      void *context, const char *identifier)
 {
 	struct imap_filter_sieve_user *ifsuser = context;
 	struct mail_user *user = ifsuser->client->user;

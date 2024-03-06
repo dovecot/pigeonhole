@@ -48,7 +48,8 @@ struct imap_sieve {
 };
 
 static const char *
-mail_sieve_get_setting(void *context, const char *identifier)
+mail_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED, void *context,
+		       const char *identifier)
 {
 	struct imap_sieve *isieve = context;
 	struct mail_user *user = isieve->client->user;

@@ -8,7 +8,8 @@
  */
 
 typedef const char *
-(*sieve_tool_setting_callback_t)(void *context, const char *identifier);
+(*sieve_tool_setting_callback_t)(struct sieve_instance *svinst,
+				 void *context, const char *identifier);
 
 /*
  * Global variables

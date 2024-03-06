@@ -68,12 +68,14 @@ struct sieve_tool *sieve_tool;
  */
 
 static const char *
-sieve_tool_sieve_get_setting(void *context, const char *identifier)
+sieve_tool_sieve_get_setting(struct sieve_instance *svinst, void *context,
+			     const char *identifier)
 {
 	struct sieve_tool *tool = (struct sieve_tool *)context;
 
 	if (tool->setting_callback != NULL) {
-		return tool->setting_callback(tool->setting_callback_context,
+		return tool->setting_callback(svinst,
+					      tool->setting_callback_context,
 					      identifier);
 	}
 
@@ -83,7 +85,9 @@ sieve_tool_sieve_get_setting(void *context, const char *identifier)
 	return mail_user_plugin_getenv(tool->mail_user_dovecot, identifier);
 }
 
-static const char *sieve_tool_sieve_get_homedir(void *context)
+static const char *
+sieve_tool_sieve_get_homedir(struct sieve_instance *svinst ATTR_UNUSED,
+			     void *context)
 {
 	struct sieve_tool *tool = (struct sieve_tool *)context;
 
