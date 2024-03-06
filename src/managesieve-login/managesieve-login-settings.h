@@ -4,8 +4,8 @@
 struct managesieve_login_settings {
 	pool_t pool;
 	const char *managesieve_implementation_string;
-	const char *managesieve_sieve_capability;
-	const char *managesieve_notify_capability;
+	ARRAY_TYPE(const_string) managesieve_sieve_capability;
+	ARRAY_TYPE(const_string) managesieve_notify_capability;
 };
 
 extern const struct setting_parser_info managesieve_login_setting_parser_info;

@@ -58,11 +58,17 @@ static void client_send_capabilities(struct client *client)
 {
 	struct managesieve_client *msieve_client =
 		container_of(client, struct managesieve_client, common);
+	const ARRAY_TYPE(const_string) *sieve_cap_list =
+		&msieve_client->set->managesieve_sieve_capability;
+	const ARRAY_TYPE(const_string) *notify_cap_list =
+		&msieve_client->set->managesieve_notify_capability;
 	const char *sieve_cap, *notify_cap, *sasl_cap;
 
 	T_BEGIN {
-		sieve_cap = msieve_client->set->managesieve_sieve_capability;
-		notify_cap = msieve_client->set->managesieve_notify_capability;
+		sieve_cap = t_strarray_join(
+			settings_boollist_get(sieve_cap_list), " ");
+		notify_cap = t_strarray_join(
+			settings_boollist_get(notify_cap_list), " ");
 		sasl_cap = client_authenticate_get_capabilities(client);
 
 		/* Default capabilities */
