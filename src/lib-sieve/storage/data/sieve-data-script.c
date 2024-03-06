@@ -32,19 +32,20 @@ static struct sieve_data_script *sieve_data_script_alloc(void)
 
 struct sieve_script *
 sieve_data_script_create_from_input(struct sieve_instance *svinst,
-				    const char *name, struct istream *input)
+				    const char *cause, const char *name,
+				    struct istream *input)
 {
 	struct sieve_storage *storage;
 	struct sieve_data_script *dscript = NULL;
 	int ret;
 
-	ret = sieve_storage_alloc(svinst, NULL, &sieve_data_storage,
-				  "", 0, FALSE, &storage, NULL, NULL);
+	ret = sieve_storage_alloc(svinst, svinst->event, &sieve_data_storage,
+				  cause, "data", "data", "data", 0, &storage,
+				  NULL, NULL);
 	i_assert(ret >= 0);
 
 	dscript = sieve_data_script_alloc();
-	sieve_script_init(&dscript->script, storage, &sieve_data_script,
-			  "data:", name);
+	sieve_script_init(&dscript->script, storage, &sieve_data_script, name);
 
 	dscript->data = input;
 	i_stream_ref(dscript->data);

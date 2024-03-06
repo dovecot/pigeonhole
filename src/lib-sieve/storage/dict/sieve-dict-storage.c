@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "settings.h"
 #include "dict.h"
 
 #include "sieve-common.h"
@@ -27,55 +28,21 @@ static struct sieve_storage *sieve_dict_storage_alloc(void)
 }
 
 static int
-sieve_dict_storage_init(struct sieve_storage *storage,
-			const char *const *options)
+sieve_dict_storage_init(struct sieve_storage *storage)
 {
 	struct sieve_dict_storage *dstorage =
 		container_of(storage, struct sieve_dict_storage, storage);
-	struct sieve_instance *svinst = storage->svinst;
-	const char *value, *uri = storage->location;
-
-	if (options != NULL) {
-		while (*options != NULL) {
-			const char *option = *options;
-
-			if (str_begins_icase(option, "user=", &value) &&
-			    *value != '\0') {
-				/* Ignore */
-			} else {
-				sieve_storage_set_critical(
-					storage, "Invalid option '%s'", option);
-				return -1;
-			}
-
-			options++;
-		}
-	}
-
-	if (svinst->base_dir == NULL) {
-		sieve_storage_set_critical(
-			storage,
-			"BUG: Sieve interpreter is initialized without a base_dir");
-		return -1;
-	}
-
-	e_debug(storage->event, "user=%s, uri=%s", svinst->username, uri);
-
-	storage->location = p_strconcat(
-		storage->pool, SIEVE_DICT_STORAGE_DRIVER_NAME, ":",
-		storage->location, ";user=", svinst->username, NULL);
-
-	struct dict_legacy_settings dict_set;
 	const char *error;
 	int ret;
 
-	i_zero(&dict_set);
-	dict_set.base_dir = svinst->base_dir;
-	ret = dict_init_legacy(uri, &dict_set, &dstorage->dict, &error);
-	if (ret < 0) {
+	struct event *event = event_create(storage->event);
+	event_set_ptr(event, SETTINGS_EVENT_FILTER_NAME, "sieve_script_dict");
+	ret = dict_init_auto(event, &dstorage->dict, &error);
+	event_unref(&event);
+	if (ret <= 0) {
 		sieve_storage_set_critical(storage,
-			"Failed to initialize dict with data '%s' for user '%s': %s",
-			uri, svinst->username, error);
+			"Failed to initialize sieve_script %s dict: %s",
+			storage->name, error);
 		return -1;
 	}
 

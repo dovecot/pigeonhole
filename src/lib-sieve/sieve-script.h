@@ -17,6 +17,8 @@ bool sieve_script_name_is_valid(const char *scriptname);
  */
 
 bool sieve_script_file_has_extension(const char *filename);
+const char *sieve_script_file_get_scriptname(const char *filename);
+const char *sieve_script_file_from_name(const char *name);
 
 /*
  * Sieve script class
@@ -36,10 +38,14 @@ struct sieve_script;
 ARRAY_DEFINE_TYPE(sieve_script, struct sieve_script *);
 
 int sieve_script_create(struct sieve_instance *svinst,
-			const char *location, const char *name,
+			const char *cause, const char *type, const char *name,
 			struct sieve_script **script_r,
 			enum sieve_error *error_code_r, const char **error_r);
-
+int sieve_script_create_in(struct sieve_instance *svinst, const char *cause,
+			   const char *storage_name, const char *name,
+			   struct sieve_script **script_r,
+			   enum sieve_error *error_code_r,
+			   const char **error_r);
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
 
@@ -49,12 +55,19 @@ int sieve_script_open_as(struct sieve_script *script, const char *name,
 			 enum sieve_error *error_code_r);
 
 int sieve_script_create_open(struct sieve_instance *svinst,
-			     const char *location, const char *name,
-			     struct sieve_script **script_r,
+			     const char *cause, const char *type,
+			     const char *name, struct sieve_script **script_r,
 			     enum sieve_error *error_code_r,
 			     const char **error_r);
+int sieve_script_create_open_in(struct sieve_instance *svinst,
+				const char *cause,
+				const char *storage_name, const char *name,
+				struct sieve_script **script_r,
+				enum sieve_error *error_code_r,
+				const char **error_r);
+
 int sieve_script_check(struct sieve_instance *svinst,
-		       const char *location, const char *name,
+		       const char *cause, const char *type, const char *name,
 		       enum sieve_error *error_code_r, const char **error_r);
 
 /*
@@ -63,7 +76,8 @@ int sieve_script_check(struct sieve_instance *svinst,
 
 struct sieve_script *
 sieve_data_script_create_from_input(struct sieve_instance *svinst,
-				    const char *name, struct istream *input);
+				    const char *cause, const char *name,
+				    struct istream *input);
 
 /*
  * Binary
@@ -113,7 +127,9 @@ int sieve_script_delete(struct sieve_script *script, bool ignore_active);
 
 const char *sieve_script_name(const struct sieve_script *script) ATTR_PURE;
 const char *sieve_script_label(const struct sieve_script *script) ATTR_PURE;
-const char *sieve_script_location(const struct sieve_script *script) ATTR_PURE;
+const char *
+sieve_script_storage_type(const struct sieve_script *script) ATTR_PURE;
+const char *sieve_script_cause(const struct sieve_script *script) ATTR_PURE;
 struct sieve_instance *
 sieve_script_svinst(const struct sieve_script *script) ATTR_PURE;
 
@@ -156,7 +172,8 @@ const char *sieve_script_get_last_error_lcase(struct sieve_script *script);
 struct sieve_script_sequence;
 
 int sieve_script_sequence_create(struct sieve_instance *svinst,
-				 const char *location,
+				 struct event *event_parent,
+				 const char *cause, const char *type,
 				 struct sieve_script_sequence **sseq_r,
 				 enum sieve_error *error_code_r,
 				 const char **error_r);

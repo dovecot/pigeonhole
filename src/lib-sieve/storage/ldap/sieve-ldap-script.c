@@ -38,18 +38,12 @@ sieve_ldap_script_init(struct sieve_ldap_storage *lstorage, const char *name)
 {
 	struct sieve_storage *storage = &lstorage->storage;
 	struct sieve_ldap_script *lscript = NULL;
-	const char *location;
 
-	if (name == NULL) {
+	if (name == NULL || *name == '\0')
 		name = SIEVE_LDAP_SCRIPT_DEFAULT;
-		location = storage->location;
-	} else {
-		location = t_strconcat(storage->location, ";name=", name, NULL);
-	}
 
 	lscript = sieve_ldap_script_alloc();
-	sieve_script_init(&lscript->script, storage, &sieve_ldap_script,
-			  location, name);
+	sieve_script_init(&lscript->script, storage, &sieve_ldap_script, name);
 	return lscript;
 }
 
@@ -118,26 +112,12 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 	struct sieve_ldap_script *lscript =
 		container_of(script, struct sieve_ldap_script, script);
 	struct sieve_storage *storage = script->storage;
-	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_ldap_storage *lstorage =
 		container_of(storage, struct sieve_ldap_storage, storage);
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
-	time_t bmtime = sieve_binary_mtime(sbin);
 	string_t *dn, *modattr;
 
-	/* Config file changed? */
-	if (bmtime <= lstorage->set_mtime) {
-		if (svinst->debug) {
-			e_debug(script->event,
-				"Sieve binary '%s' is not newer "
-				"than the LDAP configuration '%s' (%s <= %s)",
-				sieve_binary_path(sbin), lstorage->config_file,
-				t_strflocaltime("%Y-%m-%d %H:%M:%S", bmtime),
-				t_strflocaltime("%Y-%m-%d %H:%M:%S",
-						lstorage->set_mtime));
-		}
-		return 0;
-	}
+	// FIXME: Maybe detect config changes somehow to trigger recompile
 
 	/* Open script if not open already */
 	if (lscript->dn == NULL && sieve_script_open(script, NULL) < 0)
@@ -149,7 +129,7 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 			"LDAP entry for script '%s' "
 			"has no modified attribute '%s'",
 			sieve_script_label(script),
-			lstorage->set->sieve_ldap_mod_attr);
+			lstorage->set->mod_attr);
 		return 0;
 	}
 

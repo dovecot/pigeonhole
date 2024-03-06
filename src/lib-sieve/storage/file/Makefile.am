@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 libsieve_storage_file_la_SOURCES = \
 	sieve-file-script.c \
 	sieve-file-script-sequence.c \
+	sieve-file-storage-settings.c \
 	sieve-file-storage-active.c \
 	sieve-file-storage-save.c \
 	sieve-file-storage-list.c \

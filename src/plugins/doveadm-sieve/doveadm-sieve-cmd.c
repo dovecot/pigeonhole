@@ -118,6 +118,7 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 		return -1;
 
 	if (sieve_storage_create_personal(ctx->svinst, user,
+					  SIEVE_SCRIPT_CAUSE_ANY,
 					  SIEVE_STORAGE_FLAG_READWRITE,
 					  &ctx->storage, &error_code) < 0) {
 		switch (error_code) {

@@ -113,8 +113,9 @@ sieve_file_storage_active_parse_link(struct sieve_file_storage *fstorage,
 	if (strcmp(scriptpath, fstorage->path) != 0) {
 		e_warning(storage->event,
 			  "Active sieve script symlink %s is broken: "
-			  "Invalid/unknown path to storage (points to %s).",
-			  fstorage->active_path, scriptpath);
+			  "Invalid/unknown path to storage "
+			  "(points to %s, expected %s)",
+			  fstorage->active_path, scriptpath, fstorage->path);
 		return NULL;
 	}
 

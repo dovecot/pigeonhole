@@ -8,6 +8,7 @@
 #include "mkdir-parents.h"
 #include "eacces-error.h"
 #include "unlink-old-files.h"
+#include "settings.h"
 #include "mail-storage-private.h"
 
 #include "sieve.h"
@@ -473,37 +474,18 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 	}
 
 	fstorage->path = p_strdup(storage->pool, storage_path);
-	storage->location = fstorage->path;
-
 	return 0;
 }
 
 static int
 sieve_file_storage_init_from_settings(
 	struct sieve_file_storage *fstorage,
-	const char *const *options)
+	const struct sieve_file_storage_settings *set)
 {
 	struct sieve_storage *storage = &fstorage->storage;
-	const char *storage_path = storage->location;
-	const char *value, *active_path = "";
+	const char *storage_path = set->script_path;
+	const char *active_path = set->script_active_path;
 	bool exists = FALSE;
-
-	if (options != NULL) {
-		while (*options != NULL) {
-			const char *option = *options;
-
-			if (str_begins_icase(option, "active=", &value) &&
-			    *value != '\0') {
-				active_path = value;
-			} else {
-				sieve_storage_set_critical(
-					storage, "Invalid option '%s'", option);
-				return -1;
-			}
-
-			options++;
-		}
-	}
 
 	/* Get full storage path */
 
@@ -512,9 +494,12 @@ sieve_file_storage_init_from_settings(
 
 	/* Stat storage directory */
 
+	bool is_personal = sieve_storage_is_personal(storage);
+
 	if (storage_path != NULL && *storage_path != '\0') {
 		if (sieve_file_storage_stat(fstorage, storage_path) < 0) {
-			if (storage->error_code != SIEVE_ERROR_NOT_FOUND)
+			if (!is_personal ||
+			    storage->error_code != SIEVE_ERROR_NOT_FOUND)
 				return -1;
 			if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0) {
 				/* For backwards compatibility, recognize when
@@ -561,7 +546,7 @@ sieve_file_storage_init_from_settings(
 	}
 
 	if ((active_path == NULL || *active_path == '\0') &&
-	    (storage->main_storage ||
+	    (is_personal ||
 	     (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0)) {
 		e_debug(storage->event,
 			"Active script path is unconfigured; "
@@ -574,15 +559,23 @@ sieve_file_storage_init_from_settings(
 					      storage_path, exists);
 }
 
-static int
-sieve_file_storage_init(struct sieve_storage *storage,
-			const char *const *options)
+static int sieve_file_storage_init(struct sieve_storage *storage)
 {
 	struct sieve_file_storage *fstorage =
 		container_of(storage, struct sieve_file_storage, storage);
+	const struct sieve_file_storage_settings *fstorage_set;
+	const char *error;
 	int ret;
 
-	ret = sieve_file_storage_init_from_settings(fstorage, options);
+	if (settings_get(storage->event,
+			 &sieve_file_storage_setting_parser_info, 0,
+			 &fstorage_set, &error) < 0) {
+		sieve_storage_set_critical(storage, "%s",error);
+		return -1;
+	}
+
+	ret = sieve_file_storage_init_from_settings(fstorage, fstorage_set);
+	settings_free(fstorage_set);
 	if (ret < 0)
 		return -1;
 
@@ -591,15 +584,16 @@ sieve_file_storage_init(struct sieve_storage *storage,
 
 static int
 sieve_file_storage_do_autodetect(
-	struct sieve_instance *svinst, struct event *event,
-	const char *active_path,
+	struct sieve_instance *svinst, struct event *event, const char *cause,
+	const struct sieve_storage_settings *storage_set,
+	const struct sieve_file_storage_settings *fstorage_set,
 	enum sieve_storage_flags flags, struct sieve_storage **storage_r,
 	enum sieve_error *error_code_r, const char **error_r)
 {
 	const char *home = sieve_environment_get_homedir(svinst);
 	int mode = ((flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ?
 		    R_OK|W_OK|X_OK : R_OK|X_OK);
-	const char *storage_path = NULL;
+	const char *storage_path = fstorage_set->script_path;
 
 	if (storage_path == NULL || *storage_path == '\0') {
 		/* We'll need to figure out the storage location ourself.
@@ -631,12 +625,14 @@ sieve_file_storage_do_autodetect(
 
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
+	const char *active_path = NULL;
 	bool exists = FALSE;
 	int ret;
 
-	ret = sieve_storage_alloc(svinst, event, &sieve_file_storage,
-				  "", flags, TRUE, &storage,
-				  error_code_r, error_r);
+	ret = sieve_storage_alloc_with_settings(svinst, event,
+						&sieve_file_storage, cause,
+						storage_set, flags, &storage,
+						error_code_r, error_r);
 	if (ret < 0)
 		return -1;
 
@@ -647,7 +643,7 @@ sieve_file_storage_do_autodetect(
 	bool tried_active = FALSE;
 	while (!tried_active) {
 		if (storage_path == NULL || *storage_path == '\0') {
-			storage_path = active_path;
+			storage_path = fstorage_set->script_active_path;
 			if (storage_path == NULL || *storage_path == '\0')
 				storage_path = SIEVE_FILE_DEFAULT_ACTIVE_PATH;
 			tried_active = TRUE;
@@ -701,6 +697,7 @@ sieve_file_storage_do_autodetect(
 
 		/* Success */
 		exists = TRUE;
+		active_path = fstorage_set->script_active_path;
 	} else if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0) {
 		exists = TRUE;
 		active_path = storage_path;
@@ -723,32 +720,48 @@ sieve_file_storage_do_autodetect(
 	}
 
 	*storage_r = storage;
-	return 0;
+	return 1;
 }
 
 static int
 sieve_file_storage_autodetect(struct sieve_instance *svinst,
-			      const char *active_path,
+			      struct event *event, const char *cause,
+			      const struct sieve_storage_settings *storage_set,
 			      enum sieve_storage_flags flags,
 			      struct sieve_storage **storage_r,
 			      enum sieve_error *error_code_r,
 			      const char **error_r)
 {
-	struct event *event = svinst->event;
+	const struct sieve_file_storage_settings *fstorage_set;
 	int ret;
+
+	if (!sieve_storage_settings_match_script_type(
+		storage_set, SIEVE_STORAGE_TYPE_PERSONAL))
+		return 0;
 
 	e_debug(event, "Performing auto-detection");
 
-	T_BEGIN {
-		ret = sieve_file_storage_do_autodetect(
-			svinst, event, active_path, flags,
-			storage_r, error_code_r, error_r);
-	}  T_END_PASS_STR_IF(ret < 0, error_r);
-	
+	const char *error;
+
+	if (settings_get(event, &sieve_file_storage_setting_parser_info, 0,
+			 &fstorage_set, &error) < 0) {
+		e_error(event, "%s", error);
+		sieve_error_create_internal(error_code_r, error_r);
+		return -1;
+	}
+
+	ret = sieve_file_storage_do_autodetect(
+		svinst, event, cause, storage_set, fstorage_set, flags,
+		storage_r, error_code_r, error_r);
+
+	settings_free(fstorage_set);
 	return ret;
 }
 
 int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
+				      const char *cause,
+				      const char *script_type,
+				      const char *storage_name,
 				      const char *path,
 				      enum sieve_storage_flags flags,
 				      struct sieve_file_storage **fstorage_r,
@@ -764,9 +777,10 @@ int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 	*fstorage_r = NULL;
 	sieve_error_args_init(&error_code_r, &error_r);
 
-	ret = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
-				  "", flags, FALSE, &storage,
-				  error_code_r, error_r);
+	ret = sieve_storage_alloc(svinst, svinst->event, &sieve_file_storage,
+				  cause, script_type, storage_name,
+				  sieve_script_file_get_scriptname(path),
+				  flags, &storage, error_code_r, error_r);
 	if (ret < 0)
 		return -1;
 	fstorage = container_of(storage, struct sieve_file_storage, storage);

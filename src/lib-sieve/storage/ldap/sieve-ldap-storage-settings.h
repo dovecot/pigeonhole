@@ -1,7 +1,9 @@
 #ifndef SIEVE_LDAP_STORAGE_SETTINGS_H
 #define SIEVE_LDAP_STORAGE_SETTINGS_H
 
-struct sieve_ldap_storage_settings {
+struct sieve_ldap_settings {
+	pool_t pool;
+
 	const char *hosts;
 	const char *uris;
 	const char *dn;
@@ -28,14 +30,21 @@ struct sieve_ldap_storage_settings {
 	const char *ldaprc_path;
 	const char *debug_level;
 
-	const char *sieve_ldap_script_attr;
-	const char *sieve_ldap_mod_attr;
-	const char *sieve_ldap_filter;
-
 	/* ... */
 	struct {
 		int deref, scope, tls_require_cert;
 	} parsed;
 };
+
+struct sieve_ldap_storage_settings {
+	pool_t pool;
+
+	const char *script_attr;
+	const char *mod_attr;
+	const char *filter;
+};
+
+extern const struct setting_parser_info sieve_ldap_setting_parser_info;
+extern const struct setting_parser_info sieve_ldap_storage_setting_parser_info;
 
 #endif

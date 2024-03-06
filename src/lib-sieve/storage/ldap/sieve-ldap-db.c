@@ -256,19 +256,19 @@ void db_ldap_request(struct ldap_connection *conn,
 static int db_ldap_connect_finish(struct ldap_connection *conn, int ret)
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
-	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
+	const struct sieve_ldap_settings *set = conn->lstorage->ldap_set;
 
 	if (ret == LDAP_SERVER_DOWN) {
 		e_error(storage->event, "db: "
 			"Can't connect to server: %s",
-			set->uris != NULL ?
+			*set->uris != '\0' ?
 			set->uris : set->hosts);
 		return -1;
 	}
 	if (ret != LDAP_SUCCESS) {
 		e_error(storage->event, "db: "
 			"binding failed (dn %s): %s",
-			set->dn == NULL ? "(none)" : set->dn,
+			*set->dn == '\0' ? "(none)" : set->dn,
 			ldap_get_error(conn));
 		return -1;
 	}
@@ -277,7 +277,7 @@ static int db_ldap_connect_finish(struct ldap_connection *conn, int ret)
 	conn->conn_state = LDAP_CONN_STATE_BOUND;
 	e_debug(storage->event, "db: "
 		"Successfully bound (dn %s)",
-		set->dn == NULL ? "(none)" : set->dn);
+		*set->dn == '\0' ? "(none)" : set->dn);
 	while (db_ldap_request_queue_next(conn))
 		;
 	return 0;
@@ -575,7 +575,7 @@ static void ldap_connection_timeout(struct ldap_connection *conn)
 
 static int db_ldap_bind(struct ldap_connection *conn)
 {
-	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
+	const struct sieve_ldap_settings *set = conn->lstorage->ldap_set;
 	int msgid;
 
 	i_assert(conn->conn_state != LDAP_CONN_STATE_BINDING);
@@ -653,7 +653,7 @@ db_ldap_set_opt_str(struct ldap_connection *conn, int opt, const char *value,
 
 static int db_ldap_set_tls_options(struct ldap_connection *conn)
 {
-	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
+	const struct sieve_ldap_settings *set = conn->lstorage->ldap_set;
 
 	if (!set->tls)
 		return 0;
@@ -674,7 +674,7 @@ static int db_ldap_set_tls_options(struct ldap_connection *conn)
 	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CIPHER_SUITE,
 				set->tls_cipher_suite, "tls_cipher_suite") < 0)
 		return -1;
-	if (set->tls_require_cert != NULL) {
+	if (*set->tls_require_cert != '\0') {
 		if (db_ldap_set_opt(conn, LDAP_OPT_X_TLS_REQUIRE_CERT,
 				    &set->parsed.tls_require_cert,
 				    "tls_require_cert",
@@ -682,11 +682,11 @@ static int db_ldap_set_tls_options(struct ldap_connection *conn)
 			return -1;
 	}
 #else
-	if (set->tls_ca_cert_file != NULL ||
-	    set->tls_ca_cert_dir != NULL ||
-	    set->tls_cert_file != NULL ||
-	    set->tls_key_file != NULL ||
-	    set->tls_cipher_suite != NULL) {
+	if (*set->tls_ca_cert_file != '\0' ||
+	    *set->tls_ca_cert_dir != '\0' ||
+	    *set->tls_cert_file != '\0' ||
+	    *set->tls_key_file != '\0' ||
+	    *set->tls_cipher_suite != '\0') {
 		e_warning(&conn->lstorage->storage, "db: "
 			  "tls_* settings ignored, "
 			  "your LDAP library doesn't seem to support them");
@@ -697,7 +697,7 @@ static int db_ldap_set_tls_options(struct ldap_connection *conn)
 
 static int db_ldap_set_options(struct ldap_connection *conn)
 {
-	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
+	const struct sieve_ldap_settings *set = conn->lstorage->ldap_set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	unsigned int ldap_version;
 	int value;
@@ -737,7 +737,7 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 
 int sieve_ldap_db_connect(struct ldap_connection *conn)
 {
-	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
+	const struct sieve_ldap_settings *set = conn->lstorage->ldap_set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct timeval start, end;
 	int debug_level;
@@ -757,7 +757,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 		i_gettimeofday(&start);
 	i_assert(conn->pending_count == 0);
 	if (conn->ld == NULL) {
-		if (set->uris != NULL) {
+		if (*set->uris != '\0') {
 #ifdef LDAP_HAVE_INITIALIZE
 			if (ldap_initialize(&conn->ld,
 					    set->uris) != LDAP_SUCCESS)
@@ -787,7 +787,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 		ret = ldap_start_tls_s(conn->ld, NULL, NULL);
 		if (ret != LDAP_SUCCESS) {
 			if (ret == LDAP_OPERATIONS_ERROR &&
-			    set->uris != NULL &&
+			    *set->uris != '\0' &&
 			    str_begins_with(set->uris, "ldaps:")) {
 				e_error(storage->event, "db: "
 					"Don't use both tls=yes and ldaps URI");
@@ -1052,7 +1052,7 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 
 	attr = ldap_first_attribute(conn->ld, entry, &ber);
 	while (attr != NULL) {
-		if (strcmp(attr, set->sieve_ldap_mod_attr) == 0) {
+		if (strcmp(attr, set->mod_attr) == 0) {
 			vals = ldap_get_values(conn->ld, entry, attr);
 			if (vals == NULL || vals[0] == NULL)
 				return 0;
@@ -1061,7 +1061,7 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 				e_warning(storage->event, "db: "
 					  "Search returned more than one Sieve modified attribute '%s'; "
 					  "using only the first one.",
-					  set->sieve_ldap_mod_attr);
+					  set->mod_attr);
 			}
 
 			*modattr_r = p_strdup(pool, vals[0]);
@@ -1092,7 +1092,7 @@ sieve_ldap_db_get_script(struct ldap_connection *conn, LDAPMessage *entry,
 
 	attr = ldap_first_attribute(conn->ld, entry, &ber);
 	while (attr != NULL) {
-		if (strcmp(attr, set->sieve_ldap_script_attr) == 0) {
+		if (strcmp(attr, set->script_attr) == 0) {
 			vals = ldap_get_values_len(conn->ld, entry, attr);
 			if (vals == NULL || vals[0] == NULL)
 				return 0;
@@ -1101,7 +1101,7 @@ sieve_ldap_db_get_script(struct ldap_connection *conn, LDAPMessage *entry,
 				e_warning(storage->event, "db: "
 					  "Search returned more than one Sieve script attribute '%s'; "
 					  "using only the first one.",
-					  set->sieve_ldap_script_attr);
+					  set->script_attr);
 			}
 
 			size = vals[0]->bv_len;
@@ -1210,6 +1210,7 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
 {
 	struct sieve_ldap_storage *lstorage = conn->lstorage;
 	struct sieve_storage *storage = &lstorage->storage;
+	const struct sieve_ldap_settings *ldap_set = lstorage->ldap_set;
 	const struct sieve_ldap_storage_settings *set = lstorage->set;
 	struct sieve_ldap_script_lookup_request *request;
 	char **attr_names;
@@ -1226,31 +1227,31 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
 	};
 
 	str = t_str_new(512);
-	if (var_expand(str, set->base, &params, &error) < 0) {
+	if (var_expand(str, ldap_set->base, &params, &error) < 0) {
 		e_error(storage->event, "db: "
 			"Failed to expand base=%s: %s",
-			set->base, error);
+			ldap_set->base, error);
 		return -1;
 	}
 	request->request.base = p_strdup(pool, str_c(str));
 
 	attr_names = p_new(pool, char *, 3);
-	attr_names[0] = p_strdup(pool, set->sieve_ldap_mod_attr);
+	attr_names[0] = p_strdup(pool, set->mod_attr);
 
 	str_truncate(str, 0);
-	if (var_expand(str, set->sieve_ldap_filter, &params, &error) < 0) {
+	if (var_expand(str, set->filter, &params, &error) < 0) {
 		e_error(storage->event, "db: "
 			"Failed to expand sieve_ldap_filter=%s: %s",
-			set->sieve_ldap_filter, error);
+			set->filter, error);
 		return -1;
 	}
 
-	request->request.scope = lstorage->set->parsed.scope;
+	request->request.scope = ldap_set->parsed.scope;
 	request->request.filter = p_strdup(pool, str_c(str));
 	request->request.attributes = attr_names;
 
 	e_debug(storage->event, "base=%s scope=%s filter=%s fields=%s",
-		request->request.base, lstorage->set->scope,
+		request->request.base, ldap_set->scope,
 		request->request.filter,
 		t_strarray_join((const char **)attr_names, ","));
 
@@ -1317,7 +1318,7 @@ int sieve_ldap_db_read_script(struct ldap_connection *conn,
 	request->request.base = p_strdup(pool, dn);
 
 	attr_names = p_new(pool, char *, 3);
-	attr_names[0] = p_strdup(pool, set->sieve_ldap_script_attr);
+	attr_names[0] = p_strdup(pool, set->script_attr);
 
 	request->request.scope = LDAP_SCOPE_BASE;
 	request->request.filter = "(objectClass=*)";

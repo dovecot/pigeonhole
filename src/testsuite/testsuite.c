@@ -8,10 +8,12 @@
 #include "ostream.h"
 #include "hostpid.h"
 #include "path-util.h"
+#include "settings.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
 #include "sieve-script.h"
+#include "sieve-storage.h"
 #include "sieve-binary.h"
 #include "sieve-result.h"
 #include "sieve-interpreter.h"
@@ -23,6 +25,7 @@
 #include "testsuite-settings.h"
 #include "testsuite-result.h"
 #include "testsuite-message.h"
+#include "testsuite-script.h"
 #include "testsuite-smtp.h"
 #include "testsuite-mailstore.h"
 
@@ -156,21 +159,77 @@ int main(int argc, char **argv)
 	else
 		sieve_dir = t_strdup_until(abspath, sieve_dir);
 
-	testsuite_setting_set("sieve",
-			      t_strdup_printf("file:%s/included;active=~/.dovecot.sieve",
-					      sieve_dir));
-	testsuite_setting_set("sieve_global",
-			      t_strdup_printf("%s/included-global", sieve_dir));
-
 	/* Finish testsuite initialization */
 	svinst = sieve_tool_init_finish(sieve_tool, FALSE, FALSE);
 	testsuite_init(svinst, sieve_dir, log_stdout);
 
 	printf("Test case: %s:\n\n", scriptfile);
 
+	struct settings_instance *set_instance =
+		settings_instance_find(svinst->event);
+
+	/* Configure main test script */
+	settings_override(set_instance, "sieve_script+", "testsuite-main",
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/testsuite-main/sieve_script_storage",
+			  "testsuite-main",
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/testsuite-main/sieve_script_name",
+			  testsuite_script_get_name(scriptfile),
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/testsuite-main/sieve_script_type",
+			  "testsuite", SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/testsuite-main/sieve_script_driver",
+			  "file", SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/testsuite-main/sieve_script_path",
+			  scriptfile, SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+
+	/* Configure personal storage */
+	settings_override(set_instance, "sieve_script+", "included",
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/included/sieve_script_storage",
+			  "included",
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/included/sieve_script_type",
+			  SIEVE_STORAGE_TYPE_PERSONAL,
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/included/sieve_script_driver",
+			  "file", SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/included/sieve_script_path",
+			  t_strdup_printf("%s/included", sieve_dir),
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+
+	/* Configure global storage */
+	settings_override(set_instance, "sieve_script+", "included-global",
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/included-global/sieve_script_storage",
+			  "included-global",
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/included-global/sieve_script_type",
+			  SIEVE_STORAGE_TYPE_GLOBAL,
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/included-global/sieve_script_driver",
+			  "file", SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  "sieve_script/included-global/sieve_script_path",
+			  t_strdup_printf("%s/included-global", sieve_dir),
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+
 	/* Compile sieve script */
-	if (sieve_compile(svinst, scriptfile, NULL,
-			  testsuite_log_main_ehandler, 0,
+	if (sieve_compile(svinst, SIEVE_SCRIPT_CAUSE_ANY, "testsuite-main",
+			  NULL, testsuite_log_main_ehandler, 0,
 			  &sbin, NULL) < 0) {
 		testsuite_testcase_fail("failed to compile testcase script");
 	} else {

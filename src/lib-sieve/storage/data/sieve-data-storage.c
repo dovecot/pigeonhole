@@ -26,8 +26,7 @@ static struct sieve_storage *sieve_data_storage_alloc(void)
 }
 
 static int
-sieve_data_storage_init(struct sieve_storage *storage ATTR_UNUSED,
-			const char *const *options ATTR_UNUSED)
+sieve_data_storage_init(struct sieve_storage *storage ATTR_UNUSED)
 {
 	return 0;
 }

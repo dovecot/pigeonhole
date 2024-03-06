@@ -50,8 +50,9 @@ int sieve_compile_script(struct sieve_script *script,
 /* Compile a Sieve script from a Sieve script location string. Returns Sieve
    binary upon success and NULL upon failure. The provided script_name is used
    for the internally created Sieve script object. */
-int sieve_compile(struct sieve_instance *svinst, const char *script_location,
-		  const char *script_name, struct sieve_error_handler *ehandler,
+int sieve_compile(struct sieve_instance *svinst, const char *script_cause,
+		  const char *storage_name, const char *script_name,
+		  struct sieve_error_handler *ehandler,
 		  enum sieve_compile_flags flags, struct sieve_binary **sbin_r,
 		  enum sieve_error *error_code_r);
 
@@ -75,8 +76,9 @@ int sieve_open_script(struct sieve_script *script,
    not exist or if it contains errors, the script is (re-)compiled. Note that
    errors in the bytecode are caught only at runtime.
  */
-int sieve_open(struct sieve_instance *svinst, const char *script_location,
-	       const char *script_name, struct sieve_error_handler *ehandler,
+int sieve_open(struct sieve_instance *svinst, const char *script_cause,
+	       const char *script_storage, const char *script_name,
+	       struct sieve_error_handler *ehandler,
 	       enum sieve_compile_flags flags, struct sieve_binary **sbin_r,
 	       enum sieve_error *error_code_r);
 

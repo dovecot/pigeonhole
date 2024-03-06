@@ -14,6 +14,7 @@ print '#include "lib.h"'."\n";
 print '#include "array.h"'."\n";
 print '#include "str.h"'."\n";
 print '#include "ipwd.h"'."\n";
+print '#include "env-util.h"'."\n";
 print '#include "var-expand.h"'."\n";
 print '#include "file-lock.h"'."\n";
 print '#include "fsync-mode.h"'."\n";
@@ -29,6 +30,9 @@ print '#include "sieve-address-source.h"'."\n";
 print '#include "managesieve-url.h"'."\n";
 print '#include "pigeonhole-settings.h"'."\n";
 print '#include <unistd.h>'."\n";
+print "#ifdef LDAP_PLUGIN\n";
+print '#include <ldap.h>'."\n";
+print "#endif\n";
 print '#define CONFIG_BINARY'."\n";
 
 my @services = ();

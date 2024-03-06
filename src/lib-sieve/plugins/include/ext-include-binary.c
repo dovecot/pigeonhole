@@ -290,6 +290,10 @@ ext_include_binary_open(const struct sieve_extension *ext,
 	struct ext_include_context *extctx = ext->context;
 	struct ext_include_binary_context *binctx =
 		(struct ext_include_binary_context *)context;
+	struct sieve_script *bin_script = sieve_binary_script(sbin);
+	const char *cause = (bin_script == NULL ?
+			     SIEVE_SCRIPT_CAUSE_ANY :
+			     sieve_script_cause(bin_script));
 	struct sieve_binary_block *sblock;
 	unsigned int depcount, i, block_id;
 	sieve_size_t offset;
@@ -367,7 +371,8 @@ ext_include_binary_open(const struct sieve_extension *ext,
 		}
 
 		/* Can we open the script dependency ? */
-		if (ext_include_open_script(ext, location, str_c(script_name),
+		if (ext_include_open_script(ext, location, cause,
+					    str_c(script_name),
 					    &script, &error_code) < 0) {
 			if (error_code != SIEVE_ERROR_NOT_FOUND) {
 				/* No, recompile */

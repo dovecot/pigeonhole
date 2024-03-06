@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "settings.h"
 
 #include "sieve.h"
 #include "sieve-common.h"
@@ -63,6 +64,7 @@ static struct sieve_binary *
 _testsuite_script_compile(const struct sieve_runtime_env *renv,
 			  const char *script)
 {
+	static unsigned int storage_id = 0;
 	struct sieve_instance *svinst = testsuite_sieve_instance;
 	struct sieve_binary *sbin;
 	const char *script_path;
@@ -75,8 +77,36 @@ _testsuite_script_compile(const struct sieve_runtime_env *renv,
 		return NULL;
 
 	script_path = t_strconcat(script_path, "/", script, NULL);
-	if (sieve_compile(svinst, script_path, NULL,
-			  testsuite_log_ehandler, 0, &sbin, NULL) < 0)
+
+	const char *storage_name = t_strdup_printf("testsuite-script%u",
+						   storage_id++);
+	const char *script_name = testsuite_script_get_name(script_path);
+
+	struct settings_instance *set_instance =
+		settings_instance_find(svinst->event);
+	settings_override(set_instance, "sieve_script+", storage_name,
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  t_strdup_printf("sieve_script/%s/sieve_script_name",
+					  storage_name),
+			  script_name,
+			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  t_strdup_printf("sieve_script/%s/sieve_script_type",
+					  storage_name),
+			  "testsuite", SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  t_strdup_printf("sieve_script/%s/sieve_script_driver",
+					  storage_name),
+			  "file", SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+	settings_override(set_instance,
+			  t_strdup_printf("sieve_script/%s/sieve_script_path",
+					  storage_name),
+			  script_path, SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
+
+	if (sieve_compile(svinst, SIEVE_SCRIPT_CAUSE_ANY,
+			  storage_name, script_name, testsuite_log_ehandler, 0,
+			  &sbin, NULL) < 0)
 		return NULL;
 
 	return sbin;

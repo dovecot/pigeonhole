@@ -15,23 +15,15 @@
 struct sieve_ldap_storage;
 
 /*
- * LDAP settings
- */
-
-int sieve_ldap_storage_read_settings(struct sieve_ldap_storage *lstorage,
-				     const char *config_path);
-
-/*
  * Storage class
  */
 
 struct sieve_ldap_storage {
 	struct sieve_storage storage;
 
-	struct sieve_ldap_storage_settings *set;
+	const struct sieve_ldap_settings *ldap_set;
+	const struct sieve_ldap_storage_settings *set;
 	time_t set_mtime;
-
-	const char *config_file;
 
 	struct ldap_connection *conn;
 };

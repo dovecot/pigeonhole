@@ -128,7 +128,7 @@ void imap_sieve_deinit(struct imap_sieve **_isieve)
 }
 
 static int
-imap_sieve_get_storage(struct imap_sieve *isieve,
+imap_sieve_get_storage(struct imap_sieve *isieve, const char *cause,
 		       struct sieve_storage **storage_r)
 {
 	enum sieve_storage_flags storage_flags = 0;
@@ -147,7 +147,8 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
 		return -1;
 	}
 
-	if (sieve_storage_create_personal(isieve->svinst, user, storage_flags,
+	if (sieve_storage_create_personal(isieve->svinst, user,
+					  cause, storage_flags,
 					  &isieve->storage, &error_code) < 0) {
 		if (error_code == SIEVE_ERROR_TEMP_FAILURE)
 			return -1;
@@ -416,34 +417,93 @@ imap_sieve_run_init_trace_log(struct imap_sieve_run *isrun,
 }
 
 static int
+imap_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
+				   struct event *event_parent,
+				   const char *cause, const char *type,
+				   ARRAY_TYPE(imap_sieve_run_script) *scripts,
+				   enum sieve_error *error_code_r)
+{
+	struct sieve_script_sequence *sseq;
+	struct sieve_script *script;
+	bool found = FALSE;
+	int ret;
+
+	ret = sieve_script_sequence_create(svinst, event_parent, cause, type,
+					   &sseq, error_code_r, NULL);
+	if (ret < 0)
+		return (*error_code_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
+
+	while (ret >= 0) {
+		ret = sieve_script_sequence_next(sseq, &script,
+						 error_code_r, NULL);
+		if (ret < 0) {
+			if (*error_code_r == SIEVE_ERROR_TEMP_FAILURE) {
+				sieve_script_sequence_free(&sseq);
+				return -1;
+			}
+			continue;
+		}
+		if (ret == 0)
+			break;
+
+		struct imap_sieve_run_script *rscript;
+
+		rscript = array_append_space(scripts);
+		rscript->script = script;
+		found = TRUE;
+	}
+
+	sieve_script_sequence_free(&sseq);
+	return (found ? 1 : 0);
+}
+
+static int
+imap_sieve_multiscript_get_scripts_for(
+	struct sieve_instance *svinst, struct event *dest_mbox_event,
+	struct mailbox *src_mailbox, const char *cause, const char *type,
+	ARRAY_TYPE(imap_sieve_run_script) *scripts,
+	enum sieve_error *error_code_r)
+{
+	struct event *event;
+	int ret;
+
+	/* Restrict script storages to source mailbox if we have one. */
+	event = event_create(dest_mbox_event);
+	if (strcasecmp(cause, "copy") == 0 && src_mailbox != NULL) {
+		event_add_str(event, "imapsieve_from",
+			      mailbox_get_vname(src_mailbox));
+	}
+	ret = imap_sieve_multiscript_get_scripts(svinst, event,
+						 cause, type, scripts,
+						 error_code_r);
+	event_unref(&event);
+	if (ret != 0)
+		return ret;
+
+	/* None found */
+	return 0;
+}
+
+static int
 imap_sieve_run_init_scripts(struct imap_sieve *isieve,
+			    struct event *dest_mbox_event,
 			    ARRAY_TYPE(imap_sieve_run_script) *scripts,
+			    struct mailbox *src_mailbox, const char *cause,
 			    struct sieve_storage *storage,
 			    const char *script_name,
-			    const char *const *scripts_before,
-			    const char *const *scripts_after)
+			    const char *before_type, const char *after_type)
 {
 	struct sieve_instance *svinst = isieve->svinst;
 	enum sieve_error error_code;
-	const char *const *sp;
 
 	/* Admin scripts before user script */
-	if (scripts_before != NULL) {
-		for (sp = scripts_before; *sp != NULL; sp++) {
-			struct sieve_script *script;
-
-			if (sieve_script_create_open(svinst, *sp, NULL, &script,
-						     &error_code, NULL) < 0) {
-				if (error_code == SIEVE_ERROR_TEMP_FAILURE)
-					return -1;
-				continue;
-			}
-
-			struct imap_sieve_run_script *rscript;
-
-			rscript = array_append_space(scripts);
-			rscript->script = script;
-		}
+	if (before_type != NULL &&
+	    imap_sieve_multiscript_get_scripts_for(svinst, dest_mbox_event,
+						   src_mailbox, cause,
+						   before_type, scripts,
+						   &error_code) < 0) {
+		if (error_code == SIEVE_ERROR_TEMP_FAILURE)
+			return -1;
 	}
 
 	/* The user script */
@@ -464,33 +524,23 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 	}
 
 	/* Admin scripts after user script */
-	if (scripts_after != NULL) {
-		for (sp = scripts_after; *sp != NULL; sp++) {
-			struct sieve_script *script;
-
-			if (sieve_script_create_open(svinst, *sp, NULL, &script,
-						     &error_code, NULL) < 0) {
-				if (error_code == SIEVE_ERROR_TEMP_FAILURE)
-					return -1;
-				continue;
-			}
-
-			struct imap_sieve_run_script *rscript;
-
-			rscript = array_append_space(scripts);
-			rscript->script = script;
-		}
+	if (imap_sieve_multiscript_get_scripts_for(svinst, dest_mbox_event,
+						   src_mailbox, cause,
+						   after_type, scripts,
+						   &error_code) < 0) {
+		if (error_code == SIEVE_ERROR_TEMP_FAILURE)
+			return -1;
 	}
 
 	return 0;
 }
 
 int imap_sieve_run_init(struct imap_sieve *isieve,
+			struct event *dest_mbox_event,
 			struct mailbox *dest_mailbox,
 			struct mailbox *src_mailbox,
 			const char *cause, const char *script_name,
-			const char *const *scripts_before,
-			const char *const *scripts_after,
+			const char *before_type, const char *after_type,
 			struct imap_sieve_run **isrun_r)
 {
 	struct imap_sieve_run *isrun;
@@ -506,16 +556,17 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 	/* Get storage for user script */
 	storage = NULL;
 	if (script_name != NULL && *script_name != '\0' &&
-	    (ret = imap_sieve_get_storage(isieve, &storage)) < 0)
+	    (ret = imap_sieve_get_storage(isieve, cause, &storage)) < 0)
 		return ret;
 
 	/* Open all scripts */
 	pool = pool_alloconly_create("imap_sieve_run", 256);
 	p_array_init(&scripts, pool, 16);
 
-	ret = imap_sieve_run_init_scripts(isieve, &scripts,
+	ret = imap_sieve_run_init_scripts(isieve, dest_mbox_event, &scripts,
+					  src_mailbox, cause,
 					  storage, script_name,
-					  scripts_before, scripts_after);
+					  before_type, after_type);
 	if (ret < 0) {
 		struct imap_sieve_run_script *rscript;
 

@@ -33,7 +33,6 @@
 #define IMAP_SIEVE_MAIL_CONTEXT(obj) \
 	MODULE_CONTEXT_REQUIRE(obj, imap_sieve_mail_module)
 
-struct imap_sieve_mailbox_rule;
 struct imap_sieve_user;
 struct imap_sieve_mailbox_event;
 struct imap_sieve_mailbox_transaction;
@@ -48,23 +47,8 @@ enum imap_sieve_command {
 	IMAP_SIEVE_CMD_OTHER
 };
 
-ARRAY_DEFINE_TYPE(imap_sieve_mailbox_rule,
-	struct imap_sieve_mailbox_rule *);
 ARRAY_DEFINE_TYPE(imap_sieve_mailbox_event,
 	struct imap_sieve_mailbox_event);
-
-HASH_TABLE_DEFINE_TYPE(imap_sieve_mailbox_rule,
-	struct imap_sieve_mailbox_rule *,
-	struct imap_sieve_mailbox_rule *);
-
-struct imap_sieve_mailbox_rule {
-	unsigned int index;
-	const char *mailbox;
-	const char *from;
-	const char *const *causes;
-	const char *before, *after;
-	const char *copy_source_after;
-};
 
 struct imap_sieve_user {
 	union mail_user_module_context module_ctx;
@@ -73,9 +57,6 @@ struct imap_sieve_user {
 	struct event *event;
 
 	enum imap_sieve_command cur_cmd;
-
-	HASH_TABLE_TYPE(imap_sieve_mailbox_rule) mbox_rules;
-	ARRAY_TYPE(imap_sieve_mailbox_rule) mbox_patterns;
 
 	bool sieve_active:1;
 	bool user_script:1;
@@ -119,12 +100,6 @@ static MODULE_CONTEXT_DEFINE_INIT(imap_sieve_storage_module,
 				  &mail_storage_module_register);
 static MODULE_CONTEXT_DEFINE_INIT(imap_sieve_mail_module,
 				  &mail_module_register);
-
-static void
-imap_sieve_mailbox_rules_get(struct mail_user *user,
-			     struct mailbox *dst_box, struct mailbox *src_box,
-			     const char *cause,
-			     ARRAY_TYPE(imap_sieve_mailbox_rule) *rules);
 
 struct event_category event_category_imap_sieve = {
 	.name = "imapsieve",
@@ -592,51 +567,20 @@ imap_sieve_mailbox_transaction_run(
 
 	/* Initialize execution */
 	T_BEGIN {
-		ARRAY_TYPE(imap_sieve_mailbox_rule) mbrules;
-		ARRAY_TYPE(const_string) scripts_before, scripts_after;
-		ARRAY_TYPE(const_string) scripts_copy_source;
-		struct imap_sieve_mailbox_rule *rule;
-
-		/* Find matching rules */
-		t_array_init(&mbrules, 16);
-		imap_sieve_mailbox_rules_get(user, dest_box, src_box, cause,
-					     &mbrules);
-
-		/* Apply all matched rules */
-		t_array_init(&scripts_before, 8);
-		t_array_init(&scripts_after, 8);
-		t_array_init(&scripts_copy_source, 4);
-		array_foreach_elem(&mbrules, rule) {
-			if (rule->before != NULL)
-				array_append(&scripts_before, &rule->before, 1);
-			if (rule->after != NULL)
-				array_append(&scripts_after, &rule->after, 1);
-			if (rule->copy_source_after != NULL) {
-				array_append(&scripts_copy_source,
-					     &rule->copy_source_after, 1);
-			}
-		}
-		(void)array_append_space(&scripts_before);
-		(void)array_append_space(&scripts_after);
-
 		/* Initialize */
-		ret = imap_sieve_run_init(isuser->isieve, dest_box, src_box,
-					  cause, script_name,
-					  array_idx(&scripts_before, 0),
-					  array_idx(&scripts_after, 0), &isrun);
+		ret = imap_sieve_run_init(isuser->isieve, dest_isbox->event,
+					  dest_box, src_box, cause, script_name,
+					  SIEVE_STORAGE_TYPE_BEFORE,
+					  SIEVE_STORAGE_TYPE_AFTER, &isrun);
 
 		/* Initialize source script execution */
 		isrun_src = NULL;
 		if (ret > 0 && ismt->src_mail_trans != NULL &&
-		    isuser->cur_cmd == IMAP_SIEVE_CMD_COPY &&
-		    array_count(&scripts_copy_source) > 0) {
-			const char *no_scripts = NULL;
-
-			(void)array_append_space(&scripts_copy_source);
+		    isuser->cur_cmd == IMAP_SIEVE_CMD_COPY) {
 			if (imap_sieve_run_init(
-				isuser->isieve, dest_box, src_box, cause, NULL,
-				&no_scripts, array_idx(&scripts_copy_source, 0),
-				&isrun_src) <= 0)
+				isuser->isieve, dest_isbox->event,
+				dest_box, src_box, cause, NULL,
+				NULL, "copy-source-after", &isrun_src) <= 0)
 				isrun_src = NULL;
 		}
 	} T_END;
@@ -809,289 +753,6 @@ static void imap_sieve_mailbox_allocated(struct mailbox *box)
 }
 
 /*
- * Mailbox rules
- */
-
-static unsigned int
-imap_sieve_mailbox_rule_hash(const struct imap_sieve_mailbox_rule *rule)
-{
-	unsigned int hash = str_hash(rule->mailbox);
-
-	if (rule->from != NULL)
-		hash += str_hash(rule->from);
-	return hash;
-}
-
-static int
-imap_sieve_mailbox_rule_cmp(const struct imap_sieve_mailbox_rule *rule1,
-			    const struct imap_sieve_mailbox_rule *rule2)
-{
-	int ret;
-
-	ret = strcmp(rule1->mailbox, rule2->mailbox);
-	if (ret != 0)
-		return ret;
-	return null_strcmp(rule1->from, rule2->from);
-}
-
-static bool rule_pattern_has_wildcards(const char *pattern)
-{
-	for (; *pattern != '\0'; pattern++) {
-		if (*pattern == '%' || *pattern == '*')
-			return TRUE;
-	}
-	return FALSE;
-}
-
-static void imap_sieve_mailbox_rules_init(struct mail_user *user)
-{
-	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
-	string_t *identifier;
-	unsigned int i = 0;
-	size_t prefix_len;
-
-	if (hash_table_is_created(isuser->mbox_rules))
-		return;
-
-	hash_table_create(&isuser->mbox_rules, default_pool, 0,
-			  imap_sieve_mailbox_rule_hash,
-			  imap_sieve_mailbox_rule_cmp);
-	i_array_init(&isuser->mbox_patterns, 8);
-
-	identifier = t_str_new(256);
-	str_append(identifier, "imapsieve_mailbox");
-	prefix_len = str_len(identifier);
-
-	for (i = 1; ; i++) {
-		struct imap_sieve_mailbox_rule *mbrule;
-		const char *setval;
-		size_t id_len;
-
-		str_truncate(identifier, prefix_len);
-		str_printfa(identifier, "%u", i);
-		id_len = str_len(identifier);
-
-		str_append(identifier, "_name");
-		setval = mail_user_plugin_getenv(user, str_c(identifier));
-		if (setval == NULL || *setval == '\0')
-			break;
-		setval = t_str_trim(setval, "\t ");
-		if (strcasecmp(setval, "INBOX") == 0)
-			setval = t_str_ucase(setval);
-
-		mbrule = p_new(user->pool, struct imap_sieve_mailbox_rule, 1);
-		mbrule->index = i;
-		mbrule->mailbox = p_strdup(user->pool, setval);
-
-		str_truncate(identifier, id_len);
-		str_append(identifier, "_from");
-		setval = mail_user_plugin_getenv(user, str_c(identifier));
-		if (setval != NULL && *setval != '\0') {
-			setval = t_str_trim(setval, "\t ");
-			if (strcasecmp(setval, "INBOX") == 0)
-				setval = t_str_ucase(setval);
-			mbrule->from = p_strdup(user->pool, setval);
-			if (strcmp(mbrule->from, "*") == 0)
-				mbrule->from = NULL;
-		}
-
-		if ((strcmp(mbrule->mailbox, "*") == 0 ||
-		    !rule_pattern_has_wildcards(mbrule->mailbox)) &&
-		    (mbrule->from == NULL ||
-		     !rule_pattern_has_wildcards(mbrule->from)) &&
-		    hash_table_lookup(isuser->mbox_rules, mbrule) != NULL) {
-			e_warning(isuser->event,
-				  "Duplicate static mailbox rule [%u] for mailbox '%s' "
-				  "(skipped)", i, mbrule->mailbox);
-			continue;
-		}
-
-		str_truncate(identifier, id_len);
-		str_append(identifier, "_causes");
-		setval = mail_user_plugin_getenv(user, str_c(identifier));
-		if (setval != NULL && *setval != '\0') {
-			const char *const *cause;
-
-			mbrule->causes = (const char *const *)
-				p_strsplit_spaces(user->pool, setval, " \t,");
-
-			for (cause = mbrule->causes; *cause != NULL; cause++) {
-				if (!imap_sieve_event_cause_valid(*cause))
-					break;
-			}
-			if (*cause != NULL) {
-				e_warning(isuser->event,
-					  "Static mailbox rule [%u] has invalid event cause '%s' "
-					  "(skipped)", i, *cause);
-				continue;
-			}
-		}
-
-		str_truncate(identifier, id_len);
-		str_append(identifier, "_before");
-		setval = mail_user_plugin_getenv(user, str_c(identifier));
-		mbrule->before = p_strdup_empty(user->pool, setval);
-
-		str_truncate(identifier, id_len);
-		str_append(identifier, "_after");
-		setval = mail_user_plugin_getenv(user, str_c(identifier));
-		mbrule->after = p_strdup_empty(user->pool, setval);
-
-		str_truncate(identifier, id_len);
-		str_append(identifier, "_copy_source_after");
-		setval = mail_user_plugin_getenv(user, str_c(identifier));
-		mbrule->copy_source_after = p_strdup_empty(user->pool, setval);
-
-		e_debug(isuser->event, "Static mailbox rule [%u]: "
-			"mailbox='%s' from='%s' causes=(%s) => "
-			"before=%s after=%s%s",
-			mbrule->index, mbrule->mailbox,
-			(mbrule->from == NULL ? "*" : mbrule->from),
-			t_strarray_join(mbrule->causes, " "),
-			(mbrule->before == NULL ? "(none)" :
-			 t_strconcat("'", mbrule->before, "'", NULL)),
-			(mbrule->after == NULL ? "(none)" :
-			 t_strconcat("'", mbrule->after, "'", NULL)),
-			(mbrule->copy_source_after == NULL ? "":
-			 t_strconcat(" copy_source_after='",
-				     mbrule->copy_source_after, "'", NULL)));
-
-		if ((strcmp(mbrule->mailbox, "*") == 0 ||
-		    !rule_pattern_has_wildcards(mbrule->mailbox)) &&
-		    (mbrule->from == NULL ||
-		     !rule_pattern_has_wildcards(mbrule->from))) {
-			hash_table_insert(isuser->mbox_rules, mbrule, mbrule);
-		} else {
-			array_append(&isuser->mbox_patterns, &mbrule, 1);
-		}
-	}
-
-	if (i == 0)
-		e_debug(isuser->event, "No static mailbox rules");
-}
-
-static bool
-imap_sieve_mailbox_rule_match_cause(struct imap_sieve_mailbox_rule *rule,
-				    const char *cause)
-{
-	const char *const *cp;
-
-	if (rule->causes == NULL || *rule->causes == NULL)
-		return TRUE;
-
-	for (cp = rule->causes; *cp != NULL; cp++) {
-		if (strcasecmp(cause, *cp) == 0)
-			return TRUE;
-	}
-	return FALSE;
-}
-
-static void
-imap_sieve_mailbox_rules_match_patterns(
-	struct mail_user *user, struct mailbox *dst_box,
-	struct mailbox *src_box, const char *cause,
-	ARRAY_TYPE(imap_sieve_mailbox_rule) *rules)
-{
-	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
-	struct imap_sieve_mailbox_rule *rule;
-	struct mail_namespace *dst_ns, *src_ns;
-
-	if (array_count(&isuser->mbox_patterns) == 0)
-		return;
-
-	dst_ns = mailbox_get_namespace(dst_box);
-	src_ns = (src_box == NULL ? NULL : mailbox_get_namespace(src_box));
-
-	array_foreach_elem(&isuser->mbox_patterns, rule) {
-		struct imap_match_glob *glob;
-
-		if (src_ns == NULL && rule->from != NULL)
-			continue;
-		if (!imap_sieve_mailbox_rule_match_cause(rule, cause))
-			continue;
-
-		if (strcmp(rule->mailbox, "*") != 0) {
-			glob = imap_match_init(
-				pool_datastack_create(), rule->mailbox, TRUE,
-				mail_namespace_get_sep(dst_ns));
-			if (imap_match(glob, mailbox_get_vname(dst_box))
-				!= IMAP_MATCH_YES)
-				continue;
-		}
-		if (rule->from != NULL) {
-			glob = imap_match_init(
-				pool_datastack_create(), rule->from, TRUE,
-				mail_namespace_get_sep(src_ns));
-			if (imap_match(glob, mailbox_get_vname(src_box)) !=
-			    IMAP_MATCH_YES)
-				continue;
-		}
-
-		e_debug(isuser->event, "Matched static mailbox rule [%u]",
-			rule->index);
-		array_append(rules, &rule, 1);
-	}
-}
-
-static void
-imap_sieve_mailbox_rules_match(struct mail_user *user,
-			       const char *dst_box, const char *src_box,
-			       const char *cause,
-			       ARRAY_TYPE(imap_sieve_mailbox_rule) *rules)
-{
-	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
-	struct imap_sieve_mailbox_rule lookup_rule;
-	struct imap_sieve_mailbox_rule *rule;
-
-	i_zero(&lookup_rule);
-	lookup_rule.mailbox = dst_box;
-	lookup_rule.from = src_box;
-	rule = hash_table_lookup(isuser->mbox_rules, &lookup_rule);
-
-	if (rule != NULL && imap_sieve_mailbox_rule_match_cause(rule, cause)) {
-		struct imap_sieve_mailbox_rule *const *rule_idx;
-		unsigned int insert_idx = array_count(rules);
-
-		/* Insert sorted by rule index */
-		array_foreach(rules, rule_idx) {
-			if (rule->index < (*rule_idx)->index) {
-				insert_idx = array_foreach_idx(rules, rule_idx);
-				break;
-			}
-		}
-		array_insert(rules, insert_idx, &rule, 1);
-
-		e_debug(isuser->event, "Matched static mailbox rule [%u]",
-			rule->index);
-	}
-}
-
-static void
-imap_sieve_mailbox_rules_get(struct mail_user *user,
-			     struct mailbox *dst_box, struct mailbox *src_box,
-			     const char *cause,
-			     ARRAY_TYPE(imap_sieve_mailbox_rule) *rules)
-{
-	const char *dst_name, *src_name;
-
-	imap_sieve_mailbox_rules_init(user);
-
-	imap_sieve_mailbox_rules_match_patterns(user, dst_box, src_box,
-						cause, rules);
-
-	dst_name = mailbox_get_vname(dst_box);
-	src_name = (src_box == NULL ? NULL : mailbox_get_vname(src_box));
-
-	imap_sieve_mailbox_rules_match(user, dst_name, src_name, cause, rules);
-	imap_sieve_mailbox_rules_match(user, "*", src_name, cause, rules);
-	if (src_name != NULL) {
-		imap_sieve_mailbox_rules_match(user, dst_name, NULL,
-					       cause, rules);
-		imap_sieve_mailbox_rules_match(user, "*", NULL, cause, rules);
-	}
-}
-
-/*
  * User
  */
 
@@ -1101,10 +762,6 @@ static void imap_sieve_user_deinit(struct mail_user *user)
 
 	if (isuser->isieve != NULL)
 		imap_sieve_deinit(&isuser->isieve);
-
-	hash_table_destroy(&isuser->mbox_rules);
-	if (array_is_created(&isuser->mbox_patterns))
-		array_free(&isuser->mbox_patterns);
 
 	event_unref(&isuser->event);
 

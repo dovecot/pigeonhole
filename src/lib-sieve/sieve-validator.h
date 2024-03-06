@@ -43,6 +43,7 @@ struct sieve_error_handler *
 sieve_validator_error_handler(struct sieve_validator *valdtr);
 struct sieve_ast *sieve_validator_ast(struct sieve_validator *valdtr);
 struct sieve_script *sieve_validator_script(struct sieve_validator *valdtr);
+const char *sieve_validator_script_cause(struct sieve_validator *valdtr);
 struct sieve_instance *sieve_validator_svinst(struct sieve_validator *valdtr);
 enum sieve_compile_flags
 sieve_validator_compile_flags(struct sieve_validator *valdtr);

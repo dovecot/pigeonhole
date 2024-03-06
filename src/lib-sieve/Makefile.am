@@ -104,6 +104,7 @@ libdovecot_sieve_la_SOURCES = \
 	sieve-lexer.c \
 	sieve-script.c \
 	sieve-storage.c \
+	sieve-storage-settings.c \
 	sieve-storage-sync.c \
 	sieve-ast.c \
 	sieve-binary.c \
@@ -154,6 +155,7 @@ headers = \
 	sieve-script-private.h \
 	sieve-storage.h \
 	sieve-storage-private.h \
+	sieve-storage-settings.h \
 	sieve-ast.h \
 	sieve-binary.h \
 	sieve-binary-private.h \

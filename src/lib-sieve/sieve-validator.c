@@ -218,6 +218,11 @@ struct sieve_script *sieve_validator_script(struct sieve_validator *valdtr)
 	return valdtr->script;
 }
 
+const char *sieve_validator_script_cause(struct sieve_validator *valdtr)
+{
+	return sieve_script_cause(valdtr->script);
+}
+
 struct sieve_instance *sieve_validator_svinst(struct sieve_validator *valdtr)
 {
 	return valdtr->svinst;

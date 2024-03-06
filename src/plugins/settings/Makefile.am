@@ -4,8 +4,12 @@ AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/src/lib-sieve \
+	-I$(top_srcdir)/src/lib-sieve/storage/ldap \
 	-I$(top_srcdir)/src/lib-managesieve \
 	-DSETTINGS_PLUGIN
+if LDAP_PLUGIN
+AM_CPPFLAGS += -DPLUGIN_BUILD -DLDAP_PLUGIN
+endif
 
 libpigeonhole_settings_la_LDFLAGS = -module -avoid-version
 
@@ -17,10 +21,12 @@ libpigeonhole_settings_la_SOURCES = \
 	pigeonhole-settings.c
 libpigeonhole_settings_la_LIBADD = \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la \
-	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la
+	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la \
+	$(LDAP_LIBS)
 libpigeonhole_settings_la_DEPENDENCIES = \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la \
-	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la
+	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la \
+	$(LDAP_LIBS)
 
 noinst_HEADERS = \
 	pigeonhole-settings.h

@@ -6,6 +6,9 @@ struct imap_sieve_settings {
 
 	const char *url;
 	bool expunge_discarded;
+
+	ARRAY_TYPE(const_string) from;
+	const char *from_name;
 };
 
 extern const struct setting_parser_info imap_sieve_setting_parser_info;

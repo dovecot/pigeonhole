@@ -3,11 +3,12 @@
 
 #include "lib.h"
 #include "env-util.h"
-#include "settings-legacy.h"
+#include "settings-parser.h"
 
 #include "sieve-common.h"
 
 #include "sieve-ldap-storage.h"
+#include "sieve-ldap-storage-settings.h"
 
 #if defined(SIEVE_BUILTIN_LDAP) || defined(PLUGIN_BUILD)
 
@@ -15,15 +16,15 @@
 
 #include "sieve-ldap-db.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #undef DEF
 #define DEF(type, name) \
-	DEF_STRUCT_##type(name, sieve_ldap_storage_settings)
+	SETTING_DEFINE_STRUCT_##type("ldap_"#name, name, \
+				     struct sieve_ldap_settings)
 
-static struct setting_def setting_defs[] = {
+static bool
+sieve_ldap_settings_check(void *_set, pool_t pool, const char **error_r);
+
+static const struct setting_define sieve_ldap_setting_defines[] = {
 	DEF(STR, hosts),
 	DEF(STR, uris),
 	DEF(STR, dn),
@@ -39,54 +40,80 @@ static struct setting_def setting_defs[] = {
 	DEF(STR, tls_key_file),
 	DEF(STR, tls_cipher_suite),
 	DEF(STR, tls_require_cert),
-	DEF(STR, deref),
-	DEF(STR, scope),
+	DEF(ENUM, deref),
+	DEF(ENUM, scope),
 	DEF(STR, base),
-	DEF(INT, ldap_version),
+	DEF(UINT, ldap_version),
 	DEF(STR, debug_level),
 	DEF(STR, ldaprc_path),
-	DEF(STR, sieve_ldap_script_attr),
-	DEF(STR, sieve_ldap_mod_attr),
-	DEF(STR, sieve_ldap_filter),
 
-	{ 0, NULL, 0 }
+	SETTING_DEFINE_LIST_END
 };
 
-static struct sieve_ldap_storage_settings default_settings = {
-	.hosts = NULL,
-	.uris = NULL,
-	.dn = NULL,
-	.dnpass = NULL,
+const struct sieve_ldap_settings sieve_ldap_default_settings = {
+	.hosts = "",
+	.uris = "",
+	.dn = "",
+	.dnpass = "",
 	.tls = FALSE,
 	.sasl_bind = FALSE,
-	.sasl_mech = NULL,
-	.sasl_realm = NULL,
-	.sasl_authz_id = NULL,
-	.tls_ca_cert_file = NULL,
-	.tls_ca_cert_dir = NULL,
-	.tls_cert_file = NULL,
-	.tls_key_file = NULL,
-	.tls_cipher_suite = NULL,
-	.tls_require_cert = NULL,
-	.deref = "never",
-	.scope = "subtree",
-	.base = NULL,
+	.sasl_mech = "",
+	.sasl_realm = "",
+	.sasl_authz_id = "",
+	.tls_ca_cert_file = "",
+	.tls_ca_cert_dir = "",
+	.tls_cert_file = "",
+	.tls_key_file = "",
+	.tls_cipher_suite = "",
+	.tls_require_cert = "",
+	.deref = "never:searching:finding:always",
+	.scope = "subtree:onelevel:base",
+	.base = "",
 	.ldap_version = 3,
 	.debug_level = "0",
 	.ldaprc_path = "",
-	.sieve_ldap_script_attr = "mailSieveRuleSource",
-	.sieve_ldap_mod_attr = "modifyTimestamp",
-	.sieve_ldap_filter = "(&(objectClass=posixAccount)(uid=%u))",
 };
 
-static const char *
-parse_setting(const char *key, const char *value,
-	      struct sieve_ldap_storage *lstorage)
-{
-	return parse_setting_from_defs(lstorage->storage.pool, setting_defs,
-				       lstorage->set, key, value);
-}
+const struct setting_parser_info sieve_ldap_setting_parser_info = {
+	.name = "sieve_ldap",
+	.defines = sieve_ldap_setting_defines,
+	.defaults = &sieve_ldap_default_settings,
 
+	.pool_offset1 = 1 + offsetof(struct sieve_ldap_settings, pool),
+	.struct_size = sizeof(struct sieve_ldap_settings),
+	.check_func = sieve_ldap_settings_check,
+};
+
+#undef DEF
+#define DEF(type, name) \
+	SETTING_DEFINE_STRUCT_##type("sieve_script_ldap_"#name, name, \
+				     struct sieve_ldap_storage_settings)
+
+static const struct setting_define sieve_ldap_storage_setting_defines[] = {
+	DEF(STR, script_attr),
+	DEF(STR, mod_attr),
+	DEF(STR, filter),
+
+	SETTING_DEFINE_LIST_END
+};
+
+static struct sieve_ldap_storage_settings sieve_ldap_storage_server_default_settings = {
+	.script_attr = "mailSieveRuleSource",
+	.mod_attr = "modifyTimestamp",
+	.filter = "(&(objectClass=posixAccount)(uid=%u))",
+};
+
+const struct setting_parser_info sieve_ldap_storage_setting_parser_info = {
+	.name = "sieve_ldap_storage",
+
+	.defines = sieve_ldap_storage_setting_defines,
+	.defaults = &sieve_ldap_storage_server_default_settings,
+
+	.pool_offset1 = 1 + offsetof(struct sieve_ldap_storage_settings, pool),
+	.struct_size = sizeof(struct sieve_ldap_storage_settings),
+};
+
+/* <settings checks> */
 static int ldap_deref_from_str(const char *str, int *deref_r)
 {
 	if (strcasecmp(str, "never") == 0)
@@ -135,25 +162,22 @@ static int ldap_tls_require_cert_from_str(const char *str, int *opt_x_tls_r)
 #endif
 
 static bool
-sieve_ldap_settings_check(struct sieve_ldap_storage_settings *set,
+sieve_ldap_settings_check(void *_set, pool_t pool ATTR_UNUSED,
 			  const char **error_r)
 {
+	struct sieve_ldap_settings *set = _set;
 	const char *str;
 
-	if (set->base == NULL) {
-		*error_r = "No search base given";
-		return FALSE;
-	}
-
-	if (set->uris == NULL && set->hosts == NULL) {
-		*error_r = "No uris or hosts set";
+	if (set->base[0] == '\0' &&
+	    settings_get_config_binary() == SETTINGS_BINARY_OTHER) {
+		*error_r = "ldap: No search base given";
 		return FALSE;
 	}
 
 	if (*set->ldaprc_path != '\0') {
 		str = getenv("LDAPRC");
 		if (str != NULL && strcmp(str, set->ldaprc_path) != 0) {
-			*error_r = t_strdup_printf(
+			*error_r = t_strdup_printf("ldap: "
 				"Multiple different ldaprc_path settings not allowed "
 				"(%s and %s)", str, set->ldaprc_path);
 			return FALSE;
@@ -162,23 +186,23 @@ sieve_ldap_settings_check(struct sieve_ldap_storage_settings *set,
 	}
 
 	if (ldap_deref_from_str(set->deref, &set->parsed.deref) < 0) {
-		*error_r = t_strdup_printf(
+		*error_r = t_strdup_printf("ldap: "
 			"Invalid deref option '%s'", set->deref);
 		return FALSE;
 	}
 
 	if (ldap_scope_from_str(set->scope, &set->parsed.scope) < 0) {
-		*error_r = t_strdup_printf(
+		*error_r = t_strdup_printf("ldap: "
 			"Invalid scope option '%s'", set->scope);
 		return FALSE;
 	}
 
 #ifdef OPENLDAP_TLS_OPTIONS
-	if (set->tls_require_cert != NULL &&
+	if (*set->tls_require_cert != '\0' &&
 	    ldap_tls_require_cert_from_str(
 		set->tls_require_cert,
 		&set->parsed.tls_require_cert) < 0) {
-		*error_r = t_strdup_printf(
+		*error_r = t_strdup_printf("ldap: "
 			"Invalid tls_require_cert option '%s'",
 			set->tls_require_cert);
 		return FALSE;
@@ -187,41 +211,6 @@ sieve_ldap_settings_check(struct sieve_ldap_storage_settings *set,
 
 	return TRUE;
 }
-
-int sieve_ldap_storage_read_settings(struct sieve_ldap_storage *lstorage,
-				     const char *config_path)
-{
-	struct sieve_storage *storage = &lstorage->storage;
-	const char *error;
-	struct stat st;
-
-	if (stat(config_path, &st) < 0) {
-		sieve_storage_set_critical(storage,
-			"Failed to read LDAP storage config: "
-			"stat(%s) failed: %m", config_path);
-		return -1;
-	}
-
-	lstorage->set = p_new(storage->pool,
-			      struct sieve_ldap_storage_settings, 1);
-	*lstorage->set = default_settings;
-	lstorage->set_mtime = st.st_mtime;
-
-	if (!settings_read_nosection(config_path, parse_setting, lstorage,
-				     &error)) {
-		sieve_storage_set_critical(storage,
-			"Failed to read LDAP storage config '%s': %s",
-			config_path, error);
-		return -1;
-	}
-
-	if (!sieve_ldap_settings_check(lstorage->set, &error)) {
-		sieve_storage_set_critical(storage,
-			"Invalid LDAP storage config '%s': %s",
-			config_path, error);
-		return -1;
-	}
-	return 0;
-}
+/* </settings checks> */
 
 #endif

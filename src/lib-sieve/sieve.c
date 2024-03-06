@@ -325,8 +325,9 @@ int sieve_compile_script(struct sieve_script *script,
 	return 0;
 }
 
-int sieve_compile(struct sieve_instance *svinst, const char *script_location,
-		  const char *script_name, struct sieve_error_handler *ehandler,
+int sieve_compile(struct sieve_instance *svinst, const char *script_cause,
+		  const char *storage_name, const char *script_name,
+		  struct sieve_error_handler *ehandler,
 		  enum sieve_compile_flags flags, struct sieve_binary **sbin_r,
 		  enum sieve_error *error_code_r)
 {
@@ -336,8 +337,9 @@ int sieve_compile(struct sieve_instance *svinst, const char *script_location,
 	*sbin_r = NULL;
 	sieve_error_args_init(&error_code_r, NULL);
 
-	if (sieve_script_create_open(svinst, script_location, script_name,
-				     &script, error_code_r, NULL) < 0) {
+	if (sieve_script_create_open_in(svinst, script_cause,
+					storage_name, script_name,
+					&script, error_code_r, NULL) < 0) {
 		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_FOUND:
 			if (no_error_result) {
@@ -499,8 +501,9 @@ int sieve_open_script(struct sieve_script *script,
 	return ret;
 }
 
-int sieve_open(struct sieve_instance *svinst, const char *script_location,
-	       const char *script_name, struct sieve_error_handler *ehandler,
+int sieve_open(struct sieve_instance *svinst, const char *script_cause,
+	       const char *storage_name, const char *script_name,
+	       struct sieve_error_handler *ehandler,
 	       enum sieve_compile_flags flags, struct sieve_binary **sbin_r,
 	       enum sieve_error *error_code_r)
 {
@@ -512,8 +515,9 @@ int sieve_open(struct sieve_instance *svinst, const char *script_location,
 	sieve_error_args_init(&error_code_r, NULL);
 
 	/* First open the scriptfile itself */
-	if (sieve_script_create_open(svinst, script_location, script_name,
-				     &script, error_code_r, NULL) < 0) {
+	if (sieve_script_create_open_in(svinst, script_cause,
+					storage_name, script_name,
+					&script, error_code_r, NULL) < 0) {
 		/* Failed */
 		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_FOUND:
