@@ -127,7 +127,7 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
 	if (sieve_init(&svenv, &managesieve_sieve_callbacks, user,
-		       set->mail_debug, &svinst) < 0) {
+		       user->set->mail_debug, &svinst) < 0) {
 		*error_r = "Failed to initialize Sieve interpreter";
 		return -1;
 	}

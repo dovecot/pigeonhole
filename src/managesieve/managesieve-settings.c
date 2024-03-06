@@ -56,7 +56,6 @@ const struct setting_keyvalue managesieve_settings_service_settings_defaults[] =
 	SETTING_DEFINE_STRUCT_##type(#name, name, struct managesieve_settings)
 
 static struct setting_define managesieve_setting_defines[] = {
-	DEF(BOOL, mail_debug),
 	DEF(BOOL, verbose_proctitle),
 	DEF(STR, rawlog_dir),
 
@@ -70,7 +69,6 @@ static struct setting_define managesieve_setting_defines[] = {
 };
 
 static struct managesieve_settings managesieve_default_settings = {
-	.mail_debug = FALSE,
 	.verbose_proctitle = FALSE,
 	.rawlog_dir = "",
 
