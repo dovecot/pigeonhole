@@ -214,8 +214,8 @@ lda_sieve_result_amend_log_message(const struct sieve_script_env *senv,
 	table = mail_deliver_ctx_get_log_var_expand_table(mdctx, message);
 
 	str = t_str_new(256);
-	if (var_expand(str, mdctx->set->deliver_log_format,
-		       table, &error) <= 0) {
+	if (var_expand_with_table(str, mdctx->set->deliver_log_format,
+				  table, &error) <= 0) {
 		e_error(mdctx->event,
 			"Failed to expand deliver_log_format=%s: %s",
 			mdctx->set->deliver_log_format, error);
