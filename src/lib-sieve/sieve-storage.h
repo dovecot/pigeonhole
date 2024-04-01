@@ -27,12 +27,12 @@ struct sieve_storage;
 
 struct sieve_storage *
 sieve_storage_create(struct sieve_instance *svinst, const char *location,
-		     enum sieve_storage_flags flags, enum sieve_error *error_r)
-		     ATTR_NULL(4);
+		     enum sieve_storage_flags flags,
+		     enum sieve_error *error_code_r);
 struct sieve_storage *
 sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 			  enum sieve_storage_flags flags,
-			  enum sieve_error *error_r) ATTR_NULL(4);
+			  enum sieve_error *error_code_r);
 
 void sieve_storage_ref(struct sieve_storage *storage);
 void sieve_storage_unref(struct sieve_storage **_storage);
@@ -43,12 +43,12 @@ void sieve_storage_unref(struct sieve_storage **_storage);
 
 struct sieve_script *
 sieve_storage_get_script(struct sieve_storage *storage, const char *name,
-			 enum sieve_error *error_r) ATTR_NULL(3);
+			 enum sieve_error *error_code_r);
 struct sieve_script *
 sieve_storage_open_script(struct sieve_storage *storage, const char *name,
-			  enum sieve_error *error_r) ATTR_NULL(3);
+			  enum sieve_error *error_code_r);
 int sieve_storage_check_script(struct sieve_storage *storage, const char *name,
-			       enum sieve_error *error_r) ATTR_NULL(3);
+			       enum sieve_error *error_code_r);
 
 /*
  * Script sequence
@@ -56,7 +56,7 @@ int sieve_storage_check_script(struct sieve_storage *storage, const char *name,
 
 struct sieve_script_sequence *
 sieve_storage_get_script_sequence(struct sieve_storage *storage,
-				  enum sieve_error *error_r);
+				  enum sieve_error *error_code_r);
 
 /*
  * Active script
@@ -67,7 +67,7 @@ int sieve_storage_active_script_get_name(struct sieve_storage *storage,
 
 struct sieve_script *
 sieve_storage_active_script_open(struct sieve_storage *storage,
-				 enum sieve_error *error_r) ATTR_NULL(2);
+				 enum sieve_error *error_code_r);
 
 int sieve_storage_active_script_get_last_change(struct sieve_storage *storage,
 						time_t *last_change_r);
@@ -166,14 +166,13 @@ int sieve_storage_is_singular(struct sieve_storage *storage);
 void sieve_storage_clear_error(struct sieve_storage *storage);
 
 void sieve_storage_set_error(struct sieve_storage *storage,
-			     enum sieve_error error, const char *fmt, ...)
+			     enum sieve_error error_code, const char *fmt, ...)
 			     ATTR_FORMAT(3, 4);
 void sieve_storage_set_critical(struct sieve_storage *storage,
 				const char *fmt, ...) ATTR_FORMAT(2, 3);
 
 const char *sieve_storage_get_last_error(struct sieve_storage *storage,
-					 enum sieve_error *error_r)
-					 ATTR_NULL(2);
+					 enum sieve_error *error_code_r);
 
 /*
  *
