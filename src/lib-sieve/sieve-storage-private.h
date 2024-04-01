@@ -24,7 +24,7 @@ struct sieve_storage_vfuncs {
 	struct sieve_storage *(*alloc)(void);
 	void (*destroy)(struct sieve_storage *storage);
 	int (*init)(struct sieve_storage *storage, const char *const *options,
-		    enum sieve_error *error_r);
+		    enum sieve_error *error_code_r);
 
 	int (*get_last_change)(struct sieve_storage *storage,
 			       time_t *last_change_r);
@@ -38,9 +38,10 @@ struct sieve_storage_vfuncs {
 
 	/* script sequence */
 	struct sieve_script_sequence *(*get_script_sequence)(
-		struct sieve_storage *storage, enum sieve_error *error_r);
+		struct sieve_storage *storage, enum sieve_error *error_code_r);
 	struct sieve_script *(*script_sequence_next)(
-		struct sieve_script_sequence *seq, enum sieve_error *error_r);
+		struct sieve_script_sequence *seq,
+		enum sieve_error *error_code_r);
 	void (*script_sequence_destroy)(struct sieve_script_sequence *seq);
 
 	/* active script */
@@ -211,7 +212,7 @@ struct sieve_storage *
 sieve_file_storage_init_default(struct sieve_instance *svinst,
 				const char *active_path,
 				enum sieve_storage_flags flags,
-				enum sieve_error *error_r) ATTR_NULL(4);
+				enum sieve_error *error_code_r);
 
 /* dict */
 
