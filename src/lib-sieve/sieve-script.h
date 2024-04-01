@@ -37,23 +37,21 @@ ARRAY_DEFINE_TYPE(sieve_script, struct sieve_script *);
 
 struct sieve_script *
 sieve_script_create(struct sieve_instance *svinst, const char *location,
-		    const char *name, enum sieve_error *error_r) ATTR_NULL(3,4);
+		    const char *name, enum sieve_error *error_code_r);
 
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
 
-int sieve_script_open(struct sieve_script *script, enum sieve_error *error_r)
-		      ATTR_NULL(2);
+int sieve_script_open(struct sieve_script *script,
+		      enum sieve_error *error_code_r);
 int sieve_script_open_as(struct sieve_script *script, const char *name,
-			 enum sieve_error *error_r) ATTR_NULL(3);
+			 enum sieve_error *error_code_r);
 
 struct sieve_script *
 sieve_script_create_open(struct sieve_instance *svinst, const char *location,
-			 const char *name, enum sieve_error *error_r)
-			 ATTR_NULL(3, 4);
+			 const char *name, enum sieve_error *error_code_r);
 int sieve_script_check(struct sieve_instance *svinst, const char *location,
-		       const char *name, enum sieve_error *error_r)
-		       ATTR_NULL(3, 4);
+		       const char *name, enum sieve_error *error_code_r);
 
 /*
  * Data script
@@ -79,10 +77,10 @@ bool sieve_script_binary_dump_metadata(struct sieve_script *script,
 
 struct sieve_binary *
 sieve_script_binary_load(struct sieve_script *script,
-			 enum sieve_error *error_r);
+			 enum sieve_error *error_code_r);
 int sieve_script_binary_save(struct sieve_script *script,
 			     struct sieve_binary *sbin, bool update,
-			     enum sieve_error *error_r) ATTR_NULL(4);
+			     enum sieve_error *error_code_r);
 
 const char *sieve_script_binary_get_prefix(struct sieve_script *script);
 
@@ -92,7 +90,7 @@ const char *sieve_script_binary_get_prefix(struct sieve_script *script);
 
 int sieve_script_get_stream(struct sieve_script *script,
 			    struct istream **stream_r,
-			    enum sieve_error *error_r) ATTR_NULL(3);
+			    enum sieve_error *error_code_r);
 
 /*
  * Management
@@ -143,7 +141,7 @@ sieve_script_cmp(const struct sieve_script *script,
  */
 
 const char *sieve_script_get_last_error(struct sieve_script *script,
-					enum sieve_error *error_r) ATTR_NULL(2);
+					enum sieve_error *error_code_r);
 const char *sieve_script_get_last_error_lcase(struct sieve_script *script);
 
 /*
@@ -154,10 +152,11 @@ struct sieve_script_sequence;
 
 struct sieve_script_sequence *
 sieve_script_sequence_create(struct sieve_instance *svinst,
-			     const char *location, enum sieve_error *error_r);
+			     const char *location,
+			     enum sieve_error *error_code_r);
 struct sieve_script *
 sieve_script_sequence_next(struct sieve_script_sequence *seq,
-			   enum sieve_error *error_r);
+			   enum sieve_error *error_code_r);
 void sieve_script_sequence_free(struct sieve_script_sequence **_seq);
 
 #endif
