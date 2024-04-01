@@ -65,7 +65,7 @@ static void sieve_data_script_destroy(struct sieve_script *script)
 static int
 sieve_data_script_get_stream(struct sieve_script *script,
 			     struct istream **stream_r,
-			     enum sieve_error *error_r)
+			     enum sieve_error *error_code_r)
 {
 	struct sieve_data_script *dscript = (struct sieve_data_script *)script;
 
@@ -73,7 +73,7 @@ sieve_data_script_get_stream(struct sieve_script *script,
 	i_stream_seek(dscript->data, 0);
 
 	*stream_r = dscript->data;
-	*error_r = SIEVE_ERROR_NONE;
+	*error_code_r = SIEVE_ERROR_NONE;
 	return 0;
 }
 
