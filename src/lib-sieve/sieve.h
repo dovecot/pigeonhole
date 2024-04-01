@@ -41,8 +41,8 @@ void sieve_set_extensions(struct sieve_instance *svinst,
 struct sieve_binary *
 sieve_compile_script(struct sieve_script *script,
 		     struct sieve_error_handler *ehandler,
-		     enum sieve_compile_flags flags, enum sieve_error *error_r)
-		     ATTR_NULL(2, 4);
+		     enum sieve_compile_flags flags,
+		     enum sieve_error *error_code_r);
 
 /* Compile a Sieve script from a Sieve script location string. Returns Sieve
    binary upon success and NULL upon failure. The provided script_name is used
@@ -50,8 +50,7 @@ sieve_compile_script(struct sieve_script *script,
 struct sieve_binary *
 sieve_compile(struct sieve_instance *svinst, const char *script_location,
 	      const char *script_name, struct sieve_error_handler *ehandler,
-	      enum sieve_compile_flags flags, enum sieve_error *error_r)
-	      ATTR_NULL(3, 4, 6);
+	      enum sieve_compile_flags flags, enum sieve_error *error_code_r);
 
 /*
  * Reading/writing Sieve binaries
@@ -60,7 +59,7 @@ sieve_compile(struct sieve_instance *svinst, const char *script_location,
 /* Loads the sieve binary indicated by the provided path. */
 struct sieve_binary *
 sieve_load(struct sieve_instance *svinst, const char *bin_path,
-	   enum sieve_error *error_r);
+	   enum sieve_error *error_code_r);
 /* First tries to open the binary version of the specified script and if it does
    not exist or if it contains errors, the script is (re-)compiled. Note that
    errors in the bytecode are caught only at runtime.
@@ -68,7 +67,8 @@ sieve_load(struct sieve_instance *svinst, const char *bin_path,
 struct sieve_binary *
 sieve_open_script(struct sieve_script *script,
 		  struct sieve_error_handler *ehandler,
-		  enum sieve_compile_flags flags, enum sieve_error *error_r);
+		  enum sieve_compile_flags flags,
+		  enum sieve_error *error_code_r);
 /* First tries to open the binary version of the specified script and if it does
    not exist or if it contains errors, the script is (re-)compiled. Note that
    errors in the bytecode are caught only at runtime.
@@ -76,7 +76,7 @@ sieve_open_script(struct sieve_script *script,
 struct sieve_binary *
 sieve_open(struct sieve_instance *svinst, const char *script_location,
 	   const char *script_name, struct sieve_error_handler *ehandler,
-	   enum sieve_compile_flags flags, enum sieve_error *error_r);
+	   enum sieve_compile_flags flags, enum sieve_error *error_code_r);
 
 /* Record resource usage in the binary cumulatively. The binary is disabled when
    resource limits are exceeded within a configured timeout. Returns FALSE when
@@ -88,10 +88,10 @@ sieve_record_resource_usage(struct sieve_binary *sbin,
 
 /* Check whether Sieve binary is (still) executable. Returns 1 if all is OK,
    0 when an error occurred, and -1 when the error is internal. Sets the Sieve
-   error code in error_r and a user error message in client_error_r when the
-   error is not internal. */
+   error code in error_code_r and a user error message in client_error_r when
+   the error is not internal. */
 int sieve_check_executable(struct sieve_binary *sbin,
-			   enum sieve_error *error_r,
+			   enum sieve_error *error_code_r,
 			   const char **client_error_r);
 
 /* Saves the binary as the file indicated by the path parameter. This function
@@ -99,14 +99,14 @@ int sieve_check_executable(struct sieve_binary *sbin,
    earlier from the indicated bin_path, unless update is TRUE.
  */
 int sieve_save_as(struct sieve_binary *sbin, const char *bin_path, bool update,
-		  mode_t save_mode, enum sieve_error *error_r);
+		  mode_t save_mode, enum sieve_error *error_code_r);
 
 /* Saves the binary to the default location. This function will not overwrite
    the binary on disk when the provided binary object was loaded earlier from
    the default location, unless update is TRUE.
  */
 int sieve_save(struct sieve_binary *sbin, bool update,
-	       enum sieve_error *error_r);
+	       enum sieve_error *error_code_r);
 
 /* Closes a compiled/opened sieve binary. */
 void sieve_close(struct sieve_binary **_sbin);
