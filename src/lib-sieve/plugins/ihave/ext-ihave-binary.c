@@ -23,7 +23,7 @@
 static bool
 ext_ihave_binary_pre_save(const struct sieve_extension *ext,
 			  struct sieve_binary *sbin, void *context,
-			  enum sieve_error *error_r);
+			  enum sieve_error *error_code_r);
 static bool
 ext_ihave_binary_open(const struct sieve_extension *ext,
 		      struct sieve_binary *sbin, void *context);
@@ -120,7 +120,7 @@ ext_ihave_binary_init(const struct sieve_extension *this_ext,
 static bool
 ext_ihave_binary_pre_save(const struct sieve_extension *ext,
 			  struct sieve_binary *sbin, void *context,
-			  enum sieve_error *error_r ATTR_UNUSED)
+			  enum sieve_error *error_code_r ATTR_UNUSED)
 {
 	struct ext_ihave_binary_context *binctx =
 		(struct ext_ihave_binary_context *)context;
