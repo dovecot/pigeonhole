@@ -41,7 +41,8 @@ static struct sieve_storage *sieve_ldap_storage_alloc(void)
 
 static int
 sieve_ldap_storage_init(struct sieve_storage *storage,
-			const char *const *options, enum sieve_error *error_r)
+			const char *const *options,
+			enum sieve_error *error_code_r)
 {
 	struct sieve_ldap_storage *lstorage =
 		(struct sieve_ldap_storage *)storage;
@@ -58,7 +59,7 @@ sieve_ldap_storage_init(struct sieve_storage *storage,
 			} else {
 				sieve_storage_set_critical(
 					storage, "Invalid option '%s'", option);
-				*error_r = SIEVE_ERROR_TEMP_FAILURE;
+				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
 
@@ -70,7 +71,7 @@ sieve_ldap_storage_init(struct sieve_storage *storage,
 		if (svinst->username == NULL) {
 			sieve_storage_set_critical(
 				storage, "No username specified");
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 		username = svinst->username;
