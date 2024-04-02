@@ -227,7 +227,7 @@ cmd_include_validate(struct sieve_validator *valdtr,
 	struct sieve_storage *storage;
 	struct sieve_script *script;
 	const char *script_name;
-	enum sieve_error error = SIEVE_ERROR_NONE;
+	enum sieve_error error_code = SIEVE_ERROR_NONE;
 	int ret;
 
 	/* Check argument */
@@ -260,10 +260,10 @@ cmd_include_validate(struct sieve_validator *valdtr,
 	}
 
 	storage = ext_include_get_script_storage(this_ext, ctx_data->location,
-						 script_name, &error);
+						 script_name, &error_code);
 	if (storage == NULL) {
 		// FIXME: handle ':optional' in this case
-		if (error == SIEVE_ERROR_NOT_FOUND) {
+		if (error_code == SIEVE_ERROR_NOT_FOUND) {
 			sieve_argument_validate_error(
 				valdtr, arg, "include: "
 				"%s location for included script '%s' is unavailable "
@@ -282,13 +282,13 @@ cmd_include_validate(struct sieve_validator *valdtr,
 	}
 
 	/* Create script object */
-	script = sieve_storage_get_script(storage, script_name, &error);
+	script = sieve_storage_get_script(storage, script_name, &error_code);
 	if (script == NULL)
 		return FALSE;
 
-	ret = sieve_script_open(script, &error);
+	ret = sieve_script_open(script, &error_code);
 	if (ret < 0) {
-		if (error != SIEVE_ERROR_NOT_FOUND) {
+		if (error_code != SIEVE_ERROR_NOT_FOUND) {
 			sieve_argument_validate_error(
 				valdtr, arg,
 				"failed to access included %s script '%s': %s",

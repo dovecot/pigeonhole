@@ -134,7 +134,7 @@ struct sieve_storage *
 ext_include_get_script_storage(const struct sieve_extension *ext,
 			       enum ext_include_script_location location,
 			       const char *script_name,
-			       enum sieve_error *error_r)
+			       enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_include_context *ctx =
@@ -145,7 +145,7 @@ ext_include_get_script_storage(const struct sieve_extension *ext,
 		if (ctx->personal_storage == NULL) {
 			ctx->personal_storage =
 				sieve_storage_create_main(svinst, NULL, 0,
-							  error_r);
+							  error_code_r);
 		}
 		return ctx->personal_storage;
 	case EXT_INCLUDE_LOCATION_GLOBAL:
@@ -154,13 +154,13 @@ ext_include_get_script_storage(const struct sieve_extension *ext,
 				"sieve_global is unconfigured; "
 				"include of ':global' script '%s' is therefore not possible",
 				str_sanitize(script_name, 80));
-			if (error_r != NULL)
-				*error_r = SIEVE_ERROR_NOT_FOUND;
+			if (error_code_r != NULL)
+				*error_code_r = SIEVE_ERROR_NOT_FOUND;
 			return NULL;
 		}
 		if (ctx->global_storage == NULL) {
 			ctx->global_storage = sieve_storage_create(
-				svinst, ctx->global_location, 0, error_r);
+				svinst, ctx->global_location, 0, error_code_r);
 		}
 		return ctx->global_storage;
 	default:

@@ -86,7 +86,7 @@ struct sieve_storage *
 ext_include_get_script_storage(const struct sieve_extension *ext,
 			       enum ext_include_script_location location,
 			       const char *script_name,
-			       enum sieve_error *error_r);
+			       enum sieve_error *error_code_r);
 /*
  * Context
  */

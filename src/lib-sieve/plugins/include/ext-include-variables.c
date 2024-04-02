@@ -85,7 +85,7 @@ ext_include_variable_import_global(struct sieve_validator *valdtr,
 
 bool ext_include_variables_save(struct sieve_binary_block *sblock,
 				struct sieve_variable_scope_binary *global_vars,
-				enum sieve_error *error_r ATTR_UNUSED)
+				enum sieve_error *error_code_r ATTR_UNUSED)
 {
 	struct sieve_variable_scope *global_scope =
 		sieve_variable_scope_binary_get(global_vars);
