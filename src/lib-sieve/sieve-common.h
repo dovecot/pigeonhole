@@ -147,10 +147,10 @@ struct sieve_plugin;
 /* sieve.c */
 struct sieve_ast *
 sieve_parse(struct sieve_script *script, struct sieve_error_handler *ehandler,
-	    enum sieve_error *error_r);
+	    enum sieve_error *error_code_r);
 bool sieve_validate(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
 		    enum sieve_compile_flags flags,
-		    enum sieve_error *error_r);
+		    enum sieve_error *error_code_r);
 
 /*
  * Parent category
