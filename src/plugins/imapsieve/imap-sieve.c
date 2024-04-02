@@ -130,7 +130,7 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
 {
 	enum sieve_storage_flags storage_flags = 0;
 	struct mail_user *user = isieve->client->user;
-	enum sieve_error error;
+	enum sieve_error error_code;
 
 	if (isieve->storage != NULL) {
 		*storage_r = isieve->storage;
@@ -145,9 +145,9 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
 	}
 
 	isieve->storage = sieve_storage_create_main(isieve->svinst, user,
-						    storage_flags, &error);
+						    storage_flags, &error_code);
 	if (isieve->storage == NULL) {
-		if (error == SIEVE_ERROR_TEMP_FAILURE)
+		if (error_code == SIEVE_ERROR_TEMP_FAILURE)
 			return -1;
 		return 0;
 	}
@@ -409,7 +409,7 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 {
 	struct sieve_instance *svinst = isieve->svinst;
 	struct sieve_script *user_script;
-	enum sieve_error error;
+	enum sieve_error error_code;
 	unsigned int count = 0;
 	const char *const *sp;
 
@@ -419,10 +419,10 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 			i_assert(count < max_len);
 			scripts[count].script =
 				sieve_script_create_open(svinst, *sp, NULL,
-							 &error);
+							 &error_code);
 			if (scripts[count].script != NULL)
 				count++;
-			else if (error == SIEVE_ERROR_TEMP_FAILURE)
+			else if (error_code == SIEVE_ERROR_TEMP_FAILURE)
 				return -1;
 		}
 	}
@@ -432,11 +432,12 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 	if (storage != NULL) {
 		i_assert(count < max_len);
 		scripts[count].script =
-			sieve_storage_open_script(storage, script_name, &error);
+			sieve_storage_open_script(storage, script_name,
+						  &error_code);
 		if (scripts[count].script != NULL) {
 			user_script = scripts[count].script;
 			count++;
-		} else if (error == SIEVE_ERROR_TEMP_FAILURE) {
+		} else if (error_code == SIEVE_ERROR_TEMP_FAILURE) {
 			return -1;
 		}
 	}
@@ -447,10 +448,10 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 			i_assert(count < max_len);
 			scripts[count].script =
 				sieve_script_create_open(svinst, *sp, NULL,
-							 &error);
+							 &error_code);
 			if (scripts[count].script != NULL)
 				count++;
-			else if (error == SIEVE_ERROR_TEMP_FAILURE)
+			else if (error_code == SIEVE_ERROR_TEMP_FAILURE)
 				return -1;
 		}
 	}
@@ -563,7 +564,7 @@ static struct sieve_binary *
 imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 			   struct sieve_script *script,
 			   enum sieve_compile_flags cpflags,
-			   bool recompile, enum sieve_error *error_r)
+			   bool recompile, enum sieve_error *error_code_r)
 {
 	struct imap_sieve *isieve = isrun->isieve;
 	struct sieve_instance *svinst = isieve->svinst;
@@ -590,14 +591,16 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 
 	/* Load or compile the sieve script */
 	if (recompile) {
-		sbin = sieve_compile_script(script, ehandler, cpflags, error_r);
+		sbin = sieve_compile_script(script, ehandler, cpflags,
+					    error_code_r);
 	} else {
-		sbin = sieve_open_script(script, ehandler, cpflags, error_r);
+		sbin = sieve_open_script(script, ehandler, cpflags,
+					 error_code_r);
 	}
 
 	/* Handle error */
 	if (sbin == NULL) {
-		switch (*error_r) {
+		switch (*error_code_r) {
 		/* Script not found */
 		case SIEVE_ERROR_NOT_FOUND:
 			e_debug(sieve_get_event(svinst),
