@@ -61,7 +61,8 @@ static void sieve_dict_script_destroy(struct sieve_script *script)
 }
 
 static int
-sieve_dict_script_open(struct sieve_script *script, enum sieve_error *error_r)
+sieve_dict_script_open(struct sieve_script *script,
+		       enum sieve_error *error_code_r)
 {
 	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
 	struct sieve_storage *storage = script->storage;
@@ -71,7 +72,8 @@ sieve_dict_script_open(struct sieve_script *script, enum sieve_error *error_r)
 	const char *path, *data_id, *error;
 	int ret;
 
-	if (sieve_dict_storage_get_dict(dstorage, &dscript->dict, error_r) < 0)
+	if (sieve_dict_storage_get_dict(dstorage, &dscript->dict,
+					error_code_r) < 0)
 		return -1;
 
 	path = t_strconcat(DICT_SIEVE_NAME_PATH,
@@ -87,14 +89,14 @@ sieve_dict_script_open(struct sieve_script *script, enum sieve_error *error_r)
 			sieve_script_set_critical(script,
 				"Failed to lookup script id from path %s: %s",
 				path, error);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		} else {
 			e_debug(script->event,
 				"Script '%s' not found at path %s", name, path);
 			sieve_script_set_error(script, SIEVE_ERROR_NOT_FOUND,
 					       "Sieve script '%s' not found",
 					       name);
-			*error_r = SIEVE_ERROR_NOT_FOUND;
+			*error_code_r = SIEVE_ERROR_NOT_FOUND;
 		}
 		return -1;
 	}
@@ -106,7 +108,7 @@ sieve_dict_script_open(struct sieve_script *script, enum sieve_error *error_r)
 static int
 sieve_dict_script_get_stream(struct sieve_script *script,
 			     struct istream **stream_r,
-			     enum sieve_error *error_r)
+			     enum sieve_error *error_code_r)
 {
 	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
 	struct sieve_dict_storage *dstorage =
@@ -136,7 +138,7 @@ sieve_dict_script_get_stream(struct sieve_script *script,
 				"Data with id '%s' for script '%s' not found at path %s",
 				dscript->data_id, name, path);
 		}
-		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 
@@ -218,7 +220,7 @@ sieve_dict_script_get_binpath(struct sieve_dict_script *dscript)
 
 static struct sieve_binary *
 sieve_dict_script_binary_load(struct sieve_script *script,
-			      enum sieve_error *error_r)
+			      enum sieve_error *error_code_r)
 {
 	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
 
@@ -226,13 +228,13 @@ sieve_dict_script_binary_load(struct sieve_script *script,
 		return NULL;
 
 	return sieve_binary_open(script->storage->svinst, dscript->binpath,
-				 script, error_r);
+				 script, error_code_r);
 }
 
 static int
 sieve_dict_script_binary_save(struct sieve_script *script,
 			      struct sieve_binary *sbin, bool update,
-			      enum sieve_error *error_r)
+			      enum sieve_error *error_code_r)
 {
 	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
 
@@ -241,7 +243,8 @@ sieve_dict_script_binary_save(struct sieve_script *script,
 	if (sieve_storage_setup_bindir(script->storage, 0700) < 0)
 		return -1;
 
-	return sieve_binary_save(sbin, dscript->binpath, update, 0600, error_r);
+	return sieve_binary_save(sbin, dscript->binpath, update, 0600,
+				 error_code_r);
 }
 
 static bool
@@ -290,12 +293,12 @@ struct sieve_dict_script_sequence {
 
 struct sieve_script_sequence *
 sieve_dict_storage_get_script_sequence(struct sieve_storage *storage,
-				       enum sieve_error *error_r)
+				       enum sieve_error *error_code_r)
 {
 	struct sieve_dict_script_sequence *dseq = NULL;
 
-	if (error_r != NULL)
-		*error_r = SIEVE_ERROR_NONE;
+	if (error_code_r != NULL)
+		*error_code_r = SIEVE_ERROR_NONE;
 
 	/* Create sequence object */
 	dseq = i_new(struct sieve_dict_script_sequence, 1);
@@ -306,7 +309,7 @@ sieve_dict_storage_get_script_sequence(struct sieve_storage *storage,
 
 struct sieve_script *
 sieve_dict_script_sequence_next(struct sieve_script_sequence *seq,
-				enum sieve_error *error_r)
+				enum sieve_error *error_code_r)
 {
 	struct sieve_dict_script_sequence *dseq =
 		(struct sieve_dict_script_sequence *)seq;
@@ -314,15 +317,15 @@ sieve_dict_script_sequence_next(struct sieve_script_sequence *seq,
 		(struct sieve_dict_storage *)seq->storage;
 	struct sieve_dict_script *dscript;
 
-	if (error_r != NULL)
-		*error_r = SIEVE_ERROR_NONE;
+	if (error_code_r != NULL)
+		*error_code_r = SIEVE_ERROR_NONE;
 
 	if (dseq->done)
 		return NULL;
 	dseq->done = TRUE;
 
 	dscript = sieve_dict_script_init(dstorage, seq->storage->script_name);
-	if (sieve_script_open(&dscript->script, error_r) < 0) {
+	if (sieve_script_open(&dscript->script, error_code_r) < 0) {
 		struct sieve_script *script = &dscript->script;
 
 		sieve_script_unref(&script);
