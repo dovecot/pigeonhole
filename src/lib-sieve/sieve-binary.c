@@ -142,10 +142,12 @@ static inline void sieve_binary_extensions_free(struct sieve_binary *sbin)
 
 static void sieve_binary_update_resource_usage(struct sieve_binary *sbin)
 {
-	enum sieve_error error;
+	enum sieve_error error_code;
 
-	if (sbin->rusage_updated)
-		(void)sieve_binary_file_update_resource_usage(sbin, &error);
+	if (sbin->rusage_updated) {
+		(void)sieve_binary_file_update_resource_usage(
+			sbin, &error_code);
+	}
 	sbin->rusage_updated = FALSE;
 }
 

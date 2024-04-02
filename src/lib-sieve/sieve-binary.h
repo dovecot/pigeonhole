@@ -73,7 +73,7 @@ void sieve_binary_activate(struct sieve_binary *sbin);
  */
 
 int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
-		      mode_t save_mode, enum sieve_error *error_r);
+		      mode_t save_mode, enum sieve_error *error_code_r);
 
 /*
  * Loading the binary
@@ -81,12 +81,12 @@ int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
 
 struct sieve_binary *
 sieve_binary_open(struct sieve_instance *svinst, const char *path,
-		  struct sieve_script *script, enum sieve_error *error_r);
+		  struct sieve_script *script, enum sieve_error *error_code_r);
 bool sieve_binary_up_to_date(struct sieve_binary *sbin,
 			     enum sieve_compile_flags cpflags);
 
 int sieve_binary_check_executable(struct sieve_binary *sbin,
-				  enum sieve_error *error_r,
+				  enum sieve_error *error_code_r,
 				  const char **client_error_r);
 
 /*
@@ -125,10 +125,10 @@ struct sieve_binary_extension {
 
 	bool (*binary_pre_save)(const struct sieve_extension *ext,
 				struct sieve_binary *sbin, void *context,
-				enum sieve_error *error_r);
+				enum sieve_error *error_code_r);
 	bool (*binary_post_save)(const struct sieve_extension *ext,
 				 struct sieve_binary *sbin, void *context,
-				 enum sieve_error *error_r);
+				 enum sieve_error *error_code_r);
 	bool (*binary_open)(const struct sieve_extension *ext,
 			    struct sieve_binary *sbin, void *context);
 
