@@ -171,7 +171,7 @@ imap_filter_sieve_get_personal_storage(struct imap_filter_sieve_context *sctx,
 		IMAP_FILTER_SIEVE_USER_CONTEXT_REQUIRE(user);
 	enum sieve_storage_flags storage_flags = 0;
 	struct sieve_instance *svinst;
-	enum sieve_error error;
+	enum sieve_error error_code;
 
 	*error_code_r = MAIL_ERROR_NONE;
 	*error_r = NULL;
@@ -191,13 +191,14 @@ imap_filter_sieve_get_personal_storage(struct imap_filter_sieve_context *sctx,
 	}
 
 	ifsuser->storage = sieve_storage_create_main(svinst, user,
-						     storage_flags, &error);
+						     storage_flags,
+						     &error_code);
 	if (ifsuser->storage != NULL) {
 		*storage_r = ifsuser->storage;
 		return 0;
 	}
 
-	switch (error) {
+	switch (error_code) {
 	case SIEVE_ERROR_NOT_POSSIBLE:
 		*error_r = "Sieve processing is disabled for this user";
 		*error_code_r = MAIL_ERROR_NOTPOSSIBLE;
@@ -227,7 +228,7 @@ imap_filter_sieve_get_global_storage(struct imap_filter_sieve_context *sctx,
 		IMAP_FILTER_SIEVE_USER_CONTEXT_REQUIRE(user);
 	struct sieve_instance *svinst;
 	const char *location;
-	enum sieve_error error;
+	enum sieve_error error_code;
 
 	*error_code_r = MAIL_ERROR_NONE;
 	*error_r = NULL;
@@ -254,13 +255,13 @@ imap_filter_sieve_get_global_storage(struct imap_filter_sieve_context *sctx,
 		return -1;
 	}
 	ifsuser->global_storage =
-		sieve_storage_create(svinst, location, 0, &error);
+		sieve_storage_create(svinst, location, 0, &error_code);
 	if (ifsuser->global_storage != NULL) {
 		*storage_r = ifsuser->global_storage;
 		return 0;
 	}
 
-	switch (error) {
+	switch (error_code) {
 	case SIEVE_ERROR_NOT_POSSIBLE:
 	case SIEVE_ERROR_NOT_FOUND:
 		*error_r = "No global Sieve scripts available";
@@ -352,7 +353,8 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 			      struct sieve_script *script,
 			      enum sieve_compile_flags cpflags,
 			      struct sieve_error_handler *user_ehandler,
-			      bool recompile, enum sieve_error *error_r)
+			      bool recompile,
+			      enum sieve_error *error_code_r)
 {
 	struct mail_user *user = sctx->user;
 	struct imap_filter_sieve_user *ifsuser =
@@ -383,14 +385,16 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 
 	/* Load or compile the sieve script */
 	if (recompile) {
-		sbin = sieve_compile_script(script, ehandler, cpflags, error_r);
+		sbin = sieve_compile_script(script, ehandler, cpflags,
+					    error_code_r);
 	} else {
-		sbin = sieve_open_script(script, ehandler, cpflags, error_r);
+		sbin = sieve_open_script(script, ehandler, cpflags,
+					 error_code_r);
 	}
 
 	/* Handle error */
 	if (sbin == NULL) {
-		switch (*error_r) {
+		switch (*error_code_r) {
 		/* Script not found */
 		case SIEVE_ERROR_NOT_FOUND:
 			e_debug(sieve_get_event(svinst),
@@ -441,7 +445,7 @@ int imap_filter_sieve_compile(struct imap_filter_sieve_context *sctx,
 	struct imap_filter_sieve_script *scripts = sctx->scripts;
 	unsigned int count = sctx->scripts_count, i;
 	struct sieve_error_handler *ehandler;
-	enum sieve_error error;
+	enum sieve_error error_code;
 	int ret = 0;
 
 	*errors_r = NULL;
@@ -457,13 +461,13 @@ int imap_filter_sieve_compile(struct imap_filter_sieve_context *sctx,
 
 		scripts[i].binary =
 			imap_sieve_filter_open_script(sctx, script, 0, ehandler,
-						      FALSE, &error);
+						      FALSE, &error_code);
 		if (scripts[i].binary == NULL) {
-			if (error != SIEVE_ERROR_NOT_VALID) {
+			if (error_code != SIEVE_ERROR_NOT_VALID) {
 				const char *errormsg =
 					sieve_script_get_last_error(
-						script, &error);
-				if (error != SIEVE_ERROR_NONE) {
+						script, &error_code);
+				if (error_code != SIEVE_ERROR_NONE) {
 					str_truncate(sctx->errors, 0);
 					str_append(sctx->errors, errormsg);
 				}
@@ -510,7 +514,7 @@ int imap_filter_sieve_open_personal(struct imap_filter_sieve_context *sctx,
 {
 	struct sieve_storage *storage;
 	struct sieve_script *script;
-	enum sieve_error error;
+	enum sieve_error error_code;
 
 	if (imap_filter_sieve_get_personal_storage(sctx, &storage,
 						   error_code_r, error_r) < 0)
@@ -521,9 +525,9 @@ int imap_filter_sieve_open_personal(struct imap_filter_sieve_context *sctx,
 	else
 		script = sieve_storage_open_script(storage, name, NULL);
 	if (script == NULL) {
-		*error_r = sieve_storage_get_last_error(storage, &error);
+		*error_r = sieve_storage_get_last_error(storage, &error_code);
 
-		switch (error) {
+		switch (error_code) {
 		case SIEVE_ERROR_NOT_FOUND:
 			*error_code_r = MAIL_ERROR_NOTFOUND;
 			break;
@@ -550,7 +554,7 @@ int imap_filter_sieve_open_global(struct imap_filter_sieve_context *sctx,
 {
 	struct sieve_storage *storage;
 	struct sieve_script *script;
-	enum sieve_error error;
+	enum sieve_error error_code;
 
 	if (imap_filter_sieve_get_global_storage(sctx, &storage,
 						 error_code_r, error_r) < 0)
@@ -558,9 +562,9 @@ int imap_filter_sieve_open_global(struct imap_filter_sieve_context *sctx,
 
 	script = sieve_storage_open_script(storage, name, NULL);
 	if (script == NULL) {
-		*error_r = sieve_storage_get_last_error(storage, &error);
+		*error_r = sieve_storage_get_last_error(storage, &error_code);
 
-		switch (error) {
+		switch (error_code) {
 		case SIEVE_ERROR_NOT_FOUND:
 			*error_code_r = MAIL_ERROR_NOTFOUND;
 			break;
