@@ -350,7 +350,7 @@ sieve_file_storage_save_get_tempscript(struct sieve_storage_save_context *sctx)
 	struct sieve_file_storage *fstorage =
 		(struct sieve_file_storage *)sctx->storage;
 	struct sieve_file_script *tmpscript;
-	enum sieve_error error;
+	enum sieve_error error_code;
 	const char *scriptname;
 
 	if (sctx->failed)
@@ -361,10 +361,10 @@ sieve_file_storage_save_get_tempscript(struct sieve_storage_save_context *sctx)
 
 	scriptname = (sctx->scriptname == NULL ? "" : sctx->scriptname);
 	tmpscript = sieve_file_script_open_from_path(fstorage, fsctx->tmp_path,
-						     scriptname, &error);
+						     scriptname, &error_code);
 
 	if (tmpscript == NULL) {
-		if (error == SIEVE_ERROR_NOT_FOUND) {
+		if (error_code == SIEVE_ERROR_NOT_FOUND) {
 			sieve_storage_set_critical(
 				sctx->storage, "save: "
 				"Temporary script file '%s' got lost, "

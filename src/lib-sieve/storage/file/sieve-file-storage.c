@@ -49,7 +49,7 @@ sieve_file_storage_path_extend(struct sieve_file_storage *fstorage,
 
 static int
 sieve_file_storage_stat(struct sieve_file_storage *fstorage, const char *path,
-			enum sieve_error *error_r)
+			enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct stat st;
@@ -70,24 +70,24 @@ sieve_file_storage_stat(struct sieve_file_storage *fstorage, const char *path,
 			sieve_storage_set_critical(
 				storage, "t_abspath(%s) failed: %s", path,
 				error);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			break;
 		}
 		e_debug(storage->event, "Storage path '%s' not found", abspath);
 		sieve_storage_set_internal_error(storage); // should be overriden
-		*error_r = SIEVE_ERROR_NOT_FOUND;
+		*error_code_r = SIEVE_ERROR_NOT_FOUND;
 		break;
 	case EACCES:
 		sieve_storage_set_critical(
 			storage, "Failed to stat sieve storage path: %s",
 			eacces_error_get("stat", path));
-		*error_r = SIEVE_ERROR_NO_PERMISSION;
+		*error_code_r = SIEVE_ERROR_NO_PERMISSION;
 		break;
 	default:
 		sieve_storage_set_critical(
 			storage, "Failed to stat sieve storage path: "
 			"stat(%s) failed: %m", path);
-		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		break;
 	}
 
@@ -233,7 +233,7 @@ static struct sieve_storage *sieve_file_storage_alloc(void)
 static int
 sieve_file_storage_get_full_path(struct sieve_file_storage *fstorage,
 				 const char **storage_path,
-				 enum sieve_error *error_r)
+				 enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
@@ -259,7 +259,7 @@ sieve_file_storage_get_full_path(struct sieve_file_storage *fstorage,
 				storage,
 				"Sieve storage path '%s' is relative to home directory, "
 				"but home directory is not available.", path);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 	}
@@ -270,7 +270,7 @@ sieve_file_storage_get_full_path(struct sieve_file_storage *fstorage,
 static int
 sieve_file_storage_get_full_active_path(struct sieve_file_storage *fstorage,
 					const char **active_path,
-					enum sieve_error *error_r)
+					enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
@@ -294,7 +294,7 @@ sieve_file_storage_get_full_active_path(struct sieve_file_storage *fstorage,
 				storage,
 				"Sieve storage active script path '%s' is relative to home directory, "
 				"but home directory is not available.", path);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 	}
@@ -306,7 +306,7 @@ static int
 sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 			       const char *active_path,
 			       const char *storage_path, bool exists,
-			       enum sieve_error *error_r) ATTR_NULL(2, 3)
+			       enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	const char *tmp_dir, *link_path, *active_fname, *storage_dir, *error;
@@ -320,7 +320,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 	/* Get active script path */
 
 	if (sieve_file_storage_get_full_active_path(fstorage, &active_path,
-						    error_r) < 0)
+						    error_code_r) < 0)
 		return -1;
 
 	/* Get the filename for the active script link */
@@ -345,7 +345,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 				"Path to %sscript must include the filename (path=%s)",
 				(storage_path != NULL ? "active link/" : ""),
 				active_path);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 
@@ -354,7 +354,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 				e_error(storage->event,
 					"Failed to normalize active script directory "
 					"(path=%s): %s", active_dir, error);
-				*error_r = SIEVE_ERROR_TEMP_FAILURE;
+				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
 			e_debug(storage->event,
@@ -384,7 +384,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 		if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
 			sieve_storage_set_critical(storage,
 				"Storage path cannot be empty for write access");
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 
@@ -452,7 +452,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 		/* Try to find and clean up tmp dir */
 		ret = check_tmp(storage, tmp_dir);
 		if (ret < 0) {
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 
@@ -460,7 +460,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 		if (ret == 0 && mkdir_verify(storage, tmp_dir, dir_create_mode,
 					     file_create_gid,
 					     file_create_gid_origin) < 0) {
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 
@@ -470,7 +470,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 	}
 
 	if (!exists && sieve_file_storage_stat(fstorage, storage_path,
-					       error_r) < 0)
+					       error_code_r) < 0)
 		return -1;
 
 	if (have_link) {
@@ -478,7 +478,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 			e_error(storage->event,
 				"Failed to normalize storage path (path=%s): %s",
 				storage_path, error);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 		if (active_path != NULL && *active_path != '\0') {
@@ -505,7 +505,8 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 
 static int
 sieve_file_storage_init(struct sieve_storage *storage,
-			const char *const *options, enum sieve_error *error_r)
+			const char *const *options,
+			enum sieve_error *error_code_r)
 {
 	struct sieve_file_storage *fstorage =
 		(struct sieve_file_storage *)storage;
@@ -523,7 +524,7 @@ sieve_file_storage_init(struct sieve_storage *storage,
 			} else {
 				sieve_storage_set_critical(
 					storage, "Invalid option '%s'", option);
-				*error_r = SIEVE_ERROR_TEMP_FAILURE;
+				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
 
@@ -534,15 +535,15 @@ sieve_file_storage_init(struct sieve_storage *storage,
 	/* Get full storage path */
 
 	if (sieve_file_storage_get_full_path(fstorage, &storage_path,
-					     error_r) < 0)
+					     error_code_r) < 0)
 		return -1;
 
 	/* Stat storage directory */
 
 	if (storage_path != NULL && *storage_path != '\0') {
 		if (sieve_file_storage_stat(fstorage, storage_path,
-					    error_r) < 0) {
-			if (*error_r != SIEVE_ERROR_NOT_FOUND)
+					    error_code_r) < 0) {
+			if (*error_code_r != SIEVE_ERROR_NOT_FOUND)
 				return -1;
 			if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0) {
 				/* For backwards compatibility, recognize when
@@ -552,10 +553,12 @@ sieve_file_storage_init(struct sieve_storage *storage,
 				if (active_path == NULL || *active_path == '\0')
 					return -1;
 				if (sieve_file_storage_get_full_active_path(
-					fstorage, &active_path, error_r) < 0)
+					fstorage, &active_path,
+					error_code_r) < 0)
 					return -1;
 				if (sieve_file_storage_stat(
-					fstorage, active_path, error_r) < 0)
+					fstorage, active_path,
+					error_code_r) < 0)
 					return -1;
 				if (!S_ISREG(fstorage->lnk_st.st_mode))
 					return -1;
@@ -574,7 +577,7 @@ sieve_file_storage_init(struct sieve_storage *storage,
 					sieve_storage_set_critical(storage,
 						"Sieve storage path '%s' is not a directory, "
 						"but it is to be opened for write access", storage_path);
-					*error_r = SIEVE_ERROR_TEMP_FAILURE;
+					*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 					return -1;
 				}
 				if (active_path != NULL && *active_path != '\0') {
@@ -601,7 +604,8 @@ sieve_file_storage_init(struct sieve_storage *storage,
 	}
 
 	return sieve_file_storage_init_common(fstorage, active_path,
-					      storage_path, exists, error_r);
+					      storage_path, exists,
+					      error_code_r);
 }
 
 static void
@@ -639,7 +643,7 @@ sieve_file_storage_autodetect(struct sieve_file_storage *fstorage,
 static int
 sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
 				   const char *active_path,
-				   enum sieve_error *error_r)
+				   enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	const char *storage_path;
@@ -650,8 +654,8 @@ sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
 	if (storage_path != NULL && *storage_path != '\0') {
 		/* Got something: stat it */
 		if (sieve_file_storage_stat(fstorage, storage_path,
-					    error_r) < 0) {
-			if (*error_r != SIEVE_ERROR_NOT_FOUND) {
+					    error_code_r) < 0) {
+			if (*error_code_r != SIEVE_ERROR_NOT_FOUND) {
 				/* Error */
 				return -1;
 			}
@@ -666,7 +670,7 @@ sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
 		sieve_storage_set_critical(storage,
 			"Could not find storage root directory for write access; "
 			"path was left unconfigured and autodetection failed");
-		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 
@@ -688,7 +692,7 @@ sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
 		storage_path = NULL;
 
 	if (sieve_file_storage_init_common(fstorage, active_path, storage_path,
-					   exists, error_r) < 0)
+					   exists, error_code_r) < 0)
 		return -1;
 	return 0;
 }
@@ -697,7 +701,7 @@ struct sieve_storage *
 sieve_file_storage_init_default(struct sieve_instance *svinst,
 				const char *active_path,
 				enum sieve_storage_flags flags,
-				enum sieve_error *error_r)
+				enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
@@ -708,7 +712,7 @@ sieve_file_storage_init_default(struct sieve_instance *svinst,
 
 	T_BEGIN {
 		if (sieve_file_storage_do_init_default(fstorage, active_path,
-						       error_r) < 0)
+						       error_code_r) < 0)
 			sieve_storage_unref(&storage);
 	} T_END;
 
@@ -719,7 +723,7 @@ struct sieve_file_storage *
 sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 				  const char *path,
 				  enum sieve_storage_flags flags,
-				  enum sieve_error *error_r)
+				  enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
@@ -732,7 +736,7 @@ sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 
 	T_BEGIN {
 		if (sieve_file_storage_init_common(fstorage, path, NULL, FALSE,
-						   error_r) < 0) {
+						   error_code_r) < 0) {
 			sieve_storage_unref(&storage);
 			fstorage = NULL;
 		}
