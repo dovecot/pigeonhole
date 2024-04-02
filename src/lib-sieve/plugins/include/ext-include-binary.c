@@ -27,7 +27,7 @@
 static bool
 ext_include_binary_pre_save(const struct sieve_extension *ext,
 			    struct sieve_binary *sbin, void *context,
-			    enum sieve_error *error_r);
+			    enum sieve_error *error_code_r);
 static bool
 ext_include_binary_open(const struct sieve_extension *ext,
 			struct sieve_binary *sbin, void *context);
@@ -244,7 +244,7 @@ ext_include_binary_get_global_scope(const struct sieve_extension *this_ext,
 static bool
 ext_include_binary_pre_save(const struct sieve_extension *ext ATTR_UNUSED,
 			    struct sieve_binary *sbin ATTR_UNUSED,
-			    void *context, enum sieve_error *error_r)
+			    void *context, enum sieve_error *error_code_r)
 {
 	struct ext_include_binary_context *binctx =
 		(struct ext_include_binary_context *)context;
@@ -279,7 +279,7 @@ ext_include_binary_pre_save(const struct sieve_extension *ext ATTR_UNUSED,
 	}
 
 	result = ext_include_variables_save(sblock, binctx->global_vars,
-					    error_r);
+					    error_code_r);
 	return result;
 }
 
@@ -333,7 +333,7 @@ ext_include_binary_open(const struct sieve_extension *ext,
 		string_t *script_name;
 		struct sieve_storage *storage;
 		struct sieve_script *script;
-		enum sieve_error error;
+		enum sieve_error error_code;
 		int ret;
 
 		if (!sieve_binary_read_unsigned(sblock, &offset,
@@ -372,7 +372,7 @@ ext_include_binary_open(const struct sieve_extension *ext,
 		/* Can we find the script dependency ? */
 		storage = ext_include_get_script_storage(ext, location,
 							 str_c(script_name),
-							 &error);
+							 &error_code);
 		if (storage == NULL) {
 			/* No, recompile */
 			// FIXME: handle ':optional' in this case
@@ -381,13 +381,13 @@ ext_include_binary_open(const struct sieve_extension *ext,
 
 		/* Can we open the script dependency ? */
 		script = sieve_storage_get_script(storage, str_c(script_name),
-						  &error);
+						  &error_code);
 		if (script == NULL) {
 			/* No, recompile */
 			return FALSE;
 		}
-		if (sieve_script_open(script, &error) < 0) {
-			if (error != SIEVE_ERROR_NOT_FOUND) {
+		if (sieve_script_open(script, &error_code) < 0) {
+			if (error_code != SIEVE_ERROR_NOT_FOUND) {
 				/* No, recompile */
 				return FALSE;
 			}
