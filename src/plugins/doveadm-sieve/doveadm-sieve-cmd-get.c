@@ -24,16 +24,17 @@ static int cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_script *script;
 	struct istream *input;
-	enum sieve_error error;
+	enum sieve_error error_code;
 	int ret;
 
 	script = sieve_storage_open_script(_ctx->storage, ctx->scriptname,
-					   &error);
+					   &error_code);
 	if (script == NULL ||
-	    sieve_script_get_stream(script, &input, &error) < 0) {
+	    sieve_script_get_stream(script, &input, &error_code) < 0) {
 		e_error(event, "Failed to open Sieve script: %s",
-			sieve_storage_get_last_error(_ctx->storage, &error));
-		doveadm_sieve_cmd_failed_error(_ctx, error);
+			sieve_storage_get_last_error(_ctx->storage,
+						     &error_code));
+		doveadm_sieve_cmd_failed_error(_ctx, error_code);
 		if (script != NULL)
 			sieve_script_unref(&script);
 		return -1;

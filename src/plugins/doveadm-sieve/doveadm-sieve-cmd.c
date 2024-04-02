@@ -13,12 +13,12 @@
 #include "doveadm-sieve-cmd.h"
 
 void doveadm_sieve_cmd_failed_error(struct doveadm_sieve_cmd_context *ctx,
-				    enum sieve_error error)
+				    enum sieve_error error_code)
 {
 	struct doveadm_mail_cmd_context *mctx = &ctx->ctx;
 	int exit_code = 0;
 
-	switch (error) {
+	switch (error_code) {
 	case SIEVE_ERROR_NONE:
 		i_unreached();
 		return;
@@ -55,10 +55,10 @@ void doveadm_sieve_cmd_failed_error(struct doveadm_sieve_cmd_context *ctx,
 void doveadm_sieve_cmd_failed_storage(struct doveadm_sieve_cmd_context *ctx,
 				      struct sieve_storage *storage)
 {
-	enum sieve_error error;
+	enum sieve_error error_code;
 
-	(void)sieve_storage_get_last_error(storage, &error);
-	doveadm_sieve_cmd_failed_error(ctx, error);
+	(void)sieve_storage_get_last_error(storage, &error_code);
+	doveadm_sieve_cmd_failed_error(ctx, error_code);
 }
 
 static const char *
@@ -103,7 +103,7 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 	struct event *event = _ctx->cctx->event;
 
 	struct sieve_environment svenv;
-	enum sieve_error error;
+	enum sieve_error error_code;
 	int ret;
 
 	i_zero(&svenv);
@@ -118,11 +118,11 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 		return -1;
 
 	ctx->storage = sieve_storage_create_main(
-		ctx->svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error);
+		ctx->svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error_code);
 	if (ctx->storage == NULL) {
-		switch (error) {
+		switch (error_code) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
-			error = SIEVE_ERROR_NOT_FOUND;
+			error_code = SIEVE_ERROR_NOT_FOUND;
 			e_error(event, "Failed to open Sieve storage: "
 				"Sieve is disabled for this user");
 			break;
@@ -133,7 +133,7 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 		default:
 			e_error(event, "Failed to open Sieve storage.");
 		}
-		doveadm_sieve_cmd_failed_error(ctx, error);
+		doveadm_sieve_cmd_failed_error(ctx, error_code);
 		ret =  -1;
 	} else {
 		i_assert(ctx->v.run != NULL);

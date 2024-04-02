@@ -112,8 +112,8 @@ static int sieve_attribute_unset_script(struct mail_storage *storage,
 					const char *scriptname)
 {
 	struct sieve_script *script;
-	const char *errstr;
-	enum sieve_error error;
+	const char *error;
+	enum sieve_error error_code;
 	int ret = 0;
 
 	script = sieve_storage_open_script(svstorage, scriptname, NULL);
@@ -125,14 +125,14 @@ static int sieve_attribute_unset_script(struct mail_storage *storage,
 	}
 
 	if (ret < 0) {
-		errstr = sieve_storage_get_last_error(svstorage, &error);
-		if (error == SIEVE_ERROR_NOT_FOUND) {
+		error = sieve_storage_get_last_error(svstorage, &error_code);
+		if (error_code == SIEVE_ERROR_NOT_FOUND) {
 			/* already deleted, ignore */
 			return 0;
 		}
 		mail_storage_set_critical(
 			storage, "Failed to delete Sieve script '%s': %s",
-			scriptname, errstr);
+			scriptname, error);
 		return -1;
 	}
 	return 0;
@@ -425,26 +425,26 @@ sieve_attribute_retrieve_script(struct mail_storage *storage,
 				struct sieve_script *script,
 				bool add_type_prefix,
 				struct mail_attribute_value *value_r,
-				const char **errorstr_r)
+				const char **error_r)
 {
 	static char type = MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT;
 	struct istream *input, *inputs[3];
 	const struct stat *st;
-	enum sieve_error error;
+	enum sieve_error error_code;
 
 	if (script == NULL)
-		*errorstr_r = sieve_storage_get_last_error(svstorage, &error);
-	else if (sieve_script_get_stream(script, &input, &error) < 0)
+		*error_r = sieve_storage_get_last_error(svstorage, &error_code);
+	else if (sieve_script_get_stream(script, &input, &error_code) < 0)
 		sieve_script_unref(&script);
 
 	if (script == NULL) {
-		if (error == SIEVE_ERROR_NOT_FOUND) {
+		if (error_code == SIEVE_ERROR_NOT_FOUND) {
 			/* Already deleted, but return the last_change */
 			(void)sieve_storage_get_last_change(
 				svstorage, &value_r->last_change);
 			return 0;
 		}
-		*errorstr_r = sieve_storage_get_last_error(svstorage, &error);
+		*error_r = sieve_storage_get_last_error(svstorage, &error_code);
 		return -1;
 	}
 	if (i_stream_stat(input, FALSE, &st) < 0) {
@@ -473,7 +473,7 @@ sieve_attribute_get_active_script(struct mail_storage *storage,
 				  struct mail_attribute_value *value_r)
 {
 	struct sieve_script *script;
-	const char *errstr;
+	const char *error;
 	int ret;
 
 	ret = sieve_storage_is_singular(svstorage);
@@ -493,11 +493,11 @@ sieve_attribute_get_active_script(struct mail_storage *storage,
 		return 0;
 
 	ret = sieve_attribute_retrieve_script(storage, svstorage, script, TRUE,
-					      value_r, &errstr);
+					      value_r, &error);
 	if (ret < 0) {
 		mail_storage_set_critical(
 			storage, "Failed to access active sieve script: %s",
-			errstr);
+			error);
 	}
 	return ret;
 }
@@ -535,7 +535,7 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 {
 	struct sieve_storage *svstorage;
 	struct sieve_script *script;
-	const char *scriptname, *errstr;
+	const char *scriptname, *error;
 	int ret;
 
 	ret = mail_sieve_user_init(storage->user, &svstorage);
@@ -554,11 +554,11 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 	}
 	script = sieve_storage_open_script(svstorage, scriptname, NULL);
 	ret = sieve_attribute_retrieve_script(storage, svstorage, script, FALSE,
-					      value_r, &errstr);
+					      value_r, &error);
 	if (ret < 0) {
 		mail_storage_set_critical(
 			storage, "Failed to access sieve script '%s': %s",
-			scriptname, errstr);
+			scriptname, error);
 	}
 	return ret;
 }

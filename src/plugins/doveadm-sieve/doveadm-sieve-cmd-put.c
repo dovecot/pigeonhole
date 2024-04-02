@@ -27,15 +27,15 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 	struct sieve_storage_save_context *save_ctx;
 	struct sieve_storage *storage = _ctx->storage;
 	struct istream *input = _ctx->ctx.cmd_input;
-	enum sieve_error error;
+	enum sieve_error error_code;
 	ssize_t ret;
 	bool save_failed = FALSE;
 
 	save_ctx = sieve_storage_save_init(storage, ctx->scriptname, input);
 	if (save_ctx == NULL) {
 		e_error(event, "Saving failed: %s",
-			sieve_storage_get_last_error(storage, &error));
-		doveadm_sieve_cmd_failed_error(_ctx, error);
+			sieve_storage_get_last_error(storage, &error_code));
+		doveadm_sieve_cmd_failed_error(_ctx, error_code);
 		return -1;
 	}
 
@@ -80,8 +80,9 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 		/* Check result */
 		if (script == NULL) {
 			e_error(event, "Saving failed: %s",
-				sieve_storage_get_last_error(storage, &error));
-			doveadm_sieve_cmd_failed_error(_ctx, error);
+				sieve_storage_get_last_error(storage,
+							     &error_code));
+			doveadm_sieve_cmd_failed_error(_ctx, error_code);
 			ret = -1;
 
 		} else {
@@ -96,9 +97,10 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 			ehandler = sieve_master_ehandler_create(
 				ctx->ctx.svinst, 0);
 			sbin = sieve_compile_script(script, ehandler, cpflags,
-						    &error);
+						    &error_code);
 			if (sbin == NULL) {
-				doveadm_sieve_cmd_failed_error(_ctx, error);
+				doveadm_sieve_cmd_failed_error(
+					_ctx, error_code);
 				ret = -1;
 			} else {
 				sieve_close(&sbin);
@@ -108,9 +110,9 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 				if (ret < 0) {
 					e_error(event, "Saving failed: %s",
 						sieve_storage_get_last_error(
-							storage, &error));
+							storage, &error_code));
 					doveadm_sieve_cmd_failed_error(
-						_ctx, error);
+						_ctx, error_code);
 					ret = -1;
 				}
 			}
@@ -128,8 +130,9 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 		if (script == NULL ||
 		    sieve_script_activate(script, (time_t)-1) < 0) {
 			e_error(event, "Failed to activate Sieve script: %s",
-				sieve_storage_get_last_error(storage, &error));
-			doveadm_sieve_cmd_failed_error(_ctx, error);
+				sieve_storage_get_last_error(storage,
+							     &error_code));
+			doveadm_sieve_cmd_failed_error(_ctx, error_code);
 			ret = -1;
 		}
 		if (script != NULL)
