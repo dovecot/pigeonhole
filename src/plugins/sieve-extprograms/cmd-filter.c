@@ -134,7 +134,7 @@ cmd_filter_operation_execute(const struct sieve_runtime_env *renv,
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	unsigned int is_test = 0;
 	struct sieve_stringlist *args_list = NULL;
-	enum sieve_error error = SIEVE_ERROR_NONE;
+	enum sieve_error error_code = SIEVE_ERROR_NONE;
 	string_t *pname = NULL;
 	const char *program_name = NULL;
 	const char *const *args = NULL;
@@ -187,7 +187,7 @@ cmd_filter_operation_execute(const struct sieve_runtime_env *renv,
 
 	sprog = sieve_extprogram_create(this_ext, eenv->scriptenv,
 					eenv->msgdata, "filter",
-					program_name, args, &error);
+					program_name, args, &error_code);
 	if (sprog != NULL) {
 		struct mail *mail = sieve_message_get_mail(renv->msgctx);
 
@@ -227,7 +227,7 @@ cmd_filter_operation_execute(const struct sieve_runtime_env *renv,
 
 		i_stream_unref(&newmsg);
 	} else if (ret < 0) {
-		if (error == SIEVE_ERROR_NOT_FOUND) {
+		if (error_code == SIEVE_ERROR_NOT_FOUND) {
 			sieve_runtime_error(renv, NULL, "filter action: "
 					    "program '%s' not found",
 					    str_sanitize(program_name, 80));

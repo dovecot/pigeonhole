@@ -324,7 +324,7 @@ cmd_execute_operation_execute(const struct sieve_runtime_env *renv,
 	bool have_input = FALSE;
 	const char *program_name = NULL;
 	const char *const *args = NULL;
-	enum sieve_error error = SIEVE_ERROR_NONE;
+	enum sieve_error error_code = SIEVE_ERROR_NONE;
 	buffer_t *outbuf = NULL;
 	struct sieve_extprogram *sprog = NULL;
 	int ret;
@@ -401,7 +401,7 @@ cmd_execute_operation_execute(const struct sieve_runtime_env *renv,
 
 	sprog = sieve_extprogram_create(this_ext, eenv->scriptenv,
 					eenv->msgdata, "execute",
-					program_name, args, &error);
+					program_name, args, &error_code);
 	if (sprog != NULL) {
 		if (var_storage != NULL) {
 			// FIXME: limit output size
@@ -458,7 +458,7 @@ cmd_execute_operation_execute(const struct sieve_runtime_env *renv,
 			} // FIXME: handle failure
 		}
 	} else if (ret < 0) {
-		if (error == SIEVE_ERROR_NOT_FOUND) {
+		if (error_code == SIEVE_ERROR_NOT_FOUND) {
 			sieve_runtime_error(
 				renv, NULL,
 				"execute action: program '%s' not found",

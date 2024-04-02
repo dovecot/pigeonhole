@@ -406,7 +406,8 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			const struct sieve_script_env *senv,
 			const struct sieve_message_data *msgdata,
 			const char *action, const char *program_name,
-			const char *const *args, enum sieve_error *error_r)
+			const char *const *args,
+			enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct sieve_extprograms_config *ext_config =
@@ -426,7 +427,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			"failed to execute program '%s': "
 			"vnd.dovecot.%s extension is unconfigured",
 			action, program_name, action);
-		*error_r = SIEVE_ERROR_NOT_FOUND;
+		*error_code_r = SIEVE_ERROR_NOT_FOUND;
 		return NULL;
 	}
 
@@ -446,13 +447,13 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 				e_error(svinst->event, "action %s: "
 					"failed to stat socket: %s",
 					action, eacces_error_get("stat", path));
-				*error_r = SIEVE_ERROR_NO_PERMISSION;
+				*error_code_r = SIEVE_ERROR_NO_PERMISSION;
 				return NULL;
 			default:
 				e_error(svinst->event, "action %s: "
 					"failed to stat socket '%s': %m",
 					action, path);
-				*error_r = SIEVE_ERROR_TEMP_FAILURE;
+				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 				return NULL;
 			}
 			path = NULL;
@@ -460,7 +461,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			e_error(svinst->event, "action %s: "
 				"socket path '%s' for program '%s' is not a socket",
 				action, path, program_name);
-			*error_r = SIEVE_ERROR_NOT_POSSIBLE;
+			*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
 			return NULL;
 		}
 	}
@@ -476,19 +477,19 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 				e_debug(svinst->event, "action %s: "
 					"executable path '%s' for program '%s' not found",
 					action, path, program_name);
-				*error_r = SIEVE_ERROR_NOT_FOUND;
+				*error_code_r = SIEVE_ERROR_NOT_FOUND;
 				break;
 			case EACCES:
 				e_error(svinst->event, "action %s: "
 					"failed to stat program: %s",
 					action, eacces_error_get("stat", path));
-				*error_r = SIEVE_ERROR_NO_PERMISSION;
+				*error_code_r = SIEVE_ERROR_NO_PERMISSION;
 				break;
 			default:
 				e_error(svinst->event, "action %s: "
 					"failed to stat program '%s': %m",
 					action, path);
-				*error_r = SIEVE_ERROR_TEMP_FAILURE;
+				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 				break;
 			}
 
@@ -497,13 +498,13 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			e_error(svinst->event, "action %s: "
 				"executable '%s' for program '%s' is not a regular file",
 				action, path, program_name);
-			*error_r = SIEVE_ERROR_NOT_POSSIBLE;
+			*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
 			return NULL;
 		} else if ((st.st_mode & S_IWOTH) != 0) {
 			e_error(svinst->event, "action %s: "
 				"executable '%s' for program '%s' is world-writable",
 				action, path, program_name);
-			*error_r = SIEVE_ERROR_NO_PERMISSION;
+			*error_code_r = SIEVE_ERROR_NO_PERMISSION;
 			return NULL;
 		}
 	}
@@ -512,7 +513,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 	if (path == NULL) {
 		e_error(svinst->event, "action %s: "
 			"program '%s' not found", action, program_name);
-		*error_r = SIEVE_ERROR_NOT_FOUND;
+		*error_code_r = SIEVE_ERROR_NOT_FOUND;
 		return NULL;
 	}
 
