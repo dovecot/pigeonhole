@@ -24,14 +24,14 @@ static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_storage *storage = _ctx->storage;
 	struct sieve_script *script;
-	enum sieve_error error;
+	enum sieve_error error_code;
 	int ret = 0;
 
 	script = sieve_storage_open_script(storage, ctx->scriptname, NULL);
 	if (script == NULL) {
 		e_error(event, "Failed to activate Sieve script: %s",
-			sieve_storage_get_last_error(storage, &error));
-		doveadm_sieve_cmd_failed_error(_ctx, error);
+			sieve_storage_get_last_error(storage, &error_code));
+		doveadm_sieve_cmd_failed_error(_ctx, error_code);
 		return -1;
 	}
 
@@ -44,13 +44,14 @@ static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 			SIEVE_COMPILE_FLAG_NOGLOBAL |
 			SIEVE_COMPILE_FLAG_ACTIVATED;
 		struct sieve_binary *sbin;
-		enum sieve_error error;
+		enum sieve_error error_code;
 
 		/* Compile */
 		ehandler = sieve_master_ehandler_create(ctx->ctx.svinst, 0);
-		sbin = sieve_compile_script(script, ehandler, cpflags, &error);
+		sbin = sieve_compile_script(script, ehandler, cpflags,
+					    &error_code);
 		if (sbin == NULL) {
-			doveadm_sieve_cmd_failed_error(_ctx, error);
+			doveadm_sieve_cmd_failed_error(_ctx, error_code);
 			ret = -1;
 		} else {
 			sieve_close(&sbin);
@@ -66,8 +67,9 @@ static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 		ret = sieve_script_activate(script, (time_t)-1);
 		if (ret < 0) {
 			e_error(event, "Failed to activate Sieve script: %s",
-				sieve_storage_get_last_error(storage, &error));
-			doveadm_sieve_cmd_failed_error(_ctx, error);
+				sieve_storage_get_last_error(storage,
+							     &error_code));
+			doveadm_sieve_cmd_failed_error(_ctx, error_code);
 			ret = -1;
 		}
 	}
@@ -80,12 +82,12 @@ static int cmd_sieve_deactivate_run(struct doveadm_sieve_cmd_context *_ctx)
 {
 	struct event *event = _ctx->ctx.cctx->event;
 	struct sieve_storage *storage = _ctx->storage;
-	enum sieve_error error;
+	enum sieve_error error_code;
 
 	if (sieve_storage_deactivate(storage, (time_t)-1) < 0) {
 		e_error(event, "Failed to deactivate Sieve script: %s",
-			sieve_storage_get_last_error(storage, &error));
-		doveadm_sieve_cmd_failed_error(_ctx, error);
+			sieve_storage_get_last_error(storage, &error_code));
+		doveadm_sieve_cmd_failed_error(_ctx, error_code);
 		return -1;
 	}
 	return 0;
