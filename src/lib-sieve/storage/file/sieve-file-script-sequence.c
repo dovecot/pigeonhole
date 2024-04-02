@@ -125,7 +125,7 @@ sieve_file_script_sequence_read_dir(struct sieve_file_script_sequence *fseq,
 
 struct sieve_script_sequence *
 sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
-				       enum sieve_error *error_r)
+				       enum sieve_error *error_code_r)
 {
 	struct sieve_file_storage *fstorage =
 		(struct sieve_file_storage *)storage;
@@ -157,7 +157,7 @@ sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
 				"stat(%s) failed: %m", fstorage->path);
 			break;
 		}
-		*error_r = storage->error_code;
+		*error_code_r = storage->error_code;
 		return NULL;
 	}
 
@@ -175,7 +175,7 @@ sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
 			/* Read all '.sieve' files in directory */
 			if (sieve_file_script_sequence_read_dir(
 				fseq, fstorage->path) < 0) {
-				*error_r = storage->error_code;
+				*error_code_r = storage->error_code;
 				sieve_file_script_sequence_destroy(&fseq->seq);
 				return NULL;
 			}
@@ -198,7 +198,7 @@ sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
 
 struct sieve_script *
 sieve_file_script_sequence_next(struct sieve_script_sequence *seq,
-				enum sieve_error *error_r)
+				enum sieve_error *error_code_r)
 {
 	struct sieve_file_script_sequence *fseq =
 		(struct sieve_file_script_sequence *)seq;
@@ -208,8 +208,8 @@ sieve_file_script_sequence_next(struct sieve_script_sequence *seq,
 	const char *const *files;
 	unsigned int count;
 
-	if (error_r != NULL)
-		*error_r = SIEVE_ERROR_NONE;
+	if (error_code_r != NULL)
+		*error_code_r = SIEVE_ERROR_NONE;
 
 	fscript = NULL;
 	if (fseq->storage_is_file) {
@@ -232,8 +232,8 @@ sieve_file_script_sequence_next(struct sieve_script_sequence *seq,
 	}
 
 	if (fscript == NULL) {
-		if (error_r != NULL)
-			*error_r = seq->storage->error_code;
+		if (error_code_r != NULL)
+			*error_code_r = seq->storage->error_code;
 		return NULL;
 	}
 	return &fscript->script;

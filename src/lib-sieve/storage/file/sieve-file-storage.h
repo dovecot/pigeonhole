@@ -50,7 +50,7 @@ struct sieve_file_storage *
 sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 				  const char *path,
 				  enum sieve_storage_flags flags,
-				  enum sieve_error *error_r) ATTR_NULL(4);
+				  enum sieve_error *error_code_r);
 
 int sieve_file_storage_pre_modify(struct sieve_storage *storage);
 
@@ -154,11 +154,11 @@ sieve_file_script_open_from_name(struct sieve_file_storage *fstorage,
 struct sieve_file_script *
 sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
 				 const char *path, const char *scriptname,
-				 enum sieve_error *error_r) ATTR_NULL(4);
+				 enum sieve_error *error_code_r);
 struct sieve_file_script *
 sieve_file_script_open_from_path(struct sieve_file_storage *fstorage,
 				 const char *path, const char *scriptname,
-				 enum sieve_error *error_r) ATTR_NULL(4);
+				 enum sieve_error *error_code_r);
 
 /* Return directory where script resides in. Returns NULL if this is not a file
    script.
@@ -175,11 +175,11 @@ const char *sieve_file_script_get_path(const struct sieve_script *script);
 
 struct sieve_script_sequence *
 sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
-				       enum sieve_error *error_r);
+				       enum sieve_error *error_code_r);
 
 struct sieve_script *
 sieve_file_script_sequence_next(struct sieve_script_sequence *seq,
-				enum sieve_error *error_r);
+				enum sieve_error *error_code_r);
 void sieve_file_script_sequence_destroy(struct sieve_script_sequence *seq);
 
 #endif
