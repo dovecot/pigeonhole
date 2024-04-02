@@ -53,7 +53,7 @@ struct sieve_lexical_scanner {
 const struct sieve_lexer *
 sieve_lexer_create(struct sieve_script *script,
 		   struct sieve_error_handler *ehandler,
-		   enum sieve_error *error_r)
+		   enum sieve_error *error_code_r)
 {
 	struct sieve_lexical_scanner *scanner;
 	struct sieve_instance *svinst = sieve_script_svinst(script);
@@ -61,7 +61,7 @@ sieve_lexer_create(struct sieve_script *script,
 	const struct stat *st;
 
 	/* Open script as stream */
-	if (sieve_script_get_stream(script, &stream, error_r) < 0)
+	if (sieve_script_get_stream(script, &stream, error_code_r) < 0)
 		return NULL;
 
 	/* Check script size */
@@ -71,8 +71,8 @@ sieve_lexer_create(struct sieve_script *script,
 		sieve_error(ehandler, sieve_script_name(script),
 			"sieve script is too large (max %zu bytes)",
 			svinst->max_script_size);
-		if (error_r != NULL)
-			*error_r = SIEVE_ERROR_NOT_POSSIBLE;
+		if (error_code_r != NULL)
+			*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
 		return NULL;
 	}
 
