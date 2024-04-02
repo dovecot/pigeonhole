@@ -28,7 +28,8 @@ static struct sieve_storage *sieve_dict_storage_alloc(void)
 
 static int
 sieve_dict_storage_init(struct sieve_storage *storage,
-			const char *const *options, enum sieve_error *error_r)
+			const char *const *options,
+			enum sieve_error *error_code_r)
 {
 	struct sieve_dict_storage *dstorage =
 		(struct sieve_dict_storage *)storage;
@@ -45,7 +46,7 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 			} else {
 				sieve_storage_set_critical(
 					storage, "Invalid option '%s'", option);
-				*error_r = SIEVE_ERROR_TEMP_FAILURE;
+				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
 
@@ -57,7 +58,7 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 		if (svinst->username == NULL) {
 			sieve_storage_set_critical(storage,
 						   "No username specified");
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 		username = svinst->username;
@@ -67,7 +68,7 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 		sieve_storage_set_critical(
 			storage,
 			"BUG: Sieve interpreter is initialized without a base_dir");
-		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 
@@ -85,7 +86,8 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 
 int
 sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
-			    struct dict **dict_r, enum sieve_error *error_r)
+			    struct dict **dict_r,
+			    enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = &dstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
@@ -102,7 +104,7 @@ sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
 			sieve_storage_set_critical(storage,
 				"Failed to initialize dict with data '%s' for user '%s': %s",
 				dstorage->uri, dstorage->username, error);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 	}
