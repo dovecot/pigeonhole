@@ -88,7 +88,8 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			const struct sieve_script_env *senv,
 			const struct sieve_message_data *msgdata,
 			const char *action, const char *program_name,
-			const char *const *args, enum sieve_error *error_r);
+			const char *const *args,
+			enum sieve_error *error_code_r);
 void sieve_extprogram_destroy(struct sieve_extprogram **_sprog);
 
 void sieve_extprogram_set_output(struct sieve_extprogram *sprog,

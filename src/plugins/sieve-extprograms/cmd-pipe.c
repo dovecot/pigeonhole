@@ -367,12 +367,12 @@ act_pipe_execute(const struct sieve_action_exec_env *aenv,
 	struct mail *mail = (action->mail != NULL ?
 		     action->mail :
 		     sieve_message_get_mail(aenv->msgctx));
-	enum sieve_error error = SIEVE_ERROR_NONE;
+	enum sieve_error error_code = SIEVE_ERROR_NONE;
 
 	trans->sprog = sieve_extprogram_create(action->ext, eenv->scriptenv,
 					       eenv->msgdata, "pipe",
 					       act->program_name, act->args,
-					       &error);
+					       &error_code);
 	if (trans->sprog != NULL) {
 		if (sieve_extprogram_set_input_mail(trans->sprog, mail) < 0) {
 			sieve_extprogram_destroy(&trans->sprog);
@@ -394,7 +394,7 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 	const struct ext_pipe_action *act =
 		(const struct ext_pipe_action *)action->context;
 	struct act_pipe_transaction *trans = tr_context;
-	enum sieve_error error = SIEVE_ERROR_NONE;
+	enum sieve_error error_code = SIEVE_ERROR_NONE;
 	int ret;
 
 	if (trans->sprog != NULL) {
@@ -418,7 +418,7 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 		eenv->exec_status->message_forwarded = TRUE;
 	} else {
 		if (ret < 0) {
-			if (error == SIEVE_ERROR_NOT_FOUND) {
+			if (error_code == SIEVE_ERROR_NOT_FOUND) {
 				sieve_result_error(
 					aenv,
 					"failed to pipe message to program: "
