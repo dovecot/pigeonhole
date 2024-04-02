@@ -104,7 +104,7 @@ bool cmd_getscript(struct client_command_context *cmd)
 	struct client *client = cmd->client;
 	struct cmd_getscript_context *ctx;
 	const char *scriptname;
-	enum sieve_error error;
+	enum sieve_error error_code;
 
 	/* <scriptname> */
 	if (!client_read_string_args(cmd, TRUE, 1, &scriptname))
@@ -127,9 +127,9 @@ bool cmd_getscript(struct client_command_context *cmd)
 	}
 
 	if (sieve_script_get_stream(ctx->script, &ctx->script_stream,
-				    &error) < 0) {
-		if (error == SIEVE_ERROR_NOT_FOUND) {
-			sieve_storage_set_error(client->storage, error,
+				    &error_code) < 0) {
+		if (error_code == SIEVE_ERROR_NOT_FOUND) {
+			sieve_storage_set_error(client->storage, error_code,
 						"Script does not exist.");
 		}
 		ctx->failed = TRUE;

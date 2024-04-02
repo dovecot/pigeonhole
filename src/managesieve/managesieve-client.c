@@ -66,16 +66,16 @@ client_get_storage(struct sieve_instance *svinst, struct event *event,
 		   struct mail_user *user, int fd_out)
 {
 	struct sieve_storage *storage;
-	enum sieve_error error;
+	enum sieve_error error_code;
 	const char *errormsg, *byemsg;
 
 	/* Open personal script storage */
 
 	storage = sieve_storage_create_main(svinst, user,
 					    SIEVE_STORAGE_FLAG_READWRITE,
-					    &error);
+					    &error_code);
 	if (storage == NULL) {
-		switch (error) {
+		switch (error_code) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
 			byemsg = "BYE \"Sieve processing is disabled for this user.\"\r\n";
 			errormsg = "Failed to open Sieve storage: "

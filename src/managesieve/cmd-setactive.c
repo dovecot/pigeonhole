@@ -42,7 +42,7 @@ cmd_setactive_activate(struct client_command_context *cmd,
 			SIEVE_COMPILE_FLAG_NOGLOBAL |
 			SIEVE_COMPILE_FLAG_ACTIVATED;
 		struct sieve_binary *sbin;
-		enum sieve_error error;
+		enum sieve_error error_code;
 
 		/* Prepare error handler */
 		errors = str_new(default_pool, 1024);
@@ -51,12 +51,13 @@ cmd_setactive_activate(struct client_command_context *cmd,
 			client->set->managesieve_max_compile_errors);
 
 		/* Compile */
-		sbin = sieve_compile_script(script, ehandler, cpflags, &error);
+		sbin = sieve_compile_script(script, ehandler, cpflags,
+					    &error_code);
 		if (sbin == NULL) {
-			if (error != SIEVE_ERROR_NOT_VALID) {
+			if (error_code != SIEVE_ERROR_NOT_VALID) {
 				errormsg = sieve_script_get_last_error(
-					script, &error);
-				if (error == SIEVE_ERROR_NONE)
+					script, &error_code);
+				if (error_code == SIEVE_ERROR_NONE)
 					errormsg = NULL;
 			}
 			success = FALSE;

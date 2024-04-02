@@ -181,7 +181,7 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 		SIEVE_COMPILE_FLAG_NOGLOBAL | SIEVE_COMPILE_FLAG_UPLOADED;
 	struct sieve_binary *sbin;
 	bool success = TRUE;
-	enum sieve_error error;
+	enum sieve_error error_code;
 	string_t *errors;
 
 	/* Mark this as an activation when we are replacing the
@@ -196,13 +196,14 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 		client->set->managesieve_max_compile_errors);
 
 	/* Compile */
-	sbin = sieve_compile_script(script, ehandler, cpflags, &error);
+	sbin = sieve_compile_script(script, ehandler, cpflags, &error_code);
 	if (sbin == NULL) {
 		const char *errormsg = NULL, *action;
 
-		if (error != SIEVE_ERROR_NOT_VALID) {
-			errormsg = sieve_script_get_last_error(script, &error);
-			if (error == SIEVE_ERROR_NONE)
+		if (error_code != SIEVE_ERROR_NOT_VALID) {
+			errormsg = sieve_script_get_last_error(
+				script, &error_code);
+			if (error_code == SIEVE_ERROR_NONE)
 				errormsg = NULL;
 		}
 
