@@ -145,12 +145,12 @@ struct sieve_message_override_def;
 struct sieve_plugin;
 
 /* sieve.c */
-struct sieve_ast *sieve_parse
-	(struct sieve_script *script, struct sieve_error_handler *ehandler,
-		enum sieve_error *error_r);
-bool sieve_validate
-	(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
-		enum sieve_compile_flags flags, enum sieve_error *error_r);
+struct sieve_ast *
+sieve_parse(struct sieve_script *script, struct sieve_error_handler *ehandler,
+	    enum sieve_error *error_r);
+bool sieve_validate(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
+		    enum sieve_compile_flags flags,
+		    enum sieve_error *error_r);
 
 /*
  * Parent category
@@ -215,26 +215,23 @@ struct sieve_instance {
  * Script trace log
  */
 
-void sieve_trace_log_write_line
-	(struct sieve_trace_log *trace_log, const string_t *line)
-	ATTR_NULL(2);
+void sieve_trace_log_write_line(struct sieve_trace_log *trace_log,
+				const string_t *line);
 
 /*
  * User e-mail address
  */
 
-const struct smtp_address *sieve_get_user_email
-	(struct sieve_instance *svinst);
+const struct smtp_address *sieve_get_user_email	(struct sieve_instance *svinst);
 
 /*
- * Postmaster address 
+ * Postmaster address
  */
 
 const struct message_address *
 sieve_get_postmaster(const struct sieve_script_env *senv);
 const struct smtp_address *
 sieve_get_postmaster_smtp(const struct sieve_script_env *senv);
-const char *
-sieve_get_postmaster_address(const struct sieve_script_env *senv);
+const char *sieve_get_postmaster_address(const struct sieve_script_env *senv);
 
 #endif
