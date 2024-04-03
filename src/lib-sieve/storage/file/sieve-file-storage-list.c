@@ -26,7 +26,7 @@ struct sieve_storage_list_context *
 sieve_file_storage_list_init(struct sieve_storage *storage)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct sieve_file_list_context *flctx;
 	const char *active = NULL;
 	pool_t pool;
@@ -88,9 +88,9 @@ sieve_file_storage_list_next(struct sieve_storage_list_context *lctx,
 			     bool *active)
 {
 	struct sieve_file_list_context *flctx =
-		(struct sieve_file_list_context *)lctx;
+		container_of(lctx, struct sieve_file_list_context, context);
 	const struct sieve_file_storage *fstorage =
-		(const struct sieve_file_storage *)lctx->storage;
+		container_of(lctx->storage, struct sieve_file_storage, storage);
 	struct dirent *dp;
 	const char *scriptname;
 
@@ -125,9 +125,9 @@ sieve_file_storage_list_next(struct sieve_storage_list_context *lctx,
 int sieve_file_storage_list_deinit(struct sieve_storage_list_context *lctx)
 {
 	struct sieve_file_list_context *flctx =
-		(struct sieve_file_list_context *)lctx;
+		container_of(lctx, struct sieve_file_list_context, context);
 	const struct sieve_file_storage *fstorage =
-		(const struct sieve_file_storage *)lctx->storage;
+		container_of(lctx->storage, struct sieve_file_storage, storage);
 
 	if (closedir(flctx->dirp) < 0) {
 		e_error(lctx->storage->event,

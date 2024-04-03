@@ -299,10 +299,11 @@ static int
 sieve_file_script_open(struct sieve_script *script,
 		       enum sieve_error *error_code_r)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 	struct sieve_storage *storage = script->storage;
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	pool_t pool = script->pool;
 	const char *filename, *name, *path;
 	const char *dirpath, *basename, *binpath, *binprefix;
@@ -436,7 +437,8 @@ sieve_file_script_get_stream(struct sieve_script *script,
 			     struct istream **stream_r,
 			     enum sieve_error *error_code_r)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 	struct stat st;
 	struct istream *result;
 	int fd;
@@ -492,7 +494,8 @@ sieve_file_script_binary_read_metadata(struct sieve_script *script,
 				       struct sieve_binary_block *sblock,
 				       sieve_size_t *offset ATTR_UNUSED)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 	struct sieve_instance *svinst = script->storage->svinst;
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
 	const struct stat *sstat, *bstat;
@@ -532,7 +535,8 @@ static struct sieve_binary *
 sieve_file_script_binary_load(struct sieve_script *script,
 			      enum sieve_error *error_code_r)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 	struct sieve_instance *svinst = script->storage->svinst;
 
 	return sieve_binary_open(svinst, fscript->binpath, script,
@@ -545,7 +549,8 @@ sieve_file_script_binary_save(struct sieve_script *script,
 			      enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = script->storage;
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 
 	if (storage->bin_dir != NULL &&
 	    sieve_storage_setup_bindir(storage, 0700) < 0)
@@ -560,7 +565,8 @@ sieve_file_script_binary_save(struct sieve_script *script,
 static const char *
 sieve_file_script_binary_get_prefix(struct sieve_script *script)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 
 	return fscript->binprefix;
 }
@@ -571,9 +577,11 @@ sieve_file_script_binary_get_prefix(struct sieve_script *script)
 
 static int sieve_file_storage_script_is_active(struct sieve_script *script)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *) script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)script->storage;
+		container_of(script->storage, struct sieve_file_storage,
+			     storage);
 	const char *afile;
 	int ret = 0;
 
@@ -592,7 +600,8 @@ static int sieve_file_storage_script_is_active(struct sieve_script *script)
 
 static int sieve_file_storage_script_delete(struct sieve_script *script)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 	int ret = 0;
 
 	if (sieve_file_storage_pre_modify(script->storage) < 0)
@@ -619,7 +628,7 @@ _sieve_file_storage_script_activate(struct sieve_file_script *fscript)
 	struct sieve_script *script = &fscript->script;
 	struct sieve_storage *storage = script->storage;
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct stat st;
 	const char *link_path, *afile;
 	int activated = 0;
@@ -679,7 +688,8 @@ _sieve_file_storage_script_activate(struct sieve_file_script *fscript)
 
 static int sieve_file_storage_script_activate(struct sieve_script *script)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 	int ret;
 
 	if (sieve_file_storage_pre_modify(script->storage) < 0)
@@ -696,10 +706,11 @@ static int
 sieve_file_storage_script_rename(struct sieve_script *script,
 				 const char *newname)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_file_script *fscript =
+		container_of(script, struct sieve_file_script, script);
 	struct sieve_storage *storage = script->storage;
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	const char *newpath, *newfile, *link_path;
 	int ret = 0;
 
@@ -785,7 +796,8 @@ sieve_file_storage_script_rename(struct sieve_script *script,
 static int
 sieve_file_script_get_size(const struct sieve_script *script, uoff_t *size_r)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	const struct sieve_file_script *fscript =
+		container_of(script, const struct sieve_file_script, script);
 
 	*size_r = fscript->st.st_size;
 	return 1;
@@ -793,7 +805,8 @@ sieve_file_script_get_size(const struct sieve_script *script, uoff_t *size_r)
 
 const char *sieve_file_script_get_dirpath(const struct sieve_script *script)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	const struct sieve_file_script *fscript =
+		container_of(script, const struct sieve_file_script, script);
 
 	if (script->driver_name != sieve_file_script.driver_name)
 		return NULL;
@@ -803,7 +816,8 @@ const char *sieve_file_script_get_dirpath(const struct sieve_script *script)
 
 const char *sieve_file_script_get_path(const struct sieve_script *script)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	const struct sieve_file_script *fscript =
+		container_of(script, const struct sieve_file_script, script);
 
 	if (script->driver_name != sieve_file_script.driver_name)
 		return NULL;
@@ -819,8 +833,10 @@ static bool
 sieve_file_script_equals(const struct sieve_script *script,
 			 const struct sieve_script *other)
 {
-	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
-	struct sieve_file_script *fother = (struct sieve_file_script *)other;
+	const struct sieve_file_script *fscript =
+		container_of(script, const struct sieve_file_script, script);
+	const struct sieve_file_script *fother =
+		container_of(other, const struct sieve_file_script, script);
 
 	if (!script->open || !other->open) {
 		struct sieve_storage *storage = script->storage;

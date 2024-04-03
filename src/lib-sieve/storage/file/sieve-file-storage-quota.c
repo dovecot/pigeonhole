@@ -20,7 +20,7 @@ int sieve_file_storage_quota_havespace(struct sieve_storage *storage,
 				       uint64_t *limit_r)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct dirent *dp;
 	DIR *dirp;
 	uint64_t script_count = 1;

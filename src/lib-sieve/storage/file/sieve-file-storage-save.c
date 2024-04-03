@@ -210,9 +210,9 @@ int sieve_file_storage_save_init(struct sieve_storage_save_context *sctx,
 {
 	struct sieve_storage *storage = sctx->storage;
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct sieve_file_save_context *fsctx =
-		(struct sieve_file_save_context *)sctx;
+		container_of(sctx, struct sieve_file_save_context, context);
 	pool_t pool = sctx->pool;
 	const char *path;
 	int fd, ret = 0;
@@ -264,7 +264,7 @@ int sieve_file_storage_save_init(struct sieve_storage_save_context *sctx,
 int sieve_file_storage_save_continue(struct sieve_storage_save_context *sctx)
 {
 	struct sieve_file_save_context *fsctx =
-		(struct sieve_file_save_context *)sctx;
+		container_of(sctx, struct sieve_file_save_context, context);
 
 	switch (o_stream_send_istream(fsctx->output, sctx->input)) {
 	case OSTREAM_SEND_ISTREAM_RESULT_FINISHED:
@@ -290,7 +290,7 @@ int sieve_file_storage_save_continue(struct sieve_storage_save_context *sctx)
 int sieve_file_storage_save_finish(struct sieve_storage_save_context *sctx)
 {
 	struct sieve_file_save_context *fsctx =
-		(struct sieve_file_save_context *)sctx;
+		container_of(sctx, struct sieve_file_save_context, context);
 	struct sieve_storage *storage = sctx->storage;
 	int output_errno;
 
@@ -346,9 +346,9 @@ struct sieve_script *
 sieve_file_storage_save_get_tempscript(struct sieve_storage_save_context *sctx)
 {
 	struct sieve_file_save_context *fsctx =
-		(struct sieve_file_save_context *)sctx;
+		container_of(sctx, struct sieve_file_save_context, context);
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)sctx->storage;
+		container_of(sctx->storage, struct sieve_file_storage, storage);
 	struct sieve_file_script *tmpscript;
 	enum sieve_error error_code;
 	const char *scriptname;
@@ -407,10 +407,10 @@ sieve_file_storage_update_mtime(struct sieve_storage *storage, const char *path,
 int sieve_file_storage_save_commit(struct sieve_storage_save_context *sctx)
 {
 	struct sieve_file_save_context *fsctx =
-		(struct sieve_file_save_context *)sctx;
+		container_of(sctx, struct sieve_file_save_context, context);
 	struct sieve_storage *storage = sctx->storage;
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)sctx->storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	const char *dest_path;
 	bool failed = FALSE;
 
@@ -434,7 +434,7 @@ int sieve_file_storage_save_commit(struct sieve_storage_save_context *sctx)
 void sieve_file_storage_save_cancel(struct sieve_storage_save_context *sctx)
 {
 	struct sieve_file_save_context *fsctx =
-		(struct sieve_file_save_context *)sctx;
+		container_of(sctx, struct sieve_file_save_context, context);
 	struct sieve_storage *storage = sctx->storage;
 
 	if (fsctx->tmp_path != NULL &&
@@ -521,7 +521,7 @@ int sieve_file_storage_save_as(struct sieve_storage *storage,
 			       struct istream *input, const char *name)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	string_t *temp_path;
 	const char *dest_path;
 
@@ -542,7 +542,7 @@ int sieve_file_storage_save_as_active(struct sieve_storage *storage,
 				      struct istream *input, time_t mtime)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	string_t *temp_path;
 
 	temp_path = t_str_new(256);
