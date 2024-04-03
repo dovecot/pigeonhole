@@ -207,7 +207,7 @@ int sieve_file_storage_active_script_get_name(struct sieve_storage *storage,
 					      const char **name_r)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	const char *link;
 	int ret;
 
@@ -237,7 +237,7 @@ struct sieve_script *
 sieve_file_storage_active_script_open(struct sieve_storage *storage)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct sieve_file_script *fscript;
 	const char *scriptfile, *link;
 	int ret;
@@ -298,7 +298,7 @@ int sieve_file_storage_active_script_get_last_change(
 	struct sieve_storage *storage, time_t *last_change_r)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct stat st;
 
 	/* Try direct lstat first */
@@ -378,7 +378,7 @@ bool sieve_file_storage_active_rescue_regular(
 int sieve_file_storage_deactivate(struct sieve_storage *storage)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	int ret;
 
 	if (sieve_file_storage_pre_modify(storage) < 0)

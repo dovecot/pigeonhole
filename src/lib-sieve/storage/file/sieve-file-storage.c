@@ -509,7 +509,7 @@ sieve_file_storage_init(struct sieve_storage *storage,
 			enum sieve_error *error_code_r)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	const char *storage_path = storage->location;
 	const char *value, *active_path = "";
 	bool exists = FALSE;
@@ -708,7 +708,7 @@ sieve_file_storage_init_default(struct sieve_instance *svinst,
 
 	storage = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
 				      "", flags, TRUE);
-	fstorage = (struct sieve_file_storage *)storage;
+	fstorage = container_of(storage, struct sieve_file_storage, storage);
 
 	T_BEGIN {
 		if (sieve_file_storage_do_init_default(fstorage, active_path,
@@ -732,7 +732,7 @@ sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 
 	storage = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
 				      "", flags, FALSE);
-	fstorage = (struct sieve_file_storage *)storage;
+	fstorage = container_of(storage, struct sieve_file_storage, storage);
 
 	T_BEGIN {
 		if (sieve_file_storage_init_common(fstorage, path, NULL, FALSE,
@@ -748,7 +748,7 @@ sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 static int sieve_file_storage_is_singular(struct sieve_storage *storage)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct stat st;
 
 	if (fstorage->active_path == NULL)
@@ -785,7 +785,7 @@ sieve_file_storage_get_last_change(struct sieve_storage *storage,
 				   time_t *last_change_r)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct stat st;
 
 	if (fstorage->prev_mtime == (time_t)-1) {
@@ -819,7 +819,7 @@ static void
 sieve_file_storage_set_modified(struct sieve_storage *storage, time_t mtime)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct utimbuf times;
 	time_t cur_mtime;
 
@@ -858,7 +858,7 @@ static struct sieve_script *
 sieve_file_storage_get_script(struct sieve_storage *storage, const char *name)
 {
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
+		container_of(storage, struct sieve_file_storage, storage);
 	struct sieve_file_script *fscript;
 
 	T_BEGIN {
