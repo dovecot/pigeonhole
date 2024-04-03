@@ -32,7 +32,7 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 			enum sieve_error *error_code_r)
 {
 	struct sieve_dict_storage *dstorage =
-		(struct sieve_dict_storage *)storage;
+		container_of(storage, struct sieve_dict_storage, storage);
 	struct sieve_instance *svinst = storage->svinst;
 	const char *value, *uri = storage->location, *username = NULL;
 
@@ -116,7 +116,7 @@ sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
 static void sieve_dict_storage_destroy(struct sieve_storage *storage)
 {
 	struct sieve_dict_storage *dstorage =
-		(struct sieve_dict_storage *)storage;
+		container_of(storage, struct sieve_dict_storage, storage);
 
 	if (dstorage->dict != NULL)
 		dict_deinit(&dstorage->dict);
@@ -130,7 +130,7 @@ static struct sieve_script *
 sieve_dict_storage_get_script(struct sieve_storage *storage, const char *name)
 {
 	struct sieve_dict_storage *dstorage =
-		(struct sieve_dict_storage *)storage;
+		container_of(storage, struct sieve_dict_storage, storage);
 	struct sieve_dict_script *dscript;
 
 	T_BEGIN {
@@ -148,7 +148,7 @@ struct sieve_script *
 sieve_dict_storage_active_script_open(struct sieve_storage *storage)
 {
 	struct sieve_dict_storage *dstorage =
-		(struct sieve_dict_storage *)storage;
+		container_of(storage, struct sieve_dict_storage, storage);
 	struct sieve_dict_script *dscript;
 
 	dscript = sieve_dict_script_init(dstorage, storage->script_name);

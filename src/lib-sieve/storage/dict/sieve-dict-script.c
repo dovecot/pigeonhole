@@ -54,7 +54,8 @@ sieve_dict_script_init(struct sieve_dict_storage *dstorage, const char *name)
 
 static void sieve_dict_script_destroy(struct sieve_script *script)
 {
-	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
+	struct sieve_dict_script *dscript =
+		container_of(script, struct sieve_dict_script, script);
 
 	if (dscript->data_pool != NULL)
 		pool_unref(&dscript->data_pool);
@@ -64,10 +65,11 @@ static int
 sieve_dict_script_open(struct sieve_script *script,
 		       enum sieve_error *error_code_r)
 {
-	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
 	struct sieve_storage *storage = script->storage;
+	struct sieve_dict_script *dscript =
+		container_of(script, struct sieve_dict_script, script);
 	struct sieve_dict_storage *dstorage =
-		(struct sieve_dict_storage *)storage;
+		container_of(storage, struct sieve_dict_storage, storage);
 	const char *name = script->name;
 	const char *path, *data_id, *error;
 	int ret;
@@ -110,9 +112,11 @@ sieve_dict_script_get_stream(struct sieve_script *script,
 			     struct istream **stream_r,
 			     enum sieve_error *error_code_r)
 {
-	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
+	struct sieve_storage *storage = script->storage;
+	struct sieve_dict_script *dscript =
+		container_of(script, struct sieve_dict_script, script);
 	struct sieve_dict_storage *dstorage =
-		(struct sieve_dict_storage *)script->storage;
+		container_of(storage, struct sieve_dict_storage, storage);
 	const char *path, *name = script->name, *data, *error;
 	int ret;
 
@@ -153,7 +157,8 @@ sieve_dict_script_binary_read_metadata(struct sieve_script *script,
 				       struct sieve_binary_block *sblock,
 				       sieve_size_t *offset)
 {
-	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
+	struct sieve_dict_script *dscript =
+		container_of(script, struct sieve_dict_script, script);
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
 	string_t *data_id;
 
@@ -182,7 +187,8 @@ static void
 sieve_dict_script_binary_write_metadata(struct sieve_script *script,
 					struct sieve_binary_block *sblock)
 {
-	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
+	struct sieve_dict_script *dscript =
+		container_of(script, struct sieve_dict_script, script);
 
 	sieve_binary_emit_cstring(sblock, dscript->data_id);
 }
@@ -222,7 +228,8 @@ static struct sieve_binary *
 sieve_dict_script_binary_load(struct sieve_script *script,
 			      enum sieve_error *error_code_r)
 {
-	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
+	struct sieve_dict_script *dscript =
+		container_of(script, struct sieve_dict_script, script);
 
 	if (sieve_dict_script_get_binpath(dscript) == NULL)
 		return NULL;
@@ -236,7 +243,8 @@ sieve_dict_script_binary_save(struct sieve_script *script,
 			      struct sieve_binary *sbin, bool update,
 			      enum sieve_error *error_code_r)
 {
-	struct sieve_dict_script *dscript = (struct sieve_dict_script *)script;
+	struct sieve_dict_script *dscript =
+		container_of(script, struct sieve_dict_script, script);
 
 	if (sieve_dict_script_get_binpath(dscript) == NULL)
 		return 0;
@@ -312,9 +320,9 @@ sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
 				enum sieve_error *error_code_r)
 {
 	struct sieve_dict_script_sequence *dseq =
-		(struct sieve_dict_script_sequence *)sseq;
+		container_of(sseq, struct sieve_dict_script_sequence, seq);
 	struct sieve_dict_storage *dstorage =
-		(struct sieve_dict_storage *)sseq->storage;
+		container_of(sseq->storage, struct sieve_dict_storage, storage);
 	struct sieve_dict_script *dscript;
 
 	if (error_code_r != NULL)
@@ -338,7 +346,7 @@ sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
 void sieve_dict_script_sequence_destroy(struct sieve_script_sequence *sseq)
 {
 	struct sieve_dict_script_sequence *dseq =
-		(struct sieve_dict_script_sequence *)sseq;
+		container_of(sseq, struct sieve_dict_script_sequence, seq);
 
 	i_free(dseq);
 }
