@@ -57,7 +57,7 @@ sieve_data_script_create_from_input(struct sieve_instance *svinst,
 static void sieve_data_script_destroy(struct sieve_script *script)
 {
 	struct sieve_data_script *dscript =
-		(struct sieve_data_script *)script;
+		container_of(script, struct sieve_data_script, script);
 
 	i_stream_unref(&dscript->data);
 }
@@ -67,7 +67,8 @@ sieve_data_script_get_stream(struct sieve_script *script,
 			     struct istream **stream_r,
 			     enum sieve_error *error_code_r)
 {
-	struct sieve_data_script *dscript = (struct sieve_data_script *)script;
+	struct sieve_data_script *dscript =
+		container_of(script, struct sieve_data_script, script);
 
 	i_stream_ref(dscript->data);
 	i_stream_seek(dscript->data, 0);
