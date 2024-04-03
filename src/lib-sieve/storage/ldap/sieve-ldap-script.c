@@ -57,10 +57,11 @@ static int
 sieve_ldap_script_open(struct sieve_script *script,
 		       enum sieve_error *error_code_r)
 {
-	struct sieve_ldap_script *lscript = (struct sieve_ldap_script *)script;
+	struct sieve_ldap_script *lscript =
+		container_of(script, struct sieve_ldap_script, script);
 	struct sieve_storage *storage = script->storage;
 	struct sieve_ldap_storage *lstorage =
-		(struct sieve_ldap_storage *)storage;
+		container_of(storage, struct sieve_ldap_storage, storage);
 	int ret;
 
 	if (sieve_ldap_db_connect(lstorage->conn) < 0) {
@@ -92,10 +93,11 @@ sieve_ldap_script_get_stream(struct sieve_script *script,
 			     struct istream **stream_r,
 			     enum sieve_error *error_code_r)
 {
-	struct sieve_ldap_script *lscript = (struct sieve_ldap_script *)script;
+	struct sieve_ldap_script *lscript =
+		container_of(script, struct sieve_ldap_script, script);
 	struct sieve_storage *storage = script->storage;
 	struct sieve_ldap_storage *lstorage =
-		(struct sieve_ldap_storage *)storage;
+		container_of(storage, struct sieve_ldap_storage, storage);
 	int ret;
 
 	i_assert(lscript->dn != NULL);
@@ -120,10 +122,12 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 				       struct sieve_binary_block *sblock,
 				       sieve_size_t *offset)
 {
-	struct sieve_ldap_script *lscript = (struct sieve_ldap_script *)script;
-	struct sieve_instance *svinst = script->storage->svinst;
+	struct sieve_ldap_script *lscript =
+		container_of(script, struct sieve_ldap_script, script);
+	struct sieve_storage *storage = script->storage;
+	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_ldap_storage *lstorage =
-		(struct sieve_ldap_storage *)script->storage;
+		container_of(storage, struct sieve_ldap_storage, storage);
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
 	time_t bmtime = sieve_binary_mtime(sbin);
 	string_t *dn, *modattr;
@@ -197,7 +201,8 @@ static void
 sieve_ldap_script_binary_write_metadata(struct sieve_script *script,
 					struct sieve_binary_block *sblock)
 {
-	struct sieve_ldap_script *lscript = (struct sieve_ldap_script *)script;
+	struct sieve_ldap_script *lscript =
+		container_of(script, struct sieve_ldap_script, script);
 
 	sieve_binary_emit_cstring(sblock, lscript->dn);
 	if (lscript->modattr == NULL)
@@ -246,7 +251,8 @@ sieve_ldap_script_binary_load(struct sieve_script *script,
 			      enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = script->storage;
-	struct sieve_ldap_script *lscript = (struct sieve_ldap_script *)script;
+	struct sieve_ldap_script *lscript =
+		container_of(script, struct sieve_ldap_script, script);
 
 	if (sieve_ldap_script_get_binpath(lscript) == NULL)
 		return NULL;
@@ -260,7 +266,8 @@ sieve_ldap_script_binary_save(struct sieve_script *script,
 			      struct sieve_binary *sbin, bool update,
 			      enum sieve_error *error_code_r)
 {
-	struct sieve_ldap_script *lscript = (struct sieve_ldap_script *)script;
+	struct sieve_ldap_script *lscript =
+		container_of(script, struct sieve_ldap_script, script);
 
 	if (sieve_ldap_script_get_binpath(lscript) == NULL)
 		return 0;
@@ -335,9 +342,9 @@ sieve_ldap_script_sequence_next(struct sieve_script_sequence *sseq,
 				enum sieve_error *error_code_r)
 {
 	struct sieve_ldap_script_sequence *lsec =
-		(struct sieve_ldap_script_sequence *)sseq;
+		container_of(sseq, struct sieve_ldap_script_sequence, seq);
 	struct sieve_ldap_storage *lstorage =
-		(struct sieve_ldap_storage *)sseq->storage;
+		container_of(sseq->storage, struct sieve_ldap_storage, storage);
 	struct sieve_ldap_script *lscript;
 
 	if (error_code_r != NULL)
@@ -360,7 +367,7 @@ sieve_ldap_script_sequence_next(struct sieve_script_sequence *sseq,
 void sieve_ldap_script_sequence_destroy(struct sieve_script_sequence *sseq)
 {
 	struct sieve_ldap_script_sequence *lsec =
-		(struct sieve_ldap_script_sequence *)sseq;
+		container_of(sseq, struct sieve_ldap_script_sequence, seq);
 
 	i_free(lsec);
 }

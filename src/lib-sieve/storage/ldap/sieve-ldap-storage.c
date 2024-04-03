@@ -45,7 +45,7 @@ sieve_ldap_storage_init(struct sieve_storage *storage,
 			enum sieve_error *error_code_r)
 {
 	struct sieve_ldap_storage *lstorage =
-		(struct sieve_ldap_storage *)storage;
+		container_of(storage, struct sieve_ldap_storage, storage);
 	struct sieve_instance *svinst = storage->svinst;
 	const char *value, *username = NULL;
 
@@ -97,7 +97,7 @@ sieve_ldap_storage_init(struct sieve_storage *storage,
 static void sieve_ldap_storage_destroy(struct sieve_storage *storage)
 {
 	struct sieve_ldap_storage *lstorage =
-		(struct sieve_ldap_storage *)storage;
+		container_of(storage, struct sieve_ldap_storage, storage);
 
 	if (lstorage->conn != NULL)
 		sieve_ldap_db_unref(&lstorage->conn);
@@ -111,7 +111,7 @@ static struct sieve_script *
 sieve_ldap_storage_get_script(struct sieve_storage *storage, const char *name)
 {
 	struct sieve_ldap_storage *lstorage =
-		(struct sieve_ldap_storage *)storage;
+		container_of(storage, struct sieve_ldap_storage, storage);
 	struct sieve_ldap_script *lscript;
 
 	T_BEGIN {
@@ -129,7 +129,7 @@ struct sieve_script *
 sieve_ldap_storage_active_script_open(struct sieve_storage *storage)
 {
 	struct sieve_ldap_storage *lstorage =
-		(struct sieve_ldap_storage *)storage;
+		container_of(storage, struct sieve_ldap_storage, storage);
 	struct sieve_ldap_script *lscript;
 
 	lscript = sieve_ldap_script_init(lstorage, storage->script_name);

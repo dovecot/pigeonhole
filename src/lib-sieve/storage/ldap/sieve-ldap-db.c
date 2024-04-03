@@ -1223,7 +1223,8 @@ sieve_ldap_lookup_script_callback(struct ldap_connection *conn,
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct sieve_ldap_script_lookup_request *srequest =
-		(struct sieve_ldap_script_lookup_request *)request;
+		container_of(request, struct sieve_ldap_script_lookup_request,
+			     request);
 
 	if (res == NULL) {
 		io_loop_stop(conn->ioloop);
@@ -1320,7 +1321,8 @@ sieve_ldap_read_script_callback(struct ldap_connection *conn,
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct sieve_ldap_script_read_request *srequest =
-		(struct sieve_ldap_script_read_request *)request;
+		container_of(request, struct sieve_ldap_script_read_request,
+			     request);
 
 	if (res == NULL) {
 		io_loop_stop(conn->ioloop);
