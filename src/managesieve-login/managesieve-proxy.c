@@ -501,7 +501,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 
 	i_assert(!client->destroyed);
 
-	output = login_proxy_get_ostream(client->login_proxy);
+	output = login_proxy_get_server_ostream(client->login_proxy);
 	switch (msieve_client->proxy_state) {
 	case MSIEVE_PROXY_STATE_NONE:
 		ret = proxy_input_capability(msieve_client, line, &response);
