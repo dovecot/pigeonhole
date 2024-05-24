@@ -882,9 +882,9 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 	}
 	if (debug) {
 		i_gettimeofday(&end);
-		int msecs = timeval_diff_msecs(&end, &start);
+		long long msecs = timeval_diff_msecs(&end, &start);
 		e_debug(storage->event, "db: "
-			"Initialization took %d msecs", msecs);
+			"Initialization took %lld msecs", msecs);
 	}
 
 	if (db_ldap_get_fd(conn) < 0)
