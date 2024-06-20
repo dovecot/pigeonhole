@@ -708,10 +708,8 @@ sieve_file_storage_init_default(struct sieve_instance *svinst,
 
 	T_BEGIN {
 		if (sieve_file_storage_do_init_default(fstorage, active_path,
-						       error_r) < 0) {
+						       error_r) < 0)
 			sieve_storage_unref(&storage);
-			storage = NULL;
-		}
 	} T_END;
 
 	return storage;

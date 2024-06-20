@@ -1123,10 +1123,8 @@ static void imap_filter_sieve_user_deinit(struct mail_user *user)
 
 	sieve_error_handler_unref(&ifsuser->master_ehandler);
 
-	if (ifsuser->storage != NULL)
-		sieve_storage_unref(&ifsuser->storage);
-	if (ifsuser->global_storage != NULL)
-		sieve_storage_unref(&ifsuser->global_storage);
+	sieve_storage_unref(&ifsuser->storage);
+	sieve_storage_unref(&ifsuser->global_storage);
 	sieve_deinit(&ifsuser->svinst);
 	if (ifsuser->dup_db != NULL)
 		mail_duplicate_db_deinit(&ifsuser->dup_db);

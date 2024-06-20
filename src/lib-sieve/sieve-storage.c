@@ -340,7 +340,6 @@ sieve_storage_init(struct sieve_instance *svinst,
 					     &location, &options) < 0) {
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			sieve_storage_unref(&storage);
-			storage = NULL;
 		} else {
 			storage->location = p_strdup(storage->pool, location);
 
@@ -348,10 +347,8 @@ sieve_storage_init(struct sieve_instance *svinst,
 				      storage->location);
 
 			if (storage_class->v.init(storage, options,
-						  error_r) < 0) {
+						  error_r) < 0)
 				sieve_storage_unref(&storage);
-				storage = NULL;
-			}
 		}
 	} T_END;
 
@@ -574,8 +571,11 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 {
 	struct sieve_storage *storage = *_storage;
 
-	i_assert(storage->refcount > 0);
+	if (storage == NULL)
+		return;
+	*_storage = NULL;
 
+	i_assert(storage->refcount > 0);
 	if (--storage->refcount != 0)
 		return;
 
@@ -592,7 +592,6 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 	i_free(storage->error);
 	event_unref(&storage->event);
 	pool_unref(&storage->pool);
-	*_storage = NULL;
 }
 
 int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
