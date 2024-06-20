@@ -36,6 +36,7 @@
  */
 
 struct sieve_tool {
+	pool_t pool;
 	char *name;
 
 	bool no_config;
@@ -143,6 +144,7 @@ sieve_tool_init(const char *name, int *argc, char **argv[],
 		MASTER_SERVICE_FLAG_STANDALONE |
 		MASTER_SERVICE_FLAG_DONT_SEND_STATS |
 		MASTER_SERVICE_FLAG_NO_INIT_DATASTACK_FRAME;
+	pool_t pool;
 
 	if (no_config)
 		service_flags |= MASTER_SERVICE_FLAG_NO_CONFIG_SETTINGS;
@@ -150,11 +152,13 @@ sieve_tool_init(const char *name, int *argc, char **argv[],
 	master_service = master_service_init(name, service_flags,
 					     argc, argv, getopt_str);
 
-	tool = i_new(struct sieve_tool, 1);
-	tool->name = i_strdup(name);
+	pool = pool_alloconly_create("sieve tool", 8192);
+	tool = p_new(pool, struct sieve_tool, 1);
+	tool->pool = pool;
+	tool->name = p_strdup(tool->pool, name);
 	tool->no_config = no_config;
 
-	i_array_init(&tool->sieve_plugins, 16);
+	p_array_init(&tool->sieve_plugins, pool, 16);
 	return tool;
 }
 
@@ -172,17 +176,17 @@ int sieve_tool_getopt(struct sieve_tool *tool)
 					"duplicate -x option specified, "
 					"but only one allowed.");
 			}
-			tool->sieve_extensions = i_strdup(optarg);
+			tool->sieve_extensions = p_strdup(tool->pool, optarg);
 			break;
 		case 'u':
 			if (tool->username == NULL)
-				tool->username = i_strdup(optarg);
+				tool->username = p_strdup(tool->pool, optarg);
 			break;
 		case 'P': {
 			/* Plugin */
 			const char *plugin;
 
-			plugin = t_strdup(optarg);
+			plugin = p_strdup(tool->pool, optarg);
 			array_append(&tool->sieve_plugins, &plugin, 1);
 			break;
 		}
@@ -239,11 +243,9 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 	if (username == NULL) {
 		sieve_tool_get_user_data(&username, &homedir);
 
-		username = tool->username = i_strdup(username);
+		username = tool->username = p_strdup(tool->pool, username);
 
-		if (tool->homedir != NULL)
-			i_free(tool->homedir);
-		tool->homedir = i_strdup(homedir);
+		tool->homedir = p_strdup(tool->pool, homedir);
 
 		if (preserve_root) {
 			storage_service_flags |=
@@ -313,17 +315,6 @@ void sieve_tool_deinit(struct sieve_tool **_tool)
 	/* Deinitialize Sieve engine */
 	sieve_deinit(&tool->svinst);
 
-	/* Free options */
-
-	if (tool->username != NULL)
-		i_free(tool->username);
-	if (tool->homedir != NULL)
-		i_free(tool->homedir);
-
-	if (tool->sieve_extensions != NULL)
-		i_free(tool->sieve_extensions);
-	array_free(&tool->sieve_plugins);
-
 	/* Free raw mail */
 
 	if (tool->mail_raw != NULL)
@@ -343,8 +334,7 @@ void sieve_tool_deinit(struct sieve_tool **_tool)
 
 	/* Free sieve tool object */
 
-	i_free(tool->name);
-	i_free(tool);
+	pool_unref(&tool->pool);
 
 	/* Deinitialize service */
 	master_service_deinit(&master_service);
@@ -428,14 +418,10 @@ sieve_tool_open_data_as_mail(struct sieve_tool *tool, string_t *mail_data)
 
 void sieve_tool_set_homedir(struct sieve_tool *tool, const char *homedir)
 {
-	if (tool->homedir != NULL) {
-		if (strcmp(homedir, tool->homedir) == 0)
-			return;
+	if (tool->homedir != NULL && strcmp(homedir, tool->homedir) == 0)
+		return;
 
-		i_free(tool->homedir);
-	}
-
-	tool->homedir = i_strdup(homedir);
+	tool->homedir = p_strdup(tool->pool, homedir);
 
 	if (tool->mail_user_dovecot != NULL)
 		mail_user_set_home(tool->mail_user_dovecot, tool->homedir);
