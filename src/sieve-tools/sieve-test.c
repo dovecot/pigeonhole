@@ -296,11 +296,11 @@ int main(int argc, char **argv)
 
 	/* Compile main sieve script */
 	if (force_compile) {
-		main_sbin = sieve_tool_script_compile(svinst, scriptfile, NULL);
+		main_sbin = sieve_tool_script_compile(sieve_tool, scriptfile, NULL);
 		if (main_sbin != NULL)
 			(void)sieve_save(main_sbin, TRUE, NULL);
 	} else {
-		main_sbin = sieve_tool_script_open(svinst, scriptfile);
+		main_sbin = sieve_tool_script_open(sieve_tool, scriptfile);
 	}
 
 	if (main_sbin == NULL) {
@@ -415,11 +415,12 @@ int main(int argc, char **argv)
 				/* Compile sieve script */
 				if (force_compile) {
 					sbin = sieve_tool_script_compile(
-						svinst, sfiles[i], sfiles[i]);
+						sieve_tool, sfiles[i], sfiles[i]);
 					if (sbin != NULL)
 						(void)sieve_save(sbin, FALSE, NULL);
 				} else {
-					sbin = sieve_tool_script_open(svinst, sfiles[i]);
+					sbin = sieve_tool_script_open(
+						sieve_tool, sfiles[i]);
 				}
 
 				if (sbin == NULL) {
