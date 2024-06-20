@@ -167,8 +167,7 @@ void sieve_binary_unref(struct sieve_binary **_sbin)
 	sieve_binary_update_resource_usage(sbin);
 	sieve_binary_extensions_free(sbin);
 
-	if (sbin->script != NULL)
-		sieve_script_unref(&sbin->script);
+	sieve_script_unref(&sbin->script);
 
 	event_unref(&sbin->event);
 	pool_unref(&sbin->pool);

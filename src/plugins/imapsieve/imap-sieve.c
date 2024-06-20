@@ -549,8 +549,7 @@ void imap_sieve_run_deinit(struct imap_sieve_run **_isrun)
 	for (i = 0; i < isrun->scripts_count; i++) {
 		if (isrun->scripts[i].binary != NULL)
 			sieve_close(&isrun->scripts[i].binary);
-		if (isrun->scripts[i].script != NULL)
-			sieve_script_unref(&isrun->scripts[i].script);
+		sieve_script_unref(&isrun->scripts[i].script);
 	}
 	if (isrun->user_ehandler != NULL)
 		sieve_error_handler_unref(&isrun->user_ehandler);

@@ -312,8 +312,7 @@ void imap_filter_sieve_context_free(struct imap_filter_sieve_context **_sctx)
 	for (i = 0; i < sctx->scripts_count; i++) {
 		if (scripts[i].binary != NULL)
 			sieve_close(&scripts[i].binary);
-		if (scripts[i].script != NULL)
-			sieve_script_unref(&scripts[i].script);
+		sieve_script_unref(&scripts[i].script);
 	}
 
 	if (sctx->trace_log != NULL)

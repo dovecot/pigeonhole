@@ -62,8 +62,7 @@ static void mail_sieve_user_deinit(struct mail_user *user)
 	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
 
 	if (suser->svinst != NULL) {
-		if (suser->sieve_storage != NULL)
-			sieve_storage_unref(&suser->sieve_storage);
+		sieve_storage_unref(&suser->sieve_storage);
 		sieve_deinit(&suser->svinst);
 	}
 
@@ -184,8 +183,7 @@ sieve_attribute_set_active(struct mail_storage *storage,
 			scriptname,
 			sieve_storage_get_last_error(svstorage, NULL));
 	}
-	if (script != NULL)
-		sieve_script_unref(&script);
+	sieve_script_unref(&script);
 	sieve_storage_set_modified(svstorage, last_change);
 	return ret;
 }

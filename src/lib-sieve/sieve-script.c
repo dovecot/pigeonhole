@@ -506,8 +506,7 @@ bool sieve_script_binary_dump_metadata(struct sieve_script *script,
 			script, denv, sblock, offset);
 	}
 
-	if (adhoc_script != NULL)
-		sieve_script_unref(&adhoc_script);
+	sieve_script_unref(&adhoc_script);
 	return result;
 }
 
@@ -593,8 +592,7 @@ sieve_script_copy_from_default(struct sieve_script *script, const char *newname)
 			ret = -1;
 			(void)sieve_script_delete(newscript, TRUE);
 		}
-		if (newscript != NULL)
-			sieve_script_unref(&newscript);
+		sieve_script_unref(&newscript);
 
 		if (ret < 0) {
 			e_error(storage->event,

@@ -878,8 +878,7 @@ lda_sieve_free_scripts(struct lda_sieve_run_context *srctx)
 
 	for (i = 0; i < srctx->script_count; i++)
 		sieve_script_unref(&srctx->scripts[i]);
-	if (srctx->discard_script != NULL)
-		sieve_script_unref(&srctx->discard_script);
+	sieve_script_unref(&srctx->discard_script);
 }
 
 static void

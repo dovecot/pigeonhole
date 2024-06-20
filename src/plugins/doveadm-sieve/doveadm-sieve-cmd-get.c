@@ -35,8 +35,7 @@ static int cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 			sieve_storage_get_last_error(_ctx->storage,
 						     &error_code));
 		doveadm_sieve_cmd_failed_error(_ctx, error_code);
-		if (script != NULL)
-			sieve_script_unref(&script);
+		sieve_script_unref(&script);
 		return -1;
 	}
 
