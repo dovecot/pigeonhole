@@ -99,8 +99,7 @@ static void sieve_ldap_storage_destroy(struct sieve_storage *storage)
 	struct sieve_ldap_storage *lstorage =
 		container_of(storage, struct sieve_ldap_storage, storage);
 
-	if (lstorage->conn != NULL)
-		sieve_ldap_db_unref(&lstorage->conn);
+	sieve_ldap_db_unref(&lstorage->conn);
 }
 
 /*
