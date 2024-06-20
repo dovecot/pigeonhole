@@ -1014,7 +1014,10 @@ void sieve_ldap_db_unref(struct ldap_connection **_conn)
 	struct ldap_connection *conn = *_conn;
 	struct ldap_connection **p;
 
+	if (conn == NULL)
+		return;
 	*_conn = NULL;
+
 	i_assert(conn->refcount >= 0);
 	if (--conn->refcount > 0)
 		return;
