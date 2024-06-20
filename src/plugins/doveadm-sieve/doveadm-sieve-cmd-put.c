@@ -135,8 +135,7 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 			doveadm_sieve_cmd_failed_error(_ctx, error_code);
 			ret = -1;
 		}
-		if (script != NULL)
-			sieve_script_unref(&script);
+		sieve_script_unref(&script);
 	}
 
 	i_assert(input->eof);

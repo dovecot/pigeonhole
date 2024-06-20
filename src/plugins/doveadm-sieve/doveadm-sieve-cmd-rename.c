@@ -40,8 +40,7 @@ static int cmd_sieve_rename_run(struct doveadm_sieve_cmd_context *_ctx)
 		ret = -1;
 	}
 
-	if (script != NULL)
-		sieve_script_unref(&script);
+	sieve_script_unref(&script);
 	return ret;
 }
 

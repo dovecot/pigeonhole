@@ -30,8 +30,7 @@ static bool cmd_getscript_finish(struct cmd_getscript_context *ctx)
 	struct client_command_context *cmd = ctx->cmd;
 	struct client *client = ctx->client;
 
-	if (ctx->script != NULL)
-		sieve_script_unref(&ctx->script);
+	sieve_script_unref(&ctx->script);
 
 	if (ctx->failed) {
 		if (client->output->closed) {

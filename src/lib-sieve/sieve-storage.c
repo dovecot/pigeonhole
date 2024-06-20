@@ -753,7 +753,6 @@ sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 
 	/* Error */
 	sieve_script_unref(&script);
-	script = NULL;
 
 	if (storage->error_code == SIEVE_ERROR_NOT_FOUND &&
 	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
@@ -1061,8 +1060,7 @@ sieve_storage_save_create_event(struct sieve_storage *storage,
 
 static void sieve_storage_save_cleanup(struct sieve_storage_save_context *sctx)
 {
-	if (sctx->scriptobject != NULL)
-		sieve_script_unref(&sctx->scriptobject);
+	sieve_script_unref(&sctx->scriptobject);
 }
 
 static void sieve_storage_save_deinit(struct sieve_storage_save_context **_sctx)
@@ -1258,8 +1256,7 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 			ret = -1;
 			(void)sieve_script_delete(script, TRUE);
 		}
-		if (script != NULL)
-			sieve_script_unref(&script);
+		sieve_script_unref(&script);
 
 		if (ret < 0) {
 			e_error(sctx->event,
