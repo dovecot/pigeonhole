@@ -578,9 +578,10 @@ struct ostream *sieve_tool_open_output_stream(const char *filename)
  */
 
 struct sieve_binary *
-sieve_tool_script_compile(struct sieve_instance *svinst,
-			  const char *filename, const char *name)
+sieve_tool_script_compile(struct sieve_tool *tool, const char *filename,
+			  const char *name)
 {
+	struct sieve_instance *svinst = tool->svinst;
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 
@@ -597,8 +598,9 @@ sieve_tool_script_compile(struct sieve_instance *svinst,
 }
 
 struct sieve_binary *
-sieve_tool_script_open(struct sieve_instance *svinst, const char *filename)
+sieve_tool_script_open(struct sieve_tool *tool, const char *filename)
 {
+	struct sieve_instance *svinst = tool->svinst;
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 

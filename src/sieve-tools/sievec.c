@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 				else
 					file = t_strconcat(scriptfile, "/", dp->d_name, NULL);
 
-				sbin = sieve_tool_script_compile(svinst, file, NULL);
+				sbin = sieve_tool_script_compile(sieve_tool, file, NULL);
 
 				if (sbin != NULL) {
 					sieve_save(sbin, TRUE, NULL);
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
 
 		   NOTE: For consistency, stat errors are handled here as well
 		 */
-		sbin = sieve_tool_script_compile(svinst, scriptfile, NULL);
+		sbin = sieve_tool_script_compile(sieve_tool, scriptfile, NULL);
 		if (sbin != NULL) {
 			if (dump)
 				sieve_tool_dump_binary_to(sbin, outfile, FALSE);

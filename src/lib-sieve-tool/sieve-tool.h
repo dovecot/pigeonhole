@@ -85,10 +85,10 @@ struct ostream *sieve_tool_open_output_stream(const char *filename);
  */
 
 struct sieve_binary *
-sieve_tool_script_compile(struct sieve_instance *svinst,
-			  const char *filename, const char *name);
+sieve_tool_script_compile(struct sieve_tool *tool, const char *filename,
+			  const char *name);
 struct sieve_binary *
-sieve_tool_script_open(struct sieve_instance *svinst, const char *filename);
+sieve_tool_script_open(struct sieve_tool *tool, const char *filename);
 void sieve_tool_dump_binary_to(struct sieve_binary *sbin,
 			       const char *filename, bool hexdump);
 
