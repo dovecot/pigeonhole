@@ -119,10 +119,8 @@ void ext_include_unload(const struct sieve_extension *ext)
 	struct ext_include_context *ctx =
 		(struct ext_include_context *)ext->context;
 
-	if (ctx->global_storage != NULL)
-		sieve_storage_unref(&ctx->global_storage);
-	if (ctx->personal_storage != NULL)
-		sieve_storage_unref(&ctx->personal_storage);
+	sieve_storage_unref(&ctx->global_storage);
+	sieve_storage_unref(&ctx->personal_storage);
 
 	i_free(ctx->global_location);
 	i_free(ctx);

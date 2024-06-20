@@ -112,8 +112,7 @@ void imap_sieve_deinit(struct imap_sieve **_isieve)
 
 	sieve_error_handler_unref(&isieve->master_ehandler);
 
-	if (isieve->storage != NULL)
-		sieve_storage_unref(&isieve->storage);
+	sieve_storage_unref(&isieve->storage);
 	sieve_extension_unregister(isieve->ext_imapsieve);
 	sieve_extension_unregister(isieve->ext_vnd_imapsieve);
 	sieve_deinit(&isieve->svinst);
