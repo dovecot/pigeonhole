@@ -144,10 +144,9 @@ void sieve_script_unref(struct sieve_script **_script)
 {
 	struct sieve_script *script = *_script;
 
-	*_script = NULL;
-
 	if (script == NULL)
 		return;
+	*_script = NULL;
 
 	i_assert(script->refcount > 0);
 	if (--script->refcount != 0)
