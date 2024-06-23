@@ -80,20 +80,11 @@ sieve_data_script_get_stream(struct sieve_script *script,
 	return 0;
 }
 
-static bool
-sieve_data_script_equals(const struct sieve_script *script ATTR_UNUSED,
-			 const struct sieve_script *other ATTR_UNUSED)
-{
-	return (script == other);
-}
-
 const struct sieve_script sieve_data_script = {
 	.driver_name = SIEVE_DATA_STORAGE_DRIVER_NAME,
 	.v = {
 		.destroy = sieve_data_script_destroy,
 
 		.get_stream = sieve_data_script_get_stream,
-
-		.equals = sieve_data_script_equals
 	},
 };

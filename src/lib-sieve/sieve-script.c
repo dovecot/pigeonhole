@@ -358,23 +358,23 @@ int sieve_script_get_stream(struct sieve_script *script,
  * Comparison
  */
 
-bool sieve_script_equals(const struct sieve_script *script,
-			 const struct sieve_script *other)
+int sieve_script_cmp(const struct sieve_script *script,
+		     const struct sieve_script *other)
 {
 	if (script == other)
-		return TRUE;
+		return 0;
 	if (script == NULL || other == NULL)
-		return FALSE;
+		return (script == NULL ? -1 : 1);
 	if (script->script_class != other->script_class)
-		return FALSE;
+		return (script->script_class > other->script_class ? 1 : -1);
 
-	if (script->v.equals == NULL) {
+	if (script->v.cmp == NULL) {
 		i_assert (script->location != NULL && other->location != NULL);
 
-		return (strcmp(script->location, other->location) == 0);
+		return strcmp(script->location, other->location);
 	}
 
-	return script->v.equals(script, other);
+	return script->v.cmp(script, other);
 }
 
 unsigned int sieve_script_hash(const struct sieve_script *script)
