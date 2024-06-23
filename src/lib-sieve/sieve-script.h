@@ -48,9 +48,10 @@ int sieve_script_open(struct sieve_script *script,
 int sieve_script_open_as(struct sieve_script *script, const char *name,
 			 enum sieve_error *error_code_r);
 
-struct sieve_script *
-sieve_script_create_open(struct sieve_instance *svinst, const char *location,
-			 const char *name, enum sieve_error *error_code_r);
+int sieve_script_create_open(struct sieve_instance *svinst,
+			     const char *location, const char *name,
+			     struct sieve_script **script_r,
+			     enum sieve_error *error_code_r);
 int sieve_script_check(struct sieve_instance *svinst, const char *location,
 		       const char *name, enum sieve_error *error_code_r);
 

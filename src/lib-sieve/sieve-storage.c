@@ -765,13 +765,14 @@ sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 
 		e_debug(storage->event, "Trying default script instead");
 
-		script = sieve_script_create_open(
-			svinst, storage->default_location, NULL, error_code_r);
-		if (script != NULL) {
-			script->storage->is_default = TRUE;
-			script->storage->default_for = storage;
-			sieve_storage_ref(storage);
-		}
+		if (sieve_script_create_open(svinst, storage->default_location,
+					     NULL, &script,
+					     error_code_r) < 0)
+			return NULL;
+
+		script->storage->is_default = TRUE;
+		script->storage->default_for = storage;
+		sieve_storage_ref(storage);
 	}
 	return script;
 }
@@ -908,13 +909,14 @@ sieve_storage_active_script_open(struct sieve_storage *storage,
 	}
 
 	/* Try default script location */
-	script = sieve_script_create_open(svinst, storage->default_location,
-					  NULL, error_code_r);
-	if (script != NULL) {
-		script->storage->is_default = TRUE;
-		script->storage->default_for = storage;
-		sieve_storage_ref(storage);
-	}
+	if (sieve_script_create_open(svinst, storage->default_location, NULL,
+				     &script, error_code_r) < 0)
+		return NULL;
+
+	script->storage->is_default = TRUE;
+	script->storage->default_for = storage;
+	sieve_storage_ref(storage);
+
 	return script;
 }
 

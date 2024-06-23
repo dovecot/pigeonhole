@@ -315,9 +315,8 @@ sieve_compile(struct sieve_instance *svinst, const char *script_location,
 	struct sieve_binary *sbin;
 	enum sieve_error error_code;
 
-	script = sieve_script_create_open(svinst, script_location,
-					  script_name, &error_code);
-	if (script == NULL) {
+	if (sieve_script_create_open(svinst, script_location, script_name,
+				     &script, &error_code) < 0) {
 		if (error_code_r != NULL)
 			*error_code_r = error_code;
 		switch (error_code) {
@@ -490,9 +489,8 @@ sieve_open(struct sieve_instance *svinst, const char *script_location,
 	enum sieve_error error_code;
 
 	/* First open the scriptfile itself */
-	script = sieve_script_create_open(svinst, script_location,
-					  script_name, &error_code);
-	if (script == NULL) {
+	if (sieve_script_create_open(svinst, script_location, script_name,
+				     &script, &error_code) < 0) {
 		/* Failed */
 		if (error_code_r != NULL)
 			*error_code_r = error_code;

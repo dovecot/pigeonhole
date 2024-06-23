@@ -412,15 +412,16 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 	enum sieve_error error_code;
 	unsigned int count = 0;
 	const char *const *sp;
+	int ret;
 
 	/* Admin scripts before user script */
 	if (scripts_before != NULL) {
 		for (sp = scripts_before; *sp != NULL; sp++) {
 			i_assert(count < max_len);
-			scripts[count].script =
-				sieve_script_create_open(svinst, *sp, NULL,
-							 &error_code);
-			if (scripts[count].script != NULL)
+			ret = sieve_script_create_open(svinst, *sp, NULL,
+						       &scripts[count].script,
+						       &error_code);
+			if (ret == 0)
 				count++;
 			else if (error_code == SIEVE_ERROR_TEMP_FAILURE)
 				return -1;
@@ -446,10 +447,10 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 	if (scripts_after != NULL) {
 		for (sp = scripts_after; *sp != NULL; sp++) {
 			i_assert(count < max_len);
-			scripts[count].script =
-				sieve_script_create_open(svinst, *sp, NULL,
-							 &error_code);
-			if (scripts[count].script != NULL)
+			ret = sieve_script_create_open(svinst, *sp, NULL,
+						       &scripts[count].script,
+						       &error_code);
+			if (ret == 0)
 				count++;
 			else if (error_code == SIEVE_ERROR_TEMP_FAILURE)
 				return -1;
