@@ -279,19 +279,18 @@ sieve_ldap_script_binary_save(struct sieve_script *script,
 				 error_code_r);
 }
 
-static bool
-sieve_ldap_script_equals(const struct sieve_script *script,
-			 const struct sieve_script *other)
+static int
+sieve_ldap_script_cmp(const struct sieve_script *script,
+		      const struct sieve_script *other)
 {
-	struct sieve_storage *storage = script->storage;
-	struct sieve_storage *sother = other->storage;
-
-	if (strcmp(storage->location, sother->location) != 0)
-		return FALSE;
+	int ret;
 
 	i_assert(script->name != NULL && other->name != NULL);
 
-	return (strcmp(script->name, other->name) == 0);
+	ret = strcmp(script->name, other->name);
+	if (ret != 0)
+		return (ret > 0 ? 1 : -1);
+	return 0;
 }
 
 const struct sieve_script sieve_ldap_script = {
@@ -308,7 +307,7 @@ const struct sieve_script sieve_ldap_script = {
 		.binary_load = sieve_ldap_script_binary_load,
 		.binary_save = sieve_ldap_script_binary_save,
 
-		.equals = sieve_ldap_script_equals,
+		.cmp = sieve_ldap_script_cmp,
 	},
 };
 

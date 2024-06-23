@@ -831,28 +831,41 @@ const char *sieve_file_script_get_path(const struct sieve_script *script)
  * Matching
  */
 
-static bool
-sieve_file_script_equals(const struct sieve_script *script,
-			 const struct sieve_script *other)
+static int
+sieve_file_script_cmp(const struct sieve_script *script,
+		      const struct sieve_script *other)
 {
 	const struct sieve_file_script *fscript =
 		container_of(script, const struct sieve_file_script, script);
 	const struct sieve_file_script *fother =
 		container_of(other, const struct sieve_file_script, script);
+	int ret;
 
 	if (!script->open || !other->open) {
 		struct sieve_storage *storage = script->storage;
 		struct sieve_storage *sother = other->storage;
 
-		if (strcmp(storage->location, sother->location) != 0)
-			return FALSE;
+		ret = strcmp(storage->location, sother->location);
+		if (ret != 0)
+			return ret;
 
 		i_assert(script->name != NULL && other->name != NULL);
-		return (strcmp(script->name, other->name) == 0);
+		return strcmp(script->name, other->name);
 	}
 
-	return (CMP_DEV_T(fscript->st.st_dev, fother->st.st_dev) &&
-		fscript->st.st_ino == fother->st.st_ino);
+	if (major(fscript->st.st_dev) != major(fother->st.st_dev)) {
+		return (major(fscript->st.st_dev) > major(fother->st.st_dev) ?
+			1 : -1);
+	}
+	if (minor(fscript->st.st_dev) != minor(fother->st.st_dev)) {
+		return (minor(fscript->st.st_dev) > minor(fother->st.st_dev) ?
+			1 : -1);
+	}
+
+	if (fscript->st.st_ino != fother->st.st_ino)
+		return (fscript->st.st_ino > fother->st.st_ino ? 1 : -1);
+
+	return 0;
 }
 
 /*
@@ -878,6 +891,6 @@ const struct sieve_script sieve_file_script = {
 
 		.get_size = sieve_file_script_get_size,
 
-		.equals = sieve_file_script_equals
+		.cmp = sieve_file_script_cmp,
 	}
 };
