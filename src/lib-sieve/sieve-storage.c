@@ -722,10 +722,9 @@ sieve_storage_get_script(struct sieve_storage *storage, const char *name,
 			e_debug(storage->event,
 				"Trying default script instead");
 
-			script = sieve_script_create(
+			if (sieve_script_create(
 				svinst,	storage->default_location, NULL,
-				error_code_r);
-			if (script != NULL) {
+				&script, error_code_r) == 0) {
 				script->storage->is_default = TRUE;
 				script->storage->default_for = storage;
 				sieve_storage_ref(storage);

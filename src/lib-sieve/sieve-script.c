@@ -112,14 +112,16 @@ void sieve_script_init(struct sieve_script *script,
 	sieve_storage_ref(storage);
 }
 
-struct sieve_script *
-sieve_script_create(struct sieve_instance *svinst, const char *location,
-		    const char *name, enum sieve_error *error_code_r)
+int sieve_script_create(struct sieve_instance *svinst,
+			const char *location, const char *name,
+			struct sieve_script **script_r,
+			enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
 	struct sieve_script *script;
 	enum sieve_error error_code;
 
+	*script_r = NULL;
 	if (error_code_r != NULL)
 		*error_code_r = SIEVE_ERROR_NONE;
 	else
@@ -127,12 +129,13 @@ sieve_script_create(struct sieve_instance *svinst, const char *location,
 
 	storage = sieve_storage_create(svinst, location, 0, error_code_r);
 	if (storage == NULL)
-		return NULL;
+		return -1;
 
 	script = sieve_storage_get_script(storage, name, error_code_r);
 
 	sieve_storage_unref(&storage);
-	return script;
+	*script_r = script;
+	return 0;
 }
 
 void sieve_script_ref(struct sieve_script *script)
@@ -219,8 +222,8 @@ sieve_script_create_open(struct sieve_instance *svinst, const char *location,
 {
 	struct sieve_script *script;
 
-	script = sieve_script_create(svinst, location, name, error_code_r);
-	if (script == NULL)
+	if (sieve_script_create(svinst, location, name,
+				&script, error_code_r) < 0)
 		return NULL;
 
 	if (sieve_script_open(script, error_code_r) < 0) {
@@ -498,9 +501,10 @@ bool sieve_script_binary_dump_metadata(struct sieve_script *script,
 	sieve_binary_dumpf(denv, "location = %s\n", str_c(location));
 
 	if (script == NULL) {
-		script = adhoc_script =
-			sieve_script_create(svinst, str_c(location),
-					    NULL, NULL);
+		adhoc_script = NULL;
+		if (sieve_script_create(svinst, str_c(location),
+					NULL, &script, NULL) == 0)
+			adhoc_script = script;
 	}
 
 	if (script != NULL && script->v.binary_dump_metadata != NULL) {
