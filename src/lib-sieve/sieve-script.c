@@ -216,22 +216,24 @@ int sieve_script_open_as(struct sieve_script *script, const char *name,
 	return 0;
 }
 
-struct sieve_script *
-sieve_script_create_open(struct sieve_instance *svinst, const char *location,
-			 const char *name, enum sieve_error *error_code_r)
+int sieve_script_create_open(struct sieve_instance *svinst,
+			     const char *location, const char *name,
+			     struct sieve_script **script_r,
+			     enum sieve_error *error_code_r)
 {
 	struct sieve_script *script;
 
 	if (sieve_script_create(svinst, location, name,
 				&script, error_code_r) < 0)
-		return NULL;
+		return -1;
 
 	if (sieve_script_open(script, error_code_r) < 0) {
 		sieve_script_unref(&script);
-		return NULL;
+		return -1;
 	}
 
-	return script;
+	*script_r = script;
+	return 0;
 }
 
 int sieve_script_check(struct sieve_instance *svinst, const char *location,
@@ -243,8 +245,8 @@ int sieve_script_check(struct sieve_instance *svinst, const char *location,
 	if (error_code_r == NULL)
 		error_code_r = &error_code;
 
-	script = sieve_script_create_open(svinst, location, name, error_code_r);
-	if (script == NULL)
+	if (sieve_script_create_open(svinst, location, name,
+				     &script, error_code_r) < 0)
 		return (*error_code_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
 
 	sieve_script_unref(&script);

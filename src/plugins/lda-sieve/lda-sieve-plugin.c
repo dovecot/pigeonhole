@@ -845,9 +845,9 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	sieve_discard = mail_user_plugin_getenv(
 		mdctx->rcpt_user, "sieve_discard");
 	if (sieve_discard != NULL && *sieve_discard != '\0') {
-		srctx->discard_script = sieve_script_create_open(
-			svinst, sieve_discard, NULL, &error_code);
-		if (srctx->discard_script == NULL) {
+		if (sieve_script_create_open(svinst, sieve_discard, NULL,
+					     &srctx->discard_script,
+					     &error_code) < 0) {
 			switch (error_code) {
 			case SIEVE_ERROR_NOT_FOUND:
 				e_debug(sieve_get_event(svinst),
