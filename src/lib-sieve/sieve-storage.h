@@ -25,10 +25,10 @@ enum sieve_storage_flags {
 
 struct sieve_storage;
 
-struct sieve_storage *
-sieve_storage_create(struct sieve_instance *svinst, const char *location,
-		     enum sieve_storage_flags flags,
-		     enum sieve_error *error_code_r);
+int sieve_storage_create(struct sieve_instance *svinst, const char *location,
+			 enum sieve_storage_flags flags,
+			 struct sieve_storage **storage_r,
+			 enum sieve_error *error_code_r);
 struct sieve_storage *
 sieve_storage_create_personal(struct sieve_instance *svinst,
 			      struct mail_user *user,

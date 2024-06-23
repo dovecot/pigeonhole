@@ -253,9 +253,8 @@ imap_filter_sieve_get_global_storage(struct imap_filter_sieve_context *sctx,
 		*error_r = "No global Sieve scripts available";
 		return -1;
 	}
-	ifsuser->global_storage =
-		sieve_storage_create(svinst, location, 0, &error_code);
-	if (ifsuser->global_storage != NULL) {
+	if (sieve_storage_create(svinst, location, 0,
+				 &ifsuser->global_storage, &error_code) == 0) {
 		*storage_r = ifsuser->global_storage;
 		return 0;
 	}

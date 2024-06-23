@@ -159,8 +159,10 @@ ext_include_get_script_storage(const struct sieve_extension *ext,
 			return NULL;
 		}
 		if (ctx->global_storage == NULL) {
-			ctx->global_storage = sieve_storage_create(
-				svinst, ctx->global_location, 0, error_code_r);
+			if (sieve_storage_create(svinst, ctx->global_location,
+						 0, &ctx->global_storage,
+						 error_code_r) < 0)
+				return NULL;
 		}
 		return ctx->global_storage;
 	default:

@@ -127,8 +127,8 @@ int sieve_script_create(struct sieve_instance *svinst,
 	else
 		error_code_r = &error_code;
 
-	storage = sieve_storage_create(svinst, location, 0, error_code_r);
-	if (storage == NULL)
+	if (sieve_storage_create(svinst, location, 0,
+				 &storage, error_code_r) < 0)
 		return -1;
 
 	script = sieve_storage_get_script(storage, name, error_code_r);
@@ -880,8 +880,8 @@ sieve_script_sequence_create(struct sieve_instance *svinst,
 	else
 		error_code_r = &error_code;
 
-	storage = sieve_storage_create(svinst, location, 0, error_code_r);
-	if (storage == NULL)
+	if (sieve_storage_create(svinst, location, 0,
+				 &storage, error_code_r) < 0)
 		return NULL;
 
 	sseq = sieve_storage_get_script_sequence(storage, error_code_r);

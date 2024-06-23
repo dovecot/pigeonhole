@@ -363,10 +363,10 @@ sieve_storage_init(struct sieve_instance *svinst,
 	return 0;
 }
 
-struct sieve_storage *
-sieve_storage_create(struct sieve_instance *svinst, const char *location,
-		     enum sieve_storage_flags flags,
-		     enum sieve_error *error_code_r)
+int sieve_storage_create(struct sieve_instance *svinst, const char *location,
+			 enum sieve_storage_flags flags,
+			 struct sieve_storage **storage_r,
+			 enum sieve_error *error_code_r)
 {
 	const struct sieve_storage *storage_class;
 	enum sieve_error error_code;
@@ -376,6 +376,7 @@ sieve_storage_create(struct sieve_instance *svinst, const char *location,
 	/* Dont use this function for creating a synchronizing storage */
 	i_assert((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0);
 
+	*storage_r = NULL;
 	if (error_code_r != NULL)
 		*error_code_r = SIEVE_ERROR_NONE;
 	else
@@ -385,18 +386,14 @@ sieve_storage_create(struct sieve_instance *svinst, const char *location,
 	if ((ret = sieve_storage_driver_parse(svinst, &data,
 					      &storage_class)) < 0) {
 		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
-		return NULL;
+		return -1;
 	}
 
 	if (ret == 0)
 		storage_class = &sieve_file_storage;
 
-	struct sieve_storage *storage;
-
-	if (sieve_storage_init(svinst, storage_class, data, flags, FALSE,
-			       &storage, error_code_r) < 0)
-		return NULL;
-	return storage;
+	return sieve_storage_init(svinst, storage_class, data, flags, FALSE,
+				  storage_r, error_code_r);
 }
 
 static struct sieve_storage *
@@ -547,9 +544,8 @@ sieve_storage_create_personal(struct sieve_instance *svinst,
 				"Trying default script location '%s'",
 				set_default);
 
-			storage = sieve_storage_create(svinst, set_default, 0,
-						       error_code_r);
-			if (storage == NULL) {
+			if (sieve_storage_create(svinst, set_default, 0,
+						 &storage, error_code_r) < 0) {
 				switch (*error_code_r) {
 				case SIEVE_ERROR_NOT_FOUND:
 					e_debug(svinst->event, "storage: "
