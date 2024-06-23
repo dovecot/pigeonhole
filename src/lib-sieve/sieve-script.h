@@ -35,9 +35,10 @@ struct sieve_script;
 
 ARRAY_DEFINE_TYPE(sieve_script, struct sieve_script *);
 
-struct sieve_script *
-sieve_script_create(struct sieve_instance *svinst, const char *location,
-		    const char *name, enum sieve_error *error_code_r);
+int sieve_script_create(struct sieve_instance *svinst,
+			const char *location, const char *name,
+			struct sieve_script **script_r,
+			enum sieve_error *error_code_r);
 
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
