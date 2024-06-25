@@ -14,7 +14,7 @@ endif
 
 BUILT_SOURCES = pigeonhole-man
 
-MAN_URL=https://doc.dovecot.org/assets/3.0/pigeonhole-man.txz
+MAN_URL=https://doc.dovecot.org/assets/$(PIGEONHOLE_ASSET_VERSION)/pigeonhole.txz
 
 AM_V_Q = $(am__v_Q_$(V))
 am__v_Q_ = $(am__v_Q_$(AM_DEFAULT_VERBOSITY))

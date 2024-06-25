@@ -15,6 +15,9 @@ AC_CONFIG_SRCDIR([src])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
+PIGEONHOLE_ASSET_VERSION=regexp(AC_PACKAGE_VERSION, [^\([0-9]+\)\.\([0-9]+\)], [\1.\2])
+AC_SUBST(PIGEONHOLE_ASSET_VERSION)
+
 # Autoheader is not needed and does more harm than good for this package. However, it is
 # tightly integrated in autoconf/automake and therefore it is difficult not to use it. As
 # a workaround we give autoheader a dummy config header to chew on and we handle the
