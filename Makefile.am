@@ -169,6 +169,10 @@ test_cases = \
 	tests/extensions/editheader/protected.svtest \
 	tests/extensions/editheader/errors.svtest \
 	tests/extensions/editheader/execute.svtest \
+	tests/extensions/extlists/errors.svtest \
+	tests/extensions/extlists/basic.svtest \
+	tests/extensions/extlists/multiple.svtest \
+	tests/extensions/extlists/valid_ext_list.svtest \
 	tests/extensions/duplicate/errors.svtest \
 	tests/extensions/duplicate/execute.svtest \
 	tests/extensions/metadata/execute.svtest \

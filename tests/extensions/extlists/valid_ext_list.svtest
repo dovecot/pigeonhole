@@ -1,0 +1,30 @@
+require "vnd.dovecot.testsuite";
+require "extlists";
+
+test_config_set "sieve_extlists_list" ":addrbook:default";
+test_config_set "sieve_extlists_list/:addrbook:default/name" ":addrbook:default";
+test_config_set "sieve_extlists_list/:addrbook:default/dict" "file";
+test_config_set "sieve_extlists_list/:addrbook:default/dict/file/driver" "file";
+test_config_set "sieve_extlists_list/:addrbook:default/dict/file/path"
+	"${tst.path}/addressbook.dict";
+test_config_reload :extension "extlists";
+
+test "Invalid URI" {
+	if valid_ext_list "frop:666" {
+		test_fail "invalid URI accepted";
+	}
+}
+
+test "Unknown URI" {
+	if valid_ext_list "urn:ietf:params:sieve:addrbook:diabolical" {
+		test_fail "unknown URI accepted";
+	}
+}
+test "Valid and known URI" {
+	if not valid_ext_list "urn:ietf:params:sieve:addrbook:default" {
+		test_fail "valid URI denied";
+	}
+	if not valid_ext_list ":addrbook:default" {
+		test_fail "valid shorthand URI denied";
+	}
+}

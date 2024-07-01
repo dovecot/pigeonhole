@@ -1,0 +1,104 @@
+require "vnd.dovecot.testsuite";
+require "variables";
+require "extlists";
+require "encoded-character";
+
+# Warning: addressbook lookups are cached in interpreter context,
+# which means that changing the test message will not have the
+# expected effect when the addressbook test is executed in the
+# testsuite script itself.
+
+test_config_set "sieve_extlists_list" ":addrbook:default :addrbook:empty";
+test_config_set "sieve_extlists_list/:addrbook:default/name" ":addrbook:default";
+test_config_set "sieve_extlists_list/:addrbook:default/dict" "file";
+test_config_set "sieve_extlists_list/:addrbook:default/dict/file/driver" "file";
+test_config_set "sieve_extlists_list/:addrbook:default/dict/file/path"
+	"${tst.path}/addressbook.dict";
+test_config_set "sieve_extlists_list/:addrbook:empty/name" ":addrbook:empty";
+test_config_reload :extension "extlists";
+
+test_set "message" text:
+From: <stephan@example.com>
+Subject: Frop!
+To: <usera@example.org>, <userb@example.org>, <userc@example.org>,
+ <userd@example.org>, <usere@example.org>, <userf@example.org>,
+ <userg@example.org>, <userh@example.org>, <useri@example.org>,
+ <userj@example.org>, <userk@example.org>, <userl@example.org>,
+ <userm@example.org>, <usern@example.org>, <usero@example.org>,
+ <userp@example.org>, <userq@example.org>, <userr@example.org>,
+ <users@example.org>, <usert@example.org>, <useru@example.org>,
+ <userv@example.org>, <userw@example.org>, <userx@example.org>,
+ <usery@example.org>, <userz@example.org>, <user1@example.org>
+Cc: <useraa@example.org>, <userab@example.org>, <userac@example.org>,
+ <userad@example.org>, <userae@example.org>, <useraf@example.org>,
+ <userag@example.org>, <userah@example.org>, <userai@example.org>,
+ <useraj@example.org>, <userak@example.org>, <useral@example.org>,
+ <useram@example.org>, <useran@example.org>, <userao@example.org>,
+ <userap@example.org>, <useraq@example.org>, <userar@example.org>,
+ <useras@example.org>, <userat@example.org>, <userau@example.org>,
+ <userav@example.org>, <useraw@example.org>, <userax@example.org>,
+ <useray@example.org>, <useraz@example.org>, <user35@example.org>
+X-Admin: <userj@example.org>, <userk@example.org>, <userl@example.org>,
+ <useraj@example.org>, <userak@example.org>, <useral@example.org>,
+ <useray@example.org>, <useraz@example.org>, <user35@example.org>,
+ <userav@example.org>, <useraw@example.org>, <userax@example.org>
+X-Complaints-To: group:<userj@example.org>, <userk@example.org>, <userl@example.org>,
+ <useraj@example.org>, <userak@example.org>, <useral@example.org>,
+ <useray@example.org>, <useraz@example.org>, <user35@example.org>,
+ <userav@example.org>, <useraw@example.org>;, <userax@example.org>
+X-BeenThere: <${unicode:1F608}@example.com>, <"@example.com>
+
+Frop
+.
+;
+
+test "No contact in \"To:\"" {
+	if address :list "to" "urn:ietf:params:sieve:addrbook:default" {
+		test_fail "should not have matched";
+	}
+	if address :list "to" ":addrbook:default" {
+		test_fail "shorthand should not have matched";
+	}
+}
+
+test "A contact in \"Cc:\"" {
+	if not address :list "cc" "urn:ietf:params:sieve:addrbook:default" {
+		test_fail "should have matched";
+	}
+	if not string "${0}" "user35@example.org" {
+		test_fail "match value not correct: ${0}";
+	}
+	if not address :list "cc" ":addrbook:default" {
+		test_fail "shorthand should have matched";
+	}
+	if not string "${0}" "user35@example.org" {
+		test_fail "shorthand match value not correct: ${0}";
+	}
+}
+
+test "Grouped addresses" {
+	if not address :list "x-complaints-to" "urn:ietf:params:sieve:addrbook:default" {
+		test_fail "should have matched";
+	}
+	if not string "${0}" "user35@example.org" {
+		test_fail "match value not correct: ${0}";
+	}
+	if not address :list "x-complaints-to" ":addrbook:default" {
+		test_fail "shorthand should have matched";
+	}
+	if not string "${0}" "user35@example.org" {
+		test_fail "shorthand match value not correct: ${0}";
+	}
+}
+
+test "Bad addresses" {
+	if address :list "x-beenthere" "urn:ietf:params:sieve:addrbook:default" {
+		test_fail "should not have matched";
+	}
+}
+
+test "Empty list" {
+	if address :list "to" "urn:ietf:params:sieve:addrbook:empty" {
+		test_fail "should not have matched";
+	}
+}

@@ -200,6 +200,7 @@ libsieve_setting_dirs="\
   $srcdir/src/lib-sieve/plugins/spamvirustest \
   $srcdir/src/lib-sieve/plugins/ihave \
   $srcdir/src/lib-sieve/plugins/editheader \
+  $srcdir/src/lib-sieve/plugins/extlists \
   $srcdir/src/lib-sieve/plugins/duplicate \
   $srcdir/src/lib-sieve/plugins/index \
   $srcdir/src/lib-sieve/plugins/metadata \
@@ -294,6 +295,7 @@ src/lib-sieve/plugins/duplicate/Makefile
 src/lib-sieve/plugins/index/Makefile
 src/lib-sieve/plugins/mime/Makefile
 src/lib-sieve/plugins/special-use/Makefile
+src/lib-sieve/plugins/extlists/Makefile
 src/lib-sieve/plugins/vnd.dovecot/Makefile
 src/lib-sieve/plugins/vnd.dovecot/debug/Makefile
 src/lib-sieve/plugins/vnd.dovecot/environment/Makefile

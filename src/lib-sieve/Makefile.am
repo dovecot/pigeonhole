@@ -79,6 +79,7 @@ plugins = \
 	$(extdir)/metadata/libsieve_ext_metadata.la \
 	$(extdir)/mime/libsieve_ext_mime.la \
 	$(extdir)/special-use/libsieve_ext_special_use.la \
+	$(extdir)/extlists/libsieve_ext_extlists.la \
 	$(extdir)/vnd.dovecot/debug/libsieve_ext_debug.la \
 	$(extdir)/vnd.dovecot/environment/libsieve_ext_vnd_environment.la \
 	$(extdir)/vnd.dovecot/report/libsieve_ext_vnd_report.la \
