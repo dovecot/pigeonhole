@@ -6,6 +6,7 @@ struct managesieve_login_settings {
 	const char *managesieve_implementation_string;
 	ARRAY_TYPE(const_string) managesieve_sieve_capability;
 	ARRAY_TYPE(const_string) managesieve_notify_capability;
+	ARRAY_TYPE(const_string) managesieve_extlists_capability;
 };
 
 extern const struct setting_parser_info managesieve_login_setting_parser_info;

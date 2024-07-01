@@ -52,6 +52,9 @@ dump_capability(struct config_parser_context *ctx,
 			CONFIG_PARSER_CHANGE_EXPLICIT &&
 	    config_parsed_get_setting_change_counter(new_config,
 		"managesieve_login", "managesieve_notify_capability") ==
+			CONFIG_PARSER_CHANGE_EXPLICIT &&
+	    config_parsed_get_setting_change_counter(new_config,
+		"managesieve_login", "managesieve_extlists_capability") ==
 			CONFIG_PARSER_CHANGE_EXPLICIT)
 		return 0;
 
@@ -68,11 +71,19 @@ dump_capability(struct config_parser_context *ctx,
 	/* Dump capabilities */
 	managesieve_login_config_set(ctx, "managesieve_sieve_capability",
 				     sieve_get_capabilities(svinst, NULL));
+
 	const char *capability_notify = sieve_get_capabilities(svinst, "notify");
 	if (capability_notify != NULL) {
 		managesieve_login_config_set(
 			ctx, "managesieve_notify_capability",
 			capability_notify);
+	}
+	const char *capability_extlists =
+		sieve_get_capabilities(svinst, "extlists");
+	if (capability_extlists != NULL) {
+		managesieve_login_config_set(
+			ctx, "managesieve_extlists_capability",
+			capability_extlists);
 	}
 
 	sieve_deinit(&svinst);

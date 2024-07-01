@@ -62,13 +62,17 @@ static void client_send_capabilities(struct client *client)
 		&msieve_client->set->managesieve_sieve_capability;
 	const ARRAY_TYPE(const_string) *notify_cap_list =
 		&msieve_client->set->managesieve_notify_capability;
-	const char *sieve_cap, *notify_cap, *sasl_cap;
+	const ARRAY_TYPE(const_string) *extlists_cap_list =
+		&msieve_client->set->managesieve_extlists_capability;
+	const char *sieve_cap, *notify_cap, *extlists_cap, *sasl_cap;
 
 	T_BEGIN {
 		sieve_cap = t_strarray_join(
 			settings_boollist_get(sieve_cap_list), " ");
 		notify_cap = t_strarray_join(
 			settings_boollist_get(notify_cap_list), " ");
+		extlists_cap = t_strarray_join(
+			settings_boollist_get(extlists_cap_list), " ");
 		sasl_cap = client_authenticate_get_capabilities(client);
 
 		/* Default capabilities */
@@ -81,6 +85,11 @@ static void client_send_capabilities(struct client *client)
 		if (notify_cap[0] != '\0') {
 			client_send_raw(client, t_strconcat(
 				"\"NOTIFY\" \"", notify_cap, "\"\r\n", NULL));
+		}
+		if (extlists_cap[0] != '\0') {
+			client_send_raw(client, t_strconcat(
+				"\"EXTLISTS\" \"", extlists_cap,
+				"\"\r\n", NULL));
 		}
 		client_send_raw(client, t_strconcat("\"SASL\" \"", sasl_cap,
 						    "\"\r\n", NULL));

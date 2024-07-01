@@ -14,12 +14,13 @@
 static void send_capability(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
-	const char *sieve_cap, *notify_cap;
+	const char *sieve_cap, *notify_cap, *extlists_cap;;
 	unsigned int max_redirects;
 
 	/* Get capabilities */
 	sieve_cap = sieve_get_capabilities(client->svinst, NULL);
 	notify_cap = sieve_get_capabilities(client->svinst, "notify");
+	extlists_cap = sieve_get_capabilities(client->svinst, "extlists");
 	max_redirects = sieve_max_redirects(client->svinst);
 
 	/* Default capabilities */
@@ -45,6 +46,12 @@ static void send_capability(struct client_command_context *cmd)
 	if (notify_cap != NULL) {
 		client_send_line(client,
 			t_strconcat("\"NOTIFY\" \"", notify_cap, "\"",
+				    NULL));
+	}
+	/* External lists */
+	if (extlists_cap != NULL) {
+		client_send_line(client,
+			t_strconcat("\"EXTLISTS\" \"", extlists_cap, "\"",
 				    NULL));
 	}
 

@@ -63,6 +63,7 @@ static const struct setting_define managesieve_login_setting_defines[] = {
 	DEF(STR, managesieve_implementation_string),
 	DEF(BOOLLIST, managesieve_sieve_capability),
 	DEF(BOOLLIST, managesieve_notify_capability),
+	DEF(BOOLLIST, managesieve_extlists_capability),
 
 	SETTING_DEFINE_LIST_END
 };
@@ -71,6 +72,7 @@ static const struct managesieve_login_settings managesieve_login_default_setting
 	.managesieve_implementation_string = DOVECOT_NAME " " PIGEONHOLE_NAME,
 	.managesieve_sieve_capability = ARRAY_INIT,
 	.managesieve_notify_capability = ARRAY_INIT,
+	.managesieve_extlists_capability = ARRAY_INIT,
 };
 
 static const struct setting_keyvalue managesieve_login_default_settings_keyvalue[] = {
