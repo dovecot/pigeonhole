@@ -106,6 +106,7 @@ struct sieve_match_type_context {
 
 	/* Only filled in when match_type->validate_context() is called */
 	const struct sieve_comparator *comparator;
+	bool comparator_specified;
 
 	/* Context data could be used in the future to pass data between
 	   validator and generator in match types that use extra parameters.

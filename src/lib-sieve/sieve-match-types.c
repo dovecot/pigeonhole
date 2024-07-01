@@ -482,13 +482,6 @@ bool sieve_match_type_validate(struct sieve_validator *valdtr,
 		arg = sieve_ast_argument_next(arg);
 	}
 
-	/* Verify using the default comparator if none is specified explicitly
-	 */
-	if (cmp == NULL) {
-		cmp = sieve_comparator_copy(sieve_command_pool(cmd),
-					    cmp_default);
-	}
-
 	/* Verify the default match type if none is specified explicitly */
 	if (mt_arg == NULL || mt_arg->argument == NULL ||
 	    mt_arg->argument->data == NULL) {
@@ -502,6 +495,12 @@ bool sieve_match_type_validate(struct sieve_validator *valdtr,
 			mt_arg->argument->data;
 		mcht = mtctx->match_type;
 	}
+
+	/* Verify using the default comparator if none is specified explicitly */
+	if (cmp != NULL )
+		mtctx->comparator_specified = TRUE;
+	else
+		cmp = sieve_comparator_copy(sieve_command_pool(cmd), cmp_default);
 	mtctx->comparator = cmp;
 
 	/* Check whether this match type requires additional validation.
