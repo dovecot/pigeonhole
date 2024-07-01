@@ -10,19 +10,22 @@ libsieve_util_la_DEPENDENCIES = $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
 libsieve_util_la_SOURCES = \
 	mail-raw.c \
 	edit-mail.c \
-	rfc2822.c
+	rfc2822.c \
+	urn.c
 
 headers = \
 	mail-raw.h \
 	edit-mail.h \
-	rfc2822.h
+	rfc2822.h \
+	urn.h
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 pkginc_lib_HEADERS = $(headers)
 
 test_programs = \
 	test-edit-mail \
-	test-rfc2822
+	test-rfc2822 \
+	test-urn
 
 noinst_PROGRAMS = $(test_programs)
 
@@ -42,6 +45,10 @@ test_edit_mail_DEPENDENCIES = $(test_deps)
 test_rfc2822_SOURCES = test-rfc2822.c
 test_rfc2822_LDADD = $(test_libs)
 test_rfc2822_DEPENDENCIES = $(test_deps)
+
+test_urn_SOURCES = test-urn.c
+test_urn_LDADD = $(test_libs)
+test_urn_DEPENDENCIES = $(test_deps)
 
 check: check-am check-test
 check-test: all-am
