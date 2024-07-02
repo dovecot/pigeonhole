@@ -271,6 +271,15 @@ void sieve_match_values_add(struct sieve_match_values *mvalues,
 		str_append_str(entry, value);
 }
 
+void sieve_match_values_add_cstr(struct sieve_match_values *mvalues,
+				 const char *value)
+{
+	string_t *entry = sieve_match_values_add_entry(mvalues);
+
+	if (entry != NULL && value != NULL)
+		str_append(entry, value);
+}
+
 void sieve_match_values_add_char(struct sieve_match_values *mvalues, char c)
 {
 	string_t *entry = sieve_match_values_add_entry(mvalues);

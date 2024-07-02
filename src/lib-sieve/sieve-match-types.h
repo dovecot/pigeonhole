@@ -139,6 +139,8 @@ void sieve_match_values_set(struct sieve_match_values *mvalues,
 			    unsigned int index, string_t *value);
 void sieve_match_values_add(struct sieve_match_values *mvalues,
 			    string_t *value);
+void sieve_match_values_add_cstr(struct sieve_match_values *mvalues,
+				 const char *value);
 void sieve_match_values_add_char(struct sieve_match_values *mvalues, char c);
 void sieve_match_values_skip(struct sieve_match_values *mvalues, int num);
 
