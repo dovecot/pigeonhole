@@ -125,8 +125,9 @@ static void sieve_dict_storage_destroy(struct sieve_storage *storage)
  * Script access
  */
 
-static struct sieve_script *
-sieve_dict_storage_get_script(struct sieve_storage *storage, const char *name)
+static int
+sieve_dict_storage_get_script(struct sieve_storage *storage, const char *name,
+			      struct sieve_script **script_r)
 {
 	struct sieve_dict_storage *dstorage =
 		container_of(storage, struct sieve_dict_storage, storage);
@@ -136,7 +137,10 @@ sieve_dict_storage_get_script(struct sieve_storage *storage, const char *name)
 		dscript = sieve_dict_script_init(dstorage, name);
 	} T_END;
 
-	return &dscript->script;
+	if (dscript == NULL)
+		return -1;
+	*script_r = &dscript->script;
+	return 0;
 }
 
 /*

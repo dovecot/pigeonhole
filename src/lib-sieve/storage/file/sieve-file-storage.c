@@ -854,8 +854,9 @@ sieve_file_storage_set_modified(struct sieve_storage *storage, time_t mtime)
  * Script access
  */
 
-static struct sieve_script *
-sieve_file_storage_get_script(struct sieve_storage *storage, const char *name)
+static int
+sieve_file_storage_get_script(struct sieve_storage *storage, const char *name,
+			      struct sieve_script **script_r)
 {
 	struct sieve_file_storage *fstorage =
 		container_of(storage, struct sieve_file_storage, storage);
@@ -865,7 +866,10 @@ sieve_file_storage_get_script(struct sieve_storage *storage, const char *name)
 		fscript = sieve_file_script_init_from_name(fstorage, name);
 	} T_END;
 
-	return &fscript->script;
+	if (fscript == NULL)
+		return -1;
+	*script_r = &fscript->script;
+	return 0;
 }
 
 /*
