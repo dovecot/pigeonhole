@@ -118,8 +118,8 @@ int sieve_script_create(struct sieve_instance *svinst,
 			enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
-	struct sieve_script *script;
 	enum sieve_error error_code;
+	int ret;
 
 	*script_r = NULL;
 	if (error_code_r != NULL)
@@ -131,11 +131,9 @@ int sieve_script_create(struct sieve_instance *svinst,
 				 &storage, error_code_r) < 0)
 		return -1;
 
-	script = sieve_storage_get_script(storage, name, error_code_r);
-
+	ret = sieve_storage_get_script(storage, name, script_r, error_code_r);
 	sieve_storage_unref(&storage);
-	*script_r = script;
-	return 0;
+	return ret;
 }
 
 void sieve_script_ref(struct sieve_script *script)

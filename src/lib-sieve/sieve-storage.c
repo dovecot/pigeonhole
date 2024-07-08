@@ -712,12 +712,14 @@ sieve_storage_get_script_direct(struct sieve_storage *storage, const char *name,
 	return ret;
 }
 
-struct sieve_script *
-sieve_storage_get_script(struct sieve_storage *storage, const char *name,
-			 enum sieve_error *error_code_r)
+int sieve_storage_get_script(struct sieve_storage *storage, const char *name,
+			     struct sieve_script **script_r,
+			     enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_script *script;
+
+	*script_r = NULL;
 
 	if (sieve_storage_get_script_direct(storage, name,
 					    &script, error_code_r) < 0) {
@@ -746,7 +748,11 @@ sieve_storage_get_script(struct sieve_storage *storage, const char *name,
 			*error_code_r = storage->error_code;
 		}
 	}
-	return script;
+
+	if (script == NULL)
+		return -1;
+	*script_r = script;
+	return 0;
 }
 
 struct sieve_script *
@@ -756,10 +762,8 @@ sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_script *script;
 
-	script = sieve_storage_get_script(storage, name, error_code_r);
-	if (script == NULL)
+	if (sieve_storage_get_script(storage, name, &script, error_code_r) < 0)
 		return NULL;
-
 	if (sieve_script_open(script, error_code_r) >= 0)
 		return script;
 

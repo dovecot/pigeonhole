@@ -282,8 +282,8 @@ cmd_include_validate(struct sieve_validator *valdtr,
 	}
 
 	/* Create script object */
-	script = sieve_storage_get_script(storage, script_name, &error_code);
-	if (script == NULL)
+	if (sieve_storage_get_script(storage, script_name,
+				     &script, &error_code) < 0)
 		return FALSE;
 
 	ret = sieve_script_open(script, &error_code);
