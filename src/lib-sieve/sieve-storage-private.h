@@ -33,8 +33,8 @@ struct sieve_storage_vfuncs {
 	int (*is_singular)(struct sieve_storage *storage);
 
 	/* script access */
-	struct sieve_script *(*get_script)(struct sieve_storage *storage,
-					   const char *name);
+	int (*get_script)(struct sieve_storage *storage, const char *name,
+			  struct sieve_script **script_r);
 
 	/* script sequence */
 	struct sieve_script_sequence *(*get_script_sequence)(

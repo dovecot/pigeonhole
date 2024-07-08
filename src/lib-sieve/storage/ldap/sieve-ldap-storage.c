@@ -106,8 +106,9 @@ static void sieve_ldap_storage_destroy(struct sieve_storage *storage)
  * Script access
  */
 
-static struct sieve_script *
-sieve_ldap_storage_get_script(struct sieve_storage *storage, const char *name)
+static int
+sieve_ldap_storage_get_script(struct sieve_storage *storage, const char *name,
+			      struct sieve_script **script_r)
 {
 	struct sieve_ldap_storage *lstorage =
 		container_of(storage, struct sieve_ldap_storage, storage);
@@ -117,7 +118,10 @@ sieve_ldap_storage_get_script(struct sieve_storage *storage, const char *name)
 		lscript = sieve_ldap_script_init(lstorage, name);
 	} T_END;
 
-	return &lscript->script;
+	if (lscript == NULL)
+		return -1;
+	*script_r = &lscript->script;
+	return 0;
 }
 
 /*

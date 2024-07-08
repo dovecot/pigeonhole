@@ -681,12 +681,14 @@ void sieve_storage_set_modified(struct sieve_storage *storage, time_t mtime)
  * Script access
  */
 
-static struct sieve_script *
+static int
 sieve_storage_get_script_direct(struct sieve_storage *storage, const char *name,
+				struct sieve_script **script_r,
 				enum sieve_error *error_code_r)
 {
-	struct sieve_script *script;
+	int ret;
 
+	*script_r = NULL;
 	if (error_code_r != NULL)
 		*error_code_r = SIEVE_ERROR_NONE;
 	sieve_storage_clear_error(storage);
@@ -699,12 +701,15 @@ sieve_storage_get_script_direct(struct sieve_storage *storage, const char *name,
 			str_sanitize(name, 80));
 		if (error_code_r != NULL)
 			*error_code_r = storage->error_code;
-		return NULL;
+		return -1;
 	}
 
 	i_assert(storage->v.get_script != NULL);
-	script = storage->v.get_script(storage, name);
-	return script;
+	ret = storage->v.get_script(storage, name, script_r);
+	i_assert(ret <= 0);
+	if (error_code_r != NULL)
+		*error_code_r = storage->error_code;
+	return ret;
 }
 
 struct sieve_script *
@@ -714,8 +719,8 @@ sieve_storage_get_script(struct sieve_storage *storage, const char *name,
 	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_script *script;
 
-	script = sieve_storage_get_script_direct(storage, name, error_code_r);
-	if (script == NULL) {
+	if (sieve_storage_get_script_direct(storage, name,
+					    &script, error_code_r) < 0) {
 		/* Error */
 		if (storage->error_code == SIEVE_ERROR_NOT_FOUND &&
 		    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
@@ -796,8 +801,8 @@ sieve_storage_check_script_direct(struct sieve_storage *storage,
 	if (error_code_r == NULL)
 		error_code_r = &error_code;
 
-	script = sieve_storage_get_script_direct(storage, name, error_code_r);
-	if (script == NULL)
+	if (sieve_storage_get_script_direct(storage, name,
+					    &script, error_code_r) < 0)
 		return (*error_code_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
 
 	ret = sieve_script_open(script, error_code_r);
