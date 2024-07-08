@@ -380,9 +380,8 @@ ext_include_binary_open(const struct sieve_extension *ext,
 		}
 
 		/* Can we open the script dependency ? */
-		script = sieve_storage_get_script(storage, str_c(script_name),
-						  &error_code);
-		if (script == NULL) {
+		if (sieve_storage_get_script(storage, str_c(script_name),
+					     &script, &error_code) < 0) {
 			/* No, recompile */
 			return FALSE;
 		}
