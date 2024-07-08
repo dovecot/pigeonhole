@@ -27,8 +27,8 @@ static int cmd_sieve_rename_run(struct doveadm_sieve_cmd_context *_ctx)
 	enum sieve_error error_code;
 	int ret = 0;
 
-	script = sieve_storage_open_script(storage, ctx->oldname, NULL);
-	if (script == NULL) {
+	if (sieve_storage_open_script(storage, ctx->oldname,
+				      &script, NULL) < 0) {
 		e_error(event, "Failed to rename Sieve script: %s",
 			sieve_storage_get_last_error(storage, &error_code));
 		doveadm_sieve_cmd_failed_error(_ctx, error_code);

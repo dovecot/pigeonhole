@@ -26,8 +26,7 @@ cmd_setactive_activate(struct client_command_context *cmd,
 
 	event_add_str(cmd->event, "script_name", scriptname);
 
-	script = sieve_storage_open_script(storage, scriptname, NULL);
-	if (script == NULL) {
+	if (sieve_storage_open_script(storage, scriptname, &script, NULL) < 0) {
 		client_command_storage_error(
 			cmd, "Failed to open script '%s' for activation",
 			scriptname);

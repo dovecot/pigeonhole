@@ -23,8 +23,8 @@ bool cmd_deletescript(struct client_command_context *cmd)
 
 	event_add_str(cmd->event, "script_name", scriptname);
 
-	script = sieve_storage_open_script(storage, scriptname, NULL);
-	if (script == NULL || sieve_script_delete(script, FALSE) < 0) {
+	if (sieve_storage_open_script(storage, scriptname, &script, NULL) < 0 ||
+	    sieve_script_delete(script, FALSE) < 0) {
 		client_command_storage_error(
 			cmd, "Failed to delete script '%s'", scriptname);
 		sieve_script_unref(&script);

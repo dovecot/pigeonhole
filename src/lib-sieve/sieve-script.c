@@ -588,9 +588,8 @@ sieve_script_copy_from_default(struct sieve_script *script, const char *newname)
 		struct sieve_script *newscript;
 		enum sieve_error error_code;
 
-		newscript = sieve_storage_open_script(storage->default_for,
-						      newname, &error_code);
-		if (newscript == NULL) {
+		if (sieve_storage_open_script(storage->default_for, newname,
+					      &newscript, &error_code) < 0) {
 			/* Somehow not actually saved */
 			ret = (error_code == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
 		} else if (sieve_script_activate(newscript, (time_t)-1) < 0) {

@@ -118,9 +118,8 @@ bool cmd_getscript(struct client_command_context *cmd)
 	ctx->storage = client->storage;
 	ctx->failed = FALSE;
 
-	ctx->script = sieve_storage_open_script(client->storage, scriptname,
-						NULL);
-	if (ctx->script == NULL) {
+	if (sieve_storage_open_script(client->storage, scriptname,
+				      &ctx->script, NULL) < 0) {
 		ctx->failed = TRUE;
 		return cmd_getscript_finish(ctx);
 	}

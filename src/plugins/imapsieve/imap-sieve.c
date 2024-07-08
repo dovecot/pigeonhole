@@ -432,10 +432,9 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 	user_script = NULL;
 	if (storage != NULL) {
 		i_assert(count < max_len);
-		scripts[count].script =
-			sieve_storage_open_script(storage, script_name,
-						  &error_code);
-		if (scripts[count].script != NULL) {
+		if (sieve_storage_open_script(storage, script_name,
+					      &scripts[count].script,
+					      &error_code) == 0) {
 			user_script = scripts[count].script;
 			count++;
 		} else if (error_code == SIEVE_ERROR_TEMP_FAILURE) {
