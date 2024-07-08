@@ -517,11 +517,16 @@ int imap_filter_sieve_open_personal(struct imap_filter_sieve_context *sctx,
 						   error_code_r, error_r) < 0)
 		return -1;
 
-	if (name == NULL)
+	int ret = 0;
+
+	if (name == NULL) {
 		script = sieve_storage_active_script_open(storage, NULL);
-	else
-		script = sieve_storage_open_script(storage, name, NULL);
-	if (script == NULL) {
+		if (script == NULL)
+			ret = -1;
+	} else {
+		ret = sieve_storage_open_script(storage, name, &script, NULL);
+	}
+	if (ret < 0) {
 		*error_r = sieve_storage_get_last_error(storage, &error_code);
 
 		switch (error_code) {
@@ -557,8 +562,7 @@ int imap_filter_sieve_open_global(struct imap_filter_sieve_context *sctx,
 						 error_code_r, error_r) < 0)
 		return -1;
 
-	script = sieve_storage_open_script(storage, name, NULL);
-	if (script == NULL) {
+	if (sieve_storage_open_script(storage, name, &script, NULL) < 0) {
 		*error_r = sieve_storage_get_last_error(storage, &error_code);
 
 		switch (error_code) {

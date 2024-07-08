@@ -34,10 +34,9 @@ static int cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 	array_foreach_elem(scriptnames, scriptname) {
 		int sret = 0;
 
-		script = sieve_storage_open_script(storage, scriptname, NULL);
-		if (script == NULL) {
-			sret =  -1;
-		} else {
+		sret = sieve_storage_open_script(storage, scriptname,
+						 &script, NULL);
+		if (sret == 0) {
 			if (sieve_script_delete(script,
 						ctx->ignore_active) < 0) {
 				(void)sieve_storage_get_last_error(

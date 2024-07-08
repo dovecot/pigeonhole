@@ -755,17 +755,21 @@ int sieve_storage_get_script(struct sieve_storage *storage, const char *name,
 	return 0;
 }
 
-struct sieve_script *
-sieve_storage_open_script(struct sieve_storage *storage, const char *name,
-			  enum sieve_error *error_code_r)
+int sieve_storage_open_script(struct sieve_storage *storage, const char *name,
+			      struct sieve_script **script_r,
+			      enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_script *script;
 
+	*script_r = NULL;
+
 	if (sieve_storage_get_script(storage, name, &script, error_code_r) < 0)
-		return NULL;
-	if (sieve_script_open(script, error_code_r) >= 0)
-		return script;
+		return -1;
+	if (sieve_script_open(script, error_code_r) >= 0) {
+		*script_r = script;
+		return 0;
+	}
 
 	/* Error */
 	sieve_script_unref(&script);
@@ -784,13 +788,15 @@ sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 		if (sieve_script_create_open(svinst, storage->default_location,
 					     NULL, &script,
 					     error_code_r) < 0)
-			return NULL;
+			return -1;
 
 		script->storage->is_default = TRUE;
 		script->storage->default_for = storage;
 		sieve_storage_ref(storage);
 	}
-	return script;
+
+	*script_r = script;
+	return 0;
 }
 
 static int
@@ -824,8 +830,7 @@ int sieve_storage_check_script(struct sieve_storage *storage, const char *name,
 	if (error_code_r == NULL)
 		error_code_r = &error_code;
 
-	script = sieve_storage_open_script(storage, name, error_code_r);
-	if (script == NULL)
+	if (sieve_storage_open_script(storage, name, &script, error_code_r) < 0)
 		return (*error_code_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
 
 	sieve_script_unref(&script);
@@ -1268,9 +1273,8 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 		struct sieve_script *script;
 		enum sieve_error error_code;
 
-		script = sieve_storage_open_script(storage, scriptname,
-						   &error_code);
-		if (script == NULL) {
+		if (sieve_storage_open_script(storage, scriptname,
+					      &script, &error_code) < 0) {
 			/* Somehow not actually saved */
 			ret = (error_code == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
 		} else if (sieve_script_activate(script, (time_t)-1) < 0) {

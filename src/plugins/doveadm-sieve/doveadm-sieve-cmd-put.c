@@ -124,10 +124,10 @@ static int cmd_sieve_put_run(struct doveadm_sieve_cmd_context *_ctx)
 		sieve_storage_save_cancel(&save_ctx);
 
 	if (ctx->activate && ret == 0) {
-		struct sieve_script *script =
-			sieve_storage_open_script(storage, ctx->scriptname,
-						  NULL);
-		if (script == NULL ||
+		struct sieve_script *script;
+
+		if (sieve_storage_open_script(storage, ctx->scriptname,
+					      &script, NULL) < 0 ||
 		    sieve_script_activate(script, (time_t)-1) < 0) {
 			e_error(event, "Failed to activate Sieve script: %s",
 				sieve_storage_get_last_error(storage,

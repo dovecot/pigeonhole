@@ -127,10 +127,9 @@ static int sieve_attribute_unset_script(struct mail_storage *storage,
 	enum sieve_error error_code;
 	int ret = 0;
 
-	script = sieve_storage_open_script(svstorage, scriptname, NULL);
-	if (script == NULL) {
-		ret = -1;
-	} else {
+	ret = sieve_storage_open_script(svstorage, scriptname,
+					&script, NULL);
+	if (ret == 0) {
 		ret = sieve_script_delete(script, TRUE);
 		sieve_script_unref(&script);
 	}
@@ -186,8 +185,8 @@ sieve_attribute_set_active(struct mail_storage *storage,
 	scriptname++;
 
 	/* Activate specified script */
-	script = sieve_storage_open_script(svstorage, scriptname, NULL);
-	ret = (script == NULL ?
+	ret = (sieve_storage_open_script(svstorage, scriptname,
+					 &script, NULL) < 0 ?
 	       -1 : sieve_script_activate(script, last_change));
 	if (ret < 0) {
 		mail_storage_set_critical(
@@ -562,7 +561,8 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 			"Sieve attributes are available only as streams");
 		return -1;
 	}
-	script = sieve_storage_open_script(svstorage, scriptname, NULL);
+	ret = sieve_storage_open_script(svstorage, scriptname, &script, NULL);
+	i_assert(ret == 0);
 	ret = sieve_attribute_retrieve_script(storage, svstorage, script, FALSE,
 					      value_r, &error);
 	if (ret < 0) {

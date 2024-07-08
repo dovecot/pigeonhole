@@ -25,8 +25,7 @@ bool cmd_renamescript(struct client_command_context *cmd)
 	event_add_str(cmd->event, "old_script_name", scriptname);
 	event_add_str(cmd->event, "new_script_name", newname);
 
-	script = sieve_storage_open_script(storage, scriptname, NULL);
-	if (script == NULL) {
+	if (sieve_storage_open_script(storage, scriptname, &script, NULL) < 0) {
 		client_command_storage_error(
 			cmd, "Failed to open script '%s' for rename to '%s'",
 			scriptname, newname);
