@@ -267,10 +267,10 @@ sieve_storage_event_create(struct sieve_instance *svinst,
 	return event;
 }
 
-struct sieve_storage *
-sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
-		    const struct sieve_storage *storage_class, const char *data,
-		    enum sieve_storage_flags flags, bool main)
+int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
+			const struct sieve_storage *storage_class,
+			const char *data, enum sieve_storage_flags flags,
+			bool main, struct sieve_storage **storage_r)
 {
 	struct sieve_storage *storage;
 
@@ -292,7 +292,8 @@ sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 			sieve_storage_event_create(svinst, storage_class);
 	}
 
-	return storage;
+	*storage_r = storage;
+	return 0;
 }
 
 static int
@@ -336,8 +337,9 @@ sieve_storage_init(struct sieve_instance *svinst,
 	}
 
 	T_BEGIN {
-		storage = sieve_storage_alloc(svinst, event, storage_class,
-					      data, flags, main);
+		ret = sieve_storage_alloc(svinst, event, storage_class,
+					  data, flags, main, &storage);
+		i_assert(ret == 0);
 
 		ret = sieve_storage_data_parse(storage, data,
 					       &location, &options);
