@@ -124,10 +124,10 @@ struct sieve_storage {
 struct event *
 sieve_storage_event_create(struct sieve_instance *svinst,
 			   const struct sieve_storage *storage_class);
-struct sieve_storage *
-sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
-		    const struct sieve_storage *storage_class, const char *data,
-		    enum sieve_storage_flags flags, bool main) ATTR_NULL(2, 4);
+int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
+			const struct sieve_storage *storage_class,
+			const char *data, enum sieve_storage_flags flags,
+			bool main, struct sieve_storage **storage_r);
 
 int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode);
 
