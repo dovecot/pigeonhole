@@ -767,7 +767,7 @@ int sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 
 	if (sieve_storage_get_script(storage, name, &script, error_code_r) < 0)
 		return -1;
-	if (sieve_script_open(script, error_code_r) >= 0) {
+	if (sieve_script_open(script, error_code_r) == 0) {
 		*script_r = script;
 		return 0;
 	}
@@ -775,26 +775,30 @@ int sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 	/* Error */
 	sieve_script_unref(&script);
 
-	if (storage->error_code == SIEVE_ERROR_NOT_FOUND &&
-	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
-	    storage->default_name != NULL &&
-	    storage->default_location != NULL &&
-	    strcmp(storage->default_name, name) == 0) {
-		/* Not found; if this name maps to the default script,
-		   try to open that instead */
-		i_assert(*storage->default_location != '\0');
+	if (storage->error_code != SIEVE_ERROR_NOT_FOUND ||
+	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0)
+		return -1;
 
-		e_debug(storage->event, "Trying default script instead");
+	/* Not found; if this name maps to the default script,
+	   try to access that instead */
 
-		if (sieve_script_create_open(svinst, storage->default_location,
-					     NULL, &script,
-					     error_code_r) < 0)
-			return -1;
+	if (storage->default_name == NULL ||
+	    storage->default_location == NULL ||
+	    strcmp(storage->default_name, name) != 0)
+		return -1;
 
-		script->storage->is_default = TRUE;
-		script->storage->default_for = storage;
-		sieve_storage_ref(storage);
-	}
+	i_assert(*storage->default_location != '\0');
+
+	e_debug(storage->event, "Trying default script instead");
+
+	if (sieve_script_create_open(svinst, storage->default_location,
+				     NULL, &script,
+				     error_code_r) < 0)
+		return -1;
+
+	script->storage->is_default = TRUE;
+	script->storage->default_for = storage;
+	sieve_storage_ref(storage);
 
 	*script_r = script;
 	return 0;
