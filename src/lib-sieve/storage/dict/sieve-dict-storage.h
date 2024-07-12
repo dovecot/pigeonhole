@@ -61,8 +61,8 @@ sieve_dict_storage_get_script_sequence(struct sieve_storage *storage,
 				       enum sieve_error *error_code_r);
 
 struct sieve_script *
-sieve_dict_script_sequence_next(struct sieve_script_sequence *seq,
+sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
 				enum sieve_error *error_code_r);
-void sieve_dict_script_sequence_destroy(struct sieve_script_sequence *seq);
+void sieve_dict_script_sequence_destroy(struct sieve_script_sequence *sseq);
 
 #endif

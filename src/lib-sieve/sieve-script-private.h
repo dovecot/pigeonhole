@@ -97,7 +97,7 @@ void sieve_script_set_critical(struct sieve_script *script,
  * Script sequence
  */
 
-void sieve_script_sequence_init(struct sieve_script_sequence *seq,
+void sieve_script_sequence_init(struct sieve_script_sequence *sseq,
 				struct sieve_storage *storage);
 
 #endif

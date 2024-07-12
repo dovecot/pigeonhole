@@ -197,13 +197,13 @@ sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
 }
 
 struct sieve_script *
-sieve_file_script_sequence_next(struct sieve_script_sequence *seq,
+sieve_file_script_sequence_next(struct sieve_script_sequence *sseq,
 				enum sieve_error *error_code_r)
 {
 	struct sieve_file_script_sequence *fseq =
-		(struct sieve_file_script_sequence *)seq;
+		(struct sieve_file_script_sequence *)sseq;
 	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)seq->storage;
+		(struct sieve_file_storage *)sseq->storage;
 	struct sieve_file_script *fscript;
 	const char *const *files;
 	unsigned int count;
@@ -225,24 +225,24 @@ sieve_file_script_sequence_next(struct sieve_script_sequence *seq,
 				fstorage, files[fseq->index++], NULL);
 			if (fscript != NULL)
 				break;
-			if (seq->storage->error_code != SIEVE_ERROR_NOT_FOUND)
+			if (sseq->storage->error_code != SIEVE_ERROR_NOT_FOUND)
 				break;
-			sieve_storage_clear_error(seq->storage);
+			sieve_storage_clear_error(sseq->storage);
 		}
 	}
 
 	if (fscript == NULL) {
 		if (error_code_r != NULL)
-			*error_code_r = seq->storage->error_code;
+			*error_code_r = sseq->storage->error_code;
 		return NULL;
 	}
 	return &fscript->script;
 }
 
-void sieve_file_script_sequence_destroy(struct sieve_script_sequence *seq)
+void sieve_file_script_sequence_destroy(struct sieve_script_sequence *sseq)
 {
 	struct sieve_file_script_sequence *fseq =
-		(struct sieve_file_script_sequence *)seq;
+		(struct sieve_file_script_sequence *)sseq;
 
 	if (array_is_created(&fseq->script_files))
 		array_free(&fseq->script_files);
