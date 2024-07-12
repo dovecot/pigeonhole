@@ -315,9 +315,9 @@ sieve_dict_storage_get_script_sequence(struct sieve_storage *storage,
 	return &dseq->seq;
 }
 
-struct sieve_script *
-sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
-				enum sieve_error *error_code_r)
+int sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
+				    struct sieve_script **script_r,
+				    enum sieve_error *error_code_r)
 {
 	struct sieve_dict_script_sequence *dseq =
 		container_of(sseq, struct sieve_dict_script_sequence, seq);
@@ -325,11 +325,8 @@ sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
 		container_of(sseq->storage, struct sieve_dict_storage, storage);
 	struct sieve_dict_script *dscript;
 
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-
 	if (dseq->done)
-		return NULL;
+		return 0;
 	dseq->done = TRUE;
 
 	dscript = sieve_dict_script_init(dstorage, sseq->storage->script_name);
@@ -337,10 +334,11 @@ sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
 		struct sieve_script *script = &dscript->script;
 
 		sieve_script_unref(&script);
-		return NULL;
+		return -1;
 	}
 
-	return &dscript->script;
+	*script_r = &dscript->script;
+	return 1;
 }
 
 void sieve_dict_script_sequence_destroy(struct sieve_script_sequence *sseq)

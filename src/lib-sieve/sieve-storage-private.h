@@ -39,10 +39,10 @@ struct sieve_storage_vfuncs {
 	/* script sequence */
 	struct sieve_script_sequence *(*get_script_sequence)(
 		struct sieve_storage *storage, enum sieve_error *error_code_r);
-	struct sieve_script *(*script_sequence_next)(
-		struct sieve_script_sequence *seq,
-		enum sieve_error *error_code_r);
-	void (*script_sequence_destroy)(struct sieve_script_sequence *seq);
+	int (*script_sequence_next)(struct sieve_script_sequence *sseq,
+				    struct sieve_script **script_r,
+				    enum sieve_error *error_code_r);
+	void (*script_sequence_destroy)(struct sieve_script_sequence *sseq);
 
 	/* active script */
 	int (*active_script_get_name)(struct sieve_storage *storage,

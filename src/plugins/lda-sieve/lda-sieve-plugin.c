@@ -294,8 +294,8 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 		return (*error_code_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
 
 	while (ret > 0 && !finished) {
-		script = sieve_script_sequence_next(sseq, error_code_r);
-		if (script == NULL) {
+		if (sieve_script_sequence_next(sseq, &script,
+					       error_code_r) < 0) {
 			switch (*error_code_r) {
 			case SIEVE_ERROR_NONE:
 				finished = TRUE;
