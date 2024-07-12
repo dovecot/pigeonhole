@@ -863,15 +863,15 @@ void sieve_script_sequence_init(struct sieve_script_sequence *sseq,
 	sieve_storage_ref(storage);
 }
 
-struct sieve_script_sequence *
-sieve_script_sequence_create(struct sieve_instance *svinst,
-			     const char *location,
-			     enum sieve_error *error_code_r)
+int sieve_script_sequence_create(struct sieve_instance *svinst,
+				 const char *location,
+				 struct sieve_script_sequence **sseq_r,
+				 enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
-	struct sieve_script_sequence *sseq;
 	enum sieve_error error_code;
 
+	*sseq_r = NULL;
 	if (error_code_r != NULL)
 		*error_code_r = SIEVE_ERROR_NONE;
 	else
@@ -879,12 +879,12 @@ sieve_script_sequence_create(struct sieve_instance *svinst,
 
 	if (sieve_storage_create(svinst, location, 0,
 				 &storage, error_code_r) < 0)
-		return NULL;
+		return -1;
 
-	sseq = sieve_storage_get_script_sequence(storage, error_code_r);
+	*sseq_r = sieve_storage_get_script_sequence(storage, error_code_r);
 
 	sieve_storage_unref(&storage);
-	return sseq;
+	return 0;
 }
 
 struct sieve_script *

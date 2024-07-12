@@ -289,8 +289,8 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 	bool finished = FALSE;
 	int ret = 1;
 
-	sseq = sieve_script_sequence_create(svinst, location, error_code_r);
-	if (sseq == NULL)
+	if (sieve_script_sequence_create(svinst, location,
+					 &sseq, error_code_r) < 0)
 		return (*error_code_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
 
 	while (ret > 0 && !finished) {
