@@ -331,13 +331,13 @@ sieve_ldap_storage_get_script_sequence(struct sieve_storage *storage,
 }
 
 struct sieve_script *
-sieve_ldap_script_sequence_next(struct sieve_script_sequence *seq,
+sieve_ldap_script_sequence_next(struct sieve_script_sequence *sseq,
 				enum sieve_error *error_code_r)
 {
 	struct sieve_ldap_script_sequence *lsec =
-		(struct sieve_ldap_script_sequence *)seq;
+		(struct sieve_ldap_script_sequence *)sseq;
 	struct sieve_ldap_storage *lstorage =
-		(struct sieve_ldap_storage *)seq->storage;
+		(struct sieve_ldap_storage *)sseq->storage;
 	struct sieve_ldap_script *lscript;
 
 	if (error_code_r != NULL)
@@ -347,7 +347,7 @@ sieve_ldap_script_sequence_next(struct sieve_script_sequence *seq,
 		return NULL;
 	lsec->done = TRUE;
 
-	lscript = sieve_ldap_script_init(lstorage, seq->storage->script_name);
+	lscript = sieve_ldap_script_init(lstorage, sseq->storage->script_name);
 	if (sieve_script_open(&lscript->script, error_code_r) < 0) {
 		struct sieve_script *script = &lscript->script;
 
@@ -357,10 +357,10 @@ sieve_ldap_script_sequence_next(struct sieve_script_sequence *seq,
 	return &lscript->script;
 }
 
-void sieve_ldap_script_sequence_destroy(struct sieve_script_sequence *seq)
+void sieve_ldap_script_sequence_destroy(struct sieve_script_sequence *sseq)
 {
 	struct sieve_ldap_script_sequence *lsec =
-		(struct sieve_ldap_script_sequence *)seq;
+		(struct sieve_ldap_script_sequence *)sseq;
 
 	i_free(lsec);
 }

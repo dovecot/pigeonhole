@@ -283,17 +283,17 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 				  ARRAY_TYPE(sieve_script) *scripts,
 				  enum sieve_error *error_code_r)
 {
-	struct sieve_script_sequence *seq;
+	struct sieve_script_sequence *sseq;
 	struct sieve_script *script;
 	bool finished = FALSE;
 	int ret = 1;
 
-	seq = sieve_script_sequence_create(svinst, location, error_code_r);
-	if (seq == NULL)
+	sseq = sieve_script_sequence_create(svinst, location, error_code_r);
+	if (sseq == NULL)
 		return (*error_code_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
 
 	while (ret > 0 && !finished) {
-		script = sieve_script_sequence_next(seq, error_code_r);
+		script = sieve_script_sequence_next(sseq, error_code_r);
 		if (script == NULL) {
 			switch (*error_code_r) {
 			case SIEVE_ERROR_NONE:
@@ -314,7 +314,7 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 		array_append(scripts, &script, 1);
 	}
 
-	sieve_script_sequence_free(&seq);
+	sieve_script_sequence_free(&sseq);
 	return ret;
 }
 

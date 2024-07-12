@@ -155,8 +155,8 @@ sieve_script_sequence_create(struct sieve_instance *svinst,
 			     const char *location,
 			     enum sieve_error *error_code_r);
 struct sieve_script *
-sieve_script_sequence_next(struct sieve_script_sequence *seq,
+sieve_script_sequence_next(struct sieve_script_sequence *sseq,
 			   enum sieve_error *error_code_r);
-void sieve_script_sequence_free(struct sieve_script_sequence **_seq);
+void sieve_script_sequence_free(struct sieve_script_sequence **_sseq);
 
 #endif
