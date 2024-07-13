@@ -316,42 +316,36 @@ const struct sieve_script sieve_ldap_script = {
  */
 
 struct sieve_ldap_script_sequence {
-	struct sieve_script_sequence seq;
-
 	bool done:1;
 };
 
-struct sieve_script_sequence *
-sieve_ldap_storage_get_script_sequence(struct sieve_storage *storage,
-				       enum sieve_error *error_code_r)
+int sieve_ldap_script_sequence_init(struct sieve_script_sequence *sseq,
+				    enum sieve_error *error_code_r ATTR_UNUSED)
 {
-	struct sieve_ldap_script_sequence *lsec = NULL;
-
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
+	struct sieve_ldap_script_sequence *lseq = NULL;
 
 	/* Create sequence object */
-	lsec = i_new(struct sieve_ldap_script_sequence, 1);
-	sieve_script_sequence_init(&lsec->seq, storage);
+	lseq = i_new(struct sieve_ldap_script_sequence, 1);
+	sseq->storage_data = lseq;
 
-	return &lsec->seq;
+	return 0;
 }
 
 int sieve_ldap_script_sequence_next(struct sieve_script_sequence *sseq,
 				    struct sieve_script **script_r,
 				    enum sieve_error *error_code_r)
 {
-	struct sieve_ldap_script_sequence *lsec =
-		container_of(sseq, struct sieve_ldap_script_sequence, seq);
+	struct sieve_ldap_script_sequence *lseq = sseq->storage_data;
+	struct sieve_storage *storage = sseq->storage;
 	struct sieve_ldap_storage *lstorage =
-		container_of(sseq->storage, struct sieve_ldap_storage, storage);
+		container_of(storage, struct sieve_ldap_storage, storage);
 	struct sieve_ldap_script *lscript;
 
-	if (lsec->done)
+	if (lseq->done)
 		return 0;
-	lsec->done = TRUE;
+	lseq->done = TRUE;
 
-	lscript = sieve_ldap_script_init(lstorage, sseq->storage->script_name);
+	lscript = sieve_ldap_script_init(lstorage, storage->script_name);
 	if (sieve_script_open(&lscript->script, error_code_r) < 0) {
 		struct sieve_script *script = &lscript->script;
 
@@ -364,10 +358,9 @@ int sieve_ldap_script_sequence_next(struct sieve_script_sequence *sseq,
 
 void sieve_ldap_script_sequence_destroy(struct sieve_script_sequence *sseq)
 {
-	struct sieve_ldap_script_sequence *lsec =
-		container_of(sseq, struct sieve_ldap_script_sequence, seq);
+	struct sieve_ldap_script_sequence *lseq = sseq->storage_data;
 
-	i_free(lsec);
+	i_free(lseq);
 }
 
 #endif

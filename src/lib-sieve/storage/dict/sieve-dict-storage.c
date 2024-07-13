@@ -179,7 +179,7 @@ const struct sieve_storage sieve_dict_storage = {
 
 		.get_script = sieve_dict_storage_get_script,
 
-		.get_script_sequence = sieve_dict_storage_get_script_sequence,
+		.script_sequence_init = sieve_dict_script_sequence_init,
 		.script_sequence_next = sieve_dict_script_sequence_next,
 		.script_sequence_destroy = sieve_dict_script_sequence_destroy,
 

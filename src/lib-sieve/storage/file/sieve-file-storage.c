@@ -909,7 +909,7 @@ const struct sieve_storage sieve_file_storage = {
 
 		.get_script = sieve_file_storage_get_script,
 
-		.get_script_sequence = sieve_file_storage_get_script_sequence,
+		.script_sequence_init = sieve_file_script_sequence_init,
 		.script_sequence_next = sieve_file_script_sequence_next,
 		.script_sequence_destroy = sieve_file_script_sequence_destroy,
 

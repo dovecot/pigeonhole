@@ -853,25 +853,6 @@ int sieve_storage_check_script(struct sieve_storage *storage, const char *name,
 }
 
 /*
- * Script sequence
- */
-
-struct sieve_script_sequence *
-sieve_storage_get_script_sequence(struct sieve_storage *storage,
-				  enum sieve_error *error_code_r)
-{
-	enum sieve_error error_code;
-
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
-
-	i_assert(storage->v.get_script_sequence != NULL);
-	return storage->v.get_script_sequence(storage, error_code_r);
-}
-
-/*
  * Active script
  */
 

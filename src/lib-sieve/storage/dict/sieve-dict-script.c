@@ -300,42 +300,36 @@ const struct sieve_script sieve_dict_script = {
  */
 
 struct sieve_dict_script_sequence {
-	struct sieve_script_sequence seq;
-
 	bool done:1;
 };
 
-struct sieve_script_sequence *
-sieve_dict_storage_get_script_sequence(struct sieve_storage *storage,
-				       enum sieve_error *error_code_r)
+int sieve_dict_script_sequence_init(struct sieve_script_sequence *sseq,
+				    enum sieve_error *error_code_r ATTR_UNUSED)
 {
-	struct sieve_dict_script_sequence *dseq = NULL;
-
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
+	struct sieve_dict_script_sequence *dseq;
 
 	/* Create sequence object */
 	dseq = i_new(struct sieve_dict_script_sequence, 1);
-	sieve_script_sequence_init(&dseq->seq, storage);
+	sseq->storage_data = dseq;
 
-	return &dseq->seq;
+	return 0;
 }
 
 int sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
 				    struct sieve_script **script_r,
 				    enum sieve_error *error_code_r)
 {
-	struct sieve_dict_script_sequence *dseq =
-		container_of(sseq, struct sieve_dict_script_sequence, seq);
+	struct sieve_dict_script_sequence *dseq = sseq->storage_data;
+	struct sieve_storage *storage = sseq->storage;
 	struct sieve_dict_storage *dstorage =
-		container_of(sseq->storage, struct sieve_dict_storage, storage);
+		container_of(storage, struct sieve_dict_storage, storage);
 	struct sieve_dict_script *dscript;
 
 	if (dseq->done)
 		return 0;
 	dseq->done = TRUE;
 
-	dscript = sieve_dict_script_init(dstorage, sseq->storage->script_name);
+	dscript = sieve_dict_script_init(dstorage, storage->script_name);
 	if (sieve_script_open(&dscript->script, error_code_r) < 0) {
 		struct sieve_script *script = &dscript->script;
 
@@ -349,8 +343,7 @@ int sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
 
 void sieve_dict_script_sequence_destroy(struct sieve_script_sequence *sseq)
 {
-	struct sieve_dict_script_sequence *dseq =
-		container_of(sseq, struct sieve_dict_script_sequence, seq);
+	struct sieve_dict_script_sequence *dseq = sseq->storage_data;
 
 	i_free(dseq);
 }

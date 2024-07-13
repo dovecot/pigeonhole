@@ -19,7 +19,6 @@
  */
 
 struct sieve_file_script_sequence {
-	struct sieve_script_sequence seq;
 	pool_t pool;
 
 	ARRAY_TYPE(const_string) script_files;
@@ -29,10 +28,11 @@ struct sieve_file_script_sequence {
 };
 
 static int
-sieve_file_script_sequence_read_dir(struct sieve_file_script_sequence *fseq,
+sieve_file_script_sequence_read_dir(struct sieve_script_sequence *sseq,
+				    struct sieve_file_script_sequence *fseq,
 				    const char *path)
 {
-	struct sieve_storage *storage = fseq->seq.storage;
+	struct sieve_storage *storage = sseq->storage;
 	DIR *dirp;
 	int ret = 0;
 
@@ -123,10 +123,10 @@ sieve_file_script_sequence_read_dir(struct sieve_file_script_sequence *fseq,
 	return ret;
 }
 
-struct sieve_script_sequence *
-sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
-				       enum sieve_error *error_code_r)
+int sieve_file_script_sequence_init(struct sieve_script_sequence *sseq,
+				    enum sieve_error *error_code_r)
 {
+	struct sieve_storage *storage = sseq->storage;
 	struct sieve_file_storage *fstorage =
 		container_of(storage, struct sieve_file_storage, storage);
 	struct sieve_file_script_sequence *fseq = NULL;
@@ -158,14 +158,14 @@ sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
 			break;
 		}
 		*error_code_r = storage->error_code;
-		return NULL;
+		return -1;
 	}
 
 	/* Create sequence object */
 	pool = pool_alloconly_create("sieve_file_script_sequence", 1024);
 	fseq = p_new(pool, struct sieve_file_script_sequence, 1);
 	fseq->pool = pool;
-	sieve_script_sequence_init(&fseq->seq, storage);
+	sseq->storage_data = fseq;
 
 	if (S_ISDIR(st.st_mode)) {
 		i_array_init(&fseq->script_files, 16);
@@ -174,10 +174,10 @@ sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
 		if (name == 0 || *name == '\0') {
 			/* Read all '.sieve' files in directory */
 			if (sieve_file_script_sequence_read_dir(
-				fseq, fstorage->path) < 0) {
+				sseq, fseq, fstorage->path) < 0) {
 				*error_code_r = storage->error_code;
-				sieve_file_script_sequence_destroy(&fseq->seq);
-				return NULL;
+				pool_unref(&fseq->pool);
+				return -1;
 			}
 
 		}	else {
@@ -193,15 +193,14 @@ sieve_file_storage_get_script_sequence(struct sieve_storage *storage,
 		fseq->storage_is_file = TRUE;
 	}
 
-	return &fseq->seq;
+	return 0;
 }
 
 int sieve_file_script_sequence_next(struct sieve_script_sequence *sseq,
 				    struct sieve_script **script_r,
 				    enum sieve_error *error_code_r)
 {
-	struct sieve_file_script_sequence *fseq =
-		container_of(sseq, struct sieve_file_script_sequence, seq);
+	struct sieve_file_script_sequence *fseq = sseq->storage_data;
 	struct sieve_storage *storage = sseq->storage;
 	struct sieve_file_storage *fstorage =
 		container_of(storage, struct sieve_file_storage, storage);
@@ -230,7 +229,7 @@ int sieve_file_script_sequence_next(struct sieve_script_sequence *sseq,
 				&fscript);
 			if (ret == 0)
 				break;
-			if (sseq->storage->error_code != SIEVE_ERROR_NOT_FOUND)
+			if (storage->error_code != SIEVE_ERROR_NOT_FOUND)
 				break;
 			sieve_storage_clear_error(storage);
 			if (fseq->index >= count)
@@ -250,8 +249,7 @@ int sieve_file_script_sequence_next(struct sieve_script_sequence *sseq,
 
 void sieve_file_script_sequence_destroy(struct sieve_script_sequence *sseq)
 {
-	struct sieve_file_script_sequence *fseq =
-		container_of(sseq, struct sieve_file_script_sequence, seq);
+	struct sieve_file_script_sequence *fseq = sseq->storage_data;
 
 	if (array_is_created(&fseq->script_files))
 		array_free(&fseq->script_files);

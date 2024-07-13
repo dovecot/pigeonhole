@@ -37,8 +37,8 @@ struct sieve_storage_vfuncs {
 			  struct sieve_script **script_r);
 
 	/* script sequence */
-	struct sieve_script_sequence *(*get_script_sequence)(
-		struct sieve_storage *storage, enum sieve_error *error_code_r);
+	int (*script_sequence_init)(struct sieve_script_sequence *sseq,
+				    enum sieve_error *error_code_r);
 	int (*script_sequence_next)(struct sieve_script_sequence *sseq,
 				    struct sieve_script **script_r,
 				    enum sieve_error *error_code_r);
@@ -154,6 +154,7 @@ struct sieve_storage_list_context {
 
 struct sieve_script_sequence {
 	struct sieve_storage *storage;
+	void *storage_data;
 };
 
 /*
