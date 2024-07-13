@@ -894,11 +894,15 @@ sieve_script_sequence_next(struct sieve_script_sequence *sseq,
 void sieve_script_sequence_free(struct sieve_script_sequence **_sseq)
 {
 	struct sieve_script_sequence *sseq = *_sseq;
+
+	if (sseq == NULL)
+		return;
+	*_sseq = NULL;
+
 	struct sieve_storage *storage = sseq->storage;
 
 	if (storage->v.script_sequence_destroy != NULL)
 		storage->v.script_sequence_destroy(sseq);
 
 	sieve_storage_unref(&storage);
-	*_sseq = NULL;
 }
