@@ -164,7 +164,7 @@ const struct sieve_storage sieve_ldap_storage_plugin = {
 
 		.get_script = sieve_ldap_storage_get_script,
 
-		.get_script_sequence = sieve_ldap_storage_get_script_sequence,
+		.script_sequence_init = sieve_ldap_script_sequence_init,
 		.script_sequence_next = sieve_ldap_script_sequence_next,
 		.script_sequence_destroy = sieve_ldap_script_sequence_destroy,
 

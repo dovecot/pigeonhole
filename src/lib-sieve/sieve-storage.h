@@ -52,14 +52,6 @@ int sieve_storage_check_script(struct sieve_storage *storage, const char *name,
 			       enum sieve_error *error_code_r);
 
 /*
- * Script sequence
- */
-
-struct sieve_script_sequence *
-sieve_storage_get_script_sequence(struct sieve_storage *storage,
-				  enum sieve_error *error_code_r);
-
-/*
  * Active script
  */
 
