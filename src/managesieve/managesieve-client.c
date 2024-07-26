@@ -673,7 +673,7 @@ static bool client_handle_input(struct client_command_context *cmd)
 		/* command not given - cmd_func is already NULL. */
 	} else {
 		/* find the command function */
-		struct command *command = command_find(cmd->name);
+		const struct command *command = command_find(cmd->name);
 
 		if (command != NULL)
 			cmd->func = command->func;
