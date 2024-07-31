@@ -78,7 +78,7 @@ static int command_cmp(const struct command *c1, const struct command *c2)
 	return strcasecmp(c1->name, c2->name);
 }
 
-static int command_bsearch(const char *name, const struct command *cmd)
+static int command_search(const char *name, const struct command *cmd)
 {
 	return strcasecmp(name, cmd->name);
 }
@@ -90,7 +90,7 @@ const struct command *command_find(const char *name)
 		commands_unsorted = FALSE;
 	}
 
-	return array_bsearch(&managesieve_commands, name, command_bsearch);
+	return array_bsearch(&managesieve_commands, name, command_search);
 }
 
 void commands_init(void)
