@@ -590,6 +590,10 @@ static struct login_binary managesieve_login_binary = {
 	.deinit = managesieve_login_deinit,
 
 	.anonymous_login_acceptable = FALSE,
+
+	.application_protocols = (const char *const[]) {
+		"managesieve", NULL
+	},
 };
 
 int main(int argc, char *argv[])
