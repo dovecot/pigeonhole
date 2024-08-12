@@ -373,7 +373,6 @@ struct sieve_extprogram {
 	const struct sieve_extprograms_config *ext_config;
 
 	const struct sieve_script_env *scriptenv;
-	struct program_client_settings set;
 	struct program_client *program_client;
 };
 
@@ -521,23 +520,18 @@ struct sieve_extprogram *sieve_extprogram_create
 	sprog->ext_config = ext_config;
 	sprog->scriptenv = senv;
 
-	sprog->set.client_connect_timeout_msecs =
-		SIEVE_EXTPROGRAMS_CONNECT_TIMEOUT_MSECS;
-	sprog->set.input_idle_timeout_msecs =
-		ext_config->execute_timeout * 1000;
-	restrict_access_init(&sprog->set.restrict_set);
-	if (senv->user->uid != 0)
-		sprog->set.restrict_set.uid = senv->user->uid;
-	if (senv->user->gid != 0)
-		sprog->set.restrict_set.gid = senv->user->gid;
-	sprog->set.debug = svinst->debug;
+	struct program_client_parameters pc_params = {
+		.client_connect_timeout_msecs =
+			SIEVE_EXTPROGRAMS_CONNECT_TIMEOUT_MSECS,
+		.input_idle_timeout_msecs = ext_config->execute_timeout * 1000,
+	};
 
 	if ( fork ) {
 		sprog->program_client =
-			program_client_local_create(path, args, &sprog->set);
+			program_client_local_create(svinst->event, path, args, &pc_params);
 	} else {
 		sprog->program_client =
-			program_client_unix_create(path, args, &sprog->set, FALSE);
+			program_client_unix_create(svinst->event, path, args, &pc_params);
 	}
 
 	if ( svinst->username != NULL )
