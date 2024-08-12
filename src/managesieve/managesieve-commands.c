@@ -90,7 +90,7 @@ const struct command *command_find(const char *name)
 		commands_unsorted = FALSE;
 	}
 
-	return array_bsearch(&managesieve_commands, name, command_search);
+	return array_bsearch_modifiable(&managesieve_commands, name, command_search);
 }
 
 void commands_init(void)
