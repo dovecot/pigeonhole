@@ -23,6 +23,12 @@ v2.4.0 2025-01-24  Aki Tuomi <aki.tuomi@open-xchange.com>
 	+ Added i;unicode-casecmp comparator.
 	- Lots of bugs have been fixed.
 
+v0.5.21.1 2024-08-14  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	- sieve: When saving to local storage failed after a successful action
+	  in sieve (e.g. redirect, vacation), the mail was reported as
+	  successfully delivered, although it was lost locally.
+
 v0.5.21 2023-08-15  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	- sieve: Using the deleteheader action on a message with a broken/invalid
