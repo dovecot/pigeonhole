@@ -88,9 +88,8 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 
 	isieve->home_dir = p_strdup(pool, svenv.home_dir);
 
-	isieve->svinst = sieve_init(&svenv, &mail_sieve_callbacks, isieve,
-				    debug);
-	if (isieve->svinst == NULL)
+	if (sieve_init(&svenv, &mail_sieve_callbacks, isieve,
+		       debug, &isieve->svinst) < 0)
 		return isieve;
 
 	isieve->ext_imapsieve = sieve_extension_replace(

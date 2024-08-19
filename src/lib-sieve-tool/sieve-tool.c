@@ -275,9 +275,8 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_POST;
 
 	/* Initialize Sieve Engine */
-	tool->svinst = sieve_init(&svenv, &sieve_tool_callbacks, tool,
-				  tool->debug);
-	if (tool->svinst == NULL)
+	if (sieve_init(&svenv, &sieve_tool_callbacks, tool, tool->debug,
+		       &tool->svinst) < 0)
 		i_fatal("Failed to initialize Sieve");
 
 	/* Load Sieve plugins */
