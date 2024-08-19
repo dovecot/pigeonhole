@@ -3,9 +3,10 @@
 
 #include "lib.h"
 #include "str.h"
+#include "settings-parser.h"
 #include "module-dir.h"
+#include "master-service.h"
 
-#include "sieve-settings.old.h"
 #include "sieve-extensions.h"
 
 #include "sieve-common.h"
@@ -58,44 +59,54 @@ int sieve_plugins_load(struct sieve_instance *svinst, const char *path,
 {
 	struct module *module;
 	struct module_dir_load_settings mod_set;
-	const char **module_names;
+	const char *const *module_names;
 	unsigned int i;
 
 	/* Determine what to load */
 
 	if (path == NULL && plugins == NULL) {
-		path = sieve_setting_get(svinst, "sieve_plugin_dir");
-		plugins = sieve_setting_get(svinst, "sieve_plugins");
+		/* From settings */
+		module_names = settings_boollist_get(&svinst->set->plugins);
+		path = svinst->set->plugin_dir;
+	} else {
+		/* From function parameters */
+		const char **module_names_mod;
+
+		if (plugins == NULL || *plugins == '\0')
+			return 0;
+		module_names_mod = t_strsplit_spaces(plugins, ", ");
+
+		if (path == NULL || *path == '\0')
+			path = sieve_default_settings.plugin_dir;
+
+		for (i = 0; module_names_mod[i] != NULL; i++) {
+			/* Allow giving the module names also in non-base form.
+			 */
+			module_names_mod[i] =
+				module_file_get_name(module_names_mod[i]);
+		}
+		module_names = module_names_mod;
 	}
 
-	if (plugins == NULL || *plugins == '\0')
+	if (module_names == NULL || *module_names == NULL)
 		return 0;
-
-	if (path == NULL || *path == '\0')
-		path = MODULEDIR"/sieve";
 
 	i_zero(&mod_set);
 	mod_set.abi_version = PIGEONHOLE_ABI_VERSION;
+	mod_set.binary_name = master_service_get_name(master_service);
+	mod_set.setting_name = "sieve_plugins";
 	mod_set.require_init_funcs = TRUE;
-	mod_set.debug = FALSE;
+	mod_set.debug = svinst->debug;
 
 	/* Load missing plugin modules */
 
-	sieve_modules = module_dir_load_missing(
-		sieve_modules, path, t_strsplit_spaces(plugins, ", "),
-		&mod_set);
+	sieve_modules = module_dir_load_missing(sieve_modules, path,
+						module_names, &mod_set);
 
 	/* Call plugin load functions for this Sieve instance */
 
 	if (svinst->plugins == NULL)
 		sieve_modules_refcount++;
-
-	module_names = t_strsplit_spaces(plugins, ", ");
-
-	for (i = 0; module_names[i] != NULL; i++) {
-		/* Allow giving the module names also in non-base form. */
-		module_names[i] = module_file_get_name(module_names[i]);
-	}
 
  	for (i = 0; module_names[i] != NULL; i++) {
 		struct sieve_plugin *plugin;

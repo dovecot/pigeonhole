@@ -32,12 +32,16 @@ struct sieve_settings {
 	bool trace_debug;
 	bool trace_addresses;
 
+	ARRAY_TYPE(const_string) plugins;
+	const char *plugin_dir;
+
 	struct {
 		struct sieve_address_source redirect_envelope_from;
 		const struct smtp_address *user_email;
 	} parsed;
 };
 
+extern const struct sieve_settings sieve_default_settings;
 extern const struct setting_parser_info sieve_setting_parser_info;
 
 #endif
