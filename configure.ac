@@ -153,6 +153,77 @@ else
 fi
 AM_CONDITIONAL(LDAP_PLUGIN, test "$have_ldap_plugin" = "yes")
 
+dnl **
+dnl ** Settings
+dnl **
+
+libsieve_setting_dirs="\
+  $srcdir/src/lib-sieve/storage/data \
+  $srcdir/src/lib-sieve/storage/file \
+  $srcdir/src/lib-sieve/storage/dict \
+  $srcdir/src/lib-sieve/plugins/vacation \
+  $srcdir/src/lib-sieve/plugins/subaddress \
+  $srcdir/src/lib-sieve/plugins/comparator-i-ascii-numeric \
+  $srcdir/src/lib-sieve/plugins/relational \
+  $srcdir/src/lib-sieve/plugins/regex \
+  $srcdir/src/lib-sieve/plugins/copy \
+  $srcdir/src/lib-sieve/plugins/imap4flags \
+  $srcdir/src/lib-sieve/plugins/include \
+  $srcdir/src/lib-sieve/plugins/body \
+  $srcdir/src/lib-sieve/plugins/variables \
+  $srcdir/src/lib-sieve/plugins/enotify \
+  $srcdir/src/lib-sieve/plugins/environment \
+  $srcdir/src/lib-sieve/plugins/mailbox \
+  $srcdir/src/lib-sieve/plugins/date \
+  $srcdir/src/lib-sieve/plugins/spamvirustest \
+  $srcdir/src/lib-sieve/plugins/ihave \
+  $srcdir/src/lib-sieve/plugins/editheader \
+  $srcdir/src/lib-sieve/plugins/duplicate \
+  $srcdir/src/lib-sieve/plugins/index \
+  $srcdir/src/lib-sieve/plugins/metadata \
+  $srcdir/src/lib-sieve/plugins/mime \
+  $srcdir/src/lib-sieve/plugins/special-use \
+  $srcdir/src/lib-sieve/plugins/vnd.dovecot/debug \
+  $srcdir/src/lib-sieve/plugins/vnd.dovecot/environment \
+  $srcdir/src/lib-sieve/plugins/vnd.dovecot/report"
+if test $want_ldap != plugin; then
+  libsieve_setting_dirs="$libsieve_setting_dirs \
+    $srcdir/src/lib-sieve/storage/ldap"
+fi
+libsieve_headers=
+libsieve_c_files=
+non_libsieve_headers=
+non_libsieve_c_files=
+all_files=`find $srcdir/src -name '*.[[ch]]' | grep -v '/src/plugins/settings/' | grep -v '/src/managesieve' | grep -v '/test-' | xargs grep '\\(struct setting_parser_info [[a-z]]\\)\\|\\(struct service_settings [[a-z]]\\)\\|\\(<settings checks>\\)' | sed 's/:.*//' | sort | uniq`
+for file in $all_files; do
+  dir=`echo "$file" | sed 's:/[[^/]]*$::'`
+  if echo "$libsieve_setting_dirs" | grep "$dir" >/dev/null; then
+    dnl lib-sieve
+    if echo "$file" | grep '\.h$' >/dev/null; then
+      libsieve_headers="$libsieve_headers $file"
+    else
+      libsieve_c_files="$libsieve_c_files $file"
+    fi
+  else
+    dnl not lib-sieve
+    if echo "$file" | grep '\.h$' >/dev/null; then
+      non_libsieve_headers="$non_libsieve_headers $file"
+    else
+      non_libsieve_c_files="$non_libsieve_c_files $file"
+    fi
+  fi
+done
+
+dnl libsieve is linked to pigeonhole-settings plugin, so don't duplicate the .c
+dnl file contents. However, we still need to scan the .c files for any
+dnl setting_parser_infos that aren't elsewhere.
+
+# list headers first, C files last
+SETTING_FILES=`echo $libsieve_headers $non_libsieve_headers $non_libsieve_c_files | sed -e s,$srcdir/src,./src,g -e 's,./src,$(top_srcdir)/src,g'`
+SETTING_LINKED_FILES=`echo $libsieve_c_files | sed -e s,$srcdir/src,./src,g -e 's,./src,$(top_srcdir)/src,g'`
+AC_SUBST(SETTING_FILES)
+AC_SUBST(SETTING_LINKED_FILES)
+
 CFLAGS="$CFLAGS $EXTRA_CFLAGS"
 LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
 

@@ -58,6 +58,8 @@ doc/man/sieve-filter.1
 doc/man/pigeonhole.7
 doc/stamp-man
 
+src/plugins/settings/pigeonhole-settings-dynamic.c
+
 src/sieve-tools/sievec
 src/sieve-tools/sieve-dump
 src/sieve-tools/sieve-test
