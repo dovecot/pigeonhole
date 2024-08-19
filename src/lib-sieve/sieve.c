@@ -55,11 +55,18 @@ int sieve_init(const struct sieve_environment *env,
 	       const struct sieve_callbacks *callbacks, void *context,
 	       bool debug, struct sieve_instance **svinst_r)
 {
+	struct event *event;
 	struct sieve_instance *svinst;
 	const char *domain;
 	pool_t pool;
 
 	*svinst_r = NULL;
+
+	event = event_create(env->event_parent);
+	event_add_category(event, &event_category_sieve);
+	event_set_forced_debug(event, debug);
+	event_set_append_log_prefix(event, "sieve: ");
+	event_add_str(event, "user", env->username);
 
 	/* Create Sieve engine instance */
 	pool = pool_alloconly_create("sieve", 8192);
@@ -75,12 +82,7 @@ int sieve_init(const struct sieve_environment *env,
 	svinst->flags = env->flags;
 	svinst->env_location = env->location;
 	svinst->delivery_phase = env->delivery_phase;
-
-	svinst->event = event_create(env->event_parent);
-	event_add_category(svinst->event, &event_category_sieve);
-	event_set_forced_debug(svinst->event, debug);
-	event_set_append_log_prefix(svinst->event, "sieve: ");
-	event_add_str(svinst->event, "user", env->username);
+	svinst->event = event;
 
 	/* Determine domain */
 	if (env->domainname != NULL && *(env->domainname) != '\0')
@@ -109,7 +111,7 @@ int sieve_init(const struct sieve_environment *env,
 
 	sieve_errors_init(svinst);
 
-	e_debug(svinst->event, "%s version %s initializing",
+	e_debug(event, "%s version %s initializing",
 		PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 
 	/* Read configuration */
