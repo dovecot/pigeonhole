@@ -14,9 +14,9 @@ struct sieve_binary;
 
 /* Initialize the sieve engine. Must be called before any sieve functionality is
    used. */
-struct sieve_instance *
-sieve_init(const struct sieve_environment *env,
-	   const struct sieve_callbacks *callbacks, void *context, bool debug);
+int sieve_init(const struct sieve_environment *env,
+	       const struct sieve_callbacks *callbacks, void *context,
+	       bool debug, struct sieve_instance **svinst_r);
 
 /* Free all memory allocated by the sieve engine. */
 void sieve_deinit(struct sieve_instance **_svinst);

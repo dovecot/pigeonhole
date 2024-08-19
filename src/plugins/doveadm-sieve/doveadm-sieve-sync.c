@@ -93,9 +93,8 @@ mail_sieve_user_init(struct mail_user *user, struct sieve_storage **svstorage_r)
 	svenv.base_dir = user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
-	suser->svinst = sieve_init(&svenv, &mail_sieve_callbacks,
-				   user, user->set->mail_debug);
-	if (suser->svinst == NULL)
+	if (sieve_init(&svenv, &mail_sieve_callbacks, user,
+		       user->set->mail_debug, &suser->svinst) < 0)
 		return -1;
 
 	suser->sieve_storage =

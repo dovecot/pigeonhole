@@ -51,13 +51,15 @@ struct event_category event_category_sieve = {
  * Main Sieve library interface
  */
 
-struct sieve_instance *
-sieve_init(const struct sieve_environment *env,
-	   const struct sieve_callbacks *callbacks, void *context, bool debug)
+int sieve_init(const struct sieve_environment *env,
+	       const struct sieve_callbacks *callbacks, void *context,
+	       bool debug, struct sieve_instance **svinst_r)
 {
 	struct sieve_instance *svinst;
 	const char *domain;
 	pool_t pool;
+
+	*svinst_r = NULL;
 
 	/* Create Sieve engine instance */
 	pool = pool_alloconly_create("sieve", 8192);
@@ -117,7 +119,7 @@ sieve_init(const struct sieve_environment *env,
 	/* Initialize extensions */
 	if (!sieve_extensions_init(svinst)) {
 		sieve_deinit(&svinst);
-		return NULL;
+		return -1;
 	}
 
 	/* Initialize storage classes */
@@ -129,7 +131,8 @@ sieve_init(const struct sieve_environment *env,
 	/* Configure extensions */
 	sieve_extensions_configure(svinst);
 
-	return svinst;
+	*svinst_r = svinst;
+	return 0;
 }
 
 void sieve_deinit(struct sieve_instance **_svinst)

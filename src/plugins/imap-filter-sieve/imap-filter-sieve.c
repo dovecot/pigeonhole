@@ -96,9 +96,8 @@ imap_filter_sieve_get_svinst(struct imap_filter_sieve_context *sctx)
 	svenv.location = SIEVE_ENV_LOCATION_MS;
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_POST;
 
-	ifsuser->svinst = sieve_init(&svenv, &imap_filter_sieve_callbacks,
-				     ifsuser, debug);
-	if (ifsuser->svinst == NULL)
+	if (sieve_init(&svenv, &imap_filter_sieve_callbacks, ifsuser, debug,
+		       &ifsuser->svinst) < 0)
 		return NULL;
 
 	ifsuser->master_ehandler =

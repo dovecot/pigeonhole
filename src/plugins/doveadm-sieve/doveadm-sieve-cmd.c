@@ -112,9 +112,8 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 	svenv.base_dir = user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
-	ctx->svinst = sieve_init(&svenv, &sieve_callbacks, ctx,
-				 user->set->mail_debug);
-	if (ctx->svinst == NULL)
+	if (sieve_init(&svenv, &sieve_callbacks, ctx,
+		       user->set->mail_debug, &ctx->svinst) < 0)
 		return -1;
 
 	ctx->storage = sieve_storage_create_personal(
