@@ -1,21 +1,24 @@
-noinst_LTLIBRARIES = libmanagesieve.la
+dovecot_pkglib_LTLIBRARIES = libdovecot-managesieve.la
 
 AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
 	-I$(top_srcdir)
 
-libmanagesieve_la_SOURCES = \
+libdovecot_managesieve_la_SOURCES = \
 	managesieve-arg.c \
 	managesieve-quote.c \
 	managesieve-parser.c \
 	managesieve-url.c
 
-noinst_HEADERS = \
+headers = \
 	managesieve-protocol.h \
 	managesieve-arg.h \
 	managesieve-quote.h \
 	managesieve-parser.h \
 	managesieve-url.h
+
+pkginc_libdir=$(dovecot_pkgincludedir)/sieve
+pkginc_lib_HEADERS = $(headers)
 
 test_programs = \
 	test-managesieve-url
@@ -25,11 +28,11 @@ test_nocheck_programs =
 noinst_PROGRAMS = $(test_programs) $(test_nocheck_programs)
 
 test_libs = \
-	$(noinst_LTLIBRARIES) \
+	$(dovecot_pkglib_LTLIBRARIES) \
 	$(LIBDOVECOT_STORAGE) \
 	$(LIBDOVECOT)
 test_deps = \
-	$(noinst_LTLIBRARIES) \
+	$(dovecot_pkglib_LTLIBRARIES) \
 	$(LIBDOVECOT_STORAGE_DEPS) \
 	$(LIBDOVECOT_DEPS)
 

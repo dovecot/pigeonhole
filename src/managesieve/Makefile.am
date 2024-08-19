@@ -20,7 +20,7 @@ libmanagesieve_settings_la_SOURCES = \
 
 libs = \
 	managesieve-settings.lo \
-	$(top_builddir)/src/lib-managesieve/libmanagesieve.la \
+	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la
 
 managesieve_CPPFLAGS = $(AM_CPPFLAGS) $(BINARY_CFLAGS)
