@@ -37,10 +37,13 @@ static const struct setting_define sieve_setting_defines[] = {
 	DEF(BOOL, trace_debug),
 	DEF(BOOL, trace_addresses),
 
+	DEF(BOOLLIST, plugins),
+	DEF(STR, plugin_dir),
+
 	SETTING_DEFINE_LIST_END,
 };
 
-static const struct sieve_settings sieve_default_settings = {
+const struct sieve_settings sieve_default_settings = {
 	.enabled = TRUE,
 
 	.max_script_size = SIEVE_DEFAULT_MAX_SCRIPT_SIZE,
@@ -60,6 +63,9 @@ static const struct sieve_settings sieve_default_settings = {
 	.trace_level = "none:actions:commands:tests:matching",
 	.trace_debug = FALSE,
 	.trace_addresses = FALSE,
+
+	.plugins = ARRAY_INIT,
+	.plugin_dir = MODULEDIR"/sieve",
 };
 
 const struct setting_parser_info sieve_setting_parser_info = {
@@ -86,7 +92,8 @@ sieve_settings_check(void *_set, pool_t pool, const char **error_r)
 	if (!sieve_address_source_parse(
 		pool, set->redirect_envelope_from,
 		&set->parsed.redirect_envelope_from)) {
-		*error_r = t_strdup_printf("Invalid address source '%s'",
+		*error_r = t_strdup_printf("sieve_redirect_envelope_from: "
+					   "Invalid address source '%s'",
 					   set->redirect_envelope_from);
 		return FALSE;
 	}
@@ -96,11 +103,22 @@ sieve_settings_check(void *_set, pool_t pool, const char **error_r)
 				    SMTP_ADDRESS_PARSE_FLAG_BRACKETS_OPTIONAL,
 				    &address, &error) < 0) {
 		*error_r = t_strdup_printf(
-			"Invalid SMTP address '%s': %s",
+			"sieve_user_email: Invalid SMTP address '%s': %s",
 			set->user_email, error);
 		return FALSE;
 	}
 	set->parsed.user_email = address;
+
+#ifdef CONFIG_BINARY
+	if (array_is_created(&set->plugins) &&
+	    array_not_empty(&set->plugins) &&
+	    faccessat(AT_FDCWD, set->plugin_dir, R_OK | X_OK, AT_EACCESS) < 0) {
+		*error_r = t_strdup_printf(
+			"sieve_plugin_dir: access(%s) failed: %m",
+			set->plugin_dir);
+		return FALSE;
+	}
+#endif
 	return TRUE;
 }
 /* </settings checks> */
