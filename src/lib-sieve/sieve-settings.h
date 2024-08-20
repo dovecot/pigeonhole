@@ -35,6 +35,10 @@ struct sieve_settings {
 	ARRAY_TYPE(const_string) plugins;
 	const char *plugin_dir;
 
+	ARRAY_TYPE(const_string) extensions;
+	ARRAY_TYPE(const_string) global_extensions;
+	ARRAY_TYPE(const_string) implicit_extensions;
+
 	struct {
 		struct sieve_address_source redirect_envelope_from;
 		const struct smtp_address *user_email;

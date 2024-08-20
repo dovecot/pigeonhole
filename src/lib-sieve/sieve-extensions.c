@@ -9,7 +9,6 @@
 
 #include "sieve-common.h"
 #include "sieve-error.h"
-#include "sieve-settings.old.h"
 #include "sieve-extensions.h"
 
 /*
@@ -27,6 +26,11 @@ _sieve_extension_register(struct sieve_instance *svinst,
 			  const struct sieve_extension_def *extdef,
 			  bool load, bool required,
 			  struct sieve_extension **ext_r);
+
+static int
+sieve_extensions_set_array(struct sieve_instance *svinst,
+			   const ARRAY_TYPE(const_string) *ext_names,
+			   bool global, bool implicit);
 
 /*
  * Instance global context
@@ -115,7 +119,22 @@ extern const struct sieve_extension_def extracttext_extension;
 extern const struct sieve_extension_def mboxmetadata_extension;
 extern const struct sieve_extension_def servermetadata_extension;
 
-const struct sieve_extension_def *sieve_core_extensions[] = {
+extern const struct sieve_extension_def vacation_seconds_extension;
+extern const struct sieve_extension_def spamtest_extension;
+extern const struct sieve_extension_def spamtestplus_extension;
+extern const struct sieve_extension_def virustest_extension;
+extern const struct sieve_extension_def editheader_extension;
+extern const struct sieve_extension_def special_use_extension;
+
+extern const struct sieve_extension_def vnd_debug_extension;
+extern const struct sieve_extension_def vnd_environment_extension;
+extern const struct sieve_extension_def vnd_report_extension;
+
+#ifdef HAVE_SIEVE_UNFINISHED
+extern const struct sieve_extension_def ereject_extension;
+#endif
+
+const struct sieve_extension_def *sieve_extensions[] = {
 	/* Core extensions */
 	&fileinto_extension, &reject_extension, &envelope_extension,
 	&encoded_character_extension,
@@ -128,29 +147,12 @@ const struct sieve_extension_def *sieve_core_extensions[] = {
 	&variables_extension, &enotify_extension, &environment_extension,
 	&mailbox_extension, &date_extension, &index_extension, &ihave_extension,
 	&duplicate_extension, &mime_extension, &foreverypart_extension,
-	&extracttext_extension
-};
+	&extracttext_extension,
 
-const unsigned int sieve_core_extensions_count =
-	N_ELEMENTS(sieve_core_extensions);
-
-/* Extra;
- *   These are not enabled by default, e.g. because explicit configuration is
- *   necessary to make these useful.
- */
-
-extern const struct sieve_extension_def vacation_seconds_extension;
-extern const struct sieve_extension_def spamtest_extension;
-extern const struct sieve_extension_def spamtestplus_extension;
-extern const struct sieve_extension_def virustest_extension;
-extern const struct sieve_extension_def editheader_extension;
-extern const struct sieve_extension_def special_use_extension;
-
-extern const struct sieve_extension_def vnd_debug_extension;
-extern const struct sieve_extension_def vnd_environment_extension;
-extern const struct sieve_extension_def vnd_report_extension;
-
-const struct sieve_extension_def *sieve_extra_extensions[] = {
+	/* Extra;
+	   These are not enabled by default, e.g. because explicit configuration
+	   is necessary to make these useful.
+	*/
 	&vacation_seconds_extension, &spamtest_extension,
 	&spamtestplus_extension, &virustest_extension, &editheader_extension,
 	&mboxmetadata_extension, &servermetadata_extension,
@@ -158,27 +160,14 @@ const struct sieve_extension_def *sieve_extra_extensions[] = {
 
 	/* vnd.dovecot. */
 	&vnd_debug_extension, &vnd_environment_extension, &vnd_report_extension,
-};
-
-const unsigned int sieve_extra_extensions_count =
-	N_ELEMENTS(sieve_extra_extensions);
-
-/*
- * Unfinished extensions
- */
 
 #ifdef HAVE_SIEVE_UNFINISHED
-
-extern const struct sieve_extension_def ereject_extension;
-
-const struct sieve_extension_def *sieve_unfinished_extensions[] = {
-	&ereject_extension
+	/* Unfinished extensions */
+	&ereject_extension,
+#endif
 };
 
-const unsigned int sieve_unfinished_extensions_count =
-	N_ELEMENTS(sieve_unfinished_extensions);
-
-#endif /* HAVE_SIEVE_UNFINISHED */
+const unsigned int sieve_extensions_count = N_ELEMENTS(sieve_extensions);
 
 /*
  * Extensions init/deinit
@@ -226,28 +215,11 @@ int sieve_extensions_init(struct sieve_instance *svinst)
 	}
 
 	/* Pre-load core extensions */
-	for (i = 0; i < sieve_core_extensions_count; i++) {
-		if (sieve_extension_register(svinst, sieve_core_extensions[i],
-					     TRUE, NULL) < 0)
-			return -1;
-	}
-
-	/* Pre-load extra extensions */
-	for (i = 0; i < sieve_extra_extensions_count; i++) {
-		if (sieve_extension_register(svinst, sieve_extra_extensions[i],
+	for (i = 0; i < sieve_extensions_count; i++) {
+		if (sieve_extension_register(svinst, sieve_extensions[i],
 					     FALSE, NULL) < 0)
 			return -1;
 	}
-
-#ifdef HAVE_SIEVE_UNFINISHED
-	/* Register unfinished extensions */
-	for (i = 0; i < sieve_unfinished_extensions_count; i++) {
-		if (sieve_extension_register(
-			svinst, sieve_unfinished_extensions[i], FALSE,
-			NULL) < 0)
-			return -1;
-	}
-#endif
 
 	/* More extensions can be added through plugins */
 	return 0;
@@ -255,31 +227,22 @@ int sieve_extensions_init(struct sieve_instance *svinst)
 
 int sieve_extensions_load(struct sieve_instance *svinst)
 {
-	const char *extensions;
-
 	/* Apply sieve_extensions configuration */
-	if ((extensions = sieve_setting_get(
-		svinst, "sieve_extensions")) != NULL) {
-		if (sieve_extensions_set_string(svinst, extensions,
-						FALSE, FALSE) < 0)
-			return -1;
-	}
+	if (sieve_extensions_set_array(svinst, &svinst->set->extensions,
+				       FALSE, FALSE) < 0)
+		return -1;
 
 	/* Apply sieve_global_extensions configuration */
-	if ((extensions = sieve_setting_get(
-		svinst, "sieve_global_extensions")) != NULL) {
-		if (sieve_extensions_set_string(svinst, extensions,
-						TRUE, FALSE) < 0)
-			return -1;
-	}
+	if (sieve_extensions_set_array(svinst, &svinst->set->global_extensions,
+				       TRUE, FALSE) < 0)
+		return -1;
 
 	/* Apply sieve_implicit_extensions configuration */
-	if ((extensions = sieve_setting_get(
-		svinst, "sieve_implicit_extensions")) != NULL) {
-		if (sieve_extensions_set_string(svinst, extensions,
-						FALSE, TRUE) < 0)
-			return -1;
-	}
+	if (sieve_extensions_set_array(svinst,
+				       &svinst->set->implicit_extensions,
+				       FALSE, TRUE) < 0)
+		return -1;
+
 	return 0;
 }
 
@@ -674,6 +637,55 @@ sieve_extension_set_implicit(struct sieve_extension *ext, bool enabled)
 		ext->implicit = TRUE;
 	} else {
 		ext->implicit = FALSE;
+	}
+
+	return ret;
+}
+
+static int
+sieve_extensions_set_array(struct sieve_instance *svinst,
+			   const ARRAY_TYPE(const_string) *ext_names,
+			   bool global, bool implicit)
+{
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+	const char *name;
+
+	if (array_is_empty(ext_names))
+		return 0;
+
+	int ret = 0;
+	array_foreach_elem(ext_names, name) {
+		struct sieve_extension *ext;
+
+		ext = hash_table_lookup(ext_reg->extension_index, name);
+		if (ext == NULL || ext->def == NULL ||
+		    *(ext->def->name) == '@') {
+			e_warning(svinst->event,
+				  "ignored unknown extension '%s' "
+				  "while configuring available extensions",
+				  name);
+			continue;
+		}
+		if (ext->id < 0)
+			continue;
+
+		/* Perform actual activation/deactivation */
+		if (global) {
+			if (sieve_extension_set_global(ext, TRUE) < 0) {
+				ret = -1;
+				break;
+			}
+		} else if (implicit) {
+			if (sieve_extension_set_implicit(ext, TRUE) < 0) {
+				ret = -1;
+				break;
+			}
+		} else {
+			if (sieve_extension_set_enabled(ext, TRUE) < 0) {
+				ret = -1;
+				break;
+			}
+		}
 	}
 
 	return ret;

@@ -40,6 +40,10 @@ static const struct setting_define sieve_setting_defines[] = {
 	DEF(BOOLLIST, plugins),
 	DEF(STR, plugin_dir),
 
+	DEF(BOOLLIST, extensions),
+	DEF(BOOLLIST, global_extensions),
+	DEF(BOOLLIST, implicit_extensions),
+
 	SETTING_DEFINE_LIST_END,
 };
 
@@ -66,6 +70,20 @@ const struct sieve_settings sieve_default_settings = {
 
 	.plugins = ARRAY_INIT,
 	.plugin_dir = MODULEDIR"/sieve",
+
+	.extensions = ARRAY_INIT,
+	.global_extensions = ARRAY_INIT,
+	.implicit_extensions = ARRAY_INIT,
+};
+
+static const struct setting_keyvalue sieve_default_settings_keyvalue[] = {
+	{ "sieve_extensions",
+	  "fileinto reject envelope encoded-character vacation subaddress "
+	  "comparator-i;ascii-numeric relational regex imap4flags copy include "
+	  "body variables enotify environment mailbox date index ihave "
+	  "duplicate mime foreverypart extracttext"
+	},
+	{ NULL, NULL }
 };
 
 const struct setting_parser_info sieve_setting_parser_info = {
@@ -73,6 +91,7 @@ const struct setting_parser_info sieve_setting_parser_info = {
 
 	.defines = sieve_setting_defines,
 	.defaults = &sieve_default_settings,
+	.default_settings = sieve_default_settings_keyvalue,
 
 	.struct_size = sizeof(struct sieve_settings),
 
