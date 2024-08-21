@@ -10,10 +10,12 @@ cmds = \
 
 libsieve_ext_vacation_la_SOURCES = \
 	$(cmds) \
+	ext-vacation-settings.c \
 	ext-vacation-common.c \
 	ext-vacation.c \
 	ext-vacation-seconds.c
 
 noinst_HEADERS = \
+	ext-vacation-settings.h \
 	ext-vacation-common.h
 
