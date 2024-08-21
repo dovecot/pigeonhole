@@ -13,8 +13,10 @@ extensions = \
 libsieve_ext_duplicate_la_SOURCES = \
 	$(tests) \
 	$(extensions) \
+	ext-duplicate-settings.c \
 	ext-duplicate-common.c
 
 noinst_HEADERS = \
+	ext-duplicate-settings.h \
 	ext-duplicate-common.h
 
