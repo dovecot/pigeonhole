@@ -16,8 +16,8 @@
  */
 
 unsigned int
-sieve_variables_get_max_scope_size(const struct sieve_extension *var_ext);
-size_t sieve_variables_get_max_variable_size(
+sieve_variables_get_max_scope_count(const struct sieve_extension *var_ext);
+size_t sieve_variables_get_max_value_size(
 	const struct sieve_extension *var_ext);
 
 /*
@@ -110,7 +110,7 @@ sieve_variable_scope_binary_read(struct sieve_instance *svinst,
 struct sieve_variable_scope *
 sieve_variable_scope_binary_get(struct sieve_variable_scope_binary *scpbin);
 unsigned int
-sieve_variable_scope_binary_get_size(
+sieve_variable_scope_binary_get_count(
 	struct sieve_variable_scope_binary *scpbin);
 
 /*

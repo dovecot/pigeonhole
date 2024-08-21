@@ -53,7 +53,7 @@ ext_variables_variable_argument_activate(const struct sieve_extension *var_ext,
 			valdtr, arg,
 			"(implicit) declaration of new variable '%s' exceeds the limit "
 			"(max variables: %u)", variable,
-			sieve_variables_get_max_scope_size(var_ext));
+			sieve_variables_get_max_scope_count(var_ext));
 		return FALSE;
 	}
 

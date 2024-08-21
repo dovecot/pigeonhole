@@ -68,8 +68,8 @@ static bool
 mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 		     string_t *in, string_t **result)
 {
-	size_t max_var_size =
-		sieve_variables_get_max_variable_size(modf->var_ext);
+	size_t max_val_size =
+		sieve_variables_get_max_value_size(modf->var_ext);
 	const unsigned char *p, *poff, *pend;
 	size_t new_size;
 
@@ -80,8 +80,8 @@ mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 
 	/* allocate new string */
 	new_size = str_len(in) + 32;
-	if (new_size > max_var_size)
-		new_size = max_var_size;
+	if (new_size > max_val_size)
+		new_size = max_val_size;
 	*result = t_str_new(new_size + 1);
 
 	/* escape string */
@@ -95,7 +95,7 @@ mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 			str_append_data(*result, poff, p - poff);
 			poff = p;
 
-			if (str_len(*result) + 3 * n > max_var_size)
+			if (str_len(*result) + 3 * n > max_val_size)
 				break;
 
 			str_printfa(*result, "%%%02X", *p);
@@ -106,7 +106,7 @@ mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 			}
 
 			poff++;
-		} else if ((str_len(*result) + (p - poff) + 1) > max_var_size) {
+		} else if ((str_len(*result) + (p - poff) + 1) > max_val_size) {
 			break;
 		}
 		p++;

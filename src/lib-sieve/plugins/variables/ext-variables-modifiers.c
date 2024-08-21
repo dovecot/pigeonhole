@@ -286,8 +286,8 @@ static bool
 mod_quotewildcard_modify(const struct sieve_variables_modifier *modf,
 			 string_t *in, string_t **result)
 {
-	size_t max_var_size =
-		sieve_variables_get_max_variable_size(modf->var_ext);
+	size_t max_val_size =
+		sieve_variables_get_max_value_size(modf->var_ext);
 	const unsigned char *p, *poff, *pend;
 	size_t new_size;
 
@@ -299,8 +299,8 @@ mod_quotewildcard_modify(const struct sieve_variables_modifier *modf,
 
 	/* Allocate new string */
 	new_size = str_len(in) + 16;
-	if (new_size > max_var_size)
-		new_size = max_var_size;
+	if (new_size > max_val_size)
+		new_size = max_val_size;
 	*result = t_str_new(new_size + 1);
 
 	/* Escape string */
@@ -314,11 +314,11 @@ mod_quotewildcard_modify(const struct sieve_variables_modifier *modf,
 			str_append_data(*result, poff, p - poff);
 			poff = p;
 
-			if (str_len(*result) + 2 > max_var_size)
+			if (str_len(*result) + 2 > max_val_size)
 				break;
 
 			str_append_c(*result, '\\');
-		} else if ((str_len(*result) + (p - poff) + n) > max_var_size) {
+		} else if ((str_len(*result) + (p - poff) + n) > max_val_size) {
 			break;
 		}
 		if (p + n > pend) {
@@ -545,13 +545,13 @@ int sieve_variables_modifiers_apply(
 	unsigned int i, modf_count;
 
 	/* Hold value within limits */
-	if (str_len(*value) > extctx->set->max_variable_size) {
+	if (str_len(*value) > extctx->set->max_value_size) {
 		/* assume variable originates from code, so copy it first */
 		string_t *new_value =
-			t_str_new(extctx->set->max_variable_size+3);
+			t_str_new(extctx->set->max_value_size+3);
 		str_append_str(new_value, *value);
 		*value = new_value;
-		str_truncate_utf8(*value, extctx->set->max_variable_size);
+		str_truncate_utf8(*value, extctx->set->max_value_size);
 	}
 
 	if (!array_is_created(modifiers))
@@ -581,9 +581,9 @@ int sieve_variables_modifiers_apply(
 				str_sanitize(str_c(new_value), 256));
 
 			/* Hold value within limits */
-			if (str_len(*value) > extctx->set->max_variable_size) {
+			if (str_len(*value) > extctx->set->max_value_size) {
 				str_truncate_utf8(
-					*value, extctx->set->max_variable_size);
+					*value, extctx->set->max_value_size);
 			}
 		}
 	}
