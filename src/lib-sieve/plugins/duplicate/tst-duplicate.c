@@ -13,6 +13,7 @@
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
 
+#include "ext-duplicate-settings.h"
 #include "ext-duplicate-common.h"
 
 /* Duplicate test
@@ -135,8 +136,8 @@ tst_duplicate_validate_number_tag(struct sieve_validator *valdtr,
 
 	seconds = sieve_ast_argument_number(*arg);
 	/* Enforce :days <= max_period */
-	if (extctx->max_period > 0 && seconds > extctx->max_period) {
-		seconds = extctx->max_period;
+	if (extctx->set->max_period > 0 && seconds > extctx->set->max_period) {
+		seconds = extctx->set->max_period;
 
 		sieve_argument_validate_warning(
 			valdtr, *arg,
@@ -315,7 +316,7 @@ tst_duplicate_operation_execute(const struct sieve_runtime_env *renv,
 	string_t *handle = NULL, *header = NULL, *uniqueid = NULL;
 	const char *val = NULL;
 	size_t val_len = 0;
-	sieve_number_t seconds = extctx->default_period;
+	sieve_number_t seconds = extctx->set->default_period;
 	bool last = FALSE, duplicate = FALSE;
 	int ret;
 

@@ -7,9 +7,9 @@
 #include "str.h"
 #include "str-sanitize.h"
 #include "array.h"
+#include "settings.h"
 
 #include "sieve-common.h"
-#include "sieve-settings.old.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
 #include "sieve-message.h"
@@ -19,32 +19,28 @@
 #include "sieve-actions.h"
 #include "sieve-result.h"
 
+#include "ext-duplicate-settings.h"
 #include "ext-duplicate-common.h"
 
 /*
  * Extension configuration
  */
 
-#define EXT_DUPLICATE_DEFAULT_PERIOD (12*60*60)
-#define EXT_DUPLICATE_DEFAULT_MAX_PERIOD (2*24*60*60)
-
 int ext_duplicate_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
+	const struct ext_duplicate_settings *set;
 	struct ext_duplicate_context *extctx;
-	sieve_number_t default_period, max_period;
+	const char *error;
 
-	if (!sieve_setting_get_duration_value(
-		svinst, "sieve_duplicate_default_period", &default_period))
-		default_period = EXT_DUPLICATE_DEFAULT_PERIOD;
-	if (!sieve_setting_get_duration_value(
-		svinst, "sieve_duplicate_max_period", &max_period)) {
-		max_period = EXT_DUPLICATE_DEFAULT_MAX_PERIOD;
+	if (settings_get(svinst->event, &ext_duplicate_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
 	}
 
 	extctx = i_new(struct ext_duplicate_context, 1);
-	extctx->default_period = default_period;
-	extctx->max_period = max_period;
+	extctx->set = set;
 
 	*context_r = extctx;
 	return 0;
@@ -54,6 +50,9 @@ void ext_duplicate_unload(const struct sieve_extension *ext)
 {
 	struct ext_duplicate_context *extctx = ext->context;
 
+	if (extctx == NULL)
+		return;
+	settings_free(extctx->set);
 	i_free(extctx);
 }
 

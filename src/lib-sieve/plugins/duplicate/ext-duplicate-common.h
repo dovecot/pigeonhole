@@ -8,8 +8,7 @@
  */
 
 struct ext_duplicate_context {
-	unsigned int default_period;
-	unsigned int max_period;
+	const struct ext_duplicate_settings *set;
 };
 
 int ext_duplicate_load(const struct sieve_extension *ext, void **context_r);
