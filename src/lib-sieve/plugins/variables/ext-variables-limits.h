@@ -21,9 +21,6 @@
  *  as a syntax error, which SHOULD be discovered at compile-time.
  */
 
-#define EXT_VARIABLES_DEFAULT_MAX_SCOPE_SIZE     255
-#define EXT_VARIABLES_DEFAULT_MAX_VARIABLE_SIZE  (4 * 1024)
-
 #define EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE    128
 #define EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE 4000
 

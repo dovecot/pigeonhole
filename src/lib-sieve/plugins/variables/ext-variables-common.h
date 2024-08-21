@@ -5,16 +5,14 @@
 #include "sieve-validator.h"
 
 #include "sieve-ext-variables.h"
+#include "ext-variables-settings.h"
 
 /*
  * Extension
  */
 
 struct ext_variables_context {
-	/* Maximum number of variables (in a scope) */
-	unsigned int max_scope_size;
-	/* Maximum size of variable value */
-	size_t max_variable_size;
+	const struct ext_variables_settings *set;
 };
 
 extern const struct sieve_extension_def variables_extension;
