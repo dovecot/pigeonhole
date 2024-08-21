@@ -4,30 +4,25 @@
 #include "lib.h"
 #include "strfuncs.h"
 #include "mail-storage.h"
+#include "settings.h"
 
 #include "sieve-common.h"
-#include "sieve-settings.old.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
 #include "sieve-message.h"
 #include "sieve-interpreter.h"
 #include "sieve-runtime-trace.h"
 
+#include "ext-spamvirustest-settings.h"
 #include "ext-spamvirustest-common.h"
 
 #include <sys/types.h>
-#include <regex.h>
 #include <ctype.h>
+#include <regex.h>
 
 /*
  * Extension data
  */
-
-enum ext_spamvirustest_status_type {
-	EXT_SPAMVIRUSTEST_STATUS_TYPE_SCORE,
-	EXT_SPAMVIRUSTEST_STATUS_TYPE_STRLEN,
-	EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT,
-};
 
 struct ext_spamvirustest_header_spec {
 	const char *header_name;
@@ -38,15 +33,10 @@ struct ext_spamvirustest_header_spec {
 struct ext_spamvirustest_context {
 	pool_t pool;
 	unsigned int reload_id;
+	const struct ext_spamvirustest_settings *set;
 
 	struct ext_spamvirustest_header_spec status_header;
 	struct ext_spamvirustest_header_spec max_header;
-
-	enum ext_spamvirustest_status_type status_type;
-
-	float max_value;
-
-	const char *text_values[11];
 };
 
 /*
@@ -96,9 +86,9 @@ _regexp_match_get_value(const char *string, int index, regmatch_t pmatch[],
  */
 
 static bool
-ext_spamvirustest_header_spec_parse(struct ext_spamvirustest_header_spec *spec,
-				    pool_t pool, const char *data,
-				    const char **error_r)
+ext_spamvirustest_header_spec_parse(
+	pool_t pool, const char *data,
+	struct ext_spamvirustest_header_spec *spec_r, const char **error_r)
 {
 	const char *p;
 	const char *regexp_error;
@@ -118,16 +108,16 @@ ext_spamvirustest_header_spec_parse(struct ext_spamvirustest_header_spec *spec,
 		p++;
 
 	if (*p == '\0') {
-		spec->header_name = p_strdup(pool, data);
+		spec_r->header_name = p_strdup(pool, data);
 		return TRUE;
 	}
 
-	spec->header_name = p_strdup_until(pool, data, p);
+	spec_r->header_name = p_strdup_until(pool, data, p);
 	while (*p == ' ' || *p == '\t')
 		p++;
 
 	if (*p == '\0') {
-		spec->regexp_match = FALSE;
+		spec_r->regexp_match = FALSE;
 		return TRUE;
 	}
 
@@ -140,8 +130,8 @@ ext_spamvirustest_header_spec_parse(struct ext_spamvirustest_header_spec *spec,
 	p++;
 	while (*p == ' ' || *p == '\t') p++;
 
-	spec->regexp_match = TRUE;
-	if (!_regexp_compile(&spec->regexp, p, &regexp_error)) {
+	spec_r->regexp_match = TRUE;
+	if (!_regexp_compile(&spec_r->regexp, p, &regexp_error)) {
 		*error_r = t_strdup_printf(
 			"failed to compile regular expression '%s': %s",
 			p, regexp_error);
@@ -182,68 +172,6 @@ ext_spamvirustest_parse_strlen_value(const char *str_value,
 	return TRUE;
 }
 
-static bool
-ext_spamvirustest_parse_decimal_value(const char *str_value,
-				      float *value_r, const char **error_r)
-{
-	const char *p = str_value;
-	float value;
-	float sign = 1;
-	int digits;
-
-	if (*p == '\0') {
-		*error_r = "empty value";
-		return FALSE;
-	}
-
-	if (*p == '+' || *p == '-') {
-		if (*p == '-')
-			sign = -1;
-		p++;
-	}
-
-	value = 0;
-	digits = 0;
-	while (i_isdigit(*p)) {
-		value = value*10 + (*p-'0');
-		if (digits++ > 4) {
-			*error_r = t_strdup_printf(
-				"decimal value has too many digits before radix point: %s",
-				str_value);
-			return FALSE;
-		}
-		p++;
-	}
-
-	if (*p == '.' || *p == ',') {
-		float radix = .1;
-		p++;
-
-		digits = 0;
-		while (i_isdigit(*p)) {
-			value = value + (*p-'0')*radix;
-
-			if (digits++ > 4) {
-				*error_r = t_strdup_printf(
-					"decimal value has too many digits after radix point: %s",
-					str_value);
-				return FALSE;
-			}
-			radix /= 10;
-			p++;
-		}
-	}
-
-	if (*p != '\0') {
-		*error_r = t_strdup_printf(
-			"invalid decimal point value: %s", str_value);
-		return FALSE;
-	}
-
-	*value_r = value * sign;
-	return TRUE;
-}
-
 /*
  * Extension initialization
  */
@@ -253,158 +181,69 @@ int ext_spamvirustest_load(const struct sieve_extension *ext, void **context_r)
 	static unsigned int reload_id = 0;
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_spamvirustest_context *extctx;
-	const char *ext_name, *status_header, *max_header, *status_type,
-		*max_value;
-	enum ext_spamvirustest_status_type type;
+	const struct setting_parser_info *set_info;
+	const struct ext_spamvirustest_settings *set;
 	const char *error;
 	pool_t pool;
 	int ret = 0;
 
-	/* FIXME: Prevent loading of both spamtest and spamtestplus:
-	   let these share contexts.
-	 */
-
-	if (sieve_extension_is(ext, spamtest_extension) ||
-	    sieve_extension_is(ext, spamtestplus_extension)) {
-		ext_name = spamtest_extension.name;
-	} else {
-		ext_name = sieve_extension_name(ext);
-	}
-
 	/* Get settings */
 
-	status_header = sieve_setting_get(
-		svinst, t_strconcat("sieve_", ext_name,
-				    "_status_header", NULL));
-	status_type = sieve_setting_get(
-		svinst, t_strconcat("sieve_", ext_name, "_status_type", NULL));
-	max_header = sieve_setting_get(
-		svinst, t_strconcat("sieve_", ext_name, "_max_header", NULL));
-	max_value = sieve_setting_get(
-		svinst, t_strconcat("sieve_", ext_name, "_max_value", NULL));
+	if (sieve_extension_is(ext, spamtest_extension) ||
+	    sieve_extension_is(ext, spamtestplus_extension))
+		set_info = &ext_spamtest_setting_parser_info;
+	else if (sieve_extension_is(ext, virustest_extension))
+		set_info = &ext_virustest_setting_parser_info;
+	else
+		i_unreached();
 
-	/* Base configuration */
-
-	if (status_header == NULL)
-		return 0;
-
-	if (status_type == NULL || strcmp(status_type, "score") == 0) {
-		type = EXT_SPAMVIRUSTEST_STATUS_TYPE_SCORE;
-	} else if (strcmp(status_type, "strlen") == 0) {
-		type = EXT_SPAMVIRUSTEST_STATUS_TYPE_STRLEN;
-	} else if (strcmp(status_type, "text") == 0) {
-		type = EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT;
-	} else {
-		e_error(svinst->event, "%s: "
-			"invalid status type '%s'", ext_name, status_type);
+	if (settings_get(svinst->event, set_info, 0, &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
 		return -1;
 	}
 
-	/* Verify settings */
+	/* Base configuration */
 
-	if (type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT) {
-
-		if (max_header != NULL && max_value != NULL) {
-			e_error(svinst->event, "%s: "
-				"sieve_%s_max_header and sieve_%s_max_value "
-				"cannot both be configured",
-				ext_name, ext_name, ext_name);
-			return 0;
-		}
-
-		if (max_header == NULL && max_value == NULL) {
-			e_error(svinst->event, "%s: "
-				"none of sieve_%s_max_header or sieve_%s_max_value "
-				"is configured", ext_name, ext_name, ext_name);
-			return 0;
-		}
-	} else {
-		if (max_header != NULL) {
-			e_warning(svinst->event, "%s: "
-				  "setting sieve_%s_max_header has no meaning "
-				  "for sieve_%s_status_type=text",
-				  ext_name, ext_name, ext_name);
-		}
-
-		if (max_value != NULL) {
-			e_warning(svinst->event, "%s: "
-				  "setting sieve_%s_max_value has no meaning "
-				  "for sieve_%s_status_type=text",
-				  ext_name, ext_name, ext_name);
-		}
+	if (*set->status_header == '\0') {
+		settings_free(set);
+		return 0;
 	}
 
 	pool = pool_alloconly_create("spamvirustest_data", 512);
 	extctx = p_new(pool, struct ext_spamvirustest_context, 1);
 	extctx->pool = pool;
 	extctx->reload_id = ++reload_id;
-	extctx->status_type = type;
+	extctx->set = set;
 
-	if (!ext_spamvirustest_header_spec_parse(
-		&extctx->status_header, extctx->pool, status_header,
-		&error)) {
+	if (!ext_spamvirustest_header_spec_parse(extctx->pool,
+						 set->status_header,
+						 &extctx->status_header,
+						 &error)) {
 		e_error(svinst->event, "%s: "
-			"invalid status header specification '%s': %s",
-			ext_name, status_header, error);
+			"Invalid status header specification '%s': %s",
+			sieve_extension_name(ext), set->status_header, error);
 		ret = -1;
 	}
 
-	if (ret == 0) {
-		if (type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT) {
-			/* Parse max header */
-
-			if (max_header != NULL &&
-			    !ext_spamvirustest_header_spec_parse(
-				&extctx->max_header, extctx->pool,
-				max_header, &error)) {
-				e_error(svinst->event, "%s: "
-					"invalid max header specification "
-					"'%s': %s", ext_name, max_header,
-					error);
-				ret = -1;
-			}
-
-			/* Parse max value */
-
-			if (ret == 0 && max_value != NULL) {
-				if (!ext_spamvirustest_parse_decimal_value(
-					max_value, &extctx->max_value, &error)) {
-					e_error(svinst->event, "%s: "
-						"invalid max value specification "
-						"'%s': %s", ext_name, max_value,
-						error);
-					ret = -1;
-				}
-			}
-
-		} else {
-			unsigned int i, max_text;
-
-			max_text = (sieve_extension_is(ext, virustest_extension) ?
-				    5 : 10);
-
-			/* Get text values */
-			for (i = 0; i <= max_text; i++) {
-				const char *value = sieve_setting_get(
-					svinst, t_strdup_printf("sieve_%s_text_value%d",
-								ext_name, i));
-
-				if (value != NULL && *value != '\0') {
-					extctx->text_values[i] =
-						p_strdup(extctx->pool, value);
-				}
-			}
-
-			extctx->max_value = 1;
-		}
+	if (ret == 0 &&
+	    set->parsed.status_type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT &&
+	    *set->max_header != '\0' &&
+	    !ext_spamvirustest_header_spec_parse(extctx->pool,
+						 set->max_header,
+						 &extctx->max_header,
+						 &error)) {
+		e_error(svinst->event, "%s: "
+			"Invalid max header specification '%s': %s",
+			sieve_extension_name(ext), set->max_header, error);
+		ret = -1;
 	}
 
 	*context_r = extctx;
 	if (ret < 0) {
 		e_warning(svinst->event, "%s: "
-			  "extension not configured, "
+			  "Extension not configured, "
 			  "tests will always match against \"0\"",
-			  ext_name);
+			  sieve_extension_name(ext));
 		ext_spamvirustest_unload(ext);
 		*context_r = NULL;
 	}
@@ -421,6 +260,7 @@ void ext_spamvirustest_unload(const struct sieve_extension *ext)
 
 	ext_spamvirustest_header_spec_free(&extctx->status_header);
 	ext_spamvirustest_header_spec_free(&extctx->max_header);
+	settings_free(extctx->set);
 	pool_unref(&extctx->pool);
 }
 
@@ -513,7 +353,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 	status_header = &extctx->status_header;
 	max_header = &extctx->max_header;
 
-	if (extctx->status_type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT) {
+	if (extctx->set->parsed.status_type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT) {
 		if (max_header->header_name != NULL) {
 			/* Get header from message */
 			if (mail_get_first_header_utf8(
@@ -569,7 +409,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 				goto failed;
 			}
 		} else {
-			max_value = extctx->max_value;
+			max_value = extctx->set->parsed.max_value;
 		}
 
 		if (max_value == 0) {
@@ -624,7 +464,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 		status = header_value;
 	}
 
-	switch (extctx->status_type) {
+	switch (extctx->set->parsed.status_type) {
 	case EXT_SPAMVIRUSTEST_STATUS_TYPE_SCORE:
 		if (!ext_spamvirustest_parse_decimal_value(
 			status, &status_value, &error)) {
@@ -652,8 +492,9 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 
 		i = 0;
 		while (i <= max_text) {
-			if (extctx->text_values[i] != NULL &&
-			    strcmp(status, extctx->text_values[i]) == 0) {
+			if (extctx->set->parsed.text_values[i] != NULL &&
+			    strcmp(status,
+				   extctx->set->parsed.text_values[i]) == 0) {
 				status_value = (float)i;
 				break;
 			}

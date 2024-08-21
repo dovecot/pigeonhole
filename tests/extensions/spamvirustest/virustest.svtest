@@ -27,11 +27,11 @@ Test!
 
 test_config_set "sieve_virustest_status_header" "X-VirusCheck";
 test_config_set "sieve_virustest_status_type" "text";
-test_config_set "sieve_virustest_text_value1" "Clean";
-test_config_set "sieve_virustest_text_value2" "Presumed Clean";
-test_config_set "sieve_virustest_text_value3" "Not sure";
-test_config_set "sieve_virustest_text_value4" "Almost Certain";
-test_config_set "sieve_virustest_text_value5" "Definitely";
+test_config_set "sieve_virustest_text_value/1" "Clean";
+test_config_set "sieve_virustest_text_value/2" "Presumed Clean";
+test_config_set "sieve_virustest_text_value/3" "Not sure";
+test_config_set "sieve_virustest_text_value/4" "Almost Certain";
+test_config_set "sieve_virustest_text_value/5" "Definitely";
 test_config_reload :extension "virustest";
 
 test "Text: 5" {
@@ -103,8 +103,8 @@ test "Text: 1" {
 
 test_config_set "sieve_virustest_status_header" "X-Virus-Scan:Found to be (.+)\.";
 test_config_set "sieve_virustest_status_type" "text";
-test_config_set "sieve_virustest_text_value1" "clean";
-test_config_set "sieve_virustest_text_value5" "infected";
+test_config_set "sieve_virustest_text_value/1" "clean";
+test_config_set "sieve_virustest_text_value/5" "infected";
 test_config_reload :extension "virustest";
 
 test "Text: regex: 1" {
