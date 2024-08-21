@@ -11,9 +11,10 @@
  *
  */
 
-#include "sieve-common.h"
+#include "lib.h"
+#include "settings.h"
 
-#include "sieve-settings.old.h"
+#include "sieve-common.h"
 #include "sieve-code.h"
 #include "sieve-address.h"
 #include "sieve-extensions.h"
@@ -23,16 +24,16 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
+#include "ext-subaddress-settings.h"
+
 #include <string.h>
 
 /*
  * Configuration
  */
 
-#define SUBADDRESS_DEFAULT_DELIM "+"
-
 struct ext_subaddress_context {
-	char *delimiter;
+	const struct ext_subaddress_settings *set;
 };
 
 /*
@@ -66,16 +67,19 @@ const struct sieve_extension_def subaddress_extension = {
 static int
 ext_subaddress_load(const struct sieve_extension *ext, void **context_r)
 {
+	struct sieve_instance *svinst = ext->svinst;
+	const struct ext_subaddress_settings *set;
 	struct ext_subaddress_context *extctx;
-	const char *delim;
+	const char *error;
 
-	delim = sieve_setting_get(ext->svinst, "recipient_delimiter");
-
-	if (delim == NULL)
-		delim = SUBADDRESS_DEFAULT_DELIM;
+	if (settings_get(svinst->event, &ext_subaddress_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
+	}
 
 	extctx = i_new(struct ext_subaddress_context, 1);
-	extctx->delimiter = i_strdup(delim);
+	extctx->set = set;
 
 	*context_r = extctx;
 	return 0;
@@ -85,7 +89,9 @@ static void ext_subaddress_unload(const struct sieve_extension *ext)
 {
 	struct ext_subaddress_context *extctx = ext->context;
 
-	i_free(extctx->delimiter);
+	if (extctx == NULL)
+		return;
+	settings_free(extctx->set);
 	i_free(extctx);
 }
 
@@ -139,7 +145,7 @@ subaddress_user_extract_from(const struct sieve_address_part *addrp,
 	const char *delim;
 	size_t idx;
 
-	idx = strcspn(address->localpart, extctx->delimiter);
+	idx = strcspn(address->localpart, extctx->set->recipient_delimiter);
 	delim = (address->localpart[idx] != '\0' ?
 		 address->localpart + idx : NULL);
 
@@ -157,7 +163,7 @@ subaddress_detail_extract_from(const struct sieve_address_part *addrp,
 	const char *delim;
 	size_t idx;
 
-	idx = strcspn(address->localpart, extctx->delimiter);
+	idx = strcspn(address->localpart, extctx->set->recipient_delimiter);
 	delim = (address->localpart[idx] != '\0' ?
 		 address->localpart + idx + 1: NULL);
 
