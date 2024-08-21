@@ -3,25 +3,7 @@
 
 #include "sieve-common.h"
 
-/*
- * Extension configuration
- */
-
-#define EXT_VACATION_DEFAULT_PERIOD (7*24*60*60)
-#define EXT_VACATION_DEFAULT_MIN_PERIOD (24*60*60)
-#define EXT_VACATION_DEFAULT_MAX_PERIOD 0
-
-struct ext_vacation_context {
-	unsigned int min_period;
-	unsigned int max_period;
-	unsigned int default_period;
-	char *default_subject;
-	char *default_subject_template;
-	bool use_original_recipient;
-	bool dont_check_recipient;
-	bool send_from_recipient;
-	bool to_header_ignore_envelope;
-};
+#include "ext-vacation-settings.h"
 
 /*
  * Commands
@@ -34,6 +16,14 @@ extern const struct sieve_command_def vacation_command;
  */
 
 extern const struct sieve_operation_def vacation_operation;
+
+/*
+ * Context
+ */
+
+struct ext_vacation_context {
+	const struct ext_vacation_settings *set;
+};
 
 /*
  * Extensions
