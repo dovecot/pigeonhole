@@ -318,12 +318,12 @@ ext_include_binary_open(const struct sieve_extension *ext,
 	}
 
 	/* Check include limit */
-	if (depcount > extctx->max_includes) {
+	if (depcount > extctx->set->max_includes) {
 		e_error(svinst->event,
 			"include: binary %s includes too many scripts "
 			"(%u > %u)",
 			sieve_binary_path(sbin), depcount,
-			extctx->max_includes);
+			extctx->set->max_includes);
 		return FALSE;
 	}
 

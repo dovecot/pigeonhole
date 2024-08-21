@@ -8,6 +8,8 @@
 #include "sieve-extensions.h"
 #include "sieve-storage.h"
 
+#include "ext-include-settings.h"
+
 /*
  * Forward declarations
  */
@@ -101,8 +103,7 @@ struct ext_include_context {
 
 	struct sieve_storage *personal_storage;
 
-	unsigned int max_nesting_depth;
-	unsigned int max_includes;
+	const struct ext_include_settings *set;
 };
 
 static inline struct ext_include_context *
