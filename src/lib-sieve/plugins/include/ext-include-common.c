@@ -5,9 +5,9 @@
 #include "array.h"
 #include "str-sanitize.h"
 #include "home-expand.h"
+#include "settings.h"
 
 #include "sieve-common.h"
-#include "sieve-settings.old.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
 #include "sieve-storage.h"
@@ -19,7 +19,6 @@
 #include "sieve-interpreter.h"
 
 #include "ext-include-common.h"
-#include "ext-include-limits.h"
 #include "ext-include-binary.h"
 #include "ext-include-variables.h"
 
@@ -77,26 +76,23 @@ int ext_include_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	const struct sieve_extension *var_ext;
+	const struct ext_include_settings *set;
 	struct ext_include_context *extctx;
-	unsigned long long int uint_setting;
+	const char *error;
 
 	/* Extension dependencies */
 	if (sieve_ext_variables_get_extension(ext->svinst, &var_ext) < 0)
 		return -1;
 
+	if (settings_get(svinst->event, &ext_include_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
+	}
+
 	extctx = i_new(struct ext_include_context, 1);
 	extctx->var_ext = var_ext;
-
-	/* Get limits */
-	extctx->max_nesting_depth = EXT_INCLUDE_DEFAULT_MAX_NESTING_DEPTH;
-	extctx->max_includes = EXT_INCLUDE_DEFAULT_MAX_INCLUDES;
-
-	if (sieve_setting_get_uint_value(
-		svinst, "sieve_include_max_nesting_depth", &uint_setting))
-		extctx->max_nesting_depth = (unsigned int)uint_setting;
-	if (sieve_setting_get_uint_value(
-		svinst, "sieve_include_max_includes", &uint_setting))
-		extctx->max_includes = (unsigned int)uint_setting;
+	extctx->set = set;
 
 	*context_r = extctx;
 	return 0;
@@ -106,7 +102,10 @@ void ext_include_unload(const struct sieve_extension *ext)
 {
 	struct ext_include_context *extctx = ext->context;
 
+	if (extctx == NULL)
+		return;
 	sieve_storage_unref(&extctx->personal_storage);
+	settings_free(extctx->set);
 	i_free(extctx);
 }
 
@@ -507,11 +506,11 @@ int ext_include_generate_include(
 		return -1;
 
 	/* Limit nesting level */
-	if (ctx->nesting_depth >= extctx->max_nesting_depth) {
+	if (ctx->nesting_depth >= extctx->set->max_nesting_depth) {
 		sieve_command_generate_error(
 			gentr, cmd,
 			"cannot nest includes deeper than %d levels",
-			extctx->max_nesting_depth);
+			extctx->set->max_nesting_depth);
 		return -1;
 	}
 
@@ -562,12 +561,12 @@ int ext_include_generate_include(
 
 		/* Check whether include limit is exceeded */
 		if (ext_include_binary_script_get_count(binctx) >=
-		    extctx->max_includes) {
+		    extctx->set->max_includes) {
 	 		sieve_command_generate_error(
 				gentr, cmd, "failed to include script '%s': "
 				"no more than %u includes allowed",
 				str_sanitize(script_name, 80),
-				extctx->max_includes);
+				extctx->set->max_includes);
 	 		return -1;
 		}
 
