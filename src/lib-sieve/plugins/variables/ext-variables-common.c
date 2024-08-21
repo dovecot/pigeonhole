@@ -5,9 +5,9 @@
 #include "hash.h"
 #include "str.h"
 #include "array.h"
+#include "settings.h"
 
 #include "sieve-common.h"
-#include "sieve-settings.old.h"
 
 #include "sieve-ast.h"
 #include "sieve-binary.h"
@@ -22,7 +22,6 @@
 #include "sieve-interpreter.h"
 
 #include "ext-variables-common.h"
-#include "ext-variables-limits.h"
 #include "ext-variables-name.h"
 #include "ext-variables-modifiers.h"
 
@@ -36,7 +35,7 @@ sieve_variables_get_max_scope_size(const struct sieve_extension *var_ext)
 	const struct ext_variables_context *extctx =
 		ext_variables_get_context(var_ext);
 
-	return extctx->max_scope_size;
+	return extctx->set->max_scope_size;
 }
 
 size_t sieve_variables_get_max_variable_size(
@@ -45,7 +44,7 @@ size_t sieve_variables_get_max_variable_size(
 	const struct ext_variables_context *extctx =
 		ext_variables_get_context(var_ext);
 
-	return extctx->max_variable_size;
+	return extctx->set->max_variable_size;
 }
 
 /*
@@ -55,42 +54,18 @@ size_t sieve_variables_get_max_variable_size(
 int ext_variables_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
+	const struct ext_variables_settings *set;
 	struct ext_variables_context *extctx;
-	unsigned long long int uint_setting;
-	size_t size_setting;
+	const char *error;
+
+	if (settings_get(svinst->event, &ext_variables_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
+	}
 
 	extctx = i_new(struct ext_variables_context, 1);
-
-	/* Get limits */
-	extctx->max_scope_size = EXT_VARIABLES_DEFAULT_MAX_SCOPE_SIZE;
-	extctx->max_variable_size = EXT_VARIABLES_DEFAULT_MAX_VARIABLE_SIZE;
-
-	if (sieve_setting_get_uint_value(
-		svinst, "sieve_variables_max_scope_size", &uint_setting)) {
-		if (uint_setting < EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE) {
-			e_warning(svinst->event, "variables: "
-				  "setting sieve_variables_max_scope_size "
-				  "is lower than required by standards "
-				  "(>= %llu items)",
-				  (unsigned long long)
-					EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE);
-		} else {
-			extctx->max_scope_size = (unsigned int)uint_setting;
-		}
-	}
-
-	if (sieve_setting_get_size_value(
-		svinst, "sieve_variables_max_variable_size", &size_setting)) {
-		if (size_setting < EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE) {
-			e_warning(svinst->event, "variables: "
-				  "setting sieve_variables_max_variable_size "
-				  "is lower than required by standards "
-				  "(>= %zu bytes)",
-				  (size_t)EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE);
-		} else {
-			extctx->max_variable_size = size_setting;
-		}
-	}
+	extctx->set = set;
 
 	*context_r = extctx;
 	return 0;
@@ -100,6 +75,9 @@ void ext_variables_unload(const struct sieve_extension *ext)
 {
 	struct ext_variables_context *extctx = ext->context;
 
+	if (extctx == NULL)
+		return;
+	settings_free(extctx->set);
 	i_free(extctx);
 }
 
@@ -627,8 +605,8 @@ bool sieve_variable_assign(struct sieve_variable_storage *storage,
 	str_append_str(varval, value);
 
 	/* Just a precaution, caller should prevent this in the first place */
-	if (str_len(varval) > extctx->max_variable_size)
-		str_truncate_utf8(varval, extctx->max_variable_size);
+	if (str_len(varval) > extctx->set->max_variable_size)
+		str_truncate_utf8(varval, extctx->set->max_variable_size);
 
 	return TRUE;
 }
@@ -647,8 +625,8 @@ bool sieve_variable_assign_cstr(struct sieve_variable_storage *storage,
 	str_append(varval, value);
 
 	/* Just a precaution, caller should prevent this in the first place */
-	if (str_len(varval) > extctx->max_variable_size)
-		str_truncate_utf8(varval, extctx->max_variable_size);
+	if (str_len(varval) > extctx->set->max_variable_size)
+		str_truncate_utf8(varval, extctx->set->max_variable_size);
 
 	return TRUE;
 }

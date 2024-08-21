@@ -278,9 +278,10 @@ opr_match_value_read(const struct sieve_runtime_env *renv,
 
 			if (*str_r == NULL)
 				*str_r = t_str_new(0);
-			else if (str_len(*str_r) > extctx->max_variable_size) {
-				str_truncate_utf8(*str_r,
-						  extctx->max_variable_size);
+			else if (str_len(*str_r) >
+				 extctx->set->max_variable_size) {
+				str_truncate_utf8(
+					*str_r, extctx->set->max_variable_size);
 			}
 		}
 		return SIEVE_EXEC_OK;

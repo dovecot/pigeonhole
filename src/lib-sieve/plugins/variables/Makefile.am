@@ -11,6 +11,7 @@ tsts = \
 	tst-string.c
 
 libsieve_ext_variables_la_SOURCES = \
+	ext-variables-settings.c \
 	ext-variables-common.c \
 	ext-variables-name.c \
 	ext-variables-namespaces.c \
@@ -26,6 +27,7 @@ public_headers = \
 	sieve-ext-variables.h
 
 headers = \
+	ext-variables-settings.h \
 	ext-variables-common.h \
 	ext-variables-limits.h \
 	ext-variables-name.h \
