@@ -243,8 +243,8 @@ Test!
 
 test_config_set "sieve_spamtest_status_header" "X-Spam-Verdict";
 test_config_set "sieve_spamtest_status_type" "text";
-test_config_set "sieve_spamtest_text_value1" "Not Spam";
-test_config_set "sieve_spamtest_text_value10" "Spam";
+test_config_set "sieve_spamtest_text_value/1" "Not Spam";
+test_config_set "sieve_spamtest_text_value/10" "Spam";
 test_config_unset "sieve_spamtest_max_header";
 test_config_unset "sieve_spamtest_max_value";
 test_config_reload :extension "spamtest";

@@ -9,8 +9,10 @@ tests = \
 
 libsieve_ext_spamvirustest_la_SOURCES = \
 	$(tests) \
+	ext-spamvirustest-settings.c \
 	ext-spamvirustest-common.c \
 	ext-spamvirustest.c
 
 noinst_HEADERS = \
+	ext-spamvirustest-settings.h \
 	ext-spamvirustest-common.h
