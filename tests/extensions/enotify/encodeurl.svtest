@@ -19,7 +19,7 @@ test ":encodeurl simple" {
  * :encodeurl variable size limit
  */
 
-test_config_set "sieve_variables_max_variable_size" "4000";
+test_config_set "sieve_variables_max_value_size" "4000";
 test_config_reload :extension "variables";
 
 set "a" text:
@@ -230,7 +230,7 @@ test ":encodeurl variable size limit" {
  * :encodeurl variable size limit UTF-8
  */
 
-test_config_set "sieve_variables_max_variable_size" "4000";
+test_config_set "sieve_variables_max_value_size" "4000";
 test_config_reload :extension "variables";
 
 set "a" text:

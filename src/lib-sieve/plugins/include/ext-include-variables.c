@@ -58,7 +58,7 @@ ext_include_variable_import_global(struct sieve_validator *valdtr,
 			valdtr, cmd,
 			"declaration of new global variable '%s' exceeds the limit "
 			"(max variables: %u)", variable,
-			sieve_variables_get_max_scope_size(extctx->var_ext));
+			sieve_variables_get_max_scope_count(extctx->var_ext));
 		return NULL;
 	}
 
@@ -225,7 +225,7 @@ vnspc_global_variables_validate(struct sieve_validator *valdtr,
 			valdtr, arg,
 			"(implicit) declaration of new global variable '%s' "
 			"exceeds the limit (max variables: %u)", variable,
-			sieve_variables_get_max_scope_size(extctx->var_ext));
+			sieve_variables_get_max_scope_count(extctx->var_ext));
 		return FALSE;
 	}
 
