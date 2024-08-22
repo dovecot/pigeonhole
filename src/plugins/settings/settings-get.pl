@@ -24,6 +24,7 @@ print '#include "unichar.h"'."\n";
 print '#include "hash-method.h"'."\n";
 print '#include "settings.h"'."\n";
 print '#include "message-header-parser.h"'."\n";
+print '#include "rfc2822.h"'."\n";
 print '#include "sieve-common.h"'."\n";
 print '#include "sieve-limits.h"'."\n";
 print '#include "sieve-address-source.h"'."\n";

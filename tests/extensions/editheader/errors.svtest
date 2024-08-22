@@ -99,7 +99,7 @@ test "Size limit" {
  * TEST - Size limit at runtime
  */
 
-test_config_set "sieve_editheader_max_header_size" "";
+test_config_unset "sieve_editheader_max_header_size";
 test_config_reload :extension "editheader";
 
 test "Size limit at runtime" {
