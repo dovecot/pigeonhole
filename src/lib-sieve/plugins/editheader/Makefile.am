@@ -12,8 +12,10 @@ commands = \
 libsieve_ext_editheader_la_SOURCES = \
 	$(commands) \
 	ext-editheader.c \
+	ext-editheader-settings.c \
 	ext-editheader-common.c
 
 noinst_HEADERS = \
 	ext-editheader-limits.h \
+	ext-editheader-settings.h \
 	ext-editheader-common.h

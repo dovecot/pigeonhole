@@ -4,15 +4,16 @@
 #include "lib.h"
 #include "mempool.h"
 #include "array.h"
+#include "settings.h"
 
 #include "rfc2822.h"
 
 #include "sieve-common.h"
 #include "sieve-error.h"
-#include "sieve-settings.old.h"
 #include "sieve-extensions.h"
 
 #include "ext-editheader-limits.h"
+#include "ext-editheader-settings.h"
 #include "ext-editheader-common.h"
 
 /*
@@ -28,111 +29,97 @@ struct ext_editheader_header {
 
 struct ext_editheader_context {
 	pool_t pool;
+	const struct ext_editheader_settings *set;
 
 	ARRAY(struct ext_editheader_header) headers;
 
 	size_t max_header_size;
 };
 
-static struct ext_editheader_header *
-ext_editheader_config_header_find(struct ext_editheader_context *extctx,
-				  const char *hname)
+static const struct ext_editheader_header *
+ext_editheader_header_find(struct ext_editheader_context *extctx,
+			   const char *hname)
 {
-	struct ext_editheader_header *headers;
-	unsigned int count, i;
+	const struct ext_editheader_header *header;
 
-	headers = array_get_modifiable(&extctx->headers, &count);
-	for (i = 0; i < count; i++) {
-		if (strcasecmp(hname, headers[i].name) == 0)
-			return &headers[i];
+	if (extctx == NULL)
+		return NULL;
+
+	array_foreach(&extctx->headers, header) {
+		if (strcasecmp(hname, header->name) == 0)
+			return header;
 	}
 	return NULL;
 }
 
-static void
-ext_editheader_config_headers(struct sieve_instance *svinst,
-			      struct ext_editheader_context *extctx,
-			      const char *setting, bool forbid_add,
-			      bool forbid_delete)
+static int
+ext_editheader_header_add(struct sieve_instance *svinst,
+			  struct ext_editheader_context *extctx,
+			  const char *hname)
 {
-	const char *setval;
+	struct ext_editheader_header *header;
+	const struct ext_editheader_header_settings *set;
+	const char *error;
 
-	setval = sieve_setting_get(svinst, setting);
-	if (setval != NULL) {
-		const char **headers = t_strsplit_spaces(setval, " \t");
-
-		while (*headers != NULL) {
-			struct ext_editheader_header *header;
-
-			if (!rfc2822_header_field_name_verify(
-				*headers, strlen(*headers))) {
-				e_warning(svinst->event, "editheader: "
-					  "setting %s contains invalid header field name "
-					  "'%s' (ignored)",
-					  setting, *headers);
-				headers++;
-				continue;
-			}
-
-			header = ext_editheader_config_header_find(
-				extctx, *headers);
-			if (header == NULL) {
-				header = array_append_space(
-					&extctx->headers);
-				header->name = p_strdup(extctx->pool,
-							*headers);
-			}
-
-			if (forbid_add)
-				header->forbid_add = TRUE;
-			if (forbid_delete)
-				header->forbid_delete = TRUE;
-
-			headers++;
-		}
+	if (settings_get_filter(svinst->event, "sieve_editheader_header", hname,
+				&ext_editheader_header_setting_parser_info, 0,
+				&set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
 	}
+
+	i_assert(ext_editheader_header_find(extctx, set->name) == NULL);
+
+	header = array_append_space(&extctx->headers);
+	header->name = p_strdup(extctx->pool, set->name);
+	header->forbid_add = set->forbid_add;
+	header->forbid_delete = set->forbid_delete;
+
+	settings_free(set);
+	return 0;
+}
+
+static int
+ext_editheader_config_headers(struct sieve_instance *svinst,
+			      struct ext_editheader_context *extctx)
+{
+	const char *hname;
+
+	if (!array_is_created(&extctx->set->headers))
+		return 0;
+
+	array_foreach_elem(&extctx->set->headers, hname) {
+		if (ext_editheader_header_add(svinst, extctx, hname) < 0)
+			return -1;
+	}
+	return 0;
 }
 
 int ext_editheader_load(const struct sieve_extension *ext, void **context_r)
 {
-	struct ext_editheader_context *extctx;
 	struct sieve_instance *svinst = ext->svinst;
-	size_t max_header_size;
+	const struct ext_editheader_settings *set;
+	struct ext_editheader_context *extctx;
+	const char *error;
 	pool_t pool;
 
-	T_BEGIN {
-		pool = pool_alloconly_create("editheader_config", 1024);
-		extctx = p_new(pool, struct ext_editheader_context, 1);
-		extctx->pool = pool;
-		extctx->max_header_size =
-			EXT_EDITHEADER_DEFAULT_MAX_HEADER_SIZE;
+	if (settings_get(svinst->event, &ext_editheader_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
+	}
 
-		p_array_init(&extctx->headers, pool, 16);
+	pool = pool_alloconly_create("editheader_config", 1024);
+	extctx = p_new(pool, struct ext_editheader_context, 1);
+	extctx->pool = pool;
+	extctx->set = set;
+	p_array_init(&extctx->headers, pool, 16);
 
-		ext_editheader_config_headers(
-			svinst, extctx,
-			"sieve_editheader_protected", TRUE, TRUE);
-		ext_editheader_config_headers(
-			svinst, extctx,
-			"sieve_editheader_forbid_add", TRUE, FALSE);
-		ext_editheader_config_headers(
-			svinst, extctx,
-			"sieve_editheader_forbid_delete", FALSE, TRUE);
-
-		if (sieve_setting_get_size_value(
-			svinst, "sieve_editheader_max_header_size",
-			&max_header_size)) {
-			if (max_header_size < EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE) {
-				e_warning(svinst->event, "editheader: "
-					  "value of sieve_editheader_max_header_size setting "
-					  "(=%zu) is less than the minimum (=%zu) "
-					  "(ignored)", max_header_size,
-					  (size_t)EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE);
-			} else {
-				extctx->max_header_size = max_header_size;
-			}
-		}
-	} T_END;
+	if (ext_editheader_config_headers(svinst, extctx) < 0) {
+		settings_free(set);
+		pool_unref(&pool);
+		return -1;
+	}
 
 	*context_r = extctx;
 	return 0;
@@ -142,8 +129,10 @@ void ext_editheader_unload(const struct sieve_extension *ext)
 {
 	struct ext_editheader_context *extctx = ext->context;
 
-	if (extctx != NULL)
-		pool_unref(&extctx->pool);
+	if (extctx == NULL)
+		return;
+	settings_free(extctx->set);
+	pool_unref(&extctx->pool);
 }
 
 /*
@@ -161,7 +150,7 @@ bool ext_editheader_header_allow_add(const struct sieve_extension *ext,
 	if (strcasecmp(hname, "x-sieve-redirected-from") == 0)
 		return FALSE;
 
-	header = ext_editheader_config_header_find(extctx, hname);
+	header = ext_editheader_header_find(extctx, hname);
 	if (header == NULL)
 		return TRUE;
 
@@ -182,7 +171,7 @@ bool ext_editheader_header_allow_delete(const struct sieve_extension *ext,
 	if (strcasecmp(hname, "subject") == 0)
 		return TRUE;
 
-	header = ext_editheader_config_header_find(extctx, hname);
+	header = ext_editheader_header_find(extctx, hname);
 	if (header == NULL)
 		return TRUE;
 
@@ -198,5 +187,8 @@ bool ext_editheader_header_too_large(const struct sieve_extension *ext,
 {
 	struct ext_editheader_context *extctx = ext->context;
 
-	return size > extctx->max_header_size;
+	if (extctx == NULL)
+		return size > EXT_EDITHEADER_DEFAULT_MAX_HEADER_SIZE;
+
+	return (size > extctx->set->max_header_size);
 }

@@ -45,7 +45,16 @@ test "Default protected" {
 	}
 }
 
-test_config_set "sieve_editheader_protected" "subject delivery-date x-frop";
+test_config_set "sieve_editheader_header" "subject delivery-date x-frop";
+test_config_set "sieve_editheader_header/subject/name" "subject";
+test_config_set "sieve_editheader_header/subject/forbid_add" "yes";
+test_config_set "sieve_editheader_header/subject/forbid_delete" "yes";
+test_config_set "sieve_editheader_header/delivery-date/name" "delivery-date";
+test_config_set "sieve_editheader_header/delivery-date/forbid_add" "yes";
+test_config_set "sieve_editheader_header/delivery-date/forbid_delete" "yes";
+test_config_set "sieve_editheader_header/x-frop/name" "x-frop";
+test_config_set "sieve_editheader_header/x-frop/forbid_add" "yes";
+test_config_set "sieve_editheader_header/x-frop/forbid_delete" "yes";
 test_config_reload :extension "editheader";
 
 test_set "message" "${message}";
@@ -79,9 +88,13 @@ test "Configured protected" {
 	}
 }
 
-test_config_set "sieve_editheader_protected" "";
-test_config_set "sieve_editheader_forbid_add" "subject x-frop";
-test_config_set "sieve_editheader_forbid_delete" "subject x-friep";
+test_config_set "sieve_editheader_header" "subject X-Friep x-frop";
+test_config_set "sieve_editheader_header/subject/name" "subject";
+test_config_set "sieve_editheader_header/subject/forbid_add" "yes";
+test_config_set "sieve_editheader_header/subject/forbid_delete" "yes";
+test_config_set "sieve_editheader_header/X-Friep/name" "X-Friep";
+test_config_set "sieve_editheader_header/X-Friep/forbid_add" "yes";
+test_config_set "sieve_editheader_header/X-Friep/forbid_delete" "yes";
 test_config_reload :extension "editheader";
 
 test_set "message" "${message}";
@@ -148,26 +161,3 @@ id 3jhl22khhf23f; Mon, 24 Aug 2015 04:11:54 -0600;
 		test_fail "autosubmitted header was not added";
 	}
 }
-
-/*
- * TEST - Bad header configuration
- */
-
-test_config_set "sieve_editheader_protected" "${unicode:1F4A9} delivery-date";
-test_config_reload :extension "editheader";
-
-test_set "message" "${message}";
-test "Bad header configuration" {
-	if not exists "delivery-date" {
-		test_fail "delivery-date header did not exist in the first place";
-	}
-
-	deleteheader "delivery-date";
-
-	if not exists "delivery-date" {
-		test_fail "protected delivery-date header was deleted";
-	}
-}
-
-test_config_set "sieve_editheader_protected" "";
-test_config_reload :extension "editheader";

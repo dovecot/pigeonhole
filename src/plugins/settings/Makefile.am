@@ -4,6 +4,7 @@ AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/src/lib-sieve \
+	-I$(top_srcdir)/src/lib-sieve/util \
 	-I$(top_srcdir)/src/lib-sieve/storage/ldap \
 	-I$(top_srcdir)/src/lib-managesieve \
 	-DSETTINGS_PLUGIN
