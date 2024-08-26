@@ -16,7 +16,7 @@ struct ext_environment_interpreter_context;
  * Core environment items
  */
 
-static const struct sieve_environment_item *core_env_items[] = {
+static const struct sieve_environment_item_def *core_env_items[] = {
 	&domain_env_item,
 	&host_env_item,
 	&location_env_item,
@@ -28,8 +28,10 @@ static const struct sieve_environment_item *core_env_items[] = {
 static unsigned int core_env_items_count = N_ELEMENTS(core_env_items);
 
 static void
-sieve_environment_item_insert(struct ext_environment_interpreter_context *ctx,
-			      const struct sieve_environment_item *item);
+sieve_environment_item_insert(
+	struct ext_environment_interpreter_context *ctx,
+	struct sieve_interpreter *interp, const struct sieve_extension *ext,
+	const struct sieve_environment_item_def *item_def);
 
 /*
  * Validator context
@@ -108,8 +110,10 @@ void ext_environment_interpreter_init(const struct sieve_extension *this_ext,
 	/* Create our context */
 	ctx = ext_environment_interpreter_context_get(this_ext, interp);
 
-	for (i = 0; i < core_env_items_count; i++)
-		sieve_environment_item_insert(ctx, core_env_items[i]);
+	for (i = 0; i < core_env_items_count; i++) {
+		sieve_environment_item_insert(ctx, interp, this_ext,
+					      core_env_items[i]);
+	}
 
 	ctx->active = TRUE;
 }
@@ -128,25 +132,36 @@ bool sieve_ext_environment_is_active(const struct sieve_extension *env_ext,
  */
 
 static void
-sieve_environment_item_insert(struct ext_environment_interpreter_context *ctx,
-			      const struct sieve_environment_item *item)
+sieve_environment_item_insert(
+	struct ext_environment_interpreter_context *ctx,
+	struct sieve_interpreter *interp, const struct sieve_extension *ext,
+	const struct sieve_environment_item_def *item_def)
 {
-	if (!item->prefix)
-		hash_table_insert(ctx->name_items, item->name, item);
+	pool_t pool = sieve_interpreter_pool(interp);
+	struct sieve_environment_item *item_mod;
+
+	item_mod = p_new(pool, struct sieve_environment_item, 1);
+	item_mod->def = item_def;
+	item_mod->ext = ext;
+
+	const struct sieve_environment_item *item = item_mod;
+	if (!item_def->prefix)
+		hash_table_insert(ctx->name_items, item_def->name, item);
 	else
 		array_append(&ctx->prefix_items, &item, 1);
 }
 
-void sieve_environment_item_register(const struct sieve_extension *env_ext,
-				     struct sieve_interpreter *interp,
-				     const struct sieve_environment_item *item)
+void sieve_environment_item_register(
+	const struct sieve_extension *env_ext, struct sieve_interpreter *interp,
+	const struct sieve_extension *ext,
+	const struct sieve_environment_item_def *item_def)
 {
 	struct ext_environment_interpreter_context *ctx;
 
 	i_assert(sieve_extension_is(env_ext, environment_extension));
 	ctx = ext_environment_interpreter_context_get(env_ext, interp);
 
-	sieve_environment_item_insert(ctx, item);
+	sieve_environment_item_insert(ctx, interp, ext, item_def);
 }
 
 /*
@@ -165,9 +180,9 @@ ext_environment_item_lookup(struct ext_environment_interpreter_context *ctx,
 		return item;
 
 	array_foreach_elem(&ctx->prefix_items, item) {
-		i_assert(item->prefix);
+		i_assert(item->def->prefix);
 
-		if (str_begins(name, item->name, &suffix)) {
+		if (str_begins(name, item->def->name, &suffix)) {
 			if (*suffix == '.')
 				++suffix;
 
@@ -193,10 +208,11 @@ ext_environment_item_get_value(const struct sieve_extension *env_ext,
 	if (item == NULL)
 		return NULL;
 
-	if (item->value != NULL)
-		return item->value;
-	if (item->get_value != NULL)
-		return item->get_value(renv, name);
+	i_assert(item->def != NULL);
+	if (item->def->value != NULL)
+		return item->def->value;
+	if (item->def->get_value != NULL)
+		return item->def->get_value(renv, item, name);
 	return NULL;
 }
 
@@ -212,6 +228,7 @@ ext_environment_item_get_value(const struct sieve_extension *env_ext,
 
 static const char *
 envit_domain_get_value(const struct sieve_runtime_env *renv,
+		       const struct sieve_environment_item *item ATTR_UNUSED,
 		       const char *name ATTR_UNUSED)
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
@@ -219,7 +236,7 @@ envit_domain_get_value(const struct sieve_runtime_env *renv,
 	return eenv->svinst->domainname;
 }
 
-const struct sieve_environment_item domain_env_item = {
+const struct sieve_environment_item_def domain_env_item = {
 	.name = "domain",
 	.get_value = envit_domain_get_value,
 };
@@ -232,6 +249,7 @@ const struct sieve_environment_item domain_env_item = {
 
 static const char *
 envit_host_get_value(const struct sieve_runtime_env *renv,
+		     const struct sieve_environment_item *item ATTR_UNUSED,
 		     const char *name ATTR_UNUSED)
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
@@ -239,7 +257,7 @@ envit_host_get_value(const struct sieve_runtime_env *renv,
 	return eenv->svinst->hostname;
 }
 
-const struct sieve_environment_item host_env_item = {
+const struct sieve_environment_item_def host_env_item = {
 	.name = "host",
 	.get_value = envit_host_get_value,
 };
@@ -257,6 +275,7 @@ const struct sieve_environment_item host_env_item = {
 
 static const char *
 envit_location_get_value(const struct sieve_runtime_env *renv,
+			 const struct sieve_environment_item *item ATTR_UNUSED,
 			 const char *name ATTR_UNUSED)
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
@@ -274,7 +293,7 @@ envit_location_get_value(const struct sieve_runtime_env *renv,
 	return NULL;
 }
 
-const struct sieve_environment_item location_env_item = {
+const struct sieve_environment_item_def location_env_item = {
 	.name = "location",
 	.get_value = envit_location_get_value
 };
@@ -289,6 +308,7 @@ const struct sieve_environment_item location_env_item = {
 
 static const char *
 envit_phase_get_value(const struct sieve_runtime_env *renv,
+		      const struct sieve_environment_item *item ATTR_UNUSED,
 		      const char *name ATTR_UNUSED)
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
@@ -306,7 +326,7 @@ envit_phase_get_value(const struct sieve_runtime_env *renv,
 	return NULL;
 }
 
-const struct sieve_environment_item phase_env_item = {
+const struct sieve_environment_item_def phase_env_item = {
 	.name = "phase",
 	.get_value = envit_phase_get_value
 };
@@ -316,7 +336,7 @@ const struct sieve_environment_item phase_env_item = {
     The product name associated with the Sieve interpreter.
  */
 
-const struct sieve_environment_item name_env_item = {
+const struct sieve_environment_item_def name_env_item = {
 	.name = "name",
 	.value = PIGEONHOLE_NAME" Sieve"
 };
@@ -328,7 +348,7 @@ const struct sieve_environment_item name_env_item = {
    in the context of the product name given by the "name" item.
  */
 
-const struct sieve_environment_item version_env_item = {
+const struct sieve_environment_item_def version_env_item = {
 	.name = "version",
 	.value = PIGEONHOLE_VERSION,
 };
