@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "str.h"
+#include "settings.h"
 #include "rfc822-parser.h"
 
 #include "sieve-common.h"
@@ -14,15 +15,30 @@ int ext_report_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_report_context *extctx;
+	const struct ext_report_settings *set;
+	const char *error;
 
-	extctx = p_new(svinst->pool, struct ext_report_context, 1);
+	if (settings_get(svinst->event, &ext_report_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
+	}
 
-	(void)sieve_address_source_parse_from_setting(
-		svinst, svinst->pool, "sieve_report_from",
-		&extctx->report_from);
+	extctx = i_new(struct ext_report_context, 1);
+	extctx->set = set;
 
 	*context_r = extctx;
 	return 0;
+}
+
+void ext_report_unload(const struct sieve_extension *ext)
+{
+	struct ext_report_context *extctx = ext->context;
+
+	if (extctx == NULL)
+		return;
+	settings_free(extctx->set);
+	i_free(extctx);
 }
 
 const char *ext_vnd_report_parse_feedback_type(const char *feedback_type)

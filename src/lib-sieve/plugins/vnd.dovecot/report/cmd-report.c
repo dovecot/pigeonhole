@@ -453,7 +453,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = eenv->scriptenv;
 	const struct sieve_message_data *msgdata = eenv->msgdata;
-	struct sieve_address_source report_from = extctx->report_from;
+	struct sieve_address_source report_from = extctx->set->parsed.from;
 	const struct smtp_address *sender, *user;
 	struct sieve_smtp_context *sctx;
 	struct istream *input;
