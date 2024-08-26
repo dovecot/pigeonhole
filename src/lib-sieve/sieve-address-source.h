@@ -1,9 +1,10 @@
 #ifndef SIEVE_ADDRESS_SOURCE_H
 #define SIEVE_ADDRESS_SOURCE_H
 
-#include "sieve-common.h"
-
+struct sieve_instance;
+struct sieve_script_env;
 struct sieve_message_context;
+enum sieve_execute_flags;
 
 enum sieve_address_source_type {
 	SIEVE_ADDRESS_SOURCE_DEFAULT = 0,

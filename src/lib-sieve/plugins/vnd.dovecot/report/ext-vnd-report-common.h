@@ -1,12 +1,14 @@
 #ifndef EXT_REPORT_COMMON_H
 #define EXT_REPORT_COMMON_H
 
+#include "ext-vnd-report-settings.h"
+
 /*
  * Extension configuration
  */
 
 struct ext_report_context {
-	struct sieve_address_source report_from;
+	const struct ext_report_settings *set;
 };
 
 /*
@@ -16,6 +18,7 @@ struct ext_report_context {
 extern const struct sieve_extension_def vnd_report_extension;
 
 int ext_report_load(const struct sieve_extension *ext, void **context_r);
+void ext_report_unload(const struct sieve_extension *ext);
 
 /*
  * Commands
