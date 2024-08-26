@@ -31,7 +31,7 @@
 
 #define SUBADDRESS_DEFAULT_DELIM "+"
 
-struct ext_subaddress_config {
+struct ext_subaddress_context {
 	char *delimiter;
 };
 
@@ -66,31 +66,32 @@ const struct sieve_extension_def subaddress_extension = {
 static bool
 ext_subaddress_load(const struct sieve_extension *ext, void **context)
 {
-	struct ext_subaddress_config *config;
+	struct ext_subaddress_context *extctx;
 	const char *delim;
 
-	if (*context != NULL)
+	if (*context != NULL) {
 		ext_subaddress_unload(ext);
+		*context = NULL;
+	}
 
 	delim = sieve_setting_get(ext->svinst, "recipient_delimiter");
 
 	if (delim == NULL)
 		delim = SUBADDRESS_DEFAULT_DELIM;
 
-	config = i_new(struct ext_subaddress_config, 1);
-	config->delimiter = i_strdup(delim);
+	extctx = i_new(struct ext_subaddress_context, 1);
+	extctx->delimiter = i_strdup(delim);
 
-	*context = config;
+	*context = extctx;
 	return TRUE;
 }
 
 static void ext_subaddress_unload(const struct sieve_extension *ext)
 {
-	struct ext_subaddress_config *config =
-		(struct ext_subaddress_config *)ext->context;
+	struct ext_subaddress_context *extctx = ext->context;
 
-	i_free(config->delimiter);
-	i_free(config);
+	i_free(extctx->delimiter);
+	i_free(extctx);
 }
 
 static bool
@@ -139,12 +140,11 @@ static const char *
 subaddress_user_extract_from(const struct sieve_address_part *addrp,
 			     const struct smtp_address *address)
 {
-	struct ext_subaddress_config *config =
-		(struct ext_subaddress_config *)addrp->object.ext->context;
+	struct ext_subaddress_context *extctx = addrp->object.ext->context;
 	const char *delim;
 	size_t idx;
 
-	idx = strcspn(address->localpart, config->delimiter);
+	idx = strcspn(address->localpart, extctx->delimiter);
 	delim = (address->localpart[idx] != '\0' ?
 		 address->localpart + idx : NULL);
 
@@ -158,12 +158,11 @@ static const char *
 subaddress_detail_extract_from(const struct sieve_address_part *addrp,
 			       const struct smtp_address *address)
 {
-	struct ext_subaddress_config *config =
-		(struct ext_subaddress_config *)addrp->object.ext->context;
+	struct ext_subaddress_context *extctx = addrp->object.ext->context;
 	const char *delim;
 	size_t idx;
 
-	idx = strcspn(address->localpart, config->delimiter);
+	idx = strcspn(address->localpart, extctx->delimiter);
 	delim = (address->localpart[idx] != '\0' ?
 		 address->localpart + idx + 1: NULL);
 

@@ -110,7 +110,7 @@ struct ext_include_context {
 static inline struct ext_include_context *
 ext_include_get_context(const struct sieve_extension *ext)
 {
-	return (struct ext_include_context *) ext->context;
+	return ext->context;
 }
 
 /* AST Context */

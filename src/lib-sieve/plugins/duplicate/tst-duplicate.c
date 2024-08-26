@@ -119,8 +119,7 @@ tst_duplicate_validate_number_tag(struct sieve_validator *valdtr,
 				  struct sieve_command *cmd)
 {
 	const struct sieve_extension *ext = sieve_argument_ext(*arg);
-	const struct ext_duplicate_config *config =
-		(const struct ext_duplicate_config *)ext->context;
+	const struct ext_duplicate_context *extctx = ext->context;
 	struct sieve_ast_argument *tag = *arg;
 	sieve_number_t seconds;
 
@@ -136,8 +135,8 @@ tst_duplicate_validate_number_tag(struct sieve_validator *valdtr,
 
 	seconds = sieve_ast_argument_number(*arg);
 	/* Enforce :days <= max_period */
-	if (config->max_period > 0 && seconds > config->max_period) {
-		seconds = config->max_period;
+	if (extctx->max_period > 0 && seconds > extctx->max_period) {
+		seconds = extctx->max_period;
 
 		sieve_argument_validate_warning(
 			valdtr, *arg,
@@ -310,14 +309,13 @@ tst_duplicate_operation_execute(const struct sieve_runtime_env *renv,
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *ext = renv->oprtn->ext;
-	const struct ext_duplicate_config *config =
-		(const struct ext_duplicate_config *)ext->context;
+	const struct ext_duplicate_context *extctx = ext->context;
 	struct mail *mail = eenv->msgdata->mail;
 	int opt_code = 0;
 	string_t *handle = NULL, *header = NULL, *uniqueid = NULL;
 	const char *val = NULL;
 	size_t val_len = 0;
-	sieve_number_t seconds = config->default_period;
+	sieve_number_t seconds = extctx->default_period;
 	bool last = FALSE, duplicate = FALSE;
 	int ret;
 

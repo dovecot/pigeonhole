@@ -13,15 +13,15 @@
 bool ext_report_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct ext_report_config *config;
+	struct ext_report_context *extctx;
 
-	config = p_new(svinst->pool, struct ext_report_config, 1);
+	extctx = p_new(svinst->pool, struct ext_report_context, 1);
 
 	(void)sieve_address_source_parse_from_setting(
 		svinst, svinst->pool, "sieve_report_from",
-		&config->report_from);
+		&extctx->report_from);
 
-	*context = config;
+	*context = extctx;
 	return TRUE;
 }
 

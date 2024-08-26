@@ -7,7 +7,7 @@
  * Extension
  */
 
-struct ext_duplicate_config {
+struct ext_duplicate_context {
 	unsigned int default_period;
 	unsigned int max_period;
 };

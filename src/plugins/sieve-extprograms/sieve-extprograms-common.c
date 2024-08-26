@@ -53,17 +53,22 @@
 #define SIEVE_EXTPROGRAMS_CONNECT_TIMEOUT_MSECS 5
 
 /*
- * Pipe Extension Context
+ * Context
  */
 
-struct sieve_extprograms_config *
-sieve_extprograms_config_init(const struct sieve_extension *ext)
+bool sieve_extprograms_ext_load(const struct sieve_extension *ext,
+				void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct sieve_extprograms_config *ext_config;
+	struct sieve_extprograms_ext_context *extctx;
 	const char *extname = sieve_extension_name(ext);
 	const char *bin_dir, *socket_dir, *input_eol;
 	sieve_number_t execute_timeout;
+
+	if (*context != NULL) {
+		sieve_extprograms_ext_unload(ext);
+		*context = NULL;
+	}
 
 	extname = strrchr(extname, '.');
 	i_assert(extname != NULL);
@@ -76,8 +81,8 @@ sieve_extprograms_config_init(const struct sieve_extension *ext)
 	input_eol = sieve_setting_get(
 		svinst, t_strdup_printf("sieve_%s_input_eol", extname));
 
-	ext_config = i_new(struct sieve_extprograms_config, 1);
-	ext_config->execute_timeout =
+	extctx = i_new(struct sieve_extprograms_ext_context, 1);
+	extctx->execute_timeout =
 		SIEVE_EXTPROGRAMS_DEFAULT_EXEC_TIMEOUT_SECS;
 
 	if (bin_dir == NULL && socket_dir == NULL) {
@@ -86,43 +91,43 @@ sieve_extprograms_config_init(const struct sieve_extension *ext)
 			"(both sieve_%s_bin_dir and sieve_%s_socket_dir are not set)",
 			sieve_extension_name(ext), extname, extname);
 	} else {
-		ext_config->bin_dir = i_strdup(bin_dir);
-		ext_config->socket_dir = i_strdup(socket_dir);
+		extctx->bin_dir = i_strdup(bin_dir);
+		extctx->socket_dir = i_strdup(socket_dir);
 
 		if (sieve_setting_get_duration_value(
 			svinst, t_strdup_printf("sieve_%s_exec_timeout",
 						extname), &execute_timeout))
-			ext_config->execute_timeout = execute_timeout;
+			extctx->execute_timeout = execute_timeout;
 
-		ext_config->default_input_eol = SIEVE_EXTPROGRAMS_EOL_CRLF;
+		extctx->default_input_eol = SIEVE_EXTPROGRAMS_EOL_CRLF;
 		if (input_eol != NULL && strcasecmp(input_eol, "lf") == 0) {
-			ext_config->default_input_eol =
-				SIEVE_EXTPROGRAMS_EOL_LF;
+			extctx->default_input_eol = SIEVE_EXTPROGRAMS_EOL_LF;
 		}
 	}
 
 	if (sieve_extension_is(ext, sieve_ext_vnd_pipe)) {
-		ext_config->copy_ext =
+		extctx->copy_ext =
 			sieve_ext_copy_get_extension(ext->svinst);
 	}
 	if (sieve_extension_is(ext, sieve_ext_vnd_execute)) {
-		ext_config->var_ext =
+		extctx->var_ext =
 			sieve_ext_variables_get_extension(ext->svinst);
 	}
-	return ext_config;
+
+	*context = extctx;
+	return TRUE;
 }
 
-void sieve_extprograms_config_deinit(
-	struct sieve_extprograms_config **ext_config)
+void sieve_extprograms_ext_unload(const struct sieve_extension *ext)
 {
-	if (*ext_config == NULL)
+	struct sieve_extprograms_ext_context *extctx = ext->context;
+
+	if (extctx == NULL)
 		return;
 
-	i_free((*ext_config)->bin_dir);
-	i_free((*ext_config)->socket_dir);
-	i_free((*ext_config));
-
-	*ext_config = NULL;
+	i_free(extctx->bin_dir);
+	i_free(extctx->socket_dir);
+	i_free(extctx);
 }
 
 /*
@@ -368,7 +373,7 @@ int sieve_extprogram_command_read_operands(
 
 struct sieve_extprogram {
 	struct sieve_instance *svinst;
-	const struct sieve_extprograms_config *ext_config;
+	const struct sieve_extprograms_ext_context *extctx;
 
 	const struct sieve_script_env *scriptenv;
 	struct program_client *program_client;
@@ -410,8 +415,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct sieve_extprograms_config *ext_config =
-		(struct sieve_extprograms_config *)ext->context;
+	struct sieve_extprograms_ext_context *extctx = ext->context;
 	const struct smtp_address *sender, *recipient, *orig_recipient;
 	struct sieve_extprogram *sprog;
 	const char *path = NULL;
@@ -421,8 +425,8 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 	e_debug(svinst->event, "action %s: "
 		"running program: %s", action, program_name);
 
-	if (ext_config == NULL ||
-	    (ext_config->bin_dir == NULL && ext_config->socket_dir == NULL)) {
+	if (extctx == NULL ||
+	    (extctx->bin_dir == NULL && extctx->socket_dir == NULL)) {
 		e_error(svinst->event, "action %s: "
 			"failed to execute program '%s': "
 			"vnd.dovecot.%s extension is unconfigured",
@@ -432,9 +436,9 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 	}
 
 	/* Try socket first */
-	if (ext_config->socket_dir != NULL) {
+	if (extctx->socket_dir != NULL) {
 		path = t_strconcat(senv->user->set->base_dir, "/",
-				   ext_config->socket_dir, "/", program_name,
+				   extctx->socket_dir, "/", program_name,
 				   NULL);
 		if (stat(path, &st) < 0) {
 			switch (errno) {
@@ -467,10 +471,9 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 	}
 
 	/* Try executable next */
-	if (path == NULL && ext_config->bin_dir != NULL) {
+	if (path == NULL && extctx->bin_dir != NULL) {
 		fork = TRUE;
-		path = t_strconcat(ext_config->bin_dir, "/",
-				   program_name, NULL);
+		path = t_strconcat(extctx->bin_dir, "/", program_name, NULL);
 		if (stat(path, &st) < 0) {
 			switch (errno) {
 			case ENOENT:
@@ -519,13 +522,13 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 
 	sprog = i_new(struct sieve_extprogram, 1);
 	sprog->svinst = ext->svinst;
-	sprog->ext_config = ext_config;
+	sprog->extctx = extctx;
 	sprog->scriptenv = senv;
 
 	struct program_client_parameters pc_params = {
 		.client_connect_timeout_msecs =
 			SIEVE_EXTPROGRAMS_CONNECT_TIMEOUT_MSECS,
-		.input_idle_timeout_msecs = ext_config->execute_timeout * 1000,
+		.input_idle_timeout_msecs = extctx->execute_timeout * 1000,
 	};
 
 	if (fork) {
@@ -591,7 +594,7 @@ void sieve_extprogram_set_output(struct sieve_extprogram *sprog,
 void sieve_extprogram_set_input(struct sieve_extprogram *sprog,
 				struct istream *input)
 {
-	switch (sprog->ext_config->default_input_eol) {
+	switch (sprog->extctx->default_input_eol) {
 	case SIEVE_EXTPROGRAMS_EOL_LF:
 		input = i_stream_create_lf(input);
 		break;

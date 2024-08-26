@@ -33,19 +33,19 @@
 unsigned int
 sieve_variables_get_max_scope_size(const struct sieve_extension *var_ext)
 {
-	const struct ext_variables_config *config =
-		ext_variables_get_config(var_ext);
+	const struct ext_variables_context *extctx =
+		ext_variables_get_context(var_ext);
 
-	return config->max_scope_size;
+	return extctx->max_scope_size;
 }
 
 size_t sieve_variables_get_max_variable_size(
 	const struct sieve_extension *var_ext)
 {
-	const struct ext_variables_config *config =
-		ext_variables_get_config(var_ext);
+	const struct ext_variables_context *extctx =
+		ext_variables_get_context(var_ext);
 
-	return config->max_variable_size;
+	return extctx->max_variable_size;
 }
 
 /*
@@ -55,18 +55,20 @@ size_t sieve_variables_get_max_variable_size(
 bool ext_variables_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct ext_variables_config *config;
+	struct ext_variables_context *extctx;
 	unsigned long long int uint_setting;
 	size_t size_setting;
 
-	if (*context != NULL)
+	if (*context != NULL) {
 		ext_variables_unload(ext);
+		*context = NULL;
+	}
 
-	config = i_new(struct ext_variables_config, 1);
+	extctx = i_new(struct ext_variables_context, 1);
 
 	/* Get limits */
-	config->max_scope_size = EXT_VARIABLES_DEFAULT_MAX_SCOPE_SIZE;
-	config->max_variable_size = EXT_VARIABLES_DEFAULT_MAX_VARIABLE_SIZE;
+	extctx->max_scope_size = EXT_VARIABLES_DEFAULT_MAX_SCOPE_SIZE;
+	extctx->max_variable_size = EXT_VARIABLES_DEFAULT_MAX_VARIABLE_SIZE;
 
 	if (sieve_setting_get_uint_value(
 		svinst, "sieve_variables_max_scope_size", &uint_setting)) {
@@ -78,7 +80,7 @@ bool ext_variables_load(const struct sieve_extension *ext, void **context)
 				  (unsigned long long)
 					EXT_VARIABLES_REQUIRED_MAX_SCOPE_SIZE);
 		} else {
-			config->max_scope_size = (unsigned int)uint_setting;
+			extctx->max_scope_size = (unsigned int)uint_setting;
 		}
 	}
 
@@ -91,30 +93,28 @@ bool ext_variables_load(const struct sieve_extension *ext, void **context)
 				  "(>= %zu bytes)",
 				  (size_t)EXT_VARIABLES_REQUIRED_MAX_VARIABLE_SIZE);
 		} else {
-			config->max_variable_size = size_setting;
+			extctx->max_variable_size = size_setting;
 		}
 	}
 
-	*context = config;
+	*context = extctx;
 	return TRUE;
 }
 
 void ext_variables_unload(const struct sieve_extension *ext)
 {
-	struct ext_variables_config *config =
-		(struct ext_variables_config *)ext->context;
+	struct ext_variables_context *extctx = ext->context;
 
-	i_free(config);
+	i_free(extctx);
 }
 
-const struct ext_variables_config *
-ext_variables_get_config(const struct sieve_extension *var_ext)
+const struct ext_variables_context *
+ext_variables_get_context(const struct sieve_extension *var_ext)
 {
-	const struct ext_variables_config *config =
-		(const struct ext_variables_config *)var_ext->context;
+	const struct ext_variables_context *extctx = var_ext->context;
 
 	i_assert(var_ext->def == &variables_extension);
-	return config;
+	return extctx;
 }
 
 /*
@@ -621,8 +621,8 @@ bool sieve_variable_get_modifiable(struct sieve_variable_storage *storage,
 bool sieve_variable_assign(struct sieve_variable_storage *storage,
 			   unsigned int index, const string_t *value)
 {
-	const struct ext_variables_config *config =
-		ext_variables_get_config(storage->var_ext);
+	const struct ext_variables_context *extctx =
+		ext_variables_get_context(storage->var_ext);
 	string_t *varval;
 
 	if (!sieve_variable_get_modifiable(storage, index, &varval))
@@ -632,8 +632,8 @@ bool sieve_variable_assign(struct sieve_variable_storage *storage,
 	str_append_str(varval, value);
 
 	/* Just a precaution, caller should prevent this in the first place */
-	if (str_len(varval) > config->max_variable_size)
-		str_truncate_utf8(varval, config->max_variable_size);
+	if (str_len(varval) > extctx->max_variable_size)
+		str_truncate_utf8(varval, extctx->max_variable_size);
 
 	return TRUE;
 }
@@ -641,8 +641,8 @@ bool sieve_variable_assign(struct sieve_variable_storage *storage,
 bool sieve_variable_assign_cstr(struct sieve_variable_storage *storage,
 				unsigned int index, const char *value)
 {
-	const struct ext_variables_config *config =
-		ext_variables_get_config(storage->var_ext);
+	const struct ext_variables_context *extctx =
+		ext_variables_get_context(storage->var_ext);
 	string_t *varval;
 
 	if (!sieve_variable_get_modifiable(storage, index, &varval))
@@ -652,8 +652,8 @@ bool sieve_variable_assign_cstr(struct sieve_variable_storage *storage,
 	str_append(varval, value);
 
 	/* Just a precaution, caller should prevent this in the first place */
-	if (str_len(varval) > config->max_variable_size)
-		str_truncate_utf8(varval, config->max_variable_size);
+	if (str_len(varval) > extctx->max_variable_size)
+		str_truncate_utf8(varval, extctx->max_variable_size);
 
 	return TRUE;
 }

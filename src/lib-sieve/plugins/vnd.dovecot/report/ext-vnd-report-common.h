@@ -5,7 +5,7 @@
  * Extension configuration
  */
 
-struct ext_report_config {
+struct ext_report_context {
 	struct sieve_address_source report_from;
 };
 

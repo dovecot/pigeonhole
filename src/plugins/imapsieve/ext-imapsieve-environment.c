@@ -156,8 +156,8 @@ const struct sieve_environment_item vnd_mailbox_to_env_item = {
 void ext_imapsieve_environment_items_register(
 	const struct sieve_extension *ext, const struct sieve_runtime_env *renv)
 {
-	const struct sieve_extension *env_ext =
-		(const struct sieve_extension *)ext->context;
+	struct ext_imapsieve_context *extctx = ext->context;
+	const struct sieve_extension *env_ext = extctx->ext_environment;
 
 	sieve_environment_item_register(env_ext, renv->interp,
 					&imap_user_env_item);
@@ -174,8 +174,8 @@ void ext_imapsieve_environment_items_register(
 void ext_imapsieve_environment_vendor_items_register(
 	const struct sieve_extension *ext, const struct sieve_runtime_env *renv)
 {
-	const struct sieve_extension *env_ext =
-		(const struct sieve_extension *)ext->context;
+	struct ext_imapsieve_context *extctx = ext->context;
+	const struct sieve_extension *env_ext = extctx->ext_environment;
 
 	sieve_environment_item_register(env_ext, renv->interp,
 					&vnd_mailbox_from_env_item);

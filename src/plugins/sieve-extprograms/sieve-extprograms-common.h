@@ -12,7 +12,7 @@ enum sieve_extprograms_eol {
 	SIEVE_EXTPROGRAMS_EOL_LF
 };
 
-struct sieve_extprograms_config {
+struct sieve_extprograms_ext_context {
 	const struct sieve_extension *copy_ext;
 	const struct sieve_extension *var_ext;
 
@@ -24,10 +24,9 @@ struct sieve_extprograms_config {
 	unsigned int execute_timeout;
 };
 
-struct sieve_extprograms_config *
-sieve_extprograms_config_init(const struct sieve_extension *ext);
-void sieve_extprograms_config_deinit(
-	struct sieve_extprograms_config **ext_config);
+bool sieve_extprograms_ext_load(const struct sieve_extension *ext,
+				void **context);
+void sieve_extprograms_ext_unload(const struct sieve_extension *ext);
 
 /*
  * Extensions

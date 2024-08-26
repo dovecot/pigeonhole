@@ -445,7 +445,7 @@ static bool _contains_8bit(const char *msg)
 
 static int
 act_report_send(const struct sieve_action_exec_env *aenv,
-		const struct ext_report_config *config,
+		const struct ext_report_context *extctx,
 		const struct act_report_data *act)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
@@ -453,7 +453,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = eenv->scriptenv;
 	const struct sieve_message_data *msgdata = eenv->msgdata;
-	struct sieve_address_source report_from = config->report_from;
+	struct sieve_address_source report_from = extctx->report_from;
 	const struct smtp_address *sender, *user;
 	struct sieve_smtp_context *sctx;
 	struct istream *input;
@@ -672,14 +672,13 @@ act_report_commit(const struct sieve_action_exec_env *aenv,
 {
 	const struct sieve_action *action = aenv->action;
 	const struct sieve_extension *ext = action->ext;
-	const struct ext_report_config *config =
-		(const struct ext_report_config *)ext->context;
+	const struct ext_report_context *extctx = ext->context;
 	const struct act_report_data *act =
 		(const struct act_report_data *)action->context;
 	int ret;
 
 	T_BEGIN {
-		ret = act_report_send(aenv, config, act);
+		ret = act_report_send(aenv, extctx, act);
 	} T_END;
 
 	if (ret == SIEVE_EXEC_TEMP_FAILURE)

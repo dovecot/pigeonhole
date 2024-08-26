@@ -31,11 +31,13 @@
 bool ext_duplicate_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct ext_duplicate_config *config;
+	struct ext_duplicate_context *extctx;
 	sieve_number_t default_period, max_period;
 
-	if (*context != NULL)
+	if (*context != NULL) {
 		ext_duplicate_unload(ext);
+		*context = NULL;
+	}
 
 	if (!sieve_setting_get_duration_value(
 		svinst, "sieve_duplicate_default_period", &default_period))
@@ -45,20 +47,19 @@ bool ext_duplicate_load(const struct sieve_extension *ext, void **context)
 		max_period = EXT_DUPLICATE_DEFAULT_MAX_PERIOD;
 	}
 
-	config = i_new(struct ext_duplicate_config, 1);
-	config->default_period = default_period;
-	config->max_period = max_period;
+	extctx = i_new(struct ext_duplicate_context, 1);
+	extctx->default_period = default_period;
+	extctx->max_period = max_period;
 
-	*context = config;
+	*context = extctx;
 	return TRUE;
 }
 
 void ext_duplicate_unload(const struct sieve_extension *ext)
 {
-	struct ext_duplicate_config *config =
-		(struct ext_duplicate_config *)ext->context;
+	struct ext_duplicate_context *extctx = ext->context;
 
-	i_free(config);
+	i_free(extctx);
 }
 
 /*
@@ -143,7 +144,7 @@ struct ext_duplicate_hash {
 	ARRAY(struct ext_duplicate_handle) handles;
 };
 
-struct ext_duplicate_context {
+struct ext_duplicate_runtime_context {
 	ARRAY(struct ext_duplicate_hash) hashes;
 };
 
@@ -176,7 +177,7 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
-	struct ext_duplicate_context *rctx;
+	struct ext_duplicate_runtime_context *rctx;
 	bool duplicate = FALSE;
 	pool_t msg_pool = NULL, result_pool = NULL;
 	unsigned char hash[MD5_RESULTLEN];
@@ -201,13 +202,12 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	ext_duplicate_hash(handle, value, value_len, last, hash);
 
 	/* Get context; find out whether duplicate was checked earlier */
-	rctx = (struct ext_duplicate_context *)
-		sieve_message_context_extension_get(renv->msgctx, this_ext);
+	rctx = sieve_message_context_extension_get(renv->msgctx, this_ext);
 
 	if (rctx == NULL) {
 		/* Create context */
 		msg_pool = sieve_message_context_pool(renv->msgctx);
-		rctx = p_new(msg_pool, struct ext_duplicate_context, 1);
+		rctx = p_new(msg_pool, struct ext_duplicate_runtime_context, 1);
 		sieve_message_context_extension_set(renv->msgctx, this_ext,
 						    rctx);
 	} else if (array_is_created(&rctx->hashes)) {

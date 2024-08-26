@@ -10,7 +10,7 @@
  * Extension
  */
 
-struct ext_variables_config {
+struct ext_variables_context {
 	/* Maximum number of variables (in a scope) */
 	unsigned int max_scope_size;
 	/* Maximum size of variable value */
@@ -22,8 +22,8 @@ extern const struct sieve_extension_def variables_extension;
 bool ext_variables_load(const struct sieve_extension *ext, void **context);
 void ext_variables_unload(const struct sieve_extension *ext);
 
-const struct ext_variables_config *
-ext_variables_get_config(const struct sieve_extension *var_ext);
+const struct ext_variables_context *
+ext_variables_get_context(const struct sieve_extension *var_ext);
 
 /*
  * Commands
