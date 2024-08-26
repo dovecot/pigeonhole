@@ -14,6 +14,7 @@
 
 #include "lib.h"
 #include "array.h"
+#include "settings.h"
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -61,14 +62,25 @@ ext_vnd_environment_load(const struct sieve_extension *ext, void **context_r)
 {
 	const struct sieve_extension *ext_env;
 	const struct sieve_extension *ext_var;
+	struct sieve_instance *svinst = ext->svinst;
 	struct ext_vnd_environment_context *extctx;
+	const struct ext_vnd_environment_settings *set;
+	const char *error;
 
 	if (sieve_ext_environment_require_extension(ext->svinst, &ext_env) < 0)
 		return -1;
 	if (sieve_ext_variables_get_extension(ext->svinst, &ext_var) < 0)
 		return -1;
 
+	if (settings_get(svinst->event,
+			 &ext_vnd_environment_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
+	}
+
 	extctx = i_new(struct ext_vnd_environment_context, 1);
+	extctx->set = set;
 	extctx->env_ext = ext_env;
 	extctx->var_ext = ext_var;
 
@@ -80,6 +92,9 @@ static void ext_vnd_environment_unload(const struct sieve_extension *ext)
 {
 	struct ext_vnd_environment_context *extctx = ext->context;
 
+	if (extctx == NULL)
+		return;
+	settings_free(extctx->set);
 	i_free(extctx);
 }
 

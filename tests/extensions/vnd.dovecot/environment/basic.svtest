@@ -16,7 +16,7 @@ test "username" {
 	}
 }
 
-test_config_set "sieve_env_display_name" "Jan Jansen";
+test_config_set "sieve_environment/display_name" "Jan Jansen";
 test_config_reload :extension "vnd.dovecot.environment";
 
 test "config" {
