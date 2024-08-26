@@ -54,7 +54,7 @@ doc/man/sieve-dump.1
 doc/man/sieve-test.1
 doc/man/sieve-filter.1
 doc/man/pigeonhole.7
-doc/pigeonhole-man
+doc/stamp-man
 
 src/sieve-tools/sievec
 src/sieve-tools/sieve-dump
