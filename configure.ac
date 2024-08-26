@@ -15,9 +15,6 @@ AC_CONFIG_SRCDIR([src])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
-PIGEONHOLE_ASSET_VERSION=regexp(AC_PACKAGE_VERSION, [^\([0-9]+\)\.\([0-9]+\)], [\1.\2])
-AC_SUBST(PIGEONHOLE_ASSET_VERSION)
-
 # Autoheader is not needed and does more harm than good for this package. However, it is
 # tightly integrated in autoconf/automake and therefore it is difficult not to use it. As
 # a workaround we give autoheader a dummy config header to chew on and we handle the
@@ -51,6 +48,17 @@ BINARY_CFLAGS="$PIE_CFLAGS"
 AC_SUBST(BINARY_CFLAGS)
 AC_SUBST(BINARY_LDFLAGS)
 AC_SUBST(LIBDOVECOT_INCLUDE)
+
+AC_SUBST(PIGEONHOLE_ASSET_VERSION, regexp(AC_PACKAGE_VERSION, [^\([0-9]+\)\.\([0-9]+\).\([0-9]+\)], [\1.\2.\3]))
+AS_IF([test $PIGEONHOLE_ASSET_VERSION = "0.0.0"], [
+   AC_SUBST([PIGEONHOLE_ASSET_VERSION], "main")
+])
+
+AS_IF([test $DOVECOT_PRO_BUILD = "1"], [
+  AC_SUBST(PIGEONHOLE_ASSET_URL, "doc.dovecotpro.com")
+], [
+  AC_SUBST(PIGEONHOLE_ASSET_URL, "doc.dovecot.org")
+])
 
 # Define Sieve documentation install dir
 #
