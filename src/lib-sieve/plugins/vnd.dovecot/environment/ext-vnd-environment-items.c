@@ -26,8 +26,10 @@
 /* default_mailbox */
 
 static const char *
-envit_default_mailbox_get_value(const struct sieve_runtime_env *renv,
-				const char *name ATTR_UNUSED)
+envit_default_mailbox_get_value(
+	const struct sieve_runtime_env *renv,
+	const struct sieve_environment_item *item ATTR_UNUSED,
+	const char *name ATTR_UNUSED)
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
 
@@ -35,7 +37,7 @@ envit_default_mailbox_get_value(const struct sieve_runtime_env *renv,
 	return eenv->scriptenv->default_mailbox;
 }
 
-const struct sieve_environment_item default_mailbox_env_item = {
+const struct sieve_environment_item_def default_mailbox_env_item = {
 	.name = "vnd.dovecot.default-mailbox",
 	.get_value = envit_default_mailbox_get_value,
 };
@@ -44,6 +46,7 @@ const struct sieve_environment_item default_mailbox_env_item = {
 
 static const char *
 envit_username_get_value(const struct sieve_runtime_env *renv,
+			 const struct sieve_environment_item *item ATTR_UNUSED,
 			 const char *name ATTR_UNUSED)
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
@@ -51,7 +54,7 @@ envit_username_get_value(const struct sieve_runtime_env *renv,
 	return eenv->svinst->username;
 }
 
-const struct sieve_environment_item username_env_item = {
+const struct sieve_environment_item_def username_env_item = {
 	.name = "vnd.dovecot.username",
 	.get_value = envit_username_get_value,
 };
@@ -59,7 +62,9 @@ const struct sieve_environment_item username_env_item = {
 /* config.* */
 
 static const char *
-envit_config_get_value(const struct sieve_runtime_env *renv, const char *name)
+envit_config_get_value(const struct sieve_runtime_env *renv,
+		       const struct sieve_environment_item *item ATTR_UNUSED,
+		       const char *name)
 {
 	const struct sieve_execute_env *eenv = renv->exec_env;
 
@@ -70,7 +75,7 @@ envit_config_get_value(const struct sieve_runtime_env *renv, const char *name)
 				 t_strconcat("sieve_env_", name, NULL));
 }
 
-const struct sieve_environment_item config_env_item = {
+const struct sieve_environment_item_def config_env_item = {
 	.name = "vnd.dovecot.config",
 	.prefix = TRUE,
 	.get_value = envit_config_get_value,
@@ -85,10 +90,10 @@ void ext_vnd_environment_items_register(const struct sieve_extension *ext,
 {
 	struct ext_vnd_environment_context *extctx = ext->context;
 
-	sieve_environment_item_register(extctx->env_ext, renv->interp,
+	sieve_environment_item_register(extctx->env_ext, renv->interp, ext,
 					&default_mailbox_env_item);
-	sieve_environment_item_register(extctx->env_ext, renv->interp,
+	sieve_environment_item_register(extctx->env_ext, renv->interp, ext,
 					&username_env_item);
-	sieve_environment_item_register(extctx->env_ext, renv->interp,
+	sieve_environment_item_register(extctx->env_ext, renv->interp, ext,
 					&config_env_item);
 }

@@ -29,12 +29,12 @@ extern const struct sieve_operation_def tst_environment_operation;
  * Environment items
  */
 
-extern const struct sieve_environment_item domain_env_item;
-extern const struct sieve_environment_item host_env_item;
-extern const struct sieve_environment_item location_env_item;
-extern const struct sieve_environment_item phase_env_item;
-extern const struct sieve_environment_item name_env_item;
-extern const struct sieve_environment_item version_env_item;
+extern const struct sieve_environment_item_def domain_env_item;
+extern const struct sieve_environment_item_def host_env_item;
+extern const struct sieve_environment_item_def location_env_item;
+extern const struct sieve_environment_item_def phase_env_item;
+extern const struct sieve_environment_item_def name_env_item;
+extern const struct sieve_environment_item_def version_env_item;
 
 /*
  * Initialization
