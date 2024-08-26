@@ -106,15 +106,15 @@ vnspc_vnd_environment_generate(const struct sieve_codegen_env *cgenv,
 {
 	const struct sieve_extension *this_ext = SIEVE_OBJECT_EXTENSION(nspc);
 	const char *variable = (const char *) var_data;
-	struct ext_vnd_environment_context *ext_data;
+	struct ext_vnd_environment_context *extctx;
 
 	if (this_ext == NULL)
 		return FALSE;
 
-	ext_data = (struct ext_vnd_environment_context *)this_ext->context;
+	extctx = (struct ext_vnd_environment_context *)this_ext->context;
 
 	sieve_variables_opr_namespace_variable_emit(
-		cgenv->sblock, ext_data->var_ext, this_ext,
+		cgenv->sblock, extctx->var_ext, this_ext,
 		&environment_namespace);
 	sieve_binary_emit_cstring(cgenv->sblock, variable);
 	return TRUE;
@@ -148,8 +148,7 @@ vnspc_vnd_environment_read_variable(
 	string_t **str_r)
 {
 	const struct sieve_extension *this_ext = SIEVE_OBJECT_EXTENSION(nspc);
-	struct ext_vnd_environment_context *ectx =
-		(struct ext_vnd_environment_context *)this_ext->context;
+	struct ext_vnd_environment_context *extctx = this_ext->context;
 	string_t *var_name;
 	const char *ext_value;
 
@@ -163,8 +162,8 @@ vnspc_vnd_environment_read_variable(
 	if (str_r !=  NULL) {
 		const char *vname = str_c(var_name);
 
-		ext_value = ext_environment_item_get_value(
-			ectx->env_ext, renv, vname);
+		ext_value = ext_environment_item_get_value(extctx->env_ext,
+							   renv, vname);
 		if (ext_value == NULL && strchr(vname, '_') != NULL) {
 			char *p, *aname;
 
@@ -175,7 +174,7 @@ vnspc_vnd_environment_read_variable(
 					*p = '-';
 			}
 			ext_value = ext_environment_item_get_value(
-				ectx->env_ext, renv, aname);
+				extctx->env_ext, renv, aname);
 		}
 
 		if (ext_value == NULL) {
@@ -205,9 +204,8 @@ const struct sieve_operand_def environment_namespace_operand = {
 void ext_environment_variables_init(const struct sieve_extension *this_ext,
 				    struct sieve_validator *valdtr)
 {
-	struct ext_vnd_environment_context *ext_data =
-		(struct ext_vnd_environment_context *)this_ext->context;
+	struct ext_vnd_environment_context *extctx = this_ext->context;
 
-	sieve_variables_namespace_register(ext_data->var_ext, valdtr, this_ext,
+	sieve_variables_namespace_register(extctx->var_ext, valdtr, this_ext,
 					   &environment_namespace);
 }

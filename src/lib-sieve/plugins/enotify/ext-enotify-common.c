@@ -62,13 +62,13 @@ extern const struct sieve_enotify_method_def mailto_notify;
 
 static const struct sieve_enotify_method *
 ext_enotify_method_register(struct sieve_instance *svinst,
-			    struct ext_enotify_context *ectx,
+			    struct ext_enotify_context *extctx,
 			    const struct sieve_enotify_method_def *nmth_def)
 {
 	struct sieve_enotify_method *nmth;
-	int nmth_id = (int)array_count(&ectx->notify_methods);
+	int nmth_id = (int)array_count(&extctx->notify_methods);
 
-	nmth = array_append_space(&ectx->notify_methods);
+	nmth = array_append_space(&extctx->notify_methods);
 	nmth->def = nmth_def;
 	nmth->id = nmth_id;
 	nmth->svinst = svinst;
@@ -80,25 +80,25 @@ ext_enotify_method_register(struct sieve_instance *svinst,
 }
 
 void ext_enotify_methods_init(struct sieve_instance *svinst,
-			      struct ext_enotify_context *ectx)
+			      struct ext_enotify_context *extctx)
 {
-	p_array_init(&ectx->notify_methods, default_pool, 4);
+	p_array_init(&extctx->notify_methods, default_pool, 4);
 
-	ext_enotify_method_register(svinst, ectx, &mailto_notify);
+	ext_enotify_method_register(svinst, extctx, &mailto_notify);
 }
 
-void ext_enotify_methods_deinit(struct ext_enotify_context *ectx)
+void ext_enotify_methods_deinit(struct ext_enotify_context *extctx)
 {
 	const struct sieve_enotify_method *methods;
 	unsigned int meth_count, i;
 
-	methods = array_get(&ectx->notify_methods, &meth_count);
+	methods = array_get(&extctx->notify_methods, &meth_count);
 	for (i = 0; i < meth_count; i++) {
 		if (methods[i].def != NULL && methods[i].def->unload != NULL)
 			methods[i].def->unload(&methods[i]);
 	}
 
-	array_free(&ectx->notify_methods);
+	array_free(&extctx->notify_methods);
 }
 
 const struct sieve_enotify_method *
@@ -109,10 +109,9 @@ sieve_enotify_method_register(struct sieve_instance *svinst,
 		sieve_extension_get_by_name(svinst, "enotify");
 
 	if (ntfy_ext != NULL) {
-		struct ext_enotify_context *ectx =
-			(struct ext_enotify_context *)ntfy_ext->context;
+		struct ext_enotify_context *extctx = ntfy_ext->context;
 
-		return ext_enotify_method_register(svinst, ectx, nmth_def);
+		return ext_enotify_method_register(svinst, extctx, nmth_def);
 	}
 	return NULL;
 }
@@ -124,14 +123,13 @@ void sieve_enotify_method_unregister(const struct sieve_enotify_method *nmth)
 		sieve_extension_get_by_name(svinst, "enotify");
 
 	if (ntfy_ext != NULL) {
-		struct ext_enotify_context *ectx =
-			(struct ext_enotify_context *) ntfy_ext->context;
+		struct ext_enotify_context *extctx = ntfy_ext->context;
 		int nmth_id = nmth->id;
 
 		if (nmth_id >= 0 &&
-		    nmth_id < (int)array_count(&ectx->notify_methods)) {
+		    nmth_id < (int)array_count(&extctx->notify_methods)) {
 			struct sieve_enotify_method *nmth_mod =
-				array_idx_modifiable(&ectx->notify_methods,
+				array_idx_modifiable(&extctx->notify_methods,
 						     nmth_id);
 
 			nmth_mod->def = NULL;
@@ -143,12 +141,11 @@ const struct sieve_enotify_method *
 ext_enotify_method_find(const struct sieve_extension *ntfy_ext,
 			const char *identifier)
 {
-	struct ext_enotify_context *ectx =
-		(struct ext_enotify_context *)ntfy_ext->context;
+	struct ext_enotify_context *extctx = ntfy_ext->context;
 	unsigned int meth_count, i;
 	const struct sieve_enotify_method *methods;
 
-	methods = array_get(&ectx->notify_methods, &meth_count);
+	methods = array_get(&extctx->notify_methods, &meth_count);
 	for (i = 0; i < meth_count; i++) {
 		if (methods[i].def == NULL)
 			continue;
@@ -162,13 +159,12 @@ ext_enotify_method_find(const struct sieve_extension *ntfy_ext,
 static const char *
 ext_notify_get_methods_string(const struct sieve_extension *ntfy_ext)
 {
-	struct ext_enotify_context *ectx =
-		(struct ext_enotify_context *) ntfy_ext->context;
+	struct ext_enotify_context *extctx = ntfy_ext->context;
 	unsigned int meth_count, i;
 	const struct sieve_enotify_method *methods;
 	string_t *result = t_str_new(128);
 
-	methods = array_get(&ectx->notify_methods, &meth_count);
+	methods = array_get(&extctx->notify_methods, &meth_count);
 	if (meth_count > 0) {
 		for (i = 0; i < meth_count; i++) {
 			if (str_len(result) > 0)

@@ -165,11 +165,10 @@ cmd_execute_validate_output_tag(struct sieve_validator *valdtr,
 				struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
-	struct sieve_extprograms_config *ext_config =
-		(struct sieve_extprograms_config *)cmd->ext->context;
+	struct sieve_extprograms_ext_context *extctx = cmd->ext->context;
 
-	if (ext_config == NULL || ext_config->var_ext == NULL ||
-	    !sieve_ext_variables_is_active(ext_config->var_ext, valdtr)) {
+	if (extctx == NULL || extctx->var_ext == NULL ||
+	    !sieve_ext_variables_is_active(extctx->var_ext, valdtr)) {
 		sieve_argument_validate_error(
 			valdtr,*arg,
 			"the %s %s only allows for the specification of an "
@@ -182,8 +181,8 @@ cmd_execute_validate_output_tag(struct sieve_validator *valdtr,
 	/* Detach the tag itself */
 	*arg = sieve_ast_arguments_detach(*arg, 1);
 
-	if (!sieve_variable_argument_activate(ext_config->var_ext,
-					      ext_config->var_ext, valdtr,
+	if (!sieve_variable_argument_activate(extctx->var_ext,
+					      extctx->var_ext, valdtr,
 					      cmd, *arg, TRUE))
 		return FALSE;
 

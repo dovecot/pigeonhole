@@ -57,16 +57,18 @@ const struct sieve_extension_def enotify_extension = {
 
 static bool ext_enotify_load(const struct sieve_extension *ext, void **context)
 {
-	struct ext_enotify_context *ectx;
+	struct ext_enotify_context *extctx;
 
-	if (*context != NULL)
+	if (*context != NULL) {
 		ext_enotify_unload(ext);
+		*context = NULL;
+	}
 
-	ectx = i_new(struct ext_enotify_context, 1);
-	ectx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
-	*context = ectx;
+	extctx = i_new(struct ext_enotify_context, 1);
+	extctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
+	*context = extctx;
 
-	ext_enotify_methods_init(ext->svinst, ectx);
+	ext_enotify_methods_init(ext->svinst, extctx);
 
 	sieve_extension_capabilities_register(ext, &notify_capabilities);
 	return TRUE;
@@ -74,20 +76,18 @@ static bool ext_enotify_load(const struct sieve_extension *ext, void **context)
 
 static void ext_enotify_unload(const struct sieve_extension *ext)
 {
-	struct ext_enotify_context *ectx =
-		(struct ext_enotify_context *)ext->context;
+	struct ext_enotify_context *extctx = ext->context;
 
-	ext_enotify_methods_deinit(ectx);
+	ext_enotify_methods_deinit(extctx);
 
-	i_free(ectx);
+	i_free(extctx);
 }
 
 static bool
 ext_enotify_validator_load(const struct sieve_extension *ext,
 			   struct sieve_validator *valdtr)
 {
-	struct ext_enotify_context *ectx =
-		(struct ext_enotify_context *)ext->context;
+	struct ext_enotify_context *extctx = ext->context;
 
 	/* Register new commands */
 	sieve_validator_register_command(valdtr, ext,
@@ -98,7 +98,7 @@ ext_enotify_validator_load(const struct sieve_extension *ext,
 					 &notify_method_capability_test);
 
 	/* Register new set modifier for variables extension */
-	sieve_variables_modifier_register(ectx->var_ext, valdtr, ext,
+	sieve_variables_modifier_register(extctx->var_ext, valdtr, ext,
 					  &encodeurl_modifier);
 
 	return TRUE;

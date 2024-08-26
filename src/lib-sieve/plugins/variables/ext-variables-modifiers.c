@@ -539,18 +539,18 @@ int sieve_variables_modifiers_apply(
 	const struct sieve_extension *var_ext,
 	ARRAY_TYPE(sieve_variables_modifier) *modifiers, string_t **value)
 {
-	const struct ext_variables_config *config =
-		ext_variables_get_config(var_ext);
+	const struct ext_variables_context *extctx =
+		ext_variables_get_context(var_ext);
 	const struct sieve_variables_modifier *modfs;
 	unsigned int i, modf_count;
 
 	/* Hold value within limits */
-	if (str_len(*value) > config->max_variable_size) {
+	if (str_len(*value) > extctx->max_variable_size) {
 		/* assume variable originates from code, so copy it first */
-		string_t *new_value = t_str_new(config->max_variable_size+3);
+		string_t *new_value = t_str_new(extctx->max_variable_size+3);
 		str_append_str(new_value, *value);
 		*value = new_value;
-		str_truncate_utf8(*value, config->max_variable_size);
+		str_truncate_utf8(*value, extctx->max_variable_size);
 	}
 
 	if (!array_is_created(modifiers))
@@ -580,9 +580,9 @@ int sieve_variables_modifiers_apply(
 				str_sanitize(str_c(new_value), 256));
 
 			/* Hold value within limits */
-			if (str_len(*value) > config->max_variable_size) {
+			if (str_len(*value) > extctx->max_variable_size) {
 				str_truncate_utf8(*value,
-						  config->max_variable_size);
+						  extctx->max_variable_size);
 			}
 		}
 	}

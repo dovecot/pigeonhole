@@ -34,7 +34,7 @@ ext_include_variable_import_global(struct sieve_validator *valdtr,
 	struct sieve_ast *ast = cmd->ast_node->ast;
 	struct ext_include_ast_context *ctx =
 		ext_include_get_ast_context(this_ext, ast);
-	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+	struct ext_include_context *extctx = ext_include_get_context(this_ext);
 	struct sieve_variable_scope *local_scope;
 	struct sieve_variable_scope *global_scope = ctx->global_vars;
 	struct sieve_variable *global_var = NULL, *local_var;
@@ -58,13 +58,13 @@ ext_include_variable_import_global(struct sieve_validator *valdtr,
 			valdtr, cmd,
 			"declaration of new global variable '%s' exceeds the limit "
 			"(max variables: %u)", variable,
-			sieve_variables_get_max_scope_size(ectx->var_ext));
+			sieve_variables_get_max_scope_size(extctx->var_ext));
 		return NULL;
 	}
 
 	/* Import the global variable into the local script scope */
 	local_scope = sieve_ext_variables_get_local_scope(
-		ectx->var_ext, valdtr);
+		extctx->var_ext, valdtr);
 
 	local_var = sieve_variable_scope_get_variable(local_scope, variable);
 	if (local_var != NULL && local_var->ext != this_ext) {
@@ -116,14 +116,13 @@ bool ext_include_variables_load(
 	struct sieve_binary_block *sblock, sieve_size_t *offset,
 	struct sieve_variable_scope_binary **global_vars_r)
 {
-	struct ext_include_context *ectx =
-		ext_include_get_context(this_ext);
+	struct ext_include_context *extctx = ext_include_get_context(this_ext);
 
 	/* Sanity assert */
 	i_assert(*global_vars_r == NULL);
 
 	*global_vars_r = sieve_variable_scope_binary_read(
-		this_ext->svinst, ectx->var_ext, this_ext, sblock, offset);
+		this_ext->svinst, extctx->var_ext, this_ext, sblock, offset);
 
 	return (*global_vars_r != NULL);
 }
@@ -187,7 +186,7 @@ vnspc_global_variables_validate(struct sieve_validator *valdtr,
 {
 	const struct sieve_extension *this_ext = SIEVE_OBJECT_EXTENSION(nspc);
 	struct sieve_ast *ast = arg->ast;
-	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+	struct ext_include_context *extctx = ext_include_get_context(this_ext);
 	struct ext_include_ast_context *ctx =
 		ext_include_get_ast_context(this_ext, ast);
 	struct sieve_variable *var = NULL;
@@ -226,7 +225,7 @@ vnspc_global_variables_validate(struct sieve_validator *valdtr,
 			valdtr, arg,
 			"(implicit) declaration of new global variable '%s' "
 			"exceeds the limit (max variables: %u)", variable,
-			sieve_variables_get_max_scope_size(ectx->var_ext));
+			sieve_variables_get_max_scope_size(extctx->var_ext));
 		return FALSE;
 	}
 
@@ -241,18 +240,18 @@ bool vnspc_global_variables_generate(
 	struct sieve_command *cmd ATTR_UNUSED, void *var_data)
 {
 	const struct sieve_extension *this_ext = SIEVE_OBJECT_EXTENSION(nspc);
-	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+	struct ext_include_context *extctx = ext_include_get_context(this_ext);
 	struct sieve_variable *var = (struct sieve_variable *)var_data;
 
-	sieve_variables_opr_variable_emit(cgenv->sblock, ectx->var_ext, var);
+	sieve_variables_opr_variable_emit(cgenv->sblock, extctx->var_ext, var);
 	return TRUE;
 }
 
 void ext_include_variables_global_namespace_init(
 	const struct sieve_extension *this_ext, struct sieve_validator *valdtr)
 {
-	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+	struct ext_include_context *extctx = ext_include_get_context(this_ext);
 
-	sieve_variables_namespace_register(ectx->var_ext, valdtr, this_ext,
+	sieve_variables_namespace_register(extctx->var_ext, valdtr, this_ext,
 					   &global_variables_namespace);
 }

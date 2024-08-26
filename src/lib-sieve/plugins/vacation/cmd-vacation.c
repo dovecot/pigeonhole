@@ -239,8 +239,7 @@ cmd_vacation_validate_number_tag(struct sieve_validator *valdtr,
 				 struct sieve_command *cmd)
 {
 	const struct sieve_extension *ext = sieve_argument_ext(*arg);
-	const struct ext_vacation_config *config =
-		(const struct ext_vacation_config *)ext->context;
+	const struct ext_vacation_context *extctx = ext->context;
 	struct sieve_ast_argument *tag = *arg;
 	sieve_number_t period, seconds;
 
@@ -263,8 +262,8 @@ cmd_vacation_validate_number_tag(struct sieve_validator *valdtr,
 		i_unreached();
 
 	/* Enforce :seconds >= min_period */
-	if (seconds < config->min_period) {
-		seconds = config->min_period;
+	if (seconds < extctx->min_period) {
+		seconds = extctx->min_period;
 
 		sieve_argument_validate_warning(
 			valdtr, *arg,
@@ -272,8 +271,8 @@ cmd_vacation_validate_number_tag(struct sieve_validator *valdtr,
 			sieve_argument_identifier(tag),
 			(unsigned long long)period);
 	/* Enforce :days <= max_period */
-	} else if (config->max_period > 0 && seconds > config->max_period) {
-		seconds = config->max_period;
+	} else if (extctx->max_period > 0 && seconds > extctx->max_period) {
+		seconds = extctx->max_period;
 
 		sieve_argument_validate_warning(
 			valdtr, *arg,
@@ -600,13 +599,12 @@ ext_vacation_operation_execute(const struct sieve_runtime_env *renv,
 			       sieve_size_t *address)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
-	const struct ext_vacation_config *config =
-		(const struct ext_vacation_config *)this_ext->context;
+	const struct ext_vacation_context *extctx = this_ext->context;
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_vacation_context *act;
 	pool_t pool;
 	int opt_code = 0;
-	sieve_number_t seconds = config->default_period;
+	sieve_number_t seconds = extctx->default_period;
 	bool mime = FALSE;
 	struct sieve_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL;
@@ -950,7 +948,7 @@ static bool _contains_8bit(const char *text)
 }
 
 static bool
-_header_get_full_reply_recipient(const struct ext_vacation_config *config,
+_header_get_full_reply_recipient(const struct ext_vacation_context *extctx,
 				 const struct smtp_address *smtp_to,
 				 const char *header,
 				 struct message_address *reply_to_r)
@@ -963,7 +961,7 @@ _header_get_full_reply_recipient(const struct ext_vacation_config *config,
 		strlen(header), 256, 0);
 
 	for (; addr != NULL; addr = addr->next) {
-		bool matched = config->to_header_ignore_envelope;
+		bool matched = extctx->to_header_ignore_envelope;
 
 		if (addr->domain == NULL || addr->invalid_syntax)
 			continue;
@@ -981,7 +979,7 @@ _header_get_full_reply_recipient(const struct ext_vacation_config *config,
 
 static int
 _get_full_reply_recipient(const struct sieve_action_exec_env *aenv,
-			  const struct ext_vacation_config *config,
+			  const struct ext_vacation_context *extctx,
 			  const struct smtp_address *smtp_to,
 			  struct message_address *reply_to_r)
 {
@@ -1003,7 +1001,7 @@ _get_full_reply_recipient(const struct sieve_action_exec_env *aenv,
 		if (ret == 0 || header == NULL)
 			continue;
 
-		if (_header_get_full_reply_recipient(config, smtp_to,
+		if (_header_get_full_reply_recipient(extctx, smtp_to,
 						     header, reply_to_r))
 			return SIEVE_EXEC_OK;
 	}
@@ -1027,7 +1025,7 @@ _get_var_expand_table(const struct sieve_action_exec_env *aenv ATTR_UNUSED,
 
 static int
 act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
-				 const struct ext_vacation_config *config,
+				 const struct ext_vacation_context *extctx,
 				 const char **subject_r)
 {
 	const struct sieve_execute_env *eenv = aenv->exec_env;
@@ -1036,8 +1034,8 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 	string_t *str;
 	int ret;
 
-	*subject_r = (config->default_subject == NULL ?
-		      "Automated reply" : config->default_subject);
+	*subject_r = (extctx->default_subject == NULL ?
+		      "Automated reply" : extctx->default_subject);
 	ret = mail_get_first_header_utf8(msgdata->mail, "subject", &header);
 	if (ret < 0) {
 		return sieve_result_mail_error(
@@ -1046,7 +1044,7 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 	}
 	if (ret == 0)
 		return SIEVE_EXEC_OK;
-	if (config->default_subject_template == NULL) {
+	if (extctx->default_subject_template == NULL) {
 		*subject_r = t_strconcat("Auto: ", header, NULL);
 		return SIEVE_EXEC_OK;
 	}
@@ -1055,11 +1053,11 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 	const struct var_expand_params params = {
 		.table = _get_var_expand_table(aenv, header),
 	};
-	if (var_expand(str, config->default_subject_template, &params,
+	if (var_expand(str, extctx->default_subject_template, &params,
 		       &error) < 0) {
 		e_error(aenv->event,
 			"Failed to expand deliver_log_format=%s: %s",
-			config->default_subject_template, error);
+			extctx->default_subject_template, error);
 		*subject_r = t_strconcat("Auto: ", header, NULL);
 		return SIEVE_EXEC_OK;
 	}
@@ -1070,7 +1068,7 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 
 static int
 act_vacation_send(const struct sieve_action_exec_env *aenv,
-		  const struct ext_vacation_config *config,
+		  const struct ext_vacation_context *extctx,
 		  struct act_vacation_context *ctx,
 		  const struct smtp_address *smtp_to,
 		  const struct smtp_address *smtp_from,
@@ -1097,7 +1095,7 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 	/* Make sure we have a subject for our reply */
 
 	if (ctx->subject == NULL || *(ctx->subject) == '\0') {
-		ret = act_vacation_get_default_subject(aenv, config, &subject);
+		ret = act_vacation_get_default_subject(aenv, extctx, &subject);
 		if (ret <= 0)
 			return ret;
 	} else {
@@ -1112,7 +1110,7 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 	i_zero(&reply_to);
 	reply_to.mailbox = smtp_to->localpart;
 	reply_to.domain = smtp_to->domain;
-	ret = _get_full_reply_recipient(aenv, config, smtp_to, &reply_to);
+	ret = _get_full_reply_recipient(aenv, extctx, smtp_to, &reply_to);
 	if (ret <= 0)
 		return ret;
 
@@ -1237,8 +1235,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	const struct sieve_extension *ext = action->ext;
 	const struct sieve_execute_env *eenv = aenv->exec_env;
 	struct sieve_instance *svinst = eenv->svinst;
-	const struct ext_vacation_config *config =
-		(const struct ext_vacation_config *)ext->context;
+	const struct ext_vacation_context *extctx = ext->context;
 	struct act_vacation_context *ctx =
 		(struct act_vacation_context *)action->context;
 	unsigned char dupl_hash[MD5_RESULTLEN];
@@ -1437,7 +1434,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	}
 
 	/* Fetch original recipient if necessary */
-	if (config->use_original_recipient)
+	if (extctx->use_original_recipient)
 		orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
 	/* Fetch explicitly configured user email address */
 	if (svinst->user_email != NULL)
@@ -1507,7 +1504,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 
 	/* My address not found in the headers; we got an implicit delivery */
 	if (*hdsp == NULL) {
-		if (config->dont_check_recipient) {
+		if (extctx->dont_check_recipient) {
 			/* Send reply from envelope recipient address */
 			smtp_from = (orig_recipient == NULL ?
 				     recipient : orig_recipient);
@@ -1519,7 +1516,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 			const char *orig_rcpt_str = "", *user_email_str = "";
 
 			/* Bail out */
-			if (config->use_original_recipient) {
+			if (extctx->use_original_recipient) {
 				orig_rcpt_str =
 					t_strdup_printf("original-recipient=<%s>, ",
 							(orig_recipient == NULL ? "UNAVAILABLE" :
@@ -1548,8 +1545,8 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 
 	T_BEGIN {
 		ret = act_vacation_send(
-			aenv, config, ctx, sender,
-			(config->send_from_recipient ? smtp_from : NULL),
+			aenv, extctx, ctx, sender,
+			(extctx->send_from_recipient ? smtp_from : NULL),
 			&reply_from);
 	} T_END;
 
@@ -1567,10 +1564,10 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 
 		/* Check period limits once more */
 		seconds = ctx->seconds;
-		if (seconds < config->min_period)
-			seconds = config->min_period;
-		else if (config->max_period > 0 && seconds > config->max_period)
-			seconds = config->max_period;
+		if (seconds < extctx->min_period)
+			seconds = extctx->min_period;
+		else if (extctx->max_period > 0 && seconds > extctx->max_period)
+			seconds = extctx->max_period;
 
 		/* Mark as replied */
 		if (seconds > 0) {

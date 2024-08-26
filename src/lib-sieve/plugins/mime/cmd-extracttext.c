@@ -130,13 +130,12 @@ cmd_extracttext_registered(struct sieve_validator *valdtr,
 			   const struct sieve_extension *ext,
 			   struct sieve_command_registration *cmd_reg)
 {
-	struct ext_extracttext_context *ectx =
-		(struct ext_extracttext_context *)ext->context;
+	struct ext_extracttext_context *extctx = ext->context;
 
-	sieve_validator_register_tag(
-		valdtr, cmd_reg, ext, &extracttext_from_tag,
-		CMD_EXTRACTTEXT_OPT_FIRST);
-	sieve_variables_modifiers_link_tag(valdtr, ectx->var_ext, cmd_reg);
+	sieve_validator_register_tag(valdtr, cmd_reg, ext,
+				     &extracttext_from_tag,
+				     CMD_EXTRACTTEXT_OPT_FIRST);
+	sieve_variables_modifiers_link_tag(valdtr, extctx->var_ext, cmd_reg);
 	return TRUE;
 }
 
@@ -149,8 +148,7 @@ cmd_extracttext_validate(struct sieve_validator *valdtr,
 			 struct sieve_command *cmd)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
-	struct ext_extracttext_context *ectx =
-		(struct ext_extracttext_context *)this_ext->context;
+	struct ext_extracttext_context *extctx = this_ext->context;
 	struct sieve_ast_node *node = cmd->ast_node;
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	pool_t pool = sieve_command_pool(cmd);
@@ -169,7 +167,7 @@ cmd_extracttext_validate(struct sieve_validator *valdtr,
 	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "varname", 1,
 						SAAT_STRING))
 		return FALSE;
-	if (!sieve_variable_argument_activate(ectx->var_ext, ectx->var_ext,
+	if (!sieve_variable_argument_activate(extctx->var_ext, extctx->var_ext,
 					      valdtr, cmd, arg, TRUE))
 		return FALSE;
 
@@ -270,8 +268,7 @@ cmd_extracttext_operation_execute(const struct sieve_runtime_env *renv,
 				  sieve_size_t *address)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
-	struct ext_extracttext_context *ectx =
-		(struct ext_extracttext_context *)this_ext->context;
+	struct ext_extracttext_context *extctx = this_ext->context;
 	struct sieve_variable_storage *storage;
 	ARRAY_TYPE(sieve_variables_modifier) modifiers;
 	struct ext_foreverypart_runtime_loop *sfploop;
@@ -323,8 +320,8 @@ cmd_extracttext_operation_execute(const struct sieve_runtime_env *renv,
 
 	/* Modifiers */
 
-	ret = sieve_variables_modifiers_code_read(renv, ectx->var_ext, address,
-						  &modifiers);
+	ret = sieve_variables_modifiers_code_read(renv, extctx->var_ext,
+						  address, &modifiers);
 	if (ret <= 0)
 		return ret;
 
@@ -357,7 +354,7 @@ cmd_extracttext_operation_execute(const struct sieve_runtime_env *renv,
 	}
 
 	/* Apply modifiers */
-	ret = sieve_variables_modifiers_apply(renv, ectx->var_ext,
+	ret = sieve_variables_modifiers_apply(renv, extctx->var_ext,
 					      &modifiers, &value);
 	if (ret <= 0)
 		return ret;

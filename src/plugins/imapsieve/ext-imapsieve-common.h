@@ -9,6 +9,14 @@
  * Extensions
  */
 
+struct ext_imapsieve_context {
+	const struct sieve_extension *ext_environment;
+};
+
+struct ext_vnd_imapsieve_context {
+	const struct sieve_extension *ext_imapsieve;
+};
+
 extern const struct sieve_extension_def imapsieve_extension;
 extern const struct sieve_extension_def imapsieve_extension_dummy;
 

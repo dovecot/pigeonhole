@@ -13,14 +13,16 @@
 bool ext_vacation_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct ext_vacation_config *config;
+	struct ext_vacation_context *extctx;
 	sieve_number_t min_period, max_period, default_period;
 	bool use_original_recipient, dont_check_recipient, send_from_recipient,
 		to_header_ignore_envelope;
 	const char *default_subject, *default_subject_template;
 
-	if (*context != NULL)
+	if (*context != NULL) {
 		ext_vacation_unload(ext);
+		*context = NULL;
+	}
 
 	if (!sieve_setting_get_duration_value(
 		svinst, "sieve_vacation_min_period", &min_period))
@@ -68,28 +70,27 @@ bool ext_vacation_load(const struct sieve_extension *ext, void **context)
 		&to_header_ignore_envelope) )
 		to_header_ignore_envelope = FALSE;
 
-	config = i_new(struct ext_vacation_config, 1);
-	config->min_period = min_period;
-	config->max_period = max_period;
-	config->default_period = default_period;
-	config->default_subject = i_strdup_empty(default_subject);
-	config->default_subject_template =
+	extctx = i_new(struct ext_vacation_context, 1);
+	extctx->min_period = min_period;
+	extctx->max_period = max_period;
+	extctx->default_period = default_period;
+	extctx->default_subject = i_strdup_empty(default_subject);
+	extctx->default_subject_template =
 		i_strdup_empty(default_subject_template);
-	config->use_original_recipient = use_original_recipient;
-	config->dont_check_recipient = dont_check_recipient;
-	config->send_from_recipient = send_from_recipient;
-	config->to_header_ignore_envelope = to_header_ignore_envelope;
+	extctx->use_original_recipient = use_original_recipient;
+	extctx->dont_check_recipient = dont_check_recipient;
+	extctx->send_from_recipient = send_from_recipient;
+	extctx->to_header_ignore_envelope = to_header_ignore_envelope;
 
-	*context = config;
+	*context = extctx;
 	return TRUE;
 }
 
 void ext_vacation_unload(const struct sieve_extension *ext)
 {
-	struct ext_vacation_config *config =
-		(struct ext_vacation_config *)ext->context;
+	struct ext_vacation_context *extctx = ext->context;
 
-	i_free(config->default_subject);
-	i_free(config->default_subject_template);
-	i_free(config);
+	i_free(extctx->default_subject);
+	i_free(extctx->default_subject_template);
+	i_free(extctx);
 }

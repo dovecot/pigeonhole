@@ -32,6 +32,9 @@ static bool
 ext_imapsieve_load(const struct sieve_extension *ext, void **context);
 static bool
 ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context);
+static void ext_imapsieve_unload(const struct sieve_extension *ext);
+static void ext_vnd_imapsieve_unload(const struct sieve_extension *ext);
+
 static bool
 ext_vnd_imapsieve_validator_load(const struct sieve_extension *ext,
 				 struct sieve_validator *valdtr);
@@ -48,6 +51,7 @@ const struct sieve_extension_def imapsieve_extension = {
 #endif
 	.name = "imapsieve",
 	.load = ext_imapsieve_load,
+	.unload = ext_imapsieve_unload,
 	.interpreter_load = ext_imapsieve_interpreter_load,
 };
 
@@ -58,6 +62,7 @@ const struct sieve_extension_def vnd_imapsieve_extension = {
 #endif
 	.name = "vnd.dovecot.imapsieve",
 	.load = ext_vnd_imapsieve_load,
+	.unload = ext_vnd_imapsieve_unload,
 	.interpreter_load = ext_imapsieve_interpreter_load,
 	.validator_load = ext_vnd_imapsieve_validator_load,
 };
@@ -69,21 +74,55 @@ const struct sieve_extension_def vnd_imapsieve_extension = {
 static bool
 ext_imapsieve_load(const struct sieve_extension *ext, void **context)
 {
-	*context = (void *)sieve_ext_environment_require_extension(ext->svinst);
+	struct ext_imapsieve_context *extctx;
+
+	if (context != NULL) {
+		ext_imapsieve_unload(ext);
+		*context = NULL;
+	}
+
+	extctx = i_new(struct ext_imapsieve_context, 1);
+	extctx->ext_environment =
+		sieve_ext_environment_require_extension(ext->svinst);
+	*context = extctx;
 	return TRUE;
 }
 
 static bool
 ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context)
 {
+	struct ext_vnd_imapsieve_context *extctx;
+
+	if (context != NULL) {
+		ext_imapsieve_unload(ext);
+		*context = NULL;
+	}
+
+	extctx = i_new(struct ext_vnd_imapsieve_context, 1);
 #ifdef __IMAPSIEVE_DUMMY
-	*context = (void *)sieve_extension_require(
+	extctx->ext_imapsieve = sieve_extension_require(
 		ext->svinst, &imapsieve_extension_dummy, TRUE);
 #else
-	*context = (void *)sieve_extension_require(
+	extctx->ext_imapsieve = sieve_extension_require(
 		ext->svinst, &imapsieve_extension, TRUE);
 #endif
+
+	*context = extctx;
 	return TRUE;
+}
+
+static void ext_imapsieve_unload(const struct sieve_extension *ext)
+{
+	struct ext_imapsieve_context *extctx = ext->context;
+
+	i_free(extctx);
+}
+
+static void ext_vnd_imapsieve_unload(const struct sieve_extension *ext)
+{
+	struct ext_vnd_imapsieve_context *extctx = ext->context;
+
+	i_free(extctx);
 }
 
 /*
@@ -159,8 +198,8 @@ ext_imapsieve_interpreter_run(const struct sieve_extension *ext,
 			      bool deferred ATTR_UNUSED)
 {
 	if (ext->def == &vnd_imapsieve_extension) {
-		const struct sieve_extension *ims_ext =
-			(const struct sieve_extension *)ext->context;
+		struct ext_vnd_imapsieve_context *extctx = ext->context;
+		const struct sieve_extension *ims_ext = extctx->ext_imapsieve;
 
 		ext_imapsieve_environment_vendor_items_register(ims_ext, renv);
 	} else {

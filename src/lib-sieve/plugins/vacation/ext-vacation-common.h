@@ -11,7 +11,7 @@
 #define EXT_VACATION_DEFAULT_MIN_PERIOD (24*60*60)
 #define EXT_VACATION_DEFAULT_MAX_PERIOD 0
 
-struct ext_vacation_config {
+struct ext_vacation_context {
 	unsigned int min_period;
 	unsigned int max_period;
 	unsigned int default_period;

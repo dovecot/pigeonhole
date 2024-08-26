@@ -266,8 +266,8 @@ opr_match_value_read(const struct sieve_runtime_env *renv,
 		     string_t **str_r)
 {
 	const struct sieve_extension *this_ext = oprnd->ext;
-	const struct ext_variables_config *config =
-		ext_variables_get_config(this_ext);
+	const struct ext_variables_context *extctx =
+		ext_variables_get_context(this_ext);
 	unsigned int index = 0;
 
 	if (sieve_binary_read_unsigned(renv->sblock, address, &index)) {
@@ -278,8 +278,10 @@ opr_match_value_read(const struct sieve_runtime_env *renv,
 
 			if (*str_r == NULL)
 				*str_r = t_str_new(0);
-			else if (str_len(*str_r) > config->max_variable_size)
-				str_truncate_utf8(*str_r, config->max_variable_size);
+			else if (str_len(*str_r) > extctx->max_variable_size) {
+				str_truncate_utf8(*str_r,
+						  extctx->max_variable_size);
+			}
 		}
 		return SIEVE_EXEC_OK;
 	}

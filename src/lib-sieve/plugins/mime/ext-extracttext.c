@@ -50,25 +50,27 @@ static bool
 ext_extracttext_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct ext_extracttext_context *ectx;
+	struct ext_extracttext_context *extctx;
 
-	if (*context != NULL)
+	if (*context != NULL) {
 		ext_extracttext_unload(ext);
+		*context = NULL;
+	}
 
-	ectx = i_new(struct ext_extracttext_context, 1);
-	ectx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
-	ectx->fep_ext = sieve_extension_register(
+	extctx = i_new(struct ext_extracttext_context, 1);
+	extctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
+	extctx->fep_ext = sieve_extension_register(
 		svinst, &foreverypart_extension, FALSE);
-	*context = ectx;
+
+	*context = extctx;
 	return TRUE;
 }
 
 static void ext_extracttext_unload(const struct sieve_extension *ext)
 {
-	struct ext_extracttext_context *ctx =
-		(struct ext_extracttext_context *)ext->context;
+	struct ext_extracttext_context *extctx = ext->context;
 
-	i_free(ctx);
+	i_free(extctx);
 }
 
 /*
@@ -108,19 +110,18 @@ ext_extracttext_validator_validate(const struct sieve_extension *ext,
 				   struct sieve_ast_argument *require_arg,
 				   bool required ATTR_UNUSED)
 {
-	struct ext_extracttext_context *ectx =
-		(struct ext_extracttext_context *)ext->context;
+	struct ext_extracttext_context *extctx = ext->context;
 
-	if (ectx->var_ext == NULL ||
-	    !sieve_ext_variables_is_active(ectx->var_ext, valdtr)) {
+	if (extctx->var_ext == NULL ||
+	    !sieve_ext_variables_is_active(extctx->var_ext, valdtr) ) {
 		sieve_argument_validate_error(
 			valdtr, require_arg,
 			"extracttext extension cannot be used "
 			"without variables extension");
 		return FALSE;
 	}
-	if (ectx->fep_ext == NULL ||
-	    !sieve_validator_extension_loaded(valdtr, ectx->fep_ext)) {
+	if (extctx->fep_ext == NULL ||
+	    !sieve_validator_extension_loaded(valdtr, extctx->fep_ext) ) {
 		sieve_argument_validate_error(
 			valdtr, require_arg,
 			"extracttext extension cannot be used "

@@ -76,14 +76,16 @@ struct ext_include_interpreter_context {
 bool ext_include_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct ext_include_context *ctx;
+	struct ext_include_context *extctx;
 	const char *location;
 	unsigned long long int uint_setting;
 
-	if (*context != NULL)
+	if (*context != NULL) {
 		ext_include_unload(ext);
+		*context = NULL;
+	}
 
-	ctx = i_new(struct ext_include_context, 1);
+	extctx = i_new(struct ext_include_context, 1);
 
 	/* Get location for :global scripts */
 	location = sieve_setting_get(svinst, "sieve_global");
@@ -94,36 +96,35 @@ bool ext_include_load(const struct sieve_extension *ext, void **context)
 			"it is currently not possible to include ':global' scripts.");
 	}
 
-	ctx->global_location = i_strdup(location);
+	extctx->global_location = i_strdup(location);
 
 	/* Get limits */
-	ctx->max_nesting_depth = EXT_INCLUDE_DEFAULT_MAX_NESTING_DEPTH;
-	ctx->max_includes = EXT_INCLUDE_DEFAULT_MAX_INCLUDES;
+	extctx->max_nesting_depth = EXT_INCLUDE_DEFAULT_MAX_NESTING_DEPTH;
+	extctx->max_includes = EXT_INCLUDE_DEFAULT_MAX_INCLUDES;
 
 	if (sieve_setting_get_uint_value(
 		svinst, "sieve_include_max_nesting_depth", &uint_setting))
-		ctx->max_nesting_depth = (unsigned int)uint_setting;
+		extctx->max_nesting_depth = (unsigned int)uint_setting;
 	if (sieve_setting_get_uint_value(
 		svinst, "sieve_include_max_includes", &uint_setting))
-		ctx->max_includes = (unsigned int)uint_setting;
+		extctx->max_includes = (unsigned int)uint_setting;
 
 	/* Extension dependencies */
-	ctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
+	extctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
 
-	*context = ctx;
+	*context = extctx;
 	return TRUE;
 }
 
 void ext_include_unload(const struct sieve_extension *ext)
 {
-	struct ext_include_context *ctx =
-		(struct ext_include_context *)ext->context;
+	struct ext_include_context *extctx = ext->context;
 
-	sieve_storage_unref(&ctx->global_storage);
-	sieve_storage_unref(&ctx->personal_storage);
+	sieve_storage_unref(&extctx->global_storage);
+	sieve_storage_unref(&extctx->personal_storage);
 
-	i_free(ctx->global_location);
-	i_free(ctx);
+	i_free(extctx->global_location);
+	i_free(extctx);
 }
 
 /*
@@ -137,19 +138,18 @@ ext_include_get_script_storage(const struct sieve_extension *ext,
 			       enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct ext_include_context *ctx =
-		(struct ext_include_context *)ext->context;
+	struct ext_include_context *extctx = ext->context;
 
 	switch (location) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
-		if (ctx->personal_storage == NULL &&
+		if (extctx->personal_storage == NULL &&
 		    sieve_storage_create_personal(svinst, NULL, 0,
-						  &ctx->personal_storage,
+						  &extctx->personal_storage,
 						  error_code_r) < 0)
 			return NULL;
-		return ctx->personal_storage;
+		return extctx->personal_storage;
 	case EXT_INCLUDE_LOCATION_GLOBAL:
-		if (ctx->global_location == NULL) {
+		if (extctx->global_location == NULL) {
 			e_info(svinst->event, "include: "
 				"sieve_global is unconfigured; "
 				"include of ':global' script '%s' is therefore not possible",
@@ -158,13 +158,14 @@ ext_include_get_script_storage(const struct sieve_extension *ext,
 				*error_code_r = SIEVE_ERROR_NOT_FOUND;
 			return NULL;
 		}
-		if (ctx->global_storage == NULL) {
-			if (sieve_storage_create(svinst, ctx->global_location,
-						 0, &ctx->global_storage,
+		if (extctx->global_storage == NULL) {
+			if (sieve_storage_create(svinst,
+						 extctx->global_location,
+						 0, &extctx->global_storage,
 						 error_code_r) < 0)
 				return NULL;
 		}
-		return ctx->global_storage;
+		return extctx->global_storage;
 	default:
 		break;
 	}
@@ -222,11 +223,11 @@ ext_include_create_ast_context(const struct sieve_extension *this_ext,
 
 		sieve_variable_scope_ref(actx->global_vars);
 	} else {
-		struct ext_include_context *ectx =
+		struct ext_include_context *extctx =
 			ext_include_get_context(this_ext);
 
 		actx->global_vars = sieve_variable_scope_create(
-			this_ext->svinst, ectx->var_ext, this_ext);
+			this_ext->svinst, extctx->var_ext, this_ext);
 	}
 
 	sieve_ast_extension_register(ast, this_ext, &include_ast_extension,
@@ -260,9 +261,9 @@ void ext_include_ast_link_included_script(
 bool ext_include_validator_have_variables(
 	const struct sieve_extension *this_ext, struct sieve_validator *valdtr)
 {
-	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+	struct ext_include_context *extctx = ext_include_get_context(this_ext);
 
-	return sieve_ext_variables_is_active(ectx->var_ext, valdtr);
+	return sieve_ext_variables_is_active(extctx->var_ext, valdtr);
 }
 
 /*
@@ -348,7 +349,7 @@ ext_include_runtime_init(const struct sieve_extension *this_ext,
 {
 	struct ext_include_interpreter_context *ctx =
 		(struct ext_include_interpreter_context *)context;
-	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+	struct ext_include_context *extctx = ext_include_get_context(this_ext);
 
 	if (ctx->parent == NULL) {
 		ctx->global = p_new(ctx->pool,
@@ -359,13 +360,14 @@ ext_include_runtime_init(const struct sieve_extension *this_ext,
 			ext_include_binary_get_global_scope(
 				this_ext, renv->sbin);
 		ctx->global->var_storage =
-			sieve_variable_storage_create(ectx->var_ext, ctx->pool,
+			sieve_variable_storage_create(extctx->var_ext,
+						      ctx->pool,
 						      ctx->global->var_scope);
 	} else {
 		ctx->global = ctx->parent->global;
 	}
 
-	sieve_ext_variables_runtime_set_storage(ectx->var_ext, renv, this_ext,
+	sieve_ext_variables_runtime_set_storage(extctx->var_ext, renv, this_ext,
 						ctx->global->var_storage);
 	return SIEVE_EXEC_OK;
 }
@@ -473,8 +475,7 @@ int ext_include_generate_include(
 	const struct ext_include_script_info **included_r)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
-	struct ext_include_context *ext_ctx =
-		(struct ext_include_context *)this_ext->context;
+	struct ext_include_context *extctx = this_ext->context;
 	int result = 1;
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin = cgenv->sbin;
@@ -497,11 +498,11 @@ int ext_include_generate_include(
 		return -1;
 
 	/* Limit nesting level */
-	if (ctx->nesting_depth >= ext_ctx->max_nesting_depth) {
+	if (ctx->nesting_depth >= extctx->max_nesting_depth) {
 		sieve_command_generate_error(
 			gentr, cmd,
 			"cannot nest includes deeper than %d levels",
-			ext_ctx->max_nesting_depth);
+			extctx->max_nesting_depth);
 		return -1;
 	}
 
@@ -552,12 +553,12 @@ int ext_include_generate_include(
 
 		/* Check whether include limit is exceeded */
 		if (ext_include_binary_script_get_count(binctx) >=
-		    ext_ctx->max_includes) {
+		    extctx->max_includes) {
 	 		sieve_command_generate_error(
 				gentr, cmd, "failed to include script '%s': "
 				"no more than %u includes allowed",
 				str_sanitize(script_name, 80),
-				ext_ctx->max_includes);
+				extctx->max_includes);
 	 		return -1;
 		}
 

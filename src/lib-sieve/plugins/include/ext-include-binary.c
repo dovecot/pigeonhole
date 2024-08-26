@@ -288,8 +288,7 @@ ext_include_binary_open(const struct sieve_extension *ext,
 			struct sieve_binary *sbin, void *context)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	struct ext_include_context *ext_ctx =
-		(struct ext_include_context *)ext->context;
+	struct ext_include_context *extctx = ext->context;
 	struct ext_include_binary_context *binctx =
 		(struct ext_include_binary_context *)context;
 	struct sieve_binary_block *sblock;
@@ -316,12 +315,12 @@ ext_include_binary_open(const struct sieve_extension *ext,
 	}
 
 	/* Check include limit */
-	if (depcount > ext_ctx->max_includes) {
+	if (depcount > extctx->max_includes) {
 		e_error(svinst->event,
 			"include: binary %s includes too many scripts "
 			"(%u > %u)",
 			sieve_binary_path(sbin), depcount,
-			ext_ctx->max_includes);
+			extctx->max_includes);
 		return FALSE;
 	}
 
@@ -540,10 +539,10 @@ bool ext_include_code_dump(const struct sieve_extension *ext,
 	struct sieve_binary *sbin = denv->sbin;
 	struct ext_include_binary_context *binctx =
 		ext_include_binary_get_context(ext, sbin);
-	struct ext_include_context *ectx = ext_include_get_context(ext);
+	struct ext_include_context *extctx = ext_include_get_context(ext);
 
 	sieve_ext_variables_dump_set_scope(
-		ectx->var_ext, denv, ext,
+		extctx->var_ext, denv, ext,
 		sieve_variable_scope_binary_get(binctx->global_vars));
 	return TRUE;
 }

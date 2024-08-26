@@ -83,13 +83,12 @@ const struct sieve_environment_item config_env_item = {
 void ext_vnd_environment_items_register(const struct sieve_extension *ext,
 					const struct sieve_runtime_env *renv)
 {
-	struct ext_vnd_environment_context *ectx =
-		(struct ext_vnd_environment_context *)ext->context;
+	struct ext_vnd_environment_context *extctx = ext->context;
 
-	sieve_environment_item_register(ectx->env_ext, renv->interp,
+	sieve_environment_item_register(extctx->env_ext, renv->interp,
 					&default_mailbox_env_item);
-	sieve_environment_item_register(ectx->env_ext, renv->interp,
+	sieve_environment_item_register(extctx->env_ext, renv->interp,
 					&username_env_item);
-	sieve_environment_item_register(ectx->env_ext, renv->interp,
+	sieve_environment_item_register(extctx->env_ext, renv->interp,
 					&config_env_item);
 }
