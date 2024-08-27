@@ -2,26 +2,17 @@
 #define SIEVE_EXTPROGRAMS_COMMON_H
 
 #include "sieve-common.h"
+#include "sieve-extprograms-settings.h"
 
 /*
  * Extension configuration
  */
 
-enum sieve_extprograms_eol {
-	SIEVE_EXTPROGRAMS_EOL_CRLF = 0,
-	SIEVE_EXTPROGRAMS_EOL_LF
-};
-
 struct sieve_extprograms_ext_context {
+	const struct sieve_extprograms_settings *set;
+
 	const struct sieve_extension *copy_ext;
 	const struct sieve_extension *var_ext;
-
-	char *socket_dir;
-	char *bin_dir;
-
-	enum sieve_extprograms_eol default_input_eol;
-
-	unsigned int execute_timeout;
 };
 
 int sieve_extprograms_ext_load(const struct sieve_extension *ext,

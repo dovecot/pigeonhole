@@ -25,10 +25,13 @@ extensions = \
 lib90_sieve_extprograms_plugin_la_SOURCES = \
 	$(commands) \
 	$(extensions) \
+	sieve-extprograms-settings.c \
 	sieve-extprograms-common.c \
 	sieve-extprograms-plugin.c
 
 noinst_HEADERS = \
+	sieve-extprograms-limits.h \
+	sieve-extprograms-settings.h \
 	sieve-extprograms-common.h \
 	sieve-extprograms-plugin.h
 
