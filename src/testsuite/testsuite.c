@@ -309,7 +309,6 @@ int main(int argc, char **argv)
 
 	/* De-initialize testsuite */
 	testsuite_deinit();
-	testsuite_settings_deinit();
 
 	sieve_tool_deinit(&sieve_tool);
 
