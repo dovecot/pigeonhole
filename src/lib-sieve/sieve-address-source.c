@@ -5,7 +5,6 @@
 
 #include "sieve-common.h"
 #include "sieve-error.h"
-#include "sieve-settings.old.h"
 #include "sieve-address.h"
 #include "sieve-message.h"
 
@@ -45,24 +44,6 @@ bool sieve_address_source_parse(pool_t pool, const char *value,
 		} else {
 			return FALSE;
 		}
-	}
-	return TRUE;
-}
-
-bool sieve_address_source_parse_from_setting(struct sieve_instance *svinst,
-					     pool_t pool, const char *setting,
-					     struct sieve_address_source *asrc)
-{
-	const char *value;
-
-	value = sieve_setting_get(svinst, setting);
-	if (value == NULL)
-		return FALSE;
-
-	if (!sieve_address_source_parse(pool, value, asrc)) {
-		e_warning(svinst->event, "Invalid value for setting '%s': '%s'",
-			  setting, value);
-		return FALSE;
 	}
 	return TRUE;
 }

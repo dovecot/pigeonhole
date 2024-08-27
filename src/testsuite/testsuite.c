@@ -145,9 +145,6 @@ int main(int argc, char **argv)
 		i_fatal("Failed to get working directory: %s", error);
 	sieve_tool_set_homedir(sieve_tool, cwd);
 
-	/* Initialize settings environment */
-	testsuite_settings_init();
-
 	/* Manually setup the absolute sieve storage path for the executed
 	   test script. */
 	if (t_abspath(scriptfile, &abspath, &error) < 0)

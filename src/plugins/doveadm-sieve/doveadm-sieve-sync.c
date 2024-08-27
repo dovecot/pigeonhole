@@ -44,20 +44,6 @@ static MODULE_CONTEXT_DEFINE_INIT(sieve_storage_module,
 static MODULE_CONTEXT_DEFINE_INIT(sieve_user_module,
 				  &mail_user_module_register);
 
-static const char *
-mail_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED, void *context,
-		       const char *identifier)
-{
-	struct mail_user *mail_user = context;
-
-	return mail_user_plugin_getenv(mail_user, identifier);
-}
-
-static const struct sieve_callbacks mail_sieve_callbacks = {
-	NULL,
-	mail_sieve_get_setting
-};
-
 static void mail_sieve_user_deinit(struct mail_user *user)
 {
 	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
@@ -95,8 +81,8 @@ mail_sieve_user_init(struct mail_user *user, struct sieve_storage **svstorage_r)
 	svenv.base_dir = user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
-	if (sieve_init(&svenv, &mail_sieve_callbacks, user,
-		       user->set->mail_debug, &suser->svinst) < 0)
+	if (sieve_init(&svenv, NULL, user, user->set->mail_debug,
+		       &suser->svinst) < 0)
 		return -1;
 
 	if (sieve_storage_create_personal(suser->svinst, user,

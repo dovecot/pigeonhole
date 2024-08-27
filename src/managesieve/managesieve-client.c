@@ -34,23 +34,6 @@ struct managesieve_module_register managesieve_module_register = { 0 };
 struct client *managesieve_clients = NULL;
 unsigned int managesieve_client_count = 0;
 
-static const char *
-managesieve_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED,
-			      void *context, const char *identifier)
-{
-	struct mail_user *mail_user = (struct mail_user *) context;
-
-	if (mail_user == NULL)
-		return NULL;
-
-	return mail_user_plugin_getenv(mail_user, identifier);
-}
-
-static const struct sieve_callbacks managesieve_sieve_callbacks = {
-	NULL,
-	managesieve_sieve_get_setting
-};
-
 static void client_idle_timeout(struct client *client)
 {
 	if (client->cmd.func != NULL) {
@@ -128,8 +111,8 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 	svenv.event_parent = event;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
-	if (sieve_init(&svenv, &managesieve_sieve_callbacks, user,
-		       user->set->mail_debug, &svinst) < 0) {
+	if (sieve_init(&svenv, NULL, user, user->set->mail_debug,
+		       &svinst) < 0) {
 		*error_r = "Failed to initialize Sieve interpreter";
 		return -1;
 	}

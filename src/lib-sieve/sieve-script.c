@@ -14,7 +14,6 @@
 
 #include "sieve-common.h"
 #include "sieve-limits.h"
-#include "sieve-settings.old.h"
 #include "sieve-error.h"
 #include "sieve-dump.h"
 #include "sieve-binary.h"

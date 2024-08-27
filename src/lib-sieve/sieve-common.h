@@ -242,4 +242,21 @@ const struct smtp_address *
 sieve_get_postmaster_smtp(const struct sieve_script_env *senv);
 const char *sieve_get_postmaster_address(const struct sieve_script_env *senv);
 
+/*
+ * Home directory
+ */
+
+static inline const char *
+sieve_environment_get_homedir(struct sieve_instance *svinst)
+{
+	const struct sieve_callbacks *callbacks = svinst->callbacks;
+
+	if (svinst->home_dir != NULL)
+		return svinst->home_dir;
+	if (callbacks == NULL || callbacks->get_homedir == NULL)
+		return NULL;
+
+	return callbacks->get_homedir(svinst, svinst->context);
+}
+
 #endif

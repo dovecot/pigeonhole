@@ -57,21 +57,6 @@ static MODULE_CONTEXT_DEFINE_INIT(imap_filter_sieve_user_module,
  *
  */
 
-static const char *
-imap_filter_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED,
-			      void *context, const char *identifier)
-{
-	struct imap_filter_sieve_user *ifsuser = context;
-	struct mail_user *user = ifsuser->client->user;
-
-	return mail_user_plugin_getenv(user, identifier);
-}
-
-static const struct sieve_callbacks imap_filter_sieve_callbacks = {
-	NULL,
-	imap_filter_sieve_get_setting
-};
-
 static struct sieve_instance *
 imap_filter_sieve_get_svinst(struct imap_filter_sieve_context *sctx)
 {
@@ -96,8 +81,7 @@ imap_filter_sieve_get_svinst(struct imap_filter_sieve_context *sctx)
 	svenv.location = SIEVE_ENV_LOCATION_MS;
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_POST;
 
-	if (sieve_init(&svenv, &imap_filter_sieve_callbacks, ifsuser, debug,
-		       &ifsuser->svinst) < 0)
+	if (sieve_init(&svenv, NULL, ifsuser, debug, &ifsuser->svinst) < 0)
 		return NULL;
 
 	ifsuser->master_ehandler =
