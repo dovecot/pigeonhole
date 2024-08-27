@@ -4,7 +4,6 @@
 #include "lib.h"
 #include "array.h"
 
-#include "sieve-settings.old.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-comparators.h"

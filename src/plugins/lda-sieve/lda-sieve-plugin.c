@@ -41,36 +41,6 @@
 static deliver_mail_func_t *next_deliver_mail;
 
 /*
- * Settings handling
- */
-
-static const char *
-lda_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED, void *context,
-		      const char *identifier)
-{
-	struct mail_deliver_context *mdctx =
-		(struct mail_deliver_context *)context;
-	const char *value = NULL;
-
-	if (mdctx == NULL)
-		return NULL;
-
-	if (mdctx->rcpt_user == NULL ||
-	    (value = mail_user_plugin_getenv(
-		mdctx->rcpt_user, identifier)) == NULL) {
-		if (strcmp(identifier, "recipient_delimiter") == 0)
-			value = mdctx->set->recipient_delimiter;
-	}
-
-	return value;
-}
-
-static const struct sieve_callbacks lda_sieve_callbacks = {
-	NULL,
-	lda_sieve_get_setting
-};
-
-/*
  * Mail transmission
  */
 
@@ -1029,8 +999,7 @@ lda_sieve_deliver_mail(struct mail_deliver_context *mdctx,
 	svenv.location = SIEVE_ENV_LOCATION_MDA;
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_DURING;
 
-	if (sieve_init(&svenv, &lda_sieve_callbacks, mdctx, debug,
-		       &srctx.svinst) < 0)
+	if (sieve_init(&svenv, NULL, mdctx, debug, &srctx.svinst) < 0)
 		return -1;
 
 	/* Initialize master error handler */

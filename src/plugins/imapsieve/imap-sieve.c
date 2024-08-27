@@ -47,21 +47,6 @@ struct imap_sieve {
 	struct sieve_error_handler *master_ehandler;
 };
 
-static const char *
-mail_sieve_get_setting(struct sieve_instance *svinst ATTR_UNUSED, void *context,
-		       const char *identifier)
-{
-	struct imap_sieve *isieve = context;
-	struct mail_user *user = isieve->client->user;
-
-	return mail_user_plugin_getenv(user, identifier);
-}
-
-static const struct sieve_callbacks mail_sieve_callbacks = {
-	NULL,
-	mail_sieve_get_setting
-};
-
 struct imap_sieve *imap_sieve_init(struct client *client)
 {
 	struct sieve_environment svenv;
@@ -89,8 +74,7 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 
 	isieve->home_dir = p_strdup(pool, svenv.home_dir);
 
-	if (sieve_init(&svenv, &mail_sieve_callbacks, isieve,
-		       debug, &isieve->svinst) < 0)
+	if (sieve_init(&svenv, NULL, isieve, debug, &isieve->svinst) < 0)
 		return isieve;
 
 	if (sieve_extension_replace(isieve->svinst, &imapsieve_extension,

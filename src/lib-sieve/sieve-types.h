@@ -81,9 +81,6 @@ struct sieve_environment {
 struct sieve_callbacks {
 	const char *
 	(*get_homedir)(struct sieve_instance *svinst, void *context);
-	const char *
-	(*get_setting)(struct sieve_instance *svinst, void *context,
-		       const char *identifier);
 };
 
 /*

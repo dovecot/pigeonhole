@@ -61,21 +61,6 @@ void doveadm_sieve_cmd_failed_storage(struct doveadm_sieve_cmd_context *ctx,
 	doveadm_sieve_cmd_failed_error(ctx, error_code);
 }
 
-static const char *
-doveadm_sieve_cmd_get_setting(struct sieve_instance *svinst ATTR_UNUSED,
-			      void *context, const char *identifier)
-{
-	struct doveadm_sieve_cmd_context *ctx =
-		(struct doveadm_sieve_cmd_context *)context;
-
-	return mail_user_plugin_getenv(ctx->ctx.cur_mail_user, identifier);
-}
-
-static const struct sieve_callbacks sieve_callbacks = {
-	NULL,
-	doveadm_sieve_cmd_get_setting,
-};
-
 void doveadm_sieve_cmd_scriptname_check(const char *arg)
 {
 	if (!uni_utf8_str_is_valid(arg))
@@ -113,8 +98,8 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 	svenv.base_dir = user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
-	if (sieve_init(&svenv, &sieve_callbacks, ctx,
-		       user->set->mail_debug, &ctx->svinst) < 0)
+	if (sieve_init(&svenv, NULL, ctx, user->set->mail_debug,
+		       &ctx->svinst) < 0)
 		return -1;
 
 	if (sieve_storage_create_personal(ctx->svinst, user,
