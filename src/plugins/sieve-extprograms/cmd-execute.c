@@ -167,7 +167,9 @@ cmd_execute_validate_output_tag(struct sieve_validator *valdtr,
 	struct sieve_ast_argument *tag = *arg;
 	struct sieve_extprograms_ext_context *extctx = cmd->ext->context;
 
-	if (extctx == NULL || extctx->var_ext == NULL ||
+	if (extctx == NULL)
+		return FALSE;
+	if (extctx->var_ext == NULL ||
 	    !sieve_ext_variables_is_active(extctx->var_ext, valdtr)) {
 		sieve_argument_validate_error(
 			valdtr,*arg,

@@ -29,6 +29,7 @@ print '#include "sieve-common.h"'."\n";
 print '#include "sieve-limits.h"'."\n";
 print '#include "sieve-address-source.h"'."\n";
 print '#include "managesieve-url.h"'."\n";
+print '#include "sieve-extprograms-limits.h"'."\n";
 print '#include "pigeonhole-settings.h"'."\n";
 print '#include <unistd.h>'."\n";
 print "#ifdef LDAP_PLUGIN\n";

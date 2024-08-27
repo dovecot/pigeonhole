@@ -7,6 +7,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve/util \
 	-I$(top_srcdir)/src/lib-sieve/storage/ldap \
 	-I$(top_srcdir)/src/lib-managesieve \
+	-I$(top_srcdir)/src/plugins/sieve-extprograms \
 	-DSETTINGS_PLUGIN
 if LDAP_PLUGIN
 AM_CPPFLAGS += -DPLUGIN_BUILD -DLDAP_PLUGIN
