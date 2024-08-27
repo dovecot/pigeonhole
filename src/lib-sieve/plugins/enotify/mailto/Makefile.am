@@ -8,9 +8,9 @@ AM_CPPFLAGS = \
 
 libsieve_ext_enotify_mailto_la_SOURCES = \
 	uri-mailto.c \
+	ntfy-mailto-settings.c \
 	ntfy-mailto.c
 
 noinst_HEADERS = \
-	uri-mailto.h
-
-
+	uri-mailto.h \
+	ntfy-mailto-settings.h
