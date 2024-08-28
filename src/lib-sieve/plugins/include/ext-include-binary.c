@@ -7,7 +7,6 @@
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
-#include "sieve-storage.h"
 #include "sieve-binary.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -330,7 +329,6 @@ ext_include_binary_open(const struct sieve_extension *ext,
 		struct sieve_binary_block *inc_block = NULL;
 		unsigned int location, flags;
 		string_t *script_name;
-		struct sieve_storage *storage;
 		struct sieve_script *script;
 		enum sieve_error error_code;
 		int ret;
@@ -369,21 +367,14 @@ ext_include_binary_open(const struct sieve_extension *ext,
 		}
 
 		/* Can we find the script dependency ? */
-		storage = ext_include_get_script_storage(ext, location,
-							 str_c(script_name),
-							 &error_code);
-		if (storage == NULL) {
+		if (ext_include_get_script(ext, location, str_c(script_name),
+					   &script, &error_code) < 0) {
 			/* No, recompile */
 			// FIXME: handle ':optional' in this case
 			return FALSE;
 		}
 
 		/* Can we open the script dependency ? */
-		if (sieve_storage_get_script(storage, str_c(script_name),
-					     &script, &error_code) < 0) {
-			/* No, recompile */
-			return FALSE;
-		}
 		if (sieve_script_open(script, &error_code) < 0) {
 			if (error_code != SIEVE_ERROR_NOT_FOUND) {
 				/* No, recompile */

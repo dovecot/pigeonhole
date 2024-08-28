@@ -6,7 +6,6 @@
 
 #include "sieve-common.h"
 #include "sieve-script.h"
-#include "sieve-storage.h"
 #include "sieve-ast.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
@@ -224,7 +223,6 @@ cmd_include_validate(struct sieve_validator *valdtr,
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct cmd_include_context_data *ctx_data =
 		(struct cmd_include_context_data *)cmd->data;
-	struct sieve_storage *storage;
 	struct sieve_script *script;
 	const char *script_name;
 	enum sieve_error error_code = SIEVE_ERROR_NONE;
@@ -259,21 +257,19 @@ cmd_include_validate(struct sieve_validator *valdtr,
 		return FALSE;
 	}
 
-	storage = ext_include_get_script_storage(this_ext, ctx_data->location,
-						 script_name, &error_code);
-	if (storage == NULL) {
+	if (ext_include_get_script(this_ext, ctx_data->location,
+				   script_name, &script, &error_code) < 0) {
 		// FIXME: handle ':optional' in this case
 		if (error_code == SIEVE_ERROR_NOT_FOUND) {
 			sieve_argument_validate_error(
 				valdtr, arg, "include: "
-				"%s location for included script '%s' is unavailable "
-				"(contact system administrator for more information)",
+				"included %s script '%s' not found ",
 				ext_include_script_location_name(ctx_data->location),
 				str_sanitize(script_name, 80));
 		} else {
 			sieve_argument_validate_error(
 				valdtr, arg, "include: "
-				"failed to access %s location for included script '%s' "
+				"failed to access included %s script '%s' "
 				"(contact system administrator for more information)",
 				ext_include_script_location_name(ctx_data->location),
 				str_sanitize(script_name, 80));
@@ -281,11 +277,7 @@ cmd_include_validate(struct sieve_validator *valdtr,
 		return FALSE;
 	}
 
-	/* Create script object */
-	if (sieve_storage_get_script(storage, script_name,
-				     &script, &error_code) < 0)
-		return FALSE;
-
+	/* Open script */
 	ret = sieve_script_open(script, &error_code);
 	if (ret < 0) {
 		if (error_code != SIEVE_ERROR_NOT_FOUND) {
