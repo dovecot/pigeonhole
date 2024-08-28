@@ -129,14 +129,15 @@ void ext_include_unload(const struct sieve_extension *ext)
  * Script access
  */
 
-struct sieve_storage *
-ext_include_get_script_storage(const struct sieve_extension *ext,
-			       enum ext_include_script_location location,
-			       const char *script_name,
-			       enum sieve_error *error_code_r)
+int ext_include_get_script(const struct sieve_extension *ext,
+			   enum ext_include_script_location location,
+			   const char *script_name,
+			   struct sieve_script **script_r,
+			   enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_include_context *extctx = ext->context;
+	struct sieve_storage *storage = NULL;
 
 	switch (location) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
@@ -144,8 +145,9 @@ ext_include_get_script_storage(const struct sieve_extension *ext,
 		    sieve_storage_create_personal(svinst, NULL, 0,
 						  &extctx->personal_storage,
 						  error_code_r) < 0)
-			return NULL;
-		return extctx->personal_storage;
+			break;
+		storage = extctx->personal_storage;
+		break;
 	case EXT_INCLUDE_LOCATION_GLOBAL:
 		if (extctx->global_location == NULL) {
 			e_info(svinst->event, "include: "
@@ -154,22 +156,25 @@ ext_include_get_script_storage(const struct sieve_extension *ext,
 				str_sanitize(script_name, 80));
 			if (error_code_r != NULL)
 				*error_code_r = SIEVE_ERROR_NOT_FOUND;
-			return NULL;
+			break;
 		}
 		if (extctx->global_storage == NULL) {
 			if (sieve_storage_create(svinst,
 						 extctx->global_location,
 						 0, &extctx->global_storage,
 						 error_code_r) < 0)
-				return NULL;
+				break;
 		}
-		return extctx->global_storage;
-	default:
+		storage = extctx->global_storage;
 		break;
+	default:
+		i_unreached();
 	}
 
-	i_unreached();
-	return NULL;
+	if (storage == NULL)
+		return -1;
+	return sieve_storage_get_script(storage, script_name,
+					script_r, error_code_r);
 }
 
 /*
