@@ -295,10 +295,11 @@ sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 	return storage;
 }
 
-static struct sieve_storage *
+static int
 sieve_storage_init(struct sieve_instance *svinst,
 		   const struct sieve_storage *storage_class, const char *data,
 		   enum sieve_storage_flags flags, bool main,
+		   struct sieve_storage **storage_r,
 		   enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
@@ -306,7 +307,9 @@ sieve_storage_init(struct sieve_instance *svinst,
 	const char *location;
 	struct event *event;
 	enum sieve_error error_code;
+	int ret;
 
+	*storage_r = NULL;
 	if (error_code_r != NULL)
 		*error_code_r = SIEVE_ERROR_NONE;
 	else
@@ -321,7 +324,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 		e_debug(event, "Storage does not support synchronization");
 		*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
 		event_unref(&event);
-		return NULL;
+		return -1;
 	}
 
 	if ((flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 &&
@@ -329,31 +332,35 @@ sieve_storage_init(struct sieve_instance *svinst,
 		e_error(event, "Storage does not support write access");
 		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		event_unref(&event);
-		return NULL;
+		return -1;
 	}
 
 	T_BEGIN {
 		storage = sieve_storage_alloc(svinst, event, storage_class,
 					      data, flags, main);
 
-		if (sieve_storage_data_parse(storage, data,
-					     &location, &options) < 0) {
+		ret = sieve_storage_data_parse(storage, data,
+					       &location, &options);
+		if (ret < 0)
 			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
-			sieve_storage_unref(&storage);
-		} else {
+		else {
 			storage->location = p_strdup(storage->pool, location);
 
 			event_add_str(event, "script_location",
 				      storage->location);
 
-			if (storage_class->v.init(storage, options,
-						  error_code_r) < 0)
-				sieve_storage_unref(&storage);
+			ret = storage_class->v.init(storage, options,
+						    error_code_r);
+			i_assert(ret <= 0);
 		}
 	} T_END;
-
 	event_unref(&event);
-	return storage;
+	if (ret < 0) {
+		sieve_storage_unref(&storage);
+		return -1;
+	}
+	*storage_r = storage;
+	return 0;
 }
 
 struct sieve_storage *
@@ -384,8 +391,12 @@ sieve_storage_create(struct sieve_instance *svinst, const char *location,
 	if (ret == 0)
 		storage_class = &sieve_file_storage;
 
-	return sieve_storage_init(svinst, storage_class, data, flags,
-				  FALSE, error_code_r);
+	struct sieve_storage *storage;
+
+	if (sieve_storage_init(svinst, storage_class, data, flags, FALSE,
+			       &storage, error_code_r) < 0)
+		return NULL;
+	return storage;
 }
 
 static struct sieve_storage *
@@ -423,9 +434,9 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 
 		if (ret > 0) {
 			/* The normal case: explicit driver name */
-			storage = sieve_storage_init(svinst, sieve_class, data,
-						     flags, TRUE, error_code_r);
-			if (storage == NULL)
+			if (sieve_storage_init(svinst, sieve_class, data,
+					       flags, TRUE,
+					       &storage, error_code_r) < 0)
 				return NULL;
 		}
 
