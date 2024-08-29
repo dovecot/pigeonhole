@@ -24,15 +24,13 @@ void sieve_deinit(struct sieve_instance **_svinst);
 /* Get capability string for a particular extension. */
 const char *
 sieve_get_capabilities(struct sieve_instance *svinst, const char *name);
+/* Get top-level event for this Sieve instance. */
+struct event *sieve_get_event(struct sieve_instance *svinst) ATTR_PURE;
 
 /* Set the supported extensions. The provided string is parsed into a list
    of extensions that are to be enabled/disabled. */
 void sieve_set_extensions(struct sieve_instance *svinst,
 			  const char *extensions);
-
-
-/* Get top-level event for this Sieve instance. */
-struct event *sieve_get_event(struct sieve_instance *svinst) ATTR_PURE;
 
 /*
  * Script compilation
