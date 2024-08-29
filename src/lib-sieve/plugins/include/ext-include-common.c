@@ -32,6 +32,8 @@
 
 struct ext_include_generator_context {
 	unsigned int nesting_depth;
+	enum ext_include_script_location location;
+	const char *script_name;
 	struct sieve_script *script;
 	struct ext_include_generator_context *parent;
 };
@@ -271,6 +273,7 @@ static struct ext_include_generator_context *
 ext_include_create_generator_context(
 	struct sieve_generator *gentr,
 	struct ext_include_generator_context *parent,
+	enum ext_include_script_location location, const char *script_name,
 	struct sieve_script *script)
 {
 	struct ext_include_generator_context *ctx;
@@ -278,6 +281,8 @@ ext_include_create_generator_context(
 	pool_t pool = sieve_generator_pool(gentr);
 	ctx = p_new(pool, struct ext_include_generator_context, 1);
 	ctx->parent = parent;
+	ctx->location = location;
+	ctx->script_name = p_strdup(pool, script_name);
 	ctx->script = script;
 	if (parent == NULL)
 		ctx->nesting_depth = 0;
@@ -299,11 +304,14 @@ static inline void
 ext_include_initialize_generator_context(
 	const struct sieve_extension *this_ext, struct sieve_generator *gentr,
 	struct ext_include_generator_context *parent,
+	enum ext_include_script_location location, const char *script_name,
 	struct sieve_script *script)
 {
 	sieve_generator_extension_set_context(
 		gentr, this_ext,
-		ext_include_create_generator_context(gentr, parent, script));
+		ext_include_create_generator_context(gentr, parent,
+						     location, script_name,
+						     script));
 }
 
 void ext_include_register_generator_context(
@@ -315,8 +323,10 @@ void ext_include_register_generator_context(
 
 	/* Initialize generator context if necessary */
 	if (ctx == NULL) {
+		i_assert(cgenv->script != NULL);
 		ctx = ext_include_create_generator_context(
-			cgenv->gentr, NULL, cgenv->script);
+			cgenv->gentr, NULL, EXT_INCLUDE_LOCATION_PERSONAL,
+			sieve_script_name(cgenv->script), cgenv->script);
 
 		sieve_generator_extension_set_context(
 			cgenv->gentr, this_ext, (void *)ctx);
@@ -458,8 +468,8 @@ ext_include_interpreter_get_global_variables(
 
 int ext_include_generate_include(
 	const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
-	enum ext_include_script_location location, enum ext_include_flags flags,
-	struct sieve_script *script,
+	enum ext_include_script_location location, const char *script_name,
+	enum ext_include_flags flags, struct sieve_script *script,
 	const struct ext_include_script_info **included_r)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
@@ -499,7 +509,10 @@ int ext_include_generate_include(
 	if ((flags & EXT_INCLUDE_FLAG_ONCE) == 0) {
 		pctx = ctx;
 		while (pctx != NULL) {
-			if (sieve_script_equals(pctx->script, script)) {
+			if (pctx->location == location &&
+			    strcmp(pctx->script_name, script_name) == 0 &&
+			    (pctx->script == NULL || script == NULL ||
+			     sieve_script_equals(pctx->script, script))) {
 				/* Just drop circular include when uploading
 				   inactive script;  not an error
 				 */
@@ -524,7 +537,8 @@ int ext_include_generate_include(
 	binctx = ext_include_binary_init(this_ext, sbin, cgenv->ast);
 
 	/* Is the script already compiled into the current binary? */
-	included = ext_include_binary_script_get_include_info(binctx, script);
+	included = ext_include_binary_script_get_include_info(
+		binctx, location, script_name);
 	if (included != NULL) {
 		/* Yes, only update flags */
 		if ((flags & EXT_INCLUDE_FLAG_OPTIONAL) == 0)
@@ -532,7 +546,6 @@ int ext_include_generate_include(
 		if ((flags & EXT_INCLUDE_FLAG_ONCE) == 0)
 			included->flags &= ENUM_NEGATE(EXT_INCLUDE_FLAG_ONCE);
 	} else 	{
-		const char *script_name = sieve_script_name(script);
 		enum sieve_compile_flags cpflags = cgenv->flags;
 
 		/* No, include new script */
@@ -550,13 +563,14 @@ int ext_include_generate_include(
 
 		/* Allocate a new block in the binary and mark the script as
 		   included. */
-		if (!sieve_script_is_open(script)) {
+		if (script == NULL || !sieve_script_is_open(script)) {
 			/* Just making an empty entry to mark a missing script
 			 */
 			i_assert((flags & EXT_INCLUDE_FLAG_MISSING_AT_UPLOAD) != 0 ||
 				 (flags & EXT_INCLUDE_FLAG_OPTIONAL) != 0);
 			included = ext_include_binary_script_include(
-				binctx, location, flags, script, NULL);
+				binctx, location, script_name, flags, NULL,
+				NULL);
 			result = 0;
 		} else {
 			struct sieve_binary_block *inc_block =
@@ -564,7 +578,8 @@ int ext_include_generate_include(
 
 			/* Real include */
 			included = ext_include_binary_script_include(
-				binctx, location, flags, script, inc_block);
+				binctx, location, script_name, flags, script,
+				inc_block);
 
 			/* Parse */
 			if ((ast = sieve_parse(script, ehandler,
@@ -604,7 +619,8 @@ int ext_include_generate_include(
 			 */
 		 	subgentr = sieve_generator_create(ast, ehandler, cpflags);
 			ext_include_initialize_generator_context(
-				cmd->ext, subgentr, ctx, script);
+				cmd->ext, subgentr, ctx, location, script_name,
+				script);
 
 			if (sieve_generator_run(subgentr, &inc_block) == NULL) {
 				sieve_command_generate_error(
@@ -683,7 +699,7 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 
 	/* Check for invalid include id (== corrupt binary) */
 	included = ext_include_binary_script_get_included(binctx, include_id);
-	if (included == NULL) {
+	if (included == NULL || included->block == NULL) {
 		sieve_runtime_trace_error(
 			renv, "include: include id %d is invalid", include_id);
 		return SIEVE_EXEC_BIN_CORRUPT;

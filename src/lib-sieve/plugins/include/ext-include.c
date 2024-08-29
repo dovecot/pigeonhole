@@ -67,7 +67,7 @@ ext_include_binary_load(const struct sieve_extension *ext,
 
 const struct sieve_extension_def include_extension = {
 	.name = "include",
-	.version = 1,
+	.version = 2,
 
 	.load = ext_include_load,
 	.unload = ext_include_unload,

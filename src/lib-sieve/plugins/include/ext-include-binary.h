@@ -31,9 +31,11 @@ ext_include_binary_get_global_scope(const struct sieve_extension *this_ext,
 struct ext_include_script_info {
 	unsigned int id;
 
+	enum ext_include_script_location location;
+	const char *script_name;
+
 	struct sieve_script *script;
 	enum ext_include_flags flags;
-	enum ext_include_script_location location;
 
 	struct sieve_binary_block *block;
 };
@@ -41,19 +43,18 @@ struct ext_include_script_info {
 struct ext_include_script_info *
 ext_include_binary_script_include(struct ext_include_binary_context *binctx,
 				  enum ext_include_script_location location,
+				  const char *script_name,
 				  enum ext_include_flags flags,
 				  struct sieve_script *script,
 				  struct sieve_binary_block *inc_block);
 struct ext_include_script_info *
 ext_include_binary_script_get_include_info(
-	struct ext_include_binary_context *binctx, struct sieve_script *script);
+	struct ext_include_binary_context *binctx,
+	enum ext_include_script_location location, const char *script_name);
 
 const struct ext_include_script_info *
 ext_include_binary_script_get_included(
 	struct ext_include_binary_context *binctx, unsigned int include_id);
-const struct ext_include_script_info *
-ext_include_binary_script_get(struct ext_include_binary_context *binctx,
-			      struct sieve_script *script);
 unsigned int
 ext_include_binary_script_get_count(struct ext_include_binary_context *binctx);
 

@@ -81,7 +81,7 @@ const struct sieve_operation_def include_operation = {
 
 struct cmd_include_context_data {
 	enum ext_include_script_location location;
-
+	const char *script_name;
 	struct sieve_script *script;
 	enum ext_include_flags flags;
 
@@ -328,6 +328,7 @@ cmd_include_validate(struct sieve_validator *valdtr,
 	}
 
 	ext_include_ast_link_included_script(cmd->ext, cmd->ast_node->ast, script);
+	ctx_data->script_name = p_strdup(sieve_command_pool(cmd), script_name);
 	ctx_data->script = script;
 
 	(void)sieve_ast_arguments_detach(arg, 1);
@@ -351,6 +352,7 @@ cmd_include_generate(const struct sieve_codegen_env *cgenv,
 	   This yields the id of the binary block containing the compiled byte
 	   code. */
 	ret = ext_include_generate_include(cgenv, cmd, ctx_data->location,
+					   ctx_data->script_name,
 					   ctx_data->flags, ctx_data->script,
 					   &included);
 	if (ret < 0)
@@ -385,7 +387,7 @@ static bool opc_include_dump(const struct sieve_dumptime_env *denv,
 
 	binctx = ext_include_binary_get_context(denv->oprtn->ext, denv->sbin);
 	included = ext_include_binary_script_get_included(binctx, include_id);
-	if (included == NULL)
+	if (included == NULL || included->block == NULL)
 		return FALSE;
 
 	sieve_code_descend(denv);

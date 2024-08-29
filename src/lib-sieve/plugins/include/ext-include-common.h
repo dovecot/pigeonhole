@@ -143,8 +143,8 @@ void ext_include_register_generator_context(
 
 int ext_include_generate_include(
 	const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
-	enum ext_include_script_location location, enum ext_include_flags flags,
-	struct sieve_script *script,
+	enum ext_include_script_location location, const char *script_name,
+	enum ext_include_flags flags, struct sieve_script *script,
 	const struct ext_include_script_info **included_r);
 
 /* Interpreter context */
