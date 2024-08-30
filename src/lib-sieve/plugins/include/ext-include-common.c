@@ -130,11 +130,11 @@ void ext_include_unload(const struct sieve_extension *ext)
  */
 
 static int
-ext_include_get_script_personal(struct sieve_instance *svinst,
-				struct ext_include_context *extctx,
-				const char *script_name,
-				struct sieve_script **script_r,
-				enum sieve_error *error_code_r)
+ext_include_open_script_personal(struct sieve_instance *svinst,
+				 struct ext_include_context *extctx,
+				 const char *script_name,
+				 struct sieve_script **script_r,
+				 enum sieve_error *error_code_r)
 {
 	if (extctx->personal_storage == NULL &&
 	    sieve_storage_create_personal(svinst, NULL, 0,
@@ -142,16 +142,16 @@ ext_include_get_script_personal(struct sieve_instance *svinst,
 					  error_code_r) < 0)
 		return -1;
 
-	return sieve_storage_get_script(extctx->personal_storage, script_name,
-					script_r, error_code_r);
+	return sieve_storage_open_script(extctx->personal_storage, script_name,
+					 script_r, error_code_r);
 }
 
 static int
-ext_include_get_script_global(struct sieve_instance *svinst,
-			      struct ext_include_context *extctx,
-			      const char *script_name,
-			      struct sieve_script **script_r,
-			      enum sieve_error *error_code_r)
+ext_include_open_script_global(struct sieve_instance *svinst,
+			       struct ext_include_context *extctx,
+			       const char *script_name,
+			       struct sieve_script **script_r,
+			       enum sieve_error *error_code_r)
 {
 	if (extctx->global_location == NULL) {
 		e_info(svinst->event, "include: "
@@ -167,35 +167,35 @@ ext_include_get_script_global(struct sieve_instance *svinst,
 				 &extctx->global_storage, error_code_r) < 0)
 		return -1;
 
-	return sieve_storage_get_script(extctx->global_storage, script_name,
-					script_r, error_code_r);
+	return sieve_storage_open_script(extctx->global_storage, script_name,
+					 script_r, error_code_r);
 }
 
-int ext_include_get_script(const struct sieve_extension *ext,
-			   enum ext_include_script_location location,
-			   const char *script_name,
-			   struct sieve_script **script_r,
-			   enum sieve_error *error_code_r)
+int ext_include_open_script(const struct sieve_extension *ext,
+			    enum ext_include_script_location location,
+			    const char *script_name,
+			    struct sieve_script **script_r,
+			    enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_include_context *extctx = ext->context;
 	int ret;
 
+	*script_r = NULL;
 	switch (location) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
-		ret = ext_include_get_script_personal(svinst, extctx,
-						      script_name,
-						      script_r, error_code_r);
+		ret = ext_include_open_script_personal(svinst, extctx,
+						       script_name,
+						       script_r, error_code_r);
 		break;
 	case EXT_INCLUDE_LOCATION_GLOBAL:
-		ret = ext_include_get_script_global(svinst, extctx,
-						    script_name,
-						    script_r, error_code_r);
+		ret = ext_include_open_script_global(svinst, extctx,
+						     script_name,
+						     script_r, error_code_r);
 		break;
 	default:
 		i_unreached();
 	}
-
 	return ret;
 }
 
@@ -589,7 +589,7 @@ int ext_include_generate_include(
 
 		/* Allocate a new block in the binary and mark the script as
 		   included. */
-		if (script == NULL || !sieve_script_is_open(script)) {
+		if (script == NULL) {
 			/* Just making an empty entry to mark a missing script
 			 */
 			i_assert((flags & EXT_INCLUDE_FLAG_MISSING_AT_UPLOAD) != 0 ||

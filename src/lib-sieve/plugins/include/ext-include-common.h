@@ -82,11 +82,11 @@ extern const struct sieve_operation_def global_operation;
  * Script access
  */
 
-int ext_include_get_script(const struct sieve_extension *ext,
-			   enum ext_include_script_location location,
-			   const char *script_name,
-			   struct sieve_script **script_r,
-			   enum sieve_error *error_code_r);
+int ext_include_open_script(const struct sieve_extension *ext,
+			    enum ext_include_script_location location,
+			    const char *script_name,
+			    struct sieve_script **script_r,
+			    enum sieve_error *error_code_r);
 
 /*
  * Context
