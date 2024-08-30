@@ -226,7 +226,6 @@ cmd_include_validate(struct sieve_validator *valdtr,
 	struct sieve_script *script;
 	const char *script_name;
 	enum sieve_error error_code = SIEVE_ERROR_NONE;
-	int ret;
 
 	/* Check argument */
 	if (!sieve_validate_positional_argument(valdtr, cmd, arg, "value",
@@ -257,39 +256,17 @@ cmd_include_validate(struct sieve_validator *valdtr,
 		return FALSE;
 	}
 
-	if (ext_include_get_script(this_ext, ctx_data->location,
-				   script_name, &script, &error_code) < 0) {
-		// FIXME: handle ':optional' in this case
-		if (error_code == SIEVE_ERROR_NOT_FOUND) {
-			sieve_argument_validate_error(
-				valdtr, arg, "include: "
-				"included %s script '%s' not found ",
-				ext_include_script_location_name(ctx_data->location),
-				str_sanitize(script_name, 80));
-		} else {
-			sieve_argument_validate_error(
-				valdtr, arg, "include: "
-				"failed to access included %s script '%s' "
-				"(contact system administrator for more information)",
-				ext_include_script_location_name(ctx_data->location),
-				str_sanitize(script_name, 80));
-		}
-		return FALSE;
-	}
-
 	/* Open script */
-	ret = sieve_script_open(script, &error_code);
-	if (ret < 0) {
+	if (ext_include_open_script(this_ext, ctx_data->location,
+				    script_name, &script, &error_code) < 0) {
 		if (error_code != SIEVE_ERROR_NOT_FOUND) {
 			sieve_argument_validate_error(
 				valdtr, arg,
-				"failed to access included %s script '%s': %s",
+				"failed to access included %s script '%s' "
+				"(refer to server log for more information)",
 				ext_include_script_location_name(ctx_data->location),
-				str_sanitize(script_name, 80),
-				sieve_script_get_last_error_lcase(script));
-			sieve_script_unref(&script);
+				str_sanitize(script_name, 80));
 			return FALSE;
-
 		/* Not found */
 		} else {
 			enum sieve_compile_flags cpflags =
@@ -313,7 +290,6 @@ cmd_include_validate(struct sieve_validator *valdtr,
 					"included %s script '%s' does not exist",
 					ext_include_script_location_name(ctx_data->location),
 					str_sanitize(script_name, 80));
-				sieve_script_unref(&script);
 				return FALSE;
 			}
 		}

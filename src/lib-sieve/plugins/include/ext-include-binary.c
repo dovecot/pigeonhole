@@ -366,16 +366,9 @@ ext_include_binary_open(const struct sieve_extension *ext,
 			return FALSE;
 		}
 
-		/* Can we find the script dependency ? */
-		if (ext_include_get_script(ext, location, str_c(script_name),
-					   &script, &error_code) < 0) {
-			/* No, recompile */
-			// FIXME: handle ':optional' in this case
-			return FALSE;
-		}
-
 		/* Can we open the script dependency ? */
-		if (sieve_script_open(script, &error_code) < 0) {
+		if (ext_include_open_script(ext, location, str_c(script_name),
+					    &script, &error_code) < 0) {
 			if (error_code != SIEVE_ERROR_NOT_FOUND) {
 				/* No, recompile */
 				return FALSE;
