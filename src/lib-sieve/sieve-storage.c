@@ -325,14 +325,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 	const char *const *options;
 	const char *location;
 	struct event *storage_event, *event;
-	enum sieve_error error_code;
 	int ret;
-
-	*storage_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
 
 	i_assert(storage_class->v.init != NULL);
 
@@ -392,7 +385,6 @@ int sieve_storage_create(struct sieve_instance *svinst, const char *location,
 			 enum sieve_error *error_code_r)
 {
 	const struct sieve_storage *storage_class;
-	enum sieve_error error_code;
 	const char *data;
 	int ret;
 
@@ -400,10 +392,7 @@ int sieve_storage_create(struct sieve_instance *svinst, const char *location,
 	i_assert((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0);
 
 	*storage_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	data = location;
 	if ((ret = sieve_storage_driver_parse(svinst, &data,
@@ -512,14 +501,10 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 {
 	struct sieve_storage *storage = NULL;
 	const char *set_default, *set_default_name;
-	enum sieve_error error_code;
 	int ret;
 
 	*storage_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	/* Check whether Sieve is disabled for this user */
 	if (!svinst->set->enabled) {
@@ -718,27 +703,20 @@ sieve_storage_get_script_direct(struct sieve_storage *storage, const char *name,
 {
 	int ret;
 
-	*script_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	sieve_storage_clear_error(storage);
-
 	/* Validate script name */
 	if (name != NULL && !sieve_script_name_is_valid(name)) {
 		sieve_storage_set_error(storage,
 			SIEVE_ERROR_BAD_PARAMS,
 			"Invalid script name '%s'.",
 			str_sanitize(name, 80));
-		if (error_code_r != NULL)
-			*error_code_r = storage->error_code;
+		*error_code_r = storage->error_code;
 		return -1;
 	}
 
 	i_assert(storage->v.get_script != NULL);
 	ret = storage->v.get_script(storage, name, script_r);
 	i_assert(ret <= 0);
-	if (error_code_r != NULL)
-		*error_code_r = storage->error_code;
+	*error_code_r = storage->error_code;
 	return ret;
 }
 
@@ -749,6 +727,8 @@ int sieve_storage_get_script(struct sieve_storage *storage, const char *name,
 	struct sieve_instance *svinst = storage->svinst;
 
 	*script_r = NULL;
+	sieve_error_args_init(&error_code_r, NULL);
+	sieve_storage_clear_error(storage);
 
 	if (sieve_storage_get_script_direct(storage, name,
 					    script_r, error_code_r) == 0)
@@ -792,6 +772,8 @@ int sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 	struct sieve_script *script;
 
 	*script_r = NULL;
+	sieve_error_args_init(&error_code_r, NULL);
+	sieve_storage_clear_error(storage);
 
 	if (sieve_storage_get_script(storage, name, &script, error_code_r) < 0)
 		return -1;
@@ -838,11 +820,10 @@ sieve_storage_check_script_direct(struct sieve_storage *storage,
 				  enum sieve_error *error_code_r)
 {
 	struct sieve_script *script;
-	enum sieve_error error_code;
 	int ret;
 
-	if (error_code_r == NULL)
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
+	sieve_storage_clear_error(storage);
 
 	if (sieve_storage_get_script_direct(storage, name,
 					    &script, error_code_r) < 0)
@@ -858,10 +839,9 @@ int sieve_storage_check_script(struct sieve_storage *storage, const char *name,
 			       enum sieve_error *error_code_r)
 {
 	struct sieve_script *script;
-	enum sieve_error error_code;
 
-	if (error_code_r == NULL)
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
+	sieve_storage_clear_error(storage);
 
 	if (sieve_storage_open_script(storage, name, &script, error_code_r) < 0)
 		return (*error_code_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
@@ -931,14 +911,10 @@ int sieve_storage_active_script_open(struct sieve_storage *storage,
 {
 	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_script *script = NULL;
-	enum sieve_error error_code;
 	int ret;
 
 	*script_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
 	sieve_storage_clear_error(storage);
 
 	i_assert(storage->v.active_script_open != NULL);
@@ -948,7 +924,7 @@ int sieve_storage_active_script_open(struct sieve_storage *storage,
 	if (ret == 0 ||
 	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 ||
 	    storage->default_location == NULL) {
-		if (ret < 0 && error_code_r != NULL)
+		if (ret < 0)
 			*error_code_r = storage->error_code;
 		*script_r = script;
 		return ret;
@@ -972,6 +948,8 @@ int sieve_storage_deactivate(struct sieve_storage *storage, time_t mtime)
 	int ret;
 
 	i_assert((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0);
+
+	sieve_storage_clear_error(storage);
 
 	i_assert(storage->v.deactivate != NULL);
 	ret = storage->v.deactivate(storage);
@@ -1014,6 +992,7 @@ int sieve_storage_list_init(struct sieve_storage *storage,
 	struct sieve_storage_list_context *lctx;
 
 	*lctx_r = NULL;
+	sieve_storage_clear_error(storage);
 
 	i_assert(storage->v.list_init != NULL);
 	if (storage->v.list_init(storage, &lctx) < 0)
@@ -1036,6 +1015,8 @@ sieve_storage_list_next(struct sieve_storage_list_context *lctx, bool *active_r)
 			storage->default_location != NULL &&
 			(storage->flags &
 			 SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0);
+
+	sieve_storage_clear_error(storage);
 
 	i_assert(storage->v.list_next != NULL);
 	scriptname = storage->v.list_next(lctx, &script_active);
@@ -1137,6 +1118,8 @@ sieve_storage_save_init(struct sieve_storage *storage, const char *scriptname,
 {
 	struct sieve_storage_save_context *sctx;
 
+	sieve_storage_clear_error(storage);
+
 	if (scriptname != NULL) {
 		/* Validate script name */
 		if (!sieve_script_name_is_valid(scriptname)) {
@@ -1186,6 +1169,8 @@ int sieve_storage_save_continue(struct sieve_storage_save_context *sctx)
 	struct sieve_storage *storage = sctx->storage;
 	int ret;
 
+	sieve_storage_clear_error(storage);
+
 	i_assert(storage->v.save_continue != NULL);
 	ret = storage->v.save_continue(sctx);
 	if (ret < 0)
@@ -1197,6 +1182,8 @@ int sieve_storage_save_finish(struct sieve_storage_save_context *sctx)
 {
 	struct sieve_storage *storage = sctx->storage;
 	int ret;
+
+	sieve_storage_clear_error(storage);
 
 	i_assert(!sctx->finished);
 	sctx->finished = TRUE;
@@ -1233,6 +1220,8 @@ sieve_storage_save_get_tempscript(struct sieve_storage_save_context *sctx)
 	if (sctx->scriptobject != NULL)
 		return sctx->scriptobject;
 
+	sieve_storage_clear_error(storage);
+
 	i_assert(storage->v.save_get_tempscript != NULL);
 	sctx->scriptobject = storage->v.save_get_tempscript(sctx);
 
@@ -1243,8 +1232,12 @@ sieve_storage_save_get_tempscript(struct sieve_storage_save_context *sctx)
 
 bool sieve_storage_save_will_activate(struct sieve_storage_save_context *sctx)
 {
+	struct sieve_storage *storage = sctx->storage;
+
 	if (sctx->scriptname == NULL)
 		return FALSE;
+
+	sieve_storage_clear_error(storage);
 
 	if (sctx->active_scriptname == NULL) {
 		const char *scriptname;
@@ -1275,6 +1268,7 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 
 	storage = sctx->storage;
 	scriptname = sctx->scriptname;
+	sieve_storage_clear_error(storage);
 
 	i_assert(!sctx->failed);
 	i_assert(sctx->finished);
@@ -1378,6 +1372,8 @@ int sieve_storage_save_as_active(struct sieve_storage *storage,
 	struct event *event;
 	int ret;
 
+	sieve_storage_clear_error(storage);
+
 	event = event_create(storage->event);
 	event_set_append_log_prefix(event, "active script: save: ");
 
@@ -1412,6 +1408,8 @@ int sieve_storage_save_as(struct sieve_storage *storage, struct istream *input,
 {
 	struct event *event;
 	int ret;
+
+	sieve_storage_clear_error(storage);
 
 	event = sieve_storage_save_create_event(storage, name);
 

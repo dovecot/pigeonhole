@@ -210,6 +210,9 @@ struct sieve_instance {
  * Errors
  */
 
+void sieve_error_args_init(enum sieve_error **error_code_r,
+			   const char ***error_r);
+
 void sieve_error_create_internal(enum sieve_error *error_code_r,
 				 const char **error_r);
 

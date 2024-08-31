@@ -243,6 +243,7 @@ int sieve_file_storage_active_script_open(struct sieve_storage *storage,
 	int ret;
 
 	*script_r = NULL;
+	sieve_storage_clear_error(storage);
 
 	/* Read the active link */
 	ret = sieve_file_storage_active_read_link(fstorage, &link);
