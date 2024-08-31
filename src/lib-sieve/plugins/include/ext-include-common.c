@@ -558,7 +558,6 @@ int ext_include_generate_include(
 			included = ext_include_binary_script_include(
 				binctx, location, flags, script, NULL);
 			result = 0;
-
 		} else {
 			struct sieve_binary_block *inc_block =
 				sieve_binary_block_create(sbin);
