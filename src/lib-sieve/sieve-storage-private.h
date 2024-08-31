@@ -109,7 +109,7 @@ struct sieve_storage {
 
 	const char *default_name;
 	const char *default_location;
-	struct sieve_storage *default_for;
+	struct sieve_storage *default_storage_for;
 
 	struct mail_namespace *sync_inbox_ns;
 

@@ -589,19 +589,21 @@ sieve_script_copy_from_default(struct sieve_script *script, const char *newname)
 	/* copy from default */
 	if ((ret = sieve_script_open(script, NULL)) < 0 ||
 	    (ret = sieve_script_get_stream(script, &input, NULL)) < 0) {
-		sieve_storage_copy_error(storage->default_for, storage);
+		sieve_storage_copy_error(storage->default_storage_for, storage);
 		return ret;
 	}
 
-	ret = sieve_storage_save_as(storage->default_for, input, newname);
+	ret = sieve_storage_save_as(storage->default_storage_for,
+				    input, newname);
 	if (ret < 0) {
-		sieve_storage_copy_error(storage, storage->default_for);
+		sieve_storage_copy_error(storage, storage->default_storage_for);
 	} else if (sieve_script_is_active(script) > 0) {
 		struct sieve_script *newscript;
 		enum sieve_error error_code;
 
-		if (sieve_storage_open_script(storage->default_for, newname,
-					      &newscript, &error_code) < 0) {
+		if (sieve_storage_open_script(storage->default_storage_for,
+					      newname, &newscript,
+					      &error_code) < 0) {
 			/* Somehow not actually saved */
 			ret = (error_code == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
 		} else if (sieve_script_activate(newscript, (time_t)-1) < 0) {
@@ -615,7 +617,8 @@ sieve_script_copy_from_default(struct sieve_script *script, const char *newname)
 			e_error(storage->event,
 				"Failed to implicitly activate script '%s' "
 				"after rename",	newname);
-			sieve_storage_copy_error(storage->default_for, storage);
+			sieve_storage_copy_error(storage->default_storage_for,
+						 storage);
 		}
 	}
 
@@ -642,7 +645,7 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 
 	i_assert(script->open); // FIXME: auto-open?
 
-	if (storage->default_for == NULL) {
+	if (storage->default_storage_for == NULL) {
 		i_assert((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0);
 
 		/* rename script */
@@ -654,11 +657,11 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 			(void)sieve_storage_sync_script_rename(storage, oldname,
 							       newname);
 		}
-	} else if (sieve_storage_check_script(storage->default_for,
+	} else if (sieve_storage_check_script(storage->default_storage_for,
 					      newname, NULL) > 0) {
 		sieve_script_set_error(script, SIEVE_ERROR_EXISTS,
 			"A sieve script with that name already exists.");
-		sieve_storage_copy_error(storage->default_for, storage);
+		sieve_storage_copy_error(storage->default_storage_for, storage);
 		ret = -1;
 	} else {
 		ret = sieve_script_copy_from_default(script, newname);
@@ -696,9 +699,9 @@ int sieve_script_delete(struct sieve_script *script, bool ignore_active)
 		if (!ignore_active) {
 			sieve_script_set_error(script, SIEVE_ERROR_ACTIVE,
 				"Cannot delete the active Sieve script.");
-			if (storage->default_for != NULL) {
-				sieve_storage_copy_error(storage->default_for,
-							 storage);
+			if (storage->default_storage_for != NULL) {
+				sieve_storage_copy_error(
+					storage->default_storage_for, storage);
 			}
 			return -1;
 		}
@@ -743,11 +746,13 @@ int sieve_script_is_active(struct sieve_script *script)
 	struct sieve_storage *storage = script->storage;
 
 	/* Special handling if this is a default script */
-	if (storage->default_for != NULL) {
+	if (storage->default_storage_for != NULL) {
 		int ret = sieve_storage_active_script_is_default(
-			storage->default_for);
-		if (ret < 0)
-			sieve_storage_copy_error(storage, storage->default_for);
+			storage->default_storage_for);
+		if (ret < 0) {
+			sieve_storage_copy_error(storage,
+						 storage->default_storage_for);
+		}
 		return ret;
 	}
 
@@ -763,7 +768,7 @@ int sieve_script_activate(struct sieve_script *script, time_t mtime)
 
 	i_assert(script->open); // FIXME: auto-open?
 
-	if (storage->default_for == NULL) {
+	if (storage->default_storage_for == NULL) {
 		i_assert((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0);
 
 		i_assert(script->v.activate != NULL);
@@ -789,10 +794,12 @@ int sieve_script_activate(struct sieve_script *script, time_t mtime)
 	} else {
 		/* Activating the default script is equal to deactivating
 		   the storage */
-		ret = sieve_storage_deactivate(storage->default_for,
+		ret = sieve_storage_deactivate(storage->default_storage_for,
 					       (time_t)-1);
-		if (ret < 0)
-			sieve_storage_copy_error(storage, storage->default_for);
+		if (ret < 0) {
+			sieve_storage_copy_error(storage,
+						 storage->default_storage_for);
+		}
 	}
 
 	return ret;
