@@ -599,9 +599,9 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 	if (--storage->refcount != 0)
 		return;
 
-	if (storage->default_for != NULL) {
+	if (storage->default_storage_for != NULL) {
 		i_assert(storage->is_default);
-		sieve_storage_unref(&storage->default_for);
+		sieve_storage_unref(&storage->default_storage_for);
 	}
 
 	sieve_storage_sync_deinit(storage);
@@ -757,7 +757,7 @@ int sieve_storage_get_script(struct sieve_storage *storage, const char *name,
 		return -1;
 
 	script->storage->is_default = TRUE;
-	script->storage->default_for = storage;
+	script->storage->default_storage_for = storage;
 	sieve_storage_ref(storage);
 
 	*script_r = script;
@@ -805,7 +805,7 @@ int sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 		return -1;
 
 	script->storage->is_default = TRUE;
-	script->storage->default_for = storage;
+	script->storage->default_storage_for = storage;
 	sieve_storage_ref(storage);
 
 	*script_r = script;
@@ -960,7 +960,7 @@ int sieve_storage_active_script_open(struct sieve_storage *storage,
 		return -1;
 
 	script->storage->is_default = TRUE;
-	script->storage->default_for = storage;
+	script->storage->default_storage_for = storage;
 	sieve_storage_ref(storage);
 
 	*script_r = script;
