@@ -209,6 +209,8 @@ sieve_parse(struct sieve_script *script, struct sieve_error_handler *ehandler,
 	struct sieve_parser *parser;
 	struct sieve_ast *ast = NULL;
 
+	sieve_error_args_init(&error_code_r, NULL);
+
 	/* Parse */
 	parser = sieve_parser_create(script, ehandler, error_code_r);
 	if (parser == NULL)
@@ -221,12 +223,8 @@ sieve_parse(struct sieve_script *script, struct sieve_error_handler *ehandler,
 
 	sieve_parser_free(&parser);
 
-	if (error_code_r != NULL) {
-		if (ast == NULL)
-			*error_code_r = SIEVE_ERROR_NOT_VALID;
-		else
-			*error_code_r = SIEVE_ERROR_NONE;
-	}
+	if (ast == NULL)
+		*error_code_r = SIEVE_ERROR_NOT_VALID;
 	return ast;
 }
 
@@ -235,20 +233,18 @@ bool sieve_validate(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
 		    enum sieve_error *error_code_r)
 {
 	bool result = TRUE;
-	struct sieve_validator *validator =
-		sieve_validator_create(ast, ehandler, flags);
+	struct sieve_validator *validator;
 
+	sieve_error_args_init(&error_code_r, NULL);
+
+	validator = sieve_validator_create(ast, ehandler, flags);
 	if (!sieve_validator_run(validator))
 		result = FALSE;
 
 	sieve_validator_free(&validator);
 
-	if (error_code_r != NULL) {
-		if (!result)
-			*error_code_r = SIEVE_ERROR_NOT_VALID;
-		else
-			*error_code_r = SIEVE_ERROR_NONE;
-	}
+	if (!result)
+		*error_code_r = SIEVE_ERROR_NOT_VALID;
 	return result;
 }
 
@@ -256,20 +252,18 @@ static struct sieve_binary *
 sieve_generate(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
 	       enum sieve_compile_flags flags, enum sieve_error *error_code_r)
 {
-	struct sieve_generator *generator =
-		sieve_generator_create(ast, ehandler, flags);
+	struct sieve_generator *generator;
 	struct sieve_binary *sbin = NULL;
 
+	sieve_error_args_init(&error_code_r, NULL);
+
+	generator = sieve_generator_create(ast, ehandler, flags);
 	sbin = sieve_generator_run(generator, NULL);
 
 	sieve_generator_free(&generator);
 
-	if (error_code_r != NULL) {
-		if (sbin == NULL)
-			*error_code_r = SIEVE_ERROR_NOT_VALID;
-		else
-			*error_code_r = SIEVE_ERROR_NONE;
-	}
+	if (sbin == NULL)
+		*error_code_r = SIEVE_ERROR_NOT_VALID;
 	return sbin;
 }
 
@@ -285,20 +279,17 @@ int sieve_compile_script(struct sieve_script *script,
 {
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin;
-	enum sieve_error error_code;
+	bool no_error_result = (error_code_r == NULL);
 
 	*sbin_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	/* Parse */
 	ast = sieve_parse(script, ehandler, error_code_r);
 	if (ast == NULL) {
 		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_FOUND:
-			if (error_code_r == NULL) {
+			if (no_error_result) {
 				sieve_error(ehandler, sieve_script_name(script),
 					    "script not found");
 			}
@@ -340,19 +331,19 @@ int sieve_compile(struct sieve_instance *svinst, const char *script_location,
 		  enum sieve_error *error_code_r)
 {
 	struct sieve_script *script;
-	enum sieve_error error_code;
+	bool no_error_result = (error_code_r == NULL);
 
 	*sbin_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	if (sieve_script_create_open(svinst, script_location, script_name,
 				     &script, error_code_r) < 0) {
 		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_FOUND:
-			sieve_error(ehandler, script_name, "script not found");
+			if (no_error_result) {
+				sieve_error(ehandler, script_name,
+					    "script not found");
+			}
 			break;
 		default:
 			sieve_internal_error(ehandler, script_name,
@@ -464,6 +455,7 @@ sieve_open_script_real(struct sieve_script *script,
 	if (ret <= 0) {
 		const char *path = sieve_binary_path(sbin);
 
+		i_assert(error != NULL);
 		if (path != NULL) {
 			e_debug(svinst->event,
 				"Script binary %s cannot be executed",
@@ -495,14 +487,10 @@ int sieve_open_script(struct sieve_script *script,
 		      struct sieve_binary **sbin_r,
 		      enum sieve_error *error_code_r)
 {
-	enum sieve_error error_code;
 	int ret;
 
 	*sbin_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	T_BEGIN {
 		ret = sieve_open_script_real(script, ehandler, flags,
@@ -518,14 +506,11 @@ int sieve_open(struct sieve_instance *svinst, const char *script_location,
 	       enum sieve_error *error_code_r)
 {
 	struct sieve_script *script;
-	enum sieve_error error_code;
+	bool no_error_result = (error_code_r == NULL);
 	int ret;
 
 	*sbin_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	/* First open the scriptfile itself */
 	if (sieve_script_create_open(svinst, script_location, script_name,
@@ -533,7 +518,10 @@ int sieve_open(struct sieve_instance *svinst, const char *script_location,
 		/* Failed */
 		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_FOUND:
-			sieve_error(ehandler, script_name, "script not found");
+			if (no_error_result) {
+				sieve_error(ehandler, script_name,
+					    "script not found");
+			}
 			break;
 		default:
 			sieve_internal_error(ehandler, script_name,
@@ -1018,6 +1006,25 @@ size_t sieve_max_script_size(struct sieve_instance *svinst)
 #define CRITICAL_MSG \
 	"Internal error occurred. Refer to server log for more information."
 #define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
+
+void sieve_error_args_init(enum sieve_error **error_code_r,
+			   const char ***error_r)
+{
+	/* Dummies */
+	static enum sieve_error dummy_error_code = SIEVE_ERROR_NONE;
+	static const char *dummy_error = NULL;
+
+	if (error_code_r != NULL) {
+		if (*error_code_r == NULL)
+			*error_code_r = &dummy_error_code;
+		**error_code_r = SIEVE_ERROR_NONE;
+	}
+	if (error_r != NULL) {
+		if (*error_r == NULL)
+			*error_r = &dummy_error;
+		**error_r = NULL;
+	}
+}
 
 void sieve_error_create_internal(enum sieve_error *error_code_r,
 				 const char **error_r)

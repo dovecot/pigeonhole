@@ -68,12 +68,9 @@ sieve_binary_file_read_header(struct sieve_binary *sbin, int fd,
 			      enum sieve_error *error_code_r)
 {
 	struct sieve_binary_header header;
-	enum sieve_error error_code;
 	ssize_t rret;
 
-	if (error_code_r == NULL)
-		error_code_r = &error_code;
-	*error_code_r = SIEVE_ERROR_NONE;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	rret = pread(fd, &header, sizeof(header), 0);
 	if (rret == 0) {
@@ -158,15 +155,13 @@ sieve_binary_file_write_header(struct sieve_binary *sbin, int fd,
 	if (wret < 0) {
 		e_error(sbin->event, "update: "
 			"failed to write to binary: %m");
-		if (error_code_r != NULL)
-			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	} else if (wret != sizeof(*header)) {
 		e_error(sbin->event, "update: "
 			"header written partially %zd/%zu",
 			wret, sizeof(*header));
-		if (error_code_r != NULL)
-			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 	return 0;
@@ -417,8 +412,7 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 	struct sieve_binary_extension_reg *const *regs;
 	unsigned int ext_count, i;
 
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	/* Check whether saving is necessary */
 	if (!update && sbin->path != NULL && strcmp(sbin->path, path) == 0) {
@@ -438,14 +432,12 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 				"failed to create temporary file: %s",
 				eacces_error_get_creating("open",
 							  str_c(temp_path)));
-			if (error_code_r != NULL)
-				*error_code_r = SIEVE_ERROR_NO_PERMISSION;
+			*error_code_r = SIEVE_ERROR_NO_PERMISSION;
 		} else {
 			e_error(sbin->event, "save: "
 				"failed to create temporary file: "
 				"open(%s) failed: %m", str_c(temp_path));
-			if (error_code_r != NULL)
-				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		}
 		return -1;
 	}
@@ -457,8 +449,10 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 
 		if (binext != NULL && binext->binary_pre_save != NULL &&
 		    !binext->binary_pre_save(regs[i]->extension, sbin,
-					     regs[i]->context, error_code_r))
+					     regs[i]->context, error_code_r)) {
+			i_assert(*error_code_r != SIEVE_ERROR_NONE);
 			return -1;
+		}
 	}
 
 	/* Save binary */
@@ -466,8 +460,7 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 	stream = o_stream_create_fd(fd, 0);
 	if (!sieve_binary_save_to_stream(sbin, stream)) {
 		result = -1;
-		if (error_code_r != NULL)
-			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		o_stream_ignore_last_errors(stream);
 	}
 	o_stream_destroy(&stream);
@@ -485,15 +478,13 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 			e_error(sbin->event, "save: "
 				"failed to save binary: %s",
 				eacces_error_get_creating("rename", path));
-			if (error_code_r != NULL)
-				*error_code_r = SIEVE_ERROR_NO_PERMISSION;
+			*error_code_r = SIEVE_ERROR_NO_PERMISSION;
 		} else {
 			e_error(sbin->event, "save: "
 				"failed to save binary: "
 				"rename(%s, %s) failed: %m",
 				str_c(temp_path), path);
-			if (error_code_r != NULL)
-				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		}
 		result = -1;
 	}
@@ -521,6 +512,7 @@ sieve_binary_do_save(struct sieve_binary *sbin, const char *path, bool update,
 			    !binext->binary_post_save(regs[i]->extension, sbin,
 						      regs[i]->context,
 						      error_code_r)) {
+				i_assert(*error_code_r != SIEVE_ERROR_NONE);
 				result = -1;
 				break;
 			}
@@ -558,28 +550,22 @@ sieve_binary_fd_open(struct sieve_binary *sbin, const char *path,
 {
 	int fd;
 
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-
 	fd = open(path, open_flags);
 	if (fd < 0) {
 		switch (errno) {
 		case ENOENT:
-			if (error_code_r != NULL)
-				*error_code_r = SIEVE_ERROR_NOT_FOUND;
+			*error_code_r = SIEVE_ERROR_NOT_FOUND;
 			break;
 		case EACCES:
 			e_error(sbin->event, "open: "
 				"failed to open: %s",
 				eacces_error_get("open", path));
-			if (error_code_r != NULL)
-				*error_code_r = SIEVE_ERROR_NO_PERMISSION;
+			*error_code_r = SIEVE_ERROR_NO_PERMISSION;
 			break;
 		default:
 			e_error(sbin->event, "open: "
 				"failed to open: open(%s) failed: %m", path);
-			if (error_code_r != NULL)
-				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			break;
 		}
 		return -1;
@@ -595,23 +581,27 @@ sieve_binary_file_open(struct sieve_binary *sbin, const char *path,
 	int fd, ret = 0;
 	struct stat st;
 
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	fd = sieve_binary_fd_open(sbin, path, O_RDONLY, error_code_r);
 	if (fd < 0)
 		return -1;
 
 	if (fstat(fd, &st) < 0) {
-		if (errno != ENOENT)
+		if (errno == ENOENT)
+			*error_code_r = SIEVE_ERROR_NOT_FOUND;
+		else {
 			e_error(sbin->event, "open: fstat(%s) failed: %m",
 				path);
+			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+		}
 		ret = -1;
 	}
 
 	if (ret == 0 && !S_ISREG(st.st_mode)) {
 		e_error(sbin->event, "open: "
 			"binary is not a regular file");
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		ret = -1;
 	}
 
@@ -881,8 +871,7 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_code_r)
 	}
 
 	if (!result) {
-		if (error_code_r != NULL)
-			*error_code_r = SIEVE_ERROR_NOT_VALID;
+		*error_code_r = SIEVE_ERROR_NOT_VALID;
 		return FALSE;
 	}
 
@@ -903,8 +892,7 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_code_r)
 	} T_END;
 
 	if (!result) {
-		if (error_code_r != NULL)
-			*error_code_r = SIEVE_ERROR_NOT_VALID;
+		*error_code_r = SIEVE_ERROR_NOT_VALID;
 		return FALSE;
 	}
 	return TRUE;
@@ -921,6 +909,7 @@ int sieve_binary_open(struct sieve_instance *svinst, const char *path,
 
 	i_assert(script == NULL || sieve_script_svinst(script) == svinst);
 	*sbin_r = NULL;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	/* Create binary object */
 	sbin = sieve_binary_create(svinst, script);
@@ -953,8 +942,7 @@ int sieve_binary_open(struct sieve_instance *svinst, const char *path,
 		    !binext->binary_open(regs[i]->extension, sbin,
 					 regs[i]->context)) {
 			/* Extension thinks its corrupt */
-			if (error_code_r != NULL)
-				*error_code_r = SIEVE_ERROR_NOT_VALID;
+			*error_code_r = SIEVE_ERROR_NOT_VALID;
 			sieve_binary_unref(&sbin);
 			return -1;
 		}
@@ -968,9 +956,8 @@ int sieve_binary_check_executable(struct sieve_binary *sbin,
 				  enum sieve_error *error_code_r,
 				  const char **client_error_r)
 {
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
 	*client_error_r = NULL;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	if (HAS_ALL_BITS(sbin->header.flags,
 			 SIEVE_BINARY_FLAG_RESOURCE_LIMIT)) {
@@ -978,8 +965,7 @@ int sieve_binary_check_executable(struct sieve_binary *sbin,
 			"Binary execution is blocked: "
 			"Cumulative resource usage limit exceeded "
 			"(resource limit flag is set)");
-		if (error_code_r != NULL)
-			*error_code_r = SIEVE_ERROR_RESOURCE_LIMIT;
+		*error_code_r = SIEVE_ERROR_RESOURCE_LIMIT;
 		*client_error_r = "cumulative resource usage limit exceeded";
 		return 0;
 	}
@@ -1025,12 +1011,9 @@ sieve_binary_file_do_update_resource_usage(
 int sieve_binary_file_update_resource_usage(struct sieve_binary *sbin,
 					    enum sieve_error *error_code_r)
 {
-	enum sieve_error error_code;
 	int fd, ret = 0;
 
-	if (error_code_r == NULL)
-		error_code_r = &error_code;
-	*error_code_r = SIEVE_ERROR_NONE;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	sieve_binary_file_close(&sbin->file);
 
@@ -1042,11 +1025,14 @@ int sieve_binary_file_update_resource_usage(struct sieve_binary *sbin,
 	}
 
 	fd = sieve_binary_fd_open(sbin, sbin->path, O_RDWR, error_code_r);
-	if (fd < 0)
+	if (fd < 0) {
+		i_assert(*error_code_r != SIEVE_ERROR_NONE);
 		return -1;
+	}
 
 	ret = sieve_binary_file_do_update_resource_usage(sbin, fd,
 							 error_code_r);
+	i_assert(ret == 0 || *error_code_r != SIEVE_ERROR_NONE);
 
 	if (close(fd) < 0) {
 		e_error(sbin->event, "update: "

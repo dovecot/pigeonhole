@@ -721,16 +721,12 @@ int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 {
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
-	enum sieve_error error_code;
 	int ret;
 
 	i_assert(path != NULL);
 
 	*fstorage_r = NULL;
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	sieve_error_args_init(&error_code_r, NULL);
 
 	ret = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
 				  "", flags, FALSE, &storage);
