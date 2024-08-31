@@ -149,15 +149,6 @@ struct sieve_storage_list_context {
 };
 
 /*
- * Script sequence
- */
-
-struct sieve_script_sequence {
-	struct sieve_storage *storage;
-	void *storage_data;
-};
-
-/*
  * Saving scripts
  */
 
