@@ -909,9 +909,9 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_code_r)
 	return TRUE;
 }
 
-struct sieve_binary *
-sieve_binary_open(struct sieve_instance *svinst, const char *path,
-		  struct sieve_script *script, enum sieve_error *error_code_r)
+int sieve_binary_open(struct sieve_instance *svinst, const char *path,
+		      struct sieve_script *script, struct sieve_binary **sbin_r,
+		      enum sieve_error *error_code_r)
 {
 	struct sieve_binary_extension_reg *const *regs;
 	unsigned int ext_count, i;
@@ -919,6 +919,7 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 	struct sieve_binary_file *file;
 
 	i_assert(script == NULL || sieve_script_svinst(script) == svinst);
+	*sbin_r = NULL;
 
 	/* Create binary object */
 	sbin = sieve_binary_create(svinst, script);
@@ -926,7 +927,7 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 
 	if (sieve_binary_file_open(sbin, path, &file, error_code_r) < 0) {
 		sieve_binary_unref(&sbin);
-		return NULL;
+		return -1;
 	}
 
 	sbin->file = file;
@@ -937,7 +938,7 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 
 	if (!_sieve_binary_open(sbin, error_code_r)) {
 		sieve_binary_unref(&sbin);
-		return NULL;
+		return -1;
 	}
 
 	sieve_binary_activate(sbin);
@@ -954,10 +955,12 @@ sieve_binary_open(struct sieve_instance *svinst, const char *path,
 			if (error_code_r != NULL)
 				*error_code_r = SIEVE_ERROR_NOT_VALID;
 			sieve_binary_unref(&sbin);
-			return NULL;
+			return -1;
 		}
 	}
-	return sbin;
+
+	*sbin_r = sbin;
+	return 0;
 }
 
 int sieve_binary_check_executable(struct sieve_binary *sbin,

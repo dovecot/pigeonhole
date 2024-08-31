@@ -230,12 +230,15 @@ sieve_dict_script_binary_load(struct sieve_script *script,
 {
 	struct sieve_dict_script *dscript =
 		container_of(script, struct sieve_dict_script, script);
+	struct sieve_binary *sbin;
 
 	if (sieve_dict_script_get_binpath(dscript) == NULL)
 		return NULL;
 
-	return sieve_binary_open(script->storage->svinst, dscript->binpath,
-				 script, error_code_r);
+	if (sieve_binary_open(script->storage->svinst, dscript->binpath,
+			      script, &sbin, error_code_r) < 0)
+		return NULL;
+	return sbin;
 }
 
 static int

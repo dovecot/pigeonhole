@@ -538,9 +538,12 @@ sieve_file_script_binary_load(struct sieve_script *script,
 	struct sieve_file_script *fscript =
 		container_of(script, struct sieve_file_script, script);
 	struct sieve_instance *svinst = script->storage->svinst;
+	struct sieve_binary *sbin;
 
-	return sieve_binary_open(svinst, fscript->binpath, script,
-				 error_code_r);
+	if (sieve_binary_open(svinst, fscript->binpath, script,
+			      &sbin, error_code_r) < 0)
+		return NULL;
+	return sbin;
 }
 
 static int
