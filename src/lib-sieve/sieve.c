@@ -375,7 +375,11 @@ struct sieve_binary *
 sieve_load(struct sieve_instance *svinst, const char *bin_path,
 	   enum sieve_error *error_code_r)
 {
-	return sieve_binary_open(svinst, bin_path, NULL, error_code_r);
+	struct sieve_binary *sbin;
+
+	if (sieve_binary_open(svinst, bin_path, NULL, &sbin, error_code_r) < 0)
+		return NULL;
+	return sbin;
 }
 
 static struct sieve_binary *

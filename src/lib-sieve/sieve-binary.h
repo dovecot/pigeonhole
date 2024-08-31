@@ -79,9 +79,9 @@ int sieve_binary_save(struct sieve_binary *sbin, const char *path, bool update,
  * Loading the binary
  */
 
-struct sieve_binary *
-sieve_binary_open(struct sieve_instance *svinst, const char *path,
-		  struct sieve_script *script, enum sieve_error *error_code_r);
+int sieve_binary_open(struct sieve_instance *svinst, const char *path,
+		      struct sieve_script *script, struct sieve_binary **sbin_r,
+		      enum sieve_error *error_code_r);
 bool sieve_binary_up_to_date(struct sieve_binary *sbin,
 			     enum sieve_compile_flags cpflags);
 

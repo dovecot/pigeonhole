@@ -253,12 +253,15 @@ sieve_ldap_script_binary_load(struct sieve_script *script,
 	struct sieve_storage *storage = script->storage;
 	struct sieve_ldap_script *lscript =
 		container_of(script, struct sieve_ldap_script, script);
+	struct sieve_binary *sbin;
 
 	if (sieve_ldap_script_get_binpath(lscript) == NULL)
 		return NULL;
 
-	return sieve_binary_open(storage->svinst, lscript->binpath, script,
-				 error_code_r);
+	if (sieve_binary_open(storage->svinst, lscript->binpath, script,
+			      &sbin, error_code_r) < 0)
+		return NULL;
+	return sbin;
 }
 
 static int
