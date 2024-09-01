@@ -121,9 +121,6 @@ struct sieve_storage {
 	bool is_default:1;
 };
 
-struct event *
-sieve_storage_event_create(struct sieve_instance *svinst,
-			   const struct sieve_storage *storage_class);
 int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 			const struct sieve_storage *storage_class,
 			const char *data, enum sieve_storage_flags flags,
