@@ -19,8 +19,7 @@ static int cmd_sieve_list_run(struct doveadm_sieve_cmd_context *_ctx)
 	const char *scriptname;
 	bool active;
 
-	lctx = sieve_storage_list_init(storage);
-	if (lctx == NULL) {
+	if (sieve_storage_list_init(storage, &lctx) < 0) {
 		e_error(event, "Listing Sieve scripts failed: %s",
 			sieve_storage_get_last_error(storage, &error_code));
 		doveadm_sieve_cmd_failed_error(_ctx, error_code);

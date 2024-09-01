@@ -25,8 +25,7 @@ bool cmd_listscripts(struct client_command_context *cmd)
 	if (!client_read_no_args(cmd))
 		return FALSE;
 
-	lctx = sieve_storage_list_init(client->storage);
-	if (lctx == NULL) {
+	if (sieve_storage_list_init(client->storage, &lctx) < 0) {
 		client_command_storage_error(
 			cmd, "Failed to list scripts");
 		return TRUE;

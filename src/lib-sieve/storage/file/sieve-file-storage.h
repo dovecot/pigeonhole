@@ -78,8 +78,8 @@ int sieve_file_storage_active_script_get_last_change(
 
 /* Listing */
 
-struct sieve_storage_list_context *
-sieve_file_storage_list_init(struct sieve_storage *storage);
+int sieve_file_storage_list_init(struct sieve_storage *storage,
+				 struct sieve_storage_list_context **lctx_r);
 const char *
 sieve_file_storage_list_next(struct sieve_storage_list_context *lctx,
 			     bool *active);

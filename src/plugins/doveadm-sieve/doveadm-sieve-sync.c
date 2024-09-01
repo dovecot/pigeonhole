@@ -625,8 +625,7 @@ sieve_attribute_iter_script_init(struct sieve_mailbox_attribute_iter *siter)
 	if (ret <= 0)
 		return ret;
 
-	siter->sieve_list = sieve_storage_list_init(svstorage);
-	if (siter->sieve_list == NULL) {
+	if (sieve_storage_list_init(svstorage, &siter->sieve_list) < 0) {
 		mail_storage_set_critical(
 			siter->iter.box->storage,
 			"Failed to iterate sieve scripts: %s",
