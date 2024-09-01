@@ -115,6 +115,22 @@ sieve_storage_class_find(struct sieve_instance *svinst, const char *name)
  * Storage instance
  */
 
+struct event *
+sieve_storage_event_create(struct sieve_instance *svinst,
+			   const struct sieve_storage *storage_class)
+{
+	struct event *event;
+
+	event = event_create(svinst->event);
+	event_add_category(event, &event_category_sieve_storage);
+	event_add_str(event, "driver", storage_class->driver_name);
+	event_set_append_log_prefix(
+		event, t_strdup_printf("%s storage: ",
+				       storage_class->driver_name));
+
+	return event;
+}
+
 static const char *split_next_arg(const char *const **_args)
 {
 	const char *const *args = *_args;
@@ -249,22 +265,6 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 	}
 
 	return 0;
-}
-
-struct event *
-sieve_storage_event_create(struct sieve_instance *svinst,
-			   const struct sieve_storage *storage_class)
-{
-	struct event *event;
-
-	event = event_create(svinst->event);
-	event_add_category(event, &event_category_sieve_storage);
-	event_add_str(event, "driver", storage_class->driver_name);
-	event_set_append_log_prefix(
-		event, t_strdup_printf("%s storage: ",
-				       storage_class->driver_name));
-
-	return event;
 }
 
 int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
