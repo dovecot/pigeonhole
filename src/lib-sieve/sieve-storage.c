@@ -1254,6 +1254,28 @@ bool sieve_storage_save_will_activate(struct sieve_storage_save_context *sctx)
 		strcmp(sctx->scriptname, sctx->active_scriptname) == 0);
 }
 
+static int
+sieve_storage_save_is_activating_default(
+	struct sieve_storage_save_context *sctx)
+{
+	struct sieve_storage *storage = sctx->storage;
+
+	if (storage->default_name == NULL || storage->default_location == NULL)
+		return 0;
+	if ((storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0)
+		return 0;
+	if (!sieve_storage_save_will_activate(sctx))
+		return 0;
+
+	if (strcmp(sctx->scriptname, storage->default_name) != 0 ||
+	    !sieve_storage_save_will_activate(sctx))
+		return 0;
+	if (sieve_storage_check_script_direct(storage, storage->default_name,
+					      NULL) > 0)
+		return 0;
+	return 1;
+}
+
 int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 {
 	struct sieve_storage_save_context *sctx = *_sctx;
@@ -1275,14 +1297,10 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 	i_assert(sctx->scriptname != NULL);
 
 	/* Check whether we're replacing the default active script */
-	if (storage->default_name != NULL &&
-	    storage->default_location != NULL &&
-	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
-	    strcmp(sctx->scriptname, storage->default_name) == 0 &&
-	    sieve_storage_save_will_activate(sctx) &&
-	    sieve_storage_check_script_direct(storage, storage->default_name,
-					      NULL) <= 0)
-		default_activate = TRUE;
+	ret = sieve_storage_save_is_activating_default(sctx);
+	if (ret < 0)
+		return -1;
+	default_activate = (ret > 0);
 
 	sieve_storage_save_cleanup(sctx);
 
