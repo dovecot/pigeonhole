@@ -96,16 +96,16 @@ struct sieve_storage {
 	const struct sieve_storage *storage_class;
 	struct sieve_storage_vfuncs v;
 
+	const char *data;
+	const char *location;
+	const char *script_name;
+	const char *bin_path;
+
 	uint64_t max_scripts;
 	uint64_t max_storage;
 
 	char *error;
 	enum sieve_error error_code;
-
-	const char *data;
-	const char *location;
-	const char *script_name;
-	const char *bin_path;
 
 	const char *default_name;
 	const char *default_location;
