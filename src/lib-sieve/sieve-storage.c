@@ -132,7 +132,7 @@ sieve_storage_create_event(struct sieve_instance *svinst,
 	event_add_category(event, &event_category_sieve_storage);
 	event_add_str(event, "driver", driver_name);
 	event_set_append_log_prefix(
-		event, t_strdup_printf("%s storage: ", driver_name));
+		event, t_strdup_printf("storage: %s: ", driver_name));
 
 	return event;
 }
