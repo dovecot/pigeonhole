@@ -9,6 +9,7 @@
 #include "hash.h"
 #include "array.h"
 #include "eacces-error.h"
+#include "mkdir-parents.h"
 #include "istream.h"
 
 #include "sieve-common.h"
@@ -503,6 +504,31 @@ bool sieve_script_binary_dump_metadata(struct sieve_script *script,
 	return result;
 }
 
+int sieve_script_binary_load_default(struct sieve_script *script,
+				     const char *path,
+				     struct sieve_binary **sbin_r,
+				     enum sieve_error *error_code_r)
+{
+	struct sieve_instance *svinst = script->storage->svinst;
+	enum sieve_error error_code;
+
+	if (path == NULL) {
+		sieve_script_set_error(
+			script, SIEVE_ERROR_NOT_POSSIBLE,
+			"Cannot load script binary for this storage");
+		*error_code_r = script->storage->error_code;
+		return -1;
+	}
+
+	if (sieve_binary_open(svinst, path, script, sbin_r, &error_code) < 0) {
+		sieve_script_set_error(script, error_code,
+				       "Failed to load script binary");
+		*error_code_r = script->storage->error_code;
+		return -1;
+	}
+	return 0;
+}
+
 int sieve_script_binary_load(struct sieve_script *script,
 			     struct sieve_binary **sbin_r,
 			     enum sieve_error *error_code_r)
@@ -523,6 +549,42 @@ int sieve_script_binary_load(struct sieve_script *script,
 	i_assert(ret <= 0);
 	i_assert(ret < 0 || *sbin_r != NULL);
 	return ret;
+}
+
+int sieve_script_binary_save_default(struct sieve_script *script ATTR_UNUSED,
+				     struct sieve_binary *sbin,
+				     const char *path, bool update,
+				     mode_t save_mode,
+				     enum sieve_error *error_code_r)
+{
+	struct sieve_storage *storage = script->storage;
+	enum sieve_error error_code;
+	int ret;
+
+	if (path == NULL) {
+		sieve_script_set_error(
+			script, SIEVE_ERROR_NOT_POSSIBLE,
+			"Cannot save script binary for this storage");
+		*error_code_r = script->storage->error_code;
+		return -1;
+	}
+
+	if (storage->bin_path != NULL &&
+	    str_begins_with(path, storage->bin_path) &&
+	    sieve_storage_setup_bin_path(
+		script->storage, mkdir_get_executable_mode(save_mode)) < 0) {
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+		return -1;
+	}
+
+	ret = sieve_binary_save(sbin, path, update, save_mode, &error_code);
+	if (ret < 0) {
+		sieve_script_set_error(script, error_code,
+				       "Failed to save script binary");
+		*error_code_r = script->storage->error_code;
+		return -1;
+	}
+	return 0;
 }
 
 int sieve_script_binary_save(struct sieve_script *script,

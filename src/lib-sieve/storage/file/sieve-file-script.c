@@ -537,10 +537,9 @@ sieve_file_script_binary_load(struct sieve_script *script,
 {
 	struct sieve_file_script *fscript =
 		container_of(script, struct sieve_file_script, script);
-	struct sieve_instance *svinst = script->storage->svinst;
 
-	return sieve_binary_open(svinst, fscript->bin_path, script,
-				 sbin_r, error_code_r);
+	return sieve_script_binary_load_default(script, fscript->bin_path,
+						sbin_r, error_code_r);
 }
 
 static int
@@ -548,16 +547,12 @@ sieve_file_script_binary_save(struct sieve_script *script,
 			      struct sieve_binary *sbin, bool update,
 			      enum sieve_error *error_code_r)
 {
-	struct sieve_storage *storage = script->storage;
 	struct sieve_file_script *fscript =
 		container_of(script, struct sieve_file_script, script);
 
-	if (storage->bin_path != NULL &&
-	    sieve_storage_setup_bin_path(storage, 0700) < 0)
-		return -1;
-
-	return sieve_binary_save(sbin, fscript->bin_path, update,
-				 (fscript->st.st_mode & 0777), error_code_r);
+	return sieve_script_binary_save_default(
+		script, sbin, fscript->bin_path, update,
+		(fscript->st.st_mode & 0777), error_code_r);
 }
 
 static const char *

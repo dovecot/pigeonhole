@@ -75,6 +75,20 @@ void sieve_script_init(struct sieve_script *script,
 		       const char *location, const char *name);
 
 /*
+ * Binary
+ */
+
+int sieve_script_binary_load_default(struct sieve_script *script,
+				     const char *path,
+				     struct sieve_binary **sbin_r,
+				     enum sieve_error *error_code_r);
+int sieve_script_binary_save_default(struct sieve_script *script,
+				     struct sieve_binary *sbin,
+				     const char *path, bool update,
+				     mode_t save_mode,
+				     enum sieve_error *error_code_r);
+
+/*
  * Built-in script drivers
  */
 
