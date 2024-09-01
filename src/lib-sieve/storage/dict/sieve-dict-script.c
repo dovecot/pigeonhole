@@ -232,11 +232,9 @@ sieve_dict_script_binary_load(struct sieve_script *script,
 	struct sieve_dict_script *dscript =
 		container_of(script, struct sieve_dict_script, script);
 
-	if (sieve_dict_script_get_bin_path(dscript) == NULL)
-		return -1;
-
-	return sieve_binary_open(script->storage->svinst, dscript->bin_path,
-				 script, sbin_r, error_code_r);
+	return sieve_script_binary_load_default(
+		script, sieve_dict_script_get_bin_path(dscript),
+		sbin_r, error_code_r);
 }
 
 static int
@@ -247,13 +245,9 @@ sieve_dict_script_binary_save(struct sieve_script *script,
 	struct sieve_dict_script *dscript =
 		container_of(script, struct sieve_dict_script, script);
 
-	if (sieve_dict_script_get_bin_path(dscript) == NULL)
-		return 0;
-	if (sieve_storage_setup_bin_path(script->storage, 0700) < 0)
-		return -1;
-
-	return sieve_binary_save(sbin, dscript->bin_path, update, 0600,
-				 error_code_r);
+	return sieve_script_binary_save_default(
+		script, sbin, sieve_dict_script_get_bin_path(dscript),
+		update, 0600, error_code_r);
 }
 
 static int
