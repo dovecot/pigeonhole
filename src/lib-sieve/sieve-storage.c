@@ -123,16 +123,28 @@ bool sieve_storage_class_exists(struct sieve_instance *svinst,
 
 static struct event *
 sieve_storage_create_event(struct sieve_instance *svinst,
-			   struct event *event_parent, const char *driver_name)
+			   struct event *event_parent)
 {
 	struct event *event;
 
 	event = event_create(event_parent == NULL ?
 			     svinst->event : event_parent);
 	event_add_category(event, &event_category_sieve_storage);
+	event_set_append_log_prefix(event, "storage: ");
+
+	return event;
+}
+
+static struct event *
+sieve_storage_create_driver_event(struct event *event_parent,
+				  const char *driver_name)
+{
+	struct event *event;
+
+	event = event_create(event_parent);
 	event_add_str(event, "driver", driver_name);
-	event_set_append_log_prefix(
-		event, t_strdup_printf("storage: %s: ", driver_name));
+	event_set_append_log_prefix(event,
+		t_strdup_printf("%s: ", driver_name));
 
 	return event;
 }
@@ -296,8 +308,10 @@ int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 		storage->event = event;
 		event_ref(storage->event);
 	} else {
-		storage->event = sieve_storage_create_event(
-			svinst, svinst->event, storage_class->driver_name);
+		event = sieve_storage_create_event(svinst, svinst->event);
+		storage->event = sieve_storage_create_driver_event(
+			event, storage_class->driver_name);
+		event_unref(&event);
 	}
 
 	*storage_r = storage;
@@ -314,7 +328,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 	struct sieve_storage *storage;
 	const char *const *options;
 	const char *location;
-	struct event *event;
+	struct event *storage_event, *event;
 	enum sieve_error error_code;
 	int ret;
 
@@ -326,8 +340,10 @@ sieve_storage_init(struct sieve_instance *svinst,
 
 	i_assert(storage_class->v.init != NULL);
 
-	event = sieve_storage_create_event(svinst, svinst->event,
-					   storage_class->driver_name);
+	storage_event = sieve_storage_create_event(svinst, svinst->event);
+	event = sieve_storage_create_driver_event(storage_event,
+						  storage_class->driver_name);
+	event_unref(&storage_event);
 
 	if ((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
 	    !storage_class->allows_synchronization) {
