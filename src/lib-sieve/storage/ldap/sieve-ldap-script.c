@@ -237,10 +237,10 @@ sieve_ldap_script_get_binpath(struct sieve_ldap_script *lscript)
 	struct sieve_storage *storage = script->storage;
 
 	if (lscript->binpath == NULL) {
-		if (storage->bin_dir == NULL)
+		if (storage->bin_path == NULL)
 			return NULL;
 		lscript->binpath = p_strconcat(
-			script->pool, storage->bin_dir, "/",
+			script->pool, storage->bin_path, "/",
 			sieve_binfile_from_name(script->name), NULL);
 	}
 	return lscript->binpath;
