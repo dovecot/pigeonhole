@@ -997,18 +997,20 @@ int sieve_storage_active_script_get_last_change(struct sieve_storage *storage,
  * Listing scripts
  */
 
-struct sieve_storage_list_context *
-sieve_storage_list_init(struct sieve_storage *storage)
+int sieve_storage_list_init(struct sieve_storage *storage,
+			    struct sieve_storage_list_context **lctx_r)
 {
 	struct sieve_storage_list_context *lctx;
 
+	*lctx_r = NULL;
+
 	i_assert(storage->v.list_init != NULL);
-	lctx = storage->v.list_init(storage);
+	if (storage->v.list_init(storage, &lctx) < 0)
+		return -1;
 
-	if (lctx != NULL)
-		lctx->storage = storage;
-
-	return lctx;
+	lctx->storage = storage;
+	*lctx_r = lctx;
+	return 0;
 }
 
 const char *

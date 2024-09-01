@@ -22,8 +22,8 @@ struct sieve_file_list_context {
 	DIR *dirp;
 };
 
-struct sieve_storage_list_context *
-sieve_file_storage_list_init(struct sieve_storage *storage)
+int sieve_file_storage_list_init(struct sieve_storage *storage,
+				 struct sieve_storage_list_context **lctx_r)
 {
 	struct sieve_file_storage *fstorage =
 		container_of(storage, struct sieve_file_storage, storage);
@@ -54,7 +54,7 @@ sieve_file_storage_list_init(struct sieve_storage *storage)
 				"opendir(%s) failed: %m", fstorage->path);
 			break;
 		}
-		return NULL;
+		return -1;
 	}
 
 	T_BEGIN {
@@ -78,9 +78,10 @@ sieve_file_storage_list_init(struct sieve_storage *storage)
 			e_error(storage->event,
 				"closedir(%s) failed: %m", fstorage->path);
 		}
-		return NULL;
+		return -1;
 	}
-	return &flctx->context;
+	*lctx_r = &flctx->context;
+	return 0;
 }
 
 const char *

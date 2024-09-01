@@ -54,8 +54,8 @@ struct sieve_storage_vfuncs {
 					     time_t *last_change_r);
 
 	/* listing scripts */
-	struct sieve_storage_list_context *(*list_init)(
-		struct sieve_storage *storage);
+	int (*list_init)(struct sieve_storage *storage,
+			 struct sieve_storage_list_context **lctx_r);
 	const char *(*list_next)(struct sieve_storage_list_context *lctx,
 				 bool *active_r);
 	int (*list_deinit)(struct sieve_storage_list_context *lctx);

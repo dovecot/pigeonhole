@@ -80,8 +80,8 @@ int sieve_storage_active_script_get_last_change(struct sieve_storage *storage,
 struct sieve_storage_list_context;
 
 /* Create a context for listing the scripts in the storage */
-struct sieve_storage_list_context *
-sieve_storage_list_init(struct sieve_storage *storage);
+int sieve_storage_list_init(struct sieve_storage *storage,
+			    struct sieve_storage_list_context **lctx_r);
 /* Get the next script in the storage. */
 const char *sieve_storage_list_next(struct sieve_storage_list_context *lctx,
 				    bool *active_r) ATTR_NULL(2);
