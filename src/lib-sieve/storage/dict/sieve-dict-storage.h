@@ -28,8 +28,6 @@ int sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
 				struct dict **dict_r,
 				enum sieve_error *error_code_r);
 
-struct sieve_script *
-sieve_dict_storage_active_script_open(struct sieve_storage *storage);
 int sieve_dict_storage_active_script_get_name(struct sieve_storage *storage,
 					      const char **name_r);
 

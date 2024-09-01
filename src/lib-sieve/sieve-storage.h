@@ -66,9 +66,9 @@ sieve_storage_get_script_sequence(struct sieve_storage *storage,
 int sieve_storage_active_script_get_name(struct sieve_storage *storage,
 					 const char **name_r);
 
-struct sieve_script *
-sieve_storage_active_script_open(struct sieve_storage *storage,
-				 enum sieve_error *error_code_r);
+int sieve_storage_active_script_open(struct sieve_storage *storage,
+				     struct sieve_script **script_r,
+				     enum sieve_error *error_code_r);
 
 int sieve_storage_active_script_get_last_change(struct sieve_storage *storage,
 						time_t *last_change_r);

@@ -517,15 +517,12 @@ int imap_filter_sieve_open_personal(struct imap_filter_sieve_context *sctx,
 						   error_code_r, error_r) < 0)
 		return -1;
 
-	int ret = 0;
+	int ret;
 
-	if (name == NULL) {
-		script = sieve_storage_active_script_open(storage, NULL);
-		if (script == NULL)
-			ret = -1;
-	} else {
+	if (name == NULL)
+		ret = sieve_storage_active_script_open(storage, &script, NULL);
+	else
 		ret = sieve_storage_open_script(storage, name, &script, NULL);
-	}
 	if (ret < 0) {
 		*error_r = sieve_storage_get_last_error(storage, &error_code);
 

@@ -497,8 +497,7 @@ sieve_attribute_get_active_script(struct mail_storage *storage,
 		return ret;
 	}
 
-	script = sieve_storage_active_script_open(svstorage, NULL);
-	if (script == NULL)
+	if (sieve_storage_active_script_open(svstorage, &script, NULL) < 0)
 		return 0;
 
 	ret = sieve_attribute_retrieve_script(storage, svstorage, script, TRUE,

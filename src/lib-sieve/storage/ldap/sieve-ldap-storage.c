@@ -128,8 +128,9 @@ sieve_ldap_storage_get_script(struct sieve_storage *storage, const char *name,
  * Active script
  */
 
-struct sieve_script *
-sieve_ldap_storage_active_script_open(struct sieve_storage *storage)
+static int
+sieve_ldap_storage_active_script_open(struct sieve_storage *storage,
+				      struct sieve_script **script_r)
 {
 	struct sieve_ldap_storage *lstorage =
 		container_of(storage, struct sieve_ldap_storage, storage);
@@ -139,10 +140,11 @@ sieve_ldap_storage_active_script_open(struct sieve_storage *storage)
 	if (sieve_script_open(&lscript->script, NULL) < 0) {
 		struct sieve_script *script = &lscript->script;
 		sieve_script_unref(&script);
-		return NULL;
+		return -1;
 	}
 
-	return &lscript->script;
+	*script_r = &lscript->script;
+	return 0;
 }
 
 int sieve_ldap_storage_active_script_get_name(struct sieve_storage *storage,

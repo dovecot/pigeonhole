@@ -47,8 +47,8 @@ struct sieve_storage_vfuncs {
 	/* active script */
 	int (*active_script_get_name)(struct sieve_storage *storage,
 				      const char **name_r);
-	struct sieve_script *(*active_script_open)(
-		struct sieve_storage *storage);
+	int (*active_script_open)(struct sieve_storage *storage,
+				  struct sieve_script **script_r);
 	int (*deactivate)(struct sieve_storage *storage);
 	int (*active_script_get_last_change)(struct sieve_storage *storage,
 					     time_t *last_change_r);
