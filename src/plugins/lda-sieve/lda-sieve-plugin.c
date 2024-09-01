@@ -722,10 +722,9 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	if (ret == 0 && error_code == SIEVE_ERROR_NOT_POSSIBLE)
 		return 0;
 	if (ret > 0) {
-		srctx->main_script = sieve_storage_active_script_open(
-			main_storage, &error_code);
-
-		if (srctx->main_script == NULL) {
+		if (sieve_storage_active_script_open(main_storage,
+						     &srctx->main_script,
+						     &error_code) < 0) {
 			switch (error_code) {
 			case SIEVE_ERROR_NOT_FOUND:
 				e_debug(sieve_get_event(svinst),

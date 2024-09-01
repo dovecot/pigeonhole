@@ -913,34 +913,47 @@ int sieve_storage_active_script_is_default(struct sieve_storage *storage)
 	return (ret < 0 ? -1 : (is_default ? 1 : 0));
 }
 
-struct sieve_script *
-sieve_storage_active_script_open(struct sieve_storage *storage,
-				 enum sieve_error *error_code_r)
+int sieve_storage_active_script_open(struct sieve_storage *storage,
+				     struct sieve_script **script_r,
+				     enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = storage->svinst;
-	struct sieve_script *script;
+	struct sieve_script *script = NULL;
+	enum sieve_error error_code;
+	int ret;
+
+	*script_r = NULL;
+	if (error_code_r != NULL)
+		*error_code_r = SIEVE_ERROR_NONE;
+	else
+		error_code_r = &error_code;
+	sieve_storage_clear_error(storage);
 
 	i_assert(storage->v.active_script_open != NULL);
-	script = storage->v.active_script_open(storage);
+	ret = storage->v.active_script_open(storage, &script);
+	i_assert(ret <= 0);
 
-	if (script != NULL ||
+	if (ret == 0 ||
 	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 ||
 	    storage->default_location == NULL) {
+		i_assert(script != NULL);
 		if (error_code_r != NULL)
 			*error_code_r = storage->error_code;
-		return script;
+		*script_r = script;
+		return ret;
 	}
 
 	/* Try default script location */
 	if (sieve_script_create_open(svinst, storage->default_location, NULL,
 				     &script, error_code_r) < 0)
-		return NULL;
+		return -1;
 
 	script->storage->is_default = TRUE;
 	script->storage->default_for = storage;
 	sieve_storage_ref(storage);
 
-	return script;
+	*script_r = script;
+	return 0;
 }
 
 int sieve_storage_deactivate(struct sieve_storage *storage, time_t mtime)

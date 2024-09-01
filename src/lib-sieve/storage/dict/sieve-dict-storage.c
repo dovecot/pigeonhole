@@ -147,8 +147,9 @@ sieve_dict_storage_get_script(struct sieve_storage *storage, const char *name,
  * Active script
  */
 
-struct sieve_script *
-sieve_dict_storage_active_script_open(struct sieve_storage *storage)
+static int
+sieve_dict_storage_active_script_open(struct sieve_storage *storage,
+				      struct sieve_script **script_r)
 {
 	struct sieve_dict_storage *dstorage =
 		container_of(storage, struct sieve_dict_storage, storage);
@@ -158,10 +159,11 @@ sieve_dict_storage_active_script_open(struct sieve_storage *storage)
 	if (sieve_script_open(&dscript->script, NULL) < 0) {
 		struct sieve_script *script = &dscript->script;
 		sieve_script_unref(&script);
-		return NULL;
+		return -1;
 	}
 
-	return &dscript->script;
+	*script_r = &dscript->script;
+	return 0;
 }
 
 int sieve_dict_storage_active_script_get_name(struct sieve_storage *storage,

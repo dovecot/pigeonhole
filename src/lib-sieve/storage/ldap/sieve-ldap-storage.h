@@ -71,8 +71,6 @@ struct sieve_ldap_storage {
 	struct ldap_connection *conn;
 };
 
-struct sieve_script *
-sieve_ldap_storage_active_script_open(struct sieve_storage *storage);
 int sieve_ldap_storage_active_script_get_name(struct sieve_storage *storage,
 					      const char **name_r);
 

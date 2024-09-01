@@ -63,8 +63,8 @@ bool sieve_file_storage_active_rescue_regular(
 
 int sieve_file_storage_active_script_get_name(struct sieve_storage *storage,
 					      const char **name_r);
-struct sieve_script *
-sieve_file_storage_active_script_open(struct sieve_storage *storage);
+int sieve_file_storage_active_script_open(struct sieve_storage *storage,
+					  struct sieve_script **script_r);
 
 int sieve_file_storage_active_script_get_file(
 	struct sieve_file_storage *fstorage, const char **file_r);
