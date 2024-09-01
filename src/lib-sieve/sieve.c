@@ -403,8 +403,7 @@ sieve_open_script_real(struct sieve_script *script,
 	sieve_resource_usage_init(&rusage);
 
 	/* Try to open the matching binary */
-	sbin = sieve_script_binary_load(script, error_code_r);
-	if (sbin != NULL) {
+	if (sieve_script_binary_load(script, &sbin, error_code_r) == 0) {
 		sieve_binary_get_resource_usage(sbin, &rusage);
 
 		/* Ok, it exists; now let's see if it is up to date */

@@ -28,8 +28,9 @@ struct sieve_script_vfuncs {
 				     struct sieve_dumptime_env *denv,
 				     struct sieve_binary_block *sblock,
 				     sieve_size_t *offset);
-	struct sieve_binary *(*binary_load)(struct sieve_script *script,
-					    enum sieve_error *error_code_r);
+	int (*binary_load)(struct sieve_script *script,
+			   struct sieve_binary **sbin_r,
+			   enum sieve_error *error_code_r);
 	int (*binary_save)(struct sieve_script *script,
 			   struct sieve_binary *sbin, bool update,
 			   enum sieve_error *error_code_r);
