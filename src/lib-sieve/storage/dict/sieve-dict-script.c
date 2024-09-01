@@ -215,10 +215,10 @@ sieve_dict_script_get_binpath(struct sieve_dict_script *dscript)
 	struct sieve_storage *storage = script->storage;
 
 	if (dscript->binpath == NULL) {
-		if (storage->bin_dir == NULL)
+		if (storage->bin_path == NULL)
 			return NULL;
 		dscript->binpath = p_strconcat(
-			script->pool, storage->bin_dir, "/",
+			script->pool, storage->bin_path, "/",
 			sieve_binfile_from_name(script->name), NULL);
 	}
 	return dscript->binpath;

@@ -238,7 +238,7 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 					}
 				}
 
-				storage->bin_dir = p_strdup(storage->pool, value);
+				storage->bin_path = p_strdup(storage->pool, value);
 			} else {
 				array_append(&options, &option, 1);
 			}
@@ -616,31 +616,31 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 
 int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
 {
-	const char *bin_dir = storage->bin_dir;
+	const char *bin_path = storage->bin_path;
 	struct stat st;
 
-	if (bin_dir == NULL)
+	if (bin_path == NULL)
 		return -1;
 
-	if (stat(bin_dir, &st) == 0)
+	if (stat(bin_path, &st) == 0)
 		return 0;
 
 	if (errno == EACCES) {
 		e_error(storage->event,
 			"Failed to setup directory for binaries: "
-			"%s", eacces_error_get("stat", bin_dir));
+			"%s", eacces_error_get("stat", bin_path));
 		return -1;
 	} else if (errno != ENOENT) {
 		e_error(storage->event,
 			"Failed to setup directory for binaries: "
 			"stat(%s) failed: %m",
-			bin_dir);
+			bin_path);
 		return -1;
 	}
 
-	if (mkdir_parents(bin_dir, mode) == 0) {
+	if (mkdir_parents(bin_path, mode) == 0) {
 		e_debug(storage->event,
-			"Created directory for binaries: %s", bin_dir);
+			"Created directory for binaries: %s", bin_path);
 		return 1;
 	}
 
@@ -654,11 +654,11 @@ int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
 	case EACCES:
 		e_error(storage->event,
 			"%s", eacces_error_get_creating("mkdir_parents_chgrp",
-							bin_dir));
+							bin_path));
 		break;
 	default:
 		e_error(storage->event,
-			"mkdir_parents_chgrp(%s) failed: %m", bin_dir);
+			"mkdir_parents_chgrp(%s) failed: %m", bin_path);
 		break;
 	}
 

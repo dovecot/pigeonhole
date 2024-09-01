@@ -393,8 +393,8 @@ sieve_file_script_open(struct sieve_script *script,
 		if (success) {
 			const char *bpath, *bfile, *bprefix;
 
-			if (storage->bin_dir != NULL) {
-				bpath = storage->bin_dir;
+			if (storage->bin_path != NULL) {
+				bpath = storage->bin_path;
 				bfile = sieve_binfile_from_name(name);
 				bprefix = name;
 
@@ -554,7 +554,7 @@ sieve_file_script_binary_save(struct sieve_script *script,
 	struct sieve_file_script *fscript =
 		container_of(script, struct sieve_file_script, script);
 
-	if (storage->bin_dir != NULL &&
+	if (storage->bin_path != NULL &&
 	    sieve_storage_setup_bindir(storage, 0700) < 0)
 		return -1;
 

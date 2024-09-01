@@ -105,7 +105,7 @@ struct sieve_storage {
 	const char *data;
 	const char *location;
 	const char *script_name;
-	const char *bin_dir;
+	const char *bin_path;
 
 	const char *default_name;
 	const char *default_location;
