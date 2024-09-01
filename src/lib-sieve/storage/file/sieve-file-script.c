@@ -531,19 +531,17 @@ sieve_file_script_binary_read_metadata(struct sieve_script *script,
 	return 1;
 }
 
-static struct sieve_binary *
+static int
 sieve_file_script_binary_load(struct sieve_script *script,
+			      struct sieve_binary **sbin_r,
 			      enum sieve_error *error_code_r)
 {
 	struct sieve_file_script *fscript =
 		container_of(script, struct sieve_file_script, script);
 	struct sieve_instance *svinst = script->storage->svinst;
-	struct sieve_binary *sbin;
 
-	if (sieve_binary_open(svinst, fscript->binpath, script,
-			      &sbin, error_code_r) < 0)
-		return NULL;
-	return sbin;
+	return sieve_binary_open(svinst, fscript->binpath, script,
+				 sbin_r, error_code_r);
 }
 
 static int

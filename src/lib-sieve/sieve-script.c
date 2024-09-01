@@ -516,16 +516,28 @@ bool sieve_script_binary_dump_metadata(struct sieve_script *script,
 	return result;
 }
 
-struct sieve_binary *
-sieve_script_binary_load(struct sieve_script *script,
-			 enum sieve_error *error_code_r)
+int sieve_script_binary_load(struct sieve_script *script,
+			     struct sieve_binary **sbin_r,
+			     enum sieve_error *error_code_r)
 {
+	enum sieve_error error_code;
+	int ret;
+
+	*sbin_r = NULL;
+	if (error_code_r != NULL)
+		*error_code_r = SIEVE_ERROR_NONE;
+	else
+		error_code_r = &error_code;
+
 	if (script->v.binary_load == NULL) {
 		*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
-		return NULL;
+		return -1;
 	}
 
-	return script->v.binary_load(script, error_code_r);
+	ret = script->v.binary_load(script, sbin_r, error_code_r);
+	i_assert(ret <= 0);
+	i_assert(ret < 0 || *sbin_r != NULL);
+	return ret;
 }
 
 int sieve_script_binary_save(struct sieve_script *script,
