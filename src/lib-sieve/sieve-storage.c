@@ -115,8 +115,8 @@ sieve_storage_class_find(struct sieve_instance *svinst, const char *name)
  * Storage instance
  */
 
-struct event *
-sieve_storage_event_create(struct sieve_instance *svinst,
+static struct event *
+sieve_storage_create_event(struct sieve_instance *svinst,
 			   const struct sieve_storage *storage_class)
 {
 	struct event *event;
@@ -291,7 +291,7 @@ int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 		event_ref(storage->event);
 	} else {
 		storage->event =
-			sieve_storage_event_create(svinst, storage_class);
+			sieve_storage_create_event(svinst, storage_class);
 	}
 
 	*storage_r = storage;
@@ -320,7 +320,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 
 	i_assert(storage_class->v.init != NULL);
 
-	event = sieve_storage_event_create(svinst, storage_class);
+	event = sieve_storage_create_event(svinst, storage_class);
 
 	if ((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
 	    !storage_class->allows_synchronization) {
