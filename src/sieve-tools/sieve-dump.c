@@ -45,8 +45,7 @@ int main(int argc, char **argv)
 	int exit_status = EXIT_SUCCESS;
 	int c;
 
-	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv,
-				     "DhP:x:", FALSE);
+	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv, "h", FALSE);
 
 	outfile = NULL;
 
