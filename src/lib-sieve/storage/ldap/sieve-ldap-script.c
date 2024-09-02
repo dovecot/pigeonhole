@@ -54,8 +54,7 @@ sieve_ldap_script_init(struct sieve_ldap_storage *lstorage, const char *name)
 }
 
 static int
-sieve_ldap_script_open(struct sieve_script *script,
-		       enum sieve_error *error_code_r)
+sieve_ldap_script_open(struct sieve_script *script)
 {
 	struct sieve_ldap_script *lscript =
 		container_of(script, struct sieve_ldap_script, script);
@@ -67,7 +66,6 @@ sieve_ldap_script_open(struct sieve_script *script,
 	if (sieve_ldap_db_connect(lstorage->conn) < 0) {
 		sieve_storage_set_critical(
 			storage, "Failed to connect to LDAP database");
-		*error_code_r = storage->error_code;
 		return -1;
 	}
 
@@ -76,12 +74,10 @@ sieve_ldap_script_open(struct sieve_script *script,
 	if (ret <= 0) {
 		if (ret == 0) {
 			e_debug(script->event, "Script entry not found");
-			sieve_script_set_error(script, SIEVE_ERROR_NOT_FOUND,
-					       "Sieve script not found");
+			sieve_script_set_not_found_error(script, NULL);
 		} else {
 			sieve_script_set_internal_error(script);
 		}
-		*error_code_r = script->storage->error_code;
 		return -1;
 	}
 
@@ -90,8 +86,7 @@ sieve_ldap_script_open(struct sieve_script *script,
 
 static int
 sieve_ldap_script_get_stream(struct sieve_script *script,
-			     struct istream **stream_r,
-			     enum sieve_error *error_code_r)
+			     struct istream **stream_r)
 {
 	struct sieve_ldap_script *lscript =
 		container_of(script, struct sieve_ldap_script, script);
@@ -106,12 +101,10 @@ sieve_ldap_script_get_stream(struct sieve_script *script,
 	if (ret <= 0) {
 		if (ret == 0) {
 			e_debug(script->event, "Script attribute not found");
-			sieve_script_set_error(script, SIEVE_ERROR_NOT_FOUND,
-					       "Sieve script not found");
+			sieve_script_set_not_found_error(script, NULL);
 		} else {
 			sieve_script_set_internal_error(script);
 		}
-		*error_code_r = script->storage->error_code;
 		return -1;
 	}
 	return 0;
@@ -248,28 +241,25 @@ sieve_ldap_script_get_bin_path(struct sieve_ldap_script *lscript)
 
 static int
 sieve_ldap_script_binary_load(struct sieve_script *script,
-			      struct sieve_binary **sbin_r,
-			      enum sieve_error *error_code_r)
+			      struct sieve_binary **sbin_r)
 {
 	struct sieve_ldap_script *lscript =
 		container_of(script, struct sieve_ldap_script, script);
 
 	return sieve_script_binary_load_default(
-		script, sieve_ldap_script_get_bin_path(lscript),
-		sbin_r, error_code_r);
+		script, sieve_ldap_script_get_bin_path(lscript), sbin_r);
 }
 
 static int
 sieve_ldap_script_binary_save(struct sieve_script *script,
-			      struct sieve_binary *sbin, bool update,
-			      enum sieve_error *error_code_r)
+			      struct sieve_binary *sbin, bool update)
 {
 	struct sieve_ldap_script *lscript =
 		container_of(script, struct sieve_ldap_script, script);
 
 	return sieve_script_binary_save_default(
 		script, sbin, sieve_ldap_script_get_bin_path(lscript),
-		update, 0600, error_code_r);
+		update, 0600);
 }
 
 static int
@@ -312,8 +302,7 @@ struct sieve_ldap_script_sequence {
 	bool done:1;
 };
 
-int sieve_ldap_script_sequence_init(struct sieve_script_sequence *sseq,
-				    enum sieve_error *error_code_r ATTR_UNUSED)
+int sieve_ldap_script_sequence_init(struct sieve_script_sequence *sseq)
 {
 	struct sieve_ldap_script_sequence *lseq = NULL;
 
@@ -325,8 +314,7 @@ int sieve_ldap_script_sequence_init(struct sieve_script_sequence *sseq,
 }
 
 int sieve_ldap_script_sequence_next(struct sieve_script_sequence *sseq,
-				    struct sieve_script **script_r,
-				    enum sieve_error *error_code_r)
+				    struct sieve_script **script_r)
 {
 	struct sieve_ldap_script_sequence *lseq = sseq->storage_data;
 	struct sieve_storage *storage = sseq->storage;
@@ -339,7 +327,7 @@ int sieve_ldap_script_sequence_next(struct sieve_script_sequence *sseq,
 	lseq->done = TRUE;
 
 	lscript = sieve_ldap_script_init(lstorage, storage->script_name);
-	if (sieve_script_open(&lscript->script, error_code_r) < 0) {
+	if (sieve_script_open(&lscript->script, NULL) < 0) {
 		struct sieve_script *script = &lscript->script;
 
 		sieve_script_unref(&script);

@@ -24,8 +24,7 @@ struct sieve_dict_storage {
 };
 
 int sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
-				struct dict **dict_r,
-				enum sieve_error *error_code_r);
+				struct dict **dict_r);
 
 int sieve_dict_storage_active_script_get_name(struct sieve_storage *storage,
 					      const char **name_r);
@@ -53,11 +52,9 @@ sieve_dict_script_init(struct sieve_dict_storage *dstorage, const char *name);
  * Script sequence
  */
 
-int sieve_dict_script_sequence_init(struct sieve_script_sequence *sseq,
-				    enum sieve_error *error_code_r);
+int sieve_dict_script_sequence_init(struct sieve_script_sequence *sseq);
 int sieve_dict_script_sequence_next(struct sieve_script_sequence *sseq,
-				    struct sieve_script **script_r,
-				    enum sieve_error *error_code_r);
+				    struct sieve_script **script_r);
 void sieve_dict_script_sequence_destroy(struct sieve_script_sequence *sseq);
 
 #endif

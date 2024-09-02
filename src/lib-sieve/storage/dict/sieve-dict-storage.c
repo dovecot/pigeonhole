@@ -73,10 +73,8 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 	return 0;
 }
 
-int
-sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
-			    struct dict **dict_r,
-			    enum sieve_error *error_code_r)
+int sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
+				struct dict **dict_r)
 {
 	struct sieve_storage *storage = &dstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
@@ -93,7 +91,6 @@ sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
 			sieve_storage_set_critical(storage,
 				"Failed to initialize dict with data '%s' for user '%s': %s",
 				dstorage->uri, svinst->username, error);
-			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 	}

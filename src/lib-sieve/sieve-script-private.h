@@ -11,12 +11,9 @@
 struct sieve_script_vfuncs {
 	void (*destroy)(struct sieve_script *script);
 
-	int (*open)(struct sieve_script *script,
-		    enum sieve_error *error_code_r);
-
+	int (*open)(struct sieve_script *script);
 	int (*get_stream)(struct sieve_script *script,
-			  struct istream **stream_r,
-			  enum sieve_error *error_code_r);
+			  struct istream **stream_r);
 
 	/* binary */
 	int (*binary_read_metadata)(struct sieve_script *_script,
@@ -29,11 +26,9 @@ struct sieve_script_vfuncs {
 				     struct sieve_binary_block *sblock,
 				     sieve_size_t *offset);
 	int (*binary_load)(struct sieve_script *script,
-			   struct sieve_binary **sbin_r,
-			   enum sieve_error *error_code_r);
+			   struct sieve_binary **sbin_r);
 	int (*binary_save)(struct sieve_script *script,
-			   struct sieve_binary *sbin, bool update,
-			   enum sieve_error *error_code_r);
+			   struct sieve_binary *sbin, bool update);
 	const char *(*binary_get_prefix)(struct sieve_script *script);
 
 	/* management */
@@ -80,13 +75,11 @@ void sieve_script_init(struct sieve_script *script,
 
 int sieve_script_binary_load_default(struct sieve_script *script,
 				     const char *path,
-				     struct sieve_binary **sbin_r,
-				     enum sieve_error *error_code_r);
+				     struct sieve_binary **sbin_r);
 int sieve_script_binary_save_default(struct sieve_script *script,
 				     struct sieve_binary *sbin,
 				     const char *path, bool update,
-				     mode_t save_mode,
-				     enum sieve_error *error_code_r);
+				     mode_t save_mode);
 
 /*
  * Built-in script drivers

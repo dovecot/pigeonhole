@@ -59,11 +59,9 @@ sieve_ldap_script_init(struct sieve_ldap_storage *lstorage, const char *name);
  * Script sequence
  */
 
-int sieve_ldap_script_sequence_init(struct sieve_script_sequence *sseq,
-				    enum sieve_error *error_code_r);
+int sieve_ldap_script_sequence_init(struct sieve_script_sequence *sseq);
 int sieve_ldap_script_sequence_next(struct sieve_script_sequence *sseq,
-				    struct sieve_script **script_r,
-				    enum sieve_error *error_code_r);
+				    struct sieve_script **script_r);
 void sieve_ldap_script_sequence_destroy(struct sieve_script_sequence *sseq);
 
 #endif
