@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 	int ret, c;
 
 	sieve_tool = sieve_tool_init("testsuite", &argc, &argv,
-				     "d:t:T:EFDP:", TRUE);
+				     "d:t:T:EF", TRUE);
 
 	/* Parse arguments */
 	dumpfile = tracefile = NULL;
