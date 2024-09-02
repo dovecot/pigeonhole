@@ -178,10 +178,14 @@ int sieve_script_open(struct sieve_script *script,
 	if (script->open)
 		return 0;
 
-	ret = script->v.open(script, error_code_r);
+	ret = script->v.open(script);
 	i_assert(ret <= 0);
-	if (ret < 0)
+	if (ret < 0) {
+		i_assert(storage->error_code != SIEVE_ERROR_NONE);
+		i_assert(storage->error != NULL);
+		*error_code_r = storage->error_code;
 		return -1;
+	}
 
 	i_assert(script->location != NULL);
 	i_assert(script->name != NULL);
@@ -319,11 +323,12 @@ int sieve_script_get_stream(struct sieve_script *script,
 	i_assert(script->open);
 
 	T_BEGIN {
-		ret = script->v.get_stream(script, &script->stream,
-					   error_code_r);
+		ret = script->v.get_stream(script, &script->stream);
 	} T_END;
 
 	if (ret < 0) {
+		*error_code_r = storage->error_code;
+
 		struct event_passthrough *e =
 			event_create_passthrough(script->event)->
 			add_str("error", storage->error)->
@@ -506,8 +511,7 @@ bool sieve_script_binary_dump_metadata(struct sieve_script *script,
 
 int sieve_script_binary_load_default(struct sieve_script *script,
 				     const char *path,
-				     struct sieve_binary **sbin_r,
-				     enum sieve_error *error_code_r)
+				     struct sieve_binary **sbin_r)
 {
 	struct sieve_instance *svinst = script->storage->svinst;
 	enum sieve_error error_code;
@@ -516,14 +520,12 @@ int sieve_script_binary_load_default(struct sieve_script *script,
 		sieve_script_set_error(
 			script, SIEVE_ERROR_NOT_POSSIBLE,
 			"Cannot load script binary for this storage");
-		*error_code_r = script->storage->error_code;
 		return -1;
 	}
 
 	if (sieve_binary_open(svinst, path, script, sbin_r, &error_code) < 0) {
 		sieve_script_set_error(script, error_code,
 				       "Failed to load script binary");
-		*error_code_r = script->storage->error_code;
 		return -1;
 	}
 	return 0;
@@ -541,21 +543,27 @@ int sieve_script_binary_load(struct sieve_script *script,
 	sieve_storage_clear_error(storage);
 
 	if (script->v.binary_load == NULL) {
-		*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
-		return -1;
+		sieve_script_set_error(
+			script, SIEVE_ERROR_NOT_POSSIBLE,
+			"Cannot load script binary for this storage type");
+		ret = -1;
+	} else {
+		ret = script->v.binary_load(script, sbin_r);
+		i_assert(ret <= 0);
+		i_assert(ret < 0 || *sbin_r != NULL);
 	}
 
-	ret = script->v.binary_load(script, sbin_r, error_code_r);
-	i_assert(ret <= 0);
-	i_assert(ret < 0 || *sbin_r != NULL);
-	return ret;
+	if (ret < 0) {
+		*error_code_r = script->storage->error_code;
+		return -1;
+	}
+	return 0;
 }
 
 int sieve_script_binary_save_default(struct sieve_script *script ATTR_UNUSED,
 				     struct sieve_binary *sbin,
 				     const char *path, bool update,
-				     mode_t save_mode,
-				     enum sieve_error *error_code_r)
+				     mode_t save_mode)
 {
 	struct sieve_storage *storage = script->storage;
 	enum sieve_error error_code;
@@ -565,23 +573,19 @@ int sieve_script_binary_save_default(struct sieve_script *script ATTR_UNUSED,
 		sieve_script_set_error(
 			script, SIEVE_ERROR_NOT_POSSIBLE,
 			"Cannot save script binary for this storage");
-		*error_code_r = script->storage->error_code;
 		return -1;
 	}
 
 	if (storage->bin_path != NULL &&
 	    str_begins_with(path, storage->bin_path) &&
 	    sieve_storage_setup_bin_path(
-		script->storage, mkdir_get_executable_mode(save_mode)) < 0) {
-		*error_code_r = script->storage->error_code;
+		script->storage, mkdir_get_executable_mode(save_mode)) < 0)
 		return -1;
-	}
 
 	ret = sieve_binary_save(sbin, path, update, save_mode, &error_code);
 	if (ret < 0) {
 		sieve_script_set_error(script, error_code,
 				       "Failed to save script binary");
-		*error_code_r = script->storage->error_code;
 		return -1;
 	}
 	return 0;
@@ -593,6 +597,7 @@ int sieve_script_binary_save(struct sieve_script *script,
 {
 	struct sieve_storage *storage = script->storage;
 	struct sieve_script *bin_script = sieve_binary_script(sbin);
+	int ret;
 
 	sieve_error_args_init(&error_code_r, NULL);
 	sieve_storage_clear_error(storage);
@@ -600,11 +605,19 @@ int sieve_script_binary_save(struct sieve_script *script,
 	i_assert(bin_script == NULL || sieve_script_equals(bin_script, script));
 
 	if (script->v.binary_save == NULL) {
-		*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
-		return -1;
+		sieve_script_set_error(
+			script, SIEVE_ERROR_NOT_POSSIBLE,
+			"Cannot save script binary for this storage type");
+		ret = -1;
+	} else {
+		ret = script->v.binary_save(script, sbin, update);
 	}
 
-	return script->v.binary_save(script, sbin, update, error_code_r);
+	if (ret < 0) {
+		*error_code_r = script->storage->error_code;
+		return -1;
+	}
+	return 0;
 }
 
 const char *sieve_script_binary_get_prefix(struct sieve_script *script)
@@ -952,7 +965,8 @@ int sieve_script_sequence_create(struct sieve_instance *svinst,
 	sseq->storage = storage;
 
 	i_assert(storage->v.script_sequence_init != NULL);
-        ret = storage->v.script_sequence_init(sseq, error_code_r);
+        ret = storage->v.script_sequence_init(sseq);
+	*error_code_r = storage->error_code;
 
 	*sseq_r = sseq;
 	return ret;
@@ -963,13 +977,16 @@ int sieve_script_sequence_next(struct sieve_script_sequence *sseq,
 			       enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = sseq->storage;
+	int ret;
 
 	*script_r = NULL;
 	sieve_error_args_init(&error_code_r, NULL);
 	sieve_storage_clear_error(storage);
 
 	i_assert(storage->v.script_sequence_next != NULL);
-	return storage->v.script_sequence_next(sseq, script_r, error_code_r);
+	ret = storage->v.script_sequence_next(sseq, script_r);
+	*error_code_r = storage->error_code;
+	return ret;
 }
 
 void sieve_script_sequence_free(struct sieve_script_sequence **_sseq)

@@ -172,11 +172,9 @@ const char *sieve_file_script_get_path(const struct sieve_script *script);
  * Script sequence
  */
 
-int sieve_file_script_sequence_init(struct sieve_script_sequence *sseq,
-				    enum sieve_error *error_code_r);
+int sieve_file_script_sequence_init(struct sieve_script_sequence *sseq);
 int sieve_file_script_sequence_next(struct sieve_script_sequence *sseq,
-				    struct sieve_script **script_r,
-				    enum sieve_error *error_code_r);
+				    struct sieve_script **script_r);
 void sieve_file_script_sequence_destroy(struct sieve_script_sequence *sseq);
 
 #endif
