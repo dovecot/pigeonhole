@@ -185,24 +185,27 @@ int sieve_file_script_init_from_name(struct sieve_file_storage *fstorage,
 	return 0;
 }
 
-struct sieve_file_script *
-sieve_file_script_open_from_name(struct sieve_file_storage *fstorage,
-				 const char *name)
+int sieve_file_script_open_from_name(struct sieve_file_storage *fstorage,
+				     const char *name,
+				     struct sieve_file_script **fscript_r)
 {
 	struct sieve_file_script *fscript;
 	enum sieve_error error_code;
 
+	*fscript_r = NULL;
+
 	if (sieve_file_script_init_from_name(fstorage, name, &fscript) < 0)
-		return NULL;
+		return -1;
 
 	if (sieve_script_open(&fscript->script, &error_code) < 0) {
 		struct sieve_script *script = &fscript->script;
 
 		sieve_script_unref(&script);
-		return NULL;
+		return -1;
 	}
 
-	return fscript;
+	*fscript_r = fscript;
+	return 0;
 }
 
 struct sieve_file_script *
