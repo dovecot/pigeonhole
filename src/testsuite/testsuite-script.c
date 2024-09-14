@@ -42,7 +42,7 @@ _testsuite_script_compile(const struct sieve_runtime_env *renv,
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
 			    "compile script '%s'", script);
 
-	script_path = sieve_file_script_get_dirpath(renv->script);
+	script_path = sieve_file_script_get_dir_path(renv->script);
 	if (script_path == NULL)
 		return NULL;
 

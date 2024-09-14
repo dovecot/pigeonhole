@@ -119,7 +119,7 @@ bool sieve_script_is_open(const struct sieve_script *script) ATTR_PURE;
 bool sieve_script_is_default(const struct sieve_script *script) ATTR_PURE;
 
 const char *
-sieve_file_script_get_dirpath(const struct sieve_script *script) ATTR_PURE;
+sieve_file_script_get_dir_path(const struct sieve_script *script) ATTR_PURE;
 const char *
 sieve_file_script_get_path(const struct sieve_script *script) ATTR_PURE;
 

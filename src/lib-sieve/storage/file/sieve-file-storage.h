@@ -128,7 +128,7 @@ struct sieve_file_script {
 	struct stat lnk_st;
 
 	const char *path;
-	const char *dirpath;
+	const char *dir_path;
 	const char *filename;
 	const char *bin_path;
 	const char *bin_prefix;
@@ -162,7 +162,7 @@ int sieve_file_script_open_from_path(struct sieve_file_storage *fstorage,
 /* Return directory where script resides in. Returns NULL if this is not a file
    script.
  */
-const char *sieve_file_script_get_dirpath(const struct sieve_script *script);
+const char *sieve_file_script_get_dir_path(const struct sieve_script *script);
 
 /* Return full path to file script. Returns NULL if this is not a file script.
  */
