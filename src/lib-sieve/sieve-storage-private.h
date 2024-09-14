@@ -129,7 +129,7 @@ int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 			const char *data, enum sieve_storage_flags flags,
 			bool main, struct sieve_storage **storage_r);
 
-int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode);
+int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode);
 
 /*
  * Active script

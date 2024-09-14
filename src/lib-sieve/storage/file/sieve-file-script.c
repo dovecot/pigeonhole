@@ -555,7 +555,7 @@ sieve_file_script_binary_save(struct sieve_script *script,
 		container_of(script, struct sieve_file_script, script);
 
 	if (storage->bin_path != NULL &&
-	    sieve_storage_setup_bindir(storage, 0700) < 0)
+	    sieve_storage_setup_bin_path(storage, 0700) < 0)
 		return -1;
 
 	return sieve_binary_save(
