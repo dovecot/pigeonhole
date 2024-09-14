@@ -865,13 +865,16 @@ sieve_file_storage_get_script(struct sieve_storage *storage, const char *name,
 	struct sieve_file_storage *fstorage =
 		container_of(storage, struct sieve_file_storage, storage);
 	struct sieve_file_script *fscript;
+	int ret;
 
 	T_BEGIN {
-		fscript = sieve_file_script_init_from_name(fstorage, name);
+		ret = sieve_file_script_init_from_name(fstorage, name,
+						       &fscript);
 	} T_END;
 
-	if (fscript == NULL)
+	if (ret < 0)
 		return -1;
+	i_assert(fscript != NULL);
 	*script_r = &fscript->script;
 	return 0;
 }
