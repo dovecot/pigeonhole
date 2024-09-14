@@ -307,7 +307,7 @@ sieve_file_script_open(struct sieve_script *script,
 		container_of(storage, struct sieve_file_storage, storage);
 	pool_t pool = script->pool;
 	const char *filename, *name, *path;
-	const char *dirpath, *basename, *binpath, *binprefix;
+	const char *dirpath, *basename, *bin_path, *binprefix;
 	struct stat st, lnk_st;
 	bool success = TRUE;
 	int ret = 0;
@@ -405,13 +405,13 @@ sieve_file_script_open(struct sieve_script *script,
 			}
 
 			if (*bpath == '\0') {
-				binpath = bfile;
+				bin_path = bfile;
 				binprefix = bprefix;
 			} else if (bpath[strlen(bpath)-1] == '/') {
-				binpath = t_strconcat(bpath, bfile, NULL);
+				bin_path = t_strconcat(bpath, bfile, NULL);
 				binprefix = t_strconcat(bpath, bprefix, NULL);
 			} else {
-				binpath = t_strconcat(bpath, "/", bfile, NULL);
+				bin_path = t_strconcat(bpath, "/", bfile, NULL);
 				binprefix = t_strconcat(bpath, "/", bprefix, NULL);
 			}
 
@@ -420,7 +420,7 @@ sieve_file_script_open(struct sieve_script *script,
 			fscript->path = p_strdup(pool, path);
 			fscript->filename = p_strdup(pool, filename);
 			fscript->dirpath = p_strdup(pool, dirpath);
-			fscript->binpath = p_strdup(pool, binpath);
+			fscript->bin_path = p_strdup(pool, bin_path);
 			fscript->binprefix = p_strdup(pool, binprefix);
 
 			fscript->script.location = fscript->path;
@@ -541,7 +541,7 @@ sieve_file_script_binary_load(struct sieve_script *script,
 		container_of(script, struct sieve_file_script, script);
 	struct sieve_instance *svinst = script->storage->svinst;
 
-	return sieve_binary_open(svinst, fscript->binpath, script,
+	return sieve_binary_open(svinst, fscript->bin_path, script,
 				 sbin_r, error_code_r);
 }
 
@@ -559,7 +559,7 @@ sieve_file_script_binary_save(struct sieve_script *script,
 		return -1;
 
 	return sieve_binary_save(
-		sbin, fscript->binpath, update,
+		sbin, fscript->bin_path, update,
 		(fscript->st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO)),
 		error_code_r);
 }
