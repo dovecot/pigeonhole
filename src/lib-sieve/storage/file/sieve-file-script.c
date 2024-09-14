@@ -239,38 +239,29 @@ int sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
 	return 0;
 }
 
-struct sieve_file_script *
-sieve_file_script_open_from_path(struct sieve_file_storage *fstorage,
-				 const char *path, const char *scriptname,
-				 enum sieve_error *error_code_r)
+int sieve_file_script_open_from_path(struct sieve_file_storage *fstorage,
+				     const char *path, const char *scriptname,
+				     struct sieve_file_script **fscript_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_file_script *fscript;
-	enum sieve_error error_code;
 
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	*fscript_r = NULL;
 
 	if (sieve_file_script_init_from_path(fstorage, path, scriptname,
-					     &fscript) < 0) {
-		*error_code_r = storage->error_code;
-		return NULL;
-	}
+					     &fscript) < 0)
+		return -1;
 
-	if (sieve_script_open(&fscript->script, error_code_r) < 0) {
+	if (sieve_script_open(&fscript->script, NULL) < 0) {
 		struct sieve_script *script = &fscript->script;
-		const char *errormsg;
 
-		errormsg = sieve_script_get_last_error(
-			&fscript->script, error_code_r);
-		sieve_storage_set_error(storage, *error_code_r, "%s", errormsg);
+		sieve_storage_copy_error(storage, script->storage);
 		sieve_script_unref(&script);
-		return NULL;
+		return -1;
 	}
 
-	return fscript;
+	*fscript_r = fscript;
+	return 0;
 }
 
 /*

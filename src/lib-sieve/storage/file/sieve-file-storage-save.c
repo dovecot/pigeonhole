@@ -347,10 +347,10 @@ sieve_file_storage_save_get_tempscript(struct sieve_storage_save_context *sctx)
 {
 	struct sieve_file_save_context *fsctx =
 		container_of(sctx, struct sieve_file_save_context, context);
+	struct sieve_storage *storage = sctx->storage;
 	struct sieve_file_storage *fstorage =
-		container_of(sctx->storage, struct sieve_file_storage, storage);
+		container_of(storage, struct sieve_file_storage, storage);
 	struct sieve_file_script *tmpscript;
-	enum sieve_error error_code;
 	const char *scriptname;
 
 	if (sctx->failed)
@@ -360,20 +360,19 @@ sieve_file_storage_save_get_tempscript(struct sieve_storage_save_context *sctx)
 		return sctx->scriptobject;
 
 	scriptname = (sctx->scriptname == NULL ? "" : sctx->scriptname);
-	tmpscript = sieve_file_script_open_from_path(fstorage, fsctx->tmp_path,
-						     scriptname, &error_code);
-
-	if (tmpscript == NULL) {
-		if (error_code == SIEVE_ERROR_NOT_FOUND) {
+	if (sieve_file_script_open_from_path(fstorage,
+					     fsctx->tmp_path, scriptname,
+					     &tmpscript) < 0) {
+		if (storage->error_code == SIEVE_ERROR_NOT_FOUND) {
 			sieve_storage_set_critical(
-				sctx->storage, "save: "
+				storage, "save: "
 				"Temporary script file '%s' got lost, "
 				"which should not happen "
 				"(possibly deleted externally).",
 				fsctx->tmp_path);
 		} else {
 			sieve_storage_set_critical(
-				sctx->storage, "save: "
+				storage, "save: "
 				"Failed to open temporary script file '%s'",
 				fsctx->tmp_path);
 		}
