@@ -307,7 +307,7 @@ sieve_file_script_open(struct sieve_script *script,
 		container_of(storage, struct sieve_file_storage, storage);
 	pool_t pool = script->pool;
 	const char *filename, *name, *path;
-	const char *dirpath, *basename, *bin_path, *binprefix;
+	const char *dirpath, *basename, *bin_path, *bin_prefix;
 	struct stat st, lnk_st;
 	bool success = TRUE;
 	int ret = 0;
@@ -406,13 +406,13 @@ sieve_file_script_open(struct sieve_script *script,
 
 			if (*bpath == '\0') {
 				bin_path = bfile;
-				binprefix = bprefix;
+				bin_prefix = bprefix;
 			} else if (bpath[strlen(bpath)-1] == '/') {
 				bin_path = t_strconcat(bpath, bfile, NULL);
-				binprefix = t_strconcat(bpath, bprefix, NULL);
+				bin_prefix = t_strconcat(bpath, bprefix, NULL);
 			} else {
 				bin_path = t_strconcat(bpath, "/", bfile, NULL);
-				binprefix = t_strconcat(bpath, "/", bprefix, NULL);
+				bin_prefix = t_strconcat(bpath, "/", bprefix, NULL);
 			}
 
 			fscript->st = st;
@@ -421,7 +421,7 @@ sieve_file_script_open(struct sieve_script *script,
 			fscript->filename = p_strdup(pool, filename);
 			fscript->dirpath = p_strdup(pool, dirpath);
 			fscript->bin_path = p_strdup(pool, bin_path);
-			fscript->binprefix = p_strdup(pool, binprefix);
+			fscript->bin_prefix = p_strdup(pool, bin_prefix);
 
 			fscript->script.location = fscript->path;
 
@@ -570,7 +570,7 @@ sieve_file_script_binary_get_prefix(struct sieve_script *script)
 	struct sieve_file_script *fscript =
 		container_of(script, struct sieve_file_script, script);
 
-	return fscript->binprefix;
+	return fscript->bin_prefix;
 }
 
 /*
