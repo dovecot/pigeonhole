@@ -105,13 +105,15 @@ static struct sieve_file_script *sieve_file_script_alloc(void)
 	return fscript;
 }
 
-struct sieve_file_script *
-sieve_file_script_init_from_filename(struct sieve_file_storage *fstorage,
-				     const char *filename,
-				     const char *scriptname)
+int sieve_file_script_init_from_filename(struct sieve_file_storage *fstorage,
+					 const char *filename,
+					 const char *scriptname,
+					 struct sieve_file_script **fscript_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_file_script *fscript = NULL;
+
+	*fscript_r = NULL;
 
 	/* Prevent initializing the active script link as a script when it
 	   resides in the sieve storage directory.
@@ -122,7 +124,7 @@ sieve_file_script_init_from_filename(struct sieve_file_storage *fstorage,
 			sieve_storage_set_error(
 				storage, SIEVE_ERROR_NOT_FOUND,
 				"Script '%s' does not exist.", scriptname);
-			return NULL;
+			return -1;
 		}
 	}
 
@@ -131,7 +133,9 @@ sieve_file_script_init_from_filename(struct sieve_file_storage *fstorage,
 			  sieve_file_storage_path_extend(fstorage, filename),
 			  scriptname);
 	fscript->filename = p_strdup(fscript->script.pool, filename);
-	return fscript;
+
+	*fscript_r = fscript;
+	return 0;
 }
 
 struct sieve_file_script *
@@ -142,9 +146,8 @@ sieve_file_script_open_from_filename(struct sieve_file_storage *fstorage,
 	struct sieve_file_script *fscript;
 	enum sieve_error error_code;
 
-	fscript = sieve_file_script_init_from_filename(fstorage, filename,
-						       scriptname);
-	if (fscript == NULL)
+	if (sieve_file_script_init_from_filename(fstorage, filename,
+						 scriptname, &fscript) < 0)
 		return NULL;
 
 	if (sieve_script_open(&fscript->script, &error_code) < 0) {
@@ -165,8 +168,11 @@ sieve_file_script_init_from_name(struct sieve_file_storage *fstorage,
 	struct sieve_file_script *fscript;
 
 	if (name != NULL && S_ISDIR(fstorage->st.st_mode)) {
-		return sieve_file_script_init_from_filename(
-			fstorage, sieve_script_file_from_name(name), name);
+		if (sieve_file_script_init_from_filename(
+			fstorage, sieve_script_file_from_name(name), name,
+			&fscript) < 0)
+			return NULL;
+		return fscript;
 	}
 
 	fscript = sieve_file_script_alloc();
