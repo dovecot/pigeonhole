@@ -131,7 +131,7 @@ struct sieve_file_script {
 	const char *dirpath;
 	const char *filename;
 	const char *bin_path;
-	const char *binprefix;
+	const char *bin_prefix;
 
 	time_t prev_mtime;
 };
