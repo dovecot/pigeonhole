@@ -281,16 +281,16 @@ sieve_file_script_stat(const char *path, struct stat *st, struct stat *lnk_st)
 }
 
 static const char *
-path_split_filename(const char *path, const char **dirpath_r)
+path_split_filename(const char *path, const char **dir_path_r)
 {
 	const char *filename;
 
 	filename = strrchr(path, '/');
 	if (filename == NULL) {
-		*dirpath_r = "";
+		*dir_path_r = "";
 		filename = path;
 	} else {
-		*dirpath_r = t_strdup_until(path, filename);
+		*dir_path_r = t_strdup_until(path, filename);
 		filename++;
 	}
 	return filename;
@@ -307,7 +307,7 @@ sieve_file_script_open(struct sieve_script *script,
 		container_of(storage, struct sieve_file_storage, storage);
 	pool_t pool = script->pool;
 	const char *filename, *name, *path;
-	const char *dirpath, *basename, *bin_path, *bin_prefix;
+	const char *dir_path, *basename, *bin_path, *bin_prefix;
 	struct stat st, lnk_st;
 	bool success = TRUE;
 	int ret = 0;
@@ -347,7 +347,7 @@ sieve_file_script_open(struct sieve_script *script,
 				} else if (basename == NULL) {
 					basename = name;
 				}
-				dirpath = path;
+				dir_path = path;
 
 				path = sieve_file_storage_path_extend(fstorage, filename);
 				ret = sieve_file_script_stat(path, &st, &lnk_st);
@@ -358,7 +358,7 @@ sieve_file_script_open(struct sieve_script *script,
 			path = fstorage->active_path;
 
 			/* Extract filename from path */
-			filename = path_split_filename(path, &dirpath);
+			filename = path_split_filename(path, &dir_path);
 
 			basename = sieve_script_file_get_scriptname(filename);
 			if (basename == NULL)
@@ -399,7 +399,7 @@ sieve_file_script_open(struct sieve_script *script,
 				bprefix = name;
 
 			} else {
-				bpath = dirpath;
+				bpath = dir_path;
 				bfile = sieve_binfile_from_name(basename);
 				bprefix = basename;
 			}
@@ -419,7 +419,7 @@ sieve_file_script_open(struct sieve_script *script,
 			fscript->lnk_st = lnk_st;
 			fscript->path = p_strdup(pool, path);
 			fscript->filename = p_strdup(pool, filename);
-			fscript->dirpath = p_strdup(pool, dirpath);
+			fscript->dir_path = p_strdup(pool, dir_path);
 			fscript->bin_path = p_strdup(pool, bin_path);
 			fscript->bin_prefix = p_strdup(pool, bin_prefix);
 
@@ -805,7 +805,7 @@ sieve_file_script_get_size(const struct sieve_script *script, uoff_t *size_r)
 	return 1;
 }
 
-const char *sieve_file_script_get_dirpath(const struct sieve_script *script)
+const char *sieve_file_script_get_dir_path(const struct sieve_script *script)
 {
 	const struct sieve_file_script *fscript =
 		container_of(script, const struct sieve_file_script, script);
@@ -813,7 +813,7 @@ const char *sieve_file_script_get_dirpath(const struct sieve_script *script)
 	if (script->driver_name != sieve_file_script.driver_name)
 		return NULL;
 
-	return fscript->dirpath;
+	return fscript->dir_path;
 }
 
 const char *sieve_file_script_get_path(const struct sieve_script *script)
