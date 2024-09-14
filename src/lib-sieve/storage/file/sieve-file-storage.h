@@ -152,10 +152,9 @@ int sieve_file_script_open_from_name(struct sieve_file_storage *fstorage,
 				     const char *name,
 				     struct sieve_file_script **fscript_r);
 
-struct sieve_file_script *
-sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
-				 const char *path, const char *scriptname,
-				 enum sieve_error *error_code_r);
+int sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
+				     const char *path, const char *scriptname,
+				     struct sieve_file_script **fscript_r);
 struct sieve_file_script *
 sieve_file_script_open_from_path(struct sieve_file_storage *fstorage,
 				 const char *path, const char *scriptname,
