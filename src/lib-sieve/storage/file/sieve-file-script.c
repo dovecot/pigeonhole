@@ -208,26 +208,26 @@ int sieve_file_script_open_from_name(struct sieve_file_storage *fstorage,
 	return 0;
 }
 
-struct sieve_file_script *
-sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
-				 const char *path, const char *scriptname,
-				 enum sieve_error *error_code_r)
+int sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
+				     const char *path, const char *scriptname,
+				     struct sieve_file_script **fscript_r)
 {
-	struct sieve_instance *svinst = fstorage->storage.svinst;
+	struct sieve_storage *storage = &fstorage->storage;
+	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_file_storage *fsubstorage;
 	struct sieve_file_script *fscript;
 	struct sieve_storage *substorage;
 	enum sieve_error error_code;
 
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
+	*fscript_r = NULL;
 
-	fsubstorage = sieve_file_storage_init_from_path(
-		svinst, path, 0, error_code_r);
-	if (fsubstorage == NULL)
-		return NULL;
+	fsubstorage = sieve_file_storage_init_from_path(svinst, path, 0,
+							&error_code);
+	if (fsubstorage == NULL) {
+		sieve_storage_set_error(storage, error_code,
+					"Failed to open script");
+		return -1;
+	}
 	substorage = &fsubstorage->storage;
 
 	fscript = sieve_file_script_alloc();
@@ -235,7 +235,8 @@ sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
 			  path, scriptname);
 	sieve_storage_unref(&substorage);
 
-	return fscript;
+	*fscript_r = fscript;
+	return 0;
 }
 
 struct sieve_file_script *
@@ -252,11 +253,9 @@ sieve_file_script_open_from_path(struct sieve_file_storage *fstorage,
 	else
 		error_code_r = &error_code;
 
-	fscript = sieve_file_script_init_from_path(fstorage, path, scriptname,
-						   error_code_r);
-	if (fscript == NULL) {
-		sieve_storage_set_error(storage, *error_code_r,
-					"Failed to open script");
+	if (sieve_file_script_init_from_path(fstorage, path, scriptname,
+					     &fscript) < 0) {
+		*error_code_r = storage->error_code;
 		return NULL;
 	}
 
