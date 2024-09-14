@@ -223,9 +223,9 @@ int sieve_file_script_sequence_next(struct sieve_script_sequence *sseq,
 			return 0;
 
 		for (;;) {
-			fscript = sieve_file_script_open_from_filename(
-				fstorage, files[fseq->index++], NULL);
-			if (fscript != NULL)
+			if (sieve_file_script_open_from_filename(
+				fstorage, files[fseq->index++], NULL,
+				&fscript) == 0)
 				break;
 			if (sseq->storage->error_code != SIEVE_ERROR_NOT_FOUND)
 				break;
