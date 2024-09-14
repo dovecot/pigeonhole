@@ -242,6 +242,8 @@ int sieve_file_storage_active_script_open(struct sieve_storage *storage,
 	const char *scriptfile, *link;
 	int ret;
 
+	*script_r = NULL;
+
 	/* Read the active link */
 	ret = sieve_file_storage_active_read_link(fstorage, &link);
 	if (ret <= 0) {
@@ -250,14 +252,14 @@ int sieve_file_storage_active_script_open(struct sieve_storage *storage,
 
 		/* Try to open the active_path as a regular file */
 		if (S_ISDIR(fstorage->st.st_mode)) {
-			fscript = sieve_file_script_open_from_path(
-				fstorage, fstorage->active_path, NULL, NULL);
+			ret = sieve_file_script_open_from_path(
+				fstorage, fstorage->active_path, NULL,
+				&fscript);
 		} else {
-			if (sieve_file_script_open_from_name(
-				fstorage, NULL, &fscript) < 0)
-				fscript = NULL;
+			ret = sieve_file_script_open_from_name(fstorage, NULL,
+							       &fscript);
 		}
-		if (fscript == NULL) {
+		if (ret < 0) {
 			if (storage->error_code != SIEVE_ERROR_NOT_FOUND) {
 				sieve_storage_set_critical(
 					storage,
@@ -283,18 +285,17 @@ int sieve_file_storage_active_script_open(struct sieve_storage *storage,
 		return -1;
 	}
 
-	fscript = sieve_file_script_open_from_path(
+	ret = sieve_file_script_open_from_path(
 		fstorage, fstorage->active_path,
-		sieve_script_file_get_scriptname(scriptfile), NULL);
-	if (fscript == NULL && storage->error_code == SIEVE_ERROR_NOT_FOUND) {
+		sieve_script_file_get_scriptname(scriptfile), &fscript);
+	if (ret < 0 && storage->error_code == SIEVE_ERROR_NOT_FOUND) {
 		e_warning(storage->event,
 			  "Active sieve script symlink %s points to non-existent script "
 			  "(points to %s).", fstorage->active_path, link);
 	}
-	if (fscript != NULL) {
-		*script_r = &fscript->script;
+	if (ret < 0)
 		return -1;
-	}
+	*script_r = &fscript->script;
 	return 0;
 }
 
