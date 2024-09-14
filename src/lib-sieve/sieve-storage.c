@@ -614,7 +614,7 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 	pool_unref(&storage->pool);
 }
 
-int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
+int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode)
 {
 	const char *bin_path = storage->bin_path;
 	struct stat st;

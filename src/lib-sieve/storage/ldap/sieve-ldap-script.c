@@ -272,7 +272,7 @@ sieve_ldap_script_binary_save(struct sieve_script *script,
 
 	if (sieve_ldap_script_get_binpath(lscript) == NULL)
 		return 0;
-	if (sieve_storage_setup_bindir(script->storage, 0700) < 0)
+	if (sieve_storage_setup_bin_path(script->storage, 0700) < 0)
 		return -1;
 
 	return sieve_binary_save(sbin, lscript->binpath, update, 0600,
