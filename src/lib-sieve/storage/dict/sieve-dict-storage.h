@@ -44,7 +44,7 @@ struct sieve_dict_script {
 	const char *data_id;
 	const char *data;
 
-	const char *binpath;
+	const char *bin_path;
 };
 
 struct sieve_dict_script *
