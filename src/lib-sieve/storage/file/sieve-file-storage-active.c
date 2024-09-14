@@ -253,8 +253,9 @@ int sieve_file_storage_active_script_open(struct sieve_storage *storage,
 			fscript = sieve_file_script_open_from_path(
 				fstorage, fstorage->active_path, NULL, NULL);
 		} else {
-			fscript = sieve_file_script_open_from_name(
-				fstorage, NULL);
+			if (sieve_file_script_open_from_name(
+				fstorage, NULL, &fscript) < 0)
+				fscript = NULL;
 		}
 		if (fscript == NULL) {
 			if (storage->error_code != SIEVE_ERROR_NOT_FOUND) {
