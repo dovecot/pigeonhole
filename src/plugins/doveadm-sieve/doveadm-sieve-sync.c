@@ -99,8 +99,8 @@ mail_sieve_user_init(struct mail_user *user, struct sieve_storage **svstorage_r)
 		return -1;
 
 	suser->sieve_storage =
-		sieve_storage_create_main(suser->svinst, user,
-					  storage_flags, NULL);
+		sieve_storage_create_personal(suser->svinst, user,
+					      storage_flags, NULL);
 
 	*svstorage_r = suser->sieve_storage;
 	return (suser->sieve_storage != NULL ? 1 : 0);

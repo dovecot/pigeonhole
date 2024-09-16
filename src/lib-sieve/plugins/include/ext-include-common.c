@@ -144,8 +144,8 @@ ext_include_get_script_storage(const struct sieve_extension *ext,
 	case EXT_INCLUDE_LOCATION_PERSONAL:
 		if (ctx->personal_storage == NULL) {
 			ctx->personal_storage =
-				sieve_storage_create_main(svinst, NULL, 0,
-							  error_code_r);
+				sieve_storage_create_personal(svinst, NULL, 0,
+							      error_code_r);
 		}
 		return ctx->personal_storage;
 	case EXT_INCLUDE_LOCATION_GLOBAL:
