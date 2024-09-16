@@ -116,9 +116,9 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 		       user->set->mail_debug, &ctx->svinst) < 0)
 		return -1;
 
-	ctx->storage = sieve_storage_create_personal(
-		ctx->svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error_code);
-	if (ctx->storage == NULL) {
+	if (sieve_storage_create_personal(ctx->svinst, user,
+					  SIEVE_STORAGE_FLAG_READWRITE,
+					  &ctx->storage, &error_code) < 0) {
 		switch (error_code) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
 			error_code = SIEVE_ERROR_NOT_FOUND;

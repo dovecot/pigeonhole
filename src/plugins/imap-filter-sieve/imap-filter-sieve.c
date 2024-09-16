@@ -189,10 +189,9 @@ imap_filter_sieve_get_personal_storage(struct imap_filter_sieve_context *sctx,
 		return -1;
 	}
 
-	ifsuser->storage = sieve_storage_create_personal(svinst, user,
-							 storage_flags,
-							 &error_code);
-	if (ifsuser->storage != NULL) {
+	if (sieve_storage_create_personal(svinst, user, storage_flags,
+					  &ifsuser->storage,
+					  &error_code) == 0) {
 		*storage_r = ifsuser->storage;
 		return 0;
 	}
