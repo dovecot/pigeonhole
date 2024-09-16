@@ -71,9 +71,9 @@ client_get_storage(struct sieve_instance *svinst, struct event *event,
 
 	/* Open personal script storage */
 
-	storage = sieve_storage_create_main(svinst, user,
-					    SIEVE_STORAGE_FLAG_READWRITE,
-					    &error_code);
+	storage = sieve_storage_create_personal(svinst, user,
+						SIEVE_STORAGE_FLAG_READWRITE,
+						&error_code);
 	if (storage == NULL) {
 		switch (error_code) {
 		case SIEVE_ERROR_NOT_POSSIBLE:

@@ -256,7 +256,8 @@ lda_sieve_get_personal_storage(struct sieve_instance *svinst,
 			       struct sieve_storage **storage_r,
 			       enum sieve_error *error_code_r)
 {
-	*storage_r = sieve_storage_create_main(svinst, user, 0, error_code_r);
+	*storage_r = sieve_storage_create_personal(svinst, user, 0,
+						   error_code_r);
 	if (*storage_r == NULL) {
 		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_POSSIBLE:

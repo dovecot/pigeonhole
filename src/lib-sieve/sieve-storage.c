@@ -389,10 +389,10 @@ sieve_storage_create(struct sieve_instance *svinst, const char *location,
 }
 
 static struct sieve_storage *
-sieve_storage_do_create_main(struct sieve_instance *svinst,
-			     struct mail_user *user,
-			     enum sieve_storage_flags flags,
-			     enum sieve_error *error_code_r)
+sieve_storage_do_create_personal(struct sieve_instance *svinst,
+				 struct mail_user *user,
+				 enum sieve_storage_flags flags,
+				 enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = NULL;
 	const struct sieve_storage *sieve_class = NULL;
@@ -470,9 +470,10 @@ sieve_storage_do_create_main(struct sieve_instance *svinst,
 }
 
 struct sieve_storage *
-sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
-			  enum sieve_storage_flags flags,
-			  enum sieve_error *error_code_r)
+sieve_storage_create_personal(struct sieve_instance *svinst,
+			      struct mail_user *user,
+			      enum sieve_storage_flags flags,
+			      enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
 	const char *set_enabled, *set_default, *set_default_name;
@@ -496,8 +497,8 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 	set_default = sieve_setting_get(svinst, "sieve_default");
 
 	/* Attempt to locate user's main storage */
-	storage = sieve_storage_do_create_main(svinst, user, flags,
-					       error_code_r);
+	storage = sieve_storage_do_create_personal(svinst, user, flags,
+						   error_code_r);
 	if (storage != NULL) {
 		/* Success; record default script location for later use */
 		storage->default_location =
