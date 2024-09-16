@@ -398,10 +398,11 @@ int sieve_storage_create(struct sieve_instance *svinst, const char *location,
 				  storage_r, error_code_r);
 }
 
-static struct sieve_storage *
+static int
 sieve_storage_do_create_personal(struct sieve_instance *svinst,
 				 struct mail_user *user,
 				 enum sieve_storage_flags flags,
+				 struct sieve_storage **storage_r,
 				 enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage = NULL;
@@ -421,14 +422,14 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 			e_debug(svinst->event, "storage: "
 				"Personal storage is disabled (sieve=\"\")");
 			*error_code_r = SIEVE_ERROR_NOT_FOUND;
-			return NULL;
+			return -1;
 		}
 
 		data = set_sieve;
 		if ((ret = sieve_storage_driver_parse(svinst, &data,
 						      &sieve_class)) < 0) {
 			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
-			return NULL;
+			return -1;
 		}
 
 		if (ret > 0) {
@@ -436,7 +437,7 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 			if (sieve_storage_init(svinst, sieve_class, data,
 					       flags, TRUE,
 					       &storage, error_code_r) < 0)
-				return NULL;
+				return -1;
 		}
 
 		/* No driver name */
@@ -445,12 +446,12 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 	if (storage == NULL) {
 		if (sieve_file_storage_init_default(svinst, set_sieve, flags,
 						    &storage, error_code_r) < 0)
-			return NULL;
+			return -1;
 		i_assert(storage != NULL);
 	}
 
 	if (storage == NULL)
-		return NULL;
+		return -1;
 
 	(void)sieve_storage_sync_init(storage, user);
 
@@ -478,19 +479,22 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 			"Script count limit: %llu scripts",
 			(unsigned long long int) storage->max_scripts);
 	}
-	return storage;
+	*storage_r = storage;
+	return 0;
 }
 
-struct sieve_storage *
-sieve_storage_create_personal(struct sieve_instance *svinst,
-			      struct mail_user *user,
-			      enum sieve_storage_flags flags,
-			      enum sieve_error *error_code_r)
+int sieve_storage_create_personal(struct sieve_instance *svinst,
+				  struct mail_user *user,
+				  enum sieve_storage_flags flags,
+				  struct sieve_storage **storage_r,
+				  enum sieve_error *error_code_r)
 {
-	struct sieve_storage *storage;
+	struct sieve_storage *storage = NULL;
 	const char *set_enabled, *set_default, *set_default_name;
 	enum sieve_error error_code;
+	int ret;
 
+	*storage_r = NULL;
 	if (error_code_r != NULL)
 		*error_code_r = SIEVE_ERROR_NONE;
 	else
@@ -502,16 +506,16 @@ sieve_storage_create_personal(struct sieve_instance *svinst,
 		e_debug(svinst->event,
 			"Sieve is disabled for this user");
 		*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
-		return NULL;
+		return -1;
 	}
 
 	/* Determine location for default script */
 	set_default = sieve_setting_get(svinst, "sieve_default");
 
 	/* Attempt to locate user's main storage */
-	storage = sieve_storage_do_create_personal(svinst, user, flags,
-						   error_code_r);
-	if (storage != NULL) {
+	ret = sieve_storage_do_create_personal(svinst, user, flags,
+					       &storage, error_code_r);
+	if (ret == 0) {
 		/* Success; record default script location for later use */
 		storage->default_location =
 			p_strdup_empty(storage->pool, set_default);
@@ -548,8 +552,9 @@ sieve_storage_create_personal(struct sieve_instance *svinst,
 				"Trying default script location '%s'",
 				set_default);
 
-			if (sieve_storage_create(svinst, set_default, 0,
-						 &storage, error_code_r) < 0) {
+			ret = sieve_storage_create(svinst, set_default, 0,
+						   &storage, error_code_r);
+			if (ret < 0) {
 				switch (*error_code_r) {
 				case SIEVE_ERROR_NOT_FOUND:
 					e_debug(svinst->event, "storage: "
@@ -573,7 +578,8 @@ sieve_storage_create_personal(struct sieve_instance *svinst,
 		if (storage != NULL)
 			storage->is_default = TRUE;
 	}
-	return storage;
+	*storage_r = storage;
+	return ret;
 }
 
 void sieve_storage_ref(struct sieve_storage *storage)

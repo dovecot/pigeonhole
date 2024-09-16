@@ -71,10 +71,9 @@ client_get_storage(struct sieve_instance *svinst, struct event *event,
 
 	/* Open personal script storage */
 
-	storage = sieve_storage_create_personal(svinst, user,
-						SIEVE_STORAGE_FLAG_READWRITE,
-						&error_code);
-	if (storage == NULL) {
+	if (sieve_storage_create_personal(svinst, user,
+					  SIEVE_STORAGE_FLAG_READWRITE,
+					  &storage, &error_code) < 0) {
 		switch (error_code) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
 			byemsg = "BYE \"Sieve processing is disabled for this user.\"\r\n";

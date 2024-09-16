@@ -98,10 +98,9 @@ mail_sieve_user_init(struct mail_user *user, struct sieve_storage **svstorage_r)
 		       user->set->mail_debug, &suser->svinst) < 0)
 		return -1;
 
-	suser->sieve_storage =
-		sieve_storage_create_personal(suser->svinst, user,
-					      storage_flags, &error_code);
-	if (suser->sieve_storage == NULL) {
+	if (sieve_storage_create_personal(suser->svinst, user, storage_flags,
+					  &suser->sieve_storage,
+					  &error_code) < 0) {
 		switch (error_code) {
 		/* Sieve disabled for user */
 		case SIEVE_ERROR_NOT_POSSIBLE:

@@ -143,10 +143,8 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
 		return -1;
 	}
 
-	isieve->storage = sieve_storage_create_personal(isieve->svinst, user,
-							storage_flags,
-							&error_code);
-	if (isieve->storage == NULL) {
+	if (sieve_storage_create_personal(isieve->svinst, user, storage_flags,
+					  &isieve->storage, &error_code) < 0) {
 		if (error_code == SIEVE_ERROR_TEMP_FAILURE)
 			return -1;
 		return 0;
