@@ -28,9 +28,9 @@ static int cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 	int ret;
 
 	script = sieve_storage_open_script(_ctx->storage, ctx->scriptname,
-					  &error);
+					   &error);
 	if (script == NULL ||
-	    sieve_script_get_stream(script, &input, &error) < 0 ) {
+	    sieve_script_get_stream(script, &input, &error) < 0) {
 		e_error(event, "Failed to open Sieve script: %s",
 			sieve_storage_get_last_error(_ctx->storage, &error));
 		doveadm_sieve_cmd_failed_error(_ctx, error);
