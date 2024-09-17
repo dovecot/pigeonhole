@@ -194,38 +194,46 @@ void client_create_finish(struct client *client)
 static const char *client_stats(struct client *client)
 {
 	const struct var_expand_table logout_tab[] = {
-		{ 'i', dec2str(i_stream_get_absolute_offset(client->input)),
-		  "input" },
-		{ 'o', dec2str(client->output->offset), "output" },
-		{ '\0', dec2str(client->put_bytes), "put_bytes" },
-		{ '\0', dec2str(client->put_count), "put_count" },
-		{ '\0', dec2str(client->get_bytes), "get_bytes" },
-		{ '\0', dec2str(client->get_count), "get_count" },
-		{ '\0', dec2str(client->check_bytes), "check_bytes" },
-		{ '\0', dec2str(client->check_count), "check_count" },
-		{ '\0', dec2str(client->deleted_count), "deleted_count" },
-		{ '\0', dec2str(client->renamed_count), "renamed_count" },
-		{ '\0', client->session_id, "session" },
-		{ '\0', NULL, NULL }
+		{
+			.key = "input",
+			.value = dec2str(i_stream_get_absolute_offset(client->input)),
+		},
+		{ .key = "output", .value = dec2str(client->output->offset) },
+		{ .key = "put_bytes", .value = dec2str(client->put_bytes) },
+		{ .key = "put_count", .value = dec2str(client->put_count) },
+		{ .key = "get_bytes", .value = dec2str(client->get_bytes) },
+		{ .key = "get_count", .value = dec2str(client->get_count) },
+		{ .key = "check_bytes", .value = dec2str(client->check_bytes) },
+		{ .key = "check_count", .value = dec2str(client->check_count) },
+		{ .key = "deleted_count", .value = dec2str(client->deleted_count) },
+		{ .key = "renamed_count", .value = dec2str(client->renamed_count) },
+		{ .key = "session", .value = client->session_id },
+		VAR_EXPAND_TABLE_END
 	};
-	const struct var_expand_table *user_tab =
-		mail_user_var_expand_table(client->user);
-	const struct var_expand_table *tab =
-		t_var_expand_merge_tables(logout_tab, user_tab);
+	const struct var_expand_params *user_params =
+		mail_user_var_expand_params(client->user);
+	const struct var_expand_params params = {
+		.tables_arr = (const struct var_expand_table*[]){
+			logout_tab,
+			user_params->table,
+			NULL
+		},
+		.providers = user_params->providers,
+		.context = user_params->context,
+	};
 	string_t *str;
 	const char *error;
 
+	event_add_int(client->event, "net_in_bytes", i_stream_get_absolute_offset(client->input));
+	event_add_int(client->event, "net_out_bytes", client->output->offset);
+
 	str = t_str_new(128);
-	if (var_expand_with_funcs(str, client->set->managesieve_logout_format,
-				  tab, mail_user_var_expand_func_table,
-				  client->user, &error) < 0) {
+	if (var_expand(str, client->set->managesieve_logout_format,
+			   &params, &error) < 0) {
 		e_error(client->event,
 			"Failed to expand managesieve_logout_format=%s: %s",
 			client->set->managesieve_logout_format, error);
 	}
-
-	event_add_int(client->event, "net_in_bytes", i_stream_get_absolute_offset(client->input));
-	event_add_int(client->event, "net_out_bytes", client->output->offset);
 
 	return str_c(str);
 }

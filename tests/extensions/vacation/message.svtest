@@ -92,38 +92,6 @@ test "Subject - configured, no subject" {
 }
 
 /*
- * Subject - configured
- */
-
-test_set "message" text:
-From: stephan@example.org
-Subject: Bloemetjes
-To: nico@frop.example.org
-
-Frop
-.
-;
-
-test_config_set "sieve_vacation_default_subject_template"
-	"Automatisch bericht: %$";
-test_config_reload :extension "vacation";
-
-test_result_reset;
-test "Subject - configured" {
-	vacation "I am not in today!";
-
-	if not test_result_execute {
-		test_fail "execution of result failed";
-	}
-
-	test_message :smtp 0;
-
-	if not header :is "subject" "Automatisch bericht: Bloemetjes" {
-		test_fail "Subject header is incorrect";
-	}
-}
-
-/*
  * Subject - configured, full variable
  */
 

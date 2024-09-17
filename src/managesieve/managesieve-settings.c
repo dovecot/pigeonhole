@@ -81,7 +81,7 @@ static struct managesieve_settings managesieve_default_settings = {
 	.managesieve_max_line_length = 65536,
 	.managesieve_implementation_string = DOVECOT_NAME " " PIGEONHOLE_NAME,
 	.managesieve_client_workarounds = "",
-	.managesieve_logout_format = "bytes=%i/%o",
+	.managesieve_logout_format = "bytes=%{input}/%{output}",
 	.managesieve_max_compile_errors = 5
 };
 
