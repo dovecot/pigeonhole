@@ -1172,12 +1172,12 @@ sieve_ldap_db_get_script(struct ldap_connection *conn,
 
 const struct var_expand_table
 auth_request_var_expand_static_tab[] = {
-	{ 'u', NULL, "user" },
-	{ 'n', NULL, "username" },
-	{ 'd', NULL, "domain" },
-	{ 'h', NULL, "home" },
-	{ '\0', NULL, "name" },
-	{ '\0', NULL, NULL }
+	{ .key = "user", .value = NULL },
+	{ .key = "username", .value = NULL },
+	{ .key = "domain", .value = NULL },
+	{ .key = "home", .value = NULL },
+	{ .key = "name", .value = NULL },
+	VAR_EXPAND_TABLE_END
 };
 
 static const struct var_expand_table *
@@ -1252,7 +1252,6 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	struct sieve_storage *storage = &lstorage->storage;
 	const struct sieve_ldap_storage_settings *set = &lstorage->set;
 	struct sieve_ldap_script_lookup_request *request;
-	struct var_expand_params params;
 	char **attr_names;
 	const char *error;
 	string_t *str;
@@ -1262,10 +1261,12 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	request = p_new(pool, struct sieve_ldap_script_lookup_request, 1);
 	request->request.pool = pool;
 
-	params.table = db_ldap_get_var_expand_table(conn, name);
+	const struct var_expand_params params = {
+		.table = db_ldap_get_var_expand_table(conn, name),
+	};
 
 	str = t_str_new(512);
-	if (var_expand(str, set->base, &params, &error) <= 0) {
+	if (var_expand(str, set->base, &params, &error) < 0) {
 		e_error(storage->event, "db: "
 			"Failed to expand base=%s: %s",
 			set->base, error);
@@ -1277,7 +1278,7 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	attr_names[0] = p_strdup(pool, set->sieve_ldap_mod_attr);
 
 	str_truncate(str, 0);
-	if (var_expand(str, set->sieve_ldap_filter, &params, &error) <= 0) {
+	if (var_expand(str, set->sieve_ldap_filter, &params, &error) < 0) {
 		e_error(storage->event, "db: "
 			"Failed to expand sieve_ldap_filter=%s: %s",
 			set->sieve_ldap_filter, error);

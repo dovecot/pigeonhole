@@ -1017,8 +1017,8 @@ _get_var_expand_table(const struct sieve_action_exec_env *aenv ATTR_UNUSED,
 		      const char *subject)
 {
 	const struct var_expand_table stack_tab[] = {
-		{ '$', subject, "subject" },
-		{ '\0', NULL, NULL }
+		{ .key = "subject", .value = subject },
+		VAR_EXPAND_TABLE_END
 	};
 
 	return p_memdup(unsafe_data_stack_pool, stack_tab, sizeof(stack_tab));
@@ -1033,7 +1033,6 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 	const struct sieve_message_data *msgdata = eenv->msgdata;
 	const char *header, *error;
 	string_t *str;
-	const struct var_expand_table *tab;
 	int ret;
 
 	*subject_r = (config->default_subject == NULL ?
@@ -1052,9 +1051,11 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 	}
 
 	str = t_str_new(256);
-	tab = _get_var_expand_table(aenv, header);
-	if (var_expand_with_table(str, config->default_subject_template,
-				  tab, &error) <= 0) {
+	const struct var_expand_params params = {
+		.table = _get_var_expand_table(aenv, header),
+	};
+	if (var_expand(str, config->default_subject_template, &params,
+		       &error) < 0) {
 		e_error(aenv->event,
 			"Failed to expand deliver_log_format=%s: %s",
 			config->default_subject_template, error);
