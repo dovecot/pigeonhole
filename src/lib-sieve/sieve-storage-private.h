@@ -164,6 +164,17 @@ struct sieve_storage_save_context {
 };
 
 /*
+ * Storage sequence
+ */
+
+struct sieve_storage_sequence {
+	struct sieve_instance *svinst;
+	char *location;
+
+	bool done:1;
+};
+
+/*
  * Storage class
  */
 

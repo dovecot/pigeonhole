@@ -1622,3 +1622,54 @@ sieve_storage_get_last_error(struct sieve_storage *storage,
 
 	return storage->error != NULL ? storage->error : "Unknown error";
 }
+
+/*
+ * Storage sequence
+ */
+
+int sieve_storage_sequence_create(struct sieve_instance *svinst,
+				  const char *location,
+				  struct sieve_storage_sequence **sseq_r,
+				  enum sieve_error *error_code_r)
+{
+	*sseq_r = NULL;
+	sieve_error_args_init(&error_code_r, NULL);
+
+	struct sieve_storage_sequence *sseq;
+
+	sseq = i_new(struct sieve_storage_sequence, 1);
+	sseq->svinst = svinst;
+	sseq->location = i_strdup(location);
+
+	*sseq_r = sseq;
+	return 0;
+}
+
+int sieve_storage_sequence_next(struct sieve_storage_sequence *sseq,
+				struct sieve_storage **storage_r,
+				enum sieve_error *error_code_r)
+{
+	*storage_r = NULL;
+	sieve_error_args_init(&error_code_r, NULL);
+
+	if (sseq->done)
+		return 0;
+	sseq->done = TRUE;
+
+	if (sieve_storage_create(sseq->svinst, sseq->location, 0,
+				 storage_r, error_code_r) < 0)
+		return -1;
+	return 1;
+}
+
+void sieve_storage_sequence_free(struct sieve_storage_sequence **_sseq)
+{
+	struct sieve_storage_sequence *sseq = *_sseq;
+
+	if (sseq == NULL)
+		return;
+	*_sseq = NULL;
+
+	i_free(sseq->location);
+	i_free(sseq);
+}

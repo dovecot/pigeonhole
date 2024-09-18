@@ -180,4 +180,19 @@ int sieve_storage_get_last_change(struct sieve_storage *storage,
 void sieve_storage_set_modified(struct sieve_storage *storage,
 				time_t mtime);
 
+/*
+ * Storage sequence
+ */
+
+struct sieve_storage_sequence;
+
+int sieve_storage_sequence_create(struct sieve_instance *svinst,
+				  const char *location,
+				  struct sieve_storage_sequence **sseq_r,
+				  enum sieve_error *error_code_r);
+int sieve_storage_sequence_next(struct sieve_storage_sequence *sseq,
+				struct sieve_storage **storage_r,
+				enum sieve_error *error_code_r);
+void sieve_storage_sequence_free(struct sieve_storage_sequence **_sseq);
+
 #endif

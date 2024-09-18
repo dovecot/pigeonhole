@@ -108,6 +108,7 @@ void sieve_script_set_not_found_error(struct sieve_script *script,
  */
 
 struct sieve_script_sequence {
+	struct sieve_storage_sequence *storage_seq;
 	struct sieve_storage *storage;
 	void *storage_data;
 };

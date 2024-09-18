@@ -950,42 +950,92 @@ int sieve_script_sequence_create(struct sieve_instance *svinst,
 				 struct sieve_script_sequence **sseq_r,
 				 enum sieve_error *error_code_r)
 {
-	struct sieve_storage *storage;
+	struct sieve_storage_sequence *storage_seq;
 	struct sieve_script_sequence *sseq;
-	int ret;
 
 	*sseq_r = NULL;
 	sieve_error_args_init(&error_code_r, NULL);
 
-	if (sieve_storage_create(svinst, location, 0,
-				 &storage, error_code_r) < 0)
+	if (sieve_storage_sequence_create(svinst, location,
+					  &storage_seq, error_code_r) < 0)
 		return -1;
 
 	sseq = i_new(struct sieve_script_sequence, 1);
-	sseq->storage = storage;
-
-	i_assert(storage->v.script_sequence_init != NULL);
-        ret = storage->v.script_sequence_init(sseq);
-	*error_code_r = storage->error_code;
+	sseq->storage_seq = storage_seq;
 
 	*sseq_r = sseq;
-	return ret;
+	return 0;
+}
+
+static int
+sieve_script_sequence_init_storage(struct sieve_script_sequence *sseq,
+				   enum sieve_error *error_code_r)
+{
+	int ret;
+
+	while (sseq->storage == NULL) {
+		ret = sieve_storage_sequence_next(sseq->storage_seq,
+						  &sseq->storage, error_code_r);
+		if (ret == 0)
+			return 0;
+		if (ret < 0) {
+			if (*error_code_r == SIEVE_ERROR_NOT_FOUND)
+				continue;
+			return -1;
+		}
+
+		struct sieve_storage *storage =	sseq->storage;
+
+		i_assert(storage->v.script_sequence_init != NULL);
+		*error_code_r = SIEVE_ERROR_NONE;
+		ret = storage->v.script_sequence_init(sseq);
+		*error_code_r = storage->error_code;
+		sieve_storage_unref(&sseq->storage);
+		if (ret < 0 && *error_code_r != SIEVE_ERROR_NOT_FOUND)
+			return -1;
+	}
+	return 1;
+}
+
+static void
+sieve_script_sequence_deinit_storage(struct sieve_script_sequence *sseq)
+{
+	struct sieve_storage *storage =	sseq->storage;
+
+	if (storage != NULL && storage->v.script_sequence_destroy != NULL)
+		storage->v.script_sequence_destroy(sseq);
+	sseq->storage_data = NULL;
+
+	sieve_storage_unref(&sseq->storage);
 }
 
 int sieve_script_sequence_next(struct sieve_script_sequence *sseq,
 			       struct sieve_script **script_r,
 			       enum sieve_error *error_code_r)
 {
-	struct sieve_storage *storage = sseq->storage;
 	int ret;
 
 	*script_r = NULL;
 	sieve_error_args_init(&error_code_r, NULL);
-	sieve_storage_clear_error(storage);
 
-	i_assert(storage->v.script_sequence_next != NULL);
-	ret = storage->v.script_sequence_next(sseq, script_r);
-	*error_code_r = storage->error_code;
+	while ((ret = sieve_script_sequence_init_storage(sseq, error_code_r)) > 0) {
+		struct sieve_storage *storage =	sseq->storage;
+
+		i_assert(storage->v.script_sequence_next != NULL);
+		sieve_storage_clear_error(storage);
+		ret = storage->v.script_sequence_next(sseq, script_r);
+		*error_code_r = storage->error_code;
+		if (ret > 0)
+			break;
+
+		if (ret < 0 && *error_code_r == SIEVE_ERROR_NOT_FOUND)
+			ret = 0;
+
+		sieve_script_sequence_deinit_storage(sseq);
+		if (ret < 0)
+			break;
+	}
+
 	return ret;
 }
 
@@ -997,11 +1047,7 @@ void sieve_script_sequence_free(struct sieve_script_sequence **_sseq)
 		return;
 	*_sseq = NULL;
 
-	struct sieve_storage *storage = sseq->storage;
-
-	if (storage->v.script_sequence_destroy != NULL)
-		storage->v.script_sequence_destroy(sseq);
-
-	sieve_storage_unref(&storage);
+	sieve_script_sequence_deinit_storage(sseq);
+	sieve_storage_sequence_free(&sseq->storage_seq);
 	i_free(sseq);
 }
