@@ -118,8 +118,7 @@ static void sieve_dict_storage_destroy(struct sieve_storage *storage)
 	struct sieve_dict_storage *dstorage =
 		container_of(storage, struct sieve_dict_storage, storage);
 
-	if (dstorage->dict != NULL)
-		dict_deinit(&dstorage->dict);
+	dict_deinit(&dstorage->dict);
 }
 
 /*
