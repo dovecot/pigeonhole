@@ -327,8 +327,6 @@ sieve_storage_init(struct sieve_instance *svinst,
 	struct event *storage_event, *event;
 	int ret;
 
-	i_assert(storage_class->v.init != NULL);
-
 	storage_event = sieve_storage_create_event(svinst, svinst->event);
 	event = sieve_storage_create_driver_event(storage_event,
 						  storage_class->driver_name);
@@ -350,16 +348,18 @@ sieve_storage_init(struct sieve_instance *svinst,
 		return -1;
 	}
 
-	T_BEGIN {
-		ret = sieve_storage_alloc(svinst, event, storage_class,
-					  data, flags, main, &storage);
-		i_assert(ret == 0);
+	ret = sieve_storage_alloc(svinst, event, storage_class,
+				  data, flags, main, &storage);
+	i_assert(ret == 0);
+	i_assert(storage != NULL);
+	i_assert(storage_class->v.init != NULL);
 
-		ret = sieve_storage_data_parse(storage, data,
-					       &location, &options);
-		if (ret < 0)
+	T_BEGIN {
+		if (sieve_storage_data_parse(storage, data,
+					     &location, &options) < 0) {
 			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
-		else {
+			ret = -1;
+		} else {
 			storage->location = p_strdup(storage->pool, location);
 
 			event_add_str(event, "script_location",
