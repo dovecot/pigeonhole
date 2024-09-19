@@ -111,6 +111,12 @@ sieve_storage_class_find(struct sieve_instance *svinst, const char *name)
 	return NULL;
 }
 
+bool sieve_storage_class_exists(struct sieve_instance *svinst,
+				const char *name)
+{
+	return (sieve_storage_class_find(svinst, name) != NULL);
+}
+
 /*
  * Storage instance
  */
