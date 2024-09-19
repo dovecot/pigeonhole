@@ -578,8 +578,7 @@ struct ostream *sieve_tool_open_output_stream(const char *filename)
  */
 
 struct sieve_binary *
-sieve_tool_script_compile(struct sieve_tool *tool, const char *location,
-			  const char *name)
+sieve_tool_script_compile(struct sieve_tool *tool, const char *location)
 {
 	struct sieve_instance *svinst = tool->svinst;
 	struct sieve_error_handler *ehandler;
@@ -589,7 +588,7 @@ sieve_tool_script_compile(struct sieve_tool *tool, const char *location,
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
-	if (sieve_compile(svinst, location, name, ehandler, 0, &sbin, NULL) < 0)
+	if (sieve_compile(svinst, location, NULL, ehandler, 0, &sbin, NULL) < 0)
 		i_fatal("failed to compile sieve script '%s'", location);
 	i_assert(sbin != NULL);
 
