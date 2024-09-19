@@ -190,7 +190,7 @@ void sieve_storage_class_register(struct sieve_instance *svinst,
 void sieve_storage_class_unregister(struct sieve_instance *svinst,
 				    const struct sieve_storage *storage_class);
 const struct sieve_storage *
-sieve_storage_find_class(struct sieve_instance *svinst, const char *name);
+sieve_storage_class_find(struct sieve_instance *svinst, const char *name);
 
 /*
  * Built-in storage drivers
