@@ -31,6 +31,34 @@ void testsuite_script_deinit(void)
 {
 }
 
+static const char *path_get_filename(const char *path)
+{
+	const char *filename;
+
+	filename = strrchr(path, '/');
+	if (filename == NULL)
+		filename = path;
+	else
+		filename++;
+	return filename;
+}
+
+const char *testsuite_script_get_name(const char *path)
+{
+	const char *file, *ext;
+
+	file = path_get_filename(path);
+
+	/* Extract the script name */
+	ext = strrchr(file, '.');
+	if (ext == NULL || ext == file ||
+	    (strcmp(ext, ".svtest") != 0 &&
+	     strcmp(ext, "."SIEVE_SCRIPT_FILEEXT) != 0))
+		return NULL;
+
+	return t_strdup_until(file, ext);
+}
+
 static struct sieve_binary *
 _testsuite_script_compile(const struct sieve_runtime_env *renv,
 			  const char *script)

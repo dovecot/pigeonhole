@@ -6,6 +6,8 @@
 void testsuite_script_init(void);
 void testsuite_script_deinit(void);
 
+const char *testsuite_script_get_name(const char *path);
+
 bool testsuite_script_is_subtest(const struct sieve_runtime_env *renv);
 
 bool testsuite_script_compile(const struct sieve_runtime_env *renv,
