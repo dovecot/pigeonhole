@@ -61,7 +61,7 @@ void sieve_storage_class_register(struct sieve_instance *svinst,
 	struct sieve_storage_class_registry *reg = svinst->storage_reg;
 	const struct sieve_storage *old_class;
 
-	old_class = sieve_storage_find_class(svinst,
+	old_class = sieve_storage_class_find(svinst,
 					     storage_class->driver_name);
 	if (old_class != NULL) {
 		if (old_class->v.alloc == NULL) {
@@ -95,7 +95,7 @@ void sieve_storage_class_unregister(struct sieve_instance *svinst,
 }
 
 const struct sieve_storage *
-sieve_storage_find_class(struct sieve_instance *svinst, const char *name)
+sieve_storage_class_find(struct sieve_instance *svinst, const char *name)
 {
 	struct sieve_storage_class_registry *reg = svinst->storage_reg;
 	const struct sieve_storage *const *classes;
@@ -154,7 +154,7 @@ sieve_storage_driver_parse(struct sieve_instance *svinst, const char **data,
 		driver = t_strdup_until(*data, p);
 		*data = p+1;
 
-		storage_class = sieve_storage_find_class(svinst, driver);
+		storage_class = sieve_storage_class_find(svinst, driver);
 		if (storage_class == NULL) {
 			e_error(svinst->event,
 				"Unknown storage driver module '%s'",
