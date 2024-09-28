@@ -84,7 +84,7 @@ struct sieve_ldap_script {
 	const char *dn;
 	const char *modattr;
 
-	const char *binpath;
+	const char *bin_path;
 };
 
 struct sieve_ldap_script *
