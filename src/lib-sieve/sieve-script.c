@@ -197,13 +197,8 @@ int sieve_script_open(struct sieve_script *script,
 	i_assert(script->name != NULL);
 	script->open = TRUE;
 
-	if (*script->name != '\0') {
-		e_debug(script->event, "Opened script '%s' from '%s'",
-			script->name, script->location);
-	} else {
-		e_debug(script->event, "Opened nameless script from '%s'",
-			script->location);
-	}
+	sieve_script_update_event(script);
+	e_debug(script->event, "Opened from '%s'", script->location);
 	return 0;
 }
 
@@ -214,8 +209,9 @@ int sieve_script_open_as(struct sieve_script *script, const char *name,
 		return -1;
 
 	/* override name */
+	i_assert(name != NULL && *name != '\0');
 	script->name = p_strdup(script->pool, name);
-	event_add_str(script->event, "script_name", name);
+	sieve_script_update_event(script);
 	return 0;
 }
 
@@ -740,6 +736,7 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 
 	if (ret >= 0) {
 		e_debug(event->event(), "Script renamed to '%s'", newname);
+		sieve_script_update_event(script);
 	} else {
 		event = event->add_str("error", storage->error);
 
