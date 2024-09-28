@@ -980,7 +980,7 @@ int sieve_storage_deactivate(struct sieve_storage *storage, time_t mtime)
 		struct event_passthrough *e =
 			event_create_passthrough(storage->event)->
 			set_name("sieve_storage_deactivated");
-		e_debug(e->event(), "Storage activated");
+		e_debug(e->event(), "Storage deactivated");
 
 		sieve_storage_set_modified(storage, mtime);
 		(void)sieve_storage_sync_deactivate(storage);
