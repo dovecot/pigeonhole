@@ -1096,8 +1096,6 @@ lda_sieve_deliver_mail(struct mail_deliver_context *mdctx,
 	T_BEGIN {
 		if (lda_sieve_find_scripts(&srctx) < 0)
 			ret = -1;
-		else if (srctx.scripts == NULL)
-			ret = 0;
 		else
 			ret = lda_sieve_execute(&srctx, storage_r);
 
