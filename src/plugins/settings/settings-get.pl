@@ -26,6 +26,7 @@ print '#include "message-header-parser.h"'."\n";
 print '#include "sieve-common.h"'."\n";
 print '#include "sieve-limits.h"'."\n";
 print '#include "sieve-address-source.h"'."\n";
+print '#include "managesieve-url.h"'."\n";
 print '#include "pigeonhole-settings.h"'."\n";
 print '#include <unistd.h>'."\n";
 print '#define CONFIG_BINARY'."\n";

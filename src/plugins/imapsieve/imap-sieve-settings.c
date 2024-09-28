@@ -6,6 +6,7 @@
 #include "settings.h"
 #include "settings-parser.h"
 
+#include "managesieve-url.h"
 #include "imap-sieve-settings.h"
 
 #undef DEF
@@ -48,10 +49,14 @@ imap_sieve_settings_check(void *_set, pool_t pool ATTR_UNUSED,
 			  const char **error_r)
 {
 	struct imap_sieve_settings *set = _set;
+	const char *error;
 
-	if (*set->url != '\0' && !str_begins_icase_with(set->url, "sieve:")) {
-		*error_r = "Invalid URL for imapsieve_url setting: "
-			"Not a Sieve URL";
+	if (*set->url != '\0' &&
+	    managesieve_url_parse(set->url, 0, pool_datastack_create(),
+				  NULL, &error) < 0) {
+		*error_r = t_strdup_printf(
+			"Invalid URL for imapsieve_url setting: %s",
+			set->url);
 		return FALSE;
 	}
 
