@@ -84,13 +84,13 @@ sieve_file_storage_list_init(struct sieve_storage *storage)
 }
 
 const char *
-sieve_file_storage_list_next(struct sieve_storage_list_context *ctx,
+sieve_file_storage_list_next(struct sieve_storage_list_context *lctx,
 			     bool *active)
 {
 	struct sieve_file_list_context *flctx =
-		(struct sieve_file_list_context *)ctx;
+		(struct sieve_file_list_context *)lctx;
 	const struct sieve_file_storage *fstorage =
-		(const struct sieve_file_storage *)ctx->storage;
+		(const struct sieve_file_storage *)lctx->storage;
 	struct dirent *dp;
 	const char *scriptname;
 
