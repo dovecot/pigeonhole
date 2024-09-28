@@ -57,9 +57,8 @@ int sieve_compile(struct sieve_instance *svinst, const char *script_location,
  */
 
 /* Loads the sieve binary indicated by the provided path. */
-struct sieve_binary *
-sieve_load(struct sieve_instance *svinst, const char *bin_path,
-	   enum sieve_error *error_code_r);
+int sieve_load(struct sieve_instance *svinst, const char *bin_path,
+	       struct sieve_binary **sbin_r, enum sieve_error *error_code_r);
 /* First tries to open the binary version of the specified script and if it does
    not exist or if it contains errors, the script is (re-)compiled. Note that
    errors in the bytecode are caught only at runtime.

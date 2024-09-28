@@ -377,15 +377,10 @@ sieve_run(struct sieve_binary *sbin, struct sieve_result *result,
  * Reading/writing sieve binaries
  */
 
-struct sieve_binary *
-sieve_load(struct sieve_instance *svinst, const char *bin_path,
-	   enum sieve_error *error_code_r)
+int sieve_load(struct sieve_instance *svinst, const char *bin_path,
+	       struct sieve_binary **sbin_r, enum sieve_error *error_code_r)
 {
-	struct sieve_binary *sbin;
-
-	if (sieve_binary_open(svinst, bin_path, NULL, &sbin, error_code_r) < 0)
-		return NULL;
-	return sbin;
+	return sieve_binary_open(svinst, bin_path, NULL, sbin_r, error_code_r);
 }
 
 static int

@@ -80,15 +80,13 @@ int main(int argc, char **argv)
         sieve_enable_debug_extension(svinst);
 
 	/* Dump binary */
-	sbin = sieve_load(svinst, binfile, NULL);
-	if (sbin != NULL) {
-		sieve_tool_dump_binary_to(sbin,
-					  (outfile == NULL ? "-" : outfile),
-					  hexdump);
-		sieve_close(&sbin);
-	} else {
+	if (sieve_load(svinst, binfile, &sbin, NULL) < 0) {
 		i_error("failed to load binary: %s", binfile);
 		exit_status = EXIT_FAILURE;
+	} else {
+		sieve_tool_dump_binary_to(sbin, outfile == NULL ? "-" : outfile,
+					  hexdump);
+		sieve_close(&sbin);
 	}
 
 	sieve_tool_deinit(&sieve_tool);
