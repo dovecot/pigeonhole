@@ -609,11 +609,9 @@ sieve_tool_script_open(struct sieve_instance *svinst, const char *filename)
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
-	sbin = sieve_open(svinst, filename, NULL, ehandler, 0, NULL);
-	if (sbin == NULL) {
-		sieve_error_handler_unref(&ehandler);
+	if (sieve_open(svinst, filename, NULL, ehandler, 0, &sbin, NULL) < 0)
 		i_fatal("failed to compile sieve script");
-	}
+	i_assert(sbin != NULL);
 
 	sieve_error_handler_unref(&ehandler);
 

@@ -73,10 +73,10 @@ sieve_open_script(struct sieve_script *script,
    not exist or if it contains errors, the script is (re-)compiled. Note that
    errors in the bytecode are caught only at runtime.
  */
-struct sieve_binary *
-sieve_open(struct sieve_instance *svinst, const char *script_location,
-	   const char *script_name, struct sieve_error_handler *ehandler,
-	   enum sieve_compile_flags flags, enum sieve_error *error_code_r);
+int sieve_open(struct sieve_instance *svinst, const char *script_location,
+	       const char *script_name, struct sieve_error_handler *ehandler,
+	       enum sieve_compile_flags flags, struct sieve_binary **sbin_r,
+	       enum sieve_error *error_code_r);
 
 /* Record resource usage in the binary cumulatively. The binary is disabled when
    resource limits are exceeded within a configured timeout. Returns FALSE when
