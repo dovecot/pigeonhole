@@ -231,19 +231,19 @@ sieve_ldap_script_binary_dump_metadata(struct sieve_script *script ATTR_UNUSED,
 }
 
 static const char *
-sieve_ldap_script_get_binpath(struct sieve_ldap_script *lscript)
+sieve_ldap_script_get_bin_path(struct sieve_ldap_script *lscript)
 {
 	struct sieve_script *script = &lscript->script;
 	struct sieve_storage *storage = script->storage;
 
-	if (lscript->binpath == NULL) {
+	if (lscript->bin_path == NULL) {
 		if (storage->bin_path == NULL)
 			return NULL;
-		lscript->binpath = p_strconcat(
+		lscript->bin_path = p_strconcat(
 			script->pool, storage->bin_path, "/",
 			sieve_binfile_from_name(script->name), NULL);
 	}
-	return lscript->binpath;
+	return lscript->bin_path;
 }
 
 static int
@@ -255,10 +255,10 @@ sieve_ldap_script_binary_load(struct sieve_script *script,
 	struct sieve_ldap_script *lscript =
 		container_of(script, struct sieve_ldap_script, script);
 
-	if (sieve_ldap_script_get_binpath(lscript) == NULL)
+	if (sieve_ldap_script_get_bin_path(lscript) == NULL)
 		return -1;
 
-	return sieve_binary_open(storage->svinst, lscript->binpath, script,
+	return sieve_binary_open(storage->svinst, lscript->bin_path, script,
 				 sbin_r, error_code_r);
 }
 
@@ -270,12 +270,12 @@ sieve_ldap_script_binary_save(struct sieve_script *script,
 	struct sieve_ldap_script *lscript =
 		container_of(script, struct sieve_ldap_script, script);
 
-	if (sieve_ldap_script_get_binpath(lscript) == NULL)
+	if (sieve_ldap_script_get_bin_path(lscript) == NULL)
 		return 0;
 	if (sieve_storage_setup_bin_path(script->storage, 0700) < 0)
 		return -1;
 
-	return sieve_binary_save(sbin, lscript->binpath, update, 0600,
+	return sieve_binary_save(sbin, lscript->bin_path, update, 0600,
 				 error_code_r);
 }
 
