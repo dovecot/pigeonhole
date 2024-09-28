@@ -11,6 +11,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
 	-I$(top_srcdir)/src/lib-sieve/util \
 	-I$(top_srcdir)/src/lib-sieve/plugins/environment \
+	-I$(top_srcdir)/src/lib-managesieve \
 	$(LIBDOVECOT_IMAP_INCLUDE) \
 	$(LIBDOVECOT_LDA_INCLUDE) \
 	$(LIBDOVECOT_INCLUDE) \
@@ -24,7 +25,8 @@ lib95_imap_sieve_plugin_la_SOURCES = \
 	imap-sieve-storage.c \
 	imap-sieve-plugin.c
 lib95_imap_sieve_plugin_la_LIBADD = \
-	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la
+	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la \
+	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la
 
 lib90_sieve_imapsieve_plugin_la_SOURCES = \
 	ext-imapsieve.c \
