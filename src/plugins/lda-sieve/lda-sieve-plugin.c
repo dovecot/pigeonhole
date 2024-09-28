@@ -285,37 +285,35 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 {
 	struct sieve_script_sequence *sseq;
 	struct sieve_script *script;
-	bool finished = FALSE;
-	int ret = 1;
+	int ret;
 
-	if (sieve_script_sequence_create(svinst, location,
-					 &sseq, error_code_r) < 0)
-		return (*error_code_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
-
-	while (ret > 0 && !finished) {
-		if (sieve_script_sequence_next(sseq, &script,
-					       error_code_r) < 0) {
-			switch (*error_code_r) {
-			case SIEVE_ERROR_NONE:
-				finished = TRUE;
-				break;
-			case SIEVE_ERROR_TEMP_FAILURE:
-				e_error(sieve_get_event(svinst),
-					"Failed to access %s script from '%s' "
-					"(temporary failure)",
-					label, location);
-				ret = -1;
-			default:
-				break;
-			}
-			continue;
-		}
-
-		array_append(scripts, &script, 1);
+	ret = sieve_script_sequence_create(svinst, location,
+					   &sseq, error_code_r);
+	if (ret < 0) {
+		if (*error_code_r == SIEVE_ERROR_NOT_FOUND)
+			return 0;
+		return -1;
 	}
 
+	while ((ret = sieve_script_sequence_next(sseq, &script,
+						 error_code_r)) > 0)
+		array_append(scripts, &script, 1);
+
 	sieve_script_sequence_free(&sseq);
-	return ret;
+	if (ret < 0) {
+		switch (*error_code_r) {
+		case SIEVE_ERROR_TEMP_FAILURE:
+			e_error(sieve_get_event(svinst),
+				"Failed to access %s script from '%s' "
+				"(temporary failure)",
+				label, location);
+			break;
+		default:
+			break;
+		}
+		return -1;
+	}
+	return 0;
 }
 
 static void
