@@ -570,6 +570,7 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	const char *compile_name = "compile";
+	int ret;
 
 	if (recompile) {
 		/* Warn */
@@ -590,16 +591,15 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 
 	/* Load or compile the sieve script */
 	if (recompile) {
-		if (sieve_compile_script(script, ehandler, cpflags,
-					 &sbin, error_code_r) < 0)
-			sbin = NULL;
+		ret = sieve_compile_script(script, ehandler, cpflags,
+					   &sbin, error_code_r);
 	} else {
-		sbin = sieve_open_script(script, ehandler, cpflags,
-					 error_code_r);
+		ret = sieve_open_script(script, ehandler, cpflags,
+					&sbin, error_code_r);
 	}
 
 	/* Handle error */
-	if (sbin == NULL) {
+	if (ret < 0) {
 		switch (*error_code_r) {
 		/* Script not found */
 		case SIEVE_ERROR_NOT_FOUND:

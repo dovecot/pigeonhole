@@ -388,23 +388,18 @@ sieve_load(struct sieve_instance *svinst, const char *bin_path,
 	return sbin;
 }
 
-static struct sieve_binary *
+static int
 sieve_open_script_real(struct sieve_script *script,
 		       struct sieve_error_handler *ehandler,
 		       enum sieve_compile_flags flags,
+		       struct sieve_binary **sbin_r,
 		       enum sieve_error *error_code_r)
 {
 	struct sieve_instance *svinst = sieve_script_svinst(script);
 	struct sieve_resource_usage rusage;
 	struct sieve_binary *sbin;
-	enum sieve_error error_code;
 	const char *error = NULL;
 	int ret;
-
-	if (error_code_r != NULL)
-		*error_code_r = SIEVE_ERROR_NONE;
-	else
-		error_code_r = &error_code;
 
 	sieve_resource_usage_init(&rusage);
 
@@ -433,7 +428,7 @@ sieve_open_script_real(struct sieve_script *script,
 	} else {
 		if (sieve_compile_script(script, ehandler, flags,
 					 &sbin, error_code_r) < 0)
-			return NULL;
+			return -1;
 
 		e_debug(svinst->event,
 			"Script '%s' from %s successfully compiled",
@@ -466,25 +461,34 @@ sieve_open_script_real(struct sieve_script *script,
 				    "%s", error);
 		}
 		sieve_binary_close(&sbin);
+		return -1;
 	}
 
-	return sbin;
+	*sbin_r = sbin;
+	return 0;
 }
 
-struct sieve_binary *
-sieve_open_script(struct sieve_script *script,
-		  struct sieve_error_handler *ehandler,
-		  enum sieve_compile_flags flags,
-		  enum sieve_error *error_code_r)
+int sieve_open_script(struct sieve_script *script,
+		      struct sieve_error_handler *ehandler,
+		      enum sieve_compile_flags flags,
+		      struct sieve_binary **sbin_r,
+		      enum sieve_error *error_code_r)
 {
-	struct sieve_binary *sbin;
+	enum sieve_error error_code;
+	int ret;
+
+	*sbin_r = NULL;
+	if (error_code_r != NULL)
+		*error_code_r = SIEVE_ERROR_NONE;
+	else
+		error_code_r = &error_code;
 
 	T_BEGIN {
-		sbin = sieve_open_script_real(script, ehandler, flags,
-					      error_code_r);
+		ret = sieve_open_script_real(script, ehandler, flags,
+					     sbin_r, error_code_r);
 	} T_END;
 
-	return sbin;
+	return ret;
 }
 
 int sieve_open(struct sieve_instance *svinst, const char *script_location,
@@ -493,8 +497,8 @@ int sieve_open(struct sieve_instance *svinst, const char *script_location,
 	       enum sieve_error *error_code_r)
 {
 	struct sieve_script *script;
-	struct sieve_binary *sbin;
 	enum sieve_error error_code;
+	int ret;
 
 	*sbin_r = NULL;
 	if (error_code_r != NULL)
@@ -517,15 +521,13 @@ int sieve_open(struct sieve_instance *svinst, const char *script_location,
 		return -1;
 	}
 
-	sbin = sieve_open_script(script, ehandler, flags, error_code_r);
-
 	/* Drop script reference, if sbin != NULL it holds a reference of its
 	   own. Otherwise the script object is freed here.
 	 */
+	ret = sieve_open_script(script, ehandler, flags,
+				sbin_r, error_code_r);
 	sieve_script_unref(&script);
-
-	*sbin_r = sbin;
-	return (sbin == NULL ? -1 : 0);
+	return ret;
 }
 
 const char *sieve_get_source(struct sieve_binary *sbin)

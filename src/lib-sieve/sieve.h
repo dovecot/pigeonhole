@@ -64,11 +64,11 @@ sieve_load(struct sieve_instance *svinst, const char *bin_path,
    not exist or if it contains errors, the script is (re-)compiled. Note that
    errors in the bytecode are caught only at runtime.
  */
-struct sieve_binary *
-sieve_open_script(struct sieve_script *script,
-		  struct sieve_error_handler *ehandler,
-		  enum sieve_compile_flags flags,
-		  enum sieve_error *error_code_r);
+int sieve_open_script(struct sieve_script *script,
+		      struct sieve_error_handler *ehandler,
+		      enum sieve_compile_flags flags,
+		      struct sieve_binary **sbin_r,
+		      enum sieve_error *error_code_r);
 /* First tries to open the binary version of the specified script and if it does
    not exist or if it contains errors, the script is (re-)compiled. Note that
    errors in the bytecode are caught only at runtime.
