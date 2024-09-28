@@ -169,9 +169,11 @@ int main(int argc, char **argv)
 	printf("Test case: %s:\n\n", scriptfile);
 
 	/* Compile sieve script */
-	if ((sbin = sieve_compile(svinst, scriptfile, NULL,
-				  testsuite_log_main_ehandler,
-				  0, NULL)) != NULL) {
+	if (sieve_compile(svinst, scriptfile, NULL,
+			  testsuite_log_main_ehandler, 0,
+			  &sbin, NULL) < 0) {
+		testsuite_testcase_fail("failed to compile testcase script");
+	} else {
 		struct sieve_trace_log *trace_log = NULL;
 		struct sieve_exec_status exec_status;
 		struct sieve_script_env scriptenv;
@@ -244,8 +246,6 @@ int main(int argc, char **argv)
 			sieve_trace_log_free(&trace_log);
 
 		testsuite_scriptenv = NULL;
-	} else {
-		testsuite_testcase_fail("failed to compile testcase script");
 	}
 
 	/* De-initialize testsuite */

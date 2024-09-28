@@ -47,9 +47,8 @@ _testsuite_script_compile(const struct sieve_runtime_env *renv,
 		return NULL;
 
 	script_path = t_strconcat(script_path, "/", script, NULL);
-	sbin = sieve_compile(svinst, script_path, NULL, testsuite_log_ehandler,
-			     0, NULL);
-	if (sbin == NULL)
+	if (sieve_compile(svinst, script_path, NULL,
+			  testsuite_log_ehandler, 0, &sbin, NULL) < 0)
 		return NULL;
 
 	return sbin;

@@ -591,9 +591,9 @@ sieve_tool_script_compile(struct sieve_instance *svinst,
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
-	sbin = sieve_compile(svinst, filename, name, ehandler, 0, NULL);
-	if (sbin == NULL)
+	if (sieve_compile(svinst, filename, name, ehandler, 0, &sbin, NULL) < 0)
 		i_fatal("failed to compile sieve script '%s'", filename);
+	i_assert(sbin != NULL);
 
 	sieve_error_handler_unref(&ehandler);
 	return sbin;
