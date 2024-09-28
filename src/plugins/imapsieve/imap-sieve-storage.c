@@ -1171,14 +1171,23 @@ static void imap_sieve_command_post(struct client_command_context *cmd)
  * Client
  */
 
-void imap_sieve_storage_client_created(struct client *client, bool user_script)
+void imap_sieve_storage_client_created(struct client *client)
 {
 	struct mail_user *user = client->user;
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
-	const char *set;
+	const char *url, *set;
+
+	url = mail_user_plugin_getenv(user, "imapsieve_url");
+	// FIXME: parse the URL and report error if it is bad
+	if (url != NULL && str_begins_icase_with(url, "sieve:")) {
+		client_add_capability(client,
+			t_strconcat("IMAPSIEVE=", url, NULL));
+	} else {
+		url = NULL;
+	}
 
 	isuser->client = client;
-	isuser->user_script = user_script;
+	isuser->user_script = (url != NULL && *url != '\0');
 
 	set = mail_user_plugin_getenv(user, "imapsieve_expunge_discarded");
 	isuser->expunge_discarded = (set != NULL &&
