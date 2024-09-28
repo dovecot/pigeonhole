@@ -87,6 +87,18 @@ bool sieve_script_name_is_valid(const char *scriptname)
  * Script instance
  */
 
+static void sieve_script_update_event(struct sieve_script *script)
+{
+	if (script->name == NULL)
+		event_set_append_log_prefix(script->event, "script: ");
+	else {
+		event_add_str(script->event, "script_name", script->name);
+		event_set_append_log_prefix(
+			script->event, t_strdup_printf("script '%s': ",
+						       script->name));
+	}
+}
+
 void sieve_script_init(struct sieve_script *script,
 		       struct sieve_storage *storage,
 		       const struct sieve_script *script_class,
@@ -98,17 +110,11 @@ void sieve_script_init(struct sieve_script *script,
 	script->refcount = 1;
 	script->storage = storage;
 	script->location = p_strdup_empty(script->pool, location);
-	script->name = p_strdup(script->pool, name);
+	script->name = p_strdup_empty(script->pool, name);
 
 	script->event = event_create(storage->event);
-	event_add_str(script->event, "script_name", name);
 	event_add_str(script->event, "script_location", location);
-	if (name == NULL)
-		event_set_append_log_prefix(script->event, "script: ");
-	else {
-		event_set_append_log_prefix(
-			script->event, t_strdup_printf("script '%s': ", name));
-	}
+	sieve_script_update_event(script);
 
 	sieve_storage_ref(storage);
 }
