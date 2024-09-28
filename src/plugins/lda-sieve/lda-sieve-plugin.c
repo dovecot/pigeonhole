@@ -731,34 +731,34 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 					     &main_storage, &error_code);
 	if (ret == 0 && error_code == SIEVE_ERROR_NOT_POSSIBLE)
 		return 0;
-	if (ret > 0) {
-		if (sieve_storage_active_script_open(main_storage,
-						     &srctx->main_script,
-						     &error_code) < 0) {
-			switch (error_code) {
-			case SIEVE_ERROR_NOT_FOUND:
-				e_debug(sieve_get_event(svinst),
-					"User has no active script in storage '%s'",
-					sieve_storage_location(main_storage));
-				break;
-			case SIEVE_ERROR_TEMP_FAILURE:
-				e_error(sieve_get_event(svinst),
-					"Failed to access active Sieve script in user storage '%s' "
-					"(temporary failure)",
-					sieve_storage_location(main_storage));
-				ret = -1;
-				break;
-			default:
-				e_error(sieve_get_event(svinst),
-					"Failed to access active Sieve script in user storage '%s'",
-					sieve_storage_location(main_storage));
-				break;
-			}
-		} else if (!sieve_script_is_default(srctx->main_script)) {
-			srctx->user_script = srctx->main_script;
+	if (ret <= 0) {
+		/* Nothing */
+	} else if (sieve_storage_active_script_open(main_storage,
+						    &srctx->main_script,
+						    &error_code) < 0) {
+		switch (error_code) {
+		case SIEVE_ERROR_NOT_FOUND:
+			e_debug(sieve_get_event(svinst),
+				"User has no active script in storage '%s'",
+				sieve_storage_location(main_storage));
+			break;
+		case SIEVE_ERROR_TEMP_FAILURE:
+			e_error(sieve_get_event(svinst),
+				"Failed to access active Sieve script in user storage '%s' "
+				"(temporary failure)",
+				sieve_storage_location(main_storage));
+			ret = -1;
+			break;
+		default:
+			e_error(sieve_get_event(svinst),
+				"Failed to access active Sieve script in user storage '%s'",
+				sieve_storage_location(main_storage));
+			break;
 		}
-		sieve_storage_unref(&main_storage);
+	} else if (!sieve_script_is_default(srctx->main_script)) {
+		srctx->user_script = srctx->main_script;
 	}
+	sieve_storage_unref(&main_storage);
 
 	if (ret >= 0 && srctx->main_script == NULL) {
 		e_debug(sieve_get_event(svinst),
