@@ -15,7 +15,7 @@
 bool cmd_listscripts(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
-	struct sieve_storage_list_context *ctx;
+	struct sieve_storage_list_context *lctx;
 	const char *scriptname;
 	unsigned int script_count = 0;
 	bool active;
@@ -25,8 +25,8 @@ bool cmd_listscripts(struct client_command_context *cmd)
 	if (!client_read_no_args(cmd))
 		return FALSE;
 
-	ctx = sieve_storage_list_init(client->storage);
-	if (ctx == NULL) {
+	lctx = sieve_storage_list_init(client->storage);
+	if (lctx == NULL) {
 		client_command_storage_error(
 			cmd, "Failed to list scripts");
 		return TRUE;
@@ -36,7 +36,7 @@ bool cmd_listscripts(struct client_command_context *cmd)
 	   some buffering to fix this. Wont truely be an issue with managesieve
 	   though.
 	 */
-	while ((scriptname = sieve_storage_list_next(ctx, &active)) != NULL) {
+	while ((scriptname = sieve_storage_list_next(lctx, &active)) != NULL) {
 		T_BEGIN {
 			str = t_str_new(128);
 
@@ -51,7 +51,7 @@ bool cmd_listscripts(struct client_command_context *cmd)
 		script_count++;
 	}
 
-	if (sieve_storage_list_deinit(&ctx) < 0) {
+	if (sieve_storage_list_deinit(&lctx) < 0) {
 		client_command_storage_error(
 			cmd, "Failed to list scripts");
 		return TRUE;
