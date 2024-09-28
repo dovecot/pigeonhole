@@ -721,17 +721,24 @@ sieve_file_storage_init_default(struct sieve_instance *svinst,
 	return storage;
 }
 
-struct sieve_file_storage *
-sieve_file_storage_init_from_path(struct sieve_instance *svinst,
-				  const char *path,
-				  enum sieve_storage_flags flags,
-				  enum sieve_error *error_code_r)
+int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
+				      const char *path,
+				      enum sieve_storage_flags flags,
+				      struct sieve_file_storage **fstorage_r,
+				      enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
+	enum sieve_error error_code;
 	int ret;
 
 	i_assert(path != NULL);
+
+	*fstorage_r = NULL;
+	if (error_code_r != NULL)
+		*error_code_r = SIEVE_ERROR_NONE;
+	else
+		error_code_r = &error_code;
 
 	ret = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
 				  "", flags, FALSE, &storage);
@@ -739,14 +746,15 @@ sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 	fstorage = container_of(storage, struct sieve_file_storage, storage);
 
 	T_BEGIN {
-		if (sieve_file_storage_init_common(fstorage, path, NULL, FALSE,
-						   error_code_r) < 0) {
-			sieve_storage_unref(&storage);
-			fstorage = NULL;
-		}
+		ret = sieve_file_storage_init_common(fstorage, path, NULL,
+						     FALSE, error_code_r);
 	} T_END;
-
-	return fstorage;
+	if (ret < 0) {
+		sieve_storage_unref(&storage);
+		return -1;
+	}
+	*fstorage_r = fstorage;
+	return 0;
 }
 
 static int sieve_file_storage_is_singular(struct sieve_storage *storage)

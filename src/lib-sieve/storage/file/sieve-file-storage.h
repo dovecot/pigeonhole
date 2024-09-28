@@ -46,11 +46,11 @@ const char *
 sieve_file_storage_path_extend(struct sieve_file_storage *fstorage,
 			       const char *filename);
 
-struct sieve_file_storage *
-sieve_file_storage_init_from_path(struct sieve_instance *svinst,
-				  const char *path,
-				  enum sieve_storage_flags flags,
-				  enum sieve_error *error_code_r);
+int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
+				      const char *path,
+				      enum sieve_storage_flags flags,
+				      struct sieve_file_storage **fstorage_r,
+				      enum sieve_error *error_code_r);
 
 int sieve_file_storage_pre_modify(struct sieve_storage *storage);
 
