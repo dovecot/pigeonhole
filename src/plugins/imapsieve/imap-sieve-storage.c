@@ -7,6 +7,7 @@
 #include "istream.h"
 #include "ostream.h"
 #include "module-context.h"
+#include "settings.h"
 #include "mail-user.h"
 #include "mail-storage-private.h"
 #include "mailbox-attribute.h"
@@ -15,6 +16,7 @@
 #include "imap-util.h"
 
 #include "imap-sieve.h"
+#include "imap-sieve-settings.h"
 #include "imap-sieve-storage.h"
 
 #define MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT "imapsieve/script"
@@ -1175,23 +1177,24 @@ void imap_sieve_storage_client_created(struct client *client)
 {
 	struct mail_user *user = client->user;
 	struct imap_sieve_user *isuser = IMAP_SIEVE_USER_CONTEXT_REQUIRE(user);
-	const char *url, *set;
+	const struct imap_sieve_settings *set;
+	const char *error;
 
-	url = mail_user_plugin_getenv(user, "imapsieve_url");
-	// FIXME: parse the URL and report error if it is bad
-	if (url != NULL && str_begins_icase_with(url, "sieve:")) {
+	if (settings_get(client->event, &imap_sieve_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(client->event, "%s", error);
+		return;
+	}
+
+	if (*set->url != '\0') {
 		client_add_capability(client,
-			t_strconcat("IMAPSIEVE=", url, NULL));
-	} else {
-		url = NULL;
+			t_strconcat("IMAPSIEVE=", set->url, NULL));
 	}
 
 	isuser->client = client;
-	isuser->user_script = (url != NULL && *url != '\0');
-
-	set = mail_user_plugin_getenv(user, "imapsieve_expunge_discarded");
-	isuser->expunge_discarded = (set != NULL &&
-				     strcasecmp(set, "yes") == 0);
+	isuser->user_script = (*set->url != '\0');
+	isuser->expunge_discarded = set->expunge_discarded;
+	settings_free(set);
 }
 
 /*

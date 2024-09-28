@@ -20,6 +20,7 @@ lib95_imap_sieve_plugin_la_SOURCES = \
 	ext-imapsieve.c \
 	ext-imapsieve-environment.c \
 	imap-sieve.c \
+	imap-sieve-settings.c \
 	imap-sieve-storage.c \
 	imap-sieve-plugin.c
 lib95_imap_sieve_plugin_la_LIBADD = \
@@ -35,6 +36,7 @@ lib90_sieve_imapsieve_plugin_la_CPPFLAGS = \
 noinst_HEADERS = \
 	ext-imapsieve-common.h \
 	imap-sieve.h \
+	imap-sieve-settings.h \
 	imap-sieve-storage.h \
 	imap-sieve-plugin.h \
 	sieve-imapsieve-plugin.h
