@@ -75,8 +75,11 @@ bool testsuite_binary_save(struct sieve_binary *sbin, const char *name)
 struct sieve_binary *testsuite_binary_load(const char *name)
 {
 	struct sieve_instance *svinst = testsuite_sieve_instance;
+	struct sieve_binary *sbin;
 
-	return sieve_load(svinst,
-			  t_strdup_printf("%s/%s", testsuite_binary_tmp,
-					  sieve_binfile_from_name(name)), NULL);
+	if (sieve_load(svinst, t_strdup_printf("%s/%s", testsuite_binary_tmp,
+					       sieve_binfile_from_name(name)),
+		       &sbin, NULL) < 0)
+		return NULL;
+	return sbin;
 }
