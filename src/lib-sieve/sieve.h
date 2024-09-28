@@ -47,10 +47,10 @@ sieve_compile_script(struct sieve_script *script,
 /* Compile a Sieve script from a Sieve script location string. Returns Sieve
    binary upon success and NULL upon failure. The provided script_name is used
    for the internally created Sieve script object. */
-struct sieve_binary *
-sieve_compile(struct sieve_instance *svinst, const char *script_location,
-	      const char *script_name, struct sieve_error_handler *ehandler,
-	      enum sieve_compile_flags flags, enum sieve_error *error_code_r);
+int sieve_compile(struct sieve_instance *svinst, const char *script_location,
+		  const char *script_name, struct sieve_error_handler *ehandler,
+		  enum sieve_compile_flags flags, struct sieve_binary **sbin_r,
+		  enum sieve_error *error_code_r);
 
 /*
  * Reading/writing Sieve binaries

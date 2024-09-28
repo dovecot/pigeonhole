@@ -306,20 +306,24 @@ sieve_compile_script(struct sieve_script *script,
 	return sbin;
 }
 
-struct sieve_binary *
-sieve_compile(struct sieve_instance *svinst, const char *script_location,
-	      const char *script_name, struct sieve_error_handler *ehandler,
-	      enum sieve_compile_flags flags, enum sieve_error *error_code_r)
+int sieve_compile(struct sieve_instance *svinst, const char *script_location,
+		  const char *script_name, struct sieve_error_handler *ehandler,
+		  enum sieve_compile_flags flags, struct sieve_binary **sbin_r,
+		  enum sieve_error *error_code_r)
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
 	enum sieve_error error_code;
 
+	*sbin_r = NULL;
+	if (error_code_r != NULL)
+		*error_code_r = SIEVE_ERROR_NONE;
+	else
+		error_code_r = &error_code;
+
 	if (sieve_script_create_open(svinst, script_location, script_name,
-				     &script, &error_code) < 0) {
-		if (error_code_r != NULL)
-			*error_code_r = error_code;
-		switch (error_code) {
+				     &script, error_code_r) < 0) {
+		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_FOUND:
 			sieve_error(ehandler, script_name, "script not found");
 			break;
@@ -327,19 +331,21 @@ sieve_compile(struct sieve_instance *svinst, const char *script_location,
 			sieve_internal_error(ehandler, script_name,
 					     "failed to open script");
 		}
-		return NULL;
+		return -1;
 	}
 
 	sbin = sieve_compile_script(script, ehandler, flags, error_code_r);
-	if (sbin != NULL) {
-		e_debug(svinst->event,
-			"Script '%s' from %s successfully compiled",
-			sieve_script_name(script),
-			sieve_script_location(script));
+	if (sbin == NULL) {
+		sieve_script_unref(&script);
+		return -1;
 	}
 
+	e_debug(svinst->event, "Script '%s' from %s successfully compiled",
+		sieve_script_name(script), sieve_script_location(script));
+
+	*sbin_r = sbin;
 	sieve_script_unref(&script);
-	return sbin;
+	return 0;
 }
 
 /*
