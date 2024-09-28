@@ -221,9 +221,8 @@ int sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
 
 	*fscript_r = NULL;
 
-	fsubstorage = sieve_file_storage_init_from_path(svinst, path, 0,
-							&error_code);
-	if (fsubstorage == NULL) {
+	if (sieve_file_storage_init_from_path(svinst, path, 0, &fsubstorage,
+					      &error_code) < 0) {
 		sieve_storage_set_error(storage, error_code,
 					"Failed to open script");
 		return -1;
