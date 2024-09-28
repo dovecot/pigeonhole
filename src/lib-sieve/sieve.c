@@ -283,7 +283,7 @@ sieve_compile_script(struct sieve_script *script,
 			    "validation failed");
 
  		sieve_ast_unref(&ast);
- 		return NULL;
+		return NULL;
  	}
 
 	/* Generate */
@@ -498,8 +498,8 @@ sieve_open(struct sieve_instance *svinst, const char *script_location,
 
 	sbin = sieve_open_script(script, ehandler, flags, error_r);
 
-	/* Drop script reference, if sbin != NULL it holds a reference of its own.
-	 * Otherwise the script object is freed here.
+	/* Drop script reference, if sbin != NULL it holds a reference of its
+	   own. Otherwise the script object is freed here.
 	 */
 	sieve_script_unref(&script);
 
