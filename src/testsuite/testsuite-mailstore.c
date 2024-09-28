@@ -82,13 +82,13 @@ void testsuite_mailstore_init(void)
 
 	if (t_get_working_dir(&cwd, &error) < 0)
 		i_fatal("Failed to get working directory: %s", error);
-	const char *const userdb_fields[] = {
-		t_strconcat("home=", cwd, NULL),
+	const char *const code_override_fields[] = {
+		t_strconcat("mail_home=", cwd, NULL),
 		"mail_driver=maildir",
 		t_strconcat("mail_path=", testsuite_mailstore_location, NULL),
 		"mail_attribute/dict=file",
 		"mail_attribute/dict/file/driver=file",
-		t_strconcat("dict/file/path=", testsuite_mailstore_attrs, NULL),
+		t_strconcat("mail_attribute/dict/file/path=", testsuite_mailstore_attrs, NULL),
 		NULL,
 	};
 	struct settings_instance *set_instance =
@@ -97,7 +97,7 @@ void testsuite_mailstore_init(void)
 		.username = "testsuite-mail-user@example.org",
 		.set_instance = set_instance,
 		.no_userdb_lookup = TRUE,
-		.userdb_fields = userdb_fields,
+		.code_override_fields = code_override_fields,
 	};
 	if (mail_storage_service_lookup_next(
 			sieve_tool_get_mail_storage_service(sieve_tool),
