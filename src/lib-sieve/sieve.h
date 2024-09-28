@@ -38,11 +38,11 @@ void sieve_set_extensions(struct sieve_instance *svinst,
 
 /* Compile a Sieve script from a Sieve script object. Returns Sieve binary upon
    success and NULL upon failure. */
-struct sieve_binary *
-sieve_compile_script(struct sieve_script *script,
-		     struct sieve_error_handler *ehandler,
-		     enum sieve_compile_flags flags,
-		     enum sieve_error *error_code_r);
+int sieve_compile_script(struct sieve_script *script,
+			 struct sieve_error_handler *ehandler,
+			 enum sieve_compile_flags flags,
+			 struct sieve_binary **sbin_r,
+			 enum sieve_error *error_code_r);
 
 /* Compile a Sieve script from a Sieve script location string. Returns Sieve
    binary upon success and NULL upon failure. The provided script_name is used

@@ -50,9 +50,8 @@ cmd_setactive_activate(struct client_command_context *cmd,
 			client->set->managesieve_max_compile_errors);
 
 		/* Compile */
-		sbin = sieve_compile_script(script, ehandler, cpflags,
-					    &error_code);
-		if (sbin == NULL) {
+		if (sieve_compile_script(script, ehandler, cpflags,
+					 &sbin, &error_code) < 0) {
 			if (error_code != SIEVE_ERROR_NOT_VALID) {
 				errormsg = sieve_script_get_last_error(
 					script, &error_code);

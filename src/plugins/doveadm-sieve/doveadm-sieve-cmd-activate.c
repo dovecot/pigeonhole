@@ -48,9 +48,8 @@ static int cmd_sieve_activate_run(struct doveadm_sieve_cmd_context *_ctx)
 
 		/* Compile */
 		ehandler = sieve_master_ehandler_create(ctx->ctx.svinst, 0);
-		sbin = sieve_compile_script(script, ehandler, cpflags,
-					    &error_code);
-		if (sbin == NULL) {
+		if (sieve_compile_script(script, ehandler, cpflags,
+					 &sbin, &error_code) < 0) {
 			doveadm_sieve_cmd_failed_error(_ctx, error_code);
 			ret = -1;
 		} else {

@@ -196,8 +196,8 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 		client->set->managesieve_max_compile_errors);
 
 	/* Compile */
-	sbin = sieve_compile_script(script, ehandler, cpflags, &error_code);
-	if (sbin == NULL) {
+	if (sieve_compile_script(script, ehandler, cpflags,
+				 &sbin, &error_code) < 0) {
 		const char *errormsg = NULL, *action;
 
 		if (error_code != SIEVE_ERROR_NOT_VALID) {

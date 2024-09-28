@@ -382,8 +382,9 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 
 	/* Load or compile the sieve script */
 	if (recompile) {
-		sbin = sieve_compile_script(script, ehandler, cpflags,
-					    error_code_r);
+		if (sieve_compile_script(script, ehandler, cpflags,
+					 &sbin, error_code_r) < 0)
+			sbin = NULL;
 	} else {
 		sbin = sieve_open_script(script, ehandler, cpflags,
 					 error_code_r);

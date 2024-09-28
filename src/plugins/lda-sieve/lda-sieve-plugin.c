@@ -369,8 +369,10 @@ sieve_binary *lda_sieve_open(struct lda_sieve_run_context *srctx,
 	sieve_error_handler_reset(ehandler);
 
 	if (recompile) {
-		sbin = sieve_compile_script(script, ehandler, cpflags,
-					    error_code_r);
+		if (sieve_compile_script(script, ehandler, cpflags,
+					 &sbin, error_code_r) < 0)
+			sbin = NULL;
+
 	} else {
 		sbin = sieve_open_script(script, ehandler, cpflags,
 					 error_code_r);

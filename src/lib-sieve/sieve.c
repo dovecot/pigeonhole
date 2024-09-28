@@ -251,16 +251,17 @@ sieve_generate(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
  * Sieve compilation
  */
 
-struct sieve_binary *
-sieve_compile_script(struct sieve_script *script,
-		     struct sieve_error_handler *ehandler,
-		     enum sieve_compile_flags flags,
-		     enum sieve_error *error_code_r)
+int sieve_compile_script(struct sieve_script *script,
+			 struct sieve_error_handler *ehandler,
+			 enum sieve_compile_flags flags,
+			 struct sieve_binary **sbin_r,
+			 enum sieve_error *error_code_r)
 {
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin;
 	enum sieve_error error_code;
 
+	*sbin_r = NULL;
 	if (error_code_r != NULL)
 		*error_code_r = SIEVE_ERROR_NONE;
 	else
@@ -280,7 +281,7 @@ sieve_compile_script(struct sieve_script *script,
 			sieve_error(ehandler, sieve_script_name(script),
 				    "parse failed");
 		}
-		return NULL;
+		return -1;
 	}
 
 	/* Validate */
@@ -289,7 +290,7 @@ sieve_compile_script(struct sieve_script *script,
 			    "validation failed");
 
  		sieve_ast_unref(&ast);
-		return NULL;
+		return -1;
  	}
 
 	/* Generate */
@@ -298,12 +299,13 @@ sieve_compile_script(struct sieve_script *script,
 		sieve_error(ehandler, sieve_script_name(script),
 			    "code generation failed");
 		sieve_ast_unref(&ast);
-		return NULL;
+		return -1;
 	}
 
 	/* Cleanup */
 	sieve_ast_unref(&ast);
-	return sbin;
+	*sbin_r = sbin;
+	return 0;
 }
 
 int sieve_compile(struct sieve_instance *svinst, const char *script_location,
@@ -312,7 +314,6 @@ int sieve_compile(struct sieve_instance *svinst, const char *script_location,
 		  enum sieve_error *error_code_r)
 {
 	struct sieve_script *script;
-	struct sieve_binary *sbin;
 	enum sieve_error error_code;
 
 	*sbin_r = NULL;
@@ -334,8 +335,8 @@ int sieve_compile(struct sieve_instance *svinst, const char *script_location,
 		return -1;
 	}
 
-	sbin = sieve_compile_script(script, ehandler, flags, error_code_r);
-	if (sbin == NULL) {
+	if (sieve_compile_script(script, ehandler, flags,
+				 sbin_r, error_code_r) < 0) {
 		sieve_script_unref(&script);
 		return -1;
 	}
@@ -343,7 +344,6 @@ int sieve_compile(struct sieve_instance *svinst, const char *script_location,
 	e_debug(svinst->event, "Script '%s' from %s successfully compiled",
 		sieve_script_name(script), sieve_script_location(script));
 
-	*sbin_r = sbin;
 	sieve_script_unref(&script);
 	return 0;
 }
@@ -431,9 +431,8 @@ sieve_open_script_real(struct sieve_script *script,
 			"Script binary %s successfully loaded",
 			sieve_binary_path(sbin));
 	} else {
-		sbin = sieve_compile_script(script, ehandler, flags,
-					    error_code_r);
-		if (sbin == NULL)
+		if (sieve_compile_script(script, ehandler, flags,
+					 &sbin, error_code_r) < 0)
 			return NULL;
 
 		e_debug(svinst->event,
