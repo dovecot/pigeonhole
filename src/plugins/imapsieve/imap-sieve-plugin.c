@@ -19,20 +19,9 @@ static void imap_sieve_client_created(struct client **clientp)
 {
 	struct client *client = *clientp;
 	struct mail_user *user = client->user;
-	const char *url = NULL;
 
-	if (mail_user_is_plugin_loaded(user, imap_sieve_module)) {
-		url = mail_user_plugin_getenv(user, "imapsieve_url");
-		// FIXME: parse the URL and report error if it is bad
-		if (url != NULL && str_begins_icase_with(url, "sieve:")) {
-			client_add_capability(client, t_strconcat(
-				"IMAPSIEVE=", url, NULL));
-		} else {
-			url = NULL;
-		}
-
-		imap_sieve_storage_client_created(client, (url != NULL));
-	}
+	if (mail_user_is_plugin_loaded(user, imap_sieve_module))
+		imap_sieve_storage_client_created(client);
 
 	if (next_hook_client_created != NULL)
 		next_hook_client_created(clientp);
