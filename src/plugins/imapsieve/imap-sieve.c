@@ -405,7 +405,6 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 	enum sieve_error error;
 	unsigned int count = 0;
 	const char *const *sp;
-	int ret;
 
 	/* Admin scripts before user script */
 	if (scripts_before != NULL) {
@@ -495,8 +494,16 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 					  storage, script_name,
 					  scripts_before, scripts_after,
 					  &user_script, &count);
-	if (ret < 0)
+	if (ret < 0) {
+		unsigned int i;
+
+		for (i = 0; i < max_len; i++) {
+			if (scripts[i].script != NULL)
+				sieve_script_unref(&scripts[i].script);
+		}
+		pool_unref(&pool);
 		return -1;
+	}
 	if (count == 0) {
 		/* None of the scripts could be opened */
 		pool_unref(&pool);
