@@ -389,46 +389,23 @@ imap_sieve_run_init_trace_log(struct imap_sieve_run *isrun,
 	*trace_log_r = isrun->trace_log;
 }
 
-int imap_sieve_run_init(struct imap_sieve *isieve,
-			struct mailbox *dest_mailbox,
-			struct mailbox *src_mailbox,
-			const char *cause, const char *script_name,
-			const char *const *scripts_before,
-			const char *const *scripts_after,
-			struct imap_sieve_run **isrun_r)
+static int
+imap_sieve_run_init_scripts(struct imap_sieve *isieve,
+			    struct imap_sieve_run_script *scripts,
+			    unsigned int max_len,
+			    struct sieve_storage *storage,
+			    const char *script_name,
+			    const char *const *scripts_before,
+			    const char *const *scripts_after,
+			    struct sieve_script **user_script_r,
+			    unsigned int *count_r)
 {
 	struct sieve_instance *svinst = isieve->svinst;
-	struct imap_sieve_run *isrun;
-	struct sieve_storage *storage;
-	struct imap_sieve_run_script *scripts;
 	struct sieve_script *user_script;
-	const char *const *sp;
 	enum sieve_error error;
-	pool_t pool;
-	unsigned int max_len, count;
+	unsigned int count = 0;
+	const char *const *sp;
 	int ret;
-
-	/* Determine how many scripts we may run for this event */
-	max_len = 0;
-	if (scripts_before != NULL)
-		max_len += str_array_length(scripts_before);
-	if (script_name != NULL)
-		max_len++;
-	if (scripts_after != NULL)
-		max_len += str_array_length(scripts_after);
-	if (max_len == 0)
-		return 0;
-
-	/* Get storage for user script */
-	storage = NULL;
-	if (script_name != NULL && *script_name != '\0' &&
-	    (ret = imap_sieve_get_storage(isieve, &storage)) < 0)
-		return ret;
-
-	/* Open all scripts */
-	count = 0;
-	pool = pool_alloconly_create("imap_sieve_run", 256);
-	scripts = p_new(pool, struct imap_sieve_run_script, max_len);
 
 	/* Admin scripts before user script */
 	if (scripts_before != NULL) {
@@ -472,6 +449,54 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 		}
 	}
 
+	*user_script_r = user_script;
+	*count_r = count;
+	return 0;
+}
+
+int imap_sieve_run_init(struct imap_sieve *isieve,
+			struct mailbox *dest_mailbox,
+			struct mailbox *src_mailbox,
+			const char *cause, const char *script_name,
+			const char *const *scripts_before,
+			const char *const *scripts_after,
+			struct imap_sieve_run **isrun_r)
+{
+	struct imap_sieve_run *isrun;
+	struct sieve_storage *storage;
+	struct imap_sieve_run_script *scripts;
+	struct sieve_script *user_script;
+	pool_t pool;
+	unsigned int max_len, count;
+	int ret;
+
+	/* Determine how many scripts we may run for this event */
+	max_len = 0;
+	if (scripts_before != NULL)
+		max_len += str_array_length(scripts_before);
+	if (script_name != NULL)
+		max_len++;
+	if (scripts_after != NULL)
+		max_len += str_array_length(scripts_after);
+	if (max_len == 0)
+		return 0;
+
+	/* Get storage for user script */
+	storage = NULL;
+	if (script_name != NULL && *script_name != '\0' &&
+	    (ret = imap_sieve_get_storage(isieve, &storage)) < 0)
+		return ret;
+
+	/* Open all scripts */
+	pool = pool_alloconly_create("imap_sieve_run", 256);
+	scripts = p_new(pool, struct imap_sieve_run_script, max_len);
+
+	ret = imap_sieve_run_init_scripts(isieve, scripts, max_len,
+					  storage, script_name,
+					  scripts_before, scripts_after,
+					  &user_script, &count);
+	if (ret < 0)
+		return -1;
 	if (count == 0) {
 		/* None of the scripts could be opened */
 		pool_unref(&pool);
