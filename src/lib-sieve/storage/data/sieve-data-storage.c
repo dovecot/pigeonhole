@@ -27,10 +27,8 @@ static struct sieve_storage *sieve_data_storage_alloc(void)
 
 static int
 sieve_data_storage_init(struct sieve_storage *storage ATTR_UNUSED,
-			const char *const *options ATTR_UNUSED,
-			enum sieve_error *error_code_r ATTR_UNUSED)
+			const char *const *options ATTR_UNUSED)
 {
-	*error_code_r = SIEVE_ERROR_NONE;
 	return 0;
 }
 

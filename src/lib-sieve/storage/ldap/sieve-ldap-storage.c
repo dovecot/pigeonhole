@@ -42,8 +42,7 @@ static struct sieve_storage *sieve_ldap_storage_alloc(void)
 
 static int
 sieve_ldap_storage_init(struct sieve_storage *storage,
-			const char *const *options,
-			enum sieve_error *error_code_r)
+			const char *const *options)
 {
 	struct sieve_ldap_storage *lstorage =
 		container_of(storage, struct sieve_ldap_storage, storage);
@@ -60,7 +59,6 @@ sieve_ldap_storage_init(struct sieve_storage *storage,
 			} else {
 				sieve_storage_set_critical(
 					storage, "Invalid option '%s'", option);
-				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
 
