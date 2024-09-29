@@ -28,8 +28,7 @@ static struct sieve_storage *sieve_dict_storage_alloc(void)
 
 static int
 sieve_dict_storage_init(struct sieve_storage *storage,
-			const char *const *options,
-			enum sieve_error *error_code_r)
+			const char *const *options)
 {
 	struct sieve_dict_storage *dstorage =
 		container_of(storage, struct sieve_dict_storage, storage);
@@ -46,7 +45,6 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 			} else {
 				sieve_storage_set_critical(
 					storage, "Invalid option '%s'", option);
-				*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
 
@@ -58,7 +56,6 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 		sieve_storage_set_critical(
 			storage,
 			"BUG: Sieve interpreter is initialized without a base_dir");
-		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 

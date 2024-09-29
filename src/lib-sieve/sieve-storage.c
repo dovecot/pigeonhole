@@ -362,12 +362,12 @@ sieve_storage_init_real(struct sieve_instance *svinst, struct event *event,
 			event_add_str(event, "script_location",
 				      storage->location);
 
-			ret = storage_class->v.init(storage, options,
-						    error_code_r);
+			ret = storage_class->v.init(storage, options);
 			i_assert(ret <= 0);
 		}
 	} T_END;
 	if (ret < 0) {
+		*error_code_r = storage->error_code;
 		sieve_storage_unref(&storage);
 		return -1;
 	}

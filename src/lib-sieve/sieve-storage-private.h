@@ -23,8 +23,7 @@ ARRAY_DEFINE_TYPE(sieve_storage_class, const struct sieve_storage *);
 struct sieve_storage_vfuncs {
 	struct sieve_storage *(*alloc)(void);
 	void (*destroy)(struct sieve_storage *storage);
-	int (*init)(struct sieve_storage *storage, const char *const *options,
-		    enum sieve_error *error_code_r);
+	int (*init)(struct sieve_storage *storage, const char *const *options);
 
 	int (*get_last_change)(struct sieve_storage *storage,
 			       time_t *last_change_r);
