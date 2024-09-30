@@ -595,30 +595,35 @@ sieve_file_storage_autodetect(struct sieve_file_storage *fstorage,
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
+	enum sieve_storage_flags flags = storage->flags;
+	struct event *event = storage->event;
 	const char *home = sieve_environment_get_homedir(svinst);
-	int mode = ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ?
+	int mode = ((flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ?
 		    R_OK|W_OK|X_OK : R_OK|X_OK);
+	const char *storage_path = NULL;
 
-	e_debug(storage->event, "Performing auto-detection");
+	e_debug(event, "Performing auto-detection");
 
-	/* We'll need to figure out the storage location ourself.
-	   It's $HOME/sieve or /sieve when (presumed to be) chrooted.
-	 */
-	if (home != NULL && *home != '\0') {
-		/* Use default ~/sieve */
-		e_debug(storage->event, "Use home (%s)", home);
-		*storage_path_r = t_strconcat(home, "/sieve", NULL);
-	} else {
-		e_debug(storage->event, "HOME is not set");
-
-		if (access("/sieve", mode) == 0) {
-			*storage_path_r = "/sieve";
-			e_debug(storage->event,
-				"Directory '/sieve' exists, assuming chroot");
+	if (storage_path == NULL || *storage_path == '\0') {
+		/* We'll need to figure out the storage location ourself.
+		   It's $HOME/sieve or /sieve when (presumed to be) chrooted.
+		 */
+		if (home != NULL && *home != '\0') {
+			/* Use default ~/sieve */
+			e_debug(event, "Use home (%s)", home);
+			storage_path = t_strconcat(home, "/sieve", NULL);
 		} else {
-			*storage_path_r = NULL;
+			e_debug(event, "HOME is not set");
+
+			if (access("/sieve", mode) == 0) {
+				storage_path = "/sieve";
+				e_debug(event, "Directory '/sieve' exists, "
+					"assuming chroot");
+			}
 		}
 	}
+
+	*storage_path_r = storage_path;
 }
 
 static int
