@@ -479,11 +479,11 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 }
 
 static int
-sieve_file_storage_init(struct sieve_storage *storage,
-			const char *const *options)
+sieve_file_storage_init_from_settings(
+	struct sieve_file_storage *fstorage,
+	const char *const *options)
 {
-	struct sieve_file_storage *fstorage =
-		container_of(storage, struct sieve_file_storage, storage);
+	struct sieve_storage *storage = &fstorage->storage;
 	const char *storage_path = storage->location;
 	const char *value, *active_path = "";
 	bool exists = FALSE;
@@ -573,6 +573,21 @@ sieve_file_storage_init(struct sieve_storage *storage,
 
 	return sieve_file_storage_init_common(fstorage, active_path,
 					      storage_path, exists);
+}
+
+static int
+sieve_file_storage_init(struct sieve_storage *storage,
+			const char *const *options)
+{
+	struct sieve_file_storage *fstorage =
+		container_of(storage, struct sieve_file_storage, storage);
+	int ret;
+
+	ret = sieve_file_storage_init_from_settings(fstorage, options);
+	if (ret < 0)
+		return -1;
+
+	return ret;
 }
 
 static void
