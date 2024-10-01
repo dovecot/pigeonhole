@@ -609,7 +609,7 @@ int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
 	if (errno == EACCES) {
 		e_error(storage->event,
 			"Failed to setup directory for binaries: "
-			"%s",	eacces_error_get("stat", bin_dir));
+			"%s", eacces_error_get("stat", bin_dir));
 		return -1;
 	} else if (errno != ENOENT) {
 		e_error(storage->event,
@@ -634,7 +634,8 @@ int sieve_storage_setup_bindir(struct sieve_storage *storage, mode_t mode)
 		break;
 	case EACCES:
 		e_error(storage->event,
-			"%s",	eacces_error_get_creating("mkdir_parents_chgrp", bin_dir));
+			"%s", eacces_error_get_creating("mkdir_parents_chgrp",
+							bin_dir));
 		break;
 	default:
 		e_error(storage->event,
