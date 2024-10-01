@@ -547,10 +547,8 @@ const char *sieve_script_binary_get_prefix(struct sieve_script *script)
 	struct sieve_storage *storage = script->storage;
 
 	if (storage->bin_dir != NULL &&
-	    sieve_storage_setup_bindir(storage, 0700) >= 0) {
+	    sieve_storage_setup_bindir(storage, 0700) >= 0)
 		return t_strconcat(storage->bin_dir, "/", script->name, NULL);
-	}
-
 	if (script->v.binary_get_prefix == NULL)
 		return NULL;
 
