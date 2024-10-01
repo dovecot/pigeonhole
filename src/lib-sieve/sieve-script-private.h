@@ -41,8 +41,8 @@ struct sieve_script_vfuncs {
 	int (*get_size)(const struct sieve_script *script, uoff_t *size_r);
 
 	/* matching */
-	int (*cmp)(const struct sieve_script *script,
-		   const struct sieve_script *other);
+	int (*cmp)(const struct sieve_script *script1,
+		   const struct sieve_script *script2);
 };
 
 struct sieve_script {
