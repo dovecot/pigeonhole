@@ -274,6 +274,8 @@ int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 {
 	struct sieve_storage *storage;
 
+	i_assert(svinst->username != NULL);
+
 	i_assert(storage_class->v.alloc != NULL);
 	storage = storage_class->v.alloc();
 

@@ -39,6 +39,8 @@ void sieve_execute_init(struct sieve_execute_env *eenv,
 			const struct sieve_script_env *senv,
 			enum sieve_execute_flags flags)
 {
+	i_assert(svinst->username != NULL);
+
 	i_zero(eenv);
 	eenv->svinst = svinst;
 	eenv->pool = pool;
