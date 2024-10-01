@@ -121,7 +121,8 @@ struct sieve_storage {
 int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 			const struct sieve_storage *storage_class,
 			const char *data, enum sieve_storage_flags flags,
-			bool main, struct sieve_storage **storage_r);
+			bool main, struct sieve_storage **storage_r,
+			enum sieve_error *error_code_r);
 
 int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode);
 
