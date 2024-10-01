@@ -782,8 +782,14 @@ static void imap_sieve_mailbox_allocated(struct mailbox *box)
 	if (isuser->client == NULL || isuser->sieve_active)
 		return;
 
+	struct event *event;
+
+	event = event_create(box->event);
+	event_set_append_log_prefix(event, "imapsieve: ");
+
 	isbox = p_new(box->pool, struct imap_sieve_mailbox, 1);
 	isbox->user = isuser;
+	isbox->event = event;
 	isbox->module_ctx.super = *v;
 	box->vlast = &isbox->module_ctx.super;
 
@@ -794,11 +800,6 @@ static void imap_sieve_mailbox_allocated(struct mailbox *box)
 	v->transaction_rollback = imap_sieve_mailbox_transaction_rollback;
 	v->free = imap_sieve_mailbox_free;
 	MODULE_CONTEXT_SET(box, imap_sieve_storage_module, isbox);
-
-	isbox->event = event_create(isuser->event);
-	event_set_append_log_prefix(isbox->event,
-				    t_strdup_printf("mailbox %s: ",
-						    mailbox_get_vname(box)));
 }
 
 /*
