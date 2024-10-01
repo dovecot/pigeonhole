@@ -101,7 +101,6 @@ struct ext_include_context {
 	/* Configuration */
  	char *global_location;
 
-	struct sieve_storage *global_storage;
 	struct sieve_storage *personal_storage;
 
 	unsigned int max_nesting_depth;
