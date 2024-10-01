@@ -695,8 +695,9 @@ int sieve_file_storage_init_default(struct sieve_instance *svinst,
 	int ret;
 
 	ret = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
-				  "", flags, TRUE, &storage);
-	i_assert(ret == 0);
+				  "", flags, TRUE, &storage, error_code_r);
+	if (ret < 0)
+		return -1;
 	fstorage = container_of(storage, struct sieve_file_storage, storage);
 
 	T_BEGIN {
@@ -727,8 +728,9 @@ int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 	sieve_error_args_init(&error_code_r, NULL);
 
 	ret = sieve_storage_alloc(svinst, NULL, &sieve_file_storage,
-				  "", flags, FALSE, &storage);
-	i_assert(ret == 0);
+				  "", flags, FALSE, &storage, error_code_r);
+	if (ret < 0)
+		return -1;
 	fstorage = container_of(storage, struct sieve_file_storage, storage);
 
 	T_BEGIN {
