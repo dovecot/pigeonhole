@@ -118,7 +118,6 @@ void ext_include_unload(const struct sieve_extension *ext)
 {
 	struct ext_include_context *extctx = ext->context;
 
-	sieve_storage_unref(&extctx->global_storage);
 	sieve_storage_unref(&extctx->personal_storage);
 
 	i_free(extctx->global_location);
@@ -162,14 +161,9 @@ ext_include_open_script_global(struct sieve_instance *svinst,
 			*error_code_r = SIEVE_ERROR_NOT_FOUND;
 		return -1;
 	}
-	if (extctx->global_storage == NULL &&
-	    sieve_storage_create(svinst, svinst->event,
-				 extctx->global_location, 0,
-				 &extctx->global_storage, error_code_r) < 0)
-		return -1;
 
-	return sieve_storage_open_script(extctx->global_storage, script_name,
-					 script_r, error_code_r);
+	return sieve_script_create_open(svinst, extctx->global_location,
+					script_name, script_r, error_code_r);
 }
 
 int ext_include_open_script(const struct sieve_extension *ext,
