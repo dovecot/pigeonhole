@@ -54,15 +54,8 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 		}
 	}
 
-	if (username == NULL) {
-		if (svinst->username == NULL) {
-			sieve_storage_set_critical(storage,
-						   "No username specified");
-			*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
-			return -1;
-		}
+	if (username == NULL)
 		username = svinst->username;
-	}
 
 	if (svinst->base_dir == NULL) {
 		sieve_storage_set_critical(

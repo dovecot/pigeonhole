@@ -539,10 +539,8 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			svinst->event, path, args, &pc_params);
 	}
 
-	if (svinst->username != NULL) {
-		program_client_set_env(sprog->program_client, "USER",
-				       svinst->username);
-	}
+	program_client_set_env(sprog->program_client, "USER",
+			       svinst->username);
 	if (svinst->home_dir != NULL) {
 		program_client_set_env(sprog->program_client, "HOME",
 				       svinst->home_dir);
