@@ -262,20 +262,6 @@ sieve_ldap_script_binary_save(struct sieve_script *script,
 		update, 0600);
 }
 
-static int
-sieve_ldap_script_cmp(const struct sieve_script *script1,
-		      const struct sieve_script *script2)
-{
-	int ret;
-
-	i_assert(script1->name != NULL && script2->name != NULL);
-
-	ret = strcmp(script1->name, script2->name);
-	if (ret != 0)
-		return (ret > 0 ? 1 : -1);
-	return 0;
-}
-
 const struct sieve_script sieve_ldap_script = {
 	.driver_name = SIEVE_LDAP_STORAGE_DRIVER_NAME,
 	.v = {
@@ -289,8 +275,6 @@ const struct sieve_script sieve_ldap_script = {
 		.binary_dump_metadata = sieve_ldap_script_binary_dump_metadata,
 		.binary_load = sieve_ldap_script_binary_load,
 		.binary_save = sieve_ldap_script_binary_save,
-
-		.cmp = sieve_ldap_script_cmp,
 	},
 };
 

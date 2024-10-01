@@ -238,26 +238,6 @@ sieve_dict_script_binary_save(struct sieve_script *script,
 		update, 0600);
 }
 
-static int
-sieve_dict_script_cmp(const struct sieve_script *script,
-		      const struct sieve_script *other)
-{
-	struct sieve_storage *storage = script->storage;
-	struct sieve_storage *sother = other->storage;
-	int ret;
-
-	ret = strcmp(storage->location, sother->location);
-	if (ret != 0)
-		return (ret < 0 ? -1 : 1);
-
-	i_assert(script->name != NULL && other->name != NULL);
-
-	ret = strcmp(script->name, other->name);
-	if (ret != 0)
-		return (ret < 0 ? -1 : 1);
-	return 0;
-}
-
 const struct sieve_script sieve_dict_script = {
 	.driver_name = SIEVE_DICT_STORAGE_DRIVER_NAME,
 	.v = {
@@ -272,8 +252,6 @@ const struct sieve_script sieve_dict_script = {
 		.binary_dump_metadata = sieve_dict_script_binary_dump_metadata,
 		.binary_load = sieve_dict_script_binary_load,
 		.binary_save = sieve_dict_script_binary_save,
-
-		.cmp = sieve_dict_script_cmp,
 	},
 };
 

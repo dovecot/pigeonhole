@@ -824,8 +824,7 @@ sieve_file_script_cmp(const struct sieve_script *script1,
 		if (ret != 0)
 			return ret;
 
-		i_assert(script1->name != NULL && script2->name != NULL);
-		return strcmp(script1->name, script2->name);
+		return null_strcmp(script1->name, script2->name);
 	}
 
 	if (major(fscript1->st.st_dev) != major(fscript2->st.st_dev)) {
