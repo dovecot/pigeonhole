@@ -400,6 +400,8 @@ int sieve_script_get_stream(struct sieve_script *script,
 int sieve_script_cmp(const struct sieve_script *script1,
 		     const struct sieve_script *script2)
 {
+	int ret;
+
 	if (script1 == script2)
 		return 0;
 	if (script1 == NULL || script2 == NULL)
@@ -410,7 +412,11 @@ int sieve_script_cmp(const struct sieve_script *script1,
 	if (script1->v.cmp == NULL) {
 		i_assert (script1->location != NULL && script2->location != NULL);
 
-		return strcmp(script1->location, script2->location);
+		ret = strcmp(script1->location, script2->location);
+		if (ret != 0)
+			return (ret < 0 ? -1 : 1);
+
+		return null_strcmp(script1->name, script2->name);
 	}
 
 	return script1->v.cmp(script1, script2);
