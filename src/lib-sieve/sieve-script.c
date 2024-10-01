@@ -119,24 +119,79 @@ void sieve_script_init(struct sieve_script *script,
 	sieve_storage_ref(storage);
 }
 
+static int
+sieve_script_create_common(struct sieve_instance *svinst,
+			   const char *location, const char *name, bool open,
+			   struct sieve_script **script_r,
+			   enum sieve_error *error_code_r)
+{
+	struct sieve_storage_sequence *sseq;
+
+	*script_r = NULL;
+	sieve_error_args_init(&error_code_r, NULL);
+
+	if (sieve_storage_sequence_create(svinst, svinst->event, location,
+					  &sseq, error_code_r) < 0)
+		return -1;
+
+	struct sieve_storage *storage;
+	struct sieve_script *script;
+	int ret;
+
+	/* Find the first storage that has the script */
+	for (;;) {
+		*error_code_r = SIEVE_ERROR_NONE;
+		ret = sieve_storage_sequence_next(sseq, &storage,
+						  error_code_r);
+		if (ret == 0)
+			break;
+		if (ret < 0) {
+			if (*error_code_r == SIEVE_ERROR_NOT_FOUND)
+				continue;
+			ret = -1;
+			break;
+		}
+		if (sieve_storage_get_script(storage, name,
+					     &script, error_code_r) < 0) {
+			if (*error_code_r == SIEVE_ERROR_NOT_FOUND) {
+				sieve_storage_unref(&storage);
+				continue;
+			}
+			ret = -1;
+		} else {
+			ret = 1;
+		}
+		sieve_storage_unref(&storage);
+		if (ret > 0 && open &&
+		    sieve_script_open(script, error_code_r) < 0) {
+			sieve_script_unref(&script);
+			if (*error_code_r == SIEVE_ERROR_NOT_FOUND)
+				continue;
+			ret = -1;
+		}
+		break;
+	}
+
+	if (ret > 0) {
+		*script_r = script;
+		ret = 0;
+	} else if (ret == 0) {
+		i_assert(*error_code_r == SIEVE_ERROR_NONE);
+		*error_code_r = SIEVE_ERROR_NOT_FOUND;
+		ret = -1;
+	}
+
+	sieve_storage_sequence_free(&sseq);
+	return ret;
+}
+
 int sieve_script_create(struct sieve_instance *svinst,
 			const char *location, const char *name,
 			struct sieve_script **script_r,
 			enum sieve_error *error_code_r)
 {
-	struct sieve_storage *storage;
-	int ret;
-
-	*script_r = NULL;
-	sieve_error_args_init(&error_code_r, NULL);
-
-	if (sieve_storage_create(svinst, svinst->event, location, 0,
-				 &storage, error_code_r) < 0)
-		return -1;
-
-	ret = sieve_storage_get_script(storage, name, script_r, error_code_r);
-	sieve_storage_unref(&storage);
-	return ret;
+	return sieve_script_create_common(svinst, location, name, FALSE,
+					  script_r, error_code_r);
 }
 
 void sieve_script_ref(struct sieve_script *script)
@@ -220,19 +275,8 @@ int sieve_script_create_open(struct sieve_instance *svinst,
 			     struct sieve_script **script_r,
 			     enum sieve_error *error_code_r)
 {
-	struct sieve_script *script;
-
-	if (sieve_script_create(svinst, location, name,
-				&script, error_code_r) < 0)
-		return -1;
-
-	if (sieve_script_open(script, error_code_r) < 0) {
-		sieve_script_unref(&script);
-		return -1;
-	}
-
-	*script_r = script;
-	return 0;
+	return sieve_script_create_common(svinst, location, name, TRUE,
+					  script_r, error_code_r);
 }
 
 int sieve_script_check(struct sieve_instance *svinst, const char *location,
