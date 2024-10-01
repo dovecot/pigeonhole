@@ -126,6 +126,10 @@ imap_sieve_mailbox_rules_get(struct mail_user *user,
 			     const char *cause,
 			     ARRAY_TYPE(imap_sieve_mailbox_rule) *rules);
 
+struct event_category event_category_imap_sieve = {
+	.name = "imapsieve",
+};
+
 /*
  * Events
  */
@@ -785,6 +789,7 @@ static void imap_sieve_mailbox_allocated(struct mailbox *box)
 	struct event *event;
 
 	event = event_create(box->event);
+	event_add_category(event, &event_category_imap_sieve);
 	event_set_append_log_prefix(event, "imapsieve: ");
 
 	isbox = p_new(box->pool, struct imap_sieve_mailbox, 1);
@@ -1117,6 +1122,7 @@ static void imap_sieve_user_created(struct mail_user *user)
 	MODULE_CONTEXT_SET(user, imap_sieve_user_module, isuser);
 
 	isuser->event = event_create(user->event);
+	event_add_category(isuser->event, &event_category_imap_sieve);
 	event_set_append_log_prefix(isuser->event, "imapsieve: ");
 }
 
