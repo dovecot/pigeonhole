@@ -289,10 +289,13 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
  * Storage instance
  */
 
-int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
-			const struct sieve_storage *storage_class,
-			const char *data, enum sieve_storage_flags flags,
-			bool main, struct sieve_storage **storage_r)
+static int
+sieve_storage_alloc_from_class(struct sieve_instance *svinst,
+			       struct event *event,
+			       const struct sieve_storage *storage_class,
+			       const char *data,
+			       enum sieve_storage_flags flags,
+			       struct sieve_storage **storage_r)
 {
 	struct sieve_storage *storage;
 
@@ -304,22 +307,47 @@ int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 	storage->storage_class = storage_class;
 	storage->refcount = 1;
 	storage->svinst = svinst;
-	storage->flags = flags;
 	storage->data = p_strdup_empty(storage->pool, data);
-	storage->main_storage = main;
+	storage->flags = flags;
 
-	if (event != NULL) {
-		storage->event = event;
-		event_ref(storage->event);
-	} else {
-		event = sieve_storage_create_event(svinst, svinst->event);
-		storage->event = sieve_storage_create_driver_event(
-			event, storage_class->driver_name);
-		event_unref(&event);
-	}
+	storage->event = event;
+	event_ref(event);
 
 	*storage_r = storage;
 	return 0;
+}
+
+int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
+			const struct sieve_storage *storage_class,
+			const char *data, enum sieve_storage_flags flags,
+			bool main, struct sieve_storage **storage_r)
+{
+	struct sieve_storage *storage;
+	int ret;
+
+	*storage_r = NULL;
+
+	if (event != NULL)
+		event_ref(event);
+	else {
+		struct event *storage_event;
+
+		storage_event = sieve_storage_create_event(
+			svinst, svinst->event);
+		event = sieve_storage_create_driver_event(
+			storage_event, storage_class->driver_name);
+		event_unref(&storage_event);
+	}
+
+	ret = sieve_storage_alloc_from_class(svinst, event, storage_class,
+					     data, flags, &storage);
+	if (ret == 0)
+		storage->main_storage = main;
+
+	event_unref(&event);
+
+	*storage_r = storage;
+	return ret;
 }
 
 static int
