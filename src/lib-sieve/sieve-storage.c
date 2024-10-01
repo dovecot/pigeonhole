@@ -624,19 +624,22 @@ int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode)
 	const char *bin_path = storage->bin_path;
 	struct stat st;
 
-	if (bin_path == NULL)
+	if (bin_path == NULL) {
+		sieve_storage_set_critical(
+			storage, "script_bin_path not configured for storage");
 		return -1;
+	}
 
 	if (stat(bin_path, &st) == 0)
 		return 0;
 
 	if (errno == EACCES) {
-		e_error(storage->event,
+		sieve_storage_set_critical(storage,
 			"Failed to setup directory for binaries: "
 			"%s", eacces_error_get("stat", bin_path));
 		return -1;
 	} else if (errno != ENOENT) {
-		e_error(storage->event,
+		sieve_storage_set_critical(storage,
 			"Failed to setup directory for binaries: "
 			"stat(%s) failed: %m",
 			bin_path);
@@ -653,16 +656,16 @@ int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode)
 	case EEXIST:
 		return 0;
 	case ENOENT:
-		e_error(storage->event,
+		sieve_storage_set_critical(storage,
 			"Directory for binaries was deleted while it was being created");
 		break;
 	case EACCES:
-		e_error(storage->event,
+		sieve_storage_set_critical(storage,
 			"%s", eacces_error_get_creating("mkdir_parents_chgrp",
 							bin_path));
 		break;
 	default:
-		e_error(storage->event,
+		sieve_storage_set_critical(storage,
 			"mkdir_parents_chgrp(%s) failed: %m", bin_path);
 		break;
 	}

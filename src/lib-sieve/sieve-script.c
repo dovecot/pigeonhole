@@ -573,7 +573,7 @@ int sieve_script_binary_save_default(struct sieve_script *script ATTR_UNUSED,
 	    str_begins_with(path, storage->bin_path) &&
 	    sieve_storage_setup_bin_path(
 		script->storage, mkdir_get_executable_mode(save_mode)) < 0) {
-		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+		*error_code_r = script->storage->error_code;
 		return -1;
 	}
 
