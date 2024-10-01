@@ -578,6 +578,7 @@ imap_sieve_mailbox_transaction_run(
 		break;
 	case IMAP_SIEVE_CMD_COPY:
 	case IMAP_SIEVE_CMD_MOVE:
+		i_assert(src_box != NULL);
 		cause = "COPY";
 		can_discard = TRUE;
 		break;
