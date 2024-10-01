@@ -263,14 +263,14 @@ sieve_ldap_script_binary_save(struct sieve_script *script,
 }
 
 static int
-sieve_ldap_script_cmp(const struct sieve_script *script,
-		      const struct sieve_script *other)
+sieve_ldap_script_cmp(const struct sieve_script *script1,
+		      const struct sieve_script *script2)
 {
 	int ret;
 
-	i_assert(script->name != NULL && other->name != NULL);
+	i_assert(script1->name != NULL && script2->name != NULL);
 
-	ret = strcmp(script->name, other->name);
+	ret = strcmp(script1->name, script2->name);
 	if (ret != 0)
 		return (ret > 0 ? 1 : -1);
 	return 0;

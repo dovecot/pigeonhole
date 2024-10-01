@@ -127,13 +127,13 @@ sieve_file_script_get_path(const struct sieve_script *script) ATTR_PURE;
  * Comparison
  */
 
-int sieve_script_cmp(const struct sieve_script *script,
-		     const struct sieve_script *other);
+int sieve_script_cmp(const struct sieve_script *script1,
+		     const struct sieve_script *script2);
 static inline bool
-sieve_script_equals(const struct sieve_script *script,
-		    const struct sieve_script *other)
+sieve_script_equals(const struct sieve_script *script1,
+		    const struct sieve_script *script2)
 {
-	return (sieve_script_cmp(script, other) == 0);
+	return (sieve_script_cmp(script1, script2) == 0);
 }
 
 unsigned int sieve_script_hash(const struct sieve_script *script);

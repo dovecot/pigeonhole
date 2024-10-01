@@ -807,38 +807,38 @@ const char *sieve_file_script_get_path(const struct sieve_script *script)
  */
 
 static int
-sieve_file_script_cmp(const struct sieve_script *script,
-		      const struct sieve_script *other)
+sieve_file_script_cmp(const struct sieve_script *script1,
+		      const struct sieve_script *script2)
 {
-	const struct sieve_file_script *fscript =
-		container_of(script, const struct sieve_file_script, script);
-	const struct sieve_file_script *fother =
-		container_of(other, const struct sieve_file_script, script);
+	const struct sieve_file_script *fscript1 =
+		container_of(script1, const struct sieve_file_script, script);
+	const struct sieve_file_script *fscript2 =
+		container_of(script2, const struct sieve_file_script, script);
 	int ret;
 
-	if (!script->open || !other->open) {
-		struct sieve_storage *storage = script->storage;
-		struct sieve_storage *sother = other->storage;
+	if (!script1->open || !script2->open) {
+		struct sieve_storage *storage1 = script1->storage;
+		struct sieve_storage *storage2 = script2->storage;
 
-		ret = strcmp(storage->location, sother->location);
+		ret = strcmp(storage1->location, storage2->location);
 		if (ret != 0)
 			return ret;
 
-		i_assert(script->name != NULL && other->name != NULL);
-		return strcmp(script->name, other->name);
+		i_assert(script1->name != NULL && script2->name != NULL);
+		return strcmp(script1->name, script2->name);
 	}
 
-	if (major(fscript->st.st_dev) != major(fother->st.st_dev)) {
-		return (major(fscript->st.st_dev) > major(fother->st.st_dev) ?
-			1 : -1);
+	if (major(fscript1->st.st_dev) != major(fscript2->st.st_dev)) {
+		return (major(fscript1->st.st_dev) >
+			major(fscript2->st.st_dev) ? 1 : -1);
 	}
-	if (minor(fscript->st.st_dev) != minor(fother->st.st_dev)) {
-		return (minor(fscript->st.st_dev) > minor(fother->st.st_dev) ?
-			1 : -1);
+	if (minor(fscript1->st.st_dev) != minor(fscript2->st.st_dev)) {
+		return (minor(fscript1->st.st_dev) >
+			minor(fscript2->st.st_dev) ? 1 : -1);
 	}
 
-	if (fscript->st.st_ino != fother->st.st_ino)
-		return (fscript->st.st_ino > fother->st.st_ino ? 1 : -1);
+	if (fscript1->st.st_ino != fscript2->st.st_ino)
+		return (fscript1->st.st_ino > fscript2->st.st_ino ? 1 : -1);
 
 	return 0;
 }
