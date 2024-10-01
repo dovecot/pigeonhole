@@ -114,7 +114,7 @@ bool sieve_storage_class_exists(struct sieve_instance *svinst,
 }
 
 /*
- * Storage instance
+ * Storage event
  */
 
 static struct event *
@@ -144,6 +144,10 @@ sieve_storage_create_driver_event(struct event *event_parent,
 
 	return event;
 }
+
+/*
+ * Storage options
+ */
 
 static const char *split_next_arg(const char *const **_args)
 {
@@ -280,6 +284,10 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 
 	return 0;
 }
+
+/*
+ * Storage instance
+ */
 
 int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 			const struct sieve_storage *storage_class,
@@ -641,6 +649,10 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 	pool_unref(&storage->pool);
 }
 
+/*
+ * Binary
+ */
+
 int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode)
 {
 	const char *bin_path = storage->bin_path;
@@ -694,6 +706,10 @@ int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode)
 
 	return -1;
 }
+
+/*
+ * Properties
+ */
 
 int sieve_storage_is_singular(struct sieve_storage *storage)
 {
