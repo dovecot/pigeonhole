@@ -73,16 +73,13 @@ static int sieve_dict_script_open(struct sieve_script *script)
 	const char *path, *data_id, *error;
 	int ret;
 
-	if (sieve_dict_storage_get_dict(dstorage, &dscript->dict) < 0)
-		return -1;
-
 	path = t_strconcat(DICT_SIEVE_NAME_PATH,
 			   dict_escape_string(name), NULL);
 
 	struct dict_op_settings set = {
 		.username = svinst->username,
 	};
-	ret = dict_lookup(dscript->dict, &set, script->pool, path,
+	ret = dict_lookup(dstorage->dict, &set, script->pool, path,
 			  &data_id, &error);
 	if (ret <= 0) {
 		if (ret < 0) {
@@ -109,6 +106,8 @@ sieve_dict_script_get_stream(struct sieve_script *script,
 	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_dict_script *dscript =
 		container_of(script, struct sieve_dict_script, script);
+	struct sieve_dict_storage *dstorage =
+		container_of(storage, struct sieve_dict_storage, storage);
 	const char *path, *name = script->name, *data, *error;
 	int ret;
 
@@ -121,7 +120,7 @@ sieve_dict_script_get_stream(struct sieve_script *script,
 	struct dict_op_settings set = {
 		.username = svinst->username,
 	};
-	ret = dict_lookup(dscript->dict, &set, dscript->data_pool, path,
+	ret = dict_lookup(dstorage->dict, &set, dscript->data_pool, path,
 			  &data, &error);
 	if (ret <= 0) {
 		if (ret < 0) {

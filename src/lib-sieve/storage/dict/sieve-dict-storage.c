@@ -61,38 +61,24 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 
 	e_debug(storage->event, "user=%s, uri=%s", svinst->username, uri);
 
-	dstorage->uri = p_strdup(storage->pool, uri);
-
 	storage->location = p_strconcat(
 		storage->pool, SIEVE_DICT_STORAGE_DRIVER_NAME, ":",
 		storage->location, ";user=", svinst->username, NULL);
 
-	return 0;
-}
-
-int sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
-				struct dict **dict_r)
-{
-	struct sieve_storage *storage = &dstorage->storage;
-	struct sieve_instance *svinst = storage->svinst;
 	struct dict_legacy_settings dict_set;
 	const char *error;
 	int ret;
 
-	if (dstorage->dict == NULL) {
-		i_zero(&dict_set);
-		dict_set.base_dir = svinst->base_dir;
-		ret = dict_init_legacy(dstorage->uri, &dict_set,
-				       &dstorage->dict, &error);
-		if (ret < 0) {
-			sieve_storage_set_critical(storage,
-				"Failed to initialize dict with data '%s' for user '%s': %s",
-				dstorage->uri, svinst->username, error);
-			return -1;
-		}
+	i_zero(&dict_set);
+	dict_set.base_dir = svinst->base_dir;
+	ret = dict_init_legacy(uri, &dict_set, &dstorage->dict, &error);
+	if (ret < 0) {
+		sieve_storage_set_critical(storage,
+			"Failed to initialize dict with data '%s' for user '%s': %s",
+			uri, svinst->username, error);
+		return -1;
 	}
 
-	*dict_r = dstorage->dict;
 	return 0;
 }
 

@@ -17,14 +17,8 @@
 
 struct sieve_dict_storage {
 	struct sieve_storage storage;
-
-	const char *uri;
-
 	struct dict *dict;
 };
-
-int sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
-				struct dict **dict_r);
 
 int sieve_dict_storage_active_script_get_name(struct sieve_storage *storage,
 					      const char **name_r);
@@ -35,8 +29,6 @@ int sieve_dict_storage_active_script_get_name(struct sieve_storage *storage,
 
 struct sieve_dict_script {
 	struct sieve_script script;
-
-	struct dict *dict;
 
 	pool_t data_pool;
 	const char *data_id;
