@@ -728,8 +728,7 @@ static int sieve_attribute_iter_deinit(struct mailbox_attribute_iter *iter)
 		if (sbox->super.attribute_iter_deinit(siter->super) < 0)
 			ret = -1;
 	}
-	if (siter->sieve_list != NULL)
-		(void)sieve_storage_list_deinit(&siter->sieve_list);
+	(void)sieve_storage_list_deinit(&siter->sieve_list);
 	str_free(&siter->name);
 	i_free(siter);
 	return ret;
