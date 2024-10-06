@@ -1025,13 +1025,17 @@ sieve_storage_list_next(struct sieve_storage_list_context *lctx, bool *active_r)
 int sieve_storage_list_deinit(struct sieve_storage_list_context **_lctx)
 {
 	struct sieve_storage_list_context *lctx = *_lctx;
+
+	if (lctx == NULL)
+		return 0;
+	*_lctx = NULL;
+
 	struct sieve_storage *storage = lctx->storage;
 	int ret;
 
 	i_assert(storage->v.list_deinit != NULL);
 	ret = storage->v.list_deinit(lctx);
 
-	*_lctx = NULL;
 	return ret;
 }
 
