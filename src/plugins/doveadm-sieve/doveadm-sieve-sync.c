@@ -732,8 +732,7 @@ static int sieve_attribute_iter_deinit(struct mailbox_attribute_iter *iter)
 	}
 	if (siter->sieve_list != NULL)
 		(void)sieve_storage_list_deinit(&siter->sieve_list);
-	if (siter->name != NULL)
-		str_free(&siter->name);
+	str_free(&siter->name);
 	i_free(siter);
 	return ret;
 }
