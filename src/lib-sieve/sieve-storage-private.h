@@ -106,7 +106,7 @@ struct sieve_storage {
 
 	const char *default_name;
 	const char *default_location;
-	struct sieve_storage *default_storage_for;
+	struct sieve_storage *default_storage, *default_storage_for;
 
 	struct mail_namespace *sync_inbox_ns;
 
@@ -138,6 +138,7 @@ int sieve_storage_active_script_is_default(struct sieve_storage *storage);
 
 struct sieve_storage_list_context {
 	struct sieve_storage *storage;
+	struct sieve_storage *def_storage;
 
 	bool seen_active:1; // Just present for assertions
 	bool seen_default:1;
