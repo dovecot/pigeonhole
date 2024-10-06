@@ -357,8 +357,7 @@ static void imap_sieve_mail_free(struct mail *_mail)
 
 	ismail->module_ctx.super.free(_mail);
 
-	if (flags != NULL)
-		str_free(&flags);
+	str_free(&flags);
 }
 
 static void imap_sieve_mail_allocated(struct mail *_mail)

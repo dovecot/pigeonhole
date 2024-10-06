@@ -119,8 +119,7 @@ cmd_setactive_activate(struct client_command_context *cmd,
 		client_send_no(client, errormsg);
 	}
 
-	if (errors != NULL)
-		str_free(&errors);
+	str_free(&errors);
 	sieve_script_unref(&script);
 }
 
