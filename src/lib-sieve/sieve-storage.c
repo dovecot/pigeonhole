@@ -837,6 +837,24 @@ void sieve_storage_set_modified(struct sieve_storage *storage, time_t mtime)
 }
 
 /*
+ * Comparison
+ */
+
+int sieve_storage_cmp(const struct sieve_storage *storage1,
+		      const struct sieve_storage *storage2)
+{
+	if (storage1 == storage2)
+		return 0;
+	if (storage1 == NULL || storage2 == NULL)
+		return (storage1 == NULL ? -1 : 1);
+	if (storage1->storage_class != storage2->storage_class) {
+		return (storage1->storage_class > storage2->storage_class ?
+			1 : -1);
+	}
+	return null_strcmp(storage1->location, storage2->location);
+}
+
+/*
  * Script access
  */
 
