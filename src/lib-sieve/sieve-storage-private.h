@@ -132,6 +132,7 @@ int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode);
 
 int sieve_storage_cmp(const struct sieve_storage *storage1,
 		      const struct sieve_storage *storage2);
+unsigned int sieve_storage_hash(const struct sieve_storage *storage);
 
 /*
  * Active script

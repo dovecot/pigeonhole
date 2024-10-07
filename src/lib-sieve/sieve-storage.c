@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "array.h"
 #include "str-sanitize.h"
+#include "hash.h"
 #include "home-expand.h"
 #include "eacces-error.h"
 #include "mkdir-parents.h"
@@ -852,6 +853,16 @@ int sieve_storage_cmp(const struct sieve_storage *storage1,
 			1 : -1);
 	}
 	return null_strcmp(storage1->location, storage2->location);
+}
+
+unsigned int sieve_storage_hash(const struct sieve_storage *storage)
+{
+	unsigned int hash = 0;
+
+	hash ^= POINTER_CAST_TO(storage->storage_class, unsigned int);
+	hash ^= str_hash(storage->location);
+
+	return hash;
 }
 
 /*
