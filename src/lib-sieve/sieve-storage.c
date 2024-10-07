@@ -22,10 +22,6 @@
 #include <time.h>
 #include <utime.h>
 
-#define CRITICAL_MSG \
-  "Internal error occurred. Refer to server log for more information."
-#define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
-
 struct event_category event_category_sieve_storage = {
 	.parent = &event_category_sieve,
 	.name = "sieve-storage",
@@ -1544,21 +1540,11 @@ void sieve_storage_copy_error(struct sieve_storage *storage,
 
 void sieve_storage_set_internal_error(struct sieve_storage *storage)
 {
-	struct tm *tm;
-	char str[256];
+	const char *error;
 
 	sieve_storage_clear_error(storage);
-
-	/* critical errors may contain sensitive data, so let user
-	   see only "Internal error" with a timestamp to make it
-	   easier to look from log files the actual error message. */
-	tm = localtime(&ioloop_time);
-
-	storage->error =
-		(strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
-		 i_strdup(str) : i_strdup(CRITICAL_MSG));
-
-	storage->error_code = SIEVE_ERROR_TEMP_FAILURE;
+	sieve_error_create_internal(&storage->error_code, &error);
+	storage->error = i_strdup(error);
 }
 
 void sieve_storage_set_critical(struct sieve_storage *storage,
