@@ -127,6 +127,13 @@ int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode);
 
 /*
+ * Comparison
+ */
+
+int sieve_storage_cmp(const struct sieve_storage *storage1,
+		      const struct sieve_storage *storage2);
+
+/*
  * Active script
  */
 
