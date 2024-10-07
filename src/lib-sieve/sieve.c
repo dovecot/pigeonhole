@@ -1012,6 +1012,32 @@ size_t sieve_max_script_size(struct sieve_instance *svinst)
 }
 
 /*
+ * Errors
+ */
+
+#define CRITICAL_MSG \
+	"Internal error occurred. Refer to server log for more information."
+#define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
+
+void sieve_error_create_internal(enum sieve_error *error_code_r,
+				 const char **error_r)
+{
+	struct tm *tm;
+	char buf[256];
+
+	/* Critical errors may contain sensitive data, so let user see only
+	   "Internal error" with a timestamp to make it easier to look from log
+	   files the actual error message. */
+	tm = localtime(&ioloop_time);
+
+	if (strftime(buf, sizeof(buf), CRITICAL_MSG_STAMP, tm) > 0)
+		*error_r = t_strdup(buf);
+	else
+		*error_r = CRITICAL_MSG;
+	*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+}
+
+/*
  * User log
  */
 
