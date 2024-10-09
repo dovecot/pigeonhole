@@ -358,8 +358,8 @@ int sieve_compile(struct sieve_instance *svinst, const char *script_location,
 		return -1;
 	}
 
-	e_debug(svinst->event, "Script '%s' from %s successfully compiled",
-		sieve_script_name(script), sieve_script_location(script));
+	e_debug(svinst->event, "Script '%s' successfully compiled",
+		sieve_script_label(script));
 
 	sieve_script_unref(&script);
 	return 0;
@@ -443,9 +443,8 @@ sieve_open_script_real(struct sieve_script *script,
 			return -1;
 
 		e_debug(svinst->event,
-			"Script '%s' from %s successfully compiled",
-			sieve_script_name(script),
-			sieve_script_location(script));
+			"Script '%s' successfully compiled",
+			sieve_script_label(script));
 
 		sieve_binary_set_resource_usage(sbin, &rusage);
 	}

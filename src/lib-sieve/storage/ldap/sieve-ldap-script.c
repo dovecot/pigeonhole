@@ -148,7 +148,7 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 		e_error(script->event,
 			"LDAP entry for script '%s' "
 			"has no modified attribute '%s'",
-			sieve_script_location(script),
+			sieve_script_label(script),
 			lstorage->set->sieve_ldap_mod_attr);
 		return 0;
 	}
@@ -158,7 +158,7 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 		e_error(script->event,
 			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid DN",
-			sieve_binary_path(sbin), sieve_script_location(script));
+			sieve_binary_path(sbin), sieve_script_label(script));
 		return -1;
 	}
 	i_assert(lscript->dn != NULL);
@@ -166,7 +166,7 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 		e_debug(script->event,
 			"Binary '%s' reports different LDAP DN for script '%s' "
 			"('%s' rather than '%s')",
-			sieve_binary_path(sbin), sieve_script_location(script),
+			sieve_binary_path(sbin), sieve_script_label(script),
 			str_c(dn), lscript->dn);
 		return 0;
 	}
@@ -176,14 +176,14 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 		e_error(script->event,
 			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid modified attribute",
-			sieve_binary_path(sbin), sieve_script_location(script));
+			sieve_binary_path(sbin), sieve_script_label(script));
 		return -1;
 	}
 	if (strcmp(str_c(modattr), lscript->modattr) != 0) {
 		e_debug(script->event,
 			"Binary '%s' reports different modified attribute content "
 			"for script '%s' ('%s' rather than '%s')",
-			sieve_binary_path(sbin), sieve_script_location(script),
+			sieve_binary_path(sbin), sieve_script_label(script),
 			str_c(modattr), lscript->modattr);
 		return 0;
 	}

@@ -345,7 +345,7 @@ lda_sieve_binary_save(struct lda_sieve_run_context *srctx,
 			"to save global Sieve script binaries; "
 			"global Sieve scripts like '%s' need to be "
 			"pre-compiled using the sievec tool",
-			sieve_script_location(script));
+			sieve_script_label(script));
 	}
 }
 
@@ -365,11 +365,11 @@ sieve_binary *lda_sieve_open(struct lda_sieve_run_context *srctx,
 		/* Warn */
 		e_warning(sieve_get_event(svinst),
 			  "Encountered corrupt binary: re-compiling script %s",
-			  sieve_script_location(script));
+			  sieve_script_label(script));
 		compile_name = "re-compile";
 	} else {
 		e_debug(sieve_get_event(svinst),
-			"Loading script %s", sieve_script_location(script));
+			"Loading script %s", sieve_script_label(script));
 	}
 
 	if (script == srctx->user_script)
@@ -394,7 +394,7 @@ sieve_binary *lda_sieve_open(struct lda_sieve_run_context *srctx,
 		case SIEVE_ERROR_NOT_FOUND:
 			e_debug(sieve_get_event(svinst),
 				"Script '%s' is missing for %s",
-				sieve_script_location(script),
+				sieve_script_label(script),
 				compile_name);
 			break;
 		/* Temporary failure */
@@ -402,7 +402,7 @@ sieve_binary *lda_sieve_open(struct lda_sieve_run_context *srctx,
 			e_error(sieve_get_event(svinst),
 				"Failed to open script '%s' for %s "
 				"(temporary failure)",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		/* Compile failed */
 		case SIEVE_ERROR_NOT_VALID:
@@ -412,26 +412,26 @@ sieve_binary *lda_sieve_open(struct lda_sieve_run_context *srctx,
 				       "Failed to %s script '%s' "
 				       "(view user logfile '%s' for more information)",
 				       compile_name,
-				       sieve_script_location(script),
+				       sieve_script_label(script),
 				       srctx->userlog);
 				break;
 			}
 			e_error(sieve_get_event(svinst),
 				"Failed to %s script '%s'",
-				compile_name, sieve_script_location(script));
+				compile_name, sieve_script_label(script));
 			break;
 		/* Cumulative resource limit exceeded */
 		case SIEVE_ERROR_RESOURCE_LIMIT:
 			e_error(sieve_get_event(svinst),
 				"Failed to open script '%s' for %s "
 				"(cumulative resource limit exceeded)",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		/* Something else */
 		default:
 			e_error(sieve_get_event(svinst),
 				"Failed to open script '%s' for %s",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		}
 
@@ -478,15 +478,15 @@ lda_sieve_handle_exec_status(struct lda_sieve_run_context *srctx,
 	switch (status) {
 	case SIEVE_EXEC_FAILURE:
 		e_log(sieve_get_event(svinst), user_log_level,
-		      "Execution of script %s failed, "
+		      "Execution of script '%s' failed, "
 		      "but implicit keep was successful%s",
-		      sieve_script_location(script), userlog_notice);
+		      sieve_script_label(script), userlog_notice);
 		ret = 1;
 		break;
 	case SIEVE_EXEC_TEMP_FAILURE:
 		e_log(sieve_get_event(svinst), log_level,
-		      "Execution of script %s was aborted due to temporary failure%s",
-		      sieve_script_location(script), userlog_notice);
+		      "Execution of script '%s' was aborted due to temporary failure%s",
+		      sieve_script_label(script), userlog_notice);
 		if (mail_error != MAIL_ERROR_TEMP &&
 		    mdctx->tempfail_error == NULL) {
 			mdctx->tempfail_error =
@@ -496,22 +496,22 @@ lda_sieve_handle_exec_status(struct lda_sieve_run_context *srctx,
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:
 		e_error(sieve_get_event(svinst),
-			"!!BUG!!: Binary compiled from %s is still corrupt; "
+			"!!BUG!!: Binary compiled from '%s' is still corrupt; "
 			"bailing out and reverting to default delivery",
-			sieve_script_location(script));
+			sieve_script_label(script));
 		ret = -1;
 		break;
 	case SIEVE_EXEC_RESOURCE_LIMIT:
 		e_error(sieve_get_event(svinst),
-			"Execution of script %s was aborted "
+			"Execution of script '%s' was aborted "
 			"due to excessive resource usage",
-			sieve_script_location(script));
+			sieve_script_label(script));
 		ret = -1;
 		break;
 	case SIEVE_EXEC_KEEP_FAILED:
 		e_log(sieve_get_event(svinst), log_level,
-		      "Execution of script %s failed with unsuccessful implicit keep%s",
-		      sieve_script_location(script), userlog_notice);
+		      "Execution of script '%s' failed with unsuccessful implicit keep%s",
+		      sieve_script_label(script), userlog_notice);
 		ret = -1;
 		break;
 	default:
@@ -558,11 +558,11 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 		e_debug(sieve_get_event(svinst),
 			"Opening script %d of %d from '%s'",
 			index, srctx->script_count,
-			sieve_script_location(script));
+			sieve_script_label(script));
 	} else {
 		e_debug(sieve_get_event(svinst),
 			"Opening discard script from '%s'",
-			sieve_script_location(script));
+			sieve_script_label(script));
 	}
 
 	sbin = lda_sieve_open(srctx, script, cpflags, FALSE, error_code_r);
@@ -800,7 +800,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 			for (i = 0; i < count; i ++) {
 				e_debug(sieve_get_event(svinst),
 					"Executed before user's personal Sieve script(%d): %s",
-					i+1, sieve_script_location(scripts[i]));
+					i+1, sieve_script_label(scripts[i]));
 			}
 		}
 	}
@@ -811,8 +811,8 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 
 		if (ret >= 0) {
 			e_debug(sieve_get_event(svinst),
-				"Using the following location for user's Sieve script: %s",
-				sieve_script_location(srctx->main_script));
+				"Using the following personal Sieve script: %s",
+				sieve_script_label(srctx->main_script));
 		}
 	}
 
@@ -845,8 +845,8 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 			scripts = array_get(&script_sequence, &count);
 			for ( i = after_index; i < count; i ++ ) {
 				e_debug(sieve_get_event(svinst),
-					"executed after user's Sieve script(%d): %s",
-					i+1, sieve_script_location(scripts[i]));
+					"Executed after user's Sieve script(%d): %s",
+					i+1, sieve_script_label(scripts[i]));
 			}
 		}
 	}

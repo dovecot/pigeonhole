@@ -500,9 +500,9 @@ sieve_file_script_binary_read_metadata(struct sieve_script *script,
 		if (svinst->debug) {
 			e_debug(script->event,
 				"Sieve binary '%s' is not newer "
-				"than the Sieve script '%s' (%s.%lu <= %s.%lu)",
-				sieve_binary_path(sbin),
-				sieve_script_location(script),
+				"than the Sieve script '%s' (path=%s, %s.%lu <= %s.%lu)",
+				sieve_binary_path(sbin), sieve_script_label(script),
+				fscript->path,
 				t_strflocaltime("%Y-%m-%d %H:%M:%S",
 						bstat->st_mtime),
 				ST_MTIME_NSEC(*bstat),

@@ -367,12 +367,12 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 	if (recompile) {
 		/* Warn */
 		e_warning(sieve_get_event(svinst),
-			  "Encountered corrupt binary: re-compiling script %s",
-			  sieve_script_location(script));
+			  "Encountered corrupt binary: re-compiling script '%s'",
+			  sieve_script_label(script));
 		compile_name = "re-compile";
 	} else {
-		e_debug(sieve_get_event(svinst), "Loading script %s",
-			sieve_script_location(script));
+		e_debug(sieve_get_event(svinst), "Loading script '%s'",
+			sieve_script_label(script));
 	}
 
 	if (script == sctx->user_script)
@@ -397,14 +397,14 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 		case SIEVE_ERROR_NOT_FOUND:
 			e_debug(sieve_get_event(svinst),
 				"Script '%s' is missing for %s",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		/* Temporary failure */
 		case SIEVE_ERROR_TEMP_FAILURE:
 			e_error(sieve_get_event(svinst),
 				"Failed to open script '%s' for %s "
 				"(temporary failure)",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		/* Compile failed */
 		case SIEVE_ERROR_NOT_VALID:
@@ -412,20 +412,20 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 				break;
 			e_error(sieve_get_event(svinst),
 				"Failed to %s script '%s'",
-				compile_name, sieve_script_location(script));
+				compile_name, sieve_script_label(script));
 			break;
 		/* Cumulative resource limit exceeded */
 		case SIEVE_ERROR_RESOURCE_LIMIT:
 			e_error(sieve_get_event(svinst),
 				"Failed to open script '%s' for %s "
 				"(cumulative resource limit exceeded)",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		/* Something else */
 		default:
 			e_error(sieve_get_event(svinst),
 				"Failed to open script '%s' for %s",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		}
 
@@ -765,39 +765,39 @@ imap_sieve_filter_handle_exec_status(struct imap_filter_sieve_context *sctx,
 	switch (status) {
 	case SIEVE_EXEC_FAILURE:
 		e_log(sieve_get_event(svinst), user_log_level,
-		      "Execution of script %s failed",
-		      sieve_script_location(script));
+		      "Execution of script '%s' failed",
+		      sieve_script_label(script));
 		ret = -1;
 		break;
 	case SIEVE_EXEC_TEMP_FAILURE:
 		e_log(sieve_get_event(svinst), log_level,
-		      "Execution of script %s was aborted "
+		      "Execution of script '%s' was aborted "
 		      "due to temporary failure",
-		      sieve_script_location(script));
+		      sieve_script_label(script));
 		*fatal_r = TRUE;
 		ret = -1;
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:
 		e_error(sieve_get_event(svinst),
-			"!!BUG!!: Binary compiled from %s is still corrupt; "
+			"!!BUG!!: Binary compiled from '%s' is still corrupt; "
 			"bailing out and reverting to default action",
-			sieve_script_location(script));
+			sieve_script_label(script));
 		*fatal_r = TRUE;
 		ret = -1;
 		break;
 	case SIEVE_EXEC_RESOURCE_LIMIT:
 		e_error(sieve_get_event(svinst),
-			"Execution of script %s was aborted "
+			"Execution of script '%s' was aborted "
 			"due to excessive resource usage",
-			sieve_script_location(script));
+			sieve_script_label(script));
 		*fatal_r = TRUE;
 		ret = -1;
 		break;
 	case SIEVE_EXEC_KEEP_FAILED:
 		e_log(sieve_get_event(svinst), log_level,
-		      "Execution of script %s failed "
+		      "Execution of script '%s' failed "
 		      "with unsuccessful implicit keep",
-		      sieve_script_location(script));
+		      sieve_script_label(script));
 		ret = -1;
 		break;
 	case SIEVE_EXEC_OK:
@@ -847,7 +847,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 		if (sbin == NULL) {
 			e_debug(sieve_get_event(svinst),
 				"Skipping script from '%s'",
-				sieve_script_location(script));
+				sieve_script_label(script));
 			continue;
 		}
 

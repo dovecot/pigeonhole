@@ -408,9 +408,9 @@ ext_include_binary_open(const struct sieve_extension *ext,
 			/* Binary is corrupt, recompile */
 			e_error(svinst->event, "include: "
 				"dependency block %d of binary %s "
-				"contains invalid script metadata for script %s",
+				"contains invalid script metadata for script '%s'",
 				block_id, sieve_binary_path(sbin),
-				sieve_script_location(script));
+				sieve_script_label(script));
 			sieve_script_unref(&script);
 			return FALSE;
 		}

@@ -284,7 +284,7 @@ bool sieve_binary_loaded(struct sieve_binary *sbin)
 const char *sieve_binary_source(struct sieve_binary *sbin)
 {
 	if (sbin->script != NULL && (sbin->path == NULL || sbin->file == NULL))
-		return sieve_script_location(sbin->script);
+		return sieve_script_label(sbin->script);
 
 	return sbin->path;
 }
@@ -315,7 +315,7 @@ const char *sieve_binary_script_name(struct sieve_binary *sbin)
 const char *sieve_binary_script_location(struct sieve_binary *sbin)
 {
 	return (sbin->script == NULL ?
-		NULL : sieve_script_location(sbin->script));
+		NULL : sieve_script_label(sbin->script));
 }
 
 /*

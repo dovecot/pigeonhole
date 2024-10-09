@@ -582,12 +582,12 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 	if (recompile) {
 		/* Warn */
 		e_warning(sieve_get_event(svinst),
-			  "Encountered corrupt binary: re-compiling script %s",
-			  sieve_script_location(script));
+			  "Encountered corrupt binary: re-compiling script '%s'",
+			  sieve_script_label(script));
 		compile_name = "re-compile";
 	} else {
 		e_debug(sieve_get_event(svinst),
-			"Loading script %s", sieve_script_location(script));
+			"Loading script '%s'", sieve_script_label(script));
 	}
 
 	if (rscript->user_script)
@@ -612,14 +612,14 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 		case SIEVE_ERROR_NOT_FOUND:
 			e_debug(sieve_get_event(svinst),
 				"Script '%s' is missing for %s",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		/* Temporary failure */
 		case SIEVE_ERROR_TEMP_FAILURE:
 			e_error(sieve_get_event(svinst),
 				"Failed to open script '%s' for %s "
 				"(temporary failure)",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		/* Compile failed */
 		case SIEVE_ERROR_NOT_VALID:
@@ -628,26 +628,26 @@ imap_sieve_run_open_script(struct imap_sieve_run *isrun,
 				e_info(sieve_get_event(svinst),
 				       "Failed to %s script '%s' "
 				       "(view user logfile '%s' for more information)",
-				       compile_name, sieve_script_location(script),
+				       compile_name, sieve_script_label(script),
 				       isrun->userlog);
 				break;
 			}
 			e_error(sieve_get_event(svinst),
 				"Failed to %s script '%s'",
-				compile_name, sieve_script_location(script));
+				compile_name, sieve_script_label(script));
 			break;
 		/* Cumulative resource limit exceeded */
 		case SIEVE_ERROR_RESOURCE_LIMIT:
 			e_error(sieve_get_event(svinst),
 				"Failed to open script '%s' for %s "
 				"(cumulative resource limit exceeded)",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		/* Something else */
 		default:
 			e_error(sieve_get_event(svinst),
 				"Failed to open script '%s' for %s",
-				sieve_script_location(script), compile_name);
+				sieve_script_label(script), compile_name);
 			break;
 		}
 
@@ -697,39 +697,39 @@ imap_sieve_handle_exec_status(struct imap_sieve_run *isrun,
 	switch (status) {
 	case SIEVE_EXEC_FAILURE:
 		e_log(sieve_get_event(svinst), user_log_level,
-			"Execution of script %s failed%s",
-			sieve_script_location(script), userlog_notice);
+			"Execution of script '%s' failed%s",
+			sieve_script_label(script), userlog_notice);
 		ret = 0;
 		break;
 	case SIEVE_EXEC_TEMP_FAILURE:
 		e_log(sieve_get_event(svinst), log_level,
-		      "Execution of script %s was aborted "
+		      "Execution of script '%s' was aborted "
 		      "due to temporary failure%s",
-		      sieve_script_location(script), userlog_notice);
+		      sieve_script_label(script), userlog_notice);
 		*fatal_r = TRUE;
 		ret = -1;
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:
 		e_error(sieve_get_event(svinst),
-			"!!BUG!!: Binary compiled from %s is still corrupt; "
+			"!!BUG!!: Binary compiled from '%s' is still corrupt; "
 			"bailing out and reverting to default action",
-			sieve_script_location(script));
+			sieve_script_label(script));
 		*fatal_r = TRUE;
 		ret = -1;
 		break;
 	case SIEVE_EXEC_RESOURCE_LIMIT:
 		e_error(sieve_get_event(svinst),
-			"Execution of script %s was aborted "
+			"Execution of script '%s' was aborted "
 			"due to excessive resource usage",
-			sieve_script_location(script));
+			sieve_script_label(script));
 		*fatal_r = TRUE;
 		ret = -1;
 		break;
 	case SIEVE_EXEC_KEEP_FAILED:
 		e_log(sieve_get_event(svinst), log_level,
-		      "Execution of script %s failed "
+		      "Execution of script '%s' failed "
 		      "with unsuccessful implicit keep%s",
-		      sieve_script_location(script), userlog_notice);
+		      sieve_script_label(script), userlog_notice);
 		ret = 0;
 		break;
 	case SIEVE_EXEC_OK:
@@ -798,7 +798,7 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 		if (sbin == NULL) {
 			e_debug(sieve_get_event(svinst),
 				"Opening script %d of %d from '%s'",
-				i+1, count, sieve_script_location(script));
+				i+1, count, sieve_script_label(script));
 
 			/* Already known to fail */
 			if (scripts[i].compile_error != SIEVE_ERROR_NONE) {
