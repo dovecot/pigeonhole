@@ -110,6 +110,7 @@ int sieve_script_delete(struct sieve_script *script, bool ignore_active);
  */
 
 const char *sieve_script_name(const struct sieve_script *script) ATTR_PURE;
+const char *sieve_script_label(const struct sieve_script *script) ATTR_PURE;
 const char *sieve_script_location(const struct sieve_script *script) ATTR_PURE;
 struct sieve_instance *
 sieve_script_svinst(const struct sieve_script *script) ATTR_PURE;

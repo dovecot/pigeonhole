@@ -151,6 +151,7 @@ int sieve_storage_quota_havespace(struct sieve_storage *storage,
  * Properties
  */
 
+const char *sieve_storage_name(const struct sieve_storage *storage) ATTR_PURE;
 const char *sieve_storage_location(const struct sieve_storage *storage)
 	ATTR_PURE;
 bool sieve_storage_is_default(const struct sieve_storage *storage) ATTR_PURE;

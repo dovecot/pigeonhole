@@ -306,6 +306,11 @@ const char *sieve_script_location(const struct sieve_script *script)
 	return script->location;
 }
 
+const char *sieve_script_label(const struct sieve_script *script)
+{
+	return script->location;
+}
+
 struct sieve_instance *sieve_script_svinst(const struct sieve_script *script)
 {
 	return script->storage->svinst;
@@ -447,14 +452,14 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 		e_error(script->event,
 			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid storage class",
-			sieve_binary_path(sbin), script->location);
+			sieve_binary_path(sbin), sieve_script_label(script));
 		return -1;
 	}
 	if (strcmp(str_c(storage_class), script->driver_name) != 0) {
 		e_debug(script->event,
 			"Binary '%s' reports unexpected driver name for script '%s' "
 			"('%s' rather than '%s')",
-			sieve_binary_path(sbin), script->location,
+			sieve_binary_path(sbin), sieve_script_label(script),
 			str_c(storage_class), script->driver_name);
 		return 0;
 	}
@@ -464,7 +469,7 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 		e_error(script->event,
 			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid version",
-			sieve_binary_path(sbin), script->location);
+			sieve_binary_path(sbin), sieve_script_label(script));
 		return -1;
 	}
 	if (script->storage->version != version) {
@@ -483,7 +488,7 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 		e_error(script->event,
 			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid location",
-			sieve_binary_path(sbin), script->location);
+			sieve_binary_path(sbin), sieve_script_label(script));
 		return -1;
 	}
 	i_assert(script->location != NULL);
