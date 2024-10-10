@@ -168,7 +168,7 @@ tst_exists_operation_execute(const struct sieve_runtime_env *renv,
 
 		sieve_runtime_trace(
 			renv, SIEVE_TRLVL_MATCHING,
-			"header `%s' %s", str_sanitize(str_c(hdr_item), 80),
+			"header '%s' %s", str_sanitize(str_c(hdr_item), 80),
 			(matched ? "exists" : "is missing"));
 	}
 

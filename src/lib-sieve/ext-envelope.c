@@ -428,7 +428,7 @@ sieve_envelope_address_list_next_item(struct sieve_address_list *_addrlist,
 		if (_addrlist->strlist.trace) {
 			sieve_runtime_trace(
 				_addrlist->strlist.runenv, 0,
-				"getting `%s' part from message envelope",
+				"getting '%s' part from message envelope",
 				str_sanitize(str_c(envp_item), 80));
 		}
 

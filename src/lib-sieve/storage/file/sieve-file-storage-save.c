@@ -238,7 +238,7 @@ int sieve_file_storage_save_init(struct sieve_storage_save_context *sctx,
 					    scriptname)) {
 				sieve_storage_set_error(
 					storage, SIEVE_ERROR_BAD_PARAMS,
-					"Script name `%s' is reserved for internal use.",
+					"Script name '%s' is reserved for internal use.",
 					scriptname);
 				return -1;
 			}
@@ -367,14 +367,14 @@ sieve_file_storage_save_get_tempscript(struct sieve_storage_save_context *sctx)
 		if (error == SIEVE_ERROR_NOT_FOUND) {
 			sieve_storage_set_critical(
 				sctx->storage, "save: "
-				"Temporary script file `%s' got lost, "
+				"Temporary script file '%s' got lost, "
 				"which should not happen "
 				"(possibly deleted externally).",
 				fsctx->tmp_path);
 		} else {
 			sieve_storage_set_critical(
 				sctx->storage, "save: "
-				"Failed to open temporary script file `%s'",
+				"Failed to open temporary script file '%s'",
 				fsctx->tmp_path);
 		}
 		return NULL;

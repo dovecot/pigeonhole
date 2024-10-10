@@ -55,7 +55,7 @@ bool managesieve_quota_check_all(struct client_command_context *cmd,
 		return TRUE;
 	if (ret < 0) {
 		client_command_storage_error(
-			cmd, "Failed to check quota for script `%s' "
+			cmd, "Failed to check quota for script '%s' "
 			     "(size %zu bytes)", scriptname, size);
 		return FALSE;
 	}
@@ -88,7 +88,7 @@ bool managesieve_quota_check_all(struct client_command_context *cmd,
 		client_command_create_finish_event(cmd)->
 		add_str("error", error_msg);
 	e_debug(e->event(),
-		"Quota check failed for script `%s' (size %zu bytes): %s",
+		"Quota check failed for script '%s' (size %zu bytes): %s",
 		scriptname, size, error_msg);
 
 	client_send_noresp(client, resp_code, error_msg);

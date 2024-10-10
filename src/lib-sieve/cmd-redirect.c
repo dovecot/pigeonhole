@@ -445,18 +445,18 @@ act_redirect_get_duplicate_id(struct act_redirect_context *ctx,
 	if (mail_get_first_header(mail, "resent-message-id", &resent_id) < 0) {
 		return sieve_result_mail_error(
 			aenv, mail,
-			"failed to read header field `resent-message-id'");
+			"failed to read header field 'resent-message-id'");
 	}
 	if (resent_id == NULL &&
 	    mail_get_first_header(mail, "resent-from", &resent_id) < 0) {
 		return sieve_result_mail_error(
 			aenv, mail,
-			"failed to read header field `resent-from'");
+			"failed to read header field 'resent-from'");
 	}
 	if (mail_get_first_header(mail, "list-id", &list_id) < 0) {
 		return sieve_result_mail_error(
 			aenv, mail,
-			"failed to read header field `list-id'");
+			"failed to read header field 'list-id'");
 	}
 
 	if ((eenv->flags & SIEVE_EXECUTE_FLAG_NO_ENVELOPE) == 0)
@@ -500,7 +500,7 @@ act_redirect_check_loop_header(const struct sieve_action_exec_env *aenv,
 	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, mail, "failed to read header field "
-			"`x-sieve-redirected-from'");
+			"'x-sieve-redirected-from'");
 	}
 
 	if (ret == 0)
@@ -615,7 +615,7 @@ act_redirect_execute(const struct sieve_action_exec_env *aenv,
 	if (loop_detected) {
 		sieve_result_global_log(
 			aenv, "not forwarding message to <%s>: "
-			"the `x-sieve-redirected-from' header indicates a mail loop",
+			"the 'x-sieve-redirected-from' header indicates a mail loop",
 			smtp_address_encode(ctx->to_address));
 		trans->skip_redirect = TRUE;
 		return SIEVE_EXEC_OK;

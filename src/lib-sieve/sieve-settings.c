@@ -262,7 +262,7 @@ void sieve_settings_load(struct sieve_instance *svinst)
 			&address, &error) < 0) {
 			e_warning(svinst->event,
 				  "Invalid address value for setting "
-				  "`sieve_user_email': %s", error);
+				  "'sieve_user_email': %s", error);
 		} else {
 			svinst->user_email = address;
 		}

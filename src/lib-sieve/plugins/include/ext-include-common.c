@@ -91,7 +91,7 @@ bool ext_include_load(const struct sieve_extension *ext, void **context)
 	if (location == NULL) {
 		e_debug(svinst->event, "include: "
 			"sieve_global is not set; "
-			"it is currently not possible to include `:global' scripts.");
+			"it is currently not possible to include ':global' scripts.");
 	}
 
 	ctx->global_location = i_strdup(location);
@@ -154,7 +154,7 @@ ext_include_get_script_storage(const struct sieve_extension *ext,
 		if (ctx->global_location == NULL) {
 			e_info(svinst->event, "include: "
 				"sieve_global is unconfigured; "
-				"include of `:global' script `%s' is therefore not possible",
+				"include of ':global' script '%s' is therefore not possible",
 				str_sanitize(script_name, 80));
 			if (error_r != NULL)
 				*error_r = SIEVE_ERROR_NOT_FOUND;

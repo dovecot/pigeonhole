@@ -57,7 +57,7 @@ sieve_ldap_storage_init(struct sieve_storage *storage,
 				username = value;
 			} else {
 				sieve_storage_set_critical(
-					storage, "Invalid option `%s'", option);
+					storage, "Invalid option '%s'", option);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}

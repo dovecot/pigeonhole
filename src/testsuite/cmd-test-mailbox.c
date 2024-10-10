@@ -117,7 +117,7 @@ cmd_test_mailbox_validate(struct sieve_validator *valdtr,
 		if ( !sieve_mailbox_check_name(folder, &error) ) {
 			sieve_command_validate_error(
 				valdtr, cmd, "%s command: "
-				"invalid mailbox `%s' specified: %s",
+				"invalid mailbox '%s' specified: %s",
 				sieve_command_identifier(cmd),
 				str_sanitize(folder, 256), error);
 			return FALSE;
@@ -193,7 +193,7 @@ cmd_test_mailbox_create_execute(const struct sieve_runtime_env *renv,
 			"testsuite/test_mailbox_create command");
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(
-			renv, 0, "create mailbox `%s'", mailbox);
+			renv, 0, "create mailbox '%s'", mailbox);
 	}
 
 	testsuite_mailstore_mailbox_create(renv, mailbox);
@@ -210,7 +210,7 @@ cmd_test_mailbox_delete_execute(const struct sieve_runtime_env *renv,
 			"testsuite/test_mailbox_delete command");
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(
-			renv, 0, "delete mailbox `%s'", mailbox);
+			renv, 0, "delete mailbox '%s'", mailbox);
 	}
 
 	/* FIXME: implement */
@@ -240,7 +240,7 @@ cmd_test_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 	if (!sieve_mailbox_check_name(str_c(mailbox), &error)) {
 		sieve_runtime_error(
 			renv, NULL, "%s command: "
-			"invalid mailbox `%s' specified: %s",
+			"invalid mailbox '%s' specified: %s",
 			cmd_test_mailbox_get_command_name(oprtn),
 			str_c(mailbox), error);
 		return SIEVE_EXEC_FAILURE;

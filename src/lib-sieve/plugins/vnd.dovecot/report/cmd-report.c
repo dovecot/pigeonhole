@@ -178,7 +178,7 @@ cmd_report_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 			if (feedback_type == NULL) {
 				sieve_argument_validate_error(
 					valdtr, arg,
-					"specified feedback type `%s' is invalid",
+					"specified feedback type '%s' is invalid",
 					str_sanitize(str_c(fbtype),128));
 			}
 		} T_END;
@@ -346,7 +346,7 @@ cmd_report_operation_execute(const struct sieve_runtime_env *renv,
 	if (feedback_type == NULL) {
 		sieve_runtime_error(
 			renv, NULL,
-			"specified report feedback type `%s' is invalid",
+			"specified report feedback type '%s' is invalid",
 			str_sanitize(str_c(fbtype), 256));
 		return SIEVE_EXEC_FAILURE;
 	}
@@ -366,7 +366,7 @@ cmd_report_operation_execute(const struct sieve_runtime_env *renv,
 		sieve_runtime_trace(renv, 0, "report action");
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(
-			renv, 0, "report incoming message as `%s' to address %s",
+			renv, 0, "report incoming message as '%s' to address %s",
 			str_sanitize(str_c(fbtype), 32),
 			smtp_address_encode_path(parsed_address));
 	}
@@ -425,7 +425,7 @@ act_report_print(const struct sieve_action *action,
 		(struct act_report_data *)action->context;
 
 	sieve_result_action_printf(rpenv,
-		"report incoming message as `%s' to: %s",
+		"report incoming message as '%s' to: %s",
 		str_sanitize(rdd->feedback_type, 32),
 		smtp_address_encode_path(rdd->to_address));
 }
@@ -475,7 +475,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, msgdata->mail,
-			"failed to read header field `subject'");
+			"failed to read header field 'subject'");
 	}
 	if (ret > 0 && headers[0] != NULL)
 		subject = t_strconcat("Report: ", headers[0], NULL);
@@ -635,14 +635,14 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	if (ret <= 0) {
 		if (ret < 0) {
 			sieve_result_global_error(
-				aenv, "failed to send `%s' report to <%s>: %s "
+				aenv, "failed to send '%s' report to <%s>: %s "
 				"(temporary failure)",
 				str_sanitize(act->feedback_type, 32),
 				smtp_address_encode(act->to_address),
 				str_sanitize(error, 512));
 		} else {
 			sieve_result_global_log_error(
-				aenv, "failed to send `%s' report to <%s>: %s "
+				aenv, "failed to send '%s' report to <%s>: %s "
 				"(permanent failure)",
 				str_sanitize(act->feedback_type, 32),
 				smtp_address_encode(act->to_address),
@@ -659,7 +659,7 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 				str_sanitize(act->feedback_type, 32));
 
 		sieve_result_event_log(aenv, e->event(),
-				       "sent `%s' report to <%s>",
+				       "sent '%s' report to <%s>",
 				       str_sanitize(act->feedback_type, 32),
 				       smtp_address_encode(act->to_address));
 	}

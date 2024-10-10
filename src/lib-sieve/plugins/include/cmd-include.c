@@ -266,14 +266,14 @@ cmd_include_validate(struct sieve_validator *valdtr,
 		if (error == SIEVE_ERROR_NOT_FOUND) {
 			sieve_argument_validate_error(
 				valdtr, arg, "include: "
-				"%s location for included script `%s' is unavailable "
+				"%s location for included script '%s' is unavailable "
 				"(contact system administrator for more information)",
 				ext_include_script_location_name(ctx_data->location),
 				str_sanitize(script_name, 80));
 		} else {
 			sieve_argument_validate_error(
 				valdtr, arg, "include: "
-				"failed to access %s location for included script `%s' "
+				"failed to access %s location for included script '%s' "
 				"(contact system administrator for more information)",
 				ext_include_script_location_name(ctx_data->location),
 				str_sanitize(script_name, 80));
@@ -392,7 +392,7 @@ static bool opc_include_dump(const struct sieve_dumptime_env *denv,
 
 	sieve_code_descend(denv);
 	sieve_code_dumpf(
-		denv, "script: `%s' from %s %s%s[ID: %d, BLOCK: %d]",
+		denv, "script: '%s' from %s %s%s[ID: %d, BLOCK: %d]",
 		sieve_script_name(included->script),
 		sieve_script_location(included->script),
 		((flags & EXT_INCLUDE_FLAG_ONCE) != 0 ? "(once) " : ""),

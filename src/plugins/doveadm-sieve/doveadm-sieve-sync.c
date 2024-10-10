@@ -400,7 +400,7 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 				"(time: %Y-%m-%d %H:%M:%S)",
 				ioloop_time);
 		}
-		e_debug(suser->event, "Assigned value for key `%s' %s",
+		e_debug(suser->event, "Assigned value for key '%s' %s",
 			key, change);
 
 		/* FIXME: set value len to sieve script size / active name
@@ -584,11 +584,11 @@ sieve_attribute_get(struct mailbox *box,
 
 			if (ret > 0) {
 				e_debug(user->event,
-					"Retrieved value for key `%s'%s",
+					"Retrieved value for key '%s'%s",
 					key, timestamp);
 			} else {
 				e_debug(suser->event,
-					"Value missing for key `%s'%s",
+					"Value missing for key '%s'%s",
 					key, timestamp);
 			}
 		}

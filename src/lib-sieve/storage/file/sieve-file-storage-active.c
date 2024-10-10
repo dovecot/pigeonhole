@@ -262,7 +262,7 @@ sieve_file_storage_active_script_open(struct sieve_storage *storage)
 			if (storage->error_code != SIEVE_ERROR_NOT_FOUND) {
 				sieve_storage_set_critical(
 					storage,
-					"Failed to open active path `%s' as regular file: %s",
+					"Failed to open active path '%s' as regular file: %s",
 					fstorage->active_path, storage->error);
 			}
 			return NULL;

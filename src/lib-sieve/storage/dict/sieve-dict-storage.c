@@ -44,7 +44,7 @@ sieve_dict_storage_init(struct sieve_storage *storage,
 				username = option+5;
 			} else {
 				sieve_storage_set_critical(
-					storage, "Invalid option `%s'", option);
+					storage, "Invalid option '%s'", option);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
@@ -100,7 +100,7 @@ sieve_dict_storage_get_dict(struct sieve_dict_storage *dstorage,
 				       &dstorage->dict, &error);
 		if (ret < 0) {
 			sieve_storage_set_critical(storage,
-				"Failed to initialize dict with data `%s' for user `%s': %s",
+				"Failed to initialize dict with data '%s' for user '%s': %s",
 				dstorage->uri, dstorage->username, error);
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;

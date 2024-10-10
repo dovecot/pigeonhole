@@ -225,7 +225,7 @@ _sieve_interpreter_create(struct sieve_binary *sbin,
 				if (ext->global &&
 				    (eenv->flags & SIEVE_EXECUTE_FLAG_NOGLOBAL) != 0) {
 					sieve_runtime_error(&interp->runenv, NULL,
-						"failed to enable extension `%s': "
+						"failed to enable extension '%s': "
 						"its use is restricted to global scripts",
 						sieve_extension_name(ext));
 					success = FALSE;
@@ -297,7 +297,7 @@ void sieve_interpreter_free(struct sieve_interpreter **_interp)
 			event_create_passthrough(interp->runenv.event)->
 			set_name("sieve_runtime_script_finished")->
 			add_str("error", "Aborted");
-		e_debug(e->event(), "Aborted running script `%s'",
+		e_debug(e->event(), "Aborted running script '%s'",
 			sieve_binary_source(interp->runenv.sbin));
 
 		interp->running = FALSE;
@@ -1001,7 +1001,7 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 			/* Not supposed to occur at runtime */
 			i_unreached();
 		}
-		e_debug(e->event(), "Finished running script `%s' "
+		e_debug(e->event(), "Finished running script '%s' "
 			"(status=%s, resource usage: %s)",
 			sieve_binary_source(interp->runenv.sbin),
 			sieve_execution_exitcode_to_str(ret),
@@ -1023,7 +1023,7 @@ int sieve_interpreter_start(struct sieve_interpreter *interp,
 	struct event_passthrough *e =
 		event_create_passthrough(interp->runenv.event)->
 		set_name("sieve_runtime_script_started");
-	e_debug(e->event(), "Started running script `%s'",
+	e_debug(e->event(), "Started running script '%s'",
 		sieve_binary_source(interp->runenv.sbin));
 
 	interp->running = TRUE;

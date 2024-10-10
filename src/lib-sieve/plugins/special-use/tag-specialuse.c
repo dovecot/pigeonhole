@@ -117,7 +117,7 @@ tag_specialuse_validate(struct sieve_validator *valdtr,
 		if (!ext_special_use_flag_valid(use_flag)) {
 			sieve_argument_validate_error(
 				valdtr, *arg, "specialuse tag: "
-				"invalid special-use flag `%s' specified",
+				"invalid special-use flag '%s' specified",
 				str_sanitize(use_flag, 64));
 			return FALSE;
 		}
@@ -200,7 +200,7 @@ seff_specialuse_read_context(
 	if (!ext_special_use_flag_valid(use_flag)) {
 		sieve_runtime_error(
 			renv, NULL, "specialuse tag: "
-			"invalid special-use flag `%s' specified",
+			"invalid special-use flag '%s' specified",
 			str_sanitize(use_flag, 64));
 		return SIEVE_EXEC_FAILURE;
 	}
@@ -241,7 +241,7 @@ seff_specialuse_print(const struct sieve_side_effect *seffect,
 
 	sieve_result_seffect_printf(
 		rpenv,
-		"use mailbox with special-use flag `%s' instead if accessible",
+		"use mailbox with special-use flag '%s' instead if accessible",
 		ctx->special_use_flag);
 }
 

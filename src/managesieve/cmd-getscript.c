@@ -40,7 +40,7 @@ static bool cmd_getscript_finish(struct cmd_getscript_context *ctx)
 		}
 
 		client_command_storage_error(
-			cmd, "Failed to retrieve script `%s'", ctx->scriptname);
+			cmd, "Failed to retrieve script '%s'", ctx->scriptname);
 		return TRUE;
 	}
 
@@ -50,7 +50,7 @@ static bool cmd_getscript_finish(struct cmd_getscript_context *ctx)
 	struct event_passthrough *e =
 		client_command_create_finish_event(cmd)->
 		add_int("script_size", ctx->script_size);
-	e_debug(e->event(), "Retrieved script `%s'", ctx->scriptname);
+	e_debug(e->event(), "Retrieved script '%s'", ctx->scriptname);
 
 	client_send_line(client, "");
 	client_send_ok(client, "Getscript completed.");
@@ -68,7 +68,7 @@ static bool cmd_getscript_continue(struct client_command_context *cmd)
 		    !ctx->failed) {
 			/* Input stream gave less data than expected */
 			sieve_storage_set_critical(
-				ctx->storage, "GETSCRIPT for script `%s' "
+				ctx->storage, "GETSCRIPT for script '%s' "
 				"from %s got too little data: "
 				"%"PRIuUOFF_T" vs %"PRIuUOFF_T,
 				sieve_script_name(ctx->script),
@@ -84,7 +84,7 @@ static bool cmd_getscript_continue(struct client_command_context *cmd)
 		return FALSE;
 	case OSTREAM_SEND_ISTREAM_RESULT_ERROR_INPUT:
 		sieve_storage_set_critical(ctx->storage,
-			"o_stream_send_istream() failed for script `%s' "
+			"o_stream_send_istream() failed for script '%s' "
 			"from %s: %s",
 			sieve_script_name(ctx->script),
 			sieve_script_location(ctx->script),
@@ -138,7 +138,7 @@ bool cmd_getscript(struct client_command_context *cmd)
 
 	if (sieve_script_get_size(ctx->script, &ctx->script_size) <= 0) {
 		sieve_storage_set_critical(ctx->storage,
-			"failed to obtain script size for script `%s' from %s",
+			"failed to obtain script size for script '%s' from %s",
 			sieve_script_name(ctx->script),
 			sieve_script_location(ctx->script));
 		ctx->failed = TRUE;

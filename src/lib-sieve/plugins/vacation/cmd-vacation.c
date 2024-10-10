@@ -679,7 +679,7 @@ ext_vacation_operation_execute(const struct sieve_runtime_env *renv,
 	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS)) {
 		sieve_runtime_trace(renv, 0, "vacation action");
 		sieve_runtime_trace_descend(renv);
-		sieve_runtime_trace(renv, 0, "auto-reply with message `%s'",
+		sieve_runtime_trace(renv, 0, "auto-reply with message '%s'",
 				    str_sanitize(str_c(reason), 80));
 	}
 
@@ -998,7 +998,7 @@ _get_full_reply_recipient(const struct sieve_action_exec_env *aenv,
 		if (ret < 0) {
 			return sieve_result_mail_error(
 				aenv, msgdata->mail,
-				"failed to read header field `%s'", *hdsp);
+				"failed to read header field '%s'", *hdsp);
 		}
 		if (ret == 0 || header == NULL)
 			continue;
@@ -1042,7 +1042,7 @@ act_vacation_get_default_subject(const struct sieve_action_exec_env *aenv,
 	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, msgdata->mail,
-			"failed to read header field `subject'");
+			"failed to read header field 'subject'");
 	}
 	if (ret == 0)
 		return SIEVE_EXEC_OK;
@@ -1155,7 +1155,7 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 		sieve_smtp_abort(sctx);
 		return sieve_result_mail_error(
 			aenv, msgdata->mail,
-			"failed to read header field `references'");
+			"failed to read header field 'references'");
 	}
 
 	if (msgdata->id != NULL) {
@@ -1339,7 +1339,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 		if (ret < 0) {
 			return sieve_result_mail_error(
 				aenv, mail,
-				"failed to read header field `%s'", *hdsp);
+				"failed to read header field '%s'", *hdsp);
 		}
 
 		if (ret > 0 && headers[0] != NULL) {
@@ -1358,7 +1358,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, mail,
-			"failed to read header field `auto-submitted'");
+			"failed to read header field 'auto-submitted'");
 	}
 	/* Theoretically multiple headers could exist, so lets make sure */
 	if (ret > 0) {
@@ -1379,7 +1379,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	ret = mail_get_headers(mail, "precedence", &headers);
 	if (ret < 0) {
 		return sieve_result_mail_error(
-			aenv, mail, "failed to read header field `precedence'");
+			aenv, mail, "failed to read header field 'precedence'");
 	}
 	/* Theoretically multiple headers could exist, so lets make sure */
 	if (ret > 0) {
@@ -1403,7 +1403,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 	if (ret < 0) {
 		return sieve_result_mail_error(
 			aenv, mail,
-			"failed to read header field `x-auto-response-suppress'");
+			"failed to read header field 'x-auto-response-suppress'");
 	}
 	/* Theoretically multiple headers could exist, so lets make sure */
 	if (ret > 0) {
@@ -1418,7 +1418,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 				    strcasecmp(flag, "OOF") == 0) {
 					sieve_result_global_log(
 						aenv, "discarding vacation response to message from <%s> "
-						"(`%s' flag found in x-auto-response-suppress header)",
+						"('%s' flag found in x-auto-response-suppress header)",
 						smtp_address_encode(sender), flag);
 					return SIEVE_EXEC_OK;
 				}
@@ -1451,7 +1451,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 		ret = mail_get_headers(mail, *hdsp, &headers);
 		if (ret < 0) {
 			return sieve_result_mail_error(
-				aenv, mail, "failed to read header field `%s'",
+				aenv, mail, "failed to read header field '%s'",
 				*hdsp);
 		}
 		if (ret > 0 && headers[0] != NULL) {
@@ -1535,7 +1535,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 			sieve_result_global_log(
 				aenv, "discarding vacation response for implicitly delivered message; "
 				"no known (envelope) recipient address found in message headers "
-				"(recipient=<%s>, %s%sand%s additional `:addresses' are specified)",
+				"(recipient=<%s>, %s%sand%s additional ':addresses' are specified)",
 				smtp_address_encode(recipient),
 				orig_rcpt_str, user_email_str,
 				(ctx->addresses == NULL || *ctx->addresses == NULL ?

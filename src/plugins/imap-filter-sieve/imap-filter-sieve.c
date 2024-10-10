@@ -233,7 +233,7 @@ imap_filter_sieve_get_global_storage(struct imap_filter_sieve_context *sctx,
 	if (location == NULL) {
 		e_info(sieve_get_event(svinst),
 		       "include: sieve_global is unconfigured; "
-		       "include of `:global' script is therefore not possible");
+		       "include of ':global' script is therefore not possible");
 		*error_code_r = MAIL_ERROR_NOTFOUND;
 		*error_r = "No global Sieve scripts available";
 		return -1;
@@ -375,13 +375,13 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 		/* Script not found */
 		case SIEVE_ERROR_NOT_FOUND:
 			e_debug(sieve_get_event(svinst),
-				"Script `%s' is missing for %s",
+				"Script '%s' is missing for %s",
 				sieve_script_location(script), compile_name);
 			break;
 		/* Temporary failure */
 		case SIEVE_ERROR_TEMP_FAILURE:
 			e_error(sieve_get_event(svinst),
-				"Failed to open script `%s' for %s "
+				"Failed to open script '%s' for %s "
 				"(temporary failure)",
 				sieve_script_location(script), compile_name);
 			break;
@@ -390,20 +390,20 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 			if (script == sctx->user_script)
 				break;
 			e_error(sieve_get_event(svinst),
-				"Failed to %s script `%s'",
+				"Failed to %s script '%s'",
 				compile_name, sieve_script_location(script));
 			break;
 		/* Cumulative resource limit exceeded */
 		case SIEVE_ERROR_RESOURCE_LIMIT:
 			e_error(sieve_get_event(svinst),
-				"Failed to open script `%s' for %s "
+				"Failed to open script '%s' for %s "
 				"(cumulative resource limit exceeded)",
 				sieve_script_location(script), compile_name);
 			break;
 		/* Something else */
 		default:
 			e_error(sieve_get_event(svinst),
-				"Failed to open script `%s' for %s",
+				"Failed to open script '%s' for %s",
 				sieve_script_location(script), compile_name);
 			break;
 		}
@@ -823,7 +823,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 
 		if (sbin == NULL) {
 			e_debug(sieve_get_event(svinst),
-				"Skipping script from `%s'",
+				"Skipping script from '%s'",
 				sieve_script_location(script));
 			continue;
 		}
@@ -850,7 +850,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 
 		/* Execute */
 		e_debug(sieve_get_event(svinst),
-			"Executing script from `%s'",
+			"Executing script from '%s'",
 			sieve_get_source(sbin));
 		more = sieve_multiscript_run(mscript,
 			sbin, ehandler, ehandler, exflags);
@@ -1019,7 +1019,7 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 		else if (smtp_address_parse_username(sctx->pool, user->username,
 						     &user_addr, &error) < 0) {
 			e_warning(sieve_get_event(svinst),
-				  "Cannot obtain SMTP address from username `%s': %s",
+				  "Cannot obtain SMTP address from username '%s': %s",
 				  user->username, error);
 		} else {
 			if (user_addr->domain == NULL)

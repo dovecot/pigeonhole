@@ -111,7 +111,7 @@ sieve_header_address_list_next_item(struct sieve_address_list *_addrlist,
 			if (trace) {
 				sieve_runtime_trace(
 					runenv, 0,
-					"invalid address value `%s'",
+					"invalid address value '%s'",
 					str_sanitize(str_c(value_item), 80));
 			}
 			if (unparsed_r != NULL)
@@ -122,7 +122,7 @@ sieve_header_address_list_next_item(struct sieve_address_list *_addrlist,
 			if (trace) {
 				sieve_runtime_trace(
 					runenv, 0,
-					"address value `%s'",
+					"address value '%s'",
 					str_sanitize(smtp_address_encode(addr_r),
 						     80));
 			}
@@ -148,7 +148,7 @@ sieve_header_address_list_next_item(struct sieve_address_list *_addrlist,
 		if (trace) {
 			sieve_runtime_trace(
 				runenv, 0,
-				"parsing address header value `%s'",
+				"parsing address header value '%s'",
 				str_sanitize(str_c(value_item), 80));
 		}
 

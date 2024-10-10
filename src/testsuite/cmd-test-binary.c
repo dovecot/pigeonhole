@@ -182,7 +182,7 @@ cmd_test_binary_operation_execute(const struct sieve_runtime_env *renv,
 			sieve_runtime_trace(renv, 0, "testsuite: "
 					    "test_binary_load command");
 			sieve_runtime_trace_descend(renv);
-			sieve_runtime_trace(renv, 0, "load binary `%s'",
+			sieve_runtime_trace(renv, 0, "load binary '%s'",
 					    str_c(binary_name));
 		}
 
@@ -202,7 +202,7 @@ cmd_test_binary_operation_execute(const struct sieve_runtime_env *renv,
 			sieve_runtime_trace(renv, 0, "testsuite: "
 					    "test_binary_save command");
 			sieve_runtime_trace_descend(renv);
-			sieve_runtime_trace(renv, 0, "save binary `%s'",
+			sieve_runtime_trace(renv, 0, "save binary '%s'",
 					    str_c(binary_name));
 		}
 

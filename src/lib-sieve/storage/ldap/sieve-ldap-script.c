@@ -131,8 +131,8 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 	if (bmtime <= lstorage->set_mtime) {
 		if (svinst->debug) {
 			e_debug(script->event,
-				"Sieve binary `%s' is not newer "
-				"than the LDAP configuration `%s' (%s <= %s)",
+				"Sieve binary '%s' is not newer "
+				"than the LDAP configuration '%s' (%s <= %s)",
 				sieve_binary_path(sbin), lstorage->config_file,
 				t_strflocaltime("%Y-%m-%d %H:%M:%S", bmtime),
 				t_strflocaltime("%Y-%m-%d %H:%M:%S",
@@ -148,8 +148,8 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 	/* If modattr not found, recompile always */
 	if (lscript->modattr == NULL || *lscript->modattr == '\0') {
 		e_error(script->event,
-			"LDAP entry for script `%s' "
-			"has no modified attribute `%s'",
+			"LDAP entry for script '%s' "
+			"has no modified attribute '%s'",
 			sieve_script_location(script),
 			lstorage->set.sieve_ldap_mod_attr);
 		return 0;
@@ -158,7 +158,7 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 	/* Compare DN in binary and from search result */
 	if (!sieve_binary_read_string(sblock, offset, &dn)) {
 		e_error(script->event,
-			"Binary `%s' has invalid metadata for script `%s': "
+			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid DN",
 			sieve_binary_path(sbin), sieve_script_location(script));
 		return -1;
@@ -166,8 +166,8 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 	i_assert(lscript->dn != NULL);
 	if (strcmp(str_c(dn), lscript->dn) != 0) {
 		e_debug(script->event,
-			"Binary `%s' reports different LDAP DN for script `%s' "
-			"(`%s' rather than `%s')",
+			"Binary '%s' reports different LDAP DN for script '%s' "
+			"('%s' rather than '%s')",
 			sieve_binary_path(sbin), sieve_script_location(script),
 			str_c(dn), lscript->dn);
 		return 0;
@@ -176,15 +176,15 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 	/* Compare modattr in binary and from search result */
 	if (!sieve_binary_read_string(sblock, offset, &modattr)) {
 		e_error(script->event,
-			"Binary `%s' has invalid metadata for script `%s': "
+			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid modified attribute",
 			sieve_binary_path(sbin), sieve_script_location(script));
 		return -1;
 	}
 	if (strcmp(str_c(modattr), lscript->modattr) != 0) {
 		e_debug(script->event,
-			"Binary `%s' reports different modified attribute content "
-			"for script `%s' (`%s' rather than `%s')",
+			"Binary '%s' reports different modified attribute content "
+			"for script '%s' ('%s' rather than '%s')",
 			sieve_binary_path(sbin), sieve_script_location(script),
 			str_c(modattr), lscript->modattr);
 		return 0;

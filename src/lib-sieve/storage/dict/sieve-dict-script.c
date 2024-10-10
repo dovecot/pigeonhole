@@ -90,9 +90,9 @@ sieve_dict_script_open(struct sieve_script *script, enum sieve_error *error_r)
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		} else {
 			e_debug(script->event,
-				"Script `%s' not found at path %s", name, path);
+				"Script '%s' not found at path %s", name, path);
 			sieve_script_set_error(script, SIEVE_ERROR_NOT_FOUND,
-					       "Sieve script `%s' not found",
+					       "Sieve script '%s' not found",
 					       name);
 			*error_r = SIEVE_ERROR_NOT_FOUND;
 		}
@@ -128,12 +128,12 @@ sieve_dict_script_get_stream(struct sieve_script *script,
 	if (ret <= 0) {
 		if (ret < 0) {
 			sieve_script_set_critical(script,
-				"Failed to lookup data with id `%s' "
-				"for script `%s' from path %s: %s",
+				"Failed to lookup data with id '%s' "
+				"for script '%s' from path %s: %s",
 				dscript->data_id, name, path, error);
 		} else {
 			sieve_script_set_critical(script,
-				"Data with id `%s' for script `%s' not found at path %s",
+				"Data with id '%s' for script '%s' not found at path %s",
 				dscript->data_id, name, path);
 		}
 		*error_r = SIEVE_ERROR_TEMP_FAILURE;
@@ -160,15 +160,15 @@ sieve_dict_script_binary_read_metadata(struct sieve_script *script,
 
 	if (!sieve_binary_read_string(sblock, offset, &data_id)) {
 		e_error(script->event,
-			"Binary `%s' has invalid metadata for script `%s'",
+			"Binary '%s' has invalid metadata for script '%s'",
 			sieve_binary_path(sbin), sieve_script_location(script));
 		return -1;
 	}
 	i_assert(dscript->data_id != NULL);
 	if (strcmp(str_c(data_id), dscript->data_id) != 0) {
 		e_debug(script->event,
-			"Binary `%s' reports different data ID for script `%s' "
-			"(`%s' rather than `%s')",
+			"Binary '%s' reports different data ID for script '%s' "
+			"('%s' rather than '%s')",
 			sieve_binary_path(sbin), sieve_script_location(script),
 			str_c(data_id), dscript->data_id);
 		return 0;

@@ -26,7 +26,7 @@ cmd_filter_parse_spec(struct imap_filter_context *ctx,
 	}
 	if (strcasecmp(filter_type, "SIEVE") != 0) {
 		client_send_command_error(cmd, t_strdup_printf(
-			"Unknown filter type `%s'", filter_type));
+			"Unknown filter type '%s'", filter_type));
 		return TRUE;
 	}
 

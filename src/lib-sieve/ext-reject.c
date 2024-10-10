@@ -414,7 +414,7 @@ ext_reject_operation_execute(const struct sieve_runtime_env *renv,
 			sieve_runtime_trace(renv, 0, "reject action");
 
 		sieve_runtime_trace_descend(renv);
-		sieve_runtime_trace(renv, 0, "reject message with reason `%s'",
+		sieve_runtime_trace(renv, 0, "reject message with reason '%s'",
 				    str_sanitize(str_c(reason), 64));
 	}
 

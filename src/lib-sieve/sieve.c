@@ -328,7 +328,7 @@ sieve_compile(struct sieve_instance *svinst, const char *script_location,
 	sbin = sieve_compile_script(script, ehandler, flags, error_r);
 	if (sbin != NULL) {
 		e_debug(svinst->event,
-			"Script `%s' from %s successfully compiled",
+			"Script '%s' from %s successfully compiled",
 			sieve_script_name(script),
 			sieve_script_location(script));
 	}
@@ -420,7 +420,7 @@ sieve_open_script_real(struct sieve_script *script,
 			return NULL;
 
 		e_debug(svinst->event,
-			"Script `%s' from %s successfully compiled",
+			"Script '%s' from %s successfully compiled",
 			sieve_script_name(script),
 			sieve_script_location(script));
 
@@ -810,7 +810,7 @@ bool sieve_multiscript_run(struct sieve_multiscript *mscript,
 		return FALSE;
 	}
 
-	e_debug(mscript->event, "Run script `%s'", sieve_binary_source(sbin));
+	e_debug(mscript->event, "Run script '%s'", sieve_binary_source(sbin));
 
 	/* Run the script */
 	mscript->exec_env.flags = flags;
@@ -858,7 +858,7 @@ void sieve_multiscript_run_discard(struct sieve_multiscript *mscript,
 	}
 	i_assert(!mscript->discard_handled);
 
-	e_debug(mscript->event, "Run discard script `%s'",
+	e_debug(mscript->event, "Run discard script '%s'",
 		sieve_binary_source(sbin));
 
 	sieve_result_set_keep_action(mscript->result, NULL, &act_store);

@@ -140,7 +140,7 @@ managesieve_url_parse_userinfo(struct managesieve_url_parser *url_parser,
 	if (auth->enc_userinfo == NULL)
 		return 0;
 	if ((url_parser->flags & MANAGESIEVE_URL_ALLOW_USERINFO_PART) == 0) {
-		parser->error = "Sieve URL does not allow `userinfo@' part";
+		parser->error = "Sieve URL does not allow 'userinfo@' part";
 		return -1;
 	}
 
@@ -312,7 +312,7 @@ static int managesieve_url_do_parse(struct managesieve_url_parser *url_parser)
 	 */
 	if (parser->cur >= parser->end || parser->cur[0] != '/' ||
 	    (parser->cur + 1) >= parser->end || parser->cur[1] != '/') {
-		parser->error = "Sieve URL requires `//' after `sieve:'";
+		parser->error = "Sieve URL requires '//' after 'sieve:'";
 		return -1;
 	}
 	parser->cur += 2;

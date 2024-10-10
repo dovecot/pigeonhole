@@ -771,7 +771,7 @@ static int edit_mail_headers_parse(struct edit_mail *edmail)
 			/* Skip bad headers */
 			if (hdr->name_len == 0)
 				continue;
-			/* We deny the existence of any `Content-Length:'
+			/* We deny the existence of any 'Content-Length:'
 			   header. This header is non-standard and it can wreak
 			   havok when the message is modified.
 			 */

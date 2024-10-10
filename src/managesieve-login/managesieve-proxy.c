@@ -205,7 +205,7 @@ proxy_input_auth_challenge(struct managesieve_client *client, const char *line,
 		/* Do not accept faulty server */
 		const char *reason = t_strdup_printf(
 			"Protocol parse error(%d) int SASL challenge line: %s "
-			"(line=`%s')", ret, error_str, line);
+			"(line='%s')", ret, error_str, line);
 		login_proxy_failed(client->common.login_proxy,
 			login_proxy_get_event(client->common.login_proxy),
 			LOGIN_PROXY_FAILURE_TYPE_PROTOCOL, reason);
@@ -392,7 +392,7 @@ proxy_input_capability(struct managesieve_client *client, const char *line,
 		/* Do not accept faulty server */
 		const char *reason = t_strdup_printf(
 			"Protocol parse error(%d) in capability/greeting line: %s "
-			"(line=`%s')", ret, error_str, line);
+			"(line='%s')", ret, error_str, line);
 		login_proxy_failed(client->common.login_proxy,
 			login_proxy_get_event(client->common.login_proxy),
 			LOGIN_PROXY_FAILURE_TYPE_PROTOCOL, reason);

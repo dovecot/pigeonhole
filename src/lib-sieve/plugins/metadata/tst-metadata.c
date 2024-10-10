@@ -161,7 +161,7 @@ tst_metadata_validate(struct sieve_validator *valdtr, struct sieve_command *tst)
 			if (!sieve_mailbox_check_name(mailbox, &error)) {
 				sieve_argument_validate_warning(
 					valdtr, arg, "%s test: "
-					"invalid mailbox name `%s' specified: %s",
+					"invalid mailbox name '%s' specified: %s",
 					sieve_command_identifier(tst),
 					str_sanitize(mailbox, 256), error);
 			}
@@ -184,7 +184,7 @@ tst_metadata_validate(struct sieve_validator *valdtr, struct sieve_command *tst)
 		if (!imap_metadata_verify_entry_name(str_c(aname), &error)) {
 			sieve_argument_validate_warning(
 				valdtr, arg, "%s test: "
-				"specified annotation name `%s' is invalid: %s",
+				"specified annotation name '%s' is invalid: %s",
 				sieve_command_identifier(tst),
 				str_sanitize(str_c(aname), 256),
 				sieve_error_from_external(error));
@@ -300,7 +300,7 @@ tst_metadata_get_annotation(const struct sieve_runtime_env *renv,
 
 		sieve_runtime_error(
 			renv, NULL, "%s test: "
-			"failed to retrieve annotation `%s': %s%s",
+			"failed to retrieve annotation '%s': %s%s",
 			(mailbox != NULL ? "metadata" : "servermetadata"),
 			str_sanitize(aname, 256),
 			sieve_error_from_external(error),
@@ -375,7 +375,7 @@ tst_metadata_operation_execute(const struct sieve_runtime_env *renv,
 	if (!imap_metadata_verify_entry_name(str_c(aname), &error)) {
 		sieve_runtime_warning(
 			renv, NULL, "%s test: "
-			"specified annotation name `%s' is invalid: %s",
+			"specified annotation name '%s' is invalid: %s",
 			(metadata ? "metadata" : "servermetadata"),
 			str_sanitize(str_c(aname), 256),
 			sieve_error_from_external(error));
@@ -387,7 +387,7 @@ tst_metadata_operation_execute(const struct sieve_runtime_env *renv,
 		if (!sieve_mailbox_check_name(str_c(mailbox), &error)) {
 			sieve_runtime_warning(
 				renv, NULL, "metadata test: "
-				"invalid mailbox name `%s' specified: %s",
+				"invalid mailbox name '%s' specified: %s",
 				str_sanitize(str_c(mailbox), 256), error);
 			sieve_interpreter_set_test_result(renv->interp, FALSE);
 			return SIEVE_EXEC_OK;
@@ -395,13 +395,13 @@ tst_metadata_operation_execute(const struct sieve_runtime_env *renv,
 
 		sieve_runtime_trace(
 			renv, SIEVE_TRLVL_TESTS,
-			"retrieving annotation `%s' from mailbox `%s'",
+			"retrieving annotation '%s' from mailbox '%s'",
 			str_sanitize(str_c(aname), 256),
 			str_sanitize(str_c(mailbox), 80));
 	} else {
 		sieve_runtime_trace(
 			renv, SIEVE_TRLVL_TESTS,
-			"retrieving server annotation `%s'",
+			"retrieving server annotation '%s'",
 			str_sanitize(str_c(aname), 256));
 	}
 

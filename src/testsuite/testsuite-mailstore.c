@@ -185,7 +185,7 @@ testsuite_mailstore_open(const char *folder)
 
 	if (!sieve_mailbox_check_name(folder, &error)) {
 		e_error(testsuite_sieve_instance->event,
-			"testsuite: invalid mailbox name `%s' specified: %s",
+			"testsuite: invalid mailbox name '%s' specified: %s",
 			folder, error);
 		return NULL;
 	}
@@ -314,7 +314,7 @@ int testsuite_mailstore_set_imap_metadata(const char *mailbox,
 	if (!imap_metadata_verify_entry_name(annotation, &error)) {
 		e_error(testsuite_sieve_instance->event,
 			"testsuite: imap metadata: "
-			"specified annotation name `%s' is invalid: %s",
+			"specified annotation name '%s' is invalid: %s",
 			str_sanitize(annotation, 256), error);
 		return -1;
 	}
@@ -347,7 +347,7 @@ int testsuite_mailstore_set_imap_metadata(const char *mailbox,
 	if (ret < 0) {
 		e_error(testsuite_sieve_instance->event,
 			"testsuite: imap metadata: "
-			"failed to assign annotation `%s': %s",
+			"failed to assign annotation '%s': %s",
 			str_sanitize(annotation, 256), error);
 		return -1;
 	}

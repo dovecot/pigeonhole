@@ -28,21 +28,21 @@ bool cmd_renamescript(struct client_command_context *cmd)
 	script = sieve_storage_open_script(storage, scriptname, NULL);
 	if (script == NULL) {
 		client_command_storage_error(
-			cmd, "Failed to open script `%s' for rename to `%s'",
+			cmd, "Failed to open script '%s' for rename to '%s'",
 			scriptname, newname);
 		return TRUE;
 	}
 
 	if (sieve_script_rename(script, newname) < 0) {
 		client_command_storage_error(
-			cmd, "Failed to rename script `%s' to `%s'",
+			cmd, "Failed to rename script '%s' to '%s'",
 			scriptname, newname);
 	} else {
 		client->renamed_count++;
 
 		struct event_passthrough *e =
 			client_command_create_finish_event(cmd);
-		e_debug(e->event(), "Renamed script `%s' to `%s'",
+		e_debug(e->event(), "Renamed script '%s' to '%s'",
 			scriptname, newname);
 
 		client_send_ok(client, "Renamescript completed.");

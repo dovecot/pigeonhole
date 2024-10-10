@@ -534,7 +534,7 @@ sieve_message_header_list_next_item(struct sieve_header_list *_hdrlist,
 		if (_hdrlist->strlist.trace) {
 			sieve_runtime_trace
 				(renv, 0,
-				"extracting `%s' headers from message",
+				"extracting '%s' headers from message",
 				str_sanitize(str_c(hdr_item), 80));
 		}
 
@@ -551,7 +551,7 @@ sieve_message_header_list_next_item(struct sieve_header_list *_hdrlist,
 			_hdrlist->strlist.exec_status =
 				sieve_runtime_mail_error(
 					renv, mail,
-					"failed to read header field `%s'",
+					"failed to read header field '%s'",
 					str_c(hdr_item));
 			return -1;
 		}
@@ -1820,7 +1820,7 @@ sieve_mime_header_list_next_item(struct sieve_header_list *_hdrlist,
 			if (_hdrlist->strlist.trace) {
 				sieve_runtime_trace(
 					renv, 0,
-					"extracting `%s' headers from message part",
+					"extracting '%s' headers from message part",
 					str_sanitize(str_c(hdr_item), 80));
 			}
 

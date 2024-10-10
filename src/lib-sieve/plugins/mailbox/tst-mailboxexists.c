@@ -84,7 +84,7 @@ tst_mailboxexists_mailbox_validate(void *context,
 		if (!sieve_mailbox_check_name(mailbox, &error)) {
 			sieve_argument_validate_warning(
 				valctx->valdtr, arg, "%s test: "
-				"invalid mailbox name `%s' specified: %s",
+				"invalid mailbox name '%s' specified: %s",
 				sieve_command_identifier(valctx->tst),
 				str_sanitize(mailbox, 256), error);
 		}
@@ -163,7 +163,7 @@ tst_mailboxexists_test_mailbox(const struct sieve_runtime_env *renv,
 	if (!sieve_mailbox_check_name(mailbox, &error)) {
 		sieve_runtime_warning(
 			renv, NULL, "mailboxexists test: "
-			"invalid mailbox name `%s' specified: %s",
+			"invalid mailbox name '%s' specified: %s",
 			str_sanitize(mailbox, 256), error);
 		*all_exist_r = FALSE;
 		return SIEVE_EXEC_OK;
@@ -178,7 +178,7 @@ tst_mailboxexists_test_mailbox(const struct sieve_runtime_env *renv,
 		if (trace) {
 			sieve_runtime_trace(
 				renv, 0,
-				"mailbox `%s' cannot be opened",
+				"mailbox '%s' cannot be opened",
 				str_sanitize(mailbox, 80));
 		}
 		mailbox_free(&box);
@@ -191,7 +191,7 @@ tst_mailboxexists_test_mailbox(const struct sieve_runtime_env *renv,
 		if (trace) {
 			sieve_runtime_trace(
 				renv, 0,
-				"mailbox `%s' is read-only",
+				"mailbox '%s' is read-only",
 				str_sanitize(mailbox, 80));
 		}
 		mailbox_free(&box);
@@ -204,7 +204,7 @@ tst_mailboxexists_test_mailbox(const struct sieve_runtime_env *renv,
 
 	if (trace) {
 		sieve_runtime_trace(
-			renv, 0, "mailbox `%s' exists",
+			renv, 0, "mailbox '%s' exists",
 			str_sanitize(mailbox, 80));
 	}
 

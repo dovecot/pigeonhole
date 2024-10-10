@@ -130,7 +130,7 @@ cmd_addheader_validate(struct sieve_validator *valdtr,
 						      str_len(fname))) {
 			sieve_argument_validate_error(
 				valdtr, arg, "addheader command: "
-				"specified field name `%s' is invalid",
+				"specified field name '%s' is invalid",
 				str_sanitize(str_c(fname), 80));
 			return FALSE;
 		}
@@ -138,7 +138,7 @@ cmd_addheader_validate(struct sieve_validator *valdtr,
 		if (!ext_editheader_header_allow_add(cmd->ext, str_c(fname))) {
 			sieve_argument_validate_warning(
 				valdtr, arg, "addheader command: "
-				"adding specified header field `%s' is forbidden; "
+				"adding specified header field '%s' is forbidden; "
 				"modification will be denied",
 				str_sanitize(str_c(fname), 80));
 		}
@@ -160,7 +160,7 @@ cmd_addheader_validate(struct sieve_validator *valdtr,
 		if (_str_contains_nul(fvalue)) {
 			sieve_argument_validate_error(
 				valdtr, arg,
-				"addheader command: specified value `%s' is invalid "
+				"addheader command: specified value '%s' is invalid "
 				"(contains NUL character)",
 				str_sanitize(str_c(fvalue), 80));
 			return FALSE;
@@ -170,7 +170,7 @@ cmd_addheader_validate(struct sieve_validator *valdtr,
 			fvalue), str_len(fvalue), TRUE, TRUE)) {
 			sieve_argument_validate_warning(
 				valdtr, arg,
-				"addheader command: specified value `%s' is invalid",
+				"addheader command: specified value '%s' is invalid",
 				str_sanitize(str_c(fvalue), 80));
 		}
 
@@ -178,7 +178,7 @@ cmd_addheader_validate(struct sieve_validator *valdtr,
 			cmd->ext, str_len(fvalue))) {
 			sieve_argument_validate_error(
 				valdtr, arg, "addheader command: "
-				"specified header value `%s' is too large (%zu bytes)",
+				"specified header value '%s' is too large (%zu bytes)",
 				str_sanitize(str_c(fvalue), 80),
 				str_len(fvalue));
 			return SIEVE_EXEC_FAILURE;
@@ -309,7 +309,7 @@ cmd_addheader_operation_execute(const struct sieve_runtime_env *renv,
 					      str_len(field_name))) {
 		sieve_runtime_error(
 			renv, NULL, "addheader action: "
-			"specified field name `%s' is invalid",
+			"specified field name '%s' is invalid",
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_FAILURE;
 	}
@@ -317,7 +317,7 @@ cmd_addheader_operation_execute(const struct sieve_runtime_env *renv,
 	if (!ext_editheader_header_allow_add(this_ext, str_c(field_name))) {
 		sieve_runtime_warning(
 			renv, NULL, "addheader action: "
-			"adding specified header field `%s' is forbidden; "
+			"adding specified header field '%s' is forbidden; "
 			"modification denied",
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_OK;
@@ -326,7 +326,7 @@ cmd_addheader_operation_execute(const struct sieve_runtime_env *renv,
 	if (_str_contains_nul(value)) {
 		sieve_runtime_error(
 			renv, NULL, "addheader action: "
-			"specified value `%s' is invalid (contains NUL character)",
+			"specified value '%s' is invalid (contains NUL character)",
 			str_sanitize(str_c(value), 80));
 		return SIEVE_EXEC_FAILURE;
 	}
@@ -334,7 +334,7 @@ cmd_addheader_operation_execute(const struct sieve_runtime_env *renv,
 	if (ext_editheader_header_too_large(this_ext, str_len(value))) {
 		sieve_runtime_error(
 			renv, NULL, "addheader action: "
-			"specified header value `%s' is too large (%zu bytes)",
+			"specified header value '%s' is too large (%zu bytes)",
 			str_sanitize(str_c(value), 80), str_len(value));
 		return SIEVE_EXEC_FAILURE;
 	}
