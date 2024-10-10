@@ -368,7 +368,7 @@ bool cmd_filter_sieve(struct client_command_context *cmd)
 		type = IMAP_FILTER_SIEVE_TYPE_SCRIPT;
 	} else {
 		client_send_command_error(cmd, t_strdup_printf(
-			"Unknown SIEVE filter sub-type `%s'",
+			"Unknown SIEVE filter sub-type '%s'",
 			sieve_type));
 		return TRUE;
 	}

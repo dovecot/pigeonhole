@@ -788,9 +788,9 @@ ntfy_mailto_action_execute(const struct sieve_enotify_exec_env *nenv,
 	if (ret < 0) {
 		sieve_enotify_critical(
 			nenv, "mailto notification: "
-			"failed to read `auto-submitted' header field",
+			"failed to read 'auto-submitted' header field",
 			"mailto notification: "
-			"failed to read `auto-submitted' header field: %s",
+			"failed to read 'auto-submitted' header field: %s",
 			mailbox_get_last_internal_error(mail->box, NULL));
 		return -1;
 	}

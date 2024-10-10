@@ -331,7 +331,7 @@ mcht_regex_match_keys(struct sieve_match_context *mctx,
 
 					if (trace) {
 						sieve_runtime_trace(renv, 0,
-							"with regex `%s' [id=%d] => %d",
+							"with regex '%s' [id=%d] => %d",
 							str_sanitize(str_c(key_item), 80),
 							array_count(&ctx->reg_expressions)-1, match);
 					}

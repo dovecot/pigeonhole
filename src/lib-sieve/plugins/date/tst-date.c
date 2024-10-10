@@ -284,7 +284,7 @@ tst_date_validate(struct sieve_validator *valdtr, struct sieve_command *tst)
 		if (ext_date_part_find(part) == NULL) {
 			sieve_argument_validate_warning(
 				valdtr, arg,
-				"specified date part `%s' is not known",
+				"specified date part '%s' is not known",
 				str_sanitize(part, 80));
 		}
 	}
@@ -460,7 +460,7 @@ tst_date_operation_execute(const struct sieve_runtime_env *renv,
 		if (!zone_literal) {
 			sieve_runtime_warning(
 				renv, NULL,
-				"specified :zone argument `%s' is not a valid timezone "
+				"specified :zone argument '%s' is not a valid timezone "
 				"(using local zone)",
 				str_sanitize(str_c(zone), 40));
 		}
@@ -471,7 +471,7 @@ tst_date_operation_execute(const struct sieve_runtime_env *renv,
 	if (dpart == NULL) {
 		sieve_runtime_warning(
 			renv, NULL,
-			"specified date part argument `%s' is not known",
+			"specified date part argument '%s' is not known",
 			str_sanitize(str_c(date_part), 40));
 		sieve_interpreter_set_test_result(renv->interp, FALSE);
 		return SIEVE_EXEC_OK;

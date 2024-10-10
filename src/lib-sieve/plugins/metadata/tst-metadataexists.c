@@ -126,7 +126,7 @@ tst_metadataexists_annotation_validate(void *context,
 		if (!imap_metadata_verify_entry_name(aname, &error)) {
 			sieve_argument_validate_warning(
 				valctx->valdtr, arg, "%s test: "
-				"specified annotation name `%s' is invalid: %s",
+				"specified annotation name '%s' is invalid: %s",
 				sieve_command_identifier(valctx->tst),
 				str_sanitize(aname, 256),
 				sieve_error_from_external(error));
@@ -161,7 +161,7 @@ tst_metadataexists_validate(struct sieve_validator *valdtr,
 			if (!sieve_mailbox_check_name(mailbox, &error)) {
 				sieve_argument_validate_warning(
 					valdtr, arg, "%s test: "
-					"invalid mailbox name `%s' specified: %s",
+					"invalid mailbox name '%s' specified: %s",
 					sieve_command_identifier(tst),
 					str_sanitize(mailbox, 256), error);
 			}
@@ -249,7 +249,7 @@ tst_metadataexists_check_annotation(const struct sieve_runtime_env *renv,
 	if (!imap_metadata_verify_entry_name(aname, &error)) {
 		sieve_runtime_warning(
 			renv, NULL, "%s test: "
-			"specified annotation name `%s' is invalid: %s",
+			"specified annotation name '%s' is invalid: %s",
 			(mailbox != NULL ?
 			 "metadataexists" : "servermetadataexists"),
 			str_sanitize(aname, 256),
@@ -267,7 +267,7 @@ tst_metadataexists_check_annotation(const struct sieve_runtime_env *renv,
 			imtrans, &error_code);
 		sieve_runtime_error(
 			renv, NULL, "%s test: "
-			"failed to retrieve annotation `%s': %s%s",
+			"failed to retrieve annotation '%s': %s%s",
 			(mailbox != NULL ?
 			 "metadataexists" : "servermetadataexists"),
 			str_sanitize(aname, 256),
@@ -281,11 +281,11 @@ tst_metadataexists_check_annotation(const struct sieve_runtime_env *renv,
 	}
 	if (avalue.value == NULL && avalue.value_stream == NULL) {
 		sieve_runtime_trace(renv, 0,
-				    "annotation `%s': not found", aname);
+				    "annotation '%s': not found", aname);
 		*all_exist_r = FALSE;
 	}
 
-	sieve_runtime_trace(renv, 0, "annotation `%s': found", aname);
+	sieve_runtime_trace(renv, 0, "annotation '%s': found", aname);
 	return SIEVE_EXEC_OK;
 }
 
@@ -320,7 +320,7 @@ tst_metadataexists_check_annotations(const struct sieve_runtime_env *renv,
 	if (mailbox != NULL) {
 		sieve_runtime_trace(
 			renv, SIEVE_TRLVL_TESTS,
-			"checking annotations of mailbox `%s':",
+			"checking annotations of mailbox '%s':",
 			str_sanitize(mailbox, 80));
 	} else {
 		sieve_runtime_trace(
@@ -391,7 +391,7 @@ tst_metadataexists_operation_execute(const struct sieve_runtime_env *renv,
 	    !sieve_mailbox_check_name(str_c(mailbox), &error)) {
 		sieve_runtime_warning(
 			renv, NULL, "metadataexists test: "
-			"invalid mailbox name `%s' specified: %s",
+			"invalid mailbox name '%s' specified: %s",
 			str_sanitize(str_c(mailbox), 256), error);
 		sieve_interpreter_set_test_result(renv->interp, FALSE);
 		return SIEVE_EXEC_OK;

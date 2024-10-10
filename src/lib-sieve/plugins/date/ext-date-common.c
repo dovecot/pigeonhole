@@ -391,11 +391,11 @@ ext_date_time_part_get(struct tm *tm, int zone_offset ATTR_UNUSED)
 static const char *
 ext_date_iso8601_part_get(struct tm *tm, int zone_offset)
 {
-	/* From RFC: `The restricted ISO 8601 format is specified by the
-	              date-time ABNF production given in [RFC3339], Section 5.6,
-	              with the added restrictions that the letters "T" and "Z"
-	              MUST be in upper case, and a time zone offset of zero MUST
-	              be represented by "Z" and not "+00:00".`
+	/* From RFC: The restricted ISO 8601 format is specified by the
+	             date-time ABNF production given in [RFC3339], Section 5.6,
+	             with the added restrictions that the letters "T" and "Z"
+	             MUST be in upper case, and a time zone offset of zero MUST
+	             be represented by "Z" and not "+00:00".
 	 */
 	if (zone_offset == 0)
 		zone_offset = INT_MAX;

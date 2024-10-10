@@ -40,7 +40,7 @@ _testsuite_script_compile(const struct sieve_runtime_env *renv,
 	const char *script_path;
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-			    "compile script `%s'", script);
+			    "compile script '%s'", script);
 
 	script_path = sieve_file_script_get_dirpath(renv->script);
 	if (script_path == NULL)
@@ -245,7 +245,7 @@ bool testsuite_script_multiscript(const struct sieve_runtime_env *renv,
 		/* Execute */
 
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-				    "run script `%s'", script);
+				    "run script '%s'", script);
 
 		more = sieve_multiscript_run(mscript, sbin,
 					     testsuite_log_ehandler,

@@ -262,7 +262,7 @@ cmd_test_message_validate_folder_tag(struct sieve_validator *valdtr,
 		if ( !sieve_mailbox_check_name(folder, &error) ) {
 			sieve_command_validate_error(
 				valdtr, cmd, "%s command: "
-				"invalid mailbox `%s' specified: %s",
+				"invalid mailbox '%s' specified: %s",
 				sieve_command_identifier(cmd),
 				str_sanitize(folder, 256), error);
 			return FALSE;
@@ -491,7 +491,7 @@ cmd_test_message_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 
 	if (!sieve_mailbox_check_name(str_c(folder), &error)) {
 		return testsuite_test_failf(
-			renv, "invalid mailbox `%s' specified: %s",
+			renv, "invalid mailbox '%s' specified: %s",
 			str_c(folder), error);
 	}
 
@@ -506,7 +506,7 @@ cmd_test_message_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 			sieve_runtime_trace_descend(renv);
 			sieve_runtime_trace(
 				renv, 0, "check and retrieve mailbox message "
-				"[mailbox=`%s' index=%llu]",
+				"[mailbox='%s' index=%llu]",
 				str_c(folder), (unsigned long long)msg_index);
 		}
 	} else {
@@ -516,7 +516,7 @@ cmd_test_message_mailbox_operation_execute(const struct sieve_runtime_env *renv,
 			sieve_runtime_trace_descend(renv);
 			sieve_runtime_trace(
 				renv, 0, "retrieve mailbox message "
-				"[mailbox=`%s' index=%llu]",
+				"[mailbox='%s' index=%llu]",
 				str_c(folder), (unsigned long long)msg_index);
 		}
 	}

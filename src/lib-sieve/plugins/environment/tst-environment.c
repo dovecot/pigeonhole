@@ -212,7 +212,7 @@ tst_environment_operation_execute(const struct sieve_runtime_env *renv,
 
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-				    "environment item `%s' not found",
+				    "environment item '%s' not found",
 				    str_sanitize(str_c(name), 128));
 	}
 

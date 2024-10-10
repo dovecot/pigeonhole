@@ -134,7 +134,7 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 	/* Execute script */
 	if (execute) {
 		sieve_info(ehandler, NULL,
-			   "filtering: [%s; %"PRIuUOFF_T" bytes] `%s'",
+			   "filtering: [%s; %"PRIuUOFF_T" bytes] '%s'",
 			   date, size, str_sanitize(subject, 40));
 
 		ret = sieve_execute(sbin, &msgdata, senv, ehandler, ehandler,
@@ -164,7 +164,7 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 		if (!source_write) {
 			/* READ-ONLY; Do nothing */
 		} else if (estatus.keep_original) {
-			/* Explicitly `stored' in source box; just keep it there */
+			/* Explicitly 'stored' in source box; just keep it there */
 			sieve_info(ehandler, NULL,
 				   "message kept in source mailbox");
 		} else if (estatus.message_saved) {
@@ -487,7 +487,7 @@ int main(int argc, char **argv)
 				i_fatal_status(
 					EX_USAGE,
 					"Invalid <discard-action> argument: "
-					"the `move' action requires mailbox argument");
+					"the 'move' action requires mailbox argument");
 			}
 		} else if (strcmp(srcact, "delete") == 0) {
 			discard_action = SIEVE_FILTER_DACT_DELETE;

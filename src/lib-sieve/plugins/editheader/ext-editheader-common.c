@@ -68,7 +68,7 @@ ext_editheader_config_headers(struct sieve_instance *svinst,
 				*headers, strlen(*headers))) {
 				e_warning(svinst->event, "editheader: "
 					  "setting %s contains invalid header field name "
-					  "`%s' (ignored)",
+					  "'%s' (ignored)",
 					  setting, *headers);
 				headers++;
 				continue;

@@ -153,7 +153,7 @@ imap_sieve_mailbox_get_script_real(struct mailbox *box,
 	if (ret > 0) {
 		e_debug(isbox->event, "Mailbox attribute /shared/"
 			MAILBOX_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
-			"points to Sieve script `%s'", value.value);
+			"points to Sieve script '%s'", value.value);
 	/* If not found, get the name of the Sieve script from server METADATA.
 	 */
 	} else {
@@ -190,7 +190,7 @@ imap_sieve_mailbox_get_script_real(struct mailbox *box,
 
 		e_debug(isbox->event, "Server attribute /shared/"
 			MAIL_SERVER_ATTRIBUTE_IMAPSIEVE_SCRIPT" "
-			"points to Sieve script `%s'", value.value);
+			"points to Sieve script '%s'", value.value);
 	}
 
 	*script_name_r = value.value;
@@ -893,7 +893,7 @@ static void imap_sieve_mailbox_rules_init(struct mail_user *user)
 		     !rule_pattern_has_wildcards(mbrule->from)) &&
 		    hash_table_lookup(isuser->mbox_rules, mbrule) != NULL) {
 			e_warning(isuser->event,
-				  "Duplicate static mailbox rule [%u] for mailbox `%s' "
+				  "Duplicate static mailbox rule [%u] for mailbox '%s' "
 				  "(skipped)", i, mbrule->mailbox);
 			continue;
 		}
@@ -913,7 +913,7 @@ static void imap_sieve_mailbox_rules_init(struct mail_user *user)
 			}
 			if (*cause != NULL) {
 				e_warning(isuser->event,
-					  "Static mailbox rule [%u] has invalid event cause `%s' "
+					  "Static mailbox rule [%u] has invalid event cause '%s' "
 					  "(skipped)", i, *cause);
 				continue;
 			}
@@ -935,17 +935,17 @@ static void imap_sieve_mailbox_rules_init(struct mail_user *user)
 		mbrule->copy_source_after = p_strdup_empty(user->pool, setval);
 
 		e_debug(isuser->event, "Static mailbox rule [%u]: "
-			"mailbox=`%s' from=`%s' causes=(%s) => "
+			"mailbox='%s' from='%s' causes=(%s) => "
 			"before=%s after=%s%s",
 			mbrule->index, mbrule->mailbox,
 			(mbrule->from == NULL ? "*" : mbrule->from),
 			t_strarray_join(mbrule->causes, " "),
 			(mbrule->before == NULL ? "(none)" :
-			 t_strconcat("`", mbrule->before, "'", NULL)),
+			 t_strconcat("'", mbrule->before, "'", NULL)),
 			(mbrule->after == NULL ? "(none)" :
-			 t_strconcat("`", mbrule->after, "'", NULL)),
+			 t_strconcat("'", mbrule->after, "'", NULL)),
 			(mbrule->copy_source_after == NULL ? "":
-			 t_strconcat(" copy_source_after=`",
+			 t_strconcat(" copy_source_after='",
 				     mbrule->copy_source_after, "'", NULL)));
 
 		if ((strcmp(mbrule->mailbox, "*") == 0 ||

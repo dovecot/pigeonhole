@@ -106,7 +106,7 @@ void sieve_script_init(struct sieve_script *script,
 		event_set_append_log_prefix(script->event, "script: ");
 	else {
 		event_set_append_log_prefix(
-			script->event, t_strdup_printf("script `%s': ", name));
+			script->event, t_strdup_printf("script '%s': ", name));
 	}
 
 	sieve_storage_ref(storage);
@@ -189,10 +189,10 @@ int sieve_script_open(struct sieve_script *script, enum sieve_error *error_r)
 	script->open = TRUE;
 
 	if (*script->name != '\0') {
-		e_debug(script->event, "Opened script `%s' from `%s'",
+		e_debug(script->event, "Opened script '%s' from '%s'",
 			script->name, script->location);
 	} else {
-		e_debug(script->event, "Opened nameless script from `%s'",
+		e_debug(script->event, "Opened nameless script from '%s'",
 			script->location);
 	}
 	return 0;
@@ -395,15 +395,15 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 	/* storage class */
 	if (!sieve_binary_read_string(sblock, offset, &storage_class)) {
 		e_error(script->event,
-			"Binary `%s' has invalid metadata for script `%s': "
+			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid storage class",
 			sieve_binary_path(sbin), script->location);
 		return -1;
 	}
 	if (strcmp(str_c(storage_class), script->driver_name) != 0) {
 		e_debug(script->event,
-			"Binary `%s' reports unexpected driver name for script `%s' "
-			"(`%s' rather than `%s')",
+			"Binary '%s' reports unexpected driver name for script '%s' "
+			"('%s' rather than '%s')",
 			sieve_binary_path(sbin), script->location,
 			str_c(storage_class), script->driver_name);
 		return 0;
@@ -412,15 +412,15 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 	/* version */
 	if (!sieve_binary_read_unsigned(sblock, offset, &version)) {
 		e_error(script->event,
-			"Binary `%s' has invalid metadata for script `%s': "
+			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid version",
 			sieve_binary_path(sbin), script->location);
 		return -1;
 	}
 	if (script->storage->version != version) {
 		e_debug(script->event,
-			"Binary `%s' was compiled with "
-			"a different version of the `%s' script storage class "
+			"Binary '%s' was compiled with "
+			"a different version of the '%s' script storage class "
 			"(compiled v%d, expected v%d; "
 				"automatically fixed when re-compiled)",
 			sieve_binary_path(sbin), script->driver_name,
@@ -431,7 +431,7 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 	/* location */
 	if (!sieve_binary_read_string(sblock, offset, &location)) {
 		e_error(script->event,
-			"Binary `%s' has invalid metadata for script `%s': "
+			"Binary '%s' has invalid metadata for script '%s': "
 			"Invalid location",
 			sieve_binary_path(sbin), script->location);
 		return -1;
@@ -439,8 +439,8 @@ int sieve_script_binary_read_metadata(struct sieve_script *script,
 	i_assert(script->location != NULL);
 	if (strcmp(str_c(location), script->location) != 0) {
 		e_debug(script->event,
-			"Binary `%s' reports different location "
-			"for script `%s' (binary points to `%s')",
+			"Binary '%s' reports different location "
+			"for script '%s' (binary points to '%s')",
 			sieve_binary_path(sbin), script->location,
 			str_c(location));
 		return 0;
@@ -595,7 +595,7 @@ sieve_script_copy_from_default(struct sieve_script *script, const char *newname)
 
 		if (ret < 0) {
 			e_error(storage->event,
-				"Failed to implicitly activate script `%s' "
+				"Failed to implicitly activate script '%s' "
 				"after rename",	newname);
 			sieve_storage_copy_error(storage->default_for, storage);
 		}
@@ -617,7 +617,7 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 	if (!sieve_script_name_is_valid(newname)) {
 		sieve_script_set_error(script,
 			SIEVE_ERROR_BAD_PARAMS,
-			"Invalid new Sieve script name `%s'.",
+			"Invalid new Sieve script name '%s'.",
 			str_sanitize(newname, 80));
 		return -1;
 	}
@@ -653,7 +653,7 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 		set_name("sieve_script_renamed");
 
 	if (ret >= 0) {
-		e_debug(event->event(), "Script renamed to `%s'", newname);
+		e_debug(event->event(), "Script renamed to '%s'", newname);
 	} else {
 		event = event->add_str("error", storage->error);
 

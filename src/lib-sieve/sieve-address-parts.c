@@ -298,7 +298,7 @@ sieve_address_part_stringlist_next_item(struct sieve_stringlist *_strlist,
 				if (_strlist->trace) {
 					sieve_runtime_trace(
 						_strlist->runenv, 0,
-						"extracting `%s' part from non-address value `%s'",
+						"extracting '%s' part from non-address value '%s'",
 						sieve_address_part_name(strlist->addrp),
 						str_sanitize(str_c(item_unparsed), 80));
 				}
@@ -314,7 +314,7 @@ sieve_address_part_stringlist_next_item(struct sieve_stringlist *_strlist,
 			if (_strlist->trace) {
 				sieve_runtime_trace(
 					_strlist->runenv, 0,
-					"extracting `%s' part from address %s",
+					"extracting '%s' part from address %s",
 					sieve_address_part_name(strlist->addrp),
 					smtp_address_encode_path(&item));
 			}

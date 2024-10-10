@@ -301,7 +301,7 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 				break;
 			case SIEVE_ERROR_TEMP_FAILURE:
 				e_error(sieve_get_event(svinst),
-					"Failed to access %s script from `%s' "
+					"Failed to access %s script from '%s' "
 					"(temporary failure)",
 					label, location);
 				ret = -1;
@@ -332,7 +332,7 @@ lda_sieve_binary_save(struct lda_sieve_run_context *srctx,
 		e_error(sieve_get_event(srctx->svinst),
 			"The LDA Sieve plugin does not have permission "
 			"to save global Sieve script binaries; "
-			"global Sieve scripts like `%s' need to be "
+			"global Sieve scripts like '%s' need to be "
 			"pre-compiled using the sievec tool",
 			sieve_script_location(script));
 	}
@@ -378,14 +378,14 @@ sieve_binary *lda_sieve_open(struct lda_sieve_run_context *srctx,
 		/* Script not found */
 		case SIEVE_ERROR_NOT_FOUND:
 			e_debug(sieve_get_event(svinst),
-				"Script `%s' is missing for %s",
+				"Script '%s' is missing for %s",
 				sieve_script_location(script),
 				compile_name);
 			break;
 		/* Temporary failure */
 		case SIEVE_ERROR_TEMP_FAILURE:
 			e_error(sieve_get_event(svinst),
-				"Failed to open script `%s' for %s "
+				"Failed to open script '%s' for %s "
 				"(temporary failure)",
 				sieve_script_location(script), compile_name);
 			break;
@@ -394,28 +394,28 @@ sieve_binary *lda_sieve_open(struct lda_sieve_run_context *srctx,
 			if (script == srctx->user_script &&
 			    srctx->userlog != NULL ) {
 				e_info(sieve_get_event(svinst),
-				       "Failed to %s script `%s' "
-				       "(view user logfile `%s' for more information)",
+				       "Failed to %s script '%s' "
+				       "(view user logfile '%s' for more information)",
 				       compile_name,
 				       sieve_script_location(script),
 				       srctx->userlog);
 				break;
 			}
 			e_error(sieve_get_event(svinst),
-				"Failed to %s script `%s'",
+				"Failed to %s script '%s'",
 				compile_name, sieve_script_location(script));
 			break;
 		/* Cumulative resource limit exceeded */
 		case SIEVE_ERROR_RESOURCE_LIMIT:
 			e_error(sieve_get_event(svinst),
-				"Failed to open script `%s' for %s "
+				"Failed to open script '%s' for %s "
 				"(cumulative resource limit exceeded)",
 				sieve_script_location(script), compile_name);
 			break;
 		/* Something else */
 		default:
 			e_error(sieve_get_event(svinst),
-				"Failed to open script `%s' for %s",
+				"Failed to open script '%s' for %s",
 				sieve_script_location(script), compile_name);
 			break;
 		}
@@ -541,12 +541,12 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 
 	if (!discard_script) {
 		e_debug(sieve_get_event(svinst),
-			"Opening script %d of %d from `%s'",
+			"Opening script %d of %d from '%s'",
 			index, srctx->script_count,
 			sieve_script_location(script));
 	} else {
 		e_debug(sieve_get_event(svinst),
-			"Opening discard script from `%s'",
+			"Opening discard script from '%s'",
 			sieve_script_location(script));
 	}
 
@@ -557,7 +557,7 @@ lda_sieve_execute_script(struct lda_sieve_run_context *srctx,
 	/* Execute */
 
 	e_debug(sieve_get_event(svinst),
-		"Executing script from `%s'",
+		"Executing script from '%s'",
 		sieve_get_source(sbin));
 
 	if (!discard_script) {
@@ -725,19 +725,19 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 			switch (error) {
 			case SIEVE_ERROR_NOT_FOUND:
 				e_debug(sieve_get_event(svinst),
-					"User has no active script in storage `%s'",
+					"User has no active script in storage '%s'",
 					sieve_storage_location(main_storage));
 				break;
 			case SIEVE_ERROR_TEMP_FAILURE:
 				e_error(sieve_get_event(svinst),
-					"Failed to access active Sieve script in user storage `%s' "
+					"Failed to access active Sieve script in user storage '%s' "
 					"(temporary failure)",
 					sieve_storage_location(main_storage));
 				ret = -1;
 				break;
 			default:
 				e_error(sieve_get_event(svinst),
-					"Failed to access active Sieve script in user storage `%s'",
+					"Failed to access active Sieve script in user storage '%s'",
 					sieve_storage_location(main_storage));
 				break;
 			}

@@ -481,7 +481,7 @@ cmd_notify_operation_execute(const struct sieve_runtime_env *renv,
 	if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS)) {
 		sieve_runtime_trace(renv, 0, "notify action");
 		sieve_runtime_trace_descend(renv);
-		sieve_runtime_trace(renv, 0, "notify with uri `%s'",
+		sieve_runtime_trace(renv, 0, "notify with uri '%s'",
 				    str_sanitize(str_c(method_uri), 80));
 	}
 

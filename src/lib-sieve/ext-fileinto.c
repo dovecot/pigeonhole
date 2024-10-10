@@ -126,7 +126,7 @@ cmd_fileinto_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 		if (!sieve_mailbox_check_name(folder, &error)) {
 			sieve_command_validate_error(
 				valdtr, cmd, "fileinto command: "
-				"invalid folder name `%s' specified: %s",
+				"invalid folder name '%s' specified: %s",
 				str_sanitize(folder, 256), error);
 			return FALSE;
 		}
@@ -205,13 +205,13 @@ ext_fileinto_operation_execute(const struct sieve_runtime_env *renv,
 	if (!sieve_mailbox_check_name(str_c(folder), &error)) {
 		sieve_runtime_error(
 			renv, NULL, "fileinto command: "
-			"invalid folder name `%s' specified: %s",
+			"invalid folder name '%s' specified: %s",
 			str_c(folder), error);
 		return SIEVE_EXEC_FAILURE;
 	}
 
 	if (trace) {
-		sieve_runtime_trace(renv, 0, "store message in mailbox `%s'",
+		sieve_runtime_trace(renv, 0, "store message in mailbox '%s'",
 				    str_sanitize(str_c(folder), 80));
 	}
 

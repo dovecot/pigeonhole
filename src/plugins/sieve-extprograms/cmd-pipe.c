@@ -411,7 +411,7 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 				str_sanitize(act->program_name, 256));
 
 		sieve_result_event_log(aenv, e->event(),
-				       "piped message to program `%s'",
+				       "piped message to program '%s'",
 				       str_sanitize(act->program_name, 128));
 
 		/* Indicate that message was successfully 'forwarded' */
@@ -422,18 +422,18 @@ act_pipe_commit(const struct sieve_action_exec_env *aenv,
 				sieve_result_error(
 					aenv,
 					"failed to pipe message to program: "
-					"program `%s' not found",
+					"program '%s' not found",
 					str_sanitize(act->program_name, 80));
 			} else {
 				sieve_extprogram_exec_error(
 					aenv->ehandler, NULL,
-					"failed to pipe message to program `%s'",
+					"failed to pipe message to program '%s'",
 					str_sanitize(act->program_name, 80));
 			}
 		} else {
 			sieve_extprogram_exec_error(
 				aenv->ehandler, NULL,
-				"failed to execute to program `%s'",
+				"failed to execute to program '%s'",
 				str_sanitize(act->program_name, 80));
 		}
 

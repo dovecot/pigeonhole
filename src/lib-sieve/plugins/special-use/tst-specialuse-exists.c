@@ -84,7 +84,7 @@ tst_specialuse_exists_flag_validate(void *context,
 		if (!ext_special_use_flag_valid(flag)) {
 			sieve_argument_validate_error(
 				valctx->valdtr, arg, "%s test: "
-				"invalid special-use flag `%s' specified",
+				"invalid special-use flag '%s' specified",
 				sieve_command_identifier(valctx->tst),
 				str_sanitize(flag, 64));
 		}
@@ -149,7 +149,7 @@ tst_specialuse_exists_validate(struct sieve_validator *valdtr,
 			if (!sieve_mailbox_check_name(mailbox, &error)) {
 				sieve_argument_validate_warning(
 					valdtr, arg, "%s test: "
-					"invalid mailbox name `%s' specified: %s",
+					"invalid mailbox name '%s' specified: %s",
 					sieve_command_identifier(tst),
 					str_sanitize(mailbox, 256), error);
 			}
@@ -265,7 +265,7 @@ tst_specialuse_find_mailbox(const struct sieve_runtime_env *renv,
 
 		if (trace) {
 			sieve_runtime_trace(
-				renv, 0, "mailbox `%s' cannot be opened: %s",
+				renv, 0, "mailbox '%s' cannot be opened: %s",
 				str_sanitize(mailbox, 256), error);
 		}
 
@@ -274,7 +274,7 @@ tst_specialuse_find_mailbox(const struct sieve_runtime_env *renv,
 		if (error_code == MAIL_ERROR_TEMP) {
 			sieve_runtime_error(
 				renv, NULL,	"specialuse_exists test: "
-				"failed to open mailbox `%s': %s",
+				"failed to open mailbox '%s': %s",
 				str_sanitize(mailbox, 256), error);
 			return -1;
 		}
@@ -285,7 +285,7 @@ tst_specialuse_find_mailbox(const struct sieve_runtime_env *renv,
 	if (mailbox_is_readonly(box)) {
 		if (trace) {
 			sieve_runtime_trace(
-				renv, 0, "mailbox `%s' is read-only",
+				renv, 0, "mailbox '%s' is read-only",
 				str_sanitize(mailbox, 256));
 		}
 
@@ -320,7 +320,7 @@ tst_specialuse_find_specialuse(const struct sieve_runtime_env *renv,
 
 		if (trace) {
 			sieve_runtime_trace(
-				renv, 0, "mailbox with special-use flag `%s' "
+				renv, 0, "mailbox with special-use flag '%s' "
 				"cannot be opened: %s",
 				str_sanitize(special_use, 64), error);
 		}
@@ -330,7 +330,7 @@ tst_specialuse_find_specialuse(const struct sieve_runtime_env *renv,
 		if (error_code == MAIL_ERROR_TEMP) {
 			sieve_runtime_error(
 				renv, NULL, "specialuse_exists test: "
-				"failed to open mailbox with special-use flag`%s': %s",
+				"failed to open mailbox with special-use flag'%s': %s",
 				str_sanitize(special_use, 64), error);
 			return -1;
 		}
@@ -342,7 +342,7 @@ tst_specialuse_find_specialuse(const struct sieve_runtime_env *renv,
 		if (trace) {
 			sieve_runtime_trace(
 				renv, 0,
-				"mailbox with special-use flag `%s' is read-only",
+				"mailbox with special-use flag '%s' is read-only",
 				str_sanitize(special_use, 64));
 		}
 
@@ -364,7 +364,7 @@ tst_specialuse_exists_check_flag(const struct sieve_runtime_env *renv,
 	if (!ext_special_use_flag_valid(use_flag)) {
 		sieve_runtime_error(
 			renv, NULL, "specialuse_exists test: "
-			"invalid special-use flag `%s' specified",
+			"invalid special-use flag '%s' specified",
 			str_sanitize(use_flag, 64));
 		return SIEVE_EXEC_FAILURE;
 	}
@@ -388,7 +388,7 @@ tst_specialuse_exists_check_flag(const struct sieve_runtime_env *renv,
 
 	if (trace) {
 		sieve_runtime_trace(
-			renv, 0, "special-use flag `%s' exists",
+			renv, 0, "special-use flag '%s' exists",
 			str_sanitize(use_flag, 80));
 	}
 
@@ -457,7 +457,7 @@ tst_specialuse_exists_operation_execute(const struct sieve_runtime_env *renv,
 		if (!sieve_mailbox_check_name(str_c(mailbox), &error)) {
 			sieve_runtime_warning(
 				renv, NULL, "specialuse_exists test: "
-				"invalid mailbox name `%s' specified: %s",
+				"invalid mailbox name '%s' specified: %s",
 				str_sanitize(str_c(mailbox), 256), error);
 			sieve_interpreter_set_test_result(renv->interp, FALSE);
 			return SIEVE_EXEC_OK;
@@ -469,7 +469,7 @@ tst_specialuse_exists_operation_execute(const struct sieve_runtime_env *renv,
 
 	if (box == NULL && mailbox != NULL) {
 		sieve_runtime_trace(
-			renv, 0, "mailbox `%s' is not accessible",
+			renv, 0, "mailbox '%s' is not accessible",
 			str_sanitize(str_c(mailbox), 80));
 		sieve_interpreter_set_test_result(renv->interp, FALSE);
 		return SIEVE_EXEC_OK;
@@ -477,7 +477,7 @@ tst_specialuse_exists_operation_execute(const struct sieve_runtime_env *renv,
 
 	if (mailbox != NULL) {
 		sieve_runtime_trace(
-			renv, 0, "mailbox `%s' is accessible",
+			renv, 0, "mailbox '%s' is accessible",
 			str_sanitize(str_c(mailbox), 80));
 	}
 

@@ -185,7 +185,7 @@ cmd_break_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 			sieve_command_validate_error(
 				valdtr, cmd,
 				"the break command is not placed inside "
-				"a foreverypart loop named `%s'", name);
+				"a foreverypart loop named '%s'", name);
 		}
 		return FALSE;
 	}

@@ -151,7 +151,7 @@ static void cmd_putscript_storage_error(struct cmd_putscript_context *ctx)
 	if (ctx->scriptname == NULL)
 		client_command_storage_error(cmd, "Failed to check script");
 	else {
-		client_command_storage_error(cmd, "Failed to store script `%s'",
+		client_command_storage_error(cmd, "Failed to store script '%s'",
 					     ctx->scriptname);
 	}
 }
@@ -207,7 +207,7 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 		}
 
 		action = (ctx->scriptname != NULL ?
-			  t_strdup_printf("store script `%s'",
+			  t_strdup_printf("store script '%s'",
 					  ctx->scriptname) :
 			  "check script");
 
@@ -262,7 +262,7 @@ cmd_putscript_finish_script(struct cmd_putscript_context *ctx,
 			add_int("compile_warnings",
 				sieve_get_warnings(ehandler));
 		if (ctx->scriptname != NULL) {
-			e_debug(e->event(), "Stored script `%s' successfully "
+			e_debug(e->event(), "Stored script '%s' successfully "
 				"(%u warnings)", ctx->scriptname,
 				sieve_get_warnings(ehandler));
 		} else {

@@ -271,13 +271,13 @@ tst_ihave_operation_execute(const struct sieve_runtime_env *renv,
 		if (sret == SIEVE_EXEC_FAILURE) {
 			sieve_runtime_trace(
 				renv, SIEVE_TRLVL_TESTS,
-				"extension `%s' not available",
+				"extension '%s' not available",
 				sieve_extension_name(ext));
 			matched = FALSE;
 		} else if (sret == SIEVE_EXEC_OK) {
 			sieve_runtime_trace(
 				renv, SIEVE_TRLVL_TESTS,
-				"extension `%s' available",
+				"extension '%s' available",
 				sieve_extension_name(ext));
 		} else {
 			return sret;

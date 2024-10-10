@@ -270,7 +270,7 @@ cmd_deleteheader_validate(struct sieve_validator *valdtr,
 						      str_len(fname))) {
 			sieve_argument_validate_error(
 				valdtr, arg, "deleteheader command:"
-				"specified field name `%s' is invalid",
+				"specified field name '%s' is invalid",
 				str_sanitize(str_c(fname), 80));
 			return FALSE;
 		}
@@ -279,7 +279,7 @@ cmd_deleteheader_validate(struct sieve_validator *valdtr,
 			cmd->ext, str_c(fname))) {
 			sieve_argument_validate_warning(
 				valdtr, arg, "deleteheader command: "
-				"deleting specified header field `%s' is forbidden; "
+				"deleting specified header field '%s' is forbidden; "
 				"modification will be denied",
 				str_sanitize(str_c(fname), 80));
 		}
@@ -447,7 +447,7 @@ cmd_deleteheader_operation_execute(const struct sieve_runtime_env *renv,
 					      str_len(field_name))) {
 		sieve_runtime_error(
 			renv, NULL, "deleteheader action: "
-			"specified field name `%s' is invalid",
+			"specified field name '%s' is invalid",
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_FAILURE;
 	}
@@ -455,7 +455,7 @@ cmd_deleteheader_operation_execute(const struct sieve_runtime_env *renv,
 	if (!ext_editheader_header_allow_delete(this_ext, str_c(field_name))) {
 		sieve_runtime_warning(
 			renv, NULL, "deleteheader action: "
-			"deleting specified header field `%s' is forbidden; "
+			"deleting specified header field '%s' is forbidden; "
 			"modification denied",
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_OK;
@@ -483,14 +483,14 @@ cmd_deleteheader_operation_execute(const struct sieve_runtime_env *renv,
 			if (index_offset != 0) {
 				sieve_runtime_trace(
 					renv, 0,
-					"deleting matching occurrences of header `%s' at index %llu%s",
+					"deleting matching occurrences of header '%s' at index %llu%s",
 					str_c(field_name),
 					(unsigned long long)index_offset,
 					(index_last ? " from last": ""));
 			} else {
 				sieve_runtime_trace(
 					renv, 0,
-					"deleting matching occurrences of header `%s'",
+					"deleting matching occurrences of header '%s'",
 					str_c(field_name));
 			}
 		}
@@ -526,7 +526,7 @@ cmd_deleteheader_operation_execute(const struct sieve_runtime_env *renv,
 						/* Remove it and iterate to next */
 						sieve_runtime_trace(
 							renv, 0,
-							"deleting header with value `%s'",
+							"deleting header with value '%s'",
 							value);
 
 						if (!edit_mail_headers_iterate_remove(edhiter))
@@ -548,12 +548,12 @@ cmd_deleteheader_operation_execute(const struct sieve_runtime_env *renv,
 		}
 
 		if (ret == 0) {
-			sieve_runtime_trace(renv, 0, "header `%s' not found",
+			sieve_runtime_trace(renv, 0, "header '%s' not found",
 					    str_c(field_name));
 		} else if (ret < 0) {
 			sieve_runtime_warning(
 				renv, NULL, "deleteheader action: "
-				"failed to delete occurrences of header `%s' "
+				"failed to delete occurrences of header '%s' "
 				"(this should not happen!)",
 				str_c(field_name));
 		}
@@ -567,13 +567,13 @@ cmd_deleteheader_operation_execute(const struct sieve_runtime_env *renv,
 			if (index_offset != 0) {
 				sieve_runtime_trace(
 					renv, 0,
-					"deleting header `%s' at index %llu%s",
+					"deleting header '%s' at index %llu%s",
 					str_c(field_name),
 					(unsigned long long)index_offset,
 					(index_last ? " from last": ""));
 			} else {
 				sieve_runtime_trace(
-					renv, 0, "deleting header `%s'",
+					renv, 0, "deleting header '%s'",
 					str_c(field_name));
 			}
 		}
@@ -583,13 +583,13 @@ cmd_deleteheader_operation_execute(const struct sieve_runtime_env *renv,
 		if (ret < 0) {
 			sieve_runtime_warning(
 				renv, NULL, "deleteheader action: "
-				"failed to delete occurrences of header `%s' "
+				"failed to delete occurrences of header '%s' "
 				"(this should not happen!)",
 				str_c(field_name));
 		} else if (trace) {
 			sieve_runtime_trace(
 				renv, 0,
-				"deleted %d occurrences of header `%s'",
+				"deleted %d occurrences of header '%s'",
 				ret, str_c(field_name));
 		}
 	}

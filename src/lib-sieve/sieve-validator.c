@@ -615,7 +615,7 @@ bool sieve_validator_extension_load(struct sieve_validator *valdtr,
 					sieve_command_type_name(cmd)));
 		sieve_argument_validate_error(
 			valdtr, ext_arg,
-			"%sfailed to load Sieve capability `%s': "
+			"%sfailed to load Sieve capability '%s': "
 			"its use is restricted to global scripts",
 			cmd_prefix, sieve_extension_name(ext));
 		return FALSE;
@@ -641,7 +641,7 @@ bool sieve_validator_extension_load(struct sieve_validator *valdtr,
 					sieve_command_type_name(cmd)));
 		sieve_argument_validate_error(
 			valdtr, ext_arg,
-			"%sfailed to load Sieve capability `%s'",
+			"%sfailed to load Sieve capability '%s'",
 			cmd_prefix, sieve_extension_name(ext));
 		return FALSE;
 	}
@@ -690,7 +690,7 @@ sieve_validator_extension_load_by_name(struct sieve_validator *valdtr,
 		if (core_test || core_command) {
 			sieve_argument_validate_error(
 				valdtr, ext_arg,
-				"%s %s: `%s' is not known as a Sieve capability, "
+				"%s %s: '%s' is not known as a Sieve capability, "
 				"but it is known as a Sieve %s that is always available",
 				sieve_command_identifier(cmd),
 				sieve_command_type_name(cmd),
@@ -699,7 +699,7 @@ sieve_validator_extension_load_by_name(struct sieve_validator *valdtr,
 		} else {
 			sieve_argument_validate_error(
 				valdtr, ext_arg,
-				"%s %s: unknown Sieve capability `%s'",
+				"%s %s: unknown Sieve capability '%s'",
 				sieve_command_identifier(cmd),
 				sieve_command_type_name(cmd),
 				str_sanitize(ext_name, 128));

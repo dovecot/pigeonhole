@@ -73,7 +73,7 @@ sieve_file_storage_stat(struct sieve_file_storage *fstorage, const char *path,
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			break;
 		}
-		e_debug(storage->event, "Storage path `%s' not found", abspath);
+		e_debug(storage->event, "Storage path '%s' not found", abspath);
 		sieve_storage_set_internal_error(storage); // should be overriden
 		*error_r = SIEVE_ERROR_NOT_FOUND;
 		break;
@@ -257,7 +257,7 @@ sieve_file_storage_get_full_path(struct sieve_file_storage *fstorage,
 		} else {
 			sieve_storage_set_critical(
 				storage,
-				"Sieve storage path `%s' is relative to home directory, "
+				"Sieve storage path '%s' is relative to home directory, "
 				"but home directory is not available.", path);
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
@@ -292,7 +292,7 @@ sieve_file_storage_get_full_active_path(struct sieve_file_storage *fstorage,
 		} else {
 			sieve_storage_set_critical(
 				storage,
-				"Sieve storage active script path `%s' is relative to home directory, "
+				"Sieve storage active script path '%s' is relative to home directory, "
 				"but home directory is not available.", path);
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
@@ -522,7 +522,7 @@ sieve_file_storage_init(struct sieve_storage *storage,
 				active_path = value;
 			} else {
 				sieve_storage_set_critical(
-					storage, "Invalid option `%s'", option);
+					storage, "Invalid option '%s'", option);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
@@ -560,8 +560,8 @@ sieve_file_storage_init(struct sieve_storage *storage,
 				if (!S_ISREG(fstorage->lnk_st.st_mode))
 					return -1;
 				e_debug(storage->event,
-					"Sieve storage path `%s' not found, "
-					"but the active script `%s' is a regular file, "
+					"Sieve storage path '%s' not found, "
+					"but the active script '%s' is a regular file, "
 					"so this is used for backwards compatibility.",
 					storage_path, active_path);
 				storage_path = NULL;
@@ -572,15 +572,15 @@ sieve_file_storage_init(struct sieve_storage *storage,
 			if (!S_ISDIR(fstorage->st.st_mode)) {
 				if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
 					sieve_storage_set_critical(storage,
-						"Sieve storage path `%s' is not a directory, "
+						"Sieve storage path '%s' is not a directory, "
 						"but it is to be opened for write access", storage_path);
 					*error_r = SIEVE_ERROR_TEMP_FAILURE;
 					return -1;
 				}
 				if (active_path != NULL && *active_path != '\0') {
 					e_warning(storage->event,
-						  "Explicitly specified active script path `%s' is ignored; "
-						  "storage path `%s' is not a directory",
+						  "Explicitly specified active script path '%s' is ignored; "
+						  "storage path '%s' is not a directory",
 						  active_path, storage_path);
 				}
 				active_path = storage_path;
@@ -629,7 +629,7 @@ sieve_file_storage_autodetect(struct sieve_file_storage *fstorage,
 		if (access("/sieve", mode) == 0) {
 			*storage_path_r = "/sieve";
 			e_debug(storage->event,
-				"Directory `/sieve' exists, assuming chroot");
+				"Directory '/sieve' exists, assuming chroot");
 		} else {
 			*storage_path_r = NULL;
 		}

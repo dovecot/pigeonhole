@@ -1103,7 +1103,7 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 
 			if (vals[1] != NULL) {
 				e_warning(storage->event, "db: "
-					  "Search returned more than one Sieve modified attribute `%s'; "
+					  "Search returned more than one Sieve modified attribute '%s'; "
 					  "using only the first one.",
 					  set->sieve_ldap_mod_attr);
 			}
@@ -1143,7 +1143,7 @@ sieve_ldap_db_get_script(struct ldap_connection *conn, LDAPMessage *entry,
 
 			if (vals[1] != NULL) {
 				e_warning(storage->event, "db: "
-					  "Search returned more than one Sieve script attribute `%s'; "
+					  "Search returned more than one Sieve script attribute '%s'; "
 					  "using only the first one.",
 					  set->sieve_ldap_script_attr);
 			}

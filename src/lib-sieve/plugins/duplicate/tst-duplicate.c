@@ -392,7 +392,7 @@ tst_duplicate_operation_execute(const struct sieve_runtime_env *renv,
 			if (ret < 0) {
 				return sieve_runtime_mail_error(
 					renv, mail, "duplicate test: "
-					"failed to read header field `message-id'");
+					"failed to read header field 'message-id'");
 			}
 		} else {
 			ret = mail_get_first_header_utf8(mail, str_c(header),
@@ -400,7 +400,7 @@ tst_duplicate_operation_execute(const struct sieve_runtime_env *renv,
 			if (ret < 0) {
 				return sieve_runtime_mail_error(
 					renv, mail, "duplicate test: "
-					"failed to read header field `%s'",
+					"failed to read header field '%s'",
 					str_c(header));
 			}
 		}

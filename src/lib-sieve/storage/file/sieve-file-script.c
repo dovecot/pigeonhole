@@ -67,9 +67,9 @@ sieve_file_script_handle_error(struct sieve_file_script *fscript,
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			break;
 		}
-		e_debug(script->event, "File `%s' not found", abspath);
+		e_debug(script->event, "File '%s' not found", abspath);
 		sieve_script_set_error(script, SIEVE_ERROR_NOT_FOUND,
-				       "Sieve script `%s' not found", name);
+				       "Sieve script '%s' not found", name);
 		*error_r = SIEVE_ERROR_NOT_FOUND;
 		break;
 	case EACCES:
@@ -120,7 +120,7 @@ sieve_file_script_init_from_filename(struct sieve_file_storage *fstorage,
 		if (strcmp(filename, fstorage->active_fname) == 0) {
 			sieve_storage_set_error(
 				storage, SIEVE_ERROR_NOT_FOUND,
-				"Script `%s' does not exist.", scriptname);
+				"Script '%s' does not exist.", scriptname);
 			return NULL;
 		}
 	}
@@ -455,7 +455,7 @@ sieve_file_script_get_stream(struct sieve_script *script,
 	/* Re-check the file type just to be sure */
 	} else if (!S_ISREG(st.st_mode)) {
 		sieve_script_set_critical(
-			script,	"Sieve script file `%s' is not a regular file",
+			script,	"Sieve script file '%s' is not a regular file",
 			fscript->path);
 		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		result = NULL;
@@ -507,8 +507,8 @@ sieve_file_script_binary_read_metadata(struct sieve_script *script,
 	     ST_MTIME_NSEC(*bstat) <= ST_MTIME_NSEC(*sstat))) {
 		if (svinst->debug) {
 			e_debug(script->event,
-				"Sieve binary `%s' is not newer "
-				"than the Sieve script `%s' (%s.%lu <= %s.%lu)",
+				"Sieve binary '%s' is not newer "
+				"than the Sieve script '%s' (%s.%lu <= %s.%lu)",
 				sieve_binary_path(sbin),
 				sieve_script_location(script),
 				t_strflocaltime("%Y-%m-%d %H:%M:%S",
@@ -600,7 +600,7 @@ static int sieve_file_storage_script_delete(struct sieve_script *script)
 		} else {
 			sieve_script_set_critical(
 				script,
-				"Performing unlink() failed on sieve file `%s': %m",
+				"Performing unlink() failed on sieve file '%s': %m",
 				fscript->path);
 		}
 	}

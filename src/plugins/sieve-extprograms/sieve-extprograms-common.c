@@ -229,7 +229,7 @@ _arg_validate(void *context, struct sieve_ast_argument *item)
 		if (!sieve_extprogram_arg_is_valid(arg)) {
 			sieve_argument_validate_error(
 				actx->valdtr, item,
-				"%s %s: specified external program argument `%s' is invalid",
+				"%s %s: specified external program argument '%s' is invalid",
 				sieve_command_identifier(actx->cmd),
 				sieve_command_type_name(actx->cmd),
 				str_sanitize(str_c(arg), 128));
@@ -349,7 +349,7 @@ int sieve_extprogram_command_read_operands(
 	       (ret = sieve_stringlist_next_item(*args_list_r, &arg)) > 0) {
 		if (!sieve_extprogram_arg_is_valid(arg)) {
 			sieve_runtime_error(renv, NULL,
-				"specified :args item `%s' is invalid",
+				"specified :args item '%s' is invalid",
 				str_sanitize(str_c(arg), 128));
 			return SIEVE_EXEC_FAILURE;
 		}
@@ -423,7 +423,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 	if (ext_config == NULL ||
 	    (ext_config->bin_dir == NULL && ext_config->socket_dir == NULL)) {
 		e_error(svinst->event, "action %s: "
-			"failed to execute program `%s': "
+			"failed to execute program '%s': "
 			"vnd.dovecot.%s extension is unconfigured",
 			action, program_name, action);
 		*error_r = SIEVE_ERROR_NOT_FOUND;
@@ -439,7 +439,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			switch (errno) {
 			case ENOENT:
 				e_debug(svinst->event, "action %s: "
-					"socket path `%s' for program `%s' not found",
+					"socket path '%s' for program '%s' not found",
 					action, path, program_name);
 				break;
 			case EACCES:
@@ -450,7 +450,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 				return NULL;
 			default:
 				e_error(svinst->event, "action %s: "
-					"failed to stat socket `%s': %m",
+					"failed to stat socket '%s': %m",
 					action, path);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return NULL;
@@ -458,7 +458,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			path = NULL;
 		} else if (!S_ISSOCK(st.st_mode)) {
 			e_error(svinst->event, "action %s: "
-				"socket path `%s' for program `%s' is not a socket",
+				"socket path '%s' for program '%s' is not a socket",
 				action, path, program_name);
 			*error_r = SIEVE_ERROR_NOT_POSSIBLE;
 			return NULL;
@@ -474,7 +474,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			switch (errno) {
 			case ENOENT:
 				e_debug(svinst->event, "action %s: "
-					"executable path `%s' for program `%s' not found",
+					"executable path '%s' for program '%s' not found",
 					action, path, program_name);
 				*error_r = SIEVE_ERROR_NOT_FOUND;
 				break;
@@ -486,7 +486,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 				break;
 			default:
 				e_error(svinst->event, "action %s: "
-					"failed to stat program `%s': %m",
+					"failed to stat program '%s': %m",
 					action, path);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				break;
@@ -495,13 +495,13 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 			return NULL;
 		} else if (!S_ISREG(st.st_mode)) {
 			e_error(svinst->event, "action %s: "
-				"executable `%s' for program `%s' is not a regular file",
+				"executable '%s' for program '%s' is not a regular file",
 				action, path, program_name);
 			*error_r = SIEVE_ERROR_NOT_POSSIBLE;
 			return NULL;
 		} else if ((st.st_mode & S_IWOTH) != 0) {
 			e_error(svinst->event, "action %s: "
-				"executable `%s' for program `%s' is world-writable",
+				"executable '%s' for program '%s' is world-writable",
 				action, path, program_name);
 			*error_r = SIEVE_ERROR_NO_PERMISSION;
 			return NULL;
@@ -511,7 +511,7 @@ sieve_extprogram_create(const struct sieve_extension *ext,
 	/* None found ? */
 	if (path == NULL) {
 		e_error(svinst->event, "action %s: "
-			"program `%s' not found", action, program_name);
+			"program '%s' not found", action, program_name);
 		*error_r = SIEVE_ERROR_NOT_FOUND;
 		return NULL;
 	}

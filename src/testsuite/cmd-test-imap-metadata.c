@@ -283,11 +283,11 @@ cmd_test_imap_metadata_operation_execute(const struct sieve_runtime_env *renv,
 			sieve_runtime_trace_descend(renv);
 			if (mailbox == NULL) {
 				sieve_runtime_trace(renv, 0,
-					"set server annotation `%s'",
+					"set server annotation '%s'",
 					str_c(annotation));
 			} else {
 				sieve_runtime_trace(renv, 0,
-					"set annotation `%s' for mailbox `%s'",
+					"set annotation '%s' for mailbox '%s'",
 					str_c(annotation), str_c(mailbox));
 			}
 		}

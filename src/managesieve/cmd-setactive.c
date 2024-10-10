@@ -29,7 +29,7 @@ cmd_setactive_activate(struct client_command_context *cmd,
 	script = sieve_storage_open_script(storage, scriptname, NULL);
 	if (script == NULL) {
 		client_command_storage_error(
-			cmd, "Failed to open script `%s' for activation",
+			cmd, "Failed to open script '%s' for activation",
 			scriptname);
 		return;
 	}
@@ -76,13 +76,13 @@ cmd_setactive_activate(struct client_command_context *cmd,
 		ret = sieve_script_activate(script, (time_t)-1);
 		if (ret < 0) {
 			client_command_storage_error(
-				cmd, "Failed to activate script `%s'",
+				cmd, "Failed to activate script '%s'",
 				scriptname);
 		} else {
 			struct event_passthrough *e =
 				client_command_create_finish_event(cmd)->
 				add_int("compile_warnings", warning_count);
-			e_debug(e->event(), "Activated script `%s' "
+			e_debug(e->event(), "Activated script '%s' "
 				" (%u warnings%s)",
 				scriptname, warning_count,
 				(ret == 0 ? ", redundant" : ""));
@@ -104,7 +104,7 @@ cmd_setactive_activate(struct client_command_context *cmd,
 			add_str("error", "Compilation failed")->
 			add_int("compile_errors", error_count)->
 			add_int("compile_warnings", warning_count);
-		e_debug(e->event(), "Failed to activate script `%s': "
+		e_debug(e->event(), "Failed to activate script '%s': "
 			"Compilation failed (%u errors, %u warnings)",
 			scriptname, error_count, warning_count);
 
@@ -113,7 +113,7 @@ cmd_setactive_activate(struct client_command_context *cmd,
 		struct event_passthrough *e =
 			client_command_create_finish_event(cmd)->
 			add_str("error", errormsg);
-		e_debug(e->event(), "Failed to activate script `%s': %s",
+		e_debug(e->event(), "Failed to activate script '%s': %s",
 			scriptname, errormsg);
 
 		client_send_no(client, errormsg);

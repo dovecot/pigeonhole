@@ -531,7 +531,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 				&header_value) < 0) {
 				return sieve_runtime_mail_error	(
 					renv, mail, "%s test: "
-					"failed to read header field `%s'",
+					"failed to read header field '%s'",
 					sieve_extension_name(ext),
 					max_header->header_name);
 			}
@@ -600,7 +600,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 	if (mail_get_first_header_utf8(mail, status_header->header_name,
 				       &header_value) < 0) {
 		return sieve_runtime_mail_error(
-			renv, mail, "%s test: failed to read header field `%s'",
+			renv, mail, "%s test: failed to read header field '%s'",
 			sieve_extension_name(ext), status_header->header_name);
 	}
 	if (header_value == NULL) {

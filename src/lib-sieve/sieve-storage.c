@@ -157,11 +157,11 @@ sieve_storage_driver_parse(struct sieve_instance *svinst, const char **data,
 		storage_class = sieve_storage_find_class(svinst, driver);
 		if (storage_class == NULL) {
 			e_error(svinst->event,
-				"Unknown storage driver module `%s'",
+				"Unknown storage driver module '%s'",
 				driver);
 		} else if (storage_class->v.alloc == NULL) {
 			e_error(svinst->event,
-				"Support not compiled in for storage driver `%s'",
+				"Support not compiled in for storage driver '%s'",
 				driver);
 			storage_class = NULL;
 		}
@@ -208,7 +208,7 @@ sieve_storage_data_parse(struct sieve_storage *storage, const char *data,
 					if (!sieve_script_name_is_valid(value)) {
 						e_error(storage->event,
 							"Failed to parse storage location: "
-							"Invalid script name `%s'.",
+							"Invalid script name '%s'.",
 							str_sanitize(value, 80));
 						return -1;
 					}
@@ -509,7 +509,7 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 		if (set_default_name != NULL && *set_default_name != '\0' &&
 		    !sieve_script_name_is_valid(set_default_name)) {
 			e_error(storage->event,
-				"Invalid script name `%s' for `sieve_default_name' setting.",
+				"Invalid script name '%s' for 'sieve_default_name' setting.",
 				str_sanitize(set_default_name, 80));
 			set_default_name = NULL;
 		}
@@ -519,7 +519,7 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 		if (storage->default_location != NULL &&
 			storage->default_name != NULL) {
 			e_debug(storage->event,
-				"Default script at `%s' is visible by name `%s'",
+				"Default script at '%s' is visible by name '%s'",
 				storage->default_location, storage->default_name);
 		}
 	} else if (*error_r != SIEVE_ERROR_TEMP_FAILURE &&
@@ -533,7 +533,7 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 				"No default script location configured");
 		} else {
 			e_debug(svinst->event, "storage: "
-				"Trying default script location `%s'",
+				"Trying default script location '%s'",
 				set_default);
 
 			storage = sieve_storage_create(svinst, set_default, 0,
@@ -542,18 +542,18 @@ sieve_storage_create_main(struct sieve_instance *svinst, struct mail_user *user,
 				switch (*error_r) {
 				case SIEVE_ERROR_NOT_FOUND:
 					e_debug(svinst->event, "storage: "
-						"Default script location `%s' not found",
+						"Default script location '%s' not found",
 						set_default);
 					break;
 				case SIEVE_ERROR_TEMP_FAILURE:
 					e_error(svinst->event, "storage: "
-						"Failed to access default script location `%s' "
+						"Failed to access default script location '%s' "
 						"(temporary failure)",
 						set_default);
 					break;
 				default:
 					e_error(svinst->event, "storage: "
-						"Failed to access default script location `%s'",
+						"Failed to access default script location '%s'",
 						set_default);
 					break;
 				}
@@ -686,7 +686,7 @@ sieve_storage_get_script_direct(struct sieve_storage *storage, const char *name,
 	if (name != NULL && !sieve_script_name_is_valid(name)) {
 		sieve_storage_set_error(storage,
 			SIEVE_ERROR_BAD_PARAMS,
-			"Invalid script name `%s'.",
+			"Invalid script name '%s'.",
 			str_sanitize(name, 80));
 		if (error_r != NULL)
 			*error_r = storage->error_code;
@@ -1050,7 +1050,7 @@ sieve_storage_save_create_event(struct sieve_storage *storage,
 		event_set_append_log_prefix(event, "save: ");
 	} else {
 		event_set_append_log_prefix(
-			event, t_strdup_printf("script `%s': save: ",
+			event, t_strdup_printf("script '%s': save: ",
 					       scriptname));
 	}
 
@@ -1087,7 +1087,7 @@ sieve_storage_save_init(struct sieve_storage *storage, const char *scriptname,
 		if (!sieve_script_name_is_valid(scriptname)) {
 			sieve_storage_set_error(storage,
 				SIEVE_ERROR_BAD_PARAMS,
-				"Invalid Sieve script name `%s'.",
+				"Invalid Sieve script name '%s'.",
 				str_sanitize(scriptname, 80));
 			return NULL;
 		}
@@ -1260,7 +1260,7 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 
 		if (ret < 0) {
 			e_error(sctx->event,
-				"Failed to implicitly activate script `%s' "
+				"Failed to implicitly activate script '%s' "
 				"while replacing the default active script",
 				scriptname);
 		}

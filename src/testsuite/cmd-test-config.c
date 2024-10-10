@@ -379,7 +379,7 @@ cmd_test_config_set_operation_execute(const struct sieve_runtime_env *renv,
 			renv, 0, "testsuite: test_config_set command");
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(
-			renv, 0, "set config `%s' = `%s'",
+			renv, 0, "set config '%s' = '%s'",
 			str_c(setting), str_c(value));
 	}
 
@@ -413,7 +413,7 @@ cmd_test_config_unset_operation_execute(const struct sieve_runtime_env *renv,
 			renv, 0, "testsuite: test_config_unset command");
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(
-			renv, 0, "unset config `%s'", str_c(setting));
+			renv, 0, "unset config '%s'", str_c(setting));
 	}
 
 	testsuite_setting_unset(str_c(setting));
@@ -482,7 +482,7 @@ cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 		if (sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS)) {
 			sieve_runtime_trace(
 				renv, 0,
-				"reload configuration for extension `%s'",
+				"reload configuration for extension '%s'",
 				str_c(extension));
 		}
 

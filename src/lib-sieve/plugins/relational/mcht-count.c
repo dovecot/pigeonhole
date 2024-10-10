@@ -85,7 +85,7 @@ mcht_count_match(struct sieve_match_context *mctx,
 	str_printfa(value, "%d", count);
 
 	if (trace) {
-		sieve_runtime_trace(renv, 0, "matching count value `%s'",
+		sieve_runtime_trace(renv, 0, "matching count value '%s'",
 				    str_sanitize(str_c(value), 80));
 	}
 
@@ -102,7 +102,7 @@ mcht_count_match(struct sieve_match_context *mctx,
 			str_c(key_item), str_len(key_item));
 
 		if (trace) {
-			sieve_runtime_trace(renv, 0, "with key `%s' => %d",
+			sieve_runtime_trace(renv, 0, "with key '%s' => %d",
 					    str_sanitize(str_c(key_item), 80),
 					    ret);
 		}

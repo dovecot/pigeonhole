@@ -227,7 +227,7 @@ cmd_set_operation_execute(const struct sieve_runtime_env *renv,
 						    &var_name);
 		var_id = sieve_variable_get_varid(storage, var_index);
 
-		sieve_runtime_trace_here(renv, 0, "assign `%s' [%s] = \"%s\"",
+		sieve_runtime_trace_here(renv, 0, "assign '%s' [%s] = \"%s\"",
 					 var_name, var_id, str_c(value));
 	}
 

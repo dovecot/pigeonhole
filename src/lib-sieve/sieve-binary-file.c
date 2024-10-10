@@ -824,7 +824,7 @@ static int _read_extensions(struct sieve_binary_block *sblock)
 
 				if (ext == NULL) {
 					e_error(sbin->event, "open: "
-						"binary requires unknown extension `%s'",
+						"binary requires unknown extension '%s'",
 						str_sanitize(str_c(extension), 128));
 					result = 0;
 				} else {
@@ -837,7 +837,7 @@ static int _read_extensions(struct sieve_binary_block *sblock)
 					} else if (!sieve_extension_version_is(ext, version)) {
 						e_debug(sbin->event, "open: "
 							"binary was compiled with different version "
-							"of the `%s' extension (compiled v%d, expected v%d;"
+							"of the '%s' extension (compiled v%d, expected v%d;"
 							"automatically fixed when re-compiled)",
 							sieve_extension_name(ext), version,
 							sieve_extension_version(ext));

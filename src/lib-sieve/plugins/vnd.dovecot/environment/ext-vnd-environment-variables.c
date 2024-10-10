@@ -73,7 +73,7 @@ vnspc_vnd_environment_validate(
 		if (name_elements[i].num_variable >= 0) {
 			sieve_argument_validate_error(
 				valdtr, arg, "vnd.dovecot.environment: "
-				"invalid variable name within env namespace `env.%d': "
+				"invalid variable name within env namespace 'env.%d': "
 				"encountered numeric variable name",
 				name_elements[i].num_variable);
 			return FALSE;
@@ -88,7 +88,7 @@ vnspc_vnd_environment_validate(
 	if (assignment) {
 		sieve_argument_validate_error(
 			valdtr, arg, "vnd.dovecot.environment: "
-			"cannot assign to environment variable `env.%s'",
+			"cannot assign to environment variable 'env.%s'",
 			variable);
 		return FALSE;
 	}

@@ -53,7 +53,7 @@ sieve_match_begin(const struct sieve_runtime_env *renv,
 	if (mctx->trace) {
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(
-			renv, 0, "starting `:%s' match with `%s' comparator:",
+			renv, 0, "starting ':%s' match with '%s' comparator:",
 			sieve_match_type_name(mcht),
 			sieve_comparator_name(cmp));
 	}
@@ -74,7 +74,7 @@ int sieve_match_value(struct sieve_match_context *mctx,
 	int match, ret;
 
 	if (mctx->trace) {
-		sieve_runtime_trace(renv, 0, "matching value `%s'",
+		sieve_runtime_trace(renv, 0, "matching value '%s'",
 				    str_sanitize(value, 80));
 	}
 
@@ -104,7 +104,7 @@ int sieve_match_value(struct sieve_match_context *mctx,
 				str_c(key_item), str_len(key_item));
 			if (mctx->trace) {
 				sieve_runtime_trace(
-					renv, 0, "with key `%s' => %d",
+					renv, 0, "with key '%s' => %d",
 					str_sanitize(str_c(key_item), 80),
 					match);
 			}

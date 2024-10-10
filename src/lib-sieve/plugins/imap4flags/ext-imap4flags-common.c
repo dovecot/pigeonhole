@@ -494,7 +494,7 @@ ext_imap4flags_get_flag_variable(const struct sieve_runtime_env *renv,
 			var_id = sieve_variable_get_varid(storage, var_index);
 
 			sieve_runtime_trace(renv, 0,
-					    "update variable `%s' [%s]",
+					    "update variable '%s' [%s]",
 					    var_name, var_id);
 		}
 
@@ -524,7 +524,7 @@ int sieve_ext_imap4flags_set_flags(const struct sieve_runtime_env *renv,
 		while ((ret = sieve_stringlist_next_item(
 			flags, &flags_item)) > 0) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-					    "set flags `%s'",
+					    "set flags '%s'",
 					    str_c(flags_item));
 
 			flags_list_add_flags(cur_flags, flags_item);
@@ -553,7 +553,7 @@ int sieve_ext_imap4flags_add_flags(const struct sieve_runtime_env *renv,
 		while ((ret = sieve_stringlist_next_item(
 			flags, &flags_item)) > 0) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-					    "add flags `%s'",
+					    "add flags '%s'",
 					    str_c(flags_item));
 
 			flags_list_add_flags(cur_flags, flags_item);
@@ -583,7 +583,7 @@ int sieve_ext_imap4flags_remove_flags(const struct sieve_runtime_env *renv,
 		while ((ret = sieve_stringlist_next_item(
 			flags, &flags_item)) > 0) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-					    "remove flags `%s'",
+					    "remove flags '%s'",
 					    str_c(flags_item));
 
 			flags_list_remove_flags(cur_flags, flags_item);

@@ -332,7 +332,7 @@ content_type_param_next(struct content_header_stringlist *strlist)
 					/* Return raw value */
 					if (trace) {
 						sieve_runtime_trace(renv, 0,
-							"found mime parameter `%s' in mime header",
+							"found mime parameter '%s' in mime header",
 							*params);
 					}
 

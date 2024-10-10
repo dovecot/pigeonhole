@@ -396,7 +396,7 @@ cmd_execute_operation_execute(const struct sieve_runtime_env *renv,
 	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "execute action");
 	sieve_runtime_trace_descend(renv);
 	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
-			    "execute program `%s'",
+			    "execute program '%s'",
 			    str_sanitize(program_name, 128));
 
 	sprog = sieve_extprogram_create(this_ext, eenv->scriptenv,
@@ -461,13 +461,13 @@ cmd_execute_operation_execute(const struct sieve_runtime_env *renv,
 		if (error == SIEVE_ERROR_NOT_FOUND) {
 			sieve_runtime_error(
 				renv, NULL,
-				"execute action: program `%s' not found",
+				"execute action: program '%s' not found",
 				str_sanitize(program_name, 80));
 		} else {
 			sieve_extprogram_exec_error(
 				renv->ehandler,
 				sieve_runtime_get_full_command_location(renv),
-				"execute action: failed to execute to program `%s'",
+				"execute action: failed to execute to program '%s'",
 				str_sanitize(program_name, 80));
 		}
 	} else {

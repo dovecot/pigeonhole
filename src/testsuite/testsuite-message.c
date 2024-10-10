@@ -261,7 +261,7 @@ void testsuite_envelope_set_sender(const struct sieve_runtime_env *renv,
 				    &address, &error) < 0) {
 		e_error(testsuite_sieve_instance->event,
 			"testsuite: envelope sender address "
-			"`%s' is invalid: %s", value, error);
+			"'%s' is invalid: %s", value, error);
 	}
 	testsuite_envelope_set_sender_address(renv, address);
 }
@@ -293,7 +293,7 @@ void testsuite_envelope_set_recipient(const struct sieve_runtime_env *renv,
 				    &address, &error) < 0) {
 		e_error(testsuite_sieve_instance->event,
 			"testsuite: envelope recipient address "
-			"`%s' is invalid: %s", value, error);
+			"'%s' is invalid: %s", value, error);
 	}
 	testsuite_envelope_set_recipient_address(renv, address);
 }
@@ -322,7 +322,7 @@ void testsuite_envelope_set_orig_recipient(const struct sieve_runtime_env *renv,
 				    &address, &error) < 0) {
 		e_error(testsuite_sieve_instance->event,
 			"testsuite: envelope recipient address "
-			"`%s' is invalid: %s", value, error);
+			"'%s' is invalid: %s", value, error);
 	}
 	testsuite_envelope_set_orig_recipient_address(renv, address);
 }
