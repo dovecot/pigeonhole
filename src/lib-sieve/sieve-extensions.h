@@ -153,9 +153,9 @@ const struct sieve_extension *
 sieve_extension_get_by_name(struct sieve_instance *svinst, const char *name);
 
 const char *sieve_extensions_get_string(struct sieve_instance *svinst);
-void sieve_extensions_set_string(struct sieve_instance *svinst,
-				 const char *ext_string, bool global,
-				 bool implicit);
+int sieve_extensions_set_string(struct sieve_instance *svinst,
+				const char *ext_string, bool global,
+				bool implicit);
 
 const struct sieve_extension *
 sieve_get_match_type_extension(struct sieve_instance *svinst);
