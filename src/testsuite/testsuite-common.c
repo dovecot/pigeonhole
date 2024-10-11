@@ -344,6 +344,8 @@ const char *testsuite_tmp_dir_get(void)
 void testsuite_init(struct sieve_instance *svinst, const char *test_path,
 		    bool log_stdout)
 {
+	int ret;
+
 	testsuite_sieve_instance = svinst;
 
 	testsuite_test_context_init();
@@ -354,8 +356,9 @@ void testsuite_init(struct sieve_instance *svinst, const char *test_path,
 	testsuite_binary_init();
 	testsuite_smtp_init();
 
-	testsuite_ext =
-		sieve_extension_register(svinst, &testsuite_extension, TRUE);
+	ret = sieve_extension_register(svinst, &testsuite_extension, TRUE,
+				       &testsuite_ext);
+	i_assert(ret == 0);
 
 	testsuite_test_path = i_strdup(test_path);
 }

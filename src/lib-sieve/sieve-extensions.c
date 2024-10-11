@@ -22,10 +22,11 @@ static void sieve_extension_registry_deinit(struct sieve_instance *svinst);
 static void sieve_capability_registry_init(struct sieve_instance *svinst);
 static void sieve_capability_registry_deinit(struct sieve_instance *svinst);
 
-static struct sieve_extension *
+static int
 _sieve_extension_register(struct sieve_instance *svinst,
 			  const struct sieve_extension_def *extdef,
-			  bool load, bool required);
+			  bool load, bool required,
+			  struct sieve_extension **ext_r);
 
 /*
  * Instance global context
@@ -188,7 +189,7 @@ int sieve_extensions_init(struct sieve_instance *svinst)
 	unsigned int i;
 	struct sieve_extension_registry *ext_reg =
 		p_new(svinst->pool, struct sieve_extension_registry, 1);
-	struct sieve_extension *ext;
+	int ret;
 
 	svinst->ext_reg = ext_reg;
 
@@ -196,12 +197,15 @@ int sieve_extensions_init(struct sieve_instance *svinst)
 	sieve_capability_registry_init(svinst);
 
 	/* Preloaded 'extensions' */
-	ext_reg->comparator_extension =
-		sieve_extension_register(svinst, &comparator_extension, TRUE);
-	ext_reg->match_type_extension =
-		sieve_extension_register(svinst, &match_type_extension, TRUE);
-	ext_reg->address_part_extension =
-		sieve_extension_register(svinst, &address_part_extension, TRUE);
+	ret = sieve_extension_register(svinst, &comparator_extension, TRUE,
+				       &ext_reg->comparator_extension);
+	i_assert(ret == 0);
+	ret = sieve_extension_register(svinst, &match_type_extension, TRUE,
+				       &ext_reg->match_type_extension);
+	i_assert(ret == 0);
+	ret = sieve_extension_register(svinst, &address_part_extension, TRUE,
+				       &ext_reg->address_part_extension);
+	i_assert(ret == 0);
 
 	p_array_init(&ext_reg->preloaded_extensions, svinst->pool, 5);
 	array_append(&ext_reg->preloaded_extensions,
@@ -213,24 +217,25 @@ int sieve_extensions_init(struct sieve_instance *svinst)
 
 	/* Pre-load dummy extensions */
 	for (i = 0; i < sieve_dummy_extensions_count; i++) {
-		if ((ext = _sieve_extension_register(
-			svinst, sieve_dummy_extensions[i],
-			TRUE, FALSE)) == NULL)
+		struct sieve_extension *ext;
+
+		if (_sieve_extension_register(svinst, sieve_dummy_extensions[i],
+					      TRUE, FALSE, &ext) < 0)
 			return -1;
 		ext->dummy = TRUE;
 	}
 
 	/* Pre-load core extensions */
 	for (i = 0; i < sieve_core_extensions_count; i++) {
-		if (sieve_extension_register(
-			svinst, sieve_core_extensions[i], TRUE) == NULL)
+		if (sieve_extension_register(svinst, sieve_core_extensions[i],
+					     TRUE, NULL) < 0)
 			return -1;
 	}
 
 	/* Pre-load extra extensions */
 	for (i = 0; i < sieve_extra_extensions_count; i++) {
-		if (sieve_extension_register(
-			svinst, sieve_extra_extensions[i], FALSE) == NULL)
+		if (sieve_extension_register(svinst, sieve_extra_extensions[i],
+					     FALSE, NULL) < 0)
 			return -1;
 	}
 
@@ -238,7 +243,8 @@ int sieve_extensions_init(struct sieve_instance *svinst)
 	/* Register unfinished extensions */
 	for (i = 0; i < sieve_unfinished_extensions_count; i++) {
 		if (sieve_extension_register(
-			svinst, sieve_unfinished_extensions[i], FALSE) == NULL)
+			svinst, sieve_unfinished_extensions[i], FALSE,
+			NULL) < 0)
 			return -1;
 	}
 #endif
@@ -378,13 +384,16 @@ sieve_extension_alloc(struct sieve_instance *svinst,
 	return ext;
 }
 
-static struct sieve_extension *
+static int
 _sieve_extension_register(struct sieve_instance *svinst,
 			  const struct sieve_extension_def *extdef,
-			  bool load, bool required)
+			  bool load, bool required,
+			  struct sieve_extension **ext_r)
 {
 	struct sieve_extension *ext;
 
+	if (ext_r != NULL)
+		*ext_r = NULL;
 	ext = sieve_extension_lookup(svinst, extdef->name);
 
 	/* Register extension if it is not registered already */
@@ -410,20 +419,43 @@ _sieve_extension_register(struct sieve_instance *svinst,
 		/* Call load handler if extension was not loaded already */
 		if (!ext->loaded) {
 			if (!_sieve_extension_load(ext))
-				return NULL;
+				return -1;
 		}
 		ext->loaded = TRUE;
 	}
 
 	ext->required = (ext->required || required);
-	return ext;
+
+	if (ext_r != NULL)
+		*ext_r = ext;
+	return 0;
 }
 
-const struct sieve_extension *
-sieve_extension_register(struct sieve_instance *svinst,
-			 const struct sieve_extension_def *extdef, bool load)
+static inline int
+_sieve_extension_register_const(struct sieve_instance *svinst,
+				const struct sieve_extension_def *extdef,
+				bool load, bool required,
+				const struct sieve_extension **ext_r)
 {
-	return _sieve_extension_register(svinst, extdef, load, FALSE);
+	struct sieve_extension *ext;
+
+	if (_sieve_extension_register(svinst, extdef, load, required,
+				      &ext) < 0) {
+		if (ext_r != NULL)
+			*ext_r = NULL;
+		return -1;
+	}
+	if (ext_r != NULL)
+		*ext_r = ext;
+	return 0;
+}
+
+int sieve_extension_register(struct sieve_instance *svinst,
+			     const struct sieve_extension_def *extdef,
+			     bool load, const struct sieve_extension **ext_r)
+{
+	return _sieve_extension_register_const(svinst, extdef, load, FALSE,
+					       ext_r);
 }
 
 void sieve_extension_unregister(const struct sieve_extension *ext)
@@ -455,14 +487,24 @@ sieve_extension_replace(struct sieve_instance *svinst,
 	ext = sieve_extension_lookup(svinst, extdef->name);
 	if (ext != NULL)
 		sieve_extension_unregister(ext);
-	return sieve_extension_register(svinst, extdef, load);
+
+	const struct sieve_extension *ext_new;
+
+	if (sieve_extension_register(svinst, extdef, load, &ext_new) < 0)
+		return NULL;
+	return ext_new;
 }
 
 const struct sieve_extension *
 sieve_extension_require(struct sieve_instance *svinst,
 			const struct sieve_extension_def *extdef, bool load)
 {
-	return _sieve_extension_register(svinst, extdef, load, TRUE);
+	const struct sieve_extension *ext;
+
+	if (_sieve_extension_register_const(svinst, extdef, load, TRUE,
+					    &ext) < 0)
+		return NULL;
+	return ext;
 }
 
 void sieve_extension_override(struct sieve_instance *svinst, const char *name,
@@ -759,7 +801,12 @@ sieve_get_address_part_extension(struct sieve_instance *svinst)
 
 void sieve_enable_debug_extension(struct sieve_instance *svinst)
 {
-	(void)sieve_extension_register(svinst, &vnd_debug_extension, TRUE);
+	const struct sieve_extension *ext;
+	int ret;
+
+	ret = sieve_extension_register(svinst, &vnd_debug_extension, TRUE,
+				       &ext);
+	i_assert(ret == 0);
 }
 
 /*

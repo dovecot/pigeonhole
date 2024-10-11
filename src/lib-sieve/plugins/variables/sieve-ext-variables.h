@@ -31,7 +31,12 @@ extern const struct sieve_extension_def variables_extension;
 static inline const struct sieve_extension *
 sieve_ext_variables_get_extension(struct sieve_instance *svinst)
 {
-	return sieve_extension_register(svinst, &variables_extension, FALSE);
+	const struct sieve_extension *ext;
+
+	if (sieve_extension_register(svinst, &variables_extension, FALSE,
+				     &ext) < 0)
+		return NULL;
+	return ext;
 }
 
 /*
