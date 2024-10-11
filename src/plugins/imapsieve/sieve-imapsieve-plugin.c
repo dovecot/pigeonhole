@@ -20,7 +20,7 @@ struct _plugin_context {
 
 const char *sieve_imapsieve_plugin_version = PIGEONHOLE_ABI_VERSION;
 
-void sieve_imapsieve_plugin_load(struct sieve_instance *svinst, void **context)
+int sieve_imapsieve_plugin_load(struct sieve_instance *svinst, void **context)
 {
 	const struct sieve_extension *ext_imapsieve;
 	const struct sieve_extension *ext_vnd_imapsieve;
@@ -28,10 +28,10 @@ void sieve_imapsieve_plugin_load(struct sieve_instance *svinst, void **context)
 
 	if (sieve_extension_register(svinst, &imapsieve_extension_dummy,
 				     TRUE, &ext_imapsieve) < 0)
-		ext_imapsieve = NULL;
+		return -1;
 	if (sieve_extension_register(svinst, &vnd_imapsieve_extension_dummy,
 				     TRUE, &ext_vnd_imapsieve) < 0)
-		ext_vnd_imapsieve = NULL;
+		return -1;
 
 	pctx = i_new(struct _plugin_context, 1);
 	pctx->ext_imapsieve = ext_imapsieve;
@@ -42,6 +42,7 @@ void sieve_imapsieve_plugin_load(struct sieve_instance *svinst, void **context)
 		PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 
 	*context = pctx;
+	return 0;
 }
 
 void sieve_imapsieve_plugin_unload(struct sieve_instance *svinst ATTR_UNUSED,
