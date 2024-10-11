@@ -117,7 +117,7 @@ int sieve_init(const struct sieve_environment *env,
 	sieve_settings_load(svinst);
 
 	/* Initialize extensions */
-	if (!sieve_extensions_init(svinst)) {
+	if (sieve_extensions_init(svinst) < 0) {
 		sieve_deinit(&svinst);
 		return -1;
 	}

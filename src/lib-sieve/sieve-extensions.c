@@ -183,7 +183,7 @@ const unsigned int sieve_unfinished_extensions_count =
  * Extensions init/deinit
  */
 
-bool sieve_extensions_init(struct sieve_instance *svinst)
+int sieve_extensions_init(struct sieve_instance *svinst)
 {
 	unsigned int i;
 	struct sieve_extension_registry *ext_reg =
@@ -216,7 +216,7 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 		if ((ext = _sieve_extension_register(
 			svinst, sieve_dummy_extensions[i],
 			TRUE, FALSE)) == NULL)
-			return FALSE;
+			return -1;
 		ext->dummy = TRUE;
 	}
 
@@ -224,14 +224,14 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	for (i = 0; i < sieve_core_extensions_count; i++) {
 		if (sieve_extension_register(
 			svinst, sieve_core_extensions[i], TRUE) == NULL)
-			return FALSE;
+			return -1;
 	}
 
 	/* Pre-load extra extensions */
 	for (i = 0; i < sieve_extra_extensions_count; i++) {
 		if (sieve_extension_register(
 			svinst, sieve_extra_extensions[i], FALSE) == NULL)
-			return FALSE;
+			return -1;
 	}
 
 #ifdef HAVE_SIEVE_UNFINISHED
@@ -239,12 +239,12 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	for (i = 0; i < sieve_unfinished_extensions_count; i++) {
 		if (sieve_extension_register(
 			svinst, sieve_unfinished_extensions[i], FALSE) == NULL)
-			return FALSE;
+			return -1;
 	}
 #endif
 
 	/* More extensions can be added through plugins */
-	return TRUE;
+	return 0;
 }
 
 void sieve_extensions_configure(struct sieve_instance *svinst)
