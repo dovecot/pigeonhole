@@ -19,11 +19,11 @@ extern const struct sieve_extension_def vnd_imapsieve_extension_dummy;
  * Environment items
  */
 
-void ext_imapsieve_environment_items_register
-	(const struct sieve_extension *ext,
-		const struct sieve_runtime_env *renv);
-void ext_imapsieve_environment_vendor_items_register
-	(const struct sieve_extension *ext,
-		const struct sieve_runtime_env *renv);
+void ext_imapsieve_environment_items_register(
+	const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv);
+void ext_imapsieve_environment_vendor_items_register(
+	const struct sieve_extension *ext,
+	const struct sieve_runtime_env *renv);
 
 #endif
