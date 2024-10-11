@@ -15,7 +15,7 @@
  * Types
  */
 
-typedef void
+typedef int
 (*sieve_plugin_load_func_t)(struct sieve_instance *svinst, void **context);
 typedef void
 (*sieve_plugin_unload_func_t)(struct sieve_instance *svinst, void *context);
@@ -53,8 +53,8 @@ static struct module *sieve_plugin_module_find(const char *name)
 	return NULL;
 }
 
-void sieve_plugins_load(struct sieve_instance *svinst, const char *path,
-			const char *plugins)
+int sieve_plugins_load(struct sieve_instance *svinst, const char *path,
+		       const char *plugins)
 {
 	struct module *module;
 	struct module_dir_load_settings mod_set;
@@ -69,7 +69,7 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path,
 	}
 
 	if (plugins == NULL || *plugins == '\0')
-		return;
+		return 0;
 
 	if (path == NULL || *path == '\0')
 		path = MODULEDIR"/sieve";
@@ -123,10 +123,12 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path,
 		plugin->module = module;
 
 		/* Call load function */
-		load_func = (sieve_plugin_load_func_t) module_get_symbol
-			(module, t_strdup_printf("%s_load", module->name));
-		if (load_func != NULL)
-			load_func(svinst, &plugin->context);
+		load_func = (sieve_plugin_load_func_t)
+			module_get_symbol(module,
+				t_strdup_printf("%s_load", module->name));
+		if (load_func != NULL &&
+		    load_func(svinst, &plugin->context) < 0)
+			return -1;
 
 		/* Add plugin to the instance */
 		if (svinst->plugins == NULL)
@@ -141,6 +143,7 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path,
 			plugin_last->next = plugin;
 		}
 	}
+	return 0;
 }
 
 void sieve_plugins_unload(struct sieve_instance *svinst)

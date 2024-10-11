@@ -182,21 +182,23 @@ const struct sieve_storage sieve_ldap_storage_plugin = {
 
 const char *sieve_storage_ldap_plugin_version = PIGEONHOLE_ABI_VERSION;
 
-void sieve_storage_ldap_plugin_load(struct sieve_instance *svinst,
-				    void **context);
+int sieve_storage_ldap_plugin_load(struct sieve_instance *svinst,
+				   void **context);
 void sieve_storage_ldap_plugin_unload(struct sieve_instance *svinst,
 				      void *context);
 void sieve_storage_ldap_plugin_init(void);
 void sieve_storage_ldap_plugin_deinit(void);
 
-void sieve_storage_ldap_plugin_load(struct sieve_instance *svinst,
-				    void **context ATTR_UNUSED)
+int sieve_storage_ldap_plugin_load(struct sieve_instance *svinst,
+				   void **context ATTR_UNUSED)
 {
 	sieve_storage_class_register(svinst, &sieve_ldap_storage_plugin);
 
 	e_debug(svinst->event,
 		"Sieve LDAP storage plugin for %s version %s loaded",
 		PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
+
+	return 0;
 }
 
 void sieve_storage_ldap_plugin_unload(struct sieve_instance *svinst ATTR_UNUSED,

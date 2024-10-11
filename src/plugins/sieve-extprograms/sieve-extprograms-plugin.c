@@ -20,8 +20,8 @@ struct _plugin_context {
 
 const char *sieve_extprograms_plugin_version = PIGEONHOLE_ABI_VERSION;
 
-void sieve_extprograms_plugin_load(struct sieve_instance *svinst,
-				   void **context)
+int sieve_extprograms_plugin_load(struct sieve_instance *svinst,
+				  void **context)
 {
 	const struct sieve_extension *ext_pipe;
 	const struct sieve_extension *ext_filter;
@@ -30,13 +30,13 @@ void sieve_extprograms_plugin_load(struct sieve_instance *svinst,
 
 	if (sieve_extension_register(svinst, &sieve_ext_vnd_pipe, FALSE,
 				     &ext_pipe) < 0)
-		ext_pipe = NULL;
+		return -1;
 	if (sieve_extension_register(svinst, &sieve_ext_vnd_filter, FALSE,
 				     &ext_filter) < 0)
-		ext_filter = NULL;
+		return -1;
 	if (sieve_extension_register(svinst, &sieve_ext_vnd_execute, FALSE,
 				     &ext_execute) < 0)
-		ext_execute = NULL;
+		return -1;
 
 	pctx = i_new(struct _plugin_context, 1);
 	pctx->ext_pipe = ext_pipe;
@@ -50,6 +50,7 @@ void sieve_extprograms_plugin_load(struct sieve_instance *svinst,
 	}
 
 	*context = pctx;
+	return 0;
 }
 
 void sieve_extprograms_plugin_unload(struct sieve_instance *svinst ATTR_UNUSED,
