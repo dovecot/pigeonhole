@@ -479,6 +479,18 @@ void sieve_extension_unregister(const struct sieve_extension *ext)
 }
 
 const struct sieve_extension *
+sieve_extension_require(struct sieve_instance *svinst,
+			const struct sieve_extension_def *extdef, bool load)
+{
+	const struct sieve_extension *ext;
+
+	if (_sieve_extension_register_const(svinst, extdef, load, TRUE,
+					    &ext) < 0)
+		return NULL;
+	return ext;
+}
+
+const struct sieve_extension *
 sieve_extension_replace(struct sieve_instance *svinst,
 			const struct sieve_extension_def *extdef, bool load)
 {
@@ -493,18 +505,6 @@ sieve_extension_replace(struct sieve_instance *svinst,
 	if (sieve_extension_register(svinst, extdef, load, &ext_new) < 0)
 		return NULL;
 	return ext_new;
-}
-
-const struct sieve_extension *
-sieve_extension_require(struct sieve_instance *svinst,
-			const struct sieve_extension_def *extdef, bool load)
-{
-	const struct sieve_extension *ext;
-
-	if (_sieve_extension_register_const(svinst, extdef, load, TRUE,
-					    &ext) < 0)
-		return NULL;
-	return ext;
 }
 
 void sieve_extension_override(struct sieve_instance *svinst, const char *name,
