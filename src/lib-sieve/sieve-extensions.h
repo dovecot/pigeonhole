@@ -133,7 +133,7 @@ int sieve_extension_register(struct sieve_instance *svinst,
 int sieve_extension_require(struct sieve_instance *svinst,
 			    const struct sieve_extension_def *extdef, bool load,
 			    const struct sieve_extension **ext_r);
-bool sieve_extension_reload(const struct sieve_extension *ext);
+int sieve_extension_reload(const struct sieve_extension *ext);
 
 void sieve_extension_unregister(const struct sieve_extension *ext);
 
