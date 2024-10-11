@@ -55,7 +55,7 @@ void sieve_extprograms_plugin_load(struct sieve_instance *svinst,
 void sieve_extprograms_plugin_unload(struct sieve_instance *svinst ATTR_UNUSED,
 				     void *context)
 {
-	struct _plugin_context *pctx = (struct _plugin_context *)context;
+	struct _plugin_context *pctx = context;
 
 	sieve_extension_unregister(pctx->ext_pipe);
 	sieve_extension_unregister(pctx->ext_filter);
