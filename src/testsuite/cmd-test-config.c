@@ -496,7 +496,12 @@ cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 			       str_c(extension));
 			return SIEVE_EXEC_FAILURE;
 		}
-		sieve_extension_reload(ext);
+		if (sieve_extension_reload(ext) < 0) {
+			return testsuite_test_failf(
+				renv, "test_config_reload: "
+				"failed to load extension '%s'",
+				str_c(extension));
+		}
 	}
 	return SIEVE_EXEC_OK;
 }
