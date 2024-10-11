@@ -16,7 +16,12 @@ extern const struct sieve_interpreter_extension
 static inline const struct sieve_extension *
 sieve_ext_imap4flags_require_extension(struct sieve_instance *svinst)
 {
-	return sieve_extension_require(svinst, &imap4flags_extension, TRUE);
+	const struct sieve_extension *ext;
+
+	if (sieve_extension_require(svinst, &imap4flags_extension, TRUE,
+				    &ext) < 0)
+		return NULL;
+	return ext;
 }
 
 void sieve_ext_imap4flags_interpreter_load(

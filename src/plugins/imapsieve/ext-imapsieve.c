@@ -100,11 +100,13 @@ ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context)
 
 	extctx = i_new(struct ext_vnd_imapsieve_context, 1);
 #ifdef __IMAPSIEVE_DUMMY
-	extctx->ext_imapsieve = sieve_extension_require(
-		ext->svinst, &imapsieve_extension_dummy, TRUE);
+	if (sieve_extension_require(ext->svinst, &imapsieve_extension_dummy,
+				    TRUE, &extctx->ext_imapsieve) < 0)
+		return FALSE;
 #else
-	extctx->ext_imapsieve = sieve_extension_require(
-		ext->svinst, &imapsieve_extension, TRUE);
+	if (sieve_extension_require(ext->svinst, &imapsieve_extension,
+				    TRUE, &extctx->ext_imapsieve) < 0)
+		return FALSE;
 #endif
 
 	*context = extctx;
