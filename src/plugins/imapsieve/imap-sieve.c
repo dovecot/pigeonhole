@@ -92,10 +92,13 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 		       debug, &isieve->svinst) < 0)
 		return isieve;
 
-	isieve->ext_imapsieve = sieve_extension_replace(
-		isieve->svinst, &imapsieve_extension, TRUE);
-	isieve->ext_vnd_imapsieve = sieve_extension_replace(
-		isieve->svinst, &vnd_imapsieve_extension, TRUE);
+	if (sieve_extension_replace(isieve->svinst, &imapsieve_extension,
+				    TRUE, &isieve->ext_imapsieve) < 0 ||
+	    sieve_extension_replace(isieve->svinst, &vnd_imapsieve_extension,
+				    TRUE, &isieve->ext_vnd_imapsieve) < 0) {
+		sieve_deinit(&isieve->svinst);
+		return isieve;
+	}
 
 	isieve->master_ehandler =
 		sieve_master_ehandler_create(isieve->svinst, 0);
