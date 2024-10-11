@@ -128,8 +128,8 @@ int sieve_init(const struct sieve_environment *env,
 	/* Initialize plugins */
 	sieve_plugins_load(svinst, NULL, NULL);
 
-	/* Configure extensions */
-	sieve_extensions_configure(svinst);
+	/* Load extensions */
+	sieve_extensions_load(svinst);
 
 	*svinst_r = svinst;
 	return 0;

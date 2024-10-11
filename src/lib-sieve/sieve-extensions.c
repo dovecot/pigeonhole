@@ -247,7 +247,7 @@ int sieve_extensions_init(struct sieve_instance *svinst)
 	return 0;
 }
 
-void sieve_extensions_configure(struct sieve_instance *svinst)
+void sieve_extensions_load(struct sieve_instance *svinst)
 {
 	const char *extensions;
 
