@@ -127,10 +127,9 @@ sieve_extensions_get_preloaded(struct sieve_instance *svinst,
  * Extension registry
  */
 
-const struct sieve_extension *
-sieve_extension_register(struct sieve_instance *svinst,
-			 const struct sieve_extension_def *extension,
-			 bool load);
+int sieve_extension_register(struct sieve_instance *svinst,
+			     const struct sieve_extension_def *extdef,
+			     bool load, const struct sieve_extension **ext_r);
 const struct sieve_extension *
 sieve_extension_require(struct sieve_instance *svinst,
 			const struct sieve_extension_def *extension, bool load);

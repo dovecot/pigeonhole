@@ -22,12 +22,20 @@ const char *sieve_imapsieve_plugin_version = PIGEONHOLE_ABI_VERSION;
 
 void sieve_imapsieve_plugin_load(struct sieve_instance *svinst, void **context)
 {
-	struct _plugin_context *pctx = i_new(struct _plugin_context, 1);
+	const struct sieve_extension *ext_imapsieve;
+	const struct sieve_extension *ext_vnd_imapsieve;
+	struct _plugin_context *pctx;
 
-	pctx->ext_imapsieve = sieve_extension_register(
-		svinst, &imapsieve_extension_dummy, TRUE);
-	pctx->ext_vnd_imapsieve = sieve_extension_register(
-		svinst, &vnd_imapsieve_extension_dummy, TRUE);
+	if (sieve_extension_register(svinst, &imapsieve_extension_dummy,
+				     TRUE, &ext_imapsieve) < 0)
+		ext_imapsieve = NULL;
+	if (sieve_extension_register(svinst, &vnd_imapsieve_extension_dummy,
+				     TRUE, &ext_vnd_imapsieve) < 0)
+		ext_vnd_imapsieve = NULL;
+
+	pctx = i_new(struct _plugin_context, 1);
+	pctx->ext_imapsieve = ext_imapsieve;
+	pctx->ext_vnd_imapsieve = ext_vnd_imapsieve;
 
 	e_debug(sieve_get_event(svinst),
 		"Sieve imapsieve plugin for %s version %s loaded",
