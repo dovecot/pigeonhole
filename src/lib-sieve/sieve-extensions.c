@@ -253,30 +253,34 @@ int sieve_extensions_init(struct sieve_instance *svinst)
 	return 0;
 }
 
-void sieve_extensions_load(struct sieve_instance *svinst)
+int sieve_extensions_load(struct sieve_instance *svinst)
 {
 	const char *extensions;
 
 	/* Apply sieve_extensions configuration */
 	if ((extensions = sieve_setting_get(
 		svinst, "sieve_extensions")) != NULL) {
-		(void)sieve_extensions_set_string(svinst, extensions,
-						  FALSE, FALSE);
+		if (sieve_extensions_set_string(svinst, extensions,
+						FALSE, FALSE) < 0)
+			return -1;
 	}
 
 	/* Apply sieve_global_extensions configuration */
 	if ((extensions = sieve_setting_get(
 		svinst, "sieve_global_extensions")) != NULL) {
-		(void)sieve_extensions_set_string(svinst, extensions,
-						  TRUE, FALSE);
+		if (sieve_extensions_set_string(svinst, extensions,
+						TRUE, FALSE) < 0)
+			return -1;
 	}
 
 	/* Apply sieve_implicit_extensions configuration */
 	if ((extensions = sieve_setting_get(
 		svinst, "sieve_implicit_extensions")) != NULL) {
-		(void)sieve_extensions_set_string(svinst, extensions,
-						  FALSE, TRUE);
+		if (sieve_extensions_set_string(svinst, extensions,
+						FALSE, TRUE) < 0)
+			return -1;
 	}
+	return 0;
 }
 
 void sieve_extensions_deinit(struct sieve_instance *svinst)
