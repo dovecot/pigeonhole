@@ -296,7 +296,7 @@ sieve_extensions_get_preloaded(struct sieve_instance *svinst,
  * Extension registry
  */
 
-static bool _sieve_extension_load(struct sieve_extension *ext)
+static int _sieve_extension_load(struct sieve_extension *ext)
 {
 	/* Call load handler */
 	if (ext->def != NULL && ext->def->load != NULL &&
@@ -304,9 +304,9 @@ static bool _sieve_extension_load(struct sieve_extension *ext)
 		e_error(ext->svinst->event,
 			"failed to load '%s' extension support.",
 			ext->def->name);
-		return FALSE;
+		return -1;
 	}
-	return TRUE;
+	return 0;
 }
 
 static void _sieve_extension_unload(struct sieve_extension *ext)
@@ -403,7 +403,7 @@ _sieve_extension_register(struct sieve_instance *svinst,
 
 		/* Call load handler if extension was not loaded already */
 		if (!ext->loaded) {
-			if (!_sieve_extension_load(ext))
+			if (_sieve_extension_load(ext) < 0)
 				return -1;
 		}
 		ext->loaded = TRUE;
@@ -471,19 +471,18 @@ int sieve_extension_require(struct sieve_instance *svinst,
 					       ext_r);
 }
 
-bool sieve_extension_reload(const struct sieve_extension *ext)
+int sieve_extension_reload(const struct sieve_extension *ext)
 {
 	struct sieve_extension_registry *ext_reg = ext->svinst->ext_reg;
 	struct sieve_extension *const *mod_ext;
 	int ext_id = ext->id;
 
 	/* Let's not just cast the 'const' away */
-	if (ext_id >= 0 && ext_id < (int) array_count(&ext_reg->extensions)) {
-		mod_ext = array_idx(&ext_reg->extensions, ext_id);
+	i_assert(ext_id >= 0 &&
+		 ext_id < (int) array_count(&ext_reg->extensions));
 
-		return _sieve_extension_load(*mod_ext);
-	}
-	return FALSE;
+	mod_ext = array_idx(&ext_reg->extensions, ext_id);
+	return _sieve_extension_load(*mod_ext);
 }
 
 const struct sieve_extension *
