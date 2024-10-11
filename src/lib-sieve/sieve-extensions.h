@@ -111,7 +111,7 @@ struct sieve_extension {
  * Extensions init/deinit
  */
 
-bool sieve_extensions_init(struct sieve_instance *svinst);
+int sieve_extensions_init(struct sieve_instance *svinst);
 void sieve_extensions_configure(struct sieve_instance *svinst);
 void sieve_extensions_deinit(struct sieve_instance *svinst);
 
