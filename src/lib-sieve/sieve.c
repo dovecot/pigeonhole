@@ -181,7 +181,7 @@ int sieve_settings_reload(struct sieve_instance *svinst)
 
 void sieve_set_extensions(struct sieve_instance *svinst, const char *extensions)
 {
-	sieve_extensions_set_string(svinst, extensions, FALSE, FALSE);
+	(void)sieve_extensions_set_string(svinst, extensions, FALSE, FALSE);
 }
 
 const char *

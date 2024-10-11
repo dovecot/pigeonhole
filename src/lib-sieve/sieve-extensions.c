@@ -259,18 +259,24 @@ void sieve_extensions_load(struct sieve_instance *svinst)
 
 	/* Apply sieve_extensions configuration */
 	if ((extensions = sieve_setting_get(
-		svinst, "sieve_extensions")) != NULL)
-		sieve_extensions_set_string(svinst, extensions, FALSE, FALSE);
+		svinst, "sieve_extensions")) != NULL) {
+		(void)sieve_extensions_set_string(svinst, extensions,
+						  FALSE, FALSE);
+	}
 
 	/* Apply sieve_global_extensions configuration */
 	if ((extensions = sieve_setting_get(
-		svinst, "sieve_global_extensions")) != NULL)
-		sieve_extensions_set_string(svinst, extensions, TRUE, FALSE);
+		svinst, "sieve_global_extensions")) != NULL) {
+		(void)sieve_extensions_set_string(svinst, extensions,
+						  TRUE, FALSE);
+	}
 
 	/* Apply sieve_implicit_extensions configuration */
 	if ((extensions = sieve_setting_get(
-		svinst, "sieve_implicit_extensions")) != NULL)
-		sieve_extensions_set_string(svinst, extensions, FALSE, TRUE);
+		svinst, "sieve_implicit_extensions")) != NULL) {
+		(void)sieve_extensions_set_string(svinst, extensions,
+						  FALSE, TRUE);
+	}
 }
 
 void sieve_extensions_deinit(struct sieve_instance *svinst)
@@ -620,46 +626,58 @@ const char *sieve_extensions_get_string(struct sieve_instance *svinst)
 	return str_c(extstr);
 }
 
-static void
+static int
 sieve_extension_set_enabled(struct sieve_extension *ext, bool enabled)
 {
+	int ret = 0;
+
 	if (enabled) {
 		ext->enabled = TRUE;
 
 		if (!ext->loaded)
-			(void)_sieve_extension_load(ext);
+			ret = _sieve_extension_load(ext);
 
 		ext->loaded = TRUE;
 	} else {
 		ext->enabled = FALSE;
 	}
+
+	return ret;
 }
 
-static void
+static int
 sieve_extension_set_global(struct sieve_extension *ext, bool enabled)
 {
+	int ret = 0;
+
 	if (enabled) {
-		sieve_extension_set_enabled(ext, TRUE);
+		ret = sieve_extension_set_enabled(ext, TRUE);
 		ext->global = TRUE;
 	} else {
 		ext->global = FALSE;
 	}
+
+	return ret;
 }
 
-static void
+static int
 sieve_extension_set_implicit(struct sieve_extension *ext, bool enabled)
 {
+	int ret = 0;
+
 	if (enabled) {
-		sieve_extension_set_enabled(ext, TRUE);
+		ret = sieve_extension_set_enabled(ext, TRUE);
 		ext->implicit = TRUE;
 	} else {
 		ext->implicit = FALSE;
 	}
+
+	return ret;
 }
 
-void sieve_extensions_set_string(struct sieve_instance *svinst,
-				 const char *ext_string, bool global,
-				 bool implicit)
+int sieve_extensions_set_string(struct sieve_instance *svinst,
+				const char *ext_string, bool global,
+				bool implicit)
 {
 	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
 	ARRAY(const struct sieve_extension *) enabled_extensions;
@@ -673,16 +691,19 @@ void sieve_extensions_set_string(struct sieve_instance *svinst,
 
 	if (ext_string == NULL) {
 		if (global || implicit)
-			return;
+			return 0;
 
 		/* Enable all */
 		exts = array_get_modifiable(&ext_reg->extensions, &ext_count);
 
-		for (i = 0; i < ext_count; i++)
-			sieve_extension_set_enabled(exts[i], TRUE);
-		return;
+		for (i = 0; i < ext_count; i++) {
+			if (sieve_extension_set_enabled(exts[i], TRUE) < 0)
+				return -1;
+		}
+		return 0;
 	}
 
+	int ret = 0;
 	T_BEGIN {
 		t_array_init(&enabled_extensions,
 			     array_count(&ext_reg->extensions));
@@ -775,14 +796,29 @@ void sieve_extensions_set_string(struct sieve_instance *svinst,
 			}
 
 			/* Perform actual activation/deactivation */
-			if (global)
-				sieve_extension_set_global(exts[i], enabled);
-			else if (implicit)
-				sieve_extension_set_implicit(exts[i], enabled);
-			else
-				sieve_extension_set_enabled(exts[i], enabled);
+			if (global) {
+				if (sieve_extension_set_global(exts[i],
+							       enabled) < 0) {
+					ret = -1;
+					break;
+				}
+			} else if (implicit) {
+				if (sieve_extension_set_implicit(exts[i],
+								 enabled) < 0) {
+					ret = -1;
+					break;
+				}
+			} else {
+				if (sieve_extension_set_enabled(exts[i],
+								enabled) < 0) {
+					ret = -1;
+					break;
+				}
+			}
 		}
 	} T_END;
+
+	return ret;
 }
 
 const struct sieve_extension *
