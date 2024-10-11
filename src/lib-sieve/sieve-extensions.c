@@ -342,21 +342,6 @@ static void sieve_extension_registry_deinit(struct sieve_instance *svinst)
 	hash_table_destroy(&ext_reg->extension_index);
 }
 
-bool sieve_extension_reload(const struct sieve_extension *ext)
-{
-	struct sieve_extension_registry *ext_reg = ext->svinst->ext_reg;
-	struct sieve_extension *const *mod_ext;
-	int ext_id = ext->id;
-
-	/* Let's not just cast the 'const' away */
-	if (ext_id >= 0 && ext_id < (int) array_count(&ext_reg->extensions)) {
-		mod_ext = array_idx(&ext_reg->extensions, ext_id);
-
-		return _sieve_extension_load(*mod_ext);
-	}
-	return FALSE;
-}
-
 static struct sieve_extension *
 sieve_extension_lookup(struct sieve_instance *svinst, const char *name)
 {
@@ -488,6 +473,21 @@ sieve_extension_require(struct sieve_instance *svinst,
 					    &ext) < 0)
 		return NULL;
 	return ext;
+}
+
+bool sieve_extension_reload(const struct sieve_extension *ext)
+{
+	struct sieve_extension_registry *ext_reg = ext->svinst->ext_reg;
+	struct sieve_extension *const *mod_ext;
+	int ext_id = ext->id;
+
+	/* Let's not just cast the 'const' away */
+	if (ext_id >= 0 && ext_id < (int) array_count(&ext_reg->extensions)) {
+		mod_ext = array_idx(&ext_reg->extensions, ext_id);
+
+		return _sieve_extension_load(*mod_ext);
+	}
+	return FALSE;
 }
 
 const struct sieve_extension *
