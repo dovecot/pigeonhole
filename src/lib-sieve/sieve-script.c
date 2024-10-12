@@ -909,6 +909,13 @@ void sieve_script_set_critical(struct sieve_script *script,
 	}
 }
 
+void sieve_script_set_not_found_error(struct sieve_script *script,
+				      const char *name)
+{
+	name = (name == NULL || *name == '\0' ? script->name : name);
+	sieve_storage_set_not_found_error(script->storage, name);
+}
+
 const char *
 sieve_script_get_last_error(struct sieve_script *script,
 			    enum sieve_error *error_code_r)
