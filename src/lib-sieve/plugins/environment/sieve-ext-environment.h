@@ -19,15 +19,12 @@ sieve_ext_environment_get_extension(struct sieve_instance *svinst,
 					ext_r);
 }
 
-static inline const struct sieve_extension *
-sieve_ext_environment_require_extension(struct sieve_instance *svinst)
+static inline int
+sieve_ext_environment_require_extension(struct sieve_instance *svinst,
+					const struct sieve_extension **ext_r)
 {
-	const struct sieve_extension *ext;
-
-	if (sieve_extension_require(svinst, &environment_extension, TRUE,
-				    &ext) < 0)
-		return NULL;
-	return ext;
+	return sieve_extension_require(svinst, &environment_extension, TRUE,
+				       ext_r);
 }
 
 bool sieve_ext_environment_is_active(const struct sieve_extension *env_ext,

@@ -59,6 +59,7 @@ const struct sieve_extension_def vnd_environment_extension = {
 static bool
 ext_vnd_environment_load(const struct sieve_extension *ext, void **context)
 {
+	const struct sieve_extension *ext_env;
 	struct ext_vnd_environment_context *extctx;
 
 	if (*context != NULL) {
@@ -66,8 +67,11 @@ ext_vnd_environment_load(const struct sieve_extension *ext, void **context)
 		*context = NULL;
 	}
 
+	if (sieve_ext_environment_require_extension(ext->svinst, &ext_env) < 0)
+		return FALSE;
+
 	extctx = i_new(struct ext_vnd_environment_context, 1);
-	extctx->env_ext = sieve_ext_environment_require_extension(ext->svinst);
+	extctx->env_ext = ext_env;
 	extctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
 
 	*context = extctx;
