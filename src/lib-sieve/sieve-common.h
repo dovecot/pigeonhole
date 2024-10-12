@@ -215,6 +215,9 @@ void sieve_error_args_init(enum sieve_error **error_code_r,
 
 void sieve_error_create_internal(enum sieve_error *error_code_r,
 				 const char **error_r);
+void sieve_error_create_script_not_found(const char *script_name,
+					 enum sieve_error *error_code_r,
+					 const char **error_r);
 
 /*
  * Script trace log

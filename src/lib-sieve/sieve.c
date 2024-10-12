@@ -1044,6 +1044,18 @@ void sieve_error_create_internal(enum sieve_error *error_code_r,
 	*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 }
 
+void sieve_error_create_script_not_found(const char *script_name,
+					 enum sieve_error *error_code_r,
+					 const char **error_r)
+{
+	*error_code_r = SIEVE_ERROR_NOT_FOUND;
+	if (script_name == NULL)
+		*error_r = "Sieve script not found";
+	else
+		*error_r = t_strdup_printf("Sieve script '%s' not found",
+					   script_name);
+}
+
 /*
  * User log
  */
