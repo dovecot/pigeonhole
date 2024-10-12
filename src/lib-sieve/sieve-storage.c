@@ -295,15 +295,29 @@ sieve_storage_alloc_from_class(struct sieve_instance *svinst,
 			       const struct sieve_storage *storage_class,
 			       const char *data,
 			       enum sieve_storage_flags flags,
-			       struct sieve_storage **storage_r)
+			       struct sieve_storage **storage_r,
+			       enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
 
 	i_assert(svinst->username != NULL);
 
 	i_assert(storage_class->v.alloc != NULL);
-	storage = storage_class->v.alloc();
 
+	if ((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
+	    !storage_class->allows_synchronization) {
+		e_debug(event, "Storage does not support synchronization");
+		*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
+		return -1;
+	}
+	if ((flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 &&
+	    storage_class->v.save_init == NULL) {
+		e_error(event, "Storage does not support write access");
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+		return -1;
+	}
+
+	storage = storage_class->v.alloc();
 	storage->storage_class = storage_class;
 	storage->refcount = 1;
 	storage->svinst = svinst;
@@ -342,7 +356,8 @@ int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
 	}
 
 	ret = sieve_storage_alloc_from_class(svinst, event, storage_class,
-					     data, flags, &storage);
+					     data, flags,
+					     &storage, error_code_r);
 	if (ret == 0)
 		storage->main_storage = main;
 
@@ -365,20 +380,6 @@ sieve_storage_init_real(struct sieve_instance *svinst, struct event *event,
 	const char *const *options;
 	const char *location;
 	int ret;
-
-	if ((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
-	    !storage_class->allows_synchronization) {
-		e_debug(event, "Storage does not support synchronization");
-		*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
-		return -1;
-	}
-
-	if ((flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 &&
-	    storage_class->v.save_init == NULL) {
-		e_error(event, "Storage does not support write access");
-		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
-		return -1;
-	}
 
 	driver_event = sieve_storage_create_driver_event(
 		event, storage_class->driver_name);
