@@ -33,7 +33,7 @@ int sieve_storage_create(struct sieve_instance *svinst, struct event *event,
 			 const char *location,
 			 enum sieve_storage_flags flags,
 			 struct sieve_storage **storage_r,
-			 enum sieve_error *error_code_r);
+			 enum sieve_error *error_code_r, const char **error_r);
 int sieve_storage_create_personal(struct sieve_instance *svinst,
 				  struct mail_user *user,
 				  enum sieve_storage_flags flags,
@@ -192,10 +192,12 @@ int sieve_storage_sequence_create(struct sieve_instance *svinst,
 				  struct event *event_parent,
 				  const char *location,
 				  struct sieve_storage_sequence **sseq_r,
-				  enum sieve_error *error_code_r);
+				  enum sieve_error *error_code_r,
+				  const char **error_r);
 int sieve_storage_sequence_next(struct sieve_storage_sequence *sseq,
 				struct sieve_storage **storage_r,
-				enum sieve_error *error_code_r);
+				enum sieve_error *error_code_r,
+				const char **error_r);
 void sieve_storage_sequence_free(struct sieve_storage_sequence **_sseq);
 
 #endif

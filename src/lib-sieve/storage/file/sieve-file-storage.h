@@ -50,7 +50,8 @@ int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 				      const char *path,
 				      enum sieve_storage_flags flags,
 				      struct sieve_file_storage **fstorage_r,
-				      enum sieve_error *error_code_r);
+				      enum sieve_error *error_code_r,
+				      const char **error_r);
 
 int sieve_file_storage_pre_modify(struct sieve_storage *storage);
 

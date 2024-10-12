@@ -163,7 +163,8 @@ ext_include_open_script_global(struct sieve_instance *svinst,
 	}
 
 	return sieve_script_create_open(svinst, extctx->global_location,
-					script_name, script_r, error_code_r);
+					script_name,
+					script_r, error_code_r, NULL);
 }
 
 int ext_include_open_script(const struct sieve_extension *ext,

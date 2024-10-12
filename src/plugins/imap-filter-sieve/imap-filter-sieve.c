@@ -254,7 +254,8 @@ imap_filter_sieve_get_global_storage(struct imap_filter_sieve_context *sctx,
 		return -1;
 	}
 	if (sieve_storage_create(svinst, svinst->event, location, 0,
-				 &ifsuser->global_storage, &error_code) == 0) {
+				 &ifsuser->global_storage,
+				 &error_code, NULL) == 0) {
 		*storage_r = ifsuser->global_storage;
 		return 0;
 	}

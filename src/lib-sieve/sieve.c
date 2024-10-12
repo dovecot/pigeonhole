@@ -337,7 +337,7 @@ int sieve_compile(struct sieve_instance *svinst, const char *script_location,
 	sieve_error_args_init(&error_code_r, NULL);
 
 	if (sieve_script_create_open(svinst, script_location, script_name,
-				     &script, error_code_r) < 0) {
+				     &script, error_code_r, NULL) < 0) {
 		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_FOUND:
 			if (no_error_result) {
@@ -513,7 +513,7 @@ int sieve_open(struct sieve_instance *svinst, const char *script_location,
 
 	/* First open the scriptfile itself */
 	if (sieve_script_create_open(svinst, script_location, script_name,
-				     &script, error_code_r) < 0) {
+				     &script, error_code_r, NULL) < 0) {
 		/* Failed */
 		switch (*error_code_r) {
 		case SIEVE_ERROR_NOT_FOUND:

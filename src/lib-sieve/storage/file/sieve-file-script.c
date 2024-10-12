@@ -211,13 +211,13 @@ int sieve_file_script_init_from_path(struct sieve_file_storage *fstorage,
 	struct sieve_file_script *fscript;
 	struct sieve_storage *substorage;
 	enum sieve_error error_code;
+	const char *error;
 
 	*fscript_r = NULL;
 
 	if (sieve_file_storage_init_from_path(svinst, path, 0, &fsubstorage,
-					      &error_code) < 0) {
-		sieve_storage_set_error(storage, error_code,
-					"Failed to open script");
+					      &error_code, &error) < 0) {
+		sieve_storage_set_error(storage, error_code, "%s", error);
 		return -1;
 	}
 	substorage = &fsubstorage->storage;
