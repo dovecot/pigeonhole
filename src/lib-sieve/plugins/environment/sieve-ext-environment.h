@@ -11,15 +11,12 @@
 
 extern const struct sieve_extension_def environment_extension;
 
-static inline const struct sieve_extension *
-sieve_ext_environment_get_extension(struct sieve_instance *svinst)
+static inline int
+sieve_ext_environment_get_extension(struct sieve_instance *svinst,
+				     const struct sieve_extension **ext_r)
 {
-	const struct sieve_extension *ext;
-
-	if (sieve_extension_register(svinst, &environment_extension, FALSE,
-				     &ext) < 0)
-		return NULL;
-	return ext;
+	return sieve_extension_register(svinst, &environment_extension, FALSE,
+					ext_r);
 }
 
 static inline const struct sieve_extension *
