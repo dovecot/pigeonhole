@@ -338,29 +338,24 @@ sieve_storage_alloc_from_class(struct sieve_instance *svinst,
 	return 0;
 }
 
-int sieve_storage_alloc(struct sieve_instance *svinst, struct event *event,
+int sieve_storage_alloc(struct sieve_instance *svinst,
+			struct event *event_parent,
 			const struct sieve_storage *storage_class,
 			const char *data, enum sieve_storage_flags flags,
 			bool main, struct sieve_storage **storage_r,
 			enum sieve_error *error_code_r, const char **error_r)
 {
+	struct event *storage_event, *event;
 	struct sieve_storage *storage;
 	int ret;
 
 	*storage_r = NULL;
 	sieve_error_args_init(&error_code_r, &error_r);
 
-	if (event != NULL)
-		event_ref(event);
-	else {
-		struct event *storage_event;
-
-		storage_event = sieve_storage_create_event(
-			svinst, svinst->event);
-		event = sieve_storage_create_driver_event(
-			storage_event, storage_class->driver_name);
-		event_unref(&storage_event);
-	}
+	storage_event = sieve_storage_create_event(svinst, event_parent);
+	event = sieve_storage_create_driver_event(storage_event,
+						  storage_class->driver_name);
+	event_unref(&storage_event);
 
 	ret = sieve_storage_alloc_from_class(svinst, event, storage_class,
 					     data, flags,
