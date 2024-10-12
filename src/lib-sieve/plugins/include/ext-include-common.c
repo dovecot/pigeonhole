@@ -76,6 +76,7 @@ struct ext_include_interpreter_context {
 bool ext_include_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
+	const struct sieve_extension *var_ext;
 	struct ext_include_context *extctx;
 	const char *location;
 	unsigned long long int uint_setting;
@@ -85,7 +86,12 @@ bool ext_include_load(const struct sieve_extension *ext, void **context)
 		*context = NULL;
 	}
 
+	/* Extension dependencies */
+	if (sieve_ext_variables_get_extension(ext->svinst, &var_ext) < 0)
+		return FALSE;
+
 	extctx = i_new(struct ext_include_context, 1);
+	extctx->var_ext = var_ext;
 
 	/* Get location for :global scripts */
 	location = sieve_setting_get(svinst, "sieve_global");
@@ -108,9 +114,6 @@ bool ext_include_load(const struct sieve_extension *ext, void **context)
 	if (sieve_setting_get_uint_value(
 		svinst, "sieve_include_max_includes", &uint_setting))
 		extctx->max_includes = (unsigned int)uint_setting;
-
-	/* Extension dependencies */
-	extctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
 
 	*context = extctx;
 	return TRUE;

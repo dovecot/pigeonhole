@@ -42,6 +42,10 @@ const struct sieve_operation_def *imap4flags_operations[] = {
  * Extension
  */
 
+static bool
+ext_imap4flags_load(const struct sieve_extension *ext, void **context);
+static void ext_imap4flags_unload(const struct sieve_extension *ext);
+
 static bool ext_imap4flags_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 static bool ext_imap4flags_interpreter_load
@@ -51,11 +55,42 @@ static bool ext_imap4flags_interpreter_load
 const struct sieve_extension_def imap4flags_extension = {
 	.name = "imap4flags",
 	.version = 1,
+	.load = ext_imap4flags_load,
+	.unload = ext_imap4flags_unload,
 	.validator_load = ext_imap4flags_validator_load,
 	.interpreter_load = ext_imap4flags_interpreter_load,
 	SIEVE_EXT_DEFINE_OPERATIONS(imap4flags_operations),
 	SIEVE_EXT_DEFINE_OPERAND(flags_side_effect_operand)
 };
+
+static bool
+ext_imap4flags_load(const struct sieve_extension *ext, void **context)
+{
+	struct sieve_instance *svinst = ext->svinst;
+	const struct sieve_extension *var_ext;
+	struct ext_imap4flags_context *extctx;
+
+	if (*context != NULL) {
+		ext_imap4flags_unload(ext);
+		*context = NULL;
+	}
+
+	if (sieve_ext_variables_get_extension(svinst, &var_ext) < 0)
+		return FALSE;
+
+	extctx = i_new(struct ext_imap4flags_context, 1);
+	extctx->var_ext = var_ext;
+
+	*context = extctx;
+	return TRUE;
+}
+
+static void ext_imap4flags_unload(const struct sieve_extension *ext)
+{
+	struct ext_imap4flags_context *extctx = ext->context;
+
+	i_free(extctx);
+}
 
 static bool ext_imap4flags_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr)

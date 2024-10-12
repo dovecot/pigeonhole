@@ -9,6 +9,14 @@
 #include "sieve-ext-imap4flags.h"
 
 /*
+ * Extension
+ */
+
+struct ext_imap4flags_context {
+	const struct sieve_extension *var_ext;
+};
+
+/*
  * Side effect
  */
 

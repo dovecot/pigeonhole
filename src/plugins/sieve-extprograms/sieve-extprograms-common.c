@@ -60,6 +60,7 @@ bool sieve_extprograms_ext_load(const struct sieve_extension *ext,
 				void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
+	const struct sieve_extension *var_ext = NULL;
 	struct sieve_extprograms_ext_context *extctx;
 	const char *extname = sieve_extension_name(ext);
 	const char *bin_dir, *socket_dir, *input_eol;
@@ -81,9 +82,16 @@ bool sieve_extprograms_ext_load(const struct sieve_extension *ext,
 	input_eol = sieve_setting_get(
 		svinst, t_strdup_printf("sieve_%s_input_eol", extname));
 
+	if (sieve_extension_is(ext, sieve_ext_vnd_execute)) {
+		if (sieve_ext_variables_get_extension(ext->svinst,
+						      &var_ext) < 0)
+			return FALSE;
+	}
+
 	extctx = i_new(struct sieve_extprograms_ext_context, 1);
 	extctx->execute_timeout =
 		SIEVE_EXTPROGRAMS_DEFAULT_EXEC_TIMEOUT_SECS;
+	extctx->var_ext = var_ext;
 
 	if (bin_dir == NULL && socket_dir == NULL) {
 		e_debug(svinst->event, "%s extension: "
@@ -108,10 +116,6 @@ bool sieve_extprograms_ext_load(const struct sieve_extension *ext,
 	if (sieve_extension_is(ext, sieve_ext_vnd_pipe)) {
 		extctx->copy_ext =
 			sieve_ext_copy_get_extension(ext->svinst);
-	}
-	if (sieve_extension_is(ext, sieve_ext_vnd_execute)) {
-		extctx->var_ext =
-			sieve_ext_variables_get_extension(ext->svinst);
 	}
 
 	*context = extctx;

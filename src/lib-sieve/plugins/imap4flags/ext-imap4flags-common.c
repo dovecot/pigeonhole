@@ -36,9 +36,11 @@ extern const struct sieve_argument_def tag_flags_implicit;
 bool ext_imap4flags_command_validate(struct sieve_validator *valdtr,
 				     struct sieve_command *cmd)
 {
+	const struct sieve_extension *ext = cmd->ext;
+	struct ext_imap4flags_context *extctx = ext->context;
+	const struct sieve_extension *var_ext = extctx->var_ext;
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct sieve_ast_argument *arg2;
-	const struct sieve_extension *var_ext;
 
 	/* Check arguments */
 
@@ -95,7 +97,6 @@ bool ext_imap4flags_command_validate(struct sieve_validator *valdtr,
 
 		/* Then, check whether the second argument is permitted */
 
-		var_ext = sieve_ext_variables_get_extension(cmd->ext->svinst);
 		if (var_ext == NULL ||
 		    !sieve_ext_variables_is_active(var_ext, valdtr)) {
 			sieve_argument_validate_error(

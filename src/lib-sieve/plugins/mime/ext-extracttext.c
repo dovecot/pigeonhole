@@ -59,7 +59,8 @@ ext_extracttext_load(const struct sieve_extension *ext, void **context)
 		*context = NULL;
 	}
 
-	var_ext = sieve_ext_variables_get_extension(ext->svinst);
+	if (sieve_ext_variables_get_extension(ext->svinst, &var_ext) < 0)
+		return FALSE;
 	if (sieve_extension_register(svinst, &foreverypart_extension, FALSE,
 				     &fep_ext) < 0)
 		return FALSE;

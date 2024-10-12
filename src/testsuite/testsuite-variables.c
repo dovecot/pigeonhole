@@ -179,8 +179,11 @@ const struct sieve_operand_def testsuite_namespace_operand = {
 void testsuite_variables_init(const struct sieve_extension *this_ext,
 			      struct sieve_validator *valdtr)
 {
-	testsuite_ext_variables =
-		sieve_ext_variables_get_extension(this_ext->svinst);
+	int ret;
+
+	ret = sieve_ext_variables_get_extension(this_ext->svinst,
+						&testsuite_ext_variables);
+	i_assert(ret == 0);
 
 	sieve_variables_namespace_register(testsuite_ext_variables, valdtr,
 					   this_ext, &testsuite_namespace);
