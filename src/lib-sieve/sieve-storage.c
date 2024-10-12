@@ -310,7 +310,7 @@ sieve_storage_alloc_from_class(struct sieve_instance *svinst,
 
 	if ((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
 	    !storage_class->allows_synchronization) {
-		e_debug(event, "Storage does not support synchronization");
+		e_error(event, "Storage does not support synchronization");
 		*error_code_r = SIEVE_ERROR_NOT_POSSIBLE;
 		return -1;
 	}
