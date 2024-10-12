@@ -39,7 +39,7 @@ sieve_data_script_create_from_input(struct sieve_instance *svinst,
 	int ret;
 
 	ret = sieve_storage_alloc(svinst, NULL, &sieve_data_storage,
-				  "", 0, FALSE, &storage, NULL);
+				  "", 0, FALSE, &storage, NULL, NULL);
 	i_assert(ret >= 0);
 
 	dscript = sieve_data_script_alloc();

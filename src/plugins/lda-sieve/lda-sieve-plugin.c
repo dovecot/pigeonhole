@@ -305,7 +305,7 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 	int ret;
 
 	ret = sieve_script_sequence_create(svinst, location,
-					   &sseq, error_code_r);
+					   &sseq, error_code_r, NULL);
 	if (ret < 0) {
 		if (*error_code_r == SIEVE_ERROR_NOT_FOUND) {
 			*error_code_r = SIEVE_ERROR_NONE;
@@ -317,7 +317,7 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 	}
 
 	while ((ret = sieve_script_sequence_next(sseq, &script,
-						 error_code_r)) > 0)
+						 error_code_r, NULL)) > 0)
 		array_append(scripts, &script, 1);
 
 	sieve_script_sequence_free(&sseq);
@@ -857,7 +857,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	if (sieve_discard != NULL && *sieve_discard != '\0') {
 		if (sieve_script_create_open(svinst, sieve_discard, NULL,
 					     &srctx->discard_script,
-					     &error_code) < 0) {
+					     &error_code, NULL) < 0) {
 			switch (error_code) {
 			case SIEVE_ERROR_NOT_FOUND:
 				e_debug(sieve_get_event(svinst),

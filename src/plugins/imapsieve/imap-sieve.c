@@ -433,7 +433,7 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 			struct sieve_script *script;
 
 			if (sieve_script_create_open(svinst, *sp, NULL, &script,
-						     &error_code) < 0) {
+						     &error_code, NULL) < 0) {
 				if (error_code == SIEVE_ERROR_TEMP_FAILURE)
 					return -1;
 				continue;
@@ -469,7 +469,7 @@ imap_sieve_run_init_scripts(struct imap_sieve *isieve,
 			struct sieve_script *script;
 
 			if (sieve_script_create_open(svinst, *sp, NULL, &script,
-						     &error_code) < 0) {
+						     &error_code, NULL) < 0) {
 				if (error_code == SIEVE_ERROR_TEMP_FAILURE)
 					return -1;
 				continue;

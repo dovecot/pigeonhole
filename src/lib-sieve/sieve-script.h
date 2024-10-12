@@ -38,7 +38,7 @@ ARRAY_DEFINE_TYPE(sieve_script, struct sieve_script *);
 int sieve_script_create(struct sieve_instance *svinst,
 			const char *location, const char *name,
 			struct sieve_script **script_r,
-			enum sieve_error *error_code_r);
+			enum sieve_error *error_code_r, const char **error_r);
 
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
@@ -51,9 +51,11 @@ int sieve_script_open_as(struct sieve_script *script, const char *name,
 int sieve_script_create_open(struct sieve_instance *svinst,
 			     const char *location, const char *name,
 			     struct sieve_script **script_r,
-			     enum sieve_error *error_code_r);
-int sieve_script_check(struct sieve_instance *svinst, const char *location,
-		       const char *name, enum sieve_error *error_code_r);
+			     enum sieve_error *error_code_r,
+			     const char **error_r);
+int sieve_script_check(struct sieve_instance *svinst,
+		       const char *location, const char *name,
+		       enum sieve_error *error_code_r, const char **error_r);
 
 /*
  * Data script
@@ -156,10 +158,12 @@ struct sieve_script_sequence;
 int sieve_script_sequence_create(struct sieve_instance *svinst,
 				 const char *location,
 				 struct sieve_script_sequence **sseq_r,
-				 enum sieve_error *error_code_r);
+				 enum sieve_error *error_code_r,
+				 const char **error_r);
 int sieve_script_sequence_next(struct sieve_script_sequence *sseq,
 			       struct sieve_script **script_r,
-			       enum sieve_error *error_code_r);
+			       enum sieve_error *error_code_r,
+			       const char **error_r);
 void sieve_script_sequence_free(struct sieve_script_sequence **_seq);
 
 #endif
