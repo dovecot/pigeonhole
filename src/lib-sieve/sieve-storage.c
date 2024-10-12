@@ -474,6 +474,55 @@ int sieve_storage_create(struct sieve_instance *svinst, struct event *event,
 }
 
 static int
+sieve_storage_create_default(struct sieve_instance *svinst,
+			     const char *location,
+			     enum sieve_storage_flags flags,
+			     struct sieve_storage **storage_r,
+			     enum sieve_error *error_code_r)
+{
+	struct sieve_storage *storage;
+	enum sieve_error error_code;
+	int ret;
+
+	*storage_r = NULL;
+	sieve_error_args_init(&error_code_r, NULL);
+
+	if (location == NULL) {
+		*error_code_r = SIEVE_ERROR_NOT_FOUND;
+		return -1;
+	}
+
+	ret = sieve_storage_create(svinst, svinst->event, location, flags,
+				   &storage, &error_code);
+	if (ret >= 0) {
+		storage->is_default = TRUE;
+	} else {
+		switch (error_code) {
+		case SIEVE_ERROR_NOT_FOUND:
+			e_debug(svinst->event, "storage: "
+				"Default script location '%s' not found",
+				location);
+			break;
+		case SIEVE_ERROR_TEMP_FAILURE:
+			e_error(svinst->event, "storage: "
+				"Failed to access default script location '%s' "
+				"(temporary failure)",
+				location);
+			break;
+		default:
+			e_error(svinst->event, "storage: "
+				"Failed to access default script location '%s'",
+				location);
+			break;
+		}
+		*error_code_r = error_code;
+	}
+
+	*storage_r = storage;
+	return ret;
+}
+
+static int
 sieve_storage_create_default_for(struct sieve_storage *storage,
 				 struct sieve_storage **storage_r,
 				 enum sieve_error *error_code_r)
@@ -487,8 +536,7 @@ sieve_storage_create_default_for(struct sieve_storage *storage,
 		return 0;
 	}
 
-	if (storage->default_name == NULL ||
-	    storage->default_location == NULL) {
+	if (storage->default_name == NULL) {
 		sieve_storage_set_not_found_error(storage, NULL);
 		*error_code_r = storage->error_code;
 		return -1;
@@ -498,31 +546,16 @@ sieve_storage_create_default_for(struct sieve_storage *storage,
 	enum sieve_error error_code;
 
 	i_assert(storage->default_storage_for == NULL);
-	i_assert(*storage->default_location != '\0');
-	if (sieve_storage_create(svinst, svinst->event,
-				 storage->default_location, 0,
-				 &storage->default_storage, &error_code) < 0) {
-		switch (error_code) {
-		case SIEVE_ERROR_NOT_FOUND:
-			sieve_storage_set_error(storage, error_code,
-				"Default script not found");
-			break;
-		case SIEVE_ERROR_TEMP_FAILURE:
-			sieve_storage_set_error(storage, error_code,
-				"Failed to access default script "
-				"(temporary failure)");
-			break;
-		default:
-			sieve_storage_set_error(storage, error_code,
-				"Failed to access default script");
-			break;
-		}
-		*error_code_r = error_code;
+	if (sieve_storage_create_default(svinst, storage->default_location, 0,
+					 &storage->default_storage,
+					 &error_code) < 0) {
+		sieve_storage_set_error(storage, error_code,
+					"Failed to access default script");
+		*error_code_r = storage->error_code;
 		return -1;
 	}
 
 	storage->default_storage->default_storage_for = storage;
-	storage->default_storage->is_default = TRUE;
 	sieve_storage_ref(storage);
 
 	*storage_r = storage->default_storage;
@@ -677,33 +710,10 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 			e_debug(svinst->event, "storage: "
 				"Trying default script location '%s'",
 				set_default);
-
-			ret = sieve_storage_create(svinst, svinst->event,
-						   set_default, 0,
-						   &storage, error_code_r);
-			if (ret < 0) {
-				switch (*error_code_r) {
-				case SIEVE_ERROR_NOT_FOUND:
-					e_debug(svinst->event, "storage: "
-						"Default script location '%s' not found",
-						set_default);
-					break;
-				case SIEVE_ERROR_TEMP_FAILURE:
-					e_error(svinst->event, "storage: "
-						"Failed to access default script location '%s' "
-						"(temporary failure)",
-						set_default);
-					break;
-				default:
-					e_error(svinst->event, "storage: "
-						"Failed to access default script location '%s'",
-						set_default);
-					break;
-				}
-			}
 		}
-		if (storage != NULL)
-			storage->is_default = TRUE;
+
+		ret = sieve_storage_create_default(svinst, set_default, 0,
+						   &storage, error_code_r);
 	}
 	*storage_r = storage;
 	return ret;
