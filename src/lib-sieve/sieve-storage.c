@@ -302,7 +302,11 @@ sieve_storage_alloc_from_class(struct sieve_instance *svinst,
 
 	i_assert(svinst->username != NULL);
 
-	i_assert(storage_class->v.alloc != NULL);
+	if (storage_class->v.alloc == NULL) {
+		e_error(event, "Support not compiled in for this driver");
+		*error_code_r = SIEVE_ERROR_NOT_FOUND;
+		return -1;
+	}
 
 	if ((flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
 	    !storage_class->allows_synchronization) {
