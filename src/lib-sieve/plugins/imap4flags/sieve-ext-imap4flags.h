@@ -13,15 +13,12 @@ extern const struct sieve_extension_def imap4flags_extension;
 extern const struct sieve_interpreter_extension
 	imap4flags_interpreter_extension;
 
-static inline const struct sieve_extension *
-sieve_ext_imap4flags_require_extension(struct sieve_instance *svinst)
+static inline int
+sieve_ext_imap4flags_require_extension(struct sieve_instance *svinst,
+				       const struct sieve_extension **ext_r)
 {
-	const struct sieve_extension *ext;
-
-	if (sieve_extension_require(svinst, &imap4flags_extension, TRUE,
-				    &ext) < 0)
-		return NULL;
-	return ext;
+	return sieve_extension_require(svinst, &imap4flags_extension, TRUE,
+				       ext_r);
 }
 
 void sieve_ext_imap4flags_interpreter_load(
