@@ -74,6 +74,7 @@ const struct sieve_extension_def vnd_imapsieve_extension = {
 static bool
 ext_imapsieve_load(const struct sieve_extension *ext, void **context)
 {
+	const struct sieve_extension *ext_environment;
 	struct ext_imapsieve_context *extctx;
 
 	if (context != NULL) {
@@ -81,9 +82,13 @@ ext_imapsieve_load(const struct sieve_extension *ext, void **context)
 		*context = NULL;
 	}
 
+	if (sieve_ext_environment_require_extension(ext->svinst,
+						    &ext_environment) < 0)
+		return FALSE;
+
 	extctx = i_new(struct ext_imapsieve_context, 1);
-	extctx->ext_environment =
-		sieve_ext_environment_require_extension(ext->svinst);
+	extctx->ext_environment = ext_environment;
+
 	*context = extctx;
 	return TRUE;
 }
