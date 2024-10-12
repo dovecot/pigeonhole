@@ -107,6 +107,8 @@ void sieve_script_set_error(struct sieve_script *script,
 void sieve_script_set_internal_error(struct sieve_script *script);
 void sieve_script_set_critical(struct sieve_script *script,
 			       const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_script_set_not_found_error(struct sieve_script *script,
+				      const char *name);
 
 /*
  * Script sequence
