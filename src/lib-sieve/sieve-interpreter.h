@@ -212,7 +212,7 @@ void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 #define sieve_runtime_critical(renv, ...) \
 	sieve_runtime_critical(renv, __FILE__, __LINE__, __VA_ARGS__)
 int sieve_runtime_mail_error(const struct sieve_runtime_env *renv,
-			     struct mail *mail, 
+			     struct mail *mail,
 			     const char *csrc_filename,
 			     unsigned int csrc_linenum,
 			     const char *fmt, ...) ATTR_FORMAT(5, 6);
