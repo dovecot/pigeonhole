@@ -566,8 +566,8 @@ sieve_file_storage_init_from_settings(
 		e_debug(storage->event,
 			"Active script path is unconfigured; "
 			"using default (path=%s)",
-			SIEVE_FILE_DEFAULT_PATH);
-		active_path = SIEVE_FILE_DEFAULT_PATH;
+			SIEVE_FILE_DEFAULT_ACTIVE_PATH);
+		active_path = SIEVE_FILE_DEFAULT_ACTIVE_PATH;
 	}
 
 	return sieve_file_storage_init_common(fstorage, active_path,
@@ -657,8 +657,8 @@ sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
 			e_debug(storage->event,
 				"Active script path is unconfigured; "
 				"using default (path=%s)",
-				SIEVE_FILE_DEFAULT_PATH);
-			active_path = SIEVE_FILE_DEFAULT_PATH;
+				SIEVE_FILE_DEFAULT_ACTIVE_PATH);
+			active_path = SIEVE_FILE_DEFAULT_ACTIVE_PATH;
 		} else {
 			*error_code_r = storage->error_code;
 			*error_r = storage->error;
