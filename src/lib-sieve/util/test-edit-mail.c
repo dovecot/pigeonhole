@@ -774,7 +774,7 @@ static void test_edit_mail_small_buffer(void)
 		edit_mail_header_add(edmail, "X-F", "FF", FALSE);
 		edit_mail_header_add(edmail, "X-L", "LL", TRUE);
 	}
-	
+
 	mail = edit_mail_get_mail(edmail);
 
 	/* prepare tests */
