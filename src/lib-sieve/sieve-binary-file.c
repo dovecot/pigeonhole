@@ -36,7 +36,7 @@
 #define SIEVE_BINARY_ALIGN(offset) \
 	(((offset) + 3) & ~3U)
 #define SIEVE_BINARY_ALIGN_PTR(ptr) \
-	((void *) SIEVE_BINARY_ALIGN(((size_t) ptr)))
+	((void *)SIEVE_BINARY_ALIGN(((size_t) ptr)))
 
 #define SIEVE_BINARY_PRE_HDR_SIZE_MAJOR         1
 #define SIEVE_BINARY_PRE_HDR_SIZE_MINOR         4
