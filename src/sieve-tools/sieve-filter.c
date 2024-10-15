@@ -401,7 +401,7 @@ int main(int argc, char **argv)
 	/* Parse arguments */
 	dst_mailbox = move_mailbox = NULL;
 	force_compile = execute = source_write = default_move = FALSE;
-	verbose = FALSE;	
+	verbose = FALSE;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'm':
