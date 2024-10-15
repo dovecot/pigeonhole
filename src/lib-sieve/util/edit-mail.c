@@ -449,7 +449,7 @@ static inline char *_header_value_unfold(const char *value)
 				break;
 
 			switch (value[i]) {
-			case ' ': 
+			case ' ':
 				str_append_c(out, ' ');
 				break;
 			case '\t':
