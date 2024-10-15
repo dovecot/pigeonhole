@@ -1201,9 +1201,9 @@ db_ldap_get_var_expand_table(struct ldap_connection *conn, const char *name)
 	memcpy(tab, auth_request_var_expand_static_tab,
 	       auth_count * sizeof(*tab));
 
-	tab[0].value = ldap_escape(lstorage->username);
-	tab[1].value = ldap_escape(t_strcut(lstorage->username, '@'));
-	tab[2].value = strchr(lstorage->username, '@');
+	tab[0].value = ldap_escape(svinst->username);
+	tab[1].value = ldap_escape(t_strcut(svinst->username, '@'));
+	tab[2].value = strchr(svinst->username, '@');
 	if (tab[2].value != NULL)
 		tab[2].value = ldap_escape(tab[2].value+1);
 	tab[3].value = ldap_escape(svinst->home_dir);

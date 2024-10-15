@@ -47,7 +47,7 @@ sieve_ldap_storage_init(struct sieve_storage *storage,
 	struct sieve_ldap_storage *lstorage =
 		container_of(storage, struct sieve_ldap_storage, storage);
 	struct sieve_instance *svinst = storage->svinst;
-	const char *value, *username = NULL;
+	const char *value;
 
 	if (options != NULL) {
 		while (*options != NULL) {
@@ -55,7 +55,7 @@ sieve_ldap_storage_init(struct sieve_storage *storage,
 
 			if (str_begins_icase(option, "user=", &value) &&
 			    *value != '\0') {
-				username = value;
+				/* Ignore */
 			} else {
 				sieve_storage_set_critical(
 					storage, "Invalid option '%s'", option);
@@ -67,22 +67,18 @@ sieve_ldap_storage_init(struct sieve_storage *storage,
 		}
 	}
 
-	if (username == NULL)
-		username = svinst->username;
-
 	e_debug(storage->event, "user=%s, config=%s",
-		username, storage->location);
+		svinst->username, storage->location);
 
 	if (sieve_ldap_storage_read_settings(lstorage, storage->location) < 0)
 		return -1;
 
-	lstorage->username = p_strdup(storage->pool, username);
 	lstorage->config_file = p_strdup(storage->pool, storage->location);
 	lstorage->conn = sieve_ldap_db_init(lstorage);
 
 	storage->location = p_strconcat(
 		storage->pool, SIEVE_LDAP_STORAGE_DRIVER_NAME, ":",
-		storage->location, ";user=", username, NULL);
+		storage->location, ";user=", svinst->username, NULL);
 
 	return 0;
 }
