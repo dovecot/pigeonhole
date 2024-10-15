@@ -236,7 +236,7 @@ act_store_rollback(const struct sieve_action_exec_env *aenv, void *tr_context,
 const struct sieve_action_def act_store = {
 	.name = "store",
 	.flags =
-		SIEVE_ACTFLAG_TRIES_DELIVER | 
+		SIEVE_ACTFLAG_TRIES_DELIVER |
 		SIEVE_ACTFLAG_MAIL_STORAGE,
 	.equals = act_store_equals,
 	.check_duplicate = act_store_check_duplicate,
@@ -995,7 +995,7 @@ sieve_action_do_reject_mail(const struct sieve_action_exec_env *aenv,
 	str_append(hdr, "\r\n");
 	rfc2822_header_write(hdr,
 			     "Reporting-UA: %s; Dovecot Mail Delivery Agent",
-			     svinst->hostname);	
+			     svinst->hostname);
 	if (orig_recipient != NULL) {
 		rfc2822_header_printf(hdr, "Original-Recipient", "rfc822; %s",
 				      smtp_address_encode(orig_recipient));
