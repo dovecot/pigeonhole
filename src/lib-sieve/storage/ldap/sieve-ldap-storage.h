@@ -66,7 +66,6 @@ struct sieve_ldap_storage {
 	time_t set_mtime;
 
 	const char *config_file;
-	const char *username; // FIXME: needed?
 
 	struct ldap_connection *conn;
 };
