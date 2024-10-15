@@ -374,7 +374,7 @@ sieve_binary_save_to_stream(struct sieve_binary *sbin, struct ostream *stream)
 	sieve_binary_emit_unsigned(ext_block, ext_count);
 
 	for (i = 0; i < ext_count; i++) {
-		struct sieve_binary_extension_reg * const *ext =
+		struct sieve_binary_extension_reg *const *ext =
 			array_idx(&sbin->linked_extensions, i);
 
 		sieve_binary_emit_cstring(
@@ -601,7 +601,7 @@ sieve_binary_file_open(struct sieve_binary *sbin, const char *path,
 	fd = sieve_binary_fd_open(sbin, path, O_RDONLY, error_r);
 	if (fd < 0)
 		return -1;
-	
+
 	if (fstat(fd, &st) < 0) {
 		if (errno != ENOENT)
 			e_error(sbin->event, "open: fstat() failed: %m");
