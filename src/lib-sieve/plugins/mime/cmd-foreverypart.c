@@ -145,9 +145,9 @@ static bool cmd_foreverypart_pre_validate
 {
 	struct ext_foreverypart_loop *loop;
 	pool_t pool = sieve_command_pool(cmd);
-	
+
 	loop = p_new(pool, struct ext_foreverypart_loop, 1);
-	cmd->data = loop;		
+	cmd->data = loop;
 
 	return TRUE;
 }
@@ -169,7 +169,7 @@ static bool cmd_foreverypart_validate
 
 	/* Enforce nesting limit
 	   NOTE: this only recognizes the foreverypart command as a loop; if
-	   new loop commands are introduced in the future, these must be 
+	   new loop commands are introduced in the future, these must be
 	   recognized somehow. */
 	if ( nesting + 1 > SIEVE_MAX_LOOP_DEPTH ) {
 		sieve_command_validate_error(valdtr, cmd,
@@ -215,7 +215,7 @@ static bool cmd_foreverypart_generate
 	i_assert(loop_jump > block_begin);
 	(void)sieve_binary_emit_offset
 		(cgenv->sblock, (loop_jump - block_begin));
-	
+
 	/* Resolve exit address */
 	sieve_jumplist_resolve(loop->exit_jumps);
 
@@ -302,7 +302,7 @@ static int cmd_foreverypart_begin_operation_execute
 
 	pool = sieve_interpreter_loop_get_pool(loop);
 	fploop = p_new(pool, struct ext_foreverypart_runtime_loop, 1);
-	
+
 	if ( sfploop == NULL ) {
 		if ( (ret=sieve_message_part_iter_init
 			(&fploop->part_iter, renv)) <= 0 )
@@ -313,13 +313,13 @@ static int cmd_foreverypart_begin_operation_execute
 	}
 	fploop->part = sieve_message_part_iter_current(&fploop->part_iter);
 	if (fploop->part != NULL) {
-		sieve_interpreter_loop_set_context(loop, (void*)fploop);
+		sieve_interpreter_loop_set_context(loop, (void *)fploop);
 	} else {
 		/* No children parts to iterate */
 		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
 			"no children at this level");
 		sieve_interpreter_loop_break(renv->interp, loop);
-	} 
+	}
 	return SIEVE_EXEC_OK;
 }
 
