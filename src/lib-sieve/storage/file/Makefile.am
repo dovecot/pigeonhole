@@ -16,4 +16,5 @@ libsieve_storage_file_la_SOURCES = \
 	sieve-file-storage.c
 
 noinst_HEADERS = \
+	sieve-file-storage-settings.h \
 	sieve-file-storage.h
