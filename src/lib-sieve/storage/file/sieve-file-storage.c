@@ -589,9 +589,11 @@ sieve_file_storage_init(struct sieve_storage *storage,
 	return ret;
 }
 
-static void
-sieve_file_storage_autodetect(struct sieve_file_storage *fstorage,
-			      const char **storage_path_r)
+static int
+sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
+				   const char *active_path,
+				   enum sieve_error *error_code_r,
+				   const char **error_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
@@ -601,6 +603,7 @@ sieve_file_storage_autodetect(struct sieve_file_storage *fstorage,
 	int mode = ((flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ?
 		    R_OK|W_OK|X_OK : R_OK|X_OK);
 	const char *storage_path = NULL;
+	bool exists = FALSE;
 
 	e_debug(event, "Performing auto-detection");
 
@@ -622,21 +625,6 @@ sieve_file_storage_autodetect(struct sieve_file_storage *fstorage,
 			}
 		}
 	}
-
-	*storage_path_r = storage_path;
-}
-
-static int
-sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
-				   const char *active_path,
-				   enum sieve_error *error_code_r,
-				   const char **error_r)
-{
-	struct sieve_storage *storage = &fstorage->storage;
-	const char *storage_path;
-	bool exists = FALSE;
-
-	sieve_file_storage_autodetect(fstorage, &storage_path);
 
 	if (storage_path != NULL && *storage_path != '\0') {
 		/* Got something: stat it */
