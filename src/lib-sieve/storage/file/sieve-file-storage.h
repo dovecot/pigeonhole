@@ -13,7 +13,7 @@
 
 #define SIEVE_FILE_READ_BLOCK_SIZE (1024*8)
 
-#define SIEVE_FILE_DEFAULT_PATH "~/.dovecot."SIEVE_SCRIPT_FILEEXT
+#define SIEVE_FILE_DEFAULT_ACTIVE_PATH "~/.dovecot."SIEVE_SCRIPT_FILEEXT
 
 /* How often to scan tmp/ directory for old files (based on dir's atime) */
 #define SIEVE_FILE_STORAGE_TMP_SCAN_SECS (8*60*60)
