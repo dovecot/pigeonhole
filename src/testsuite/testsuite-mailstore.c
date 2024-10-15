@@ -77,7 +77,7 @@ void testsuite_mailstore_init(void)
 		i_fatal("failed to create temporary directory '%s': %m.",
 			testsuite_mailstore_location);
 	}
-	
+
 	mail_user_dovecot = sieve_tool_get_mail_user(sieve_tool);
 
 	if (t_get_working_dir(&cwd, &error) < 0)
