@@ -49,7 +49,7 @@ bool mcht_relational_validate(struct sieve_validator *valdtr,
 	/* Check syntax:
 	     relational-match = DQUOTE ( "gt" / "ge" / "lt"
  	                               / "le" / "eq" / "ne" ) DQUOTE
- 	  
+
 	   So, actually this must be a constant string and it is implemented as
 	   such.
 	 */
@@ -135,7 +135,7 @@ bool mcht_relational_validate(struct sieve_validator *valdtr,
 	*arg = sieve_ast_arguments_detach(*arg, 1);
 
 	/* Not used just yet */
-	ctx->ctx_data = (void *) rel_match;
+	ctx->ctx_data = (void *)rel_match;
 
 	/* Override the actual match type with a parameter-specific one
 	 * FIXME: ugly!
