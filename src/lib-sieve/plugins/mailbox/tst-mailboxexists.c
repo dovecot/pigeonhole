@@ -98,7 +98,7 @@ tst_mailboxexists_validate(struct sieve_validator *valdtr,
 			   struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
-	struct sieve_ast_argument *aarg; 
+	struct sieve_ast_argument *aarg;
 	struct _validate_context valctx;
 
 	if (!sieve_validate_positional_argument(
@@ -114,7 +114,7 @@ tst_mailboxexists_validate(struct sieve_validator *valdtr,
 	valctx.tst = tst;
 
 	return (sieve_ast_stringlist_map(
-		&aarg, (void*)&valctx,
+		&aarg, (void *)&valctx,
 		tst_mailboxexists_mailbox_validate) >= 0);
 }
 
