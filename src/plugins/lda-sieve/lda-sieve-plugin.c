@@ -369,7 +369,7 @@ sieve_binary *lda_sieve_open(struct lda_sieve_run_context *srctx,
 
 	if (recompile)
 		sbin = sieve_compile_script(script, ehandler, cpflags, error_r);
-	else 
+	else
 		sbin = sieve_open_script(script, ehandler, cpflags, error_r);
 
 	/* Load or compile the sieve script */
@@ -755,7 +755,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	/* Compose script array */
 
 	t_array_init(&script_sequence, 16);
-	
+
 	/* before */
 	if (ret >= 0) {
 		i = 2;
@@ -1055,7 +1055,7 @@ lda_sieve_deliver_mail(struct mail_deliver_context *mdctx,
 
 	/* Initialize Sieve engine */
 
-	memset((void*)&svenv, 0, sizeof(svenv));
+	memset((void *)&svenv, 0, sizeof(svenv));
 	svenv.username = mdctx->rcpt_user->username;
 	svenv.home_dir = srctx.home_dir;
 	svenv.hostname = mdctx->rcpt_user->set->hostname;
