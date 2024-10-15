@@ -161,7 +161,7 @@ imap_sieve_smtp_start(const struct sieve_script_env *senv,
 	struct imap_sieve *isieve = isctx->isieve;
 	const struct smtp_submit_settings *smtp_set = isieve->client->smtp_set;
 	struct smtp_submit_input submit_input;
-	
+
 	i_zero(&submit_input);
 
 	return smtp_submit_init_simple(&submit_input, smtp_set, mail_from);
