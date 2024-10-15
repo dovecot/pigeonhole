@@ -9,6 +9,7 @@
 
 #if defined(SIEVE_BUILTIN_LDAP) || defined(PLUGIN_BUILD)
 
+#include "sieve-ldap-storage-settings.h"
 #include "sieve-ldap-db.h"
 
 struct sieve_ldap_storage;
@@ -16,41 +17,6 @@ struct sieve_ldap_storage;
 /*
  * LDAP settings
  */
-
-struct sieve_ldap_storage_settings {
-	const char *hosts;
-	const char *uris;
-	const char *dn;
-	const char *dnpass;
-
-	bool tls;
-	bool sasl_bind;
-	const char *sasl_mech;
-	const char *sasl_realm;
-	const char *sasl_authz_id;
-
-	const char *tls_ca_cert_file;
-	const char *tls_ca_cert_dir;
-	const char *tls_cert_file;
-	const char *tls_key_file;
-	const char *tls_cipher_suite;
-	const char *tls_require_cert;
-
-	const char *deref;
-	const char *scope;
-	const char *base;
-	unsigned int ldap_version;
-
-	const char *ldaprc_path;
-	const char *debug_level;
-
-	const char *sieve_ldap_script_attr;
-	const char *sieve_ldap_mod_attr;
-	const char *sieve_ldap_filter;
-
-	/* ... */
-	int ldap_deref, ldap_scope, ldap_tls_require_cert;
-};
 
 int sieve_ldap_storage_read_settings(struct sieve_ldap_storage *lstorage,
 				     const char *config_path);

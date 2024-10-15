@@ -19,6 +19,7 @@ libsieve_storage_ldap_la_LIBADD = $(LDAP_LIBS)
 
 noinst_HEADERS = \
 	sieve-ldap-db.h \
+	sieve-ldap-storage-settings.h \
 	sieve-ldap-storage.h
 
 if LDAP_PLUGIN
