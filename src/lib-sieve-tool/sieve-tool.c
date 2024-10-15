@@ -254,9 +254,16 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 		storage_service_flags |=
 			MAIL_STORAGE_SERVICE_FLAG_NO_NAMESPACES;
 
+	const char *const code_override_fields[] = {
+		(tool->homedir == NULL ? NULL :
+		 t_strconcat("mail_home=", tool->homedir, NULL)),
+		NULL
+	};
+
 	i_zero(&service_input);
 	service_input.service = tool->name;
 	service_input.username = username;
+	service_input.code_override_fields = code_override_fields;
 
 	tool->storage_service = mail_storage_service_init(
 		master_service, storage_service_flags);
