@@ -36,7 +36,7 @@
  */
 
 static int
-ext_vnd_environment_load(const struct sieve_extension *ext, void **context);
+ext_vnd_environment_load(const struct sieve_extension *ext, void **context_r);
 static void
 ext_vnd_environment_unload(const struct sieve_extension *ext);
 static bool
@@ -57,16 +57,11 @@ const struct sieve_extension_def vnd_environment_extension = {
 };
 
 static int
-ext_vnd_environment_load(const struct sieve_extension *ext, void **context)
+ext_vnd_environment_load(const struct sieve_extension *ext, void **context_r)
 {
 	const struct sieve_extension *ext_env;
 	const struct sieve_extension *ext_var;
 	struct ext_vnd_environment_context *extctx;
-
-	if (*context != NULL) {
-		ext_vnd_environment_unload(ext);
-		*context = NULL;
-	}
 
 	if (sieve_ext_environment_require_extension(ext->svinst, &ext_env) < 0)
 		return -1;
@@ -77,7 +72,7 @@ ext_vnd_environment_load(const struct sieve_extension *ext, void **context)
 	extctx->env_ext = ext_env;
 	extctx->var_ext = ext_var;
 
-	*context = extctx;
+	*context_r = extctx;
 	return 0;
 }
 

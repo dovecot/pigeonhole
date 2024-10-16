@@ -53,7 +53,7 @@ ext_include_script_location_name(enum ext_include_script_location location)
 extern const struct sieve_extension_def include_extension;
 extern const struct sieve_binary_extension include_binary_ext;
 
-int ext_include_load(const struct sieve_extension *ext, void **context);
+int ext_include_load(const struct sieve_extension *ext, void **context_r);
 void ext_include_unload(const struct sieve_extension *ext);
 
 /*

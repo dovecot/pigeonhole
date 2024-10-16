@@ -57,7 +57,7 @@
  */
 
 int sieve_extprograms_ext_load(const struct sieve_extension *ext,
-			       void **context)
+			       void **context_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	const struct sieve_extension *copy_ext = NULL;
@@ -66,11 +66,6 @@ int sieve_extprograms_ext_load(const struct sieve_extension *ext,
 	const char *extname = sieve_extension_name(ext);
 	const char *bin_dir, *socket_dir, *input_eol;
 	sieve_number_t execute_timeout;
-
-	if (*context != NULL) {
-		sieve_extprograms_ext_unload(ext);
-		*context = NULL;
-	}
 
 	extname = strrchr(extname, '.');
 	i_assert(extname != NULL);
@@ -119,7 +114,7 @@ int sieve_extprograms_ext_load(const struct sieve_extension *ext,
 		}
 	}
 
-	*context = extctx;
+	*context_r = extctx;
 	return 0;
 }
 

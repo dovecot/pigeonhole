@@ -31,7 +31,7 @@
  */
 
 static int
-ext_extracttext_load(const struct sieve_extension *ext, void **context);
+ext_extracttext_load(const struct sieve_extension *ext, void **context_r);
 static void
 ext_extracttext_unload(const struct sieve_extension *ext);
 static bool
@@ -47,17 +47,12 @@ const struct sieve_extension_def extracttext_extension = {
 };
 
 static int
-ext_extracttext_load(const struct sieve_extension *ext, void **context)
+ext_extracttext_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	const struct sieve_extension *var_ext;
 	const struct sieve_extension *fep_ext;
 	struct ext_extracttext_context *extctx;
-
-	if (*context != NULL) {
-		ext_extracttext_unload(ext);
-		*context = NULL;
-	}
 
 	if (sieve_ext_variables_get_extension(ext->svinst, &var_ext) < 0)
 		return -1;
@@ -69,7 +64,7 @@ ext_extracttext_load(const struct sieve_extension *ext, void **context)
 	extctx->var_ext = var_ext;
 	extctx->fep_ext = fep_ext;
 
-	*context = extctx;
+	*context_r = extctx;
 	return 0;
 }
 

@@ -12,7 +12,7 @@ struct ext_duplicate_context {
 	unsigned int max_period;
 };
 
-int ext_duplicate_load(const struct sieve_extension *ext, void **context);
+int ext_duplicate_load(const struct sieve_extension *ext, void **context_r);
 void ext_duplicate_unload(const struct sieve_extension *ext);
 
 extern const struct sieve_extension_def duplicate_extension;

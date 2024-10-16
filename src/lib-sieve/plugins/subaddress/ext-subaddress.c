@@ -64,15 +64,10 @@ const struct sieve_extension_def subaddress_extension = {
 };
 
 static int
-ext_subaddress_load(const struct sieve_extension *ext, void **context)
+ext_subaddress_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct ext_subaddress_context *extctx;
 	const char *delim;
-
-	if (*context != NULL) {
-		ext_subaddress_unload(ext);
-		*context = NULL;
-	}
 
 	delim = sieve_setting_get(ext->svinst, "recipient_delimiter");
 
@@ -82,7 +77,7 @@ ext_subaddress_load(const struct sieve_extension *ext, void **context)
 	extctx = i_new(struct ext_subaddress_context, 1);
 	extctx->delimiter = i_strdup(delim);
 
-	*context = extctx;
+	*context_r = extctx;
 	return 0;
 }
 

@@ -15,7 +15,7 @@ struct ext_report_context {
 
 extern const struct sieve_extension_def vnd_report_extension;
 
-int ext_report_load(const struct sieve_extension *ext, void **context);
+int ext_report_load(const struct sieve_extension *ext, void **context_r);
 
 /*
  * Commands

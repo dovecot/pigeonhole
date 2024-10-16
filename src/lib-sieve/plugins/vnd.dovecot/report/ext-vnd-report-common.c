@@ -10,7 +10,7 @@
 
 #include "ext-vnd-report-common.h"
 
-int ext_report_load(const struct sieve_extension *ext, void **context)
+int ext_report_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_report_context *extctx;
@@ -21,7 +21,7 @@ int ext_report_load(const struct sieve_extension *ext, void **context)
 		svinst, svinst->pool, "sieve_report_from",
 		&extctx->report_from);
 
-	*context = extctx;
+	*context_r = extctx;
 	return 0;
 }
 

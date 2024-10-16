@@ -37,8 +37,7 @@ struct ext_spamvirustest_header_spec {
 
 struct ext_spamvirustest_context {
 	pool_t pool;
-
-	int reload;
+	unsigned int reload_id;
 
 	struct ext_spamvirustest_header_spec status_header;
 	struct ext_spamvirustest_header_spec max_header;
@@ -249,22 +248,17 @@ ext_spamvirustest_parse_decimal_value(const char *str_value,
  * Extension initialization
  */
 
-int ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
+int ext_spamvirustest_load(const struct sieve_extension *ext, void **context_r)
 {
+	static unsigned int reload_id = 0;
 	struct sieve_instance *svinst = ext->svinst;
-	struct ext_spamvirustest_context *extctx = *context;
+	struct ext_spamvirustest_context *extctx;
 	const char *ext_name, *status_header, *max_header, *status_type,
 		*max_value;
 	enum ext_spamvirustest_status_type type;
 	const char *error;
 	pool_t pool;
-	int reload = 0, ret = 0;
-
-	if (*context != NULL) {
-		reload = extctx->reload + 1;
-		ext_spamvirustest_unload(ext);
-		*context = NULL;
-	}
+	int ret = 0;
 
 	/* FIXME: Prevent loading of both spamtest and spamtestplus:
 	   let these share contexts.
@@ -343,7 +337,7 @@ int ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 	pool = pool_alloconly_create("spamvirustest_data", 512);
 	extctx = p_new(pool, struct ext_spamvirustest_context, 1);
 	extctx->pool = pool;
-	extctx->reload = reload;
+	extctx->reload_id = ++reload_id;
 	extctx->status_type = type;
 
 	if (!ext_spamvirustest_header_spec_parse(
@@ -405,14 +399,14 @@ int ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 		}
 	}
 
-	*context = extctx;
+	*context_r = extctx;
 	if (ret < 0) {
 		e_warning(svinst->event, "%s: "
 			  "extension not configured, "
 			  "tests will always match against \"0\"",
 			  ext_name);
 		ext_spamvirustest_unload(ext);
-		*context = NULL;
+		*context_r = NULL;
 	}
 
 	return ret;
@@ -435,7 +429,7 @@ void ext_spamvirustest_unload(const struct sieve_extension *ext)
  */
 
 struct ext_spamvirustest_message_context {
-	int reload;
+	unsigned int reload_id;
 	float score_ratio;
 };
 
@@ -500,7 +494,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 		/* Create new context */
 		mctx = p_new(pool, struct ext_spamvirustest_message_context, 1);
 		sieve_message_context_extension_set(msgctx, ext, mctx);
-	} else if (mctx->reload == extctx->reload) {
+	} else if (mctx->reload_id == extctx->reload_id) {
 		/* Use cached result */
 		*value_r = ext_spamvirustest_get_score(ext, mctx->score_ratio,
 						       percent);
@@ -509,7 +503,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 		/* Extension was reloaded (probably in testsuite) */
 	}
 
-	mctx->reload = extctx->reload;
+	mctx->reload_id = extctx->reload_id;
 
 	/*
 	 * Get max status value
