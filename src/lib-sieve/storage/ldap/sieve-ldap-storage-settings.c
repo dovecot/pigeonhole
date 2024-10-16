@@ -19,35 +19,35 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define DEF_STR(name) DEF_STRUCT_STR(name, sieve_ldap_storage_settings)
-#define DEF_INT(name) DEF_STRUCT_INT(name, sieve_ldap_storage_settings)
-#define DEF_BOOL(name) DEF_STRUCT_BOOL(name, sieve_ldap_storage_settings)
+#undef DEF
+#define DEF(type, name) \
+	DEF_STRUCT_##type(name, sieve_ldap_storage_settings)
 
 static struct setting_def setting_defs[] = {
-	DEF_STR(hosts),
-	DEF_STR(uris),
-	DEF_STR(dn),
-	DEF_STR(dnpass),
-	DEF_BOOL(tls),
-	DEF_BOOL(sasl_bind),
-	DEF_STR(sasl_mech),
-	DEF_STR(sasl_realm),
-	DEF_STR(sasl_authz_id),
-	DEF_STR(tls_ca_cert_file),
-	DEF_STR(tls_ca_cert_dir),
-	DEF_STR(tls_cert_file),
-	DEF_STR(tls_key_file),
-	DEF_STR(tls_cipher_suite),
-	DEF_STR(tls_require_cert),
-	DEF_STR(deref),
-	DEF_STR(scope),
-	DEF_STR(base),
-	DEF_INT(ldap_version),
-	DEF_STR(debug_level),
-	DEF_STR(ldaprc_path),
-	DEF_STR(sieve_ldap_script_attr),
-	DEF_STR(sieve_ldap_mod_attr),
-	DEF_STR(sieve_ldap_filter),
+	DEF(STR, hosts),
+	DEF(STR, uris),
+	DEF(STR, dn),
+	DEF(STR, dnpass),
+	DEF(BOOL, tls),
+	DEF(BOOL, sasl_bind),
+	DEF(STR, sasl_mech),
+	DEF(STR, sasl_realm),
+	DEF(STR, sasl_authz_id),
+	DEF(STR, tls_ca_cert_file),
+	DEF(STR, tls_ca_cert_dir),
+	DEF(STR, tls_cert_file),
+	DEF(STR, tls_key_file),
+	DEF(STR, tls_cipher_suite),
+	DEF(STR, tls_require_cert),
+	DEF(STR, deref),
+	DEF(STR, scope),
+	DEF(STR, base),
+	DEF(INT, ldap_version),
+	DEF(STR, debug_level),
+	DEF(STR, ldaprc_path),
+	DEF(STR, sieve_ldap_script_attr),
+	DEF(STR, sieve_ldap_mod_attr),
+	DEF(STR, sieve_ldap_filter),
 
 	{ 0, NULL, 0 }
 };
