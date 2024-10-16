@@ -26,7 +26,7 @@ extern const struct sieve_operation_def deleteheader_operation;
 
 extern const struct sieve_extension_def editheader_extension;
 
-bool ext_editheader_load(const struct sieve_extension *ext, void **context);
+int ext_editheader_load(const struct sieve_extension *ext, void **context);
 void ext_editheader_unload(const struct sieve_extension *ext);
 
 /*

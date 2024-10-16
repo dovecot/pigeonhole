@@ -52,7 +52,7 @@ size_t sieve_variables_get_max_variable_size(
  * Extension configuration
  */
 
-bool ext_variables_load(const struct sieve_extension *ext, void **context)
+int ext_variables_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_variables_context *extctx;
@@ -98,7 +98,7 @@ bool ext_variables_load(const struct sieve_extension *ext, void **context)
 	}
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 void ext_variables_unload(const struct sieve_extension *ext)

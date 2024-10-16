@@ -30,7 +30,7 @@
  * Extension
  */
 
-static bool
+static int
 ext_extracttext_load(const struct sieve_extension *ext, void **context);
 static void
 ext_extracttext_unload(const struct sieve_extension *ext);
@@ -46,7 +46,7 @@ const struct sieve_extension_def extracttext_extension = {
 	SIEVE_EXT_DEFINE_OPERATION(extracttext_operation),
 };
 
-static bool
+static int
 ext_extracttext_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
@@ -60,17 +60,17 @@ ext_extracttext_load(const struct sieve_extension *ext, void **context)
 	}
 
 	if (sieve_ext_variables_get_extension(ext->svinst, &var_ext) < 0)
-		return FALSE;
+		return -1;
 	if (sieve_extension_register(svinst, &foreverypart_extension, FALSE,
 				     &fep_ext) < 0)
-		return FALSE;
+		return -1;
 
 	extctx = i_new(struct ext_extracttext_context, 1);
 	extctx->var_ext = var_ext;
 	extctx->fep_ext = fep_ext;
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 static void ext_extracttext_unload(const struct sieve_extension *ext)

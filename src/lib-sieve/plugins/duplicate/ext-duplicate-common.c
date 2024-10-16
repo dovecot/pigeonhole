@@ -28,7 +28,7 @@
 #define EXT_DUPLICATE_DEFAULT_PERIOD (12*60*60)
 #define EXT_DUPLICATE_DEFAULT_MAX_PERIOD (2*24*60*60)
 
-bool ext_duplicate_load(const struct sieve_extension *ext, void **context)
+int ext_duplicate_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_duplicate_context *extctx;
@@ -52,7 +52,7 @@ bool ext_duplicate_load(const struct sieve_extension *ext, void **context)
 	extctx->max_period = max_period;
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 void ext_duplicate_unload(const struct sieve_extension *ext)

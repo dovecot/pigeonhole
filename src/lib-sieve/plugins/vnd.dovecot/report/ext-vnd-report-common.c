@@ -10,7 +10,7 @@
 
 #include "ext-vnd-report-common.h"
 
-bool ext_report_load(const struct sieve_extension *ext, void **context)
+int ext_report_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_report_context *extctx;
@@ -22,7 +22,7 @@ bool ext_report_load(const struct sieve_extension *ext, void **context)
 		&extctx->report_from);
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 const char *ext_vnd_report_parse_feedback_type(const char *feedback_type)

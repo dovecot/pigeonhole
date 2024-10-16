@@ -28,9 +28,9 @@
  * Extension
  */
 
-static bool
+static int
 ext_imapsieve_load(const struct sieve_extension *ext, void **context);
-static bool
+static int
 ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context);
 static void ext_imapsieve_unload(const struct sieve_extension *ext);
 static void ext_vnd_imapsieve_unload(const struct sieve_extension *ext);
@@ -71,7 +71,7 @@ const struct sieve_extension_def vnd_imapsieve_extension = {
  * Context
  */
 
-static bool
+static int
 ext_imapsieve_load(const struct sieve_extension *ext, void **context)
 {
 	const struct sieve_extension *ext_environment;
@@ -84,16 +84,16 @@ ext_imapsieve_load(const struct sieve_extension *ext, void **context)
 
 	if (sieve_ext_environment_require_extension(ext->svinst,
 						    &ext_environment) < 0)
-		return FALSE;
+		return -1;
 
 	extctx = i_new(struct ext_imapsieve_context, 1);
 	extctx->ext_environment = ext_environment;
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
-static bool
+static int
 ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context)
 {
 	struct ext_vnd_imapsieve_context *extctx;
@@ -107,15 +107,15 @@ ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context)
 #ifdef __IMAPSIEVE_DUMMY
 	if (sieve_extension_require(ext->svinst, &imapsieve_extension_dummy,
 				    TRUE, &extctx->ext_imapsieve) < 0)
-		return FALSE;
+		return -1;
 #else
 	if (sieve_extension_require(ext->svinst, &imapsieve_extension,
 				    TRUE, &extctx->ext_imapsieve) < 0)
-		return FALSE;
+		return -1;
 #endif
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 static void ext_imapsieve_unload(const struct sieve_extension *ext)
