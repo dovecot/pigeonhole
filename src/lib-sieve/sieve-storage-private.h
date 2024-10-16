@@ -25,6 +25,13 @@ struct sieve_storage_vfuncs {
 	void (*destroy)(struct sieve_storage *storage);
 	int (*init)(struct sieve_storage *storage, const char *const *options);
 
+	int (*autodetect)(struct sieve_instance *svinst,
+			  const char *active_path,
+			  enum sieve_storage_flags flags,
+			  struct sieve_storage **storage_r,
+			  enum sieve_error *error_code_r,
+			  const char **error_r);
+
 	int (*get_last_change)(struct sieve_storage *storage,
 			       time_t *last_change_r);
 	void (*set_modified)(struct sieve_storage *storage, time_t mtime);
@@ -215,13 +222,6 @@ extern const struct sieve_storage sieve_data_storage;
 #define SIEVE_FILE_STORAGE_DRIVER_NAME "file"
 
 extern const struct sieve_storage sieve_file_storage;
-
-int sieve_file_storage_init_default(struct sieve_instance *svinst,
-				    const char *active_path,
-				    enum sieve_storage_flags flags,
-				    struct sieve_storage **storage_r,
-				    enum sieve_error *error_code_r,
-				    const char **error_r);
 
 /* dict */
 
