@@ -161,13 +161,13 @@ sieve_ldap_settings_check(struct sieve_ldap_storage_settings *set,
 		env_put("LDAPRC", set->ldaprc_path);
 	}
 
-	if (ldap_deref_from_str(set->deref, &set->ldap_deref) < 0) {
+	if (ldap_deref_from_str(set->deref, &set->parsed.deref) < 0) {
 		*error_r = t_strdup_printf(
 			"Invalid deref option '%s'", set->deref);
 		return FALSE;
 	}
 
-	if (ldap_scope_from_str(set->scope, &set->ldap_scope) < 0) {
+	if (ldap_scope_from_str(set->scope, &set->parsed.scope) < 0) {
 		*error_r = t_strdup_printf(
 			"Invalid scope option '%s'", set->scope);
 		return FALSE;
@@ -177,7 +177,7 @@ sieve_ldap_settings_check(struct sieve_ldap_storage_settings *set,
 	if (set->tls_require_cert != NULL &&
 	    ldap_tls_require_cert_from_str(
 		set->tls_require_cert,
-		&set->ldap_tls_require_cert) < 0) {
+		&set->parsed.tls_require_cert) < 0) {
 		*error_r = t_strdup_printf(
 			"Invalid tls_require_cert option '%s'",
 			set->tls_require_cert);
