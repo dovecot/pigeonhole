@@ -590,10 +590,9 @@ sieve_file_storage_init(struct sieve_storage *storage,
 }
 
 static int
-sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
-				   const char *active_path,
-				   enum sieve_error *error_code_r,
-				   const char **error_r)
+sieve_file_storage_do_autodetect(
+	struct sieve_file_storage *fstorage, const char *active_path,
+	enum sieve_error *error_code_r, const char **error_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
@@ -679,12 +678,13 @@ sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
 	return 0;
 }
 
-int sieve_file_storage_init_default(struct sieve_instance *svinst,
-				    const char *active_path,
-				    enum sieve_storage_flags flags,
-				    struct sieve_storage **storage_r,
-				    enum sieve_error *error_code_r,
-				    const char **error_r)
+static int
+sieve_file_storage_autodetect(struct sieve_instance *svinst,
+			      const char *active_path,
+			      enum sieve_storage_flags flags,
+			      struct sieve_storage **storage_r,
+			      enum sieve_error *error_code_r,
+			      const char **error_r)
 {
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
@@ -698,7 +698,7 @@ int sieve_file_storage_init_default(struct sieve_instance *svinst,
 	fstorage = container_of(storage, struct sieve_file_storage, storage);
 
 	T_BEGIN {
-		ret = sieve_file_storage_do_init_default(
+		ret = sieve_file_storage_do_autodetect(
 			fstorage, active_path, error_code_r, error_r);
 	}  T_END_PASS_STR_IF(ret < 0, error_r);
 	if (ret < 0) {
@@ -887,6 +887,8 @@ const struct sieve_storage sieve_file_storage = {
 	.v = {
 		.alloc = sieve_file_storage_alloc,
 		.init = sieve_file_storage_init,
+
+		.autodetect = sieve_file_storage_autodetect,
 
 		.get_last_change = sieve_file_storage_get_last_change,
 		.set_modified = sieve_file_storage_set_modified,

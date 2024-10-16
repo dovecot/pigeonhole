@@ -615,7 +615,9 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 
 	if (storage == NULL) {
 		const char *error;
-		if (sieve_file_storage_init_default(svinst, set_sieve, flags,
+
+		i_assert(sieve_file_storage.v.autodetect != NULL);
+		if (sieve_file_storage.v.autodetect(svinst, set_sieve, flags,
 						    &storage, error_code_r,
 						    &error) < 0)
 			return -1;
