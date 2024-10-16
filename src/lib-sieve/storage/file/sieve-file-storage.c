@@ -697,11 +697,11 @@ sieve_file_storage_do_init_default(struct sieve_file_storage *fstorage,
 	return 0;
 }
 
-struct sieve_storage *
-sieve_file_storage_init_default(struct sieve_instance *svinst,
-				const char *active_path,
-				enum sieve_storage_flags flags,
-				enum sieve_error *error_code_r)
+int sieve_file_storage_init_default(struct sieve_instance *svinst,
+				    const char *active_path,
+				    enum sieve_storage_flags flags,
+				    struct sieve_storage **storage_r,
+				    enum sieve_error *error_code_r)
 {
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
@@ -713,12 +713,15 @@ sieve_file_storage_init_default(struct sieve_instance *svinst,
 	fstorage = container_of(storage, struct sieve_file_storage, storage);
 
 	T_BEGIN {
-		if (sieve_file_storage_do_init_default(fstorage, active_path,
-						       error_code_r) < 0)
-			sieve_storage_unref(&storage);
+		ret = sieve_file_storage_do_init_default(fstorage, active_path,
+							 error_code_r);
 	} T_END;
-
-	return storage;
+	if (ret < 0) {
+		sieve_storage_unref(&storage);
+		return -1;
+	}
+	*storage_r = storage;
+	return 0;
 }
 
 int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
