@@ -625,6 +625,16 @@ sieve_file_storage_do_autodetect(
 		}
 	}
 
+	if ((storage_path == NULL || *storage_path == '\0') &&
+	    (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
+		sieve_storage_set_critical(storage,
+			"Could not find storage root directory for write access; "
+			"path was left unconfigured and autodetection failed");
+		*error_code_r = storage->error_code;
+		*error_r = storage->error;
+		return -1;
+	}
+
 	if (storage_path != NULL && *storage_path != '\0') {
 		/* Got something: stat it */
 		if (sieve_file_storage_stat(fstorage, storage_path) < 0) {
@@ -638,16 +648,6 @@ sieve_file_storage_do_autodetect(
 			/* Success */
 			exists = TRUE;
 		}
-	}
-
-	if ((storage_path == NULL || *storage_path == '\0') &&
-	    (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
-		sieve_storage_set_critical(storage,
-			"Could not find storage root directory for write access; "
-			"path was left unconfigured and autodetection failed");
-		*error_code_r = storage->error_code;
-		*error_r = storage->error;
-		return -1;
 	}
 
 	if (active_path == NULL || *active_path == '\0') {
