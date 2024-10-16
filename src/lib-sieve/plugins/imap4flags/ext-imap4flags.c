@@ -42,7 +42,7 @@ const struct sieve_operation_def *imap4flags_operations[] = {
  * Extension
  */
 
-static bool
+static int
 ext_imap4flags_load(const struct sieve_extension *ext, void **context);
 static void ext_imap4flags_unload(const struct sieve_extension *ext);
 
@@ -63,7 +63,7 @@ const struct sieve_extension_def imap4flags_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(flags_side_effect_operand)
 };
 
-static bool
+static int
 ext_imap4flags_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
@@ -76,13 +76,13 @@ ext_imap4flags_load(const struct sieve_extension *ext, void **context)
 	}
 
 	if (sieve_ext_variables_get_extension(svinst, &var_ext) < 0)
-		return FALSE;
+		return -1;
 
 	extctx = i_new(struct ext_imap4flags_context, 1);
 	extctx->var_ext = var_ext;
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 static void ext_imap4flags_unload(const struct sieve_extension *ext)

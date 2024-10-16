@@ -73,7 +73,7 @@ struct ext_include_interpreter_context {
 
 /* Extension hooks */
 
-bool ext_include_load(const struct sieve_extension *ext, void **context)
+int ext_include_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	const struct sieve_extension *var_ext;
@@ -88,7 +88,7 @@ bool ext_include_load(const struct sieve_extension *ext, void **context)
 
 	/* Extension dependencies */
 	if (sieve_ext_variables_get_extension(ext->svinst, &var_ext) < 0)
-		return FALSE;
+		return -1;
 
 	extctx = i_new(struct ext_include_context, 1);
 	extctx->var_ext = var_ext;
@@ -116,7 +116,7 @@ bool ext_include_load(const struct sieve_extension *ext, void **context)
 		extctx->max_includes = (unsigned int)uint_setting;
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 void ext_include_unload(const struct sieve_extension *ext)

@@ -298,9 +298,16 @@ sieve_extensions_get_preloaded(struct sieve_instance *svinst,
 
 static int _sieve_extension_load(struct sieve_extension *ext)
 {
+	int ret;
+
 	/* Call load handler */
-	if (ext->def != NULL && ext->def->load != NULL &&
-	    !ext->def->load(ext, &ext->context)) {
+	if (ext->def == NULL || ext->def->load == NULL)
+		return 0;
+
+	ret = ext->def->load(ext, &ext->context);
+	i_assert(ret <= 0);
+
+	if (ret < 0) {
 		e_error(ext->svinst->event,
 			"failed to load '%s' extension support.",
 			ext->def->name);

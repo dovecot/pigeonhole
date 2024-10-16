@@ -35,7 +35,7 @@
  * Extension
  */
 
-static bool
+static int
 ext_vnd_environment_load(const struct sieve_extension *ext, void **context);
 static void
 ext_vnd_environment_unload(const struct sieve_extension *ext);
@@ -56,7 +56,7 @@ const struct sieve_extension_def vnd_environment_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(environment_namespace_operand),
 };
 
-static bool
+static int
 ext_vnd_environment_load(const struct sieve_extension *ext, void **context)
 {
 	const struct sieve_extension *ext_env;
@@ -69,16 +69,16 @@ ext_vnd_environment_load(const struct sieve_extension *ext, void **context)
 	}
 
 	if (sieve_ext_environment_require_extension(ext->svinst, &ext_env) < 0)
-		return FALSE;
+		return -1;
 	if (sieve_ext_variables_get_extension(ext->svinst, &ext_var) < 0)
-		return FALSE;
+		return -1;
 
 	extctx = i_new(struct ext_vnd_environment_context, 1);
 	extctx->env_ext = ext_env;
 	extctx->var_ext = ext_var;
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 static void ext_vnd_environment_unload(const struct sieve_extension *ext)

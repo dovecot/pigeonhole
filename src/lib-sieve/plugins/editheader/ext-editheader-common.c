@@ -93,7 +93,7 @@ ext_editheader_config_headers(struct sieve_instance *svinst,
 	}
 }
 
-bool ext_editheader_load(const struct sieve_extension *ext, void **context)
+int ext_editheader_load(const struct sieve_extension *ext, void **context)
 {
 	struct ext_editheader_context *extctx;
 	struct sieve_instance *svinst = ext->svinst;
@@ -140,7 +140,7 @@ bool ext_editheader_load(const struct sieve_extension *ext, void **context)
 	} T_END;
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 void ext_editheader_unload(const struct sieve_extension *ext)

@@ -249,7 +249,7 @@ ext_spamvirustest_parse_decimal_value(const char *str_value,
  * Extension initialization
  */
 
-bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
+int ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_spamvirustest_context *extctx = *context;
@@ -258,8 +258,7 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 	enum ext_spamvirustest_status_type type;
 	const char *error;
 	pool_t pool;
-	bool result = TRUE;
-	int reload = 0;
+	int reload = 0, ret = 0;
 
 	if (*context != NULL) {
 		reload = extctx->reload + 1;
@@ -293,7 +292,7 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 	/* Base configuration */
 
 	if (status_header == NULL)
-		return TRUE;
+		return 0;
 
 	if (status_type == NULL || strcmp(status_type, "score") == 0) {
 		type = EXT_SPAMVIRUSTEST_STATUS_TYPE_SCORE;
@@ -304,7 +303,7 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 	} else {
 		e_error(svinst->event, "%s: "
 			"invalid status type '%s'", ext_name, status_type);
-		return FALSE;
+		return -1;
 	}
 
 	/* Verify settings */
@@ -316,14 +315,14 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 				"sieve_%s_max_header and sieve_%s_max_value "
 				"cannot both be configured",
 				ext_name, ext_name, ext_name);
-			return TRUE;
+			return 0;
 		}
 
 		if (max_header == NULL && max_value == NULL) {
 			e_error(svinst->event, "%s: "
 				"none of sieve_%s_max_header or sieve_%s_max_value "
 				"is configured", ext_name, ext_name, ext_name);
-			return TRUE;
+			return 0;
 		}
 	} else {
 		if (max_header != NULL) {
@@ -353,10 +352,10 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 		e_error(svinst->event, "%s: "
 			"invalid status header specification '%s': %s",
 			ext_name, status_header, error);
-		result = FALSE;
+		ret = -1;
 	}
 
-	if (result) {
+	if (ret == 0) {
 		if (type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT) {
 			/* Parse max header */
 
@@ -368,19 +367,19 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 					"invalid max header specification "
 					"'%s': %s", ext_name, max_header,
 					error);
-				result = FALSE;
+				ret = -1;
 			}
 
 			/* Parse max value */
 
-			if (result && max_value != NULL) {
+			if (ret == 0 && max_value != NULL) {
 				if (!ext_spamvirustest_parse_decimal_value(
 					max_value, &extctx->max_value, &error)) {
 					e_error(svinst->event, "%s: "
 						"invalid max value specification "
 						"'%s': %s", ext_name, max_value,
 						error);
-					result = FALSE;
+					ret = -1;
 				}
 			}
 
@@ -407,7 +406,7 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 	}
 
 	*context = extctx;
-	if (!result) {
+	if (ret < 0) {
 		e_warning(svinst->event, "%s: "
 			  "extension not configured, "
 			  "tests will always match against \"0\"",
@@ -416,7 +415,7 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 		*context = NULL;
 	}
 
-	return result;
+	return ret;
 }
 
 void ext_spamvirustest_unload(const struct sieve_extension *ext)

@@ -48,7 +48,7 @@ static struct sieve_operand_def subaddress_operand;
  * Extension
  */
 
-static bool
+static int
 ext_subaddress_load(const struct sieve_extension *ext, void **context);
 static void ext_subaddress_unload(const struct sieve_extension *ext);
 static bool
@@ -63,7 +63,7 @@ const struct sieve_extension_def subaddress_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(subaddress_operand),
 };
 
-static bool
+static int
 ext_subaddress_load(const struct sieve_extension *ext, void **context)
 {
 	struct ext_subaddress_context *extctx;
@@ -83,7 +83,7 @@ ext_subaddress_load(const struct sieve_extension *ext, void **context)
 	extctx->delimiter = i_strdup(delim);
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 static void ext_subaddress_unload(const struct sieve_extension *ext)

@@ -24,7 +24,7 @@ struct sieve_extension_def {
 	unsigned int version;
 
 	/* Registration */
-	bool (*load)(const struct sieve_extension *ext, void **context);
+	int (*load)(const struct sieve_extension *ext, void **context);
 	void (*unload)(const struct sieve_extension *ext);
 
 	/* Compilation */

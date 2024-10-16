@@ -10,7 +10,7 @@
 
 #include "ext-vacation-common.h"
 
-bool ext_vacation_load(const struct sieve_extension *ext, void **context)
+int ext_vacation_load(const struct sieve_extension *ext, void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_vacation_context *extctx;
@@ -83,7 +83,7 @@ bool ext_vacation_load(const struct sieve_extension *ext, void **context)
 	extctx->to_header_ignore_envelope = to_header_ignore_envelope;
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 void ext_vacation_unload(const struct sieve_extension *ext)

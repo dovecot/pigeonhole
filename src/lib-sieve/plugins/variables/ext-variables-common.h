@@ -19,7 +19,7 @@ struct ext_variables_context {
 
 extern const struct sieve_extension_def variables_extension;
 
-bool ext_variables_load(const struct sieve_extension *ext, void **context);
+int ext_variables_load(const struct sieve_extension *ext, void **context);
 void ext_variables_unload(const struct sieve_extension *ext);
 
 const struct ext_variables_context *

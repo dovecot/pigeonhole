@@ -28,7 +28,7 @@ struct ext_vacation_seconds_context {
 	const struct sieve_extension *ext_vacation;
 };
 
-static bool
+static int
 ext_vacation_seconds_load(const struct sieve_extension *ext, void **context);
 static void ext_vacation_seconds_unload(const struct sieve_extension *ext);
 
@@ -43,7 +43,7 @@ const struct sieve_extension_def vacation_seconds_extension = {
 	.validator_load = ext_vacation_seconds_validator_load,
 };
 
-static bool
+static int
 ext_vacation_seconds_load(const struct sieve_extension *ext, void **context)
 {
 	const struct sieve_extension *ext_vac;
@@ -57,13 +57,13 @@ ext_vacation_seconds_load(const struct sieve_extension *ext, void **context)
 	/* Make sure vacation extension is registered */
 	if (sieve_extension_require(ext->svinst, &vacation_extension,
 				    TRUE, &ext_vac) < 0)
-		return FALSE;
+		return -1;
 
 	extctx = i_new(struct ext_vacation_seconds_context, 1);
 	extctx->ext_vacation = ext_vac;
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 static void ext_vacation_seconds_unload(const struct sieve_extension *ext)

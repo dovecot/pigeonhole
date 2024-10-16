@@ -56,8 +56,8 @@
  * Context
  */
 
-bool sieve_extprograms_ext_load(const struct sieve_extension *ext,
-				void **context)
+int sieve_extprograms_ext_load(const struct sieve_extension *ext,
+			       void **context)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	const struct sieve_extension *copy_ext = NULL;
@@ -85,12 +85,12 @@ bool sieve_extprograms_ext_load(const struct sieve_extension *ext,
 
 	if (sieve_extension_is(ext, sieve_ext_vnd_pipe)) {
 		if (sieve_ext_copy_get_extension(ext->svinst, &copy_ext) < 0)
-			return FALSE;
+			return -1;
 	}
 	if (sieve_extension_is(ext, sieve_ext_vnd_execute)) {
 		if (sieve_ext_variables_get_extension(ext->svinst,
 						      &var_ext) < 0)
-			return FALSE;
+			return -1;
 	}
 
 	extctx = i_new(struct sieve_extprograms_ext_context, 1);
@@ -120,7 +120,7 @@ bool sieve_extprograms_ext_load(const struct sieve_extension *ext,
 	}
 
 	*context = extctx;
-	return TRUE;
+	return 0;
 }
 
 void sieve_extprograms_ext_unload(const struct sieve_extension *ext)
