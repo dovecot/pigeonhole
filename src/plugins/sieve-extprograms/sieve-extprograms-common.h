@@ -25,7 +25,7 @@ struct sieve_extprograms_ext_context {
 };
 
 int sieve_extprograms_ext_load(const struct sieve_extension *ext,
-			       void **context);
+			       void **context_r);
 void sieve_extprograms_ext_unload(const struct sieve_extension *ext);
 
 /*

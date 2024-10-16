@@ -11,7 +11,7 @@ extern const struct sieve_extension_def spamtest_extension;
 extern const struct sieve_extension_def spamtestplus_extension;
 extern const struct sieve_extension_def virustest_extension;
 
-int ext_spamvirustest_load(const struct sieve_extension *ext, void **context);
+int ext_spamvirustest_load(const struct sieve_extension *ext, void **context_r);
 void ext_spamvirustest_unload(const struct sieve_extension *ext);
 
 /*

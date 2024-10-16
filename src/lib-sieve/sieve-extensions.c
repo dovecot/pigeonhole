@@ -296,9 +296,15 @@ sieve_extensions_get_preloaded(struct sieve_instance *svinst,
  * Extension registry
  */
 
+static void _sieve_extension_unload(struct sieve_extension *ext);
+
 static int _sieve_extension_load(struct sieve_extension *ext)
 {
 	int ret;
+
+	/* Drop context if this is a reload */
+	if (ext->context != NULL)
+		_sieve_extension_unload(ext);
 
 	/* Call load handler */
 	if (ext->def == NULL || ext->def->load == NULL)

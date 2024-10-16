@@ -40,7 +40,8 @@ const struct sieve_operation_def *ext_enotify_operations[] = {
  * Extension
  */
 
-static int ext_enotify_load(const struct sieve_extension *ext, void **context);
+static int
+ext_enotify_load(const struct sieve_extension *ext, void **context_r);
 static void ext_enotify_unload(const struct sieve_extension *ext);
 static bool
 ext_enotify_validator_load(const struct sieve_extension *ext,
@@ -55,26 +56,22 @@ const struct sieve_extension_def enotify_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(encodeurl_operand),
 };
 
-static int ext_enotify_load(const struct sieve_extension *ext, void **context)
+static int ext_enotify_load(const struct sieve_extension *ext, void **context_r)
 {
 	const struct sieve_extension *var_ext;
 	struct ext_enotify_context *extctx;
-
-	if (*context != NULL) {
-		ext_enotify_unload(ext);
-		*context = NULL;
-	}
 
 	if (sieve_ext_variables_get_extension(ext->svinst, &var_ext) < 0)
 		return -1;
 
 	extctx = i_new(struct ext_enotify_context, 1);
 	extctx->var_ext = var_ext;
-	*context = extctx;
 
 	ext_enotify_methods_init(ext->svinst, extctx);
 
 	sieve_extension_capabilities_register(ext, &notify_capabilities);
+
+	*context_r = extctx;
 	return 0;
 }
 

@@ -29,9 +29,9 @@
  */
 
 static int
-ext_imapsieve_load(const struct sieve_extension *ext, void **context);
+ext_imapsieve_load(const struct sieve_extension *ext, void **context_r);
 static int
-ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context);
+ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context_r);
 static void ext_imapsieve_unload(const struct sieve_extension *ext);
 static void ext_vnd_imapsieve_unload(const struct sieve_extension *ext);
 
@@ -72,15 +72,10 @@ const struct sieve_extension_def vnd_imapsieve_extension = {
  */
 
 static int
-ext_imapsieve_load(const struct sieve_extension *ext, void **context)
+ext_imapsieve_load(const struct sieve_extension *ext, void **context_r)
 {
 	const struct sieve_extension *ext_environment;
 	struct ext_imapsieve_context *extctx;
-
-	if (context != NULL) {
-		ext_imapsieve_unload(ext);
-		*context = NULL;
-	}
 
 	if (sieve_ext_environment_require_extension(ext->svinst,
 						    &ext_environment) < 0)
@@ -89,19 +84,14 @@ ext_imapsieve_load(const struct sieve_extension *ext, void **context)
 	extctx = i_new(struct ext_imapsieve_context, 1);
 	extctx->ext_environment = ext_environment;
 
-	*context = extctx;
+	*context_r = extctx;
 	return 0;
 }
 
 static int
-ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context)
+ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct ext_vnd_imapsieve_context *extctx;
-
-	if (context != NULL) {
-		ext_imapsieve_unload(ext);
-		*context = NULL;
-	}
 
 	extctx = i_new(struct ext_vnd_imapsieve_context, 1);
 #ifdef __IMAPSIEVE_DUMMY
@@ -114,7 +104,7 @@ ext_vnd_imapsieve_load(const struct sieve_extension *ext, void **context)
 		return -1;
 #endif
 
-	*context = extctx;
+	*context_r = extctx;
 	return 0;
 }
 

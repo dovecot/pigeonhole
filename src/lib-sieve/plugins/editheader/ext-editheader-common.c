@@ -93,17 +93,12 @@ ext_editheader_config_headers(struct sieve_instance *svinst,
 	}
 }
 
-int ext_editheader_load(const struct sieve_extension *ext, void **context)
+int ext_editheader_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct ext_editheader_context *extctx;
 	struct sieve_instance *svinst = ext->svinst;
 	size_t max_header_size;
 	pool_t pool;
-
-	if (*context != NULL) {
-		ext_editheader_unload(ext);
-		*context = NULL;
-	}
 
 	T_BEGIN {
 		pool = pool_alloconly_create("editheader_config", 1024);
@@ -139,7 +134,7 @@ int ext_editheader_load(const struct sieve_extension *ext, void **context)
 		}
 	} T_END;
 
-	*context = extctx;
+	*context_r = extctx;
 	return 0;
 }
 
