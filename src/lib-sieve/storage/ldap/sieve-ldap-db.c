@@ -676,7 +676,7 @@ static int db_ldap_set_tls_options(struct ldap_connection *conn)
 		return -1;
 	if (set->tls_require_cert != NULL) {
 		if (db_ldap_set_opt(conn, LDAP_OPT_X_TLS_REQUIRE_CERT,
-				    &set->ldap_tls_require_cert,
+				    &set->parsed.tls_require_cert,
 				    "tls_require_cert",
 				    set->tls_require_cert) < 0)
 			return -1;
@@ -702,7 +702,7 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 	unsigned int ldap_version;
 	int value;
 
-	if (db_ldap_set_opt(conn, LDAP_OPT_DEREF, &set->ldap_deref,
+	if (db_ldap_set_opt(conn, LDAP_OPT_DEREF, &set->parsed.deref,
 			    "deref", set->deref) < 0)
 		return -1;
 #ifdef LDAP_OPT_DEBUG_LEVEL
@@ -1245,7 +1245,7 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
 		return -1;
 	}
 
-	request->request.scope = lstorage->set->ldap_scope;
+	request->request.scope = lstorage->set->parsed.scope;
 	request->request.filter = p_strdup(pool, str_c(str));
 	request->request.attributes = attr_names;
 

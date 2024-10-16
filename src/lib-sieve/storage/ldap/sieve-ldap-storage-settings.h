@@ -33,7 +33,9 @@ struct sieve_ldap_storage_settings {
 	const char *sieve_ldap_filter;
 
 	/* ... */
-	int ldap_deref, ldap_scope, ldap_tls_require_cert;
+	struct {
+		int deref, scope, tls_require_cert;
+	} parsed;
 };
 
 #endif
