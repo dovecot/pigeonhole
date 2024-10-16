@@ -134,15 +134,72 @@ static int ldap_tls_require_cert_from_str(const char *str, int *opt_x_tls_r)
 }
 #endif
 
+static bool
+sieve_ldap_settings_check(struct sieve_ldap_storage *lstorage,
+			  const char **error_r)
+{
+	const char *str;
+
+	if (lstorage->set->base == NULL) {
+		*error_r = "No search base given";
+		return FALSE;
+	}
+
+	if (lstorage->set->uris == NULL && lstorage->set->hosts == NULL) {
+		*error_r = "No uris or hosts set";
+		return FALSE;
+	}
+
+	if (*lstorage->set->ldaprc_path != '\0') {
+		str = getenv("LDAPRC");
+		if (str != NULL &&
+		    strcmp(str, lstorage->set->ldaprc_path) != 0) {
+			*error_r = t_strdup_printf(
+				"Multiple different ldaprc_path settings not allowed "
+				"(%s and %s)", str, lstorage->set->ldaprc_path);
+			return FALSE;
+		}
+		env_put("LDAPRC", lstorage->set->ldaprc_path);
+	}
+
+	if (ldap_deref_from_str(lstorage->set->deref,
+				&lstorage->set->ldap_deref) < 0) {
+		*error_r = t_strdup_printf("Invalid deref option '%s'",
+					   lstorage->set->deref);
+		return FALSE;
+	}
+
+	if (ldap_scope_from_str(lstorage->set->scope,
+				&lstorage->set->ldap_scope) < 0) {
+		*error_r = t_strdup_printf("Invalid scope option '%s'",
+					   lstorage->set->scope);
+		return FALSE;
+	}
+
+#ifdef OPENLDAP_TLS_OPTIONS
+	if (lstorage->set->tls_require_cert != NULL &&
+	    ldap_tls_require_cert_from_str(
+		lstorage->set->tls_require_cert,
+		&lstorage->set->ldap_tls_require_cert) < 0) {
+		*error_r = t_strdup_printf(
+			"Invalid tls_require_cert option '%s'",
+			lstorage->set->tls_require_cert);
+		return FALSE;
+	}
+#endif
+
+	return TRUE;
+}
+
 int sieve_ldap_storage_read_settings(struct sieve_ldap_storage *lstorage,
 				     const char *config_path)
 {
 	struct sieve_storage *storage = &lstorage->storage;
-	const char *str, *error;
+	const char *error;
 	struct stat st;
 
 	if (stat(config_path, &st) < 0) {
-		e_error(storage->event,
+		sieve_storage_set_critical(storage,
 			"Failed to read LDAP storage config: "
 			"stat(%s) failed: %m", config_path);
 		return -1;
@@ -155,67 +212,18 @@ int sieve_ldap_storage_read_settings(struct sieve_ldap_storage *lstorage,
 
 	if (!settings_read_nosection(config_path, parse_setting, lstorage,
 				     &error)) {
-		sieve_storage_set_critical(
-			storage, "Failed to read LDAP storage config '%s': %s",
+		sieve_storage_set_critical(storage,
+			"Failed to read LDAP storage config '%s': %s",
 			config_path, error);
 		return -1;
 	}
 
-	if (lstorage->set->base == NULL) {
-		sieve_storage_set_critical(
-			storage, "Invalid LDAP storage config '%s': "
-			"No search base given", config_path);
+	if (!sieve_ldap_settings_check(lstorage, &error)) {
+		sieve_storage_set_critical(storage,
+			"Invalid LDAP storage config '%s': %s",
+			config_path, error);
 		return -1;
 	}
-
-	if (lstorage->set->uris == NULL && lstorage->set->hosts == NULL) {
-		sieve_storage_set_critical(
-			storage, "Invalid LDAP storage config '%s': "
-			"No uris or hosts set", config_path);
-		return -1;
-	}
-
-	if (*lstorage->set->ldaprc_path != '\0') {
-		str = getenv("LDAPRC");
-		if (str != NULL &&
-		    strcmp(str, lstorage->set->ldaprc_path) != 0) {
-			sieve_storage_set_critical(
-				storage, "Invalid LDAP storage config '%s': "
-				"Multiple different ldaprc_path settings not allowed "
-				"(%s and %s)", config_path, str,
-				lstorage->set->ldaprc_path);
-			return -1;
-		}
-		env_put("LDAPRC", lstorage->set->ldaprc_path);
-	}
-
-	if (ldap_deref_from_str(lstorage->set->deref,
-				&lstorage->set->ldap_deref) < 0) {
-		sieve_storage_set_critical(
-			storage, "Invalid LDAP storage config '%s': "
-			"Invalid deref option '%s'",
-			config_path, lstorage->set->deref);;
-	}
-
-	if (ldap_scope_from_str(lstorage->set->scope,
-				&lstorage->set->ldap_scope) < 0) {
-		sieve_storage_set_critical(
-			storage, "Invalid LDAP storage config '%s': "
-			"Invalid scope option '%s'",
-			config_path, lstorage->set->scope);;
-	}
-
-#ifdef OPENLDAP_TLS_OPTIONS
-	if (lstorage->set->tls_require_cert != NULL &&
-	    ldap_tls_require_cert_from_str(
-		lstorage->set->tls_require_cert,
-		&lstorage->set->ldap_tls_require_cert) < 0) {
-		sieve_storage_set_critical(
-			storage, "Invalid LDAP storage config '%s': "
-			"Invalid tls_require_cert option '%s'",
-			config_path, lstorage->set->tls_require_cert);
-	}
-#endif
 	return 0;
 }
 
