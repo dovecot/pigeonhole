@@ -601,8 +601,6 @@ sieve_file_storage_do_autodetect(
 		    R_OK|W_OK|X_OK : R_OK|X_OK);
 	const char *storage_path = NULL;
 
-	e_debug(event, "Performing auto-detection");
-
 	if (storage_path == NULL || *storage_path == '\0') {
 		/* We'll need to figure out the storage location ourself.
 		   It's $HOME/sieve or /sieve when (presumed to be) chrooted.
@@ -701,11 +699,14 @@ sieve_file_storage_autodetect(struct sieve_instance *svinst,
 			      enum sieve_error *error_code_r,
 			      const char **error_r)
 {
+	struct event *event = svinst->event;
 	int ret;
+
+	e_debug(event, "Performing auto-detection");
 
 	T_BEGIN {
 		ret = sieve_file_storage_do_autodetect(
-			svinst, svinst->event, active_path, flags,
+			svinst, event, active_path, flags,
 			storage_r, error_code_r, error_r);
 	}  T_END_PASS_STR_IF(ret < 0, error_r);
 	
