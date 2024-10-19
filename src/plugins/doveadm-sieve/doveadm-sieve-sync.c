@@ -605,7 +605,7 @@ sieve_attribute_get(struct mailbox *box,
 				timestamp = str;
 
 			if (ret > 0) {
-				e_debug(user->event,
+				e_debug(suser->event,
 					"Retrieved value for key '%s'%s",
 					key, timestamp);
 			} else {
