@@ -1592,6 +1592,19 @@ void sieve_storage_set_critical(struct sieve_storage *storage,
 	}
 }
 
+void sieve_storage_set_not_found_error(struct sieve_storage *storage,
+				       const char *name)
+{
+	enum sieve_error error_code;
+	const char *error;
+
+	sieve_storage_clear_error(storage);
+	name = (name == NULL || *name == '\0' ? storage->script_name : name);
+	sieve_error_create_script_not_found(name, &error_code, &error);
+	storage->error_code = error_code;
+	storage->error = i_strdup(error);
+}
+
 const char *
 sieve_storage_get_last_error(struct sieve_storage *storage,
 			     enum sieve_error *error_code_r)
