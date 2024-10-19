@@ -47,9 +47,14 @@ void sieve_storage_unref(struct sieve_storage **_storage);
  * Script access
  */
 
+int sieve_storage_get_script_direct(struct sieve_storage *storage,
+				    const char *name,
+				    struct sieve_script **script_r,
+				    enum sieve_error *error_code_r);
 int sieve_storage_get_script(struct sieve_storage *storage, const char *name,
 			     struct sieve_script **script_r,
 			     enum sieve_error *error_code_r);
+
 int sieve_storage_open_script(struct sieve_storage *storage, const char *name,
 			      struct sieve_script **script_r,
 			      enum sieve_error *error_code_r);
