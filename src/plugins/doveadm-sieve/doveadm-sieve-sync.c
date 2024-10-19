@@ -561,9 +561,17 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 		return -1;
 	}
 	ret = sieve_storage_open_script(svstorage, scriptname, &script, NULL);
-	i_assert(ret == 0);
-	ret = sieve_attribute_retrieve_script(storage, svstorage, script, FALSE,
-					      value_r, &error);
+	if (ret < 0) {
+		enum sieve_error error_code;
+
+		error = sieve_storage_get_last_error(svstorage, &error_code);
+		if (error_code == SIEVE_ERROR_NOT_FOUND)
+			ret = 0;
+	} else {
+		ret = sieve_attribute_retrieve_script(storage, svstorage,
+						      script, FALSE,
+						      value_r, &error);
+	}
 	if (ret < 0) {
 		mail_storage_set_critical(
 			storage, "Failed to access sieve script '%s': %s",
