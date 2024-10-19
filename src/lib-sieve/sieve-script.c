@@ -959,7 +959,7 @@ int sieve_script_sequence_create(struct sieve_instance *svinst,
 	*sseq_r = NULL;
 	sieve_error_args_init(&error_code_r, NULL);
 
-	if (sieve_storage_sequence_create(svinst, location,
+	if (sieve_storage_sequence_create(svinst, svinst->event, location,
 					  &storage_seq, error_code_r) < 0)
 		return -1;
 

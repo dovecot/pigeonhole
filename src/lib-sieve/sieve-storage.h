@@ -188,6 +188,7 @@ void sieve_storage_set_modified(struct sieve_storage *storage,
 struct sieve_storage_sequence;
 
 int sieve_storage_sequence_create(struct sieve_instance *svinst,
+				  struct event *event_parent,
 				  const char *location,
 				  struct sieve_storage_sequence **sseq_r,
 				  enum sieve_error *error_code_r);

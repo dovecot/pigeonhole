@@ -1650,6 +1650,7 @@ sieve_storage_get_last_error(struct sieve_storage *storage,
  */
 
 int sieve_storage_sequence_create(struct sieve_instance *svinst,
+				  struct event *event_parent,
 				  const char *location,
 				  struct sieve_storage_sequence **sseq_r,
 				  enum sieve_error *error_code_r)
@@ -1662,6 +1663,9 @@ int sieve_storage_sequence_create(struct sieve_instance *svinst,
 	sseq = i_new(struct sieve_storage_sequence, 1);
 	sseq->svinst = svinst;
 	sseq->location = i_strdup(location);
+
+	sseq->event_parent = event_parent;
+	event_ref(event_parent);
 
 	*sseq_r = sseq;
 	return 0;
@@ -1680,7 +1684,7 @@ int sieve_storage_sequence_next(struct sieve_storage_sequence *sseq,
 		return 0;
 	sseq->done = TRUE;
 
-	if (sieve_storage_create(svinst, svinst->event, sseq->location, 0,
+	if (sieve_storage_create(svinst, sseq->event_parent, sseq->location, 0,
 				 storage_r, error_code_r) < 0)
 		return -1;
 	return 1;
@@ -1694,6 +1698,7 @@ void sieve_storage_sequence_free(struct sieve_storage_sequence **_sseq)
 		return;
 	*_sseq = NULL;
 
+	event_unref(&sseq->event_parent);
 	i_free(sseq->location);
 	i_free(sseq);
 }

@@ -168,6 +168,7 @@ struct sieve_storage_save_context {
 
 struct sieve_storage_sequence {
 	struct sieve_instance *svinst;
+	struct event *event_parent;
 	char *location;
 
 	bool done:1;
