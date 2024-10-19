@@ -220,6 +220,8 @@ extern const struct sieve_storage sieve_ldap_storage;
  */
 
 void sieve_storage_set_internal_error(struct sieve_storage *storage);
+void sieve_storage_set_not_found_error(struct sieve_storage *storage,
+				       const char *name);
 
 void sieve_storage_copy_error(struct sieve_storage *storage,
 			      const struct sieve_storage *source);
