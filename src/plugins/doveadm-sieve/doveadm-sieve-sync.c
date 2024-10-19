@@ -184,14 +184,15 @@ sieve_attribute_set_active(struct mail_storage *storage,
 	scriptname++;
 
 	/* Activate specified script */
-	ret = (sieve_storage_open_script(svstorage, scriptname,
-					 &script, NULL) < 0 ?
-	       -1 : sieve_script_activate(script, last_change));
-	if (ret < 0) {
+	ret = 0;
+	if (sieve_storage_open_script(svstorage, scriptname,
+				      &script, NULL) < 0 ||
+	    sieve_script_activate(script, last_change) < 0) {
 		mail_storage_set_critical(
 			storage, "Failed to activate Sieve script '%s': %s",
 			scriptname,
 			sieve_storage_get_last_error(svstorage, NULL));
+		ret = -1;
 	}
 	sieve_script_unref(&script);
 	sieve_storage_set_modified(svstorage, last_change);
