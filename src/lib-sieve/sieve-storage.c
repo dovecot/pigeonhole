@@ -376,7 +376,7 @@ sieve_storage_init_real(struct sieve_instance *svinst, struct event *event,
 }
 
 static int
-sieve_storage_init(struct sieve_instance *svinst,
+sieve_storage_init(struct sieve_instance *svinst, struct event *event_parent,
 		   const struct sieve_storage *storage_class, const char *data,
 		   enum sieve_storage_flags flags, bool main,
 		   struct sieve_storage **storage_r,
@@ -387,7 +387,7 @@ sieve_storage_init(struct sieve_instance *svinst,
 
 	*storage_r = NULL;
 
-	event = sieve_storage_create_event(svinst, svinst->event);
+	event = sieve_storage_create_event(svinst, event_parent);
 
 	ret = sieve_storage_init_real(svinst, event, storage_class,
 				      data, flags, main,
@@ -423,7 +423,8 @@ int sieve_storage_create(struct sieve_instance *svinst, const char *location,
 	if (ret == 0)
 		storage_class = &sieve_file_storage;
 
-	return sieve_storage_init(svinst, storage_class, data, flags, FALSE,
+	return sieve_storage_init(svinst, svinst->event, storage_class,
+				  data, flags, FALSE,
 				  storage_r, error_code_r);
 }
 
@@ -463,8 +464,8 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 
 		if (ret > 0) {
 			/* The normal case: explicit driver name */
-			if (sieve_storage_init(svinst, sieve_class, data,
-					       flags, TRUE,
+			if (sieve_storage_init(svinst, svinst->event,
+					       sieve_class, data, flags, TRUE,
 					       &storage, error_code_r) < 0)
 				return -1;
 		}
