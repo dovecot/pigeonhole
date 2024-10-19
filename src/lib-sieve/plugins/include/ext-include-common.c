@@ -163,7 +163,8 @@ ext_include_open_script_global(struct sieve_instance *svinst,
 		return -1;
 	}
 	if (extctx->global_storage == NULL &&
-	    sieve_storage_create(svinst, extctx->global_location, 0,
+	    sieve_storage_create(svinst, svinst->event,
+				 extctx->global_location, 0,
 				 &extctx->global_storage, error_code_r) < 0)
 		return -1;
 

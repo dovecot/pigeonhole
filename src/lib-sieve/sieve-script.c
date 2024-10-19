@@ -130,7 +130,7 @@ int sieve_script_create(struct sieve_instance *svinst,
 	*script_r = NULL;
 	sieve_error_args_init(&error_code_r, NULL);
 
-	if (sieve_storage_create(svinst, location, 0,
+	if (sieve_storage_create(svinst, svinst->event, location, 0,
 				 &storage, error_code_r) < 0)
 		return -1;
 
