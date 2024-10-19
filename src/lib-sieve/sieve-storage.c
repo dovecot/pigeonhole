@@ -881,10 +881,10 @@ unsigned int sieve_storage_hash(const struct sieve_storage *storage)
  * Script access
  */
 
-static int
-sieve_storage_get_script_direct(struct sieve_storage *storage, const char *name,
-				struct sieve_script **script_r,
-				enum sieve_error *error_code_r)
+int sieve_storage_get_script_direct(struct sieve_storage *storage,
+				    const char *name,
+				    struct sieve_script **script_r,
+				    enum sieve_error *error_code_r)
 {
 	int ret;
 
