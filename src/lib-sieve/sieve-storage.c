@@ -1004,6 +1004,12 @@ sieve_storage_active_script_do_get_name(struct sieve_storage *storage,
 
 	i_assert(storage->v.active_script_get_name != NULL);
 	ret = storage->v.active_script_get_name(storage, name_r);
+	if (ret < 0) {
+		if (storage->error_code == SIEVE_ERROR_NOT_FOUND) {
+			sieve_storage_clear_error(storage);
+			ret = 0;
+		}
+	}
 
 	if (ret != 0 ||
 	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0)
@@ -1064,7 +1070,7 @@ int sieve_storage_active_script_open(struct sieve_storage *storage,
 	ret = storage->v.active_script_open(storage, &script);
 	i_assert(ret <= 0);
 
-	if (ret == 0 ||
+	if (ret == 0 || storage->error_code != SIEVE_ERROR_NOT_FOUND ||
 	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0) {
 		if (ret < 0)
 			*error_code_r = storage->error_code;
