@@ -29,7 +29,8 @@ struct sieve_storage;
 bool sieve_storage_class_exists(struct sieve_instance *svinst,
 				const char *name);
 
-int sieve_storage_create(struct sieve_instance *svinst, const char *location,
+int sieve_storage_create(struct sieve_instance *svinst, struct event *event,
+			 const char *location,
 			 enum sieve_storage_flags flags,
 			 struct sieve_storage **storage_r,
 			 enum sieve_error *error_code_r);

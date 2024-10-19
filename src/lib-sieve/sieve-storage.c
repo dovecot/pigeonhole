@@ -398,7 +398,8 @@ sieve_storage_init(struct sieve_instance *svinst, struct event *event_parent,
 	return ret;
 }
 
-int sieve_storage_create(struct sieve_instance *svinst, const char *location,
+int sieve_storage_create(struct sieve_instance *svinst, struct event *event,
+			 const char *location,
 			 enum sieve_storage_flags flags,
 			 struct sieve_storage **storage_r,
 			 enum sieve_error *error_code_r)
@@ -423,7 +424,7 @@ int sieve_storage_create(struct sieve_instance *svinst, const char *location,
 	if (ret == 0)
 		storage_class = &sieve_file_storage;
 
-	return sieve_storage_init(svinst, svinst->event, storage_class,
+	return sieve_storage_init(svinst, event, storage_class,
 				  data, flags, FALSE,
 				  storage_r, error_code_r);
 }
@@ -577,7 +578,8 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 				"Trying default script location '%s'",
 				set_default);
 
-			ret = sieve_storage_create(svinst, set_default, 0,
+			ret = sieve_storage_create(svinst, svinst->event,
+						   set_default, 0,
 						   &storage, error_code_r);
 			if (ret < 0) {
 				switch (*error_code_r) {
@@ -1669,6 +1671,8 @@ int sieve_storage_sequence_next(struct sieve_storage_sequence *sseq,
 				struct sieve_storage **storage_r,
 				enum sieve_error *error_code_r)
 {
+	struct sieve_instance *svinst = sseq->svinst;
+
 	*storage_r = NULL;
 	sieve_error_args_init(&error_code_r, NULL);
 
@@ -1676,7 +1680,7 @@ int sieve_storage_sequence_next(struct sieve_storage_sequence *sseq,
 		return 0;
 	sseq->done = TRUE;
 
-	if (sieve_storage_create(sseq->svinst, sseq->location, 0,
+	if (sieve_storage_create(svinst, svinst->event, sseq->location, 0,
 				 storage_r, error_code_r) < 0)
 		return -1;
 	return 1;
