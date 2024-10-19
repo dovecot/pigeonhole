@@ -390,6 +390,8 @@ int sieve_script_get_stream(struct sieve_script *script,
 	} T_END;
 
 	if (ret < 0) {
+		i_assert(storage->error_code != SIEVE_ERROR_NONE);
+		i_assert(storage->error != NULL);
 		*error_code_r = storage->error_code;
 
 		struct event_passthrough *e =
@@ -621,6 +623,8 @@ int sieve_script_binary_load(struct sieve_script *script,
 	}
 
 	if (ret < 0) {
+		i_assert(storage->error_code != SIEVE_ERROR_NONE);
+		i_assert(storage->error != NULL);
 		*error_code_r = script->storage->error_code;
 		return -1;
 	}
@@ -681,6 +685,8 @@ int sieve_script_binary_save(struct sieve_script *script,
 	}
 
 	if (ret < 0) {
+		i_assert(storage->error_code != SIEVE_ERROR_NONE);
+		i_assert(storage->error != NULL);
 		*error_code_r = script->storage->error_code;
 		return -1;
 	}
@@ -803,6 +809,8 @@ int sieve_script_rename(struct sieve_script *script, const char *newname)
 		e_debug(event->event(), "Script renamed to '%s'", newname);
 		sieve_script_update_event(script);
 	} else {
+		i_assert(storage->error_code != SIEVE_ERROR_NONE);
+		i_assert(storage->error != NULL);
 		event = event->add_str("error", storage->error);
 
 		e_debug(event->event(), "Failed to rename script: %s",
@@ -859,6 +867,9 @@ int sieve_script_delete(struct sieve_script *script, bool ignore_active)
 		/* unset INBOX mailbox attribute */
 		(void)sieve_storage_sync_script_delete(storage, script->name);
 	} else {
+		i_assert(storage->error_code != SIEVE_ERROR_NONE);
+		i_assert(storage->error != NULL);
+
 		struct event_passthrough *e =
 			event_create_passthrough(script->event)->
 			add_str("error", storage->error)->
@@ -872,23 +883,30 @@ int sieve_script_delete(struct sieve_script *script, bool ignore_active)
 int sieve_script_is_active(struct sieve_script *script)
 {
 	struct sieve_storage *storage = script->storage;
+	int ret;
 
 	sieve_storage_clear_error(storage);
 
 	/* Special handling if this is a default script */
 	if (storage->default_storage_for != NULL) {
-		int ret = sieve_storage_active_script_is_default(
+		ret = sieve_storage_active_script_is_default(
 			storage->default_storage_for);
 		if (ret < 0) {
 			sieve_storage_copy_error(storage,
 						 storage->default_storage_for);
+			i_assert(storage->error_code != SIEVE_ERROR_NONE);
+			i_assert(storage->error != NULL);
 		}
 		return ret;
 	}
 
 	if (script->v.is_active == NULL)
 		return 0;
-	return script->v.is_active(script);
+	ret = script->v.is_active(script);
+	i_assert(ret >= 0 ||
+		 (storage->error_code != SIEVE_ERROR_NONE &&
+		  storage->error != NULL));
+	return ret;
 }
 
 int sieve_script_activate(struct sieve_script *script, time_t mtime)
@@ -914,6 +932,9 @@ int sieve_script_activate(struct sieve_script *script, time_t mtime)
 			sieve_storage_set_modified(storage, mtime);
 			(void)sieve_storage_sync_script_activate(storage);
 		} else {
+			i_assert(storage->error_code != SIEVE_ERROR_NONE);
+			i_assert(storage->error != NULL);
+
 			struct event_passthrough *e =
 				event_create_passthrough(script->event)->
 				add_str("error", storage->error)->
@@ -1059,14 +1080,17 @@ sieve_script_sequence_init_storage(struct sieve_script_sequence *sseq,
 		struct sieve_storage *storage =	sseq->storage;
 
 		i_assert(storage->v.script_sequence_init != NULL);
-		*error_code_r = SIEVE_ERROR_NONE;
-		*error_r = NULL;
+		sieve_storage_clear_error(storage);
 		ret = storage->v.script_sequence_init(sseq);
-		*error_code_r = storage->error_code;
-		*error_r = storage->error;
-		sieve_storage_unref(&sseq->storage);
-		if (ret < 0 && *error_code_r != SIEVE_ERROR_NOT_FOUND)
-			return -1;
+		if (ret < 0) {
+			i_assert(storage->error_code != SIEVE_ERROR_NONE);
+			i_assert(storage->error != NULL);
+			*error_code_r = storage->error_code;
+			*error_r = storage->error;
+			sieve_storage_unref(&sseq->storage);
+			if (*error_code_r != SIEVE_ERROR_NOT_FOUND)
+				return -1;
+		}
 	}
 	return 1;
 }
@@ -1104,6 +1128,9 @@ int sieve_script_sequence_next(struct sieve_script_sequence *sseq,
 			break;
 
 		if (ret < 0) {
+			i_assert(storage->error_code != SIEVE_ERROR_NONE);
+			i_assert(storage->error != NULL);
+
 			if (*error_code_r == SIEVE_ERROR_NOT_FOUND)
 				ret = 0;
 			else {
