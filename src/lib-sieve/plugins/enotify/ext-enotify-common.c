@@ -56,14 +56,34 @@ const struct sieve_extension_capabilities notify_capabilities = {
 
 extern const struct sieve_enotify_method_def mailto_notify;
 
+
+/*
+ * Enotify extension
+ */
+
+int sieve_ext_enotify_get_extension(struct sieve_instance *svinst,
+				    const struct sieve_extension **ext_r)
+{
+	return sieve_extension_register(svinst, &enotify_extension, FALSE,
+					ext_r);
+}
+
+int sieve_ext_enotify_require_extension(struct sieve_instance *svinst,
+					const struct sieve_extension **ext_r)
+{
+	return sieve_extension_require(svinst, &enotify_extension, TRUE,
+				       ext_r);
+}
+
 /*
  * Notify method registry
  */
 
-static const struct sieve_enotify_method *
-ext_enotify_method_register(struct sieve_instance *svinst,
-			    struct ext_enotify_context *extctx,
-			    const struct sieve_enotify_method_def *nmth_def)
+static int
+ext_enotify_method_register(struct ext_enotify_context *extctx,
+			    const struct sieve_extension *ntfy_ext,
+			    const struct sieve_enotify_method_def *nmth_def,
+			    const struct sieve_enotify_method **nmth_r)
 {
 	struct sieve_enotify_method *nmth;
 	int nmth_id = (int)array_count(&extctx->notify_methods);
@@ -71,20 +91,24 @@ ext_enotify_method_register(struct sieve_instance *svinst,
 	nmth = array_append_space(&extctx->notify_methods);
 	nmth->def = nmth_def;
 	nmth->id = nmth_id;
-	nmth->svinst = svinst;
+	nmth->svinst = ntfy_ext->svinst;
+	nmth->ext = ntfy_ext;
 
 	if (nmth_def->load != NULL)
 		nmth_def->load(nmth, &nmth->context);
 
-	return nmth;
+	*nmth_r = nmth;
+	return 0;
 }
 
-void ext_enotify_methods_init(struct sieve_instance *svinst,
-			      struct ext_enotify_context *extctx)
+void ext_enotify_methods_init(struct ext_enotify_context *extctx,
+			      const struct sieve_extension *ntfy_ext)
 {
+	const struct sieve_enotify_method *nmth;
+
 	p_array_init(&extctx->notify_methods, default_pool, 4);
 
-	ext_enotify_method_register(svinst, extctx, &mailto_notify);
+	ext_enotify_method_register(extctx, ntfy_ext, &mailto_notify, &nmth);
 }
 
 void ext_enotify_methods_deinit(struct ext_enotify_context *extctx)
@@ -101,39 +125,36 @@ void ext_enotify_methods_deinit(struct ext_enotify_context *extctx)
 	array_free(&extctx->notify_methods);
 }
 
-const struct sieve_enotify_method *
-sieve_enotify_method_register(struct sieve_instance *svinst,
-			      const struct sieve_enotify_method_def *nmth_def)
+int sieve_enotify_method_register(
+	const struct sieve_extension *ntfy_ext,
+	const struct sieve_enotify_method_def *nmth_def,
+	const struct sieve_enotify_method **nmth_r)
 {
-	const struct sieve_extension *ntfy_ext =
-		sieve_extension_get_by_name(svinst, "enotify");
+	i_assert(ntfy_ext != NULL);
+	i_assert(ntfy_ext->def == &enotify_extension);
 
-	if (ntfy_ext != NULL) {
-		struct ext_enotify_context *extctx = ntfy_ext->context;
+	struct ext_enotify_context *extctx = ntfy_ext->context;
 
-		return ext_enotify_method_register(svinst, extctx, nmth_def);
-	}
-	return NULL;
+	return ext_enotify_method_register(extctx, ntfy_ext, nmth_def, nmth_r);
 }
 
 void sieve_enotify_method_unregister(const struct sieve_enotify_method *nmth)
 {
-	struct sieve_instance *svinst = nmth->svinst;
-	const struct sieve_extension *ntfy_ext =
-		sieve_extension_get_by_name(svinst, "enotify");
+	const struct sieve_extension *ntfy_ext = nmth->ext;
 
-	if (ntfy_ext != NULL) {
-		struct ext_enotify_context *extctx = ntfy_ext->context;
-		int nmth_id = nmth->id;
+	i_assert(ntfy_ext != NULL);
+	i_assert(ntfy_ext->def == &enotify_extension);
 
-		if (nmth_id >= 0 &&
-		    nmth_id < (int)array_count(&extctx->notify_methods)) {
-			struct sieve_enotify_method *nmth_mod =
-				array_idx_modifiable(&extctx->notify_methods,
-						     nmth_id);
+	struct ext_enotify_context *extctx = ntfy_ext->context;
+	int nmth_id = nmth->id;
 
-			nmth_mod->def = NULL;
-		}
+	if (nmth_id >= 0 &&
+	    nmth_id < (int)array_count(&extctx->notify_methods)) {
+		struct sieve_enotify_method *nmth_mod =
+			array_idx_modifiable(&extctx->notify_methods,
+					     nmth_id);
+
+		nmth_mod->def = NULL;
 	}
 }
 
