@@ -947,8 +947,7 @@ int sieve_storage_active_script_open(struct sieve_storage *storage,
 	if (ret == 0 ||
 	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 ||
 	    storage->default_location == NULL) {
-		i_assert(script != NULL);
-		if (error_code_r != NULL)
+		if (ret < 0 && error_code_r != NULL)
 			*error_code_r = storage->error_code;
 		*script_r = script;
 		return ret;
