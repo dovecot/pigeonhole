@@ -49,15 +49,6 @@
 #define NTFY_MAILTO_MAX_HEADERS     16
 
 /*
- * Mailto notification configuration
- */
-
-struct ntfy_mailto_config {
-	pool_t pool;
-	struct sieve_address_source envelope_from;
-};
-
-/*
  * Mailto notification method
  */
 
@@ -159,34 +150,38 @@ struct ntfy_mailto_action_context {
  * Method registration
  */
 
+struct ntfy_mailto_context {
+	pool_t pool;
+	struct sieve_address_source envelope_from;
+};
+
 static bool
 ntfy_mailto_load(const struct sieve_enotify_method *nmth, void **context)
 {
 	struct sieve_instance *svinst = nmth->svinst;
-	struct ntfy_mailto_config *config;
+	struct ntfy_mailto_context *mtctx;
 	pool_t pool;
 
 	if (*context != NULL)
 		ntfy_mailto_unload(nmth);
 
-	pool = pool_alloconly_create("ntfy_mailto_config", 256);
-	config = p_new(pool, struct ntfy_mailto_config, 1);
-	config->pool = pool;
+	pool = pool_alloconly_create("ntfy_mailto_context", 256);
+	mtctx = p_new(pool, struct ntfy_mailto_context, 1);
+	mtctx->pool = pool;
 
 	(void)sieve_address_source_parse_from_setting(
-		svinst, config->pool, "sieve_notify_mailto_envelope_from",
-		&config->envelope_from);
+		svinst, mtctx->pool, "sieve_notify_mailto_envelope_from",
+		&mtctx->envelope_from);
 
-	*context = config;
+	*context = mtctx;
 	return TRUE;
 }
 
 static void ntfy_mailto_unload(const struct sieve_enotify_method *nmth)
 {
-	struct ntfy_mailto_config *config =
-		(struct ntfy_mailto_config *)nmth->context;
+	struct ntfy_mailto_context *mtctx = nmth->context;
 
-	pool_unref(&config->pool);
+	pool_unref(&mtctx->pool);
 }
 
 /*
@@ -523,10 +518,8 @@ ntfy_mailto_send(const struct sieve_enotify_exec_env *nenv,
 	const struct sieve_message_data *msgdata = nenv->msgdata;
 	const struct sieve_script_env *senv = nenv->scriptenv;
 	struct ntfy_mailto_action_context *mtactx = nact->method_context;
-	struct ntfy_mailto_config *mth_config =
-		(struct ntfy_mailto_config *)nenv->method->context;
-	struct sieve_address_source env_from =
-		mth_config->envelope_from;
+	struct ntfy_mailto_context *mtctx = nenv->method->context;
+	struct sieve_address_source env_from = mtctx->envelope_from;
 	const char *from = NULL;
 	const struct smtp_address *from_smtp = NULL;
 	const char *subject = mtactx->uri->subject;
