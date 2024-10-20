@@ -52,7 +52,7 @@
  * Mailto notification method
  */
 
-static bool
+static int
 ntfy_mailto_load(const struct sieve_enotify_method *nmth, void **context);
 static void
 ntfy_mailto_unload(const struct sieve_enotify_method *nmth);
@@ -155,15 +155,12 @@ struct ntfy_mailto_context {
 	struct sieve_address_source envelope_from;
 };
 
-static bool
-ntfy_mailto_load(const struct sieve_enotify_method *nmth, void **context)
+static int
+ntfy_mailto_load(const struct sieve_enotify_method *nmth, void **context_r)
 {
 	struct sieve_instance *svinst = nmth->svinst;
 	struct ntfy_mailto_context *mtctx;
 	pool_t pool;
-
-	if (*context != NULL)
-		ntfy_mailto_unload(nmth);
 
 	pool = pool_alloconly_create("ntfy_mailto_context", 256);
 	mtctx = p_new(pool, struct ntfy_mailto_context, 1);
@@ -173,8 +170,8 @@ ntfy_mailto_load(const struct sieve_enotify_method *nmth, void **context)
 		svinst, mtctx->pool, "sieve_notify_mailto_envelope_from",
 		&mtctx->envelope_from);
 
-	*context = mtctx;
-	return TRUE;
+	*context_r = mtctx;
+	return 0;
 }
 
 static void ntfy_mailto_unload(const struct sieve_enotify_method *nmth)

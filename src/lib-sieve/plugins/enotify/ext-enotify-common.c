@@ -94,21 +94,27 @@ ext_enotify_method_register(struct ext_enotify_context *extctx,
 	nmth->svinst = ntfy_ext->svinst;
 	nmth->ext = ntfy_ext;
 
-	if (nmth_def->load != NULL)
-		nmth_def->load(nmth, &nmth->context);
+	if (nmth_def->load != NULL &&
+	    nmth_def->load(nmth, &nmth->context) < 0) {
+		array_pop_back(&extctx->notify_methods);
+		return -1;
+	}
 
 	*nmth_r = nmth;
 	return 0;
 }
 
-void ext_enotify_methods_init(struct ext_enotify_context *extctx,
-			      const struct sieve_extension *ntfy_ext)
+int ext_enotify_methods_init(struct ext_enotify_context *extctx,
+			     const struct sieve_extension *ntfy_ext)
 {
 	const struct sieve_enotify_method *nmth;
 
 	p_array_init(&extctx->notify_methods, default_pool, 4);
 
-	ext_enotify_method_register(extctx, ntfy_ext, &mailto_notify, &nmth);
+	if (ext_enotify_method_register(extctx, ntfy_ext,
+					&mailto_notify, &nmth) < 0)
+		return -1;
+	return 0;
 }
 
 void ext_enotify_methods_deinit(struct ext_enotify_context *extctx)

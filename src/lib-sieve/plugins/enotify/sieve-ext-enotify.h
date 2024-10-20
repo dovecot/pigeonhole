@@ -35,7 +35,7 @@ struct sieve_enotify_method_def {
 	const char *identifier;
 
 	/* Registration */
-	bool (*load)(const struct sieve_enotify_method *nmth, void **context);
+	int (*load)(const struct sieve_enotify_method *nmth, void **context);
 	void (*unload)(const struct sieve_enotify_method *nmth);
 
 	/* Validation */
