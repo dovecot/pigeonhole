@@ -67,7 +67,7 @@ static int ext_enotify_load(const struct sieve_extension *ext, void **context_r)
 	extctx = i_new(struct ext_enotify_context, 1);
 	extctx->var_ext = var_ext;
 
-	ext_enotify_methods_init(ext->svinst, extctx);
+	ext_enotify_methods_init(extctx, ext);
 
 	sieve_extension_capabilities_register(ext, &notify_capabilities);
 

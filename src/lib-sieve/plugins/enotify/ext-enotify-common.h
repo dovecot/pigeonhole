@@ -76,8 +76,8 @@ extern const struct sieve_variables_modifier_def encodeurl_modifier;
  * Notify methods
  */
 
-void ext_enotify_methods_init(struct sieve_instance *svinst,
-			      struct ext_enotify_context *extctx);
+void ext_enotify_methods_init(struct ext_enotify_context *extctx,
+			      const struct sieve_extension *ntfy_ext);
 void ext_enotify_methods_deinit(struct ext_enotify_context *extctx);
 
 const struct sieve_enotify_method *

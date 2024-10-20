@@ -19,6 +19,15 @@ struct sieve_enotify_print_env;
 struct sieve_enotify_exec_env;
 
 /*
+ * Enotify extension
+ */
+
+int sieve_ext_enotify_get_extension(struct sieve_instance *svinst,
+				    const struct sieve_extension **ext_r);
+int sieve_ext_enotify_require_extension(struct sieve_instance *svinst,
+					const struct sieve_extension **ext_r);
+
+/*
  * Notify method definition
  */
 
@@ -80,12 +89,14 @@ struct sieve_enotify_method {
 	int id;
 
 	struct sieve_instance *svinst;
+	const struct sieve_extension *ext;
 	void *context;
 };
 
-const struct sieve_enotify_method *
-sieve_enotify_method_register(struct sieve_instance *svinst,
-			      const struct sieve_enotify_method_def *nmth_def);
+int sieve_enotify_method_register(
+	const struct sieve_extension *ntfy_ext,
+	const struct sieve_enotify_method_def *nmth_def,
+	const struct sieve_enotify_method **nmth_r);
 void  sieve_enotify_method_unregister(const struct sieve_enotify_method *nmth);
 
 /*
