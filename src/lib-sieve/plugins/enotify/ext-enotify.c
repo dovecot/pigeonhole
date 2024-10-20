@@ -67,7 +67,10 @@ static int ext_enotify_load(const struct sieve_extension *ext, void **context_r)
 	extctx = i_new(struct ext_enotify_context, 1);
 	extctx->var_ext = var_ext;
 
-	ext_enotify_methods_init(extctx, ext);
+	if (ext_enotify_methods_init(extctx, ext) < 0) {
+		i_free(extctx);
+		return -1;
+	}
 
 	sieve_extension_capabilities_register(ext, &notify_capabilities);
 
@@ -79,8 +82,10 @@ static void ext_enotify_unload(const struct sieve_extension *ext)
 {
 	struct ext_enotify_context *extctx = ext->context;
 
-	ext_enotify_methods_deinit(extctx);
+	if (extctx == NULL)
+		return;
 
+	ext_enotify_methods_deinit(extctx);
 	i_free(extctx);
 }
 
