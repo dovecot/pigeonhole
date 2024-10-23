@@ -102,10 +102,10 @@ client_get_storage(struct sieve_instance *svinst, struct event *event,
 	return storage;
 }
 
-struct client *
-client_create(int fd_in, int fd_out, const char *session_id,
-	      struct event *event, struct mail_user *user,
-	      const struct managesieve_settings *set)
+int client_create(int fd_in, int fd_out, const char *session_id,
+		  struct event *event, struct mail_user *user,
+		  const struct managesieve_settings *set,
+		  struct client **client_r)
 {
 	struct client *client;
 	struct sieve_environment svenv;
@@ -177,7 +177,8 @@ client_create(int fd_in, int fd_out, const char *session_id,
 		hook_client_created(&client);
 
 	managesieve_refresh_proctitle();
-	return client;
+	*client_r = client;
+	return 0;
 }
 
 void client_create_finish(struct client *client)
