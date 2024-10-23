@@ -111,13 +111,6 @@ struct ldap_connection {
 	time_t last_reply_stamp;
 };
 
-
-int ldap_deref_from_str(const char *str, int *deref_r);
-int ldap_scope_from_str(const char *str, int *scope_r);
-#ifdef OPENLDAP_TLS_OPTIONS
-int ldap_tls_require_cert_from_str(const char *str, int *opt_x_tls_r);
-#endif
-
 /* Send/queue request */
 void db_ldap_request(struct ldap_connection *conn,
 		     struct ldap_request *request);

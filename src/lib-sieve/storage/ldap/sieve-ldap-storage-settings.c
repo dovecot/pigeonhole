@@ -87,6 +87,53 @@ parse_setting(const char *key, const char *value,
 				       &lstorage->set, key, value);
 }
 
+static int ldap_deref_from_str(const char *str, int *deref_r)
+{
+	if (strcasecmp(str, "never") == 0)
+		*deref_r = LDAP_DEREF_NEVER;
+	else if (strcasecmp(str, "searching") == 0)
+		*deref_r = LDAP_DEREF_SEARCHING;
+	else if (strcasecmp(str, "finding") == 0)
+		*deref_r = LDAP_DEREF_FINDING;
+	else if (strcasecmp(str, "always") == 0)
+		*deref_r = LDAP_DEREF_ALWAYS;
+	else
+		return -1;
+	return 0;
+}
+
+static int ldap_scope_from_str(const char *str, int *scope_r)
+{
+	if (strcasecmp(str, "base") == 0)
+		*scope_r = LDAP_SCOPE_BASE;
+	else if (strcasecmp(str, "onelevel") == 0)
+		*scope_r = LDAP_SCOPE_ONELEVEL;
+	else if (strcasecmp(str, "subtree") == 0)
+		*scope_r = LDAP_SCOPE_SUBTREE;
+	else
+		return -1;
+	return 0;
+}
+
+#ifdef OPENLDAP_TLS_OPTIONS
+static int ldap_tls_require_cert_from_str(const char *str, int *opt_x_tls_r)
+{
+	if (strcasecmp(str, "never") == 0)
+		*opt_x_tls_r = LDAP_OPT_X_TLS_NEVER;
+	else if (strcasecmp(str, "hard") == 0)
+		*opt_x_tls_r = LDAP_OPT_X_TLS_HARD;
+	else if (strcasecmp(str, "demand") == 0)
+		*opt_x_tls_r = LDAP_OPT_X_TLS_DEMAND;
+	else if (strcasecmp(str, "allow") == 0)
+		*opt_x_tls_r = LDAP_OPT_X_TLS_ALLOW;
+	else if (strcasecmp(str, "try") == 0)
+		*opt_x_tls_r = LDAP_OPT_X_TLS_TRY;
+	else
+		return -1;
+	return 0;
+}
+#endif
+
 int sieve_ldap_storage_read_settings(struct sieve_ldap_storage *lstorage,
 				     const char *config_path)
 {
