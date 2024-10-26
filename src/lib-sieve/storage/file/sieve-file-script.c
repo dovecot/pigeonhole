@@ -816,6 +816,17 @@ sieve_file_script_equals(const struct sieve_script *script,
 	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
 	struct sieve_file_script *fother = (struct sieve_file_script *)other;
 
+	if (!script->open || !other->open) {
+		struct sieve_storage *storage = script->storage;
+		struct sieve_storage *sother = other->storage;
+
+		if (strcmp(storage->location, sother->location) != 0)
+			return FALSE;
+
+		i_assert(script->name != NULL && other->name != NULL);
+		return (strcmp(script->name, other->name) == 0);
+	}
+
 	return (CMP_DEV_T(fscript->st.st_dev, fother->st.st_dev) &&
 		fscript->st.st_ino == fother->st.st_ino);
 }
