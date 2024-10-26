@@ -4,6 +4,7 @@ Makefile.in
 *.o
 *.lo
 *.la
+*.svbin
 .deps
 .libs
 
