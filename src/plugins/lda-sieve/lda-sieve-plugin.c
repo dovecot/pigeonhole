@@ -277,6 +277,22 @@ lda_sieve_get_personal_storage(struct sieve_instance *svinst,
 	return 1;
 }
 
+static void
+lda_sieve_multiscript_log_error(struct event *event,
+				const char *label, const char *location,
+				enum sieve_error error_code)
+{
+	switch (error_code) {
+	case SIEVE_ERROR_TEMP_FAILURE:
+		e_error(event, "Failed to access %s script from '%s' "
+			"(temporary failure)",
+			label, location);
+		break;
+	default:
+		break;
+	}
+}
+
 static int
 lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 				  const char *label, const char *location,
@@ -290,8 +306,12 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 	ret = sieve_script_sequence_create(svinst, location,
 					   &sseq, error_code_r);
 	if (ret < 0) {
-		if (*error_code_r == SIEVE_ERROR_NOT_FOUND)
+		if (*error_code_r == SIEVE_ERROR_NOT_FOUND) {
+			*error_code_r = SIEVE_ERROR_NONE;
 			return 0;
+		}
+		lda_sieve_multiscript_log_error(svinst->event, label, location,
+						*error_code_r);
 		return -1;
 	}
 
@@ -301,16 +321,8 @@ lda_sieve_multiscript_get_scripts(struct sieve_instance *svinst,
 
 	sieve_script_sequence_free(&sseq);
 	if (ret < 0) {
-		switch (*error_code_r) {
-		case SIEVE_ERROR_TEMP_FAILURE:
-			e_error(sieve_get_event(svinst),
-				"Failed to access %s script from '%s' "
-				"(temporary failure)",
-				label, location);
-			break;
-		default:
-			break;
-		}
+		lda_sieve_multiscript_log_error(svinst->event, label, location,
+						*error_code_r);
 		return -1;
 	}
 	return 0;
