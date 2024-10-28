@@ -44,7 +44,6 @@ struct imap_filter_sieve_user {
 
 	struct sieve_instance *svinst;
 	struct sieve_storage *storage;
-	struct sieve_storage *global_storage;
 
 	struct mail_duplicate_db *dup_db;
 
@@ -204,66 +203,6 @@ imap_filter_sieve_get_personal_storage(struct imap_filter_sieve_context *sctx,
 		break;
 	case SIEVE_ERROR_NOT_FOUND:
 		*error_r = "Sieve script storage not accessible";
-		*error_code_r = MAIL_ERROR_NOTFOUND;
-		break;
-	default:
-		*error_r = t_strflocaltime(MAIL_ERRSTR_CRITICAL_MSG_STAMP,
-					   ioloop_time);
-		*error_code_r = MAIL_ERROR_TEMP;
-		break;
-	}
-
-	return -1;
-}
-
-static int
-imap_filter_sieve_get_global_storage(struct imap_filter_sieve_context *sctx,
-				     struct sieve_storage **storage_r,
-				     enum mail_error *error_code_r,
-				     const char **error_r)
-{
-	struct mail_user *user = sctx->user;
-	struct imap_filter_sieve_user *ifsuser =
-		IMAP_FILTER_SIEVE_USER_CONTEXT_REQUIRE(user);
-	struct sieve_instance *svinst;
-	const char *location;
-	enum sieve_error error_code;
-
-	*error_code_r = MAIL_ERROR_NONE;
-	*error_r = NULL;
-
-	if (ifsuser->global_storage != NULL) {
-		*storage_r = ifsuser->global_storage;
-		return 0;
-	}
-
-	svinst = imap_filter_sieve_get_svinst(sctx);
-	if (svinst == NULL) {
-		*error_r = "Sieve processing is not available";
-		*error_code_r = MAIL_ERROR_UNAVAILABLE;
-		return -1;
-	}
-
-	location = mail_user_plugin_getenv(user, "sieve_global");
-	if (location == NULL) {
-		e_info(sieve_get_event(svinst),
-		       "include: sieve_global is unconfigured; "
-		       "include of ':global' script is therefore not possible");
-		*error_code_r = MAIL_ERROR_NOTFOUND;
-		*error_r = "No global Sieve scripts available";
-		return -1;
-	}
-	if (sieve_storage_create(svinst, svinst->event, location, 0,
-				 &ifsuser->global_storage,
-				 &error_code, NULL) == 0) {
-		*storage_r = ifsuser->global_storage;
-		return 0;
-	}
-
-	switch (error_code) {
-	case SIEVE_ERROR_NOT_POSSIBLE:
-	case SIEVE_ERROR_NOT_FOUND:
-		*error_r = "No global Sieve scripts available";
 		*error_code_r = MAIL_ERROR_NOTFOUND;
 		break;
 	default:
@@ -553,17 +492,30 @@ int imap_filter_sieve_open_global(struct imap_filter_sieve_context *sctx,
 				  enum mail_error *error_code_r,
 				  const char **error_r)
 {
-	struct sieve_storage *storage;
+	struct sieve_instance *svinst;
+	const char *location;
 	struct sieve_script *script;
 	enum sieve_error error_code;
 
-	if (imap_filter_sieve_get_global_storage(sctx, &storage,
-						 error_code_r, error_r) < 0)
+	svinst = imap_filter_sieve_get_svinst(sctx);
+	if (svinst == NULL) {
+		*error_r = "Sieve processing is not available";
+		*error_code_r = MAIL_ERROR_UNAVAILABLE;
 		return -1;
+	}
 
-	if (sieve_storage_open_script(storage, name, &script, NULL) < 0) {
-		*error_r = sieve_storage_get_last_error(storage, &error_code);
+	location = mail_user_plugin_getenv(sctx->user, "sieve_global");
+	if (location == NULL) {
+		e_info(sieve_get_event(svinst),
+		       "include: sieve_global is unconfigured; "
+		       "include of ':global' script is therefore not possible");
+		*error_code_r = MAIL_ERROR_NOTFOUND;
+		*error_r = "No global Sieve scripts available";
+		return -1;
+	}
 
+	if (sieve_script_create_open(svinst, location, name,
+				     &script, &error_code, error_r) < 0) {
 		switch (error_code) {
 		case SIEVE_ERROR_NOT_FOUND:
 			*error_code_r = MAIL_ERROR_NOTFOUND;
@@ -1152,7 +1104,6 @@ static void imap_filter_sieve_user_deinit(struct mail_user *user)
 	sieve_error_handler_unref(&ifsuser->master_ehandler);
 
 	sieve_storage_unref(&ifsuser->storage);
-	sieve_storage_unref(&ifsuser->global_storage);
 	sieve_deinit(&ifsuser->svinst);
 	if (ifsuser->dup_db != NULL)
 		mail_duplicate_db_deinit(&ifsuser->dup_db);
