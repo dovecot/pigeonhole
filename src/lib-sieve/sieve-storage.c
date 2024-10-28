@@ -571,7 +571,6 @@ sieve_storage_create_default_for(struct sieve_storage *storage,
 
 static int
 sieve_storage_do_create_personal(struct sieve_instance *svinst,
-				 struct mail_user *user,
 				 enum sieve_storage_flags flags,
 				 struct sieve_storage **storage_r,
 				 enum sieve_error *error_code_r)
@@ -629,8 +628,6 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 	if (storage == NULL)
 		return -1;
 
-	(void)sieve_storage_sync_init(storage, user);
-
 	/* Get quota settings if storage driver provides none */
 
 	if (storage->max_storage == 0 &&
@@ -684,9 +681,11 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 	set_default = sieve_setting_get(svinst, "sieve_default");
 
 	/* Attempt to locate user's main storage */
-	ret = sieve_storage_do_create_personal(svinst, user, flags,
+	ret = sieve_storage_do_create_personal(svinst, flags,
 					       &storage, error_code_r);
 	if (ret == 0) {
+		(void)sieve_storage_sync_init(storage, user);
+
 		/* Success; record default script location for later use */
 		storage->default_location =
 			p_strdup_empty(storage->pool, set_default);
