@@ -369,6 +369,38 @@ int sieve_storage_alloc(struct sieve_instance *svinst,
 	return ret;
 }
 
+static void sieve_storage_get_quota_settings(struct sieve_storage *storage)
+{
+	struct sieve_instance *svinst = storage->svinst;
+	unsigned long long int uint_setting;
+	size_t size_setting;
+
+	/* Get quota settings if storage driver provides none */
+
+	if (storage->max_storage == 0 &&
+	    sieve_setting_get_size_value(svinst, "sieve_quota_max_storage",
+					 &size_setting)) {
+		storage->max_storage = size_setting;
+	}
+
+	if (storage->max_scripts == 0 &&
+	    sieve_setting_get_uint_value(svinst, "sieve_quota_max_scripts",
+					 &uint_setting)) {
+		storage->max_scripts = uint_setting;
+	}
+
+	if (storage->max_storage > 0) {
+		e_debug(storage->event, "quota: "
+			"Storage limit: %llu bytes",
+			(unsigned long long int) storage->max_storage);
+	}
+	if (storage->max_scripts > 0) {
+		e_debug(storage->event, "quota: "
+			"Script count limit: %llu scripts",
+			(unsigned long long int) storage->max_scripts);
+	}
+}
+
 static int
 sieve_storage_init_real(struct sieve_instance *svinst, struct event *event,
 			const struct sieve_storage *storage_class,
@@ -578,8 +610,6 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 	struct sieve_storage *storage = NULL;
 	const struct sieve_storage *sieve_class = NULL;
 	const char *set_sieve, *data;
-	unsigned long long int uint_setting;
-	size_t size_setting;
 	int ret;
 
 	/* Sieve storage location */
@@ -628,30 +658,8 @@ sieve_storage_do_create_personal(struct sieve_instance *svinst,
 	if (storage == NULL)
 		return -1;
 
-	/* Get quota settings if storage driver provides none */
+	sieve_storage_get_quota_settings(storage);
 
-	if (storage->max_storage == 0 &&
-	    sieve_setting_get_size_value(svinst, "sieve_quota_max_storage",
-					 &size_setting)) {
-		storage->max_storage = size_setting;
-	}
-
-	if (storage->max_scripts == 0 &&
-	    sieve_setting_get_uint_value(svinst, "sieve_quota_max_scripts",
-					 &uint_setting)) {
-		storage->max_scripts = uint_setting;
-	}
-
-	if (storage->max_storage > 0) {
-		e_debug(storage->event, "quota: "
-			"Storage limit: %llu bytes",
-			(unsigned long long int) storage->max_storage);
-	}
-	if (storage->max_scripts > 0) {
-		e_debug(storage->event, "quota: "
-			"Script count limit: %llu scripts",
-			(unsigned long long int) storage->max_scripts);
-	}
 	*storage_r = storage;
 	return 0;
 }
