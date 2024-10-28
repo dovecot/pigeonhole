@@ -391,13 +391,13 @@ static void sieve_storage_get_quota_settings(struct sieve_storage *storage)
 
 	if (storage->max_storage > 0) {
 		e_debug(storage->event, "quota: "
-			"Storage limit: %llu bytes",
-			(unsigned long long int) storage->max_storage);
+			"Storage limit: %"PRIuUOFF_T" bytes",
+			storage->max_storage);
 	}
 	if (storage->max_scripts > 0) {
 		e_debug(storage->event, "quota: "
-			"Script count limit: %llu scripts",
-			(unsigned long long int) storage->max_scripts);
+			"Script count limit: %u scripts",
+			storage->max_scripts);
 	}
 }
 
