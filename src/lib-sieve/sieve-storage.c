@@ -392,7 +392,7 @@ sieve_storage_init_real(struct sieve_instance *svinst, struct event *event,
 	if (ret < 0)
 		return -1;
 	i_assert(storage != NULL);
-	i_assert(storage_class->v.init != NULL);
+	i_assert(storage->v.init != NULL);
 
 	T_BEGIN {
 		if (sieve_storage_data_parse(storage, data,
