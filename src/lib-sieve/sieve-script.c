@@ -441,9 +441,16 @@ int sieve_script_cmp(const struct sieve_script *script1,
 
 unsigned int sieve_script_hash(const struct sieve_script *script)
 {
-	i_assert(script->name != NULL);
+	if (script == NULL)
+		return 0;
 
-	return str_hash(script->name);
+	unsigned int hash = 0;
+
+	hash ^= POINTER_CAST_TO(script->script_class, unsigned int);
+	hash ^= sieve_storage_hash(script->storage);
+	hash ^= str_hash(script->name);
+
+	return hash;
 }
 
 /*
