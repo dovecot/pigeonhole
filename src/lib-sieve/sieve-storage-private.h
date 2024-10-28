@@ -105,8 +105,8 @@ struct sieve_storage {
 	const char *script_name;
 	const char *bin_path;
 
-	uint64_t max_scripts;
-	uint64_t max_storage;
+	uoff_t max_storage;
+	unsigned int max_scripts;
 
 	char *error;
 	enum sieve_error error_code;
