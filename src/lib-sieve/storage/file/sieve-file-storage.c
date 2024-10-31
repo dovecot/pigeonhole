@@ -643,9 +643,29 @@ sieve_file_storage_do_autodetect(
 	event = storage->event;
 	fstorage = container_of(storage, struct sieve_file_storage, storage);
 
-	if (storage_path != NULL && *storage_path != '\0') {
+	/* Determine what we have found so far */
+	bool tried_active = FALSE;
+	while (!tried_active) {
+		if (storage_path == NULL || *storage_path == '\0') {
+			storage_path = active_path;
+			if (storage_path == NULL || *storage_path == '\0')
+				storage_path = SIEVE_FILE_DEFAULT_ACTIVE_PATH;
+			tried_active = TRUE;
+		}
+		e_debug(event, "Checking storage path %s", storage_path);
+
+		/* Get full storage path */
+		if (sieve_file_storage_get_full_path(fstorage,
+						     &storage_path) < 0) {
+			*error_code_r = storage->error_code;
+			*error_r = t_strdup(storage->error);
+			sieve_storage_unref(&storage);
+			return -1;
+		}
+
 		/* Got something: stat it */
-		if (sieve_file_storage_stat(fstorage, storage_path) < 0) {
+		ret = sieve_file_storage_stat(fstorage, storage_path);
+		if (ret < 0) {
 			if (storage->error_code != SIEVE_ERROR_NOT_FOUND) {
 				/* Error */
 				*error_code_r = storage->error_code;
@@ -653,31 +673,46 @@ sieve_file_storage_do_autodetect(
 				sieve_storage_unref(&storage);
 				return -1;
 			}
-		} else 	if (S_ISDIR(fstorage->st.st_mode)) {
-			/* Success */
-			exists = TRUE;
+			if ((storage->flags &
+			     SIEVE_STORAGE_FLAG_READWRITE) != 0)
+				break;
 		}
+		if (ret == 0)
+			break;
+		storage_path = NULL;
 	}
 
-	if (active_path == NULL || *active_path == '\0') {
-		if (storage->main_storage ||
-		    (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
-			e_debug(event,
-				"Active script path is unconfigured; "
-				"using default (path=%s)",
-				SIEVE_FILE_DEFAULT_ACTIVE_PATH);
-			active_path = SIEVE_FILE_DEFAULT_ACTIVE_PATH;
-		} else {
-			*error_code_r = storage->error_code;
-			*error_r = t_strdup(storage->error);
+	if (storage_path == NULL || *storage_path == '\0') {
+		sieve_storage_unref(&storage);
+		return 0;
+	}
+
+	if (storage->error_code != SIEVE_ERROR_NONE) {
+		/* Not found */
+	} else if (S_ISDIR(fstorage->st.st_mode)) {
+		if (tried_active) {
+			e_error(event,
+				"Active script path '%s' is a directory",
+				storage_path);
+			sieve_error_create_internal(error_code_r, error_r);
 			sieve_storage_unref(&storage);
 			return -1;
 		}
+
+		/* Success */
+		exists = TRUE;
+	} else if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0) {
+		exists = TRUE;
+		active_path = storage_path;
+		storage_path = NULL;
 	}
 
-	if (!exists && active_path != NULL && *active_path != '\0' &&
-	    (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0)
-		storage_path = NULL;
+	if (active_path == NULL || *active_path == '\0') {
+		e_debug(event, "Active script path is unconfigured; "
+			"using default (path=%s)",
+			SIEVE_FILE_DEFAULT_ACTIVE_PATH);
+		active_path = SIEVE_FILE_DEFAULT_ACTIVE_PATH;
+	}
 
 	if (sieve_file_storage_init_common(fstorage, active_path, storage_path,
 					   exists) < 0) {
