@@ -296,7 +296,17 @@ int sieve_storage_alloc_with_settings(struct sieve_instance *svinst,
 	if (ret < 0)
 		return -1;
 
-	storage->bin_path = p_strdup_empty(storage->pool, set->script_bin_path);
+	const char *bin_path = set->script_bin_path;
+
+	if (sieve_storage_get_full_path(storage, bin_path, &bin_path) < 0) {
+		sieve_storage_set_critical(
+			storage,
+			"Binary storage path '%s' is relative to home directory, "
+			"but home directory is not available.", bin_path);
+		return -1;
+	}
+
+	storage->bin_path = p_strdup_empty(storage->pool, bin_path);
 	storage->max_storage = set->quota_storage_size;
 	storage->max_scripts = set->quota_script_count;
 
