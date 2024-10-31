@@ -380,7 +380,6 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 		e_debug(storage->event, "Using script storage path: %s",
 			storage_path);
 		have_link = TRUE;
-
 	} else {
 		if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
 			sieve_storage_set_critical(storage,
