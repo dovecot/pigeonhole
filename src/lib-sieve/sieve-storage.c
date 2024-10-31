@@ -509,7 +509,7 @@ int sieve_storage_create(struct sieve_instance *svinst, struct event *event,
 
 static int
 sieve_storage_create_default(struct sieve_instance *svinst,
-			     const char *location,
+			     struct event *event, const char *location,
 			     enum sieve_storage_flags flags,
 			     struct sieve_storage **storage_r,
 			     enum sieve_error *error_code_r,
@@ -528,25 +528,25 @@ sieve_storage_create_default(struct sieve_instance *svinst,
 		return -1;
 	}
 
-	ret = sieve_storage_create(svinst, svinst->event, location, flags,
+	ret = sieve_storage_create(svinst, event, location, flags,
 				   &storage, &error_code, error_r);
 	if (ret >= 0) {
 		storage->is_default = TRUE;
 	} else {
 		switch (error_code) {
 		case SIEVE_ERROR_NOT_FOUND:
-			e_debug(svinst->event, "storage: "
+			e_debug(event, "storage: "
 				"Default script location '%s' not found",
 				location);
 			break;
 		case SIEVE_ERROR_TEMP_FAILURE:
-			e_error(svinst->event, "storage: "
+			e_error(event, "storage: "
 				"Failed to access default script location '%s' "
 				"(temporary failure)",
 				location);
 			break;
 		default:
-			e_error(svinst->event, "storage: "
+			e_error(event, "storage: "
 				"Failed to access default script location '%s'",
 				location);
 			break;
@@ -585,7 +585,8 @@ sieve_storage_create_default_for(struct sieve_storage *storage,
 	const char *error;
 
 	i_assert(storage->default_storage_for == NULL);
-	if (sieve_storage_create_default(svinst, storage->default_location, 0,
+	if (sieve_storage_create_default(svinst, svinst->event,
+					 storage->default_location, 0,
 					 &storage->default_storage,
 					 &error_code, &error) < 0) {
 		sieve_storage_set_error(storage, error_code, "%s", error);
@@ -731,8 +732,8 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 				set_default);
 		}
 
-		ret = sieve_storage_create_default(svinst, set_default,
-						   0, &storage,
+		ret = sieve_storage_create_default(svinst, svinst->event,
+						   set_default, 0, &storage,
 						   error_code_r, NULL);
 	}
 	*storage_r = storage;
