@@ -410,9 +410,7 @@ int sieve_script_cmp(const struct sieve_script *script1,
 		return (script1->script_class > script2->script_class ? 1 : -1);
 
 	if (script1->v.cmp == NULL) {
-		i_assert (script1->location != NULL && script2->location != NULL);
-
-		ret = strcmp(script1->location, script2->location);
+		ret = sieve_storage_cmp(script1->storage, script2->storage);
 		if (ret != 0)
 			return (ret < 0 ? -1 : 1);
 
