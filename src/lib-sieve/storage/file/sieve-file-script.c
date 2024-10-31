@@ -817,10 +817,7 @@ sieve_file_script_cmp(const struct sieve_script *script1,
 	int ret;
 
 	if (!script1->open || !script2->open) {
-		struct sieve_storage *storage1 = script1->storage;
-		struct sieve_storage *storage2 = script2->storage;
-
-		ret = strcmp(storage1->location, storage2->location);
+		ret = sieve_storage_cmp(script1->storage, script2->storage);
 		if (ret != 0)
 			return ret;
 
