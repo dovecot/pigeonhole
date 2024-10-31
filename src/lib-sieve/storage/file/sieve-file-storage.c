@@ -560,15 +560,14 @@ sieve_file_storage_init_from_settings(
 		}
 	}
 
-	if (active_path == NULL || *active_path == '\0') {
-		if (storage->main_storage ||
-		    (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
-			e_debug(storage->event,
-				"Active script path is unconfigured; "
-				"using default (path=%s)",
-				SIEVE_FILE_DEFAULT_PATH);
-			active_path = SIEVE_FILE_DEFAULT_PATH;
-		}
+	if ((active_path == NULL || *active_path == '\0') &&
+	    (storage->main_storage ||
+	     (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0)) {
+		e_debug(storage->event,
+			"Active script path is unconfigured; "
+			"using default (path=%s)",
+			SIEVE_FILE_DEFAULT_PATH);
+		active_path = SIEVE_FILE_DEFAULT_PATH;
 	}
 
 	return sieve_file_storage_init_common(fstorage, active_path,
