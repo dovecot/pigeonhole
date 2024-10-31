@@ -84,7 +84,7 @@ parse_setting(const char *key, const char *value,
 	      struct sieve_ldap_storage *lstorage)
 {
 	return parse_setting_from_defs(lstorage->storage.pool, setting_defs,
-				       &lstorage->set, key, value);
+				       lstorage->set, key, value);
 }
 
 static int ldap_deref_from_str(const char *str, int *deref_r)
@@ -148,7 +148,9 @@ int sieve_ldap_storage_read_settings(struct sieve_ldap_storage *lstorage,
 		return -1;
 	}
 
-	lstorage->set = default_settings;
+	lstorage->set = p_new(storage->pool,
+			      struct sieve_ldap_storage_settings, 1);
+	*lstorage->set = default_settings;
 	lstorage->set_mtime = st.st_mtime;
 
 	if (!settings_read_nosection(config_path, parse_setting, lstorage,
@@ -159,58 +161,59 @@ int sieve_ldap_storage_read_settings(struct sieve_ldap_storage *lstorage,
 		return -1;
 	}
 
-	if (lstorage->set.base == NULL) {
+	if (lstorage->set->base == NULL) {
 		sieve_storage_set_critical(
 			storage, "Invalid LDAP storage config '%s': "
 			"No search base given", config_path);
 		return -1;
 	}
 
-	if (lstorage->set.uris == NULL && lstorage->set.hosts == NULL) {
+	if (lstorage->set->uris == NULL && lstorage->set->hosts == NULL) {
 		sieve_storage_set_critical(
 			storage, "Invalid LDAP storage config '%s': "
 			"No uris or hosts set", config_path);
 		return -1;
 	}
 
-	if (*lstorage->set.ldaprc_path != '\0') {
+	if (*lstorage->set->ldaprc_path != '\0') {
 		str = getenv("LDAPRC");
-		if (str != NULL && strcmp(str, lstorage->set.ldaprc_path) != 0) {
+		if (str != NULL &&
+		    strcmp(str, lstorage->set->ldaprc_path) != 0) {
 			sieve_storage_set_critical(
 				storage, "Invalid LDAP storage config '%s': "
 				"Multiple different ldaprc_path settings not allowed "
 				"(%s and %s)", config_path, str,
-				lstorage->set.ldaprc_path);
+				lstorage->set->ldaprc_path);
 			return -1;
 		}
-		env_put("LDAPRC", lstorage->set.ldaprc_path);
+		env_put("LDAPRC", lstorage->set->ldaprc_path);
 	}
 
-	if (ldap_deref_from_str(lstorage->set.deref,
-				&lstorage->set.ldap_deref) < 0) {
+	if (ldap_deref_from_str(lstorage->set->deref,
+				&lstorage->set->ldap_deref) < 0) {
 		sieve_storage_set_critical(
 			storage, "Invalid LDAP storage config '%s': "
 			"Invalid deref option '%s'",
-			config_path, lstorage->set.deref);;
+			config_path, lstorage->set->deref);;
 	}
 
-	if (ldap_scope_from_str(lstorage->set.scope,
-				&lstorage->set.ldap_scope) < 0) {
+	if (ldap_scope_from_str(lstorage->set->scope,
+				&lstorage->set->ldap_scope) < 0) {
 		sieve_storage_set_critical(
 			storage, "Invalid LDAP storage config '%s': "
 			"Invalid scope option '%s'",
-			config_path, lstorage->set.scope);;
+			config_path, lstorage->set->scope);;
 	}
 
 #ifdef OPENLDAP_TLS_OPTIONS
-	if (lstorage->set.tls_require_cert != NULL &&
+	if (lstorage->set->tls_require_cert != NULL &&
 	    ldap_tls_require_cert_from_str(
-		lstorage->set.tls_require_cert,
-		&lstorage->set.ldap_tls_require_cert) < 0) {
+		lstorage->set->tls_require_cert,
+		&lstorage->set->ldap_tls_require_cert) < 0) {
 		sieve_storage_set_critical(
 			storage, "Invalid LDAP storage config '%s': "
 			"Invalid tls_require_cert option '%s'",
-			config_path, lstorage->set.tls_require_cert);
+			config_path, lstorage->set->tls_require_cert);
 	}
 #endif
 	return 0;
