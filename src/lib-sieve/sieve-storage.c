@@ -300,6 +300,10 @@ int sieve_storage_alloc_with_settings(struct sieve_instance *svinst,
 	storage->max_storage = set->quota_storage_size;
 	storage->max_scripts = set->quota_script_count;
 
+	if (storage->bin_path != NULL) {
+		e_debug(storage->event, "Directory for binaries: %s",
+			storage->bin_path);
+	}
 	if (storage->max_storage > 0) {
 		e_debug(storage->event, "quota: "
 			"Storage limit: %"PRIuUOFF_T" bytes",
@@ -819,8 +823,11 @@ int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode)
 		return -1;
 	}
 
-	if (stat(bin_path, &st) == 0)
+	if (stat(bin_path, &st) == 0) {
+		e_debug(storage->event,
+			"Directory for saving binary already exists");
 		return 0;
+	}
 
 	if (errno == EACCES) {
 		sieve_storage_set_critical(storage,

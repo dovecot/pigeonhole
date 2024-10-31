@@ -738,6 +738,7 @@ int sieve_script_binary_save_default(struct sieve_script *script ATTR_UNUSED,
 	int ret;
 
 	if (path == NULL) {
+		e_debug(script->event, "No path to save Sieve script");
 		sieve_script_set_error(
 			script, SIEVE_ERROR_NOT_POSSIBLE,
 			"Cannot save script binary for this storage");
@@ -749,6 +750,8 @@ int sieve_script_binary_save_default(struct sieve_script *script ATTR_UNUSED,
 	    sieve_storage_setup_bin_path(
 		script->storage, mkdir_get_executable_mode(save_mode)) < 0)
 		return -1;
+
+	e_debug(script->event, "Saving binary to '%s'", path);
 
 	ret = sieve_binary_save(sbin, path, update, save_mode, &error_code);
 	if (ret < 0) {
