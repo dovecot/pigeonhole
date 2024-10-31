@@ -142,6 +142,17 @@ int sieve_storage_alloc_with_settings(struct sieve_instance *svinst,
 				      enum sieve_error *error_code_r,
 				      const char **error_r);
 
+/*
+ * Utility
+ */
+
+int sieve_storage_get_full_path(struct sieve_storage *storage,
+				const char *path, const char **path_r);
+
+/*
+ * Binary
+ */
+
 int sieve_storage_setup_bin_path(struct sieve_storage *storage, mode_t mode);
 
 /*

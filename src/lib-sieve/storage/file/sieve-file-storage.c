@@ -225,33 +225,15 @@ sieve_file_storage_get_full_path(struct sieve_file_storage *fstorage,
 				 const char **storage_path)
 {
 	struct sieve_storage *storage = &fstorage->storage;
-	struct sieve_instance *svinst = storage->svinst;
 	const char *path = *storage_path;
 
-	/* Get full storage path */
-
-	if (path != NULL &&
-	    ((path[0] == '~' && (path[1] == '/' || path[1] == '\0')) ||
-	     (((svinst->flags & SIEVE_FLAG_HOME_RELATIVE) != 0) &&
-	      path[0] != '/'))) {
-		/* home-relative path. change to absolute. */
-		const char *home = sieve_environment_get_homedir(svinst);
-
-		if (home != NULL) {
-			if (path[0] == '~' && (path[1] == '/' ||
-			    path[1] == '\0'))
-				path = home_expand_tilde(path, home);
-			else
-				path = t_strconcat(home, "/", path, NULL);
-		} else {
-			sieve_storage_set_critical(
-				storage,
-				"Sieve storage path '%s' is relative to home directory, "
-				"but home directory is not available.", path);
-			return -1;
-		}
+	if (sieve_storage_get_full_path(storage, path, storage_path) < 0) {
+		sieve_storage_set_critical(
+			storage,
+			"Sieve storage path '%s' is relative to home directory, "
+			"but home directory is not available.", path);
+		return -1;
 	}
-	*storage_path = path;
 	return 0;
 }
 
@@ -260,31 +242,15 @@ sieve_file_storage_get_full_active_path(struct sieve_file_storage *fstorage,
 					const char **active_path)
 {
 	struct sieve_storage *storage = &fstorage->storage;
-	struct sieve_instance *svinst = storage->svinst;
 	const char *path = *active_path;
 
-	if (path != NULL && *path != '\0' &&
-	    ((path[0] == '~' && (path[1] == '/' || path[1] == '\0')) ||
-	     (((svinst->flags & SIEVE_FLAG_HOME_RELATIVE) != 0) &&
-	      path[0] != '/')))	{
-		/* home-relative path. change to absolute. */
-		const char *home = sieve_environment_get_homedir(svinst);
-
-		if (home != NULL) {
-			if (path[0] == '~' && (path[1] == '/' ||
-			    path[1] == '\0'))
-				path = home_expand_tilde(path, home);
-			else
-				path = t_strconcat(home, "/", path, NULL);
-		} else {
-			sieve_storage_set_critical(
-				storage,
-				"Sieve storage active script path '%s' is relative to home directory, "
-				"but home directory is not available.", path);
-			return -1;
-		}
+	if (sieve_storage_get_full_path(storage, path, active_path) < 0) {
+		sieve_storage_set_critical(
+			storage,
+			"Sieve storage active script path '%s' is relative to home directory, "
+			"but home directory is not available.", path);
+		return -1;
 	}
-	*active_path = path;
 	return 0;
 }
 
