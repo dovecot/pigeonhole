@@ -156,7 +156,7 @@ sieve_ldap_script_binary_read_metadata(struct sieve_script *script,
 			"LDAP entry for script '%s' "
 			"has no modified attribute '%s'",
 			sieve_script_location(script),
-			lstorage->set.sieve_ldap_mod_attr);
+			lstorage->set->sieve_ldap_mod_attr);
 		return 0;
 	}
 

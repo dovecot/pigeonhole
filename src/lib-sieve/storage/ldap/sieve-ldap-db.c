@@ -256,7 +256,7 @@ void db_ldap_request(struct ldap_connection *conn,
 static int db_ldap_connect_finish(struct ldap_connection *conn, int ret)
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
-	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
+	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
 
 	if (ret == LDAP_SERVER_DOWN) {
 		e_error(storage->event, "db: "
@@ -575,7 +575,7 @@ static void ldap_connection_timeout(struct ldap_connection *conn)
 
 static int db_ldap_bind(struct ldap_connection *conn)
 {
-	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
+	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
 	int msgid;
 
 	i_assert(conn->conn_state != LDAP_CONN_STATE_BINDING);
@@ -653,7 +653,7 @@ db_ldap_set_opt_str(struct ldap_connection *conn, int opt, const char *value,
 
 static int db_ldap_set_tls_options(struct ldap_connection *conn)
 {
-	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
+	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
 
 	if (!set->tls)
 		return 0;
@@ -697,7 +697,7 @@ static int db_ldap_set_tls_options(struct ldap_connection *conn)
 
 static int db_ldap_set_options(struct ldap_connection *conn)
 {
-	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
+	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	unsigned int ldap_version;
 	int value;
@@ -737,7 +737,7 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 
 int sieve_ldap_db_connect(struct ldap_connection *conn)
 {
-	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
+	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct timeval start, end;
 	int debug_level;
@@ -1043,7 +1043,7 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 				 LDAPMessage *entry, pool_t pool,
 				 const char **modattr_r)
 {
-	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
+	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	char *attr, **vals;
 	BerElement *ber;
@@ -1082,7 +1082,7 @@ static int
 sieve_ldap_db_get_script(struct ldap_connection *conn, LDAPMessage *entry,
 			 struct istream **script_r)
 {
-	const struct sieve_ldap_storage_settings *set = &conn->lstorage->set;
+	const struct sieve_ldap_storage_settings *set = conn->lstorage->set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	char *attr;
 	unsigned char *data;
@@ -1210,7 +1210,7 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
 {
 	struct sieve_ldap_storage *lstorage = conn->lstorage;
 	struct sieve_storage *storage = &lstorage->storage;
-	const struct sieve_ldap_storage_settings *set = &lstorage->set;
+	const struct sieve_ldap_storage_settings *set = lstorage->set;
 	struct sieve_ldap_script_lookup_request *request;
 	char **attr_names;
 	const char *error;
@@ -1245,12 +1245,12 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
 		return -1;
 	}
 
-	request->request.scope = lstorage->set.ldap_scope;
+	request->request.scope = lstorage->set->ldap_scope;
 	request->request.filter = p_strdup(pool, str_c(str));
 	request->request.attributes = attr_names;
 
 	e_debug(storage->event, "base=%s scope=%s filter=%s fields=%s",
-		request->request.base, lstorage->set.scope,
+		request->request.base, lstorage->set->scope,
 		request->request.filter,
 		t_strarray_join((const char **)attr_names, ","));
 
@@ -1306,7 +1306,7 @@ int sieve_ldap_db_read_script(struct ldap_connection *conn,
 {
 	struct sieve_ldap_storage *lstorage = conn->lstorage;
 	struct sieve_storage *storage = &lstorage->storage;
-	const struct sieve_ldap_storage_settings *set = &lstorage->set;
+	const struct sieve_ldap_storage_settings *set = lstorage->set;
 	struct sieve_ldap_script_read_request *request;
 	char **attr_names;
 
