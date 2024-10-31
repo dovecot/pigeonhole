@@ -294,7 +294,6 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	const char *tmp_dir, *link_path, *active_fname, *storage_dir, *error;
-	bool have_link = FALSE;
 	int ret;
 
 	i_assert(storage_path != NULL || active_path != NULL);
@@ -360,7 +359,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 	if (storage_path != NULL && *storage_path != '\0') {
 		e_debug(storage->event, "Using script storage path: %s",
 			storage_path);
-		have_link = TRUE;
+		fstorage->is_file = FALSE;
 	} else {
 		if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
 			sieve_storage_set_critical(storage,
@@ -369,6 +368,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 		}
 
 		storage_path = active_path;
+		fstorage->is_file = TRUE;
 	}
 
 	i_assert(storage_path != NULL);
@@ -449,7 +449,7 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 	if (!exists && sieve_file_storage_stat(fstorage, storage_path) < 0)
 		return -1;
 
-	if (have_link) {
+	if (!fstorage->is_file) {
 		if (t_realpath(storage_path, &storage_path, &error) < 0) {
 			sieve_storage_set_critical(storage,
 				"Failed to normalize storage path (path=%s): %s",

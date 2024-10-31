@@ -24,6 +24,12 @@ sieve_file_storage_active_read_link(struct sieve_file_storage *fstorage,
 	const char *error = NULL;
 	int ret;
 
+	if (fstorage->is_file) {
+		/* The storage is in fact a single script file. There is no
+		   concept of an active script in this storage. */
+		return 0;
+	}
+
 	ret = t_readlink(fstorage->active_path, link_r, &error);
 	if (ret < 0) {
 		*link_r = NULL;
