@@ -809,6 +809,37 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 }
 
 /*
+ * Utility
+ */
+
+int sieve_storage_get_full_path(struct sieve_storage *storage,
+				const char *path, const char **path_r)
+{
+	struct sieve_instance *svinst = storage->svinst;
+
+	*path_r = path;
+
+	if (path == NULL || *path == '\0')
+		return 0;
+	if ((path[0] != '~' || (path[1] != '/' && path[1] != '\0')) &&
+	    ((svinst->flags & SIEVE_FLAG_HOME_RELATIVE) == 0 ||
+	     path[0] == '/'))
+		return 0;
+
+	/* Home-relative path. change to absolute. */
+	const char *home = sieve_environment_get_homedir(svinst);
+
+	if (home == NULL)
+		return -1;
+
+	if (path[0] == '~' && (path[1] == '/' || path[1] == '\0'))
+		*path_r = home_expand_tilde(path, home);
+	else
+		*path_r = t_strconcat(home, "/", path, NULL);
+	return 0;
+}
+
+/*
  * Binary
  */
 
