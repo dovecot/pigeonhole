@@ -40,6 +40,8 @@ struct sieve_file_storage {
 	gid_t file_create_gid;
 
 	time_t prev_mtime;
+
+	bool is_file:1;
 };
 
 const char *
