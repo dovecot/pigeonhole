@@ -38,15 +38,15 @@ extern const struct sieve_operation_def cmd_error_operation;
  */
 
 struct ext_ihave_ast_context {
-  ARRAY(const char *) missing_extensions;
+	ARRAY(const char *) missing_extensions;
 };
 
-struct ext_ihave_ast_context *ext_ihave_get_ast_context
-	(const struct sieve_extension *this_ext, struct sieve_ast *ast);
+struct ext_ihave_ast_context *
+ext_ihave_get_ast_context(const struct sieve_extension *this_ext,
+			  struct sieve_ast *ast);
 
-void ext_ihave_ast_add_missing_extension
-	(const struct sieve_extension *this_ext, struct sieve_ast *ast,
-		const char *ext_name);
-
+void ext_ihave_ast_add_missing_extension(const struct sieve_extension *this_ext,
+					 struct sieve_ast *ast,
+					 const char *ext_name);
 
 #endif
