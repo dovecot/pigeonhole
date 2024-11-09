@@ -127,7 +127,7 @@ bool cmd_getscript(struct client_command_context *cmd)
 	}
 
 	if (sieve_script_get_stream(ctx->script, &ctx->script_stream,
-				    &error) < 0 ) {
+				    &error) < 0) {
 		if (error == SIEVE_ERROR_NOT_FOUND) {
 			sieve_storage_set_error(client->storage, error,
 						"Script does not exist.");
