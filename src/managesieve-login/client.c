@@ -58,9 +58,11 @@ static void client_send_capabilities(struct client *client)
 {
 	struct managesieve_client *msieve_client =
 		container_of(client, struct managesieve_client, common);
-	const char *sasl_cap;
+	const char *sieve_cap, *notify_cap, *sasl_cap;
 
 	T_BEGIN {
+		sieve_cap = msieve_client->set->managesieve_sieve_capability;
+		notify_cap = msieve_client->set->managesieve_notify_capability;
 		sasl_cap = client_authenticate_get_capabilities(client);
 
 		/* Default capabilities */
@@ -69,14 +71,10 @@ static void client_send_capabilities(struct client *client)
 			msieve_client->set->managesieve_implementation_string,
 			"\"\r\n", NULL));
 		client_send_raw(client, t_strconcat(
-			"\"SIEVE\" \"",
-			msieve_client->set->managesieve_sieve_capability,
-			"\"\r\n", NULL));
-		if (msieve_client->set->managesieve_notify_capability[0] != '\0') {
+				"\"SIEVE\" \"", sieve_cap, "\"\r\n", NULL));
+		if (notify_cap[0] != '\0') {
 			client_send_raw(client, t_strconcat(
-				"\"NOTIFY\" \"",
-				msieve_client->set->managesieve_notify_capability,
-				"\"\r\n", NULL));
+				"\"NOTIFY\" \"", notify_cap, "\"\r\n", NULL));
 		}
 		client_send_raw(client, t_strconcat("\"SASL\" \"", sasl_cap,
 						    "\"\r\n", NULL));
