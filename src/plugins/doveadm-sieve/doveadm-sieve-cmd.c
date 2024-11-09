@@ -106,7 +106,7 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 	enum sieve_error error;
 	int ret;
 
-	memset((void*)&svenv, 0, sizeof(svenv));
+	memset((void *)&svenv, 0, sizeof(svenv));
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
 	svenv.base_dir = user->set->base_dir;
