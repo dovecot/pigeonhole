@@ -33,8 +33,9 @@ extern const struct sieve_operation_def body_operation;
  * Message body part extraction
  */
 
-int ext_body_get_part_list
-	(const struct sieve_runtime_env *renv, enum tst_body_transform transform,
-		const char * const *content_types, struct sieve_stringlist **strlist_r);
+int ext_body_get_part_list(const struct sieve_runtime_env *renv,
+			   enum tst_body_transform transform,
+			   const char *const *content_types,
+			   struct sieve_stringlist **strlist_r);
 
 #endif
