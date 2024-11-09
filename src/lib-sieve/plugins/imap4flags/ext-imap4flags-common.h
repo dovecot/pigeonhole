@@ -50,16 +50,16 @@ extern const struct sieve_command_def tst_hasflag;
  * Common command functions
  */
 
-bool ext_imap4flags_command_validate
-	(struct sieve_validator *valdtr, struct sieve_command *cmd);
+bool ext_imap4flags_command_validate(struct sieve_validator *valdtr,
+				     struct sieve_command *cmd);
 
 /*
  * Flags tagged argument
  */
 
-void ext_imap4flags_attach_flags_tag
-	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-		const char *command);
+void ext_imap4flags_attach_flags_tag(struct sieve_validator *valdtr,
+				     const struct sieve_extension *ext,
+				     const char *command);
 
 /*
  * Flag management
@@ -71,27 +71,25 @@ struct ext_imap4flags_iter {
 	unsigned int last;
 };
 
-void ext_imap4flags_iter_init
-	(struct ext_imap4flags_iter *iter, string_t *flags_list);
+void ext_imap4flags_iter_init(struct ext_imap4flags_iter *iter,
+			      string_t *flags_list);
 
-const char *ext_imap4flags_iter_get_flag
-	(struct ext_imap4flags_iter *iter);
+const char *ext_imap4flags_iter_get_flag(struct ext_imap4flags_iter *iter);
 
 /* Flag operations */
 
-typedef int (*ext_imapflag_flag_operation_t)
-	(const struct sieve_runtime_env *renv,
-		const struct sieve_extension *flg_ext,
-		struct sieve_variable_storage *storage,
-		unsigned int var_index, struct sieve_stringlist *flags)
-		ATTR_NULL(2);
+typedef int
+(*ext_imapflag_flag_operation_t)(const struct sieve_runtime_env *renv,
+				 const struct sieve_extension *flg_ext,
+				 struct sieve_variable_storage *storage,
+				 unsigned int var_index,
+				 struct sieve_stringlist *flags) ATTR_NULL(2);
 
 /* Flags access */
 
-void ext_imap4flags_get_implicit_flags_init
-	(struct ext_imap4flags_iter *iter, const struct sieve_extension *this_ext,
-		struct sieve_result *result);
-
+void ext_imap4flags_get_implicit_flags_init(
+	struct ext_imap4flags_iter *iter,
+	const struct sieve_extension *this_ext,
+	struct sieve_result *result);
 
 #endif
-
