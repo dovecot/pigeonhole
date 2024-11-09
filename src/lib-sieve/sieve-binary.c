@@ -580,7 +580,7 @@ int sieve_binary_extension_link(struct sieve_binary *sbin,
 const struct sieve_extension *
 sieve_binary_extension_get_by_index(struct sieve_binary *sbin, int index)
 {
-	struct sieve_binary_extension_reg * const *ereg;
+	struct sieve_binary_extension_reg *const *ereg;
 
 	if (index < (int)array_count(&sbin->extensions)) {
 		ereg = array_idx(&sbin->extensions, (unsigned int)index);
