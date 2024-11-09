@@ -234,7 +234,7 @@ const void *
 sieve_result_extension_get_context(struct sieve_result *result,
 				   const struct sieve_extension *ext)
 {
-	void * const *ctx;
+	void *const *ctx;
 
 	if (ext->id < 0 || ext->id >= (int) array_count(&result->ext_contexts))
 		return NULL;
