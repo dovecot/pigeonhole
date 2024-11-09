@@ -104,7 +104,7 @@ tst_address_registered(struct sieve_validator *valdtr,
    FIXME: this restriction is somewhat odd. Sieve list advises to allow any
           other header as long as its content matches the address-list grammar.
  */
-static const char * const _allowed_headers[] = {
+static const char *const _allowed_headers[] = {
 	/* Required */
 	"from", "to", "cc", "bcc", "sender", "resent-from", "resent-to",
 
@@ -132,7 +132,7 @@ _header_is_allowed(void *context ATTR_UNUSED, struct sieve_ast_argument *arg)
 	if (sieve_argument_is_string_literal(arg)) {
 		const char *header = sieve_ast_strlist_strc(arg);
 
-		const char * const *hdsp = _allowed_headers;
+		const char *const *hdsp = _allowed_headers;
 		while (*hdsp != NULL) {
 			if (strcasecmp(*hdsp, header) == 0)
 				return 1;
