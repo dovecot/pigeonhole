@@ -494,7 +494,7 @@ _sieve_validator_command_tag_get(struct sieve_validator *valdtr,
 				 const char *tag, void **data)
 {
 	struct sieve_command_registration *cmd_reg = cmd->reg;
-	struct sieve_tag_registration * const *regs;
+	struct sieve_tag_registration *const *regs;
 	unsigned int i, reg_count;
 
 	/* First check normal tags */
@@ -1127,7 +1127,7 @@ sieve_validate_command_arguments(struct sieve_validator *valdtr,
 
 	/* Call initial validation for persistent arguments */
 	if (array_is_created(&cmd_reg->persistent_tags)) {
-		struct sieve_tag_registration * const *regs;
+		struct sieve_tag_registration *const *regs;
 		unsigned int i, reg_count;
 
 		regs = array_get(&cmd_reg->persistent_tags, &reg_count);
