@@ -172,7 +172,7 @@ const void *
 sieve_generator_extension_get_context(struct sieve_generator *gentr,
 				      const struct sieve_extension *ext)
 {
-	void * const *ctx;
+	void *const *ctx;
 
 	if (ext->id < 0 || ext->id >= (int) array_count(&gentr->ext_contexts))
 		return NULL;
