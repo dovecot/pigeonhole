@@ -64,7 +64,7 @@ sieve_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
 
 	output = o_stream_create_fd(STDOUT_FILENO, (size_t)-1);
 	o_stream_set_no_error_handling(output, TRUE);
-	return (void*)output;
+	return (void *)output;
 }
 
 static void
