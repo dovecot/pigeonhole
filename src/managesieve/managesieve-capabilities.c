@@ -64,7 +64,7 @@ void managesieve_capabilities_dump(void)
 	const struct plugin_settings *global_plugin_settings;
 	struct sieve_environment svenv;
 	struct sieve_instance *svinst;
-	const char *notify_cap;
+	const char *sieve_cap, *notify_cap;
 
 	/* Read plugin settings */
 
@@ -83,15 +83,13 @@ void managesieve_capabilities_dump(void)
 
 	/* Dump capabilities */
 
+	sieve_cap = sieve_get_capabilities(svinst, NULL);
 	notify_cap = sieve_get_capabilities(svinst, "notify");
 
 	if (notify_cap == NULL)
-		printf("SIEVE: %s\n", sieve_get_capabilities(svinst, NULL));
-	else {
-		printf("SIEVE: %s, NOTIFY: %s\n",
-		       sieve_get_capabilities(svinst, NULL),
-		       sieve_get_capabilities(svinst, "notify"));
-	}
+		printf("SIEVE: %s\n", sieve_cap);
+	else
+		printf("SIEVE: %s, NOTIFY: %s\n", sieve_cap, notify_cap);
 
 	settings_free(global_plugin_settings);
 	sieve_deinit(&svinst);
