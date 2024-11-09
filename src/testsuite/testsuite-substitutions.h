@@ -16,8 +16,11 @@ struct testsuite_substitution {
 	const struct testsuite_substitution_def *def;
 };
 
-struct sieve_ast_argument *testsuite_substitution_argument_create
-	(struct sieve_validator *valdtr, struct sieve_ast *ast,
-		unsigned int source_line, const char *substitution, const char *param);
+struct sieve_ast_argument *
+testsuite_substitution_argument_create(struct sieve_validator *valdtr,
+				       struct sieve_ast *ast,
+				       unsigned int source_line,
+				       const char *substitution,
+				       const char *param);
 
 #endif
