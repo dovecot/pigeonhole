@@ -597,7 +597,7 @@ tst_envelope_validate(struct sieve_validator *valdtr, struct sieve_command *tst)
 	 *   FIXME: verify dynamic envelope parts at runtime
 	 */
 	epart = arg;
-	if (sieve_ast_stringlist_map(&epart, (void *) &not_address,
+	if (sieve_ast_stringlist_map(&epart, &not_address,
 				     _envelope_part_is_supported) <= 0) {
 		i_assert(epart != NULL);
 		sieve_argument_validate_error(

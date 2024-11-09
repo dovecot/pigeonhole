@@ -59,7 +59,7 @@ ext_variables_variable_argument_activate(const struct sieve_extension *var_ext,
 
 	arg->argument = sieve_argument_create(ast, &variable_argument,
 					      this_ext, 0);
-	arg->argument->data = (void *) var;
+	arg->argument->data = var;
 	return TRUE;
 }
 
@@ -132,7 +132,7 @@ ext_variables_match_value_argument_activate(
 
 	arg->argument = sieve_argument_create(ast, &match_value_argument,
 					      this_ext, 0);
-	arg->argument->data = (void *)POINTER_CAST(index);
+	arg->argument->data = POINTER_CAST(index);
 	return TRUE;
 }
 

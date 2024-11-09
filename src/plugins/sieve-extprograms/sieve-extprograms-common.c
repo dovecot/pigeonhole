@@ -302,7 +302,7 @@ bool sieve_extprogram_command_validate(struct sieve_validator *valdtr,
 	actx.valdtr = valdtr;
 	actx.cmd = cmd;
 	stritem = arg;
-	if (sieve_ast_stringlist_map(&stritem, (void *)&actx,
+	if (sieve_ast_stringlist_map(&stritem, &actx,
 				     _arg_validate) <= 0)
 		return FALSE;
 

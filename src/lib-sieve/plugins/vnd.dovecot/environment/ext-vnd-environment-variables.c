@@ -93,7 +93,7 @@ vnspc_vnd_environment_validate(
 		return FALSE;
 	}
 
-	*var_data = (void *) p_strdup(sieve_ast_pool(ast), variable);
+	*var_data = p_strdup(sieve_ast_pool(ast), variable);
 	return TRUE;
 }
 

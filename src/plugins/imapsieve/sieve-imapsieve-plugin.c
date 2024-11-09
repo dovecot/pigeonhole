@@ -33,7 +33,7 @@ void sieve_imapsieve_plugin_load(struct sieve_instance *svinst, void **context)
 		"Sieve imapsieve plugin for %s version %s loaded",
 		PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 
-	*context = (void *)pctx;
+	*context = pctx;
 }
 
 void sieve_imapsieve_plugin_unload(struct sieve_instance *svinst ATTR_UNUSED,

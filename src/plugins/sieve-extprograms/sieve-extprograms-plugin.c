@@ -38,7 +38,7 @@ void sieve_extprograms_plugin_load(struct sieve_instance *svinst,
 			PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 	}
 
-	*context = (void *)pctx;
+	*context = pctx;
 }
 
 void sieve_extprograms_plugin_unload(struct sieve_instance *svinst ATTR_UNUSED,

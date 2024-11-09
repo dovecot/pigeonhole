@@ -55,17 +55,17 @@ cmp_i_octet_compare(const struct sieve_comparator *cmp ATTR_UNUSED,
 	int result;
 
 	if (val1_size == val2_size)
-		return memcmp((void *) val1, (void *) val2, val1_size);
+		return memcmp(val1, val2, val1_size);
 
 	if (val1_size > val2_size) {
-		result = memcmp((void *) val1, (void *) val2, val2_size);
+		result = memcmp(val1, val2, val2_size);
 
 		if (result == 0)
 			return 1;
 		return result;
 	}
 
-	result = memcmp((void *) val1, (void *) val2, val1_size);
+	result = memcmp(val1, val2, val1_size);
 
 	if (result == 0)
 		return -1;

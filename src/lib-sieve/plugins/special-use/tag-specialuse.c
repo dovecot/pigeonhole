@@ -208,7 +208,7 @@ seff_specialuse_read_context(
 	ctx = p_new(pool, struct seff_specialuse_context, 1);
 	ctx->special_use_flag = p_strdup(pool, use_flag);
 
-	*se_context = (void *) ctx;
+	*se_context = ctx;
 
 	return SIEVE_EXEC_OK;
 }

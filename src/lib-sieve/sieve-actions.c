@@ -263,7 +263,7 @@ int sieve_act_store_add_to_result(const struct sieve_runtime_env *renv,
 	act->mailbox = p_strdup(pool, mailbox);
 
 	return sieve_result_add_action(renv, NULL, name, &act_store, seffects,
-				       (void *)act, 0, TRUE);
+				       act, 0, TRUE);
 }
 
 void sieve_act_store_add_flags(const struct sieve_action_exec_env *aenv,
@@ -470,7 +470,7 @@ act_store_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 		trans->error_code = MAIL_ERROR_NONE;
 	}
 
-	*tr_context = (void *)trans;
+	*tr_context = trans;
 
 	switch (trans->error_code) {
 	case MAIL_ERROR_NONE:
@@ -916,7 +916,7 @@ int sieve_act_redirect_add_to_result(const struct sieve_runtime_env *renv,
 	act->to_address = smtp_address_clone(pool, to_address);
 
 	if (sieve_result_add_action(renv, NULL, name, &act_redirect, seffects,
-				    (void *)act, svinst->max_redirects,
+				    act, svinst->max_redirects,
 				    TRUE) < 0)
 		return SIEVE_EXEC_FAILURE;
 
@@ -1029,7 +1029,7 @@ sieve_action_do_reject_mail(const struct sieve_action_exec_env *aenv,
 			input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR |
 			       HEADER_FILTER_HIDE_BODY,
 			exclude_headers, N_ELEMENTS(exclude_headers),
-			*null_header_filter_callback, (void *)NULL);
+			*null_header_filter_callback, NULL);
 		o_stream_nsend_istream(output, input);
 		i_stream_unref(&input);
 	}

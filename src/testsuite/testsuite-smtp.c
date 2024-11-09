@@ -99,7 +99,7 @@ void *testsuite_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
 
 	smtp->output = o_stream_create_fd_autoclose(&fd, (size_t)-1);
 
-	return (void *) smtp;
+	return smtp;
 }
 
 void testsuite_smtp_add_rcpt(const struct sieve_script_env *senv ATTR_UNUSED,

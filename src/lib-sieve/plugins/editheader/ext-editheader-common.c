@@ -139,7 +139,7 @@ bool ext_editheader_load(const struct sieve_extension *ext, void **context)
 		}
 	} T_END;
 
-	*context = (void *)ext_config;
+	*context = ext_config;
 	return TRUE;
 }
 

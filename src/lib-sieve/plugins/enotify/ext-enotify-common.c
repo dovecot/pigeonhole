@@ -469,7 +469,7 @@ bool ext_enotify_compile_check_arguments(struct sieve_validator *valdtr,
 
 		/* Parse and check options */
 		result = (sieve_ast_stringlist_map(
-			&option, (void *) &optn_context,
+			&option, &optn_context,
 			_ext_enotify_option_check) > 0);
 
 		/* Discard argument if options are not accepted by method */

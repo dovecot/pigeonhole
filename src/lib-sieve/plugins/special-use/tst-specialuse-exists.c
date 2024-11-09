@@ -179,7 +179,7 @@ tst_specialuse_exists_validate(struct sieve_validator *valdtr,
 	valctx.tst = tst;
 
 	return (sieve_ast_stringlist_map(
-		&aarg, (void *)&valctx,
+		&aarg, &valctx,
 		tst_specialuse_exists_flag_validate) >= 0);
 }
 

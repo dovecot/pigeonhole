@@ -280,7 +280,7 @@ static void test_edit_mail_concatenated(void)
 	input_filt = i_stream_create_header_filter(
 		input_mail, (HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR),
 		hide_headers, N_ELEMENTS(hide_headers),
-		*null_header_filter_callback, (void *)NULL);
+		*null_header_filter_callback, NULL);
 	input = i_stream_create_lf(input_filt);
 	i_stream_unref(&input_filt);
 
@@ -307,7 +307,7 @@ static void test_edit_mail_concatenated(void)
 	input_filt = i_stream_create_header_filter(
 		input_mail, (HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR),
 		hide_headers, N_ELEMENTS(hide_headers),
-		*null_header_filter_callback, (void *)NULL);
+		*null_header_filter_callback, NULL);
 	input = i_stream_create_lf(input_filt);
 	i_stream_unref(&input_filt);
 
@@ -384,7 +384,7 @@ static void test_edit_mail_concatenated(void)
 	input_filt = i_stream_create_header_filter(
 		input_mail, (HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR),
 		hide_headers, N_ELEMENTS(hide_headers),
-		*null_header_filter_callback, (void *)NULL);
+		*null_header_filter_callback, NULL);
 	input = i_stream_create_lf(input_filt);
 	i_stream_unref(&input_filt);
 
@@ -410,7 +410,7 @@ static void test_edit_mail_concatenated(void)
 	input_filt = i_stream_create_header_filter(input_mail,
 		HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR, hide_headers,
 		N_ELEMENTS(hide_headers), *null_header_filter_callback,
-		(void *)NULL);
+		NULL);
 	input = i_stream_create_lf(input_filt);
 	i_stream_unref(&input_filt);
 

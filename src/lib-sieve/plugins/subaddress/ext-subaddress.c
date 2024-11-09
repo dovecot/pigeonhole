@@ -80,7 +80,7 @@ ext_subaddress_load(const struct sieve_extension *ext, void **context)
 	config = i_new(struct ext_subaddress_config, 1);
 	config->delimiter = i_strdup(delim);
 
-	*context = (void *) config;
+	*context = config;
 	return TRUE;
 }
 

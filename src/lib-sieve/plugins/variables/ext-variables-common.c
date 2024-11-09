@@ -95,7 +95,7 @@ bool ext_variables_load(const struct sieve_extension *ext, void **context)
 		}
 	}
 
-	*context = (void *)config;
+	*context = config;
 	return TRUE;
 }
 
@@ -687,7 +687,7 @@ ext_variables_create_local_scope(const struct sieve_extension *this_ext,
 	scope = sieve_variable_scope_create(this_ext->svinst, this_ext, NULL);
 
 	sieve_ast_extension_register(ast, this_ext, &variables_ast_extension,
-				     (void *)scope);
+				     scope);
 	return scope;
 }
 
@@ -719,7 +719,7 @@ ext_variables_validator_context_create(const struct sieve_extension *this_ext,
 	ctx->namespaces = sieve_validator_object_registry_create(valdtr);
 	ctx->local_scope = ext_variables_create_local_scope(this_ext, ast);
 
-	sieve_validator_extension_set_context(valdtr, this_ext, (void *)ctx);
+	sieve_validator_extension_set_context(valdtr, this_ext, ctx);
 	return ctx;
 }
 
@@ -873,7 +873,7 @@ ext_variables_interpreter_context_create(
 
 	sieve_interpreter_extension_register(interp, this_ext,
 					     &variables_interpreter_extension,
-					     (void *)ctx);
+					     ctx);
 	return ctx;
 }
 

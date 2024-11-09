@@ -21,7 +21,7 @@ bool ext_report_load(const struct sieve_extension *ext, void **context)
 		svinst, svinst->pool, "sieve_report_from",
 		&config->report_from);
 
-	*context = (void *) config;
+	*context = config;
 	return TRUE;
 }
 

@@ -313,7 +313,7 @@ static int cmd_foreverypart_begin_operation_execute
 	}
 	fploop->part = sieve_message_part_iter_current(&fploop->part_iter);
 	if (fploop->part != NULL) {
-		sieve_interpreter_loop_set_context(loop, (void *)fploop);
+		sieve_interpreter_loop_set_context(loop, fploop);
 	} else {
 		/* No children parts to iterate */
 		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,

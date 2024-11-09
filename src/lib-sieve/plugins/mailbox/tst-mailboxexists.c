@@ -114,7 +114,7 @@ tst_mailboxexists_validate(struct sieve_validator *valdtr,
 	valctx.tst = tst;
 
 	return (sieve_ast_stringlist_map(
-		&aarg, (void *)&valctx,
+		&aarg, &valctx,
 		tst_mailboxexists_mailbox_validate) >= 0);
 }
 

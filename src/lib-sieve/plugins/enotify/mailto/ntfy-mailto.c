@@ -177,7 +177,7 @@ ntfy_mailto_load(const struct sieve_enotify_method *nmth, void **context)
 		svinst, config->pool, "sieve_notify_mailto_envelope_from",
 		&config->envelope_from);
 
-	*context = (void *)config;
+	*context = config;
 	return TRUE;
 }
 
@@ -360,7 +360,7 @@ ntfy_mailto_runtime_check_operands(const struct sieve_enotify_env *nenv,
 		return FALSE;
 
 	mtctx->uri = parsed_uri;
-	*method_context = (void *)mtctx;
+	*method_context = mtctx;
 	return TRUE;
 }
 

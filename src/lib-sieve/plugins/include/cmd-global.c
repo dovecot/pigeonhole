@@ -69,7 +69,7 @@ _create_variable_argument(struct sieve_command *cmd,
 	struct sieve_argument *argument =
 		sieve_argument_create(cmd->ast_node->ast, NULL, cmd->ext, 0);
 
-	argument->data = (void *)var;
+	argument->data = var;
 	return argument;
 }
 

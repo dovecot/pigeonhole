@@ -1212,7 +1212,7 @@ sieve_message_parts_add_missing(const struct sieve_runtime_env *renv,
 				}
 
 				/* new part */
-				block.part->context = (void *)body_part;
+				block.part->context = body_part;
 
 				if (last_part != NULL) {
 					i_assert(parent != NULL);

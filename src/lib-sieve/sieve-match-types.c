@@ -171,7 +171,7 @@ get_interpreter_context(struct sieve_interpreter *interp, bool create)
 
 		sieve_interpreter_extension_register(
 			interp, mcht_ext, &mtch_interpreter_extension,
-			(void *)ctx);
+			ctx);
 	}
 	return ctx;
 }

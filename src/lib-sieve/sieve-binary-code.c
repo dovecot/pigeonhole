@@ -162,7 +162,7 @@ sieve_size_t sieve_binary_emit_cstring(struct sieve_binary_block *sblock,
 				       const char *str)
 {
 	sieve_size_t address =
-		sieve_binary_emit_dynamic_data(sblock, (void *)str,
+		sieve_binary_emit_dynamic_data(sblock, str,
 					       (sieve_size_t)strlen(str));
 
 	_sieve_binary_emit_byte(sblock, 0);
@@ -173,7 +173,7 @@ sieve_size_t sieve_binary_emit_string(struct sieve_binary_block *sblock,
 				      const string_t *str)
 {
 	sieve_size_t address =
-		sieve_binary_emit_dynamic_data(sblock, (void *)str_data(str),
+		sieve_binary_emit_dynamic_data(sblock, str_data(str),
 					       (sieve_size_t)str_len(str));
 
 	_sieve_binary_emit_byte(sblock, 0);

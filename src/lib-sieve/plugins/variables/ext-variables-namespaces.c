@@ -116,7 +116,7 @@ bool ext_variables_namespace_argument_activate(
 
 	arg->argument = sieve_argument_create(ast, &namespace_argument,
 					      this_ext, 0);
-	arg->argument->data = (void *) var;
+	arg->argument->data = var;
 
 	return TRUE;
 }

@@ -300,7 +300,7 @@ seff_flags_do_read_context(const struct sieve_side_effect *seffect,
 	if (ret < 0)
 		return flag_list->exec_status;
 
-	*se_context = (void *)ctx;
+	*se_context = ctx;
 	return SIEVE_EXEC_OK;
 }
 

@@ -83,8 +83,8 @@ lda_sieve_smtp_start(const struct sieve_script_env *senv,
 
 	i_zero(&submit_input);
 
-	return (void *)smtp_submit_init_simple(&submit_input, dctx->smtp_set,
-					       mail_from);
+	return smtp_submit_init_simple(&submit_input, dctx->smtp_set,
+				       mail_from);
 }
 
 static void
@@ -1014,7 +1014,7 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 	scriptenv.duplicate_check = lda_sieve_duplicate_check;
 	scriptenv.reject_mail = lda_sieve_reject_mail;
 	scriptenv.result_amend_log_message = lda_sieve_result_amend_log_message;
-	scriptenv.script_context = (void *) mdctx;
+	scriptenv.script_context = mdctx;
 	scriptenv.trace_log = trace_log;
 	scriptenv.trace_config = trace_config;
 

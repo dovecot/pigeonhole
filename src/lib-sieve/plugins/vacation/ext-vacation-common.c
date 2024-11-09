@@ -80,7 +80,7 @@ bool ext_vacation_load(const struct sieve_extension *ext, void **context)
 	config->send_from_recipient = send_from_recipient;
 	config->to_header_ignore_envelope = to_header_ignore_envelope;
 
-	*context = (void *)config;
+	*context = config;
 	return TRUE;
 }
 

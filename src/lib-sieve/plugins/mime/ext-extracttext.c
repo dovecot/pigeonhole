@@ -59,7 +59,7 @@ ext_extracttext_load(const struct sieve_extension *ext, void **context)
 	ectx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
 	ectx->fep_ext = sieve_extension_register(
 		svinst, &foreverypart_extension, FALSE);
-	*context = (void *)ectx;
+	*context = ectx;
 	return TRUE;
 }
 

@@ -68,7 +68,7 @@ ext_environment_interpreter_context_create(
 
 	sieve_interpreter_extension_register(interp, this_ext,
 					     &environment_interpreter_extension,
-					     (void *)ctx);
+					     ctx);
 	return ctx;
 }
 
