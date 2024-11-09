@@ -203,7 +203,7 @@ opc_global_dump(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 	unsigned int count, i, var_count;
 	struct sieve_variable_scope_binary *global_vars;
 	struct sieve_variable_scope *global_scope;
-	struct sieve_variable * const *vars;
+	struct sieve_variable *const *vars;
 
 	if (!sieve_binary_read_unsigned(denv->sblock, address, &count))
 		return FALSE;
@@ -243,7 +243,7 @@ opc_global_execute(const struct sieve_runtime_env *renv, sieve_size_t *address)
 	struct sieve_variable_scope_binary *global_vars;
 	struct sieve_variable_scope *global_scope;
 	struct sieve_variable_storage *storage;
-	struct sieve_variable * const *vars;
+	struct sieve_variable *const *vars;
 	unsigned int var_count, count, i;
 
 	if (!sieve_binary_read_unsigned(renv->sblock, address, &count)) {
