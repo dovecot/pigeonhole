@@ -14,12 +14,12 @@
 static void send_capability(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
-	const char *sievecap, *notifycap;
+	const char *sieve_cap, *notify_cap;
 	unsigned int max_redirects;
 
 	/* Get capabilities */
-	sievecap = sieve_get_capabilities(client->svinst, NULL);
-	notifycap = sieve_get_capabilities(client->svinst, "notify");
+	sieve_cap = sieve_get_capabilities(client->svinst, NULL);
+	notify_cap = sieve_get_capabilities(client->svinst, "notify");
 	max_redirects = sieve_max_redirects(client->svinst);
 
 	/* Default capabilities */
@@ -31,7 +31,7 @@ static void send_capability(struct client_command_context *cmd)
 	client_send_line(client,
 		t_strconcat(
 			"\"SIEVE\" \"",
-			(sievecap == NULL ? "" : sievecap),
+			(sieve_cap == NULL ? "" : sieve_cap),
 			"\"", NULL));
 
 	/* Maximum number of redirects (if limited) */
@@ -42,9 +42,9 @@ static void send_capability(struct client_command_context *cmd)
 	}
 
 	/* Notify methods */
-	if (notifycap != NULL) {
+	if (notify_cap != NULL) {
 		client_send_line(client,
-			t_strconcat("\"NOTIFY\" \"", notifycap, "\"",
+			t_strconcat("\"NOTIFY\" \"", notify_cap, "\"",
 				    NULL));
 	}
 
