@@ -127,7 +127,7 @@ tag_mime_get_data(struct sieve_command *cmd, struct sieve_ast_argument *tag)
 
 	if (tag->argument->data == NULL) {
 		data = p_new(sieve_command_pool(cmd), struct tag_mime_data, 1);
-		tag->argument->data = (void *)data;
+		tag->argument->data = data;
 	} else {
 		data = (struct tag_mime_data *)tag->argument->data;
 	}
@@ -681,7 +681,7 @@ svmo_mime_read_context(const struct sieve_message_override *svmo ATTR_UNUSED,
 		return param_list->exec_status;
 	}
 
-	*ho_context = (void *) ctx;
+	*ho_context = ctx;
 	return SIEVE_EXEC_OK;
 }
 

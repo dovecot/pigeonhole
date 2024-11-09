@@ -29,7 +29,7 @@ ext_ihave_get_ast_context(const struct sieve_extension *this_ext,
 	actx = p_new(pool, struct ext_ihave_ast_context, 1);
 	p_array_init(&actx->missing_extensions, pool, 64);
 
-	sieve_ast_extension_set_context(ast, this_ext, (void *) actx);
+	sieve_ast_extension_set_context(ast, this_ext, actx);
 	return actx;
 }
 

@@ -692,7 +692,7 @@ sieve_opr_stringlist_emit_start(struct sieve_binary_block *sblock,
 
 	/* Give the interpreter an easy way to skip over this string list */
 	*end_offset = sieve_binary_emit_offset(sblock, 0);
-	*context = (void *)end_offset;
+	*context = end_offset;
 
 	/* Emit the length of the list */
 	(void)sieve_binary_emit_unsigned(sblock, listlen);

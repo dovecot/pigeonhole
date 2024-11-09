@@ -162,7 +162,7 @@ mcht_regex_validate_context(struct sieve_validator *valdtr,
 	keyctx.cflags = cflags;
 
 	kitem = key_arg;
-	if (sieve_ast_stringlist_map(&kitem, (void *) &keyctx,
+	if (sieve_ast_stringlist_map(&kitem, &keyctx,
 				     mcht_regex_validate_key_argument) <= 0)
 		return FALSE;
 
@@ -204,7 +204,7 @@ static void mcht_regex_match_init(struct sieve_match_context *mctx)
 	}
 
 	/* Assign context */
-	mctx->data = (void *) ctx;
+	mctx->data = ctx;
 }
 
 static int

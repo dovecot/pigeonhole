@@ -408,7 +408,7 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 	}
 
 	if (result) {
-		*context = (void *) ext_data;
+		*context = ext_data;
 	} else {
 		e_warning(svinst->event, "%s: "
 			  "extension not configured, "
@@ -503,7 +503,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 	if (mctx == NULL) {
 		/* Create new context */
 		mctx = p_new(pool, struct ext_spamvirustest_message_context, 1);
-		sieve_message_context_extension_set(msgctx, ext, (void *)mctx);
+		sieve_message_context_extension_set(msgctx, ext, mctx);
 	} else if (mctx->reload == ext_data->reload) {
 		/* Use cached result */
 		*value_r = ext_spamvirustest_get_score(ext, mctx->score_ratio,

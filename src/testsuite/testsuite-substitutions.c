@@ -117,7 +117,7 @@ testsuite_substitution_argument_create(
 
 	arg->argument = sieve_argument_create
 		(ast, &testsuite_substitution_argument, testsuite_ext, 0);
-	arg->argument->data = (void *)tsctx;
+	arg->argument->data = tsctx;
 	return arg;
 }
 

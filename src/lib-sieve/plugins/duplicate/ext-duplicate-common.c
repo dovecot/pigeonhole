@@ -49,7 +49,7 @@ bool ext_duplicate_load(const struct sieve_extension *ext, void **context)
 	config->default_period = default_period;
 	config->max_period = max_period;
 
-	*context = (void *) config;
+	*context = config;
 	return TRUE;
 }
 
@@ -209,7 +209,7 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 		msg_pool = sieve_message_context_pool(renv->msgctx);
 		rctx = p_new(msg_pool, struct ext_duplicate_context, 1);
 		sieve_message_context_extension_set(renv->msgctx, this_ext,
-						    (void *)rctx);
+						    rctx);
 	} else if (array_is_created(&rctx->hashes)) {
 		struct ext_duplicate_hash *record;
 
@@ -270,7 +270,7 @@ int ext_duplicate_check(const struct sieve_runtime_env *renv, string_t *handle,
 	if (!duplicate || last) {
 		if (sieve_result_add_action(renv, NULL, NULL,
 					    &act_duplicate_mark,
-					    NULL, (void *) act, 0, FALSE) < 0)
+					    NULL, act, 0, FALSE) < 0)
 			return SIEVE_EXEC_FAILURE;
 	}
 

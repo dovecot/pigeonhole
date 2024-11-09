@@ -156,7 +156,7 @@ cmd_deleteheader_get_context
 
 	ctx_data = p_new(sieve_command_pool(cmd),
 			 struct cmd_deleteheader_context_data, 1);
-	cmd->data = (void *)ctx_data;
+	cmd->data = ctx_data;
 
 	return ctx_data;
 }

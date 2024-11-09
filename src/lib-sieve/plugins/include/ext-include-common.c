@@ -110,7 +110,7 @@ bool ext_include_load(const struct sieve_extension *ext, void **context)
 	/* Extension dependencies */
 	ctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
 
-	*context = (void *)ctx;
+	*context = ctx;
 	return TRUE;
 }
 
@@ -228,7 +228,7 @@ ext_include_create_ast_context(const struct sieve_extension *this_ext,
 	}
 
 	sieve_ast_extension_register(ast, this_ext, &include_ast_extension,
-				     (void *)actx);
+				     actx);
 	return actx;
 }
 
@@ -327,7 +327,7 @@ void ext_include_register_generator_context(
 			sieve_script_name(cgenv->script), cgenv->script);
 
 		sieve_generator_extension_set_context(
-			cgenv->gentr, this_ext, (void *)ctx);
+			cgenv->gentr, this_ext, ctx);
 	}
 
 	/* Initialize ast context if necessary */
@@ -445,7 +445,7 @@ void ext_include_interpreter_context_init(
 
 		sieve_interpreter_extension_register(
 			interp, this_ext, &include_interpreter_extension,
-			(void *)ctx);
+			ctx);
 	}
 }
 

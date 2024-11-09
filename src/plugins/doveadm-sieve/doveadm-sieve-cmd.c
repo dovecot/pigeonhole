@@ -112,7 +112,7 @@ doveadm_sieve_cmd_run(struct doveadm_mail_cmd_context *_ctx,
 	svenv.base_dir = user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
-	ctx->svinst = sieve_init(&svenv, &sieve_callbacks, (void *)ctx,
+	ctx->svinst = sieve_init(&svenv, &sieve_callbacks, ctx,
 				 user->set->mail_debug);
 	if (ctx->svinst == NULL)
 		return -1;

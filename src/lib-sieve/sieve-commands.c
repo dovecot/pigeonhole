@@ -164,7 +164,7 @@ sieve_arg_catenated_string_create(struct sieve_ast_argument *orig_arg)
 
 	catstr = p_new(pool, struct sieve_arg_catenated_string, 1);
 	catstr->str_parts = arglist;
-	(orig_arg)->argument->data = (void *)catstr;
+	(orig_arg)->argument->data = catstr;
 
 	return catstr;
 }
@@ -407,6 +407,6 @@ _verify_header_name_item(void *context, struct sieve_ast_argument *header)
 bool sieve_command_verify_headers_argument(struct sieve_validator *valdtr,
 					   struct sieve_ast_argument *headers)
 {
-	return (sieve_ast_stringlist_map(&headers, (void *)valdtr,
+	return (sieve_ast_stringlist_map(&headers, valdtr,
 					 _verify_header_name_item) >= 0);
 }

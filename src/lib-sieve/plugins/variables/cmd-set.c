@@ -103,7 +103,7 @@ cmd_set_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 	/* Create command context */
 	sctx = p_new(pool, struct cmd_set_context, 1);
 	p_array_init(&sctx->modifiers, pool, 4);
-	cmd->data = (void *) sctx;
+	cmd->data = sctx;
 
 	/* Validate modifiers */
 	if (!sieve_variables_modifiers_validate(valdtr, cmd, &sctx->modifiers))

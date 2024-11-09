@@ -367,7 +367,7 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 	input = i_stream_create_header_filter(
 		input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR,
 		hide_headers, N_ELEMENTS(hide_headers),
-		*null_header_filter_callback, (void *)NULL);
+		*null_header_filter_callback, NULL);
 
 	T_BEGIN {
 		string_t *hdr = t_str_new(256);

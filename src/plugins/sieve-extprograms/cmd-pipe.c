@@ -275,7 +275,7 @@ cmd_pipe_operation_execute(const struct sieve_runtime_env *renv,
 	act->try = try;
 
 	if (sieve_result_add_action(renv, this_ext, "pipe", &act_pipe, slist,
-				    (void *)act, 0, TRUE) < 0)
+				    act, 0, TRUE) < 0)
 		return SIEVE_EXEC_FAILURE;
 	return SIEVE_EXEC_OK;
 }
@@ -350,7 +350,7 @@ act_pipe_start(const struct sieve_action_exec_env *aenv, void **tr_context)
 
 	/* Create transaction context */
 	trans = p_new(pool, struct act_pipe_transaction, 1);
-	*tr_context = (void *)trans;
+	*tr_context = trans;
 
 	return SIEVE_EXEC_OK;
 }

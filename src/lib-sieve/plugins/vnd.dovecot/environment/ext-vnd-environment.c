@@ -67,7 +67,7 @@ ext_vnd_environment_load(const struct sieve_extension *ext, void **context)
 	ectx = i_new(struct ext_vnd_environment_context, 1);
 	ectx->env_ext = sieve_ext_environment_require_extension(ext->svinst);
 	ectx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
-	*context = (void *)ectx;
+	*context = ectx;
 	return TRUE;
 }
 

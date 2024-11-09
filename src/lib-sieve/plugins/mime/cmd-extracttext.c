@@ -159,7 +159,7 @@ cmd_extracttext_validate(struct sieve_validator *valdtr,
 	/* Create command context */
 	sctx = p_new(pool, struct cmd_extracttext_context, 1);
 	p_array_init(&sctx->modifiers, pool, 4);
-	cmd->data = (void *) sctx;
+	cmd->data = sctx;
 
 	/* Validate modifiers */
 	if (!sieve_variables_modifiers_validate(valdtr, cmd, &sctx->modifiers))

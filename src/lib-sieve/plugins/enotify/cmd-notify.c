@@ -504,7 +504,7 @@ cmd_notify_operation_execute(const struct sieve_runtime_env *renv,
 
 		if (sieve_result_add_action(renv, this_ext, "notify",
 					    &act_notify, slist,
-					    (void *)act, 0, FALSE) < 0)
+					    act, 0, FALSE) < 0)
 			return SIEVE_EXEC_FAILURE;
 
 		return SIEVE_EXEC_OK;

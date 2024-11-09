@@ -126,7 +126,7 @@ mail_raw_create_stream(struct mail_user *ruser, int fd, time_t *mtime_r,
 
 	input_list[0] = input2; input_list[1] = NULL;
 	input = i_stream_create_seekable(input_list, MAIL_MAX_MEMORY_BUFFER,
-					 seekable_fd_callback, (void *)ruser);
+					 seekable_fd_callback, ruser);
 	i_stream_unref(&input2);
 	return input;
 }

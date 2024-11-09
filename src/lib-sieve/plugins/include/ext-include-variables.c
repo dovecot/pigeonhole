@@ -230,7 +230,7 @@ vnspc_global_variables_validate(struct sieve_validator *valdtr,
 		return FALSE;
 	}
 
-	*var_data = (void *)var;
+	*var_data = var;
 	return TRUE;
 }
 

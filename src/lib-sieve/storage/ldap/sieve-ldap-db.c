@@ -112,7 +112,7 @@ static int ldap_get_errno(struct ldap_connection *conn)
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	int ret, err;
 
-	ret = ldap_get_option(conn->ld, LDAP_OPT_ERROR_NUMBER, (void *) &err);
+	ret = ldap_get_option(conn->ld, LDAP_OPT_ERROR_NUMBER, &err);
 	if (ret != LDAP_SUCCESS) {
 		e_error(storage->event, "db: "
 			"Can't get error number: %s",
@@ -130,7 +130,7 @@ const char *ldap_get_error(struct ldap_connection *conn)
 
 	ret = ldap_err2string(ldap_get_errno(conn));
 
-	ldap_get_option(conn->ld, LDAP_OPT_ERROR_STRING, (void *)&str);
+	ldap_get_option(conn->ld, LDAP_OPT_ERROR_STRING, &str);
 	if (str != NULL) {
 		ret = t_strconcat(ret, ", ", str, NULL);
 		ldap_memfree(str);
@@ -655,7 +655,7 @@ static int db_ldap_get_fd(struct ldap_connection *conn)
 	int ret;
 
 	/* Get the connection's fd */
-	ret = ldap_get_option(conn->ld, LDAP_OPT_DESC, (void *)&conn->fd);
+	ret = ldap_get_option(conn->ld, LDAP_OPT_DESC, &conn->fd);
 	if (ret != LDAP_SUCCESS) {
 		e_error(storage->event, "db: Can't get connection fd: %s",
 			ldap_err2string(ret));

@@ -263,7 +263,7 @@ bool testsuite_object_argument_activate(struct sieve_validator *valdtr,
 
 	arg->argument = sieve_argument_create(
 		arg->ast, &testsuite_object_argument, testsuite_ext, 0);
-	arg->argument->data = (void *)ctx;
+	arg->argument->data = ctx;
 	return TRUE;
 }
 

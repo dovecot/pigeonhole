@@ -597,8 +597,7 @@ imap_filter_sieve_smtp_start(const struct sieve_script_env *senv,
 
 	i_zero(&submit_input);
 
-	return (void *)smtp_submit_init_simple(&submit_input, smtp_set,
-					       mail_from);
+	return smtp_submit_init_simple(&submit_input, smtp_set, mail_from);
 }
 
 static void

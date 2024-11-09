@@ -52,7 +52,7 @@ ext_date_runtime_init(const struct sieve_extension *ext,
 	dctx->current_date = current_date;
 	dctx->zone_offset = zone_offset;
 
-	sieve_message_context_extension_set(renv->msgctx, ext, (void *)dctx);
+	sieve_message_context_extension_set(renv->msgctx, ext, dctx);
 	return SIEVE_EXEC_OK;
 }
 

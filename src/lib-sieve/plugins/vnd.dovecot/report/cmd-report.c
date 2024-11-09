@@ -381,7 +381,7 @@ cmd_report_operation_execute(const struct sieve_runtime_env *renv,
 	act->to_address = smtp_address_clone(pool, parsed_address);
 
 	if (sieve_result_add_action(renv, this_ext, "report", &act_report, NULL,
-				    (void *)act, 0, TRUE) < 0)
+				    act, 0, TRUE) < 0)
 		return SIEVE_EXEC_FAILURE;
 	return SIEVE_EXEC_OK;
 }

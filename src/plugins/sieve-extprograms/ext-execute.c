@@ -53,7 +53,7 @@ static bool ext_execute_load(const struct sieve_extension *ext, void **context)
 		*context = NULL;
 	}
 
-	*context = (void *)sieve_extprograms_config_init(ext);
+	*context = sieve_extprograms_config_init(ext);
 	return TRUE;
 }
 
