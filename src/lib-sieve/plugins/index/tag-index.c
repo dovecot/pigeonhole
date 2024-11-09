@@ -156,7 +156,7 @@ tag_last_validate(struct sieve_validator *valdtr ATTR_UNUSED,
 	/* Set :last flag */
 	if (index_arg->argument->data == NULL) {
 		data = p_new(sieve_command_pool(cmd), struct tag_index_data, 1);
-		index_arg->argument->data = (void*)data;
+		index_arg->argument->data = (void *)data;
 	} else {
 		data = (struct tag_index_data *)index_arg->argument->data;
 	}
@@ -252,7 +252,7 @@ svmo_index_read_context(const struct sieve_message_override *svmo ATTR_UNUSED,
 	ctx->fieldno = fieldno;
 	ctx->last = (last == 0 ? FALSE : TRUE);
 
-	*ho_context = (void *) ctx;
+	*ho_context = (void *)ctx;
 	return SIEVE_EXEC_OK;
 }
 
