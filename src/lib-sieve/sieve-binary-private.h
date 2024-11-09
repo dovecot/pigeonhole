@@ -136,7 +136,7 @@ sieve_binary_create(struct sieve_instance *svinst, struct sieve_script *script);
 static inline struct sieve_binary_block *
 sieve_binary_block_index(struct sieve_binary *sbin, unsigned int id)
 {
-	struct sieve_binary_block * const *sblock;
+	struct sieve_binary_block *const *sblock;
 
 	if (id >= array_count(&sbin->blocks))
 		return NULL;
@@ -189,7 +189,7 @@ sieve_binary_extension_get_reg(struct sieve_binary *sbin,
 
 	if (ext->id >= 0 &&
 	    ext->id < (int)array_count(&sbin->extension_index)) {
-		struct sieve_binary_extension_reg * const *ereg =
+		struct sieve_binary_extension_reg *const *ereg =
 			array_idx(&sbin->extension_index,
 				  (unsigned int)ext->id);
 
