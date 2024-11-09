@@ -205,7 +205,7 @@ struct sieve_envelope_part {
 
 	const struct smtp_address *const *(*get_addresses)
 		(const struct sieve_runtime_env *renv);
-	const char * const *(*get_values)
+	const char *const *(*get_values)
 		(const struct sieve_runtime_env *renv);
 };
 
@@ -378,7 +378,7 @@ struct sieve_envelope_address_list {
 	struct sieve_stringlist *env_parts;
 
 	const struct smtp_address *const *cur_addresses;
-	const char * const *cur_values;
+	const char *const *cur_values;
 
 	int value_index;
 };
