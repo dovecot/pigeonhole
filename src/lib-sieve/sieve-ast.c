@@ -157,7 +157,7 @@ void sieve_ast_extension_link(struct sieve_ast *ast,
 	array_append(&ast->linked_extensions, &ext, 1);
 }
 
-const struct sieve_extension * const *
+const struct sieve_extension *const *
 sieve_ast_extensions_get(struct sieve_ast *ast, unsigned int *count_r)
 {
 	return array_get(&ast->linked_extensions, count_r);
