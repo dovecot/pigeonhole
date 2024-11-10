@@ -79,6 +79,8 @@ void managesieve_capabilities_dump(void)
 
 	svinst = sieve_init(&svenv, &sieve_callbacks,
 			    (void *) global_plugin_settings, FALSE);
+	if (svinst == NULL)
+		i_fatal("Failed to initialize Sieve");
 
 	/* Dump capabilities */
 
