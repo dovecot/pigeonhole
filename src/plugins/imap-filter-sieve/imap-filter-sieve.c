@@ -98,6 +98,8 @@ imap_filter_sieve_get_svinst(struct imap_filter_sieve_context *sctx)
 
 	ifsuser->svinst = sieve_init(&svenv, &imap_filter_sieve_callbacks,
 				     ifsuser, debug);
+	if (ifsuser->svinst == NULL)
+		return NULL;
 
 	ifsuser->master_ehandler =
 		sieve_master_ehandler_create(ifsuser->svinst, 0);
@@ -115,6 +117,8 @@ imap_filter_sieve_init_trace_log(struct imap_filter_sieve_context *sctx,
 	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
 	struct client_command_context *cmd = sctx->filter_context->cmd;
 	struct mail_user *user = sctx->user;
+
+	i_assert(svinst != NULL);
 
 	if (sctx->trace_log_initialized) {
 		*trace_config_r = sctx->trace_config;
@@ -180,6 +184,12 @@ imap_filter_sieve_get_personal_storage(struct imap_filter_sieve_context *sctx,
 	// FIXME: limit interval between retries
 
 	svinst = imap_filter_sieve_get_svinst(sctx);
+	if (svinst == NULL) {
+		*error_r = "Sieve processing is not available";
+		*error_code_r = MAIL_ERROR_UNAVAILABLE;
+		return -1;
+	}
+
 	ifsuser->storage = sieve_storage_create_main(svinst, user,
 						     storage_flags, &error);
 	if (ifsuser->storage != NULL) {
@@ -228,6 +238,11 @@ imap_filter_sieve_get_global_storage(struct imap_filter_sieve_context *sctx,
 	}
 
 	svinst = imap_filter_sieve_get_svinst(sctx);
+	if (svinst == NULL) {
+		*error_r = "Sieve processing is not available";
+		*error_code_r = MAIL_ERROR_UNAVAILABLE;
+		return -1;
+	}
 
 	location = mail_user_plugin_getenv(user, "sieve_global");
 	if (location == NULL) {
@@ -315,6 +330,8 @@ imap_filter_sieve_create_error_handler(struct imap_filter_sieve_context *sctx)
 {
 	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
 
+	i_assert(svinst != NULL);
+
 	/* Prepare error handler */
 	if (sctx->errors == NULL)
 		sctx->errors = str_new(default_pool, 1024);
@@ -344,6 +361,8 @@ imap_sieve_filter_open_script(struct imap_filter_sieve_context *sctx,
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	const char *compile_name = "compile";
+
+	i_assert(svinst != NULL);
 
 	if (recompile) {
 		/* Warn */
@@ -474,6 +493,8 @@ void imap_filter_sieve_open_input(struct imap_filter_sieve_context *sctx,
 	struct sieve_script *script;
 
 	svinst = imap_filter_sieve_get_svinst(sctx);
+	i_assert(svinst != NULL);
+
 	script = sieve_data_script_create_from_input(svinst, "script", input);
 
 	sctx->user_script = script;
@@ -955,6 +976,8 @@ int imap_sieve_filter_run_init(struct imap_filter_sieve_context *sctx)
 	struct mail_user *user = sctx->user;
 	const char *error;
 
+	if (svinst == NULL)
+		return -1;
 	if (sieve_script_env_init(scriptenv, user, &error) < 0) {
 		e_error(sieve_get_event(svinst),
 			"Failed to initialize script execution: %s",
@@ -990,6 +1013,8 @@ imap_sieve_filter_get_msgdata(struct imap_filter_sieve_context *sctx,
 	const struct smtp_address *mail_from, *rcpt_to;
 	struct smtp_address *user_addr;
 	int ret;
+
+	i_assert(svinst != NULL);
 
 	mail_from = NULL;
 	if ((ret = mail_get_special(mail, MAIL_FETCH_FROM_ENVELOPE,
