@@ -90,6 +90,8 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 
 	isieve->svinst = sieve_init(&svenv, &mail_sieve_callbacks, isieve,
 				    debug);
+	if (isieve->svinst == NULL)
+		return isieve;
 
 	isieve->ext_imapsieve = sieve_extension_replace(
 		isieve->svinst, &imapsieve_extension, TRUE);
@@ -136,6 +138,11 @@ imap_sieve_get_storage(struct imap_sieve *isieve,
 	}
 
 	// FIXME: limit interval between retries
+
+	if (isieve->svinst == NULL) {
+		*storage_r = NULL;
+		return -1;
+	}
 
 	isieve->storage = sieve_storage_create_main(isieve->svinst, user,
 						    storage_flags, &error);
@@ -468,6 +475,10 @@ int imap_sieve_run_init(struct imap_sieve *isieve,
 	pool_t pool;
 	unsigned int max_len, count;
 	int ret;
+
+	*isrun_r = NULL;
+	if (isieve->svinst == NULL)
+		return -1;
 
 	/* Determine how many scripts we may run for this event */
 	max_len = 0;
