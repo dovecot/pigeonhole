@@ -78,6 +78,7 @@ mail_sieve_user_init(struct mail_user *user, struct sieve_storage **svstorage_r)
 		SIEVE_STORAGE_FLAG_READWRITE |
 		SIEVE_STORAGE_FLAG_SYNCHRONIZING;
 	struct sieve_environment svenv;
+	enum sieve_error error_code;
 
 	*svstorage_r = NULL;
 
@@ -99,10 +100,22 @@ mail_sieve_user_init(struct mail_user *user, struct sieve_storage **svstorage_r)
 
 	suser->sieve_storage =
 		sieve_storage_create_personal(suser->svinst, user,
-					      storage_flags, NULL);
+					      storage_flags, &error_code);
+	if (suser->sieve_storage == NULL) {
+		switch (error_code) {
+		/* Sieve disabled for user */
+		case SIEVE_ERROR_NOT_POSSIBLE:
+		/* Sieve script not found */
+		case SIEVE_ERROR_NOT_FOUND:
+			return 0;
+		default:
+			break;
+		}
+		return -1;
+	}
 
 	*svstorage_r = suser->sieve_storage;
-	return (suser->sieve_storage != NULL ? 1 : 0);
+	return 1;
 }
 
 static int sieve_attribute_unset_script(struct mail_storage *storage,
