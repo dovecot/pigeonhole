@@ -278,7 +278,7 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 	tool->svinst = sieve_init(&svenv, &sieve_tool_callbacks, tool,
 				  tool->debug);
 	if (tool->svinst == NULL)
-		i_fatal("failed to initialize sieve implementation");
+		i_fatal("Failed to initialize Sieve");
 
 	/* Load Sieve plugins */
 	if (array_count(&tool->sieve_plugins) > 0)
