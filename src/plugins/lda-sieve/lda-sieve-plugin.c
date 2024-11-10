@@ -1067,6 +1067,8 @@ lda_sieve_deliver_mail(struct mail_deliver_context *mdctx,
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_DURING;
 
 	srctx.svinst = sieve_init(&svenv, &lda_sieve_callbacks, mdctx, debug);
+	if (srctx.svinst == NULL)
+		return -1;
 
 	/* Initialize master error handler */
 
