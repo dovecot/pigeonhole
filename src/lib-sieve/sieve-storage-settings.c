@@ -35,8 +35,8 @@ static const struct setting_define sieve_storage_setting_defines[] = {
 	DEF(STR, script_name),
 	DEF(STR, script_bin_path),
 
-	DEF(SIZE, quota_max_storage),
-	DEF(UINT, quota_max_scripts),
+	DEF(SIZE, quota_storage_size),
+	DEF(UINT, quota_script_count),
 
 	{ .type = SET_FILTER_ARRAY, .key = "sieve_script",
 	   .offset = offsetof(struct sieve_storage_settings, storages),
@@ -57,8 +57,8 @@ static const struct sieve_storage_settings sieve_storage_default_settings = {
 	.script_name = "",
 	.script_bin_path = "",
 
-	.quota_max_storage = 0,
-	.quota_max_scripts = 0,
+	.quota_storage_size = 0,
+	.quota_script_count = 0,
 
 	.storages = ARRAY_INIT,
 };
