@@ -36,7 +36,7 @@ struct ext_spamvirustest_context {
 	const struct ext_spamvirustest_settings *set;
 
 	struct ext_spamvirustest_header_spec status_header;
-	struct ext_spamvirustest_header_spec max_header;
+	struct ext_spamvirustest_header_spec score_max_header;
 };
 
 /*
@@ -227,14 +227,14 @@ int ext_spamvirustest_load(const struct sieve_extension *ext, void **context_r)
 
 	if (ret == 0 &&
 	    set->parsed.status_type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT &&
-	    *set->max_header != '\0' &&
+	    *set->score_max_header != '\0' &&
 	    !ext_spamvirustest_header_spec_parse(extctx->pool,
-						 set->max_header,
-						 &extctx->max_header,
+						 set->score_max_header,
+						 &extctx->score_max_header,
 						 &error)) {
 		e_error(svinst->event, "%s: "
-			"Invalid max header specification '%s': %s",
-			sieve_extension_name(ext), set->max_header, error);
+			"Invalid max score header specification '%s': %s",
+			sieve_extension_name(ext), set->score_max_header, error);
 		ret = -1;
 	}
 
@@ -259,7 +259,7 @@ void ext_spamvirustest_unload(const struct sieve_extension *ext)
 		return;
 
 	ext_spamvirustest_header_spec_free(&extctx->status_header);
-	ext_spamvirustest_header_spec_free(&extctx->max_header);
+	ext_spamvirustest_header_spec_free(&extctx->score_max_header);
 	settings_free(extctx->set);
 	pool_unref(&extctx->pool);
 }
@@ -351,7 +351,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 
 	mail = sieve_message_get_mail(renv->msgctx);
 	status_header = &extctx->status_header;
-	max_header = &extctx->max_header;
+	max_header = &extctx->score_max_header;
 
 	if (extctx->set->parsed.status_type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT) {
 		if (max_header->header_name != NULL) {
@@ -379,7 +379,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 					    2, match_values, 0) != 0 ) {
 					sieve_runtime_trace(
 						renv, SIEVE_TRLVL_TESTS,
-						"max_header regexp for header '%s' did not match "
+						"score_max_header regexp for header '%s' did not match "
 						"on value '%s'",
 						max_header->header_name,
 						header_value);
@@ -409,7 +409,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 				goto failed;
 			}
 		} else {
-			max_value = extctx->set->parsed.max_value;
+			max_value = extctx->set->parsed.score_max_value;
 		}
 
 		if (max_value == 0) {
