@@ -172,6 +172,7 @@ int sieve_script_open(struct sieve_script *script,
 		      enum sieve_error *error_code_r)
 {
 	enum sieve_error error_code;
+	int ret;
 
 	if (error_code_r != NULL)
 		*error_code_r = SIEVE_ERROR_NONE;
@@ -181,7 +182,9 @@ int sieve_script_open(struct sieve_script *script,
 	if (script->open)
 		return 0;
 
-	if (script->v.open(script, error_code_r) < 0)
+	ret = script->v.open(script, error_code_r);
+	i_assert(ret <= 0);
+	if (ret < 0)
 		return -1;
 
 	i_assert(script->location != NULL);
