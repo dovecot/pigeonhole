@@ -105,13 +105,16 @@ client_get_storage(struct sieve_instance *svinst, struct event *event,
 int client_create(int fd_in, int fd_out, const char *session_id,
 		  struct event *event, struct mail_user *user,
 		  const struct managesieve_settings *set,
-		  struct client **client_r)
+		  struct client **client_r, const char **error_r)
 {
 	struct client *client;
 	struct sieve_environment svenv;
 	struct sieve_instance *svinst;
 	struct sieve_storage *storage;
 	pool_t pool;
+
+	*client_r = NULL;
+	*error_r = NULL;
 
 	/* Initialize Sieve */
 
@@ -124,6 +127,10 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 
 	svinst = sieve_init(&svenv, &managesieve_sieve_callbacks,
 			    (void *) user, set->mail_debug);
+	if (svinst == NULL) {
+		*error_r = "Failed to initialize Sieve interpreter";
+		return -1;
+	}
 
 	/* Get Sieve storage */
 
