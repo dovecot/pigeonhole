@@ -26,7 +26,7 @@ static const struct setting_define ext_vacation_setting_defines[] = {
 	DEF(STR, default_subject_template),
 
 	DEF(BOOL, use_original_recipient),
-	DEF(BOOL, dont_check_recipient),
+	DEF(BOOL, check_recipient),
 	DEF(BOOL, send_from_recipient),
 	DEF(BOOL, to_header_ignore_envelope),
 
@@ -40,7 +40,7 @@ static const struct ext_vacation_settings ext_vacation_default_settings = {
 	.default_subject = "",
 	.default_subject_template = "",
 	.use_original_recipient = FALSE,
-	.dont_check_recipient = FALSE,
+	.check_recipient = TRUE,
 	.send_from_recipient = FALSE,
 	.to_header_ignore_envelope = FALSE,
 };

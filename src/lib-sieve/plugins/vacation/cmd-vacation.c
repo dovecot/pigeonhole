@@ -1504,7 +1504,7 @@ act_vacation_commit(const struct sieve_action_exec_env *aenv,
 
 	/* My address not found in the headers; we got an implicit delivery */
 	if (*hdsp == NULL) {
-		if (extctx->set->dont_check_recipient) {
+		if (!extctx->set->check_recipient) {
 			/* Send reply from envelope recipient address */
 			smtp_from = (orig_recipient == NULL ?
 				     recipient : orig_recipient);

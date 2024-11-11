@@ -516,7 +516,7 @@ Frop!
 test_set "envelope.from" "timo@example.com";
 test_set "envelope.to" "stephan@example.com";
 
-test_config_set "sieve_vacation_dont_check_recipient" "yes";
+test_config_set "sieve_vacation_check_recipient" "no";
 test_config_reload :extension "vacation";
 
 test "Reply for any recipient" {
