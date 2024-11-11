@@ -14,15 +14,15 @@ struct ext_spamvirustest_settings {
 
 	const char *status_header;
 	const char *status_type;
-	const char *max_header;
-	const char *max_value;
+	const char *score_max_header;
+	const char *score_max_value;
 
 	ARRAY_TYPE(const_string) text_value;
 
 	struct {
 		enum ext_spamvirustest_status_type status_type;
 
-		float max_value;
+		float score_max_value;
 
 		const char *text_values[11];
 	} parsed;

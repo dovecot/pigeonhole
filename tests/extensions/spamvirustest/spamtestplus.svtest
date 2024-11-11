@@ -25,7 +25,7 @@ Test!
 ;
 
 test_config_set "sieve_spamtest_status_header" "X-SpamCheck";
-test_config_set "sieve_spamtest_max_value" "1";
+test_config_set "sieve_spamtest_score_max_value" "1";
 test_config_set "sieve_spamtest_status_type" "score";
 test_config_reload :extension "spamtestplus";
 

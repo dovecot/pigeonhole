@@ -24,8 +24,8 @@ static const struct setting_define ext_spamtest_setting_defines[] = {
 	DEF(STR, status_header),
 	DEF(STR, status_type),
 
-	DEF(STR, max_header),
-	DEF(STR, max_value),
+	DEF(STR, score_max_header),
+	DEF(STR, score_max_value),
 
 	{ .type = SET_STRLIST, .key = "sieve_spamtest_text_value",
 	  .offset = offsetof(struct ext_spamvirustest_settings,
@@ -43,8 +43,8 @@ static const struct setting_define ext_virustest_setting_defines[] = {
 	DEF(STR, status_header),
 	DEF(STR, status_type),
 
-	DEF(STR, max_header),
-	DEF(STR, max_value),
+	DEF(STR, score_max_header),
+	DEF(STR, score_max_value),
 
 	{ .type = SET_STRLIST, .key = "sieve_virustest_text_value",
 	  .offset = offsetof(struct ext_spamvirustest_settings,
@@ -57,8 +57,8 @@ static const struct ext_spamvirustest_settings ext_spamvirustest_default_setting
 	.status_header = "",
 	.status_type = "",
 
-	.max_header = "",
-	.max_value = "",
+	.score_max_header = "",
+	.score_max_value = "",
 
 	.text_value = ARRAY_INIT,
 };
@@ -176,25 +176,29 @@ ext_spamvirustest_settings_check(void *_set, bool virustest,
 	}
 
 	if (set->parsed.status_type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT) {
-		if (*set->max_header != '\0' && *set->max_value != '\0') {
+		if (*set->score_max_header != '\0' &&
+		    *set->score_max_value != '\0') {
 			*error_r = t_strdup_printf(
-				"sieve_%s_max_header and sieve_%s_max_value "
+				"sieve_%s_score_max_header and sieve_%s_score_max_value "
 				"cannot both be configured",
 				ext_name, ext_name);
 			return FALSE;
 		}
-		if (*set->max_header == '\0' && *set->max_value == '\0') {
+		if (*set->score_max_header == '\0' &&
+		    *set->score_max_value == '\0') {
 			*error_r = t_strdup_printf(
-				"None of sieve_%s_max_header or sieve_%s_max_value "
-				"is configured", ext_name, ext_name);
+				"None of sieve_%s_score_max_header or "
+				"sieve_%s_score_max_value is configured",
+				ext_name, ext_name);
 			return FALSE;
 		}
-		if (*set->max_value != '\0' &&
+		if (*set->score_max_value != '\0' &&
 		    !ext_spamvirustest_parse_decimal_value(
-			set->max_value, &set->parsed.max_value, &error)) {
+			set->score_max_value, &set->parsed.score_max_value,
+			&error)) {
 			*error_r = t_strdup_printf(
-				"Invalid max value specification "
-				"'%s': %s", set->max_value, error);
+				"Invalid max score value specification "
+				"'%s': %s", set->score_max_value, error);
 			return FALSE;
 		}
 	} else {
@@ -221,7 +225,7 @@ ext_spamvirustest_settings_check(void *_set, bool virustest,
 			}
 			set->parsed.text_values[tv_index] = tvalues[i + 1]; 
 		}
-		set->parsed.max_value = 1;
+		set->parsed.score_max_value = 1;
 	}
 
 	return TRUE;
