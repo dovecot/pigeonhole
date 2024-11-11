@@ -10,7 +10,6 @@
 #include "str.h"
 #include "str-sanitize.h"
 #include "strescape.h"
-#include "safe-memset.h"
 #include "buffer.h"
 #include "base64.h"
 #include "dsasl-client.h"

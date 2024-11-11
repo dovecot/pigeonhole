@@ -7,7 +7,6 @@
 #include "ioloop.h"
 #include "istream.h"
 #include "ostream.h"
-#include "safe-memset.h"
 #include "str.h"
 #include "strescape.h"
 #include "base64.h"
