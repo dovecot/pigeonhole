@@ -132,8 +132,8 @@ static bool capability_dump(void)
 
 	pid = fork();
 	if (pid == (pid_t)-1) {
-		(void)close(fd[0]);
-		(void)close(fd[1]);
+		i_close_fd(&fd[0]);
+		i_close_fd(&fd[1]);
 		i_error("managesieve-login: dump-capability fork() failed: %m");
 		return FALSE;
 	}
@@ -141,7 +141,7 @@ static bool capability_dump(void)
 		const char *argv[5];
 
 		/* Child */
-		(void)close(fd[0]);
+		i_close_fd(&fd[0]);
 
 		if (dup2(fd[1], STDOUT_FILENO) < 0) {
 			i_fatal("managesieve-login: "
@@ -160,7 +160,7 @@ static bool capability_dump(void)
 		i_fatal("managesieve-login: "
 			"dump-capability execv(%s) failed: %m", argv[0]);
 	}
-	(void)close(fd[1]);
+	i_close_fd(&fd[1]);
 
 	time_t start_time = time(NULL);
 	alarm(60);
@@ -184,7 +184,7 @@ static bool capability_dump(void)
 	}
 
 	if (status != 0) {
-		(void)close(fd[0]);
+		i_close_fd(&fd[0]);
 		if (WIFSIGNALED(status)) {
 			i_error("managesieve-login: dump-capability process "
 				"killed with signal %d", WTERMSIG(status));
@@ -204,10 +204,10 @@ static bool capability_dump(void)
 	if (ret < 0) {
 		i_error("managesieve-login: "
 			"read(dump-capability process) failed: %m");
-		(void)close(fd[0]);
+		i_close_fd(&fd[0]);
 		return FALSE;
 	}
-	(void)close(fd[0]);
+	i_close_fd(&fd[0]);
 
 	if (pos == 0 || buf[pos-1] != '\n') {
 		i_error("managesieve-login: "
