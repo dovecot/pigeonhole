@@ -174,7 +174,7 @@ tst_specialuse_exists_validate(struct sieve_validator *valdtr,
 		return FALSE;
 
 	aarg = arg2;
-	memset(&valctx, 0, sizeof(valctx));
+	i_zero(&valctx);
 	valctx.valdtr = valdtr;
 	valctx.tst = tst;
 

@@ -265,7 +265,7 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 		&tool->mail_user_dovecot, &errstr) <= 0)
 		i_fatal("%s", errstr);
 
-	memset((void *)&svenv, 0, sizeof(svenv));
+	i_zero(&svenv);
 	svenv.username = username;
 	(void)mail_user_get_home(tool->mail_user_dovecot, &svenv.home_dir);
 	svenv.hostname = my_hostdomain();

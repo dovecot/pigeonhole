@@ -1055,7 +1055,7 @@ lda_sieve_deliver_mail(struct mail_deliver_context *mdctx,
 
 	/* Initialize Sieve engine */
 
-	memset((void *)&svenv, 0, sizeof(svenv));
+	i_zero(&svenv);
 	svenv.username = mdctx->rcpt_user->username;
 	svenv.home_dir = srctx.home_dir;
 	svenv.hostname = mdctx->rcpt_user->set->hostname;
