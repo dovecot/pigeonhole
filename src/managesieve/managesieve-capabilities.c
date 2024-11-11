@@ -74,7 +74,7 @@ void managesieve_capabilities_dump(void)
 
 	/* Initialize Sieve engine */
 
-	memset((void *)&svenv, 0, sizeof(svenv));
+	i_zero(&svenv);
 	svenv.home_dir = "/tmp";
 
 	svinst = sieve_init(&svenv, &sieve_callbacks,
