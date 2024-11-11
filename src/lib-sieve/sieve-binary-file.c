@@ -604,7 +604,8 @@ sieve_binary_file_open(struct sieve_binary *sbin, const char *path,
 
 	if (fstat(fd, &st) < 0) {
 		if (errno != ENOENT)
-			e_error(sbin->event, "open: fstat() failed: %m");
+			e_error(sbin->event, "open: fstat(%s) failed: %m",
+				path);
 		ret = -1;
 	}
 
