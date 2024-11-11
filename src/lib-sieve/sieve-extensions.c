@@ -428,6 +428,9 @@ sieve_extension_register(struct sieve_instance *svinst,
 
 void sieve_extension_unregister(const struct sieve_extension *ext)
 {
+	if (ext == NULL)
+		return;
+
 	struct sieve_extension_registry *ext_reg = ext->svinst->ext_reg;
 	struct sieve_extension *const *mod_ext;
 	int ext_id = ext->id;
