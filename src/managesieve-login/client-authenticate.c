@@ -7,7 +7,6 @@
 #include "ioloop.h"
 #include "istream.h"
 #include "ostream.h"
-#include "safe-memset.h"
 #include "str.h"
 #include "str-sanitize.h"
 #include "auth-client.h"
