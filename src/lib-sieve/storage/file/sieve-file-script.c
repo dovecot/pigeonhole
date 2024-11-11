@@ -558,10 +558,8 @@ sieve_file_script_binary_save(struct sieve_script *script,
 	    sieve_storage_setup_bin_path(storage, 0700) < 0)
 		return -1;
 
-	return sieve_binary_save(
-		sbin, fscript->bin_path, update,
-		(fscript->st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO)),
-		error_code_r);
+	return sieve_binary_save(sbin, fscript->bin_path, update,
+				 (fscript->st.st_mode & 0777), error_code_r);
 }
 
 static const char *
