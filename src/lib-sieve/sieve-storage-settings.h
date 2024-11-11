@@ -16,8 +16,8 @@ struct sieve_storage_settings {
 	const char *script_name;
 	const char *script_bin_path;
 
-	uoff_t quota_max_storage;
-	unsigned int quota_max_scripts;
+	uoff_t quota_storage_size;
+	unsigned int quota_script_count;
 
 	ARRAY_TYPE(const_string) storages;
 };

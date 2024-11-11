@@ -297,8 +297,8 @@ int sieve_storage_alloc_with_settings(struct sieve_instance *svinst,
 		return -1;
 
 	storage->bin_path = p_strdup_empty(storage->pool, set->script_bin_path);
-	storage->max_storage = set->quota_max_storage;
-	storage->max_scripts = set->quota_max_scripts;
+	storage->max_storage = set->quota_storage_size;
+	storage->max_scripts = set->quota_script_count;
 
 	if (storage->max_storage > 0) {
 		e_debug(storage->event, "quota: "
