@@ -94,7 +94,8 @@ extern unsigned int managesieve_client_count;
 int client_create(int fd_in, int fd_out, const char *session_id,
 		  struct event *event, struct mail_user *user,
 		  const struct managesieve_settings *set,
-		  struct client **client_r, const char **error_r);
+		  struct client **client_r, const char **client_error_r,
+		  const char **error_r);
 void client_create_finish(struct client *client);
 void client_destroy(struct client *client, const char *reason);
 

@@ -61,50 +61,50 @@ static void client_idle_timeout(struct client *client)
 	}
 }
 
-static struct sieve_storage *
-client_get_storage(struct sieve_instance *svinst, struct event *event,
-		   struct mail_user *user, int fd_out)
+static int
+client_get_storage(struct sieve_instance *svinst, struct mail_user *user,
+		   struct sieve_storage **storage_r,
+		   const char **client_error_r, const char **error_r)
 {
 	struct sieve_storage *storage;
 	enum sieve_error error_code;
-	const char *errormsg, *byemsg;
+
+	*storage_r = NULL;
 
 	/* Open personal script storage */
-
 	if (sieve_storage_create_personal(svinst, user,
 					  SIEVE_STORAGE_FLAG_READWRITE,
 					  &storage, &error_code) < 0) {
 		switch (error_code) {
 		case SIEVE_ERROR_NOT_POSSIBLE:
-			byemsg = "BYE \"Sieve processing is disabled for this user.\"\r\n";
-			errormsg = "Failed to open Sieve storage: "
+			*client_error_r =
+				"Sieve processing is disabled for this user";
+			*error_r = "Failed to open Sieve storage: "
 				"Sieve is disabled for this user";
 			break;
 		case SIEVE_ERROR_NOT_FOUND:
-			byemsg = "BYE \"This user cannot manage personal Sieve scripts.\"\r\n";
-			errormsg = "Failed to open Sieve storage: "
-				"Personal script storage disabled or not found.";
+			*client_error_r =
+				"This user cannot manage personal Sieve scripts";
+			*error_r = "Failed to open Sieve storage: "
+				"Personal script storage disabled or not found";
 			break;
 		default:
-			byemsg = t_strflocaltime(
-				"BYE \""CRITICAL_MSG_STAMP"\"\r\n", ioloop_time);
-			errormsg = "Failed to open Sieve storage.";
+			*client_error_r = t_strflocaltime(CRITICAL_MSG_STAMP,
+							  ioloop_time);
+			*error_r = "Failed to open Sieve storage.";
 		}
-
-		if (write(fd_out, byemsg, strlen(byemsg)) < 0) {
-			if (errno != EAGAIN && errno != EPIPE)
-				e_error(event, "write(client) failed: %m");
-		}
-		i_fatal("%s", errormsg);
+		return -1;
 	}
 
-	return storage;
+	*storage_r = storage;
+	return 0;
 }
 
 int client_create(int fd_in, int fd_out, const char *session_id,
 		  struct event *event, struct mail_user *user,
 		  const struct managesieve_settings *set,
-		  struct client **client_r, const char **error_r)
+		  struct client **client_r, const char **client_error_r,
+		  const char **error_r)
 {
 	struct client *client;
 	struct sieve_environment svenv;
@@ -112,6 +112,8 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 	struct sieve_storage *storage;
 	pool_t pool;
 
+	*client_error_r = NULL;
+	*error_r = NULL;
 	*client_r = NULL;
 	*error_r = NULL;
 
@@ -132,7 +134,9 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 
 	/* Get Sieve storage */
 
-	storage = client_get_storage(svinst, event, user, fd_out);
+	if (client_get_storage(svinst, user, &storage,
+			       client_error_r, error_r) < 0)
+		return -1;
 
 	/* always use nonblocking I/O */
 	net_set_nonblock(fd_in, TRUE);
