@@ -12,6 +12,7 @@
 #include "base64.h"
 #include "process-title.h"
 #include "restrict-access.h"
+#include "time-util.h"
 #include "settings.h"
 #include "master-interface.h"
 #include "master-service-settings.h"
@@ -21,6 +22,7 @@
 #include "mail-user.h"
 #include "mail-storage-service.h"
 
+#include "managesieve-quote.h"
 #include "managesieve-common.h"
 #include "managesieve-commands.h"
 #include "managesieve-capabilities.h"
@@ -142,13 +144,16 @@ static void client_logged_in(struct client *client)
 static int
 client_create_from_input(const struct mail_storage_service_input *input,
 			 int fd_in, int fd_out, const buffer_t *input_buf,
-			 const char **error_r)
+			 const char **client_error_r, const char **error_r)
 {
 	struct mail_storage_service_input service_input;
 	struct mail_user *mail_user;
 	struct client *client;
 	struct managesieve_settings *set;
 	struct event *event;
+
+	*client_error_r = NULL;
+	*error_r = NULL;
 
 	event = event_create(NULL);
 	event_add_category(event, &event_category_managesieve);
@@ -177,7 +182,8 @@ client_create_from_input(const struct mail_storage_service_input *input,
 		verbose_proctitle = TRUE;
 
 	if (client_create(fd_in, fd_out, input->session_id,
-			  event, mail_user, set, &client, error_r) < 0) {
+			  event, mail_user, set,
+			  &client, client_error_r, error_r) < 0) {
 		settings_free(set);
 		mail_user_unref(&mail_user);
 		event_unref(&event);
@@ -196,7 +202,7 @@ client_create_from_input(const struct mail_storage_service_input *input,
 static void main_stdio_run(const char *username)
 {
 	struct mail_storage_service_input input;
-	const char *value, *error, *input_base64;
+	const char *value, *client_error, *error, *input_base64;
 	buffer_t *input_buf;
 
 	i_zero(&input);
@@ -216,7 +222,7 @@ static void main_stdio_run(const char *username)
 		     NULL : t_base64_decode_str(input_base64));
 
 	if (client_create_from_input(&input, STDIN_FILENO, STDOUT_FILENO,
-				     input_buf, &error) < 0)
+				     input_buf, &client_error, &error) < 0)
 		i_fatal("%s", error);
 }
 
@@ -224,10 +230,9 @@ static void
 login_request_finished(const struct login_server_request *request,
 		       const char *username, const char *const *extra_fields)
 {
-#define MSG_BYE_INTERNAL_ERROR "BYE \""CRITICAL_MSG"\"\r\n"
 	struct mail_storage_service_input input;
 	enum login_request_flags flags = request->auth_req.flags;
-	const char *error;
+	const char *client_error, *error;
 	buffer_t input_buf;
 
 	i_zero(&input);
@@ -245,11 +250,21 @@ login_request_finished(const struct login_server_request *request,
 	buffer_create_from_const_data(&input_buf, request->data,
 				      request->auth_req.data_size);
 	if (client_create_from_input(&input, request->fd, request->fd,
-				     &input_buf, &error) < 0) {
+				     &input_buf, &client_error, &error) < 0) {
+		string_t *byemsg;
 		int fd = request->fd;
 
-		if (write(fd, MSG_BYE_INTERNAL_ERROR,
-			  strlen(MSG_BYE_INTERNAL_ERROR)) < 0) {
+		if (client_error == NULL) {
+			client_error = t_strflocaltime(CRITICAL_MSG_STAMP,
+						       ioloop_time);
+		}
+
+		byemsg = t_str_new(256);
+		str_append(byemsg, "BYE ");
+		managesieve_quote_append_string(byemsg, client_error, FALSE);
+		str_append(byemsg, "\r\n");
+
+		if (write(fd, str_data(byemsg), str_len(byemsg)) < 0) {
 			if (errno != EAGAIN && errno != EPIPE)
 				i_error("write(client) failed: %m");
 		}
