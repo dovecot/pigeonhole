@@ -132,17 +132,6 @@ sieve_storage_get_relative_link_path(const char *active_path,
 	return t_strdup(link_path);
 }
 
-static mode_t get_dir_mode(mode_t mode)
-{
-	/* Add the execute bit if either read or write bit is set */
-
-	if ((mode & 0600) != 0) mode |= 0100;
-	if ((mode & 0060) != 0) mode |= 0010;
-	if ((mode & 0006) != 0) mode |= 0001;
-
-	return mode;
-}
-
 static int
 mkdir_verify(struct sieve_storage *storage, const char *dir,
 	     mode_t mode, gid_t gid, const char *gid_origin)
@@ -415,7 +404,8 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 			if (!S_ISDIR(fstorage->st.st_mode)) {
 				/* We're getting permissions from a file.
 				   Apply +x modes as necessary. */
-				dir_create_mode = get_dir_mode(dir_create_mode);
+				dir_create_mode = mkdir_get_executable_mode(
+					dir_create_mode);
 			}
 
 			if (S_ISDIR(fstorage->st.st_mode) &&
