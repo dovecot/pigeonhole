@@ -1139,6 +1139,26 @@ void sieve_runtime_log(const struct sieve_runtime_env *renv,
 	va_end(args);
 }
 
+#undef sieve_runtime_debug
+void sieve_runtime_debug(const struct sieve_runtime_env *renv,
+			 const char *csrc_filename, unsigned int csrc_linenum,
+			 const char *location, const char *fmt, ...)
+{
+	struct sieve_error_params params = {
+		.log_type = LOG_TYPE_DEBUG,
+		.csrc = {
+			.filename = csrc_filename,
+			.linenum = csrc_linenum,
+		},
+		.location = location,
+	};
+	va_list args;
+
+	va_start(args, fmt);
+	sieve_runtime_logv(renv, &params, fmt, args);
+	va_end(args);
+}
+
 #undef sieve_runtime_critical
 void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 			    const char *csrc_filename,

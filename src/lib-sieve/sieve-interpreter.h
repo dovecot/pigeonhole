@@ -186,6 +186,12 @@ void sieve_runtime_log(const struct sieve_runtime_env *renv,
 		       ATTR_FORMAT(5, 6);
 #define sieve_runtime_log(renv, ...) \
 	sieve_runtime_log(renv, __FILE__, __LINE__, __VA_ARGS__)
+void sieve_runtime_debug(const struct sieve_runtime_env *renv,
+			 const char *csrc_filename, unsigned int csrc_linenum,
+			 const char *location, const char *fmt, ...)
+			 ATTR_FORMAT(5, 6);
+#define sieve_runtime_debug(renv, ...) \
+	sieve_runtime_debug(renv, __FILE__, __LINE__, __VA_ARGS__)
 void sieve_runtime_critical(const struct sieve_runtime_env *renv,
 			    const char *csrc_filename,
 			    unsigned int csrc_linenum,
