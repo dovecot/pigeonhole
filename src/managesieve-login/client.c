@@ -410,7 +410,6 @@ static int managesieve_client_create(struct client *client)
 	}
 	msieve_client->parser = managesieve_parser_create(client->input,
 							  MAX_MANAGESIEVE_LINE);
-	client->io = io_add_istream(client->input, client_input, client);
 	return 0;
 }
 
@@ -449,6 +448,8 @@ static void managesieve_client_notify_auth_ready(struct client *client)
 	o_stream_uncork(client->output);
 
 	client->banner_sent = TRUE;
+	i_assert(client->io == NULL);
+	client->io = io_add_istream(client->input, client_input, client);
 }
 
 static void managesieve_client_starttls(struct client *client)
