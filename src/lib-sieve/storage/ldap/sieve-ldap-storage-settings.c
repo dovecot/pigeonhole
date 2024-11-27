@@ -44,7 +44,7 @@ static const struct setting_define sieve_ldap_setting_defines[] = {
 	DEF(ENUM, scope),
 	DEF(STR, base),
 	DEF(UINT, ldap_version),
-	DEF(STR, debug_level),
+	DEF(UINT, debug_level),
 	DEF(STR, ldaprc_path),
 
 	SETTING_DEFINE_LIST_END
@@ -70,7 +70,7 @@ const struct sieve_ldap_settings sieve_ldap_default_settings = {
 	.scope = "subtree:onelevel:base",
 	.base = "",
 	.ldap_version = 3,
-	.debug_level = "0",
+	.debug_level = 0,
 	.ldaprc_path = "",
 };
 

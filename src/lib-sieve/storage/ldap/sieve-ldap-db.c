@@ -706,9 +706,9 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 			    "deref", set->deref) < 0)
 		return -1;
 #ifdef LDAP_OPT_DEBUG_LEVEL
-	if (str_to_int(set->debug_level, &value) >= 0 && value != 0) {
+	if (set->debug_level != 0) {
 		if (db_ldap_set_opt(conn, LDAP_OPT_DEBUG_LEVEL, &value,
-				    "debug_level", set->debug_level) < 0)
+				    "debug_level", dec2str(set->debug_level)) < 0)
 			return -1;
 	}
 #endif
@@ -740,7 +740,6 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 	const struct sieve_ldap_settings *set = conn->lstorage->ldap_set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct timeval start, end;
-	int debug_level;
 	bool debug;
 #if defined(HAVE_LDAP_SASL) || defined(LDAP_HAVE_START_TLS_S)
 	int ret;
@@ -749,9 +748,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 	if (conn->conn_state != LDAP_CONN_STATE_DISCONNECTED)
 		return 0;
 
-	debug = FALSE;
-	if (str_to_int(set->debug_level, &debug_level) >= 0)
-		debug = debug_level > 0;
+	debug = set->debug_level > 0;
 
 	if (debug)
 		i_gettimeofday(&start);
