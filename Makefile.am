@@ -18,6 +18,8 @@ EXTRA_DIST = \
 	COPYING.LGPL \
 	ChangeLog \
 	update-version.sh \
+	build-aux/git-abi-version-gen \
+	build-aux/git-version-gen \
 	tests/test-address.svtest.in
 
 dist-hook:
