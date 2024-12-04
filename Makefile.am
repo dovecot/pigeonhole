@@ -237,4 +237,4 @@ test-plugins: all-am $(extprograms_test_cases)
 check: check-am test
 
 version:
-	$(AM_V_GEN)$(top_srcdir)/build-aux/git-version-gen > $@
+	$(AM_V_GEN)env VERSION=$(PACKAGE_VERSION) $(top_srcdir)/build-aux/git-version-gen > $@
