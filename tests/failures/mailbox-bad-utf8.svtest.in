@@ -1,0 +1,6 @@
+require "vnd.dovecot.testsuite";
+require "encoded-character";
+
+#UTF8# test "Mailbox parameter with bad UTF-8" {
+#UTF8#	test_message :folder "I${hex:9b}BOX" 0;
+#UTF8# }

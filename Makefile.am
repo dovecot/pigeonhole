@@ -17,7 +17,9 @@ EXTRA_DIST = \
 	examples \
 	COPYING.LGPL \
 	ChangeLog \
-	update-version.sh
+	update-version.sh \
+	tests/test-address.svtest.in \
+	tests/failures/mailbox-bad-utf8.svtest.in
 
 dist-hook:
 	rm -rf `find $(distdir)/tests -type f -name '*.svbin'`
@@ -55,6 +57,10 @@ test_unfinished =
 else
 test_unfinished =
 endif
+
+test_utf8_cases = \
+		  tests/test-address.svtest \
+		  tests/failures/mailbox-bad-utf8.svtest
 
 test_cases = \
 	tests/testsuite.svtest \
@@ -184,7 +190,17 @@ test_cases = \
 	tests/extensions/vnd.dovecot/report/execute.svtest \
 	$(test_unfinished)
 
-$(test_cases):
+
+prepare_test_cases:
+	$(AM_V_at)for case in $(test_utf8_cases); do \
+		if test @HAVE_MAIL_UTF8@ = 1; then \
+		  $(SED) -s -e 's/#UTF8#.*//' $${case}.in > $$case ; \
+		else \
+		  $(SED) -s -e 's/#UTF8#//' $${case}.in > $$case ; \
+		fi; \
+	done
+
+$(test_cases): prepare_test_cases
 	@$(TEST_BIN) $(top_srcdir)/$@
 
 failure_test_cases = \
@@ -214,7 +230,7 @@ extprograms_test_cases = \
 $(extprograms_test_cases):
 	@$(TEST_EXTPROGRAMS_BIN) 	$(top_srcdir)/$@
 
-.PHONY: test test-plugins $(test_cases) $(failure_test_cases) $(extprograms_test_cases)
+.PHONY: test test-plugins $(test_cases) $(failure_test_cases) $(extprograms_test_cases) prepare_test_case
 test: all-am $(test_cases) $(failure_test_cases)
 test-plugins: all-am $(extprograms_test_cases)
 

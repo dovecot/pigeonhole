@@ -454,17 +454,17 @@ test "Invalid addresses" {
 		test_fail ":localpart matched invalid address";
 	}
 
-	if address :localpart "resent-cc" "jürgen" {
-		test_fail ":localpart matched invalid UTF-8 address";
-	}
+#UTF8#	if address :localpart "resent-cc" "jürgen" {
+#UTF8#		test_fail ":localpart matched invalid UTF-8 address";
+#UTF8#	}
 
 	if address :domain "to" "example.org" {
 		test_fail ":domain matched invalid address";
 	}
 
-	if address :domain "resent-cc" "example.com" {
-		test_fail ":domain matched invalid UTF-8 address";
-	}
+#UTF8#	if address :domain "resent-cc" "example.com" {
+#UTF8#		test_fail ":domain matched invalid UTF-8 address";
+#UTF8#	}
 
 	if not address :is :all "resent-to" "" {
 		test_fail ":all failed to match empty address";
@@ -474,9 +474,9 @@ test "Invalid addresses" {
 		test_fail ":all failed to match invalid address";
 	}
 
-	if not address :is :all "resent-cc" "<jürgen@example.com>" {
-		test_fail ":all failed to match invalid UTF-8 address";
-	}
+#UTF8#	if not address :is :all "resent-cc" "<jürgen@example.com>" {
+#UTF8#		test_fail ":all failed to match invalid UTF-8 address";
+#UTF8#	}
 
 	if address :is :localpart "bcc" "" {
 		test_fail ":localpart matched invalid address";
