@@ -53,7 +53,7 @@ static const struct sieve_storage_settings sieve_storage_default_settings = {
 	.script_type = SIEVE_STORAGE_TYPE_PERSONAL,
 	.script_cause = ARRAY_INIT,
 
-	.script_driver = "",
+	.script_driver = "file",
 	.script_name = "",
 	.script_bin_path = "",
 
