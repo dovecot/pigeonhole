@@ -13,3 +13,6 @@
 
 /* LDAP support is built in */
 #undef SIEVE_BUILTIN_LDAP
+
+/* LDAP support is built either as a plugin or compiled in. */
+#undef STORAGE_LDAP
