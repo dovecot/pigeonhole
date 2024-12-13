@@ -32,12 +32,6 @@ static const struct setting_define sieve_ldap_setting_defines[] = {
 	DEF(BOOLLIST, auth_sasl_mechanisms),
 	DEF(STR, auth_sasl_realm),
 	DEF(STR, auth_sasl_authz_id),
-	DEF(STR, tls_ca_cert_file),
-	DEF(STR, tls_ca_cert_dir),
-	DEF(STR, tls_cert_file),
-	DEF(STR, tls_key_file),
-	DEF(STR, tls_cipher_suite),
-	DEF(STR, tls_require_cert),
 	DEF(ENUM, deref),
 	DEF(ENUM, scope),
 	DEF(STR, base),
@@ -55,12 +49,6 @@ const struct sieve_ldap_settings sieve_ldap_default_settings = {
 	.auth_sasl_mechanisms = ARRAY_INIT,
 	.auth_sasl_realm = "",
 	.auth_sasl_authz_id = "",
-	.tls_ca_cert_file = "",
-	.tls_ca_cert_dir = "",
-	.tls_cert_file = "",
-	.tls_key_file = "",
-	.tls_cipher_suite = "",
-	.tls_require_cert = "",
 	.deref = "never:searching:finding:always",
 	.scope = "subtree:onelevel:base",
 	.base = "",
@@ -136,25 +124,6 @@ static int ldap_scope_from_str(const char *str, int *scope_r)
 	return 0;
 }
 
-#ifdef OPENLDAP_TLS_OPTIONS
-static int ldap_tls_require_cert_from_str(const char *str, int *opt_x_tls_r)
-{
-	if (strcasecmp(str, "never") == 0)
-		*opt_x_tls_r = LDAP_OPT_X_TLS_NEVER;
-	else if (strcasecmp(str, "hard") == 0)
-		*opt_x_tls_r = LDAP_OPT_X_TLS_HARD;
-	else if (strcasecmp(str, "demand") == 0)
-		*opt_x_tls_r = LDAP_OPT_X_TLS_DEMAND;
-	else if (strcasecmp(str, "allow") == 0)
-		*opt_x_tls_r = LDAP_OPT_X_TLS_ALLOW;
-	else if (strcasecmp(str, "try") == 0)
-		*opt_x_tls_r = LDAP_OPT_X_TLS_TRY;
-	else
-		return -1;
-	return 0;
-}
-#endif
-
 static bool
 sieve_ldap_settings_check(void *_set, pool_t pool ATTR_UNUSED,
 			  const char **error_r)
@@ -178,18 +147,6 @@ sieve_ldap_settings_check(void *_set, pool_t pool ATTR_UNUSED,
 			"Invalid scope option '%s'", set->scope);
 		return FALSE;
 	}
-
-#ifdef OPENLDAP_TLS_OPTIONS
-	if (*set->tls_require_cert != '\0' &&
-	    ldap_tls_require_cert_from_str(
-		set->tls_require_cert,
-		&set->parsed.tls_require_cert) < 0) {
-		*error_r = t_strdup_printf("ldap: "
-			"Invalid tls_require_cert option '%s'",
-			set->tls_require_cert);
-		return FALSE;
-	}
-#endif
 
 	return TRUE;
 }

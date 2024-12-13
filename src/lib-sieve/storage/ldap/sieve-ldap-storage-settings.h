@@ -13,13 +13,6 @@ struct sieve_ldap_settings {
 	const char *auth_sasl_realm;
 	const char *auth_sasl_authz_id;
 
-	const char *tls_ca_cert_file;
-	const char *tls_ca_cert_dir;
-	const char *tls_cert_file;
-	const char *tls_key_file;
-	const char *tls_cipher_suite;
-	const char *tls_require_cert;
-
 	const char *deref;
 	const char *scope;
 	const char *base;

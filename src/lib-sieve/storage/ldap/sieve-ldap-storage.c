@@ -3,7 +3,8 @@
 
 #include "lib.h"
 #include "settings.h"
-//#include "ldap.h"
+#include "ldap-utils.h"
+#include "iostream-ssl.h"
 
 #include "sieve-common.h"
 
@@ -47,7 +48,8 @@ sieve_ldap_storage_init(struct sieve_storage *storage)
 	struct sieve_ldap_storage *lstorage =
 		container_of(storage, struct sieve_ldap_storage, storage);
 	const struct sieve_ldap_settings *ldap_set;
-	const struct sieve_ldap_storage_settings *set;
+	const struct sieve_ldap_storage_settings *set = NULL;
+	const struct ssl_settings *ssl_set;
 	const char *error;
 	int ret;
 
@@ -70,14 +72,18 @@ sieve_ldap_storage_init(struct sieve_storage *storage)
 
 	if (settings_get(storage->event,
 			 &sieve_ldap_storage_setting_parser_info, 0,
-			 &set, &error) < 0) {
+			 &set, &error) < 0 ||
+	    settings_get(storage->event, &ssl_setting_parser_info, 0,
+			 &ssl_set, &error) < 0) {
 		sieve_storage_set_critical(storage, "%s", error);
+		settings_free(set);
 		settings_free(ldap_set);
 		return -1;
 	}
 
 	lstorage->ldap_set = ldap_set;
 	lstorage->set = set;
+	lstorage->ssl_set = ssl_set;
 	lstorage->conn = sieve_ldap_db_init(lstorage);
 
 	return 0;
@@ -89,6 +95,7 @@ static void sieve_ldap_storage_destroy(struct sieve_storage *storage)
 		container_of(storage, struct sieve_ldap_storage, storage);
 
 	sieve_ldap_db_unref(&lstorage->conn);
+	settings_free(lstorage->ssl_set);
 	settings_free(lstorage->ldap_set);
 	settings_free(lstorage->set);
 }
