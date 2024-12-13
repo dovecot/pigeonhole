@@ -4,7 +4,6 @@
 struct sieve_ldap_settings {
 	pool_t pool;
 
-	const char *hosts;
 	const char *uris;
 	const char *dn;
 	const char *dnpass;

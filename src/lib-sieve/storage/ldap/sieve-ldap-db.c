@@ -260,9 +260,7 @@ static int db_ldap_connect_finish(struct ldap_connection *conn, int ret)
 
 	if (ret == LDAP_SERVER_DOWN) {
 		e_error(storage->event, "db: "
-			"Can't connect to server: %s",
-			*set->uris != '\0' ?
-			set->uris : set->hosts);
+			"Can't connect to server: %s", set->uris);
 		return -1;
 	}
 	if (ret != LDAP_SUCCESS) {
@@ -754,24 +752,10 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 		i_gettimeofday(&start);
 	i_assert(conn->pending_count == 0);
 	if (conn->ld == NULL) {
-		if (*set->uris != '\0') {
-#ifdef LDAP_HAVE_INITIALIZE
-			if (ldap_initialize(&conn->ld,
-					    set->uris) != LDAP_SUCCESS)
-				conn->ld = NULL;
-#else
+		if (ldap_initialize(&conn->ld, set->uris) != LDAP_SUCCESS) {
 			e_error(storage->event, "db: "
-				"Your LDAP library doesn't support "
-				"'uris' setting, use 'hosts' instead.");
-			return -1;
-#endif
-		} else
-			conn->ld = ldap_init(set->hosts, LDAP_PORT);
-
-		if (conn->ld == NULL) {
-			e_error(storage->event, "db: "
-				"ldap_init() failed with hosts: %s",
-				set->hosts);
+				"ldap_init() failed with uris: %s",
+				set->uris);
 			return -1;
 		}
 
