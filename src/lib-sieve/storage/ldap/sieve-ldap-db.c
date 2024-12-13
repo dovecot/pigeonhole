@@ -701,12 +701,12 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 	int value;
 
 	if (db_ldap_set_opt(conn, LDAP_OPT_DEREF, &set->parsed.deref,
-			    "deref", set->deref) < 0)
+			    "ldap_deref", set->deref) < 0)
 		return -1;
 #ifdef LDAP_OPT_DEBUG_LEVEL
 	if (set->debug_level != 0) {
 		if (db_ldap_set_opt(conn, LDAP_OPT_DEBUG_LEVEL, &value,
-				    "debug_level", dec2str(set->debug_level)) < 0)
+				    "ldap_debug_level", dec2str(set->debug_level)) < 0)
 			return -1;
 	}
 #endif
@@ -726,7 +726,7 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 
 	ldap_version = set->version;
 	if (db_ldap_set_opt(conn, LDAP_OPT_PROTOCOL_VERSION, &ldap_version,
-			"protocol_version", dec2str(ldap_version)) < 0)
+			    "ldap_version", dec2str(ldap_version)) < 0)
 		return -1;
 	if (db_ldap_set_tls_options(conn) < 0)
 		return -1;
