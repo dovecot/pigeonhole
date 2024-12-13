@@ -26,8 +26,8 @@ sieve_ldap_settings_check(void *_set, pool_t pool, const char **error_r);
 
 static const struct setting_define sieve_ldap_setting_defines[] = {
 	DEF(STR, uris),
-	DEF(STR, dn),
-	DEF(STR, dnpass),
+	DEF(STR, auth_dn),
+	DEF(STR, auth_dn_password),
 	DEF(BOOL, tls),
 	DEF(BOOL, sasl_bind),
 	DEF(STR, sasl_mech),
@@ -51,8 +51,8 @@ static const struct setting_define sieve_ldap_setting_defines[] = {
 
 const struct sieve_ldap_settings sieve_ldap_default_settings = {
 	.uris = "",
-	.dn = "",
-	.dnpass = "",
+	.auth_dn = "",
+	.auth_dn_password = "",
 	.tls = FALSE,
 	.sasl_bind = FALSE,
 	.sasl_mech = "",
