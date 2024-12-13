@@ -25,7 +25,6 @@ static bool
 sieve_ldap_settings_check(void *_set, pool_t pool, const char **error_r);
 
 static const struct setting_define sieve_ldap_setting_defines[] = {
-	DEF(STR, hosts),
 	DEF(STR, uris),
 	DEF(STR, dn),
 	DEF(STR, dnpass),
@@ -51,7 +50,6 @@ static const struct setting_define sieve_ldap_setting_defines[] = {
 };
 
 const struct sieve_ldap_settings sieve_ldap_default_settings = {
-	.hosts = "",
 	.uris = "",
 	.dn = "",
 	.dnpass = "",

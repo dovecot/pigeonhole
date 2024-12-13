@@ -60,7 +60,7 @@ sieve_ldap_storage_init(struct sieve_storage *storage)
 		sieve_storage_set_critical(storage, "%s", error);
 		return -1;
 	}
-	if (*ldap_set->uris == '\0' && *ldap_set->hosts == '\0') {
+	if (*ldap_set->uris == '\0') {
 		sieve_storage_set_critical(storage,
 			"sieve_script %s { ldap_uris / ldap_hosts } not set",
 			storage->name);
