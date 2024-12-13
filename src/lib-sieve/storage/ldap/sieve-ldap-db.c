@@ -22,6 +22,7 @@
 #include "env-util.h"
 #include "var-expand.h"
 #include "istream.h"
+#include "ldap-utils.h"
 
 #include <stddef.h>
 #include <unistd.h>
@@ -640,64 +641,12 @@ db_ldap_set_opt(struct ldap_connection *conn, int opt, const void *value,
 	return 0;
 }
 
-static int
-db_ldap_set_opt_str(struct ldap_connection *conn, int opt, const char *value,
-		    const char *optname)
-{
-	if (value != NULL)
-		return db_ldap_set_opt(conn, opt, value, optname, value);
-	return 0;
-}
-
-static int db_ldap_set_tls_options(struct ldap_connection *conn)
-{
-	const struct sieve_ldap_settings *set = conn->lstorage->ldap_set;
-
-	if (!set->starttls)
-		return 0;
-
-#ifdef OPENLDAP_TLS_OPTIONS
-	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CACERTFILE,
-				set->tls_ca_cert_file, "tls_ca_cert_file") < 0)
-		return -1;
-	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CACERTDIR,
-				set->tls_ca_cert_dir, "tls_ca_cert_dir") < 0)
-		return -1;
-	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CERTFILE,
-				set->tls_cert_file, "tls_cert_file") < 0)
-		return -1;
-	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_KEYFILE,
-				set->tls_key_file, "tls_key_file") < 0)
-		return -1;
-	if (db_ldap_set_opt_str(conn, LDAP_OPT_X_TLS_CIPHER_SUITE,
-				set->tls_cipher_suite, "tls_cipher_suite") < 0)
-		return -1;
-	if (*set->tls_require_cert != '\0') {
-		if (db_ldap_set_opt(conn, LDAP_OPT_X_TLS_REQUIRE_CERT,
-				    &set->parsed.tls_require_cert,
-				    "tls_require_cert",
-				    set->tls_require_cert) < 0)
-			return -1;
-	}
-#else
-	if (*set->tls_ca_cert_file != '\0' ||
-	    *set->tls_ca_cert_dir != '\0' ||
-	    *set->tls_cert_file != '\0' ||
-	    *set->tls_key_file != '\0' ||
-	    *set->tls_cipher_suite != '\0') {
-		e_warning(&conn->lstorage->storage, "db: "
-			  "tls_* settings ignored, "
-			  "your LDAP library doesn't seem to support them");
-	}
-#endif
-	return 0;
-}
-
 static int db_ldap_set_options(struct ldap_connection *conn)
 {
 	const struct sieve_ldap_settings *set = conn->lstorage->ldap_set;
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	unsigned int ldap_version;
+	const char *error;
 	int value;
 
 	if (db_ldap_set_opt(conn, LDAP_OPT_DEREF, &set->parsed.deref,
@@ -728,8 +677,12 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 	if (db_ldap_set_opt(conn, LDAP_OPT_PROTOCOL_VERSION, &ldap_version,
 			    "ldap_version", dec2str(ldap_version)) < 0)
 		return -1;
-	if (db_ldap_set_tls_options(conn) < 0)
+
+	if (ldap_set_tls_options(conn->ld, set->starttls, set->uris,
+				 conn->lstorage->ssl_set, &error) < 0) {
+		e_error(storage->event, "db: %s", error);
 		return -1;
+	}
 	return 0;
 }
 

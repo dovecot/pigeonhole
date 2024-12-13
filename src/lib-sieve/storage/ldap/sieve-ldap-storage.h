@@ -23,6 +23,7 @@ struct sieve_ldap_storage {
 
 	const struct sieve_ldap_settings *ldap_set;
 	const struct sieve_ldap_storage_settings *set;
+	const struct ssl_settings *ssl_set;
 	time_t set_mtime;
 
 	struct ldap_connection *conn;

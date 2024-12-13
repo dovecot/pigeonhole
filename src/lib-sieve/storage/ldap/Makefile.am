@@ -5,6 +5,7 @@ sieve_plugin_LTLIBRARIES =
 
 AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
+	$(LIBDOVECOT_LDAP_INCLUDE) \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/src/lib-sieve
 
@@ -15,7 +16,10 @@ ldap_sources = \
 	sieve-ldap-storage-settings.c
 
 libsieve_storage_ldap_la_SOURCES = $(ldap_sources)
-libsieve_storage_ldap_la_LIBADD = $(LDAP_LIBS)
+libsieve_storage_ldap_la_LIBADD = \
+	$(LIBDOVECOT) \
+	$(LIBDOVECOT_LDAP) \
+	$(DOVECOT_LDAP_LIBS)
 
 noinst_HEADERS = \
 	sieve-ldap-db.h \
@@ -26,8 +30,11 @@ if LDAP_PLUGIN
 sieve_plugin_LTLIBRARIES += lib10_sieve_storage_ldap_plugin.la
 
 lib10_sieve_storage_ldap_plugin_la_LDFLAGS = -module -avoid-version
-lib10_sieve_storage_ldap_plugin_la_LIBADD = $(LDAP_LIBS)
-lib10_sieve_storage_ldap_plugin_la_DEPENDENCIES = $(LDAP_LIBS)
+lib10_sieve_storage_ldap_plugin_la_LIBADD = \
+	$(LIBDOVECOT) \
+	$(LIBDOVECOT_LDAP) \
+	$(DOVECOT_LDAP_LIBS)
+lib10_sieve_storage_ldap_plugin_la_DEPENDENCIES = $(LIBDOVECOT_LDAP_DEPS)
 lib10_sieve_storage_ldap_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) -DPLUGIN_BUILD
 lib10_sieve_storage_ldap_plugin_la_SOURCES = $(ldap_sources)
 endif
