@@ -711,7 +711,7 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 	}
 #endif
 
-	if (set->ldap_version < 3) {
+	if (set->version < 3) {
 		if (!array_is_empty(&set->auth_sasl_mechanisms)) {
 			e_error(storage->event,
 				"db: ldap_auth_sasl_mechanisms requires ldap_version=3");
@@ -724,7 +724,7 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 		}
 	}
 
-	ldap_version = set->ldap_version;
+	ldap_version = set->version;
 	if (db_ldap_set_opt(conn, LDAP_OPT_PROTOCOL_VERSION, &ldap_version,
 			"protocol_version", dec2str(ldap_version)) < 0)
 		return -1;

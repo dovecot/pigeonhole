@@ -23,7 +23,7 @@ struct sieve_ldap_settings {
 	const char *deref;
 	const char *scope;
 	const char *base;
-	unsigned int ldap_version;
+	unsigned int version;
 
 	const char *ldaprc_path;
 	unsigned int debug_level;
