@@ -266,7 +266,7 @@ static int db_ldap_connect_finish(struct ldap_connection *conn, int ret)
 	if (ret != LDAP_SUCCESS) {
 		e_error(storage->event, "db: "
 			"binding failed (dn %s): %s",
-			*set->dn == '\0' ? "(none)" : set->dn,
+			*set->auth_dn == '\0' ? "(none)" : set->auth_dn,
 			ldap_get_error(conn));
 		return -1;
 	}
@@ -275,7 +275,7 @@ static int db_ldap_connect_finish(struct ldap_connection *conn, int ret)
 	conn->conn_state = LDAP_CONN_STATE_BOUND;
 	e_debug(storage->event, "db: "
 		"Successfully bound (dn %s)",
-		*set->dn == '\0' ? "(none)" : set->dn);
+		*set->auth_dn == '\0' ? "(none)" : set->auth_dn);
 	while (db_ldap_request_queue_next(conn))
 		;
 	return 0;
@@ -580,7 +580,7 @@ static int db_ldap_bind(struct ldap_connection *conn)
 	i_assert(conn->default_bind_msgid == -1);
 	i_assert(conn->pending_count == 0);
 
-	msgid = ldap_bind(conn->ld, set->dn, set->dnpass,
+	msgid = ldap_bind(conn->ld, set->auth_dn, set->auth_dn_password,
 			  LDAP_AUTH_SIMPLE);
 	if (msgid == -1) {
 		i_assert(ldap_get_errno(conn) != LDAP_SUCCESS);
@@ -790,8 +790,8 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 		struct db_ldap_sasl_bind_context context;
 
 		i_zero(&context);
-		context.authcid = set->dn;
-		context.passwd = set->dnpass;
+		context.authcid = set->auth_dn;
+		context.passwd = set->auth_dn_password;
 		context.realm = set->sasl_realm;
 		context.authzid = set->sasl_authz_id;
 
