@@ -16,3 +16,9 @@
 
 /* LDAP support is built either as a plugin or compiled in. */
 #undef STORAGE_LDAP
+
+/* Define to 1 if you have the <sasl.h> header file. */
+#undef HAVE_SASL_H
+
+/* Define to 1 if you have the <sasl/sasl.h> header file. */
+#undef HAVE_SASL_SASL_H
