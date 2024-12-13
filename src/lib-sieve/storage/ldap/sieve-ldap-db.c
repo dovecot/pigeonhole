@@ -712,9 +712,9 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 #endif
 
 	if (set->ldap_version < 3) {
-		if (set->sasl_bind) {
+		if (set->sasl_mech[0] != '\0') {
 			e_error(storage->event,
-				"db: sasl_bind=yes requires ldap_version=3");
+				"db: sasl_mech requires ldap_version=3");
 			return -1;
 		}
 		if (set->starttls) {
@@ -785,7 +785,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 #endif
 	}
 
-	if (set->sasl_bind) {
+	if (set->sasl_mech[0]) {
 #ifdef HAVE_LDAP_SASL
 		struct db_ldap_sasl_bind_context context;
 
@@ -805,7 +805,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 			return -1;
 #else
 		e_error(storage->event, "db: "
-			"sasl_bind=yes but no SASL support compiled in");
+			"sasl_mech is set, but no SASL support compiled in");
 		return -1;
 #endif
 		conn->conn_state = LDAP_CONN_STATE_BOUND;
