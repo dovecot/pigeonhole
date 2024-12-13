@@ -43,7 +43,6 @@ static const struct setting_define sieve_ldap_setting_defines[] = {
 	DEF(STR, base),
 	DEF(UINT, version),
 	DEF(UINT, debug_level),
-	DEF(STR, ldaprc_path),
 
 	SETTING_DEFINE_LIST_END
 };
@@ -67,7 +66,6 @@ const struct sieve_ldap_settings sieve_ldap_default_settings = {
 	.base = "",
 	.version = 3,
 	.debug_level = 0,
-	.ldaprc_path = "",
 };
 
 const struct setting_parser_info sieve_ldap_setting_parser_info = {
@@ -162,23 +160,11 @@ sieve_ldap_settings_check(void *_set, pool_t pool ATTR_UNUSED,
 			  const char **error_r)
 {
 	struct sieve_ldap_settings *set = _set;
-	const char *str;
 
 	if (set->base[0] == '\0' &&
 	    settings_get_config_binary() == SETTINGS_BINARY_OTHER) {
 		*error_r = "ldap: No search base given";
 		return FALSE;
-	}
-
-	if (*set->ldaprc_path != '\0') {
-		str = getenv("LDAPRC");
-		if (str != NULL && strcmp(str, set->ldaprc_path) != 0) {
-			*error_r = t_strdup_printf("ldap: "
-				"Multiple different ldaprc_path settings not allowed "
-				"(%s and %s)", str, set->ldaprc_path);
-			return FALSE;
-		}
-		env_put("LDAPRC", set->ldaprc_path);
 	}
 
 	if (ldap_deref_from_str(set->deref, &set->parsed.deref) < 0) {
