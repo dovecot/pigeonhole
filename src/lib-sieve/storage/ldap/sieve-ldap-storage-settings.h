@@ -9,9 +9,9 @@ struct sieve_ldap_settings {
 	const char *auth_dn_password;
 
 	bool starttls;
-	const char *sasl_mech;
-	const char *sasl_realm;
-	const char *sasl_authz_id;
+	const char *auth_sasl_mechanisms;
+	const char *auth_sasl_realm;
+	const char *auth_sasl_authz_id;
 
 	const char *tls_ca_cert_file;
 	const char *tls_ca_cert_dir;

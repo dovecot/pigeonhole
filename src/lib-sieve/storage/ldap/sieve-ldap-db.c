@@ -712,9 +712,9 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 #endif
 
 	if (set->ldap_version < 3) {
-		if (set->sasl_mech[0] != '\0') {
+		if (set->auth_sasl_mechanisms[0] != '\0') {
 			e_error(storage->event,
-				"db: sasl_mech requires ldap_version=3");
+				"db: ldap_auth_sasl_mechanisms requires ldap_version=3");
 			return -1;
 		}
 		if (set->starttls) {
@@ -785,27 +785,27 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 #endif
 	}
 
-	if (set->sasl_mech[0]) {
+	if (set->auth_sasl_mechanisms[0]) {
 #ifdef HAVE_LDAP_SASL
 		struct db_ldap_sasl_bind_context context;
 
 		i_zero(&context);
 		context.authcid = set->auth_dn;
 		context.passwd = set->auth_dn_password;
-		context.realm = set->sasl_realm;
-		context.authzid = set->sasl_authz_id;
+		context.realm = set->auth_sasl_realm;
+		context.authzid = set->auth_sasl_authz_id;
 
 		/* There doesn't seem to be a way to do SASL binding
 		   asynchronously.. */
 		ret = ldap_sasl_interactive_bind_s(conn->ld, NULL,
-						   set->sasl_mech,
+						   set->auth_sasl_mechanisms,
 						   NULL, NULL, LDAP_SASL_QUIET,
 						   sasl_interact, &context);
 		if (db_ldap_connect_finish(conn, ret) < 0)
 			return -1;
 #else
 		e_error(storage->event, "db: "
-			"sasl_mech is set, but no SASL support compiled in");
+			"ldap_auth_sasl_mechanisms is set, but no SASL support compiled in");
 		return -1;
 #endif
 		conn->conn_state = LDAP_CONN_STATE_BOUND;
