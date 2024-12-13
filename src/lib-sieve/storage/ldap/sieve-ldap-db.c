@@ -653,7 +653,7 @@ static int db_ldap_set_tls_options(struct ldap_connection *conn)
 {
 	const struct sieve_ldap_settings *set = conn->lstorage->ldap_set;
 
-	if (!set->tls)
+	if (!set->starttls)
 		return 0;
 
 #ifdef OPENLDAP_TLS_OPTIONS
@@ -717,9 +717,9 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 				"db: sasl_bind=yes requires ldap_version=3");
 			return -1;
 		}
-		if (set->tls) {
+		if (set->starttls) {
 			e_error(storage->event,
-				"db: tls=yes requires ldap_version=3");
+				"db: ldap_starttls=yes requires ldap_version=3");
 			return -1;
 		}
 	}
@@ -763,7 +763,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 			return -1;
 	}
 
-	if (set->tls) {
+	if (set->starttls) {
 #ifdef LDAP_HAVE_START_TLS_S
 		ret = ldap_start_tls_s(conn->ld, NULL, NULL);
 		if (ret != LDAP_SUCCESS) {
@@ -771,7 +771,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 			    *set->uris != '\0' &&
 			    str_begins_with(set->uris, "ldaps:")) {
 				e_error(storage->event, "db: "
-					"Don't use both tls=yes and ldaps URI");
+					"Don't use both ldap_starttls=yes and ldaps URI");
 			}
 			e_error(storage->event, "db: "
 				"ldap_start_tls_s() failed: %s",

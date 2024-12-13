@@ -8,7 +8,7 @@ struct sieve_ldap_settings {
 	const char *auth_dn;
 	const char *auth_dn_password;
 
-	bool tls;
+	bool starttls;
 	bool sasl_bind;
 	const char *sasl_mech;
 	const char *sasl_realm;
