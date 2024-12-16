@@ -1092,8 +1092,8 @@ const char *
 sieve_user_get_log_path(struct sieve_instance *svinst,
 			struct sieve_script *user_script)
 {
-	const char *log_path = (*svinst->set->user_log == '\0' ?
-				NULL : svinst->set->user_log);
+	const char *log_path = (*svinst->set->user_log_path == '\0' ?
+				NULL : svinst->set->user_log_path);
 
 	/* Determine user log file path */
 	if (log_path == NULL) {

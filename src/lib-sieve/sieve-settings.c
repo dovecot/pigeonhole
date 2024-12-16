@@ -34,7 +34,7 @@ static const struct setting_define sieve_setting_defines[] = {
 	DEF(UINT, redirect_duplicate_period),
 
 	DEF(STR, user_email),
-	DEF(STR, user_log),
+	DEF(STR, user_log_path),
 
 	DEF(STR, trace_dir),
 	DEF(ENUM, trace_level),
@@ -64,7 +64,7 @@ const struct sieve_settings sieve_default_settings = {
 	.redirect_duplicate_period = DEFAULT_REDIRECT_DUPLICATE_PERIOD,
 
 	.user_email = "",
-	.user_log = "",
+	.user_log_path = "",
 
 	.trace_dir = "",
 	.trace_level = "none:actions:commands:tests:matching",

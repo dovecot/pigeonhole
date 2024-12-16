@@ -23,7 +23,7 @@ struct sieve_settings {
 	unsigned int redirect_duplicate_period;
 
 	const char *user_email;
-	const char *user_log;
+	const char *user_log_path;
 
 	const char *trace_dir;
 	const char *trace_level;
