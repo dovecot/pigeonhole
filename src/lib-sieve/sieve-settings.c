@@ -18,6 +18,10 @@ static bool sieve_settings_check(void *_set, pool_t pool, const char **error_r);
 	"sieve_"#name, name, struct sieve_settings)
 
 static const struct setting_define sieve_setting_defines[] = {
+	{ .type = SET_FILTER_NAME, .key = "sieve_env_location_mda" },
+	{ .type = SET_FILTER_NAME, .key = "sieve_env_location_mta" },
+	{ .type = SET_FILTER_NAME, .key = "sieve_env_location_ms" },
+
 	DEF(BOOL, enabled),
 
 	DEF(SIZE, max_script_size),
@@ -53,7 +57,7 @@ const struct sieve_settings sieve_default_settings = {
 	.max_script_size = (1 << 20),
 	.max_actions = 32,
 	.max_redirects = 4,
-	.max_cpu_time = 0, /* FIXME: svinst->env_location == SIEVE_ENV_LOCATION_MS */
+	.max_cpu_time = 0,
 
 	.resource_usage_timeout = (60 * 60),
 	.redirect_envelope_from = "",
@@ -82,6 +86,7 @@ static const struct setting_keyvalue sieve_default_settings_keyvalue[] = {
 	  "body variables enotify environment mailbox date index ihave "
 	  "duplicate mime foreverypart extracttext"
 	},
+	{ "sieve_env_location_ms/sieve_max_cpu_time", "30s" },
 	{ NULL, NULL }
 };
 
