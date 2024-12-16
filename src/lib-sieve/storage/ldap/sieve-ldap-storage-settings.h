@@ -29,8 +29,8 @@ struct sieve_ldap_settings {
 struct sieve_ldap_storage_settings {
 	pool_t pool;
 
-	const char *script_attr;
-	const char *mod_attr;
+	const char *script_attribute;
+	const char *modified_attribute;
 	const char *filter;
 };
 
