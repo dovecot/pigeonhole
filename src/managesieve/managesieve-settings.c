@@ -61,7 +61,7 @@ static struct setting_define managesieve_setting_defines[] = {
 
 	DEF(SIZE, managesieve_max_line_length),
 	DEF(STR, managesieve_implementation_string),
-	DEF(STR, managesieve_client_workarounds),
+	DEF(BOOLLIST, managesieve_client_workarounds),
 	DEF(STR_NOVARS, managesieve_logout_format),
 	DEF(UINT, managesieve_max_compile_errors),
 
@@ -77,7 +77,7 @@ static struct managesieve_settings managesieve_default_settings = {
 	   liberal by default. */
 	.managesieve_max_line_length = 65536,
 	.managesieve_implementation_string = DOVECOT_NAME " " PIGEONHOLE_NAME,
-	.managesieve_client_workarounds = "",
+	.managesieve_client_workarounds = ARRAY_INIT,
 	.managesieve_logout_format = "bytes=%{input}/%{output}",
 	.managesieve_max_compile_errors = 5
 };
@@ -118,7 +118,7 @@ managesieve_settings_parse_workarounds(struct managesieve_settings *set,
 	const struct managesieve_client_workaround_list *list;
 	const char *const *str;
 
-	str = t_strsplit_spaces(set->managesieve_client_workarounds, " ,");
+	str = settings_boollist_get(&set->managesieve_client_workarounds);
 	for (; *str != NULL; str++) {
 		list = managesieve_client_workaround_list;
 		for (; list->name != NULL; list++) {
