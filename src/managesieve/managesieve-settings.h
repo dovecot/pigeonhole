@@ -17,7 +17,7 @@ struct managesieve_settings {
 	/* managesieve: */
 	uoff_t managesieve_max_line_length;
 	const char *managesieve_implementation_string;
-	const char *managesieve_client_workarounds;
+	ARRAY_TYPE(const_string) managesieve_client_workarounds;
 	const char *managesieve_logout_format;
 	unsigned int managesieve_max_compile_errors;
 
