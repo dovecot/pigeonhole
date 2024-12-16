@@ -59,18 +59,37 @@ int sieve_init(const struct sieve_environment *env,
 	struct sieve_instance *svinst;
 	const char *error;
 	struct sieve_settings *set;
-	const char *domain;
+	const char *lfilter, *domain;
 	pool_t pool;
 
 	*svinst_r = NULL;
 
 	settings_info_register(&sieve_setting_parser_info);
 
+	lfilter = NULL;
+	switch (env->location) {
+	case SIEVE_ENV_LOCATION_MDA:
+		lfilter = "sieve_env_location_mda";
+		break;
+	case SIEVE_ENV_LOCATION_MTA:
+		lfilter = "sieve_env_location_mta";
+		break;
+	case SIEVE_ENV_LOCATION_MS:
+		lfilter = "sieve_env_location_ms";
+		break;
+	default:
+		break;
+	}
+
 	event = event_create(env->event_parent);
 	event_add_category(event, &event_category_sieve);
 	event_set_forced_debug(event, debug);
 	event_set_append_log_prefix(event, "sieve: ");
 	event_add_str(event, "user", env->username);
+	if (lfilter != NULL) {
+		event_set_ptr(event, SETTINGS_EVENT_FILTER_NAME,
+			      (void*)lfilter);
+	}
 	if (settings_get(event, &sieve_setting_parser_info, 0,
 			 &set, &error) < 0) {
 		e_error(event, "%s", error);
