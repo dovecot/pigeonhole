@@ -22,7 +22,7 @@ ext_virustest_settings_check(void *_set, pool_t pool, const char **error_r);
 
 static const struct setting_define ext_spamtest_setting_defines[] = {
 	DEF(STR, status_header),
-	DEF(STR, status_type),
+	DEF(ENUM, status_type),
 
 	DEF(STR, score_max_header),
 	DEF(STR, score_max_value),
@@ -41,7 +41,7 @@ static const struct setting_define ext_spamtest_setting_defines[] = {
 
 static const struct setting_define ext_virustest_setting_defines[] = {
 	DEF(STR, status_header),
-	DEF(STR, status_type),
+	DEF(ENUM, status_type),
 
 	DEF(STR, score_max_header),
 	DEF(STR, score_max_value),
@@ -55,7 +55,7 @@ static const struct setting_define ext_virustest_setting_defines[] = {
 
 static const struct ext_spamvirustest_settings ext_spamvirustest_default_settings = {
 	.status_header = "",
-	.status_type = "",
+	.status_type = "score:strlen:text",
 
 	.score_max_header = "",
 	.score_max_value = "",
