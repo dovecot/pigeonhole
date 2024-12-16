@@ -72,16 +72,16 @@ const struct setting_parser_info sieve_ldap_setting_parser_info = {
 				     struct sieve_ldap_storage_settings)
 
 static const struct setting_define sieve_ldap_storage_setting_defines[] = {
-	DEF(STR, script_attr),
-	DEF(STR, mod_attr),
+	DEF(STR, script_attribute),
+	DEF(STR, modified_attribute),
 	DEF(STR, filter),
 
 	SETTING_DEFINE_LIST_END
 };
 
 static struct sieve_ldap_storage_settings sieve_ldap_storage_server_default_settings = {
-	.script_attr = "mailSieveRuleSource",
-	.mod_attr = "modifyTimestamp",
+	.script_attribute = "mailSieveRuleSource",
+	.modified_attribute = "modifyTimestamp",
 	.filter = "(&(objectClass=posixAccount)(uid=%u))",
 };
 

@@ -988,7 +988,7 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 
 	attr = ldap_first_attribute(conn->ld, entry, &ber);
 	while (attr != NULL) {
-		if (strcmp(attr, set->mod_attr) == 0) {
+		if (strcmp(attr, set->modified_attribute) == 0) {
 			vals = ldap_get_values(conn->ld, entry, attr);
 			if (vals == NULL || vals[0] == NULL)
 				return 0;
@@ -997,7 +997,7 @@ sieve_ldap_db_get_script_modattr(struct ldap_connection *conn,
 				e_warning(storage->event, "db: "
 					  "Search returned more than one Sieve modified attribute '%s'; "
 					  "using only the first one.",
-					  set->mod_attr);
+					  set->modified_attribute);
 			}
 
 			*modattr_r = p_strdup(pool, vals[0]);
@@ -1028,7 +1028,7 @@ sieve_ldap_db_get_script(struct ldap_connection *conn, LDAPMessage *entry,
 
 	attr = ldap_first_attribute(conn->ld, entry, &ber);
 	while (attr != NULL) {
-		if (strcmp(attr, set->script_attr) == 0) {
+		if (strcmp(attr, set->script_attribute) == 0) {
 			vals = ldap_get_values_len(conn->ld, entry, attr);
 			if (vals == NULL || vals[0] == NULL)
 				return 0;
@@ -1037,7 +1037,7 @@ sieve_ldap_db_get_script(struct ldap_connection *conn, LDAPMessage *entry,
 				e_warning(storage->event, "db: "
 					  "Search returned more than one Sieve script attribute '%s'; "
 					  "using only the first one.",
-					  set->script_attr);
+					  set->script_attribute);
 			}
 
 			size = vals[0]->bv_len;
@@ -1172,7 +1172,7 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
 	request->request.base = p_strdup(pool, str_c(str));
 
 	attr_names = p_new(pool, char *, 3);
-	attr_names[0] = p_strdup(pool, set->mod_attr);
+	attr_names[0] = p_strdup(pool, set->modified_attribute);
 
 	str_truncate(str, 0);
 	if (var_expand(str, set->filter, &params, &error) < 0) {
@@ -1254,7 +1254,7 @@ int sieve_ldap_db_read_script(struct ldap_connection *conn,
 	request->request.base = p_strdup(pool, dn);
 
 	attr_names = p_new(pool, char *, 3);
-	attr_names[0] = p_strdup(pool, set->script_attr);
+	attr_names[0] = p_strdup(pool, set->script_attribute);
 
 	request->request.scope = LDAP_SCOPE_BASE;
 	request->request.filter = "(objectClass=*)";
