@@ -11,41 +11,6 @@
  *
  */
 
-/* Configuration examples:
- *
- * # 1: X-Spam-Score: No, score=-3.2
- *
- * sieve_spamtest_status_header = \
- *   X-Spam-Score: [[:alnum:]]+, score=(-?[[:digit:]]+\.[[:digit:]])
- * sieve_spamtest_max_value = 5.0
- *
- * # 2: X-Spam-Status: Yes
- *
- * sieve_spamtest_status_header = X-Spam-Status
- * sieve_spamtest_status_type = yesno
- * sieve_spamtest_max_value = Yes
- *
- * # 3: X-Spam-Score: sssssss
- * sieve_spamtest_status_header = X-Spam-Score
- * sieve_spamtest_status_type = strlen
- * sieve_spamtest_max_value = 5
- *
- * # 4: X-Spam-Score: status=3.2 required=5.0
- *
- * sieve_spamtest_status_header = \
- *   X-Spam-Score: score=(-?[[:digit:]]+\.[[:digit:]]).*
- * sieve_spamtest_max_header = \
- *   X-Spam-Score: score=-?[[:digit:]]+\.[[:digit:]] required=([[:digit:]]+\.[[:digit:]])
- *
- * # 5: X-Virus-Scan: Found to be clean.
- *
- * sieve_virustest_status_header = \
- *   X-Virus-Scan: Found to be (.+)\.
- * sieve_virustest_status_type = text
- * sieve_virustest_text_value1 = clean
- * sieve_virustest_text_value5 = infected
- */
-
 #include "lib.h"
 #include "array.h"
 
