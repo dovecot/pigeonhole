@@ -85,9 +85,9 @@ static const struct setting_define sieve_ldap_storage_setting_defines[] = {
 };
 
 static struct sieve_ldap_storage_settings sieve_ldap_storage_server_default_settings = {
-	.script_attribute = "mailSieveRuleSource",
-	.modified_attribute = "modifyTimestamp",
-	.filter = "(&(objectClass=posixAccount)(uid=%u))",
+	.script_attribute = "",
+	.modified_attribute = "",
+	.filter = "",
 };
 
 const struct setting_parser_info sieve_ldap_storage_setting_parser_info = {
