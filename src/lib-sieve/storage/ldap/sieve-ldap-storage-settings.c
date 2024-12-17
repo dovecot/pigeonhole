@@ -21,8 +21,13 @@
 	SETTING_DEFINE_STRUCT_##type("ldap_"#name, name, \
 				     struct sieve_ldap_settings)
 
+/* <settings checks> */
 static bool
 sieve_ldap_settings_check(void *_set, pool_t pool, const char **error_r);
+static bool
+sieve_ldap_storage_settings_check(void *_set, pool_t pool,
+				  const char **error_r);
+/* </settings checks> */
 
 static const struct setting_define sieve_ldap_setting_defines[] = {
 	DEF(STR, uris),
@@ -93,6 +98,7 @@ const struct setting_parser_info sieve_ldap_storage_setting_parser_info = {
 
 	.pool_offset1 = 1 + offsetof(struct sieve_ldap_storage_settings, pool),
 	.struct_size = sizeof(struct sieve_ldap_storage_settings),
+	.check_func = sieve_ldap_storage_settings_check,
 };
 
 /* <settings checks> */
@@ -148,6 +154,32 @@ sieve_ldap_settings_check(void *_set, pool_t pool ATTR_UNUSED,
 		return FALSE;
 	}
 
+	return TRUE;
+}
+
+static bool
+sieve_ldap_storage_settings_check(void *_set, pool_t pool ATTR_UNUSED,
+				  const char **error_r)
+{
+	struct sieve_ldap_storage_settings *set = _set;
+
+	if (settings_get_config_binary() == SETTINGS_BINARY_OTHER) {
+		if (*set->script_attribute == '\0') {
+			*error_r = "ldap: "
+				"No sieve_script_ldap_script_attribute configured";
+			return FALSE;
+		}
+		if (*set->modified_attribute == '\0') {
+			*error_r = "ldap: "
+				"No sieve_script_ldap_modified_attribute configured";
+			return FALSE;
+		}
+		if (*set->filter == '\0') {
+			*error_r = "ldap: "
+				"No sieve_script_ldap_filter configured";
+			return FALSE;
+		}
+	}
 	return TRUE;
 }
 /* </settings checks> */
