@@ -395,7 +395,8 @@ static int managesieve_client_create(struct client *client)
 	}
 	msieve_client->parser = managesieve_parser_create(
 		msieve_client->common.input, MAX_MANAGESIEVE_LINE);
-	client->io = io_add(client->fd, IO_READ, client_input, client);
+	client->io = io_add_istream(msieve_client->common.input,
+				    client_input, client);
 	return 0;
 }
 
