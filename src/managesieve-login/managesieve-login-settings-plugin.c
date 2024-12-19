@@ -105,7 +105,7 @@ static void capability_parse(const char *cap_string)
 		capability_store(cap_type, str_c(part));
 }
 
-static bool capability_dump(void)
+static bool capability_dump(bool dump_defaults)
 {
 	char buf[4096];
 	int fd[2], status = 0;
@@ -152,9 +152,14 @@ static bool capability_dump(void)
 
 		argv[0] = PKG_LIBEXECDIR"/managesieve";
 		argv[1] = "-k";
-		argv[2] = "-c";
-		argv[3] = master_service_get_config_path(master_service);
-		argv[4] = NULL;
+		if (!dump_defaults) {
+			argv[2] = "-c";
+			argv[3] = master_service_get_config_path(master_service);
+			argv[4] = NULL;
+		} else {
+			argv[2] = "-O";
+			argv[3] = NULL;
+		}
 		execv_const(argv[0], argv);
 
 		i_fatal("managesieve-login: "
@@ -234,7 +239,7 @@ static void
 managesieve_login_config_parser_begin(struct config_parser_context *ctx)
 {
 	if (!capability_dumped) {
-		(void)capability_dump();
+		(void)capability_dump(ctx->dump_defaults);
 		capability_dumped = TRUE;
 	}
 
