@@ -64,6 +64,8 @@ int sieve_init(const struct sieve_environment *env,
 
 	*svinst_r = NULL;
 
+	settings_info_register(&sieve_setting_parser_info);
+
 	event = event_create(env->event_parent);
 	event_add_category(event, &event_category_sieve);
 	event_set_forced_debug(event, debug);
