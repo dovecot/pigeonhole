@@ -69,3 +69,6 @@ src/testsuite/testsuite
 
 src/managesieve/managesieve
 src/managesieve-login/managesieve-login
+
+tests/failures/mailbox-bad-utf8.svtest
+tests/test-address.svtest
