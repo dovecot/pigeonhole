@@ -15,7 +15,7 @@ static bool sieve_settings_check(void *_set, pool_t pool, const char **error_r);
 
 #undef DEF
 #define DEF(type, name) SETTING_DEFINE_STRUCT_##type( \
-	SIEVE_SETTINGS_FILTER"_"#name, name, struct sieve_settings)
+	"sieve_"#name, name, struct sieve_settings)
 
 static const struct setting_define sieve_setting_defines[] = {
 	DEF(BOOL, enabled),
