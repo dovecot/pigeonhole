@@ -72,3 +72,6 @@ src/managesieve-login/managesieve-login
 
 compile_commands.json
 /.cache
+
+tests/failures/mailbox-bad-utf8.svtest
+tests/test-address.svtest
