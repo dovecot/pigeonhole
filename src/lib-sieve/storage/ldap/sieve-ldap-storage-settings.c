@@ -10,7 +10,7 @@
 #include "sieve-ldap-storage.h"
 #include "sieve-ldap-storage-settings.h"
 
-#if defined(STORAGE_LDAP) && !defined(PLUGIN_BUILD)
+#ifdef STORAGE_LDAP
 
 #include "sieve-error.h"
 
