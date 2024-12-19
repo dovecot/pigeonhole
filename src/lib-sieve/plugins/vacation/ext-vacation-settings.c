@@ -35,7 +35,7 @@ static const struct setting_define ext_vacation_setting_defines[] = {
 
 static const struct ext_vacation_settings ext_vacation_default_settings = {
 	.min_period = (24*60*60),
-	.max_period = 0,
+	.max_period = (60*24*60*60),
 	.default_period = (7*24*60*60),
 	.default_subject = "",
 	.default_subject_template = "",
