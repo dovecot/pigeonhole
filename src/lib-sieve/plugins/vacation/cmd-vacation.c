@@ -261,6 +261,8 @@ cmd_vacation_validate_number_tag(struct sieve_validator *valdtr,
 	else
 		i_unreached();
 
+	i_assert(extctx->set->max_period > 0);
+
 	/* Enforce :seconds >= min_period */
 	if (seconds < extctx->set->min_period) {
 		seconds = extctx->set->min_period;
@@ -271,8 +273,7 @@ cmd_vacation_validate_number_tag(struct sieve_validator *valdtr,
 			sieve_argument_identifier(tag),
 			(unsigned long long)period);
 	/* Enforce :days <= max_period */
-	} else if (extctx->set->max_period > 0 &&
-		   seconds > extctx->set->max_period) {
+	} else if (seconds > extctx->set->max_period) {
 		seconds = extctx->set->max_period;
 
 		sieve_argument_validate_warning(
