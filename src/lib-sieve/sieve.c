@@ -71,7 +71,6 @@ int sieve_init(const struct sieve_environment *env,
 	event_set_forced_debug(event, debug);
 	event_set_append_log_prefix(event, "sieve: ");
 	event_add_str(event, "user", env->username);
-	event_set_ptr(event, SETTINGS_EVENT_FILTER_NAME, SIEVE_SETTINGS_FILTER);
 	if (settings_get(event, &sieve_setting_parser_info, 0,
 			 &set, &error) < 0) {
 		e_error(event, "%s", error);

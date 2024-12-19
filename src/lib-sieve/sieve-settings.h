@@ -6,8 +6,6 @@
 #include "sieve-config.h"
 #include "sieve-address-source.h"
 
-#define SIEVE_SETTINGS_FILTER "sieve"
-
 struct sieve_address_source;
 
 struct sieve_settings {
