@@ -132,19 +132,19 @@ sieve_ldap_settings_check(void *_set, pool_t pool ATTR_UNUSED,
 
 	if (set->base[0] == '\0' &&
 	    settings_get_config_binary() == SETTINGS_BINARY_OTHER) {
-		*error_r = "ldap: No search base given";
+		*error_r = "ldap: No ldap_base configured";
 		return FALSE;
 	}
 
 	if (ldap_deref_from_str(set->deref, &set->parsed.deref) < 0) {
 		*error_r = t_strdup_printf("ldap: "
-			"Invalid deref option '%s'", set->deref);
+			"Invalid ldap_deref value '%s'", set->deref);
 		return FALSE;
 	}
 
 	if (ldap_scope_from_str(set->scope, &set->parsed.scope) < 0) {
 		*error_r = t_strdup_printf("ldap: "
-			"Invalid scope option '%s'", set->scope);
+			"Invalid ldap_scope value '%s'", set->scope);
 		return FALSE;
 	}
 
