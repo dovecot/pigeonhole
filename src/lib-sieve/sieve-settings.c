@@ -50,13 +50,12 @@ static const struct setting_define sieve_setting_defines[] = {
 const struct sieve_settings sieve_default_settings = {
 	.enabled = TRUE,
 
-	.max_script_size = SIEVE_DEFAULT_MAX_SCRIPT_SIZE,
-	.max_actions = SIEVE_DEFAULT_MAX_ACTIONS,
-	.max_redirects = SIEVE_DEFAULT_MAX_REDIRECTS,
+	.max_script_size = (1 << 20),
+	.max_actions = 32,
+	.max_redirects = 4,
 	.max_cpu_time = 0, /* FIXME: svinst->env_location == SIEVE_ENV_LOCATION_MS */
 
-	.resource_usage_timeout =
-		SIEVE_DEFAULT_RESOURCE_USAGE_TIMEOUT_SECS,
+	.resource_usage_timeout = (60 * 60),
 	.redirect_envelope_from = "",
 	.redirect_duplicate_period = DEFAULT_REDIRECT_DUPLICATE_PERIOD,
 
