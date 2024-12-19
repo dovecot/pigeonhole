@@ -65,6 +65,11 @@ ext_vacation_settings_check(void *_set, pool_t pool ATTR_UNUSED,
 {
 	struct ext_vacation_settings *set = _set;
 
+	if (set->max_period == 0) {
+		*error_r = "sieve_vacation_max_period must not be 0";
+		return FALSE;
+	}
+
 	if (set->max_period > 0 &&
 	    (set->min_period > set->max_period ||
 	     set->default_period < set->min_period ||
