@@ -7,8 +7,6 @@
 
 #define SIEVE_MAX_SCRIPT_NAME_LEN                       256
 
-#define SIEVE_DEFAULT_MAX_SCRIPT_SIZE                   (1 << 20)
-
 #define SIEVE_MAX_LOOP_DEPTH                            4
 
 /*
@@ -32,15 +30,11 @@
 
 #define SIEVE_MAX_MATCH_VALUES                          32
 #define SIEVE_HIGH_CPU_TIME_MSECS                       1500
-#define SIEVE_DEFAULT_MAX_CPU_TIME_SECS                 30
-#define SIEVE_DEFAULT_RESOURCE_USAGE_TIMEOUT_SECS       (60 * 60)
+#define SIEVE_DEFAULT_RESOURCE_USAGE_TIMEOUT_SECS       
 
 /*
  * Actions
  */
-
-#define SIEVE_DEFAULT_MAX_ACTIONS                       32
-#define SIEVE_DEFAULT_MAX_REDIRECTS                     4
 
 #define SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS             256
 
