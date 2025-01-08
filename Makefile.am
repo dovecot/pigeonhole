@@ -193,10 +193,10 @@ test_cases = \
 
 prepare_test_cases:
 	$(AM_V_at)for case in $(test_utf8_cases); do \
-		if test @HAVE_MAIL_UTF8@ = 1; then \
-		  $(SED) -s -e 's/#UTF8#.*//' $${case}.in > $$case ; \
-		else \
+		if test $(DOVECOT_HAVE_MAIL_UTF8) = yes; then \
 		  $(SED) -s -e 's/#UTF8#//' $${case}.in > $$case ; \
+		else \
+		  $(SED) -s -e 's/#UTF8#.*//' $${case}.in > $$case ; \
 		fi; \
 	done
 
