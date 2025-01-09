@@ -18,8 +18,7 @@ EXTRA_DIST = \
 	COPYING.LGPL \
 	ChangeLog \
 	update-version.sh \
-	tests/test-address.svtest.in \
-	tests/failures/mailbox-bad-utf8.svtest.in
+	tests/test-address.svtest.in
 
 dist-hook:
 	rm -rf `find $(distdir)/tests -type f -name '*.svbin'`
@@ -59,8 +58,7 @@ test_unfinished =
 endif
 
 test_utf8_cases = \
-		  tests/test-address.svtest \
-		  tests/failures/mailbox-bad-utf8.svtest
+		  tests/test-address.svtest
 
 test_cases = \
 	tests/testsuite.svtest \
