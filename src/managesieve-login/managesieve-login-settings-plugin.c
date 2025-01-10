@@ -16,6 +16,7 @@
 #include <time.h>
 #include <sys/wait.h>
 #include <sysexits.h>
+#include <signal.h>
 
 typedef enum {
 	CAP_SIEVE,
