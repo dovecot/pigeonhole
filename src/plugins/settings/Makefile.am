@@ -27,8 +27,7 @@ libpigeonhole_settings_la_LIBADD = \
 	$(LDAP_LIBS)
 libpigeonhole_settings_la_DEPENDENCIES = \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la \
-	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la \
-	$(LDAP_LIBS)
+	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la
 
 noinst_HEADERS = \
 	pigeonhole-settings.h

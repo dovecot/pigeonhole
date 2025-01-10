@@ -4,6 +4,7 @@ sieve_plugindir = $(dovecot_moduledir)/sieve
 sieve_plugin_LTLIBRARIES =
 
 AM_CPPFLAGS = \
+	$(LDAP_CFLAGS) \
 	$(LIBDOVECOT_INCLUDE) \
 	$(LIBDOVECOT_LDAP_INCLUDE) \
 	-I$(top_srcdir) \
@@ -17,6 +18,7 @@ ldap_sources = \
 
 libsieve_storage_ldap_la_SOURCES = $(ldap_sources)
 libsieve_storage_ldap_la_LIBADD = \
+	$(LDAP_LIBS) \
 	$(LIBDOVECOT) \
 	$(LIBDOVECOT_LDAP) \
 	$(DOVECOT_LDAP_LIBS)
