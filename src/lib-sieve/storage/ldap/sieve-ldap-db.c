@@ -692,9 +692,7 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	struct timeval start, end;
 	bool debug;
-#if defined(HAVE_LDAP_SASL) || defined(LDAP_HAVE_START_TLS_S)
 	int ret;
-#endif
 
 	if (conn->conn_state != LDAP_CONN_STATE_DISCONNECTED)
 		return 0;
@@ -717,7 +715,6 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 	}
 
 	if (set->starttls) {
-#ifdef LDAP_HAVE_START_TLS_S
 		ret = ldap_start_tls_s(conn->ld, NULL, NULL);
 		if (ret != LDAP_SUCCESS) {
 			if (ret == LDAP_OPERATIONS_ERROR &&
@@ -731,11 +728,6 @@ int sieve_ldap_db_connect(struct ldap_connection *conn)
 				ldap_err2string(ret));
 			return -1;
 		}
-#else
-		e_error(storage->event, "db: "
-			"Your LDAP library doesn't support TLS");
-		return -1;
-#endif
 	}
 
 	if (!array_is_empty(&set->auth_sasl_mechanisms)) {
