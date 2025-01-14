@@ -25,7 +25,8 @@
  */
 
 const struct sieve_comparator_def *sieve_core_comparators[] = {
-	&i_octet_comparator, &i_ascii_casemap_comparator
+	&i_octet_comparator, &i_ascii_casemap_comparator,
+	&i_unicode_casemap_comparator
 };
 
 const unsigned int sieve_core_comparators_count =

@@ -73,6 +73,10 @@ const struct sieve_extension_def comparator_i_ascii_casemap_extension = {
 	.name = "comparator-i;ascii-casemap",
 };
 
+const struct sieve_extension_def comparator_i_unicode_casemap_extension = {
+	.name = "comparator-i;unicode-casemap",
+};
+
 /*
  * List of native extensions
  */
@@ -81,9 +85,11 @@ const struct sieve_extension_def comparator_i_ascii_casemap_extension = {
 
 extern const struct sieve_extension_def comparator_i_octet_extension;
 extern const struct sieve_extension_def comparator_i_ascii_casemap_extension;
+extern const struct sieve_extension_def comparator_i_unicode_casemap_extension;
 
 const struct sieve_extension_def *sieve_dummy_extensions[] = {
-	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension
+	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension,
+	&comparator_i_unicode_casemap_extension,
 };
 
 const unsigned int sieve_dummy_extensions_count =

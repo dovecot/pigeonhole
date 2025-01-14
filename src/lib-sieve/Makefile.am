@@ -39,7 +39,8 @@ match_types = \
 
 comparators = \
 	cmp-i-octet.c \
-	cmp-i-ascii-casemap.c
+	cmp-i-ascii-casemap.c \
+	cmp-i-unicode-casemap.c
 
 if BUILD_UNFINISHED
 unfinished_storages =
