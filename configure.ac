@@ -105,7 +105,7 @@ AS_HELP_STRING([--with-ldap=yes|plugin], [Build with LDAP support (default=no)])
 # lib-ldap, but, until then, some code is duplicated.
 have_ldap=no
 AS_IF([test $want_ldap != no], [
-    PKG_CHECK_MODULES([LDAP], [ldap], [have_ldap=yes], [have_ldap=no])
+    PKG_CHECK_MODULES([LDAP], [ldap >= 2.4], [have_ldap=yes], [have_ldap=no])
 
     AS_IF([test $have_ldap = no], [
     AC_CHECK_LIB(ldap, ldap_init, [
@@ -126,12 +126,6 @@ AS_IF([test $want_ldap != no], [
               ])
             ])
             AC_SUBST(LDAP_LIBS)
-            AS_IF([test $want_ldap != plugin], [
-                AC_DEFINE(SIEVE_BUILTIN_LDAP,, [LDAP support is built in])
-            ])
-
-          AC_DEFINE(STORAGE_LDAP,, [Build with LDAP support])
-            AC_CHECK_HEADERS(sasl.h sasl/sasl.h)
             have_ldap=yes
         ], [
           AS_IF([$want_ldap != auto], [
@@ -149,6 +143,12 @@ AS_IF([test $want_ldap != no], [
 AS_IF([test $have_ldap = no], [
   not_scriptloc="$not_scriptloc ldap"
 ], [
+  AS_IF([test $want_ldap != plugin], [
+    AC_DEFINE(SIEVE_BUILTIN_LDAP,, [LDAP support is built in])
+  ])
+  AC_DEFINE(STORAGE_LDAP,, [Build with LDAP support])
+  AC_CHECK_HEADERS(sasl.h sasl/sasl.h)
+
   scriptloc="$scriptloc ldap"
   AS_IF([test $want_ldap = plugin], [
     have_ldap_plugin=yes
