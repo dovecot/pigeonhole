@@ -116,9 +116,6 @@ if test $want_ldap != no; then
 					(OpenLDAP >= 2.4 required)
 				])
 			], $LDAP_LIBS)
-			AC_CHECK_LIB(ldap, ldap_start_tls_s, [
-				AC_DEFINE(LDAP_HAVE_START_TLS_S,, [Define if you have ldap_start_tls_s])
-			])
 			LDAP_LIBS="-lldap"
 			AC_CHECK_LIB(ldap, ber_free, [
 			  # do nothing, default is to add -lldap to LIBS
