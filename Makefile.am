@@ -86,6 +86,7 @@ test_cases = \
 	tests/lexer.svtest \
 	tests/comparators/i-octet.svtest \
 	tests/comparators/i-ascii-casemap.svtest \
+	tests/comparators/i-unicode-casemap.svtest \
 	tests/match-types/is.svtest \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \

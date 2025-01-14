@@ -14,11 +14,13 @@
 enum sieve_comparator_code {
 	SIEVE_COMPARATOR_I_OCTET,
 	SIEVE_COMPARATOR_I_ASCII_CASEMAP,
+	SIEVE_COMPARATOR_I_UNICODE_CASEMAP,
 	SIEVE_COMPARATOR_CUSTOM
 };
 
 extern const struct sieve_comparator_def i_octet_comparator;
 extern const struct sieve_comparator_def i_ascii_casemap_comparator;
+extern const struct sieve_comparator_def i_unicode_casemap_comparator;
 
 /*
  * Comparator flags
