@@ -104,57 +104,57 @@ AS_HELP_STRING([--with-ldap=yes|plugin], [Build with LDAP support (default=no)])
 # FIXME: Imported this from Dovecot auth for now. We're working on a proper
 # lib-ldap, but, until then, some code is duplicated.
 have_ldap=no
-if test $want_ldap != no; then
+AS_IF([test $want_ldap != no], [
     PKG_CHECK_MODULES([LDAP], [ldap], [have_ldap=yes], [have_ldap=no])
 
     AS_IF([test $have_ldap = no], [
-	AC_CHECK_LIB(ldap, ldap_init, [
-		AC_CHECK_HEADER(ldap.h, [
-			AC_CHECK_LIB(ldap, ldap_initialize, :, [
-				AC_MSG_ERROR([
-					cannot build with LDAP support: function ldap_initialize() not found
-					(OpenLDAP >= 2.4 required)
-				])
-			], $LDAP_LIBS)
-			LDAP_LIBS="-lldap"
-			AC_CHECK_LIB(ldap, ber_free, [
-			  # do nothing, default is to add -lldap to LIBS
-			  :
-			], [
-			  AC_CHECK_LIB(lber, ber_free, [
-			    LDAP_LIBS="$LDAP_LIBS -llber"
-			  ])
-			])
-			AC_SUBST(LDAP_LIBS)
-			if test $want_ldap != plugin; then
-				AC_DEFINE(SIEVE_BUILTIN_LDAP,, [LDAP support is built in])
-			fi
+    AC_CHECK_LIB(ldap, ldap_init, [
+        AC_CHECK_HEADER(ldap.h, [
+            AC_CHECK_LIB(ldap, ldap_initialize, :, [
+                AC_MSG_ERROR([
+                    cannot build with LDAP support: function ldap_initialize() not found
+                    (OpenLDAP >= 2.4 required)
+                ])
+            ], $LDAP_LIBS)
+            LDAP_LIBS="-lldap"
+            AC_CHECK_LIB(ldap, ber_free, [
+              # do nothing, default is to add -lldap to LIBS
+              :
+            ], [
+              AC_CHECK_LIB(lber, ber_free, [
+                LDAP_LIBS="$LDAP_LIBS -llber"
+              ])
+            ])
+            AC_SUBST(LDAP_LIBS)
+            AS_IF([test $want_ldap != plugin], [
+                AC_DEFINE(SIEVE_BUILTIN_LDAP,, [LDAP support is built in])
+            ])
 
-  		AC_DEFINE(STORAGE_LDAP,, [Build with LDAP support])
-			AC_CHECK_HEADERS(sasl.h sasl/sasl.h)
-			have_ldap=yes
-		], [
-		  if test $want_ldap != auto; then
-		    AC_MSG_ERROR([cannot build with LDAP support: ldap.h not found])
-		  fi
-		])
-	], [
-	  if test $want_ldap != auto; then
-	    AC_MSG_ERROR([cannot build with LDAP support: libldap not found])
-	  fi
-	])
+          AC_DEFINE(STORAGE_LDAP,, [Build with LDAP support])
+            AC_CHECK_HEADERS(sasl.h sasl/sasl.h)
+            have_ldap=yes
+        ], [
+          AS_IF([$want_ldap != auto], [
+            AC_MSG_ERROR([cannot build with LDAP support: ldap.h not found])
+          ])
+        ])
+    ], [
+      AS_IF([$want_ldap != auto], [
+        AC_MSG_ERROR([cannot build with LDAP support: libldap not found])
+      ])
+    ])
    ])
-fi
+])
 
-if test $have_ldap = no; then
+AS_IF([test $have_ldap = no], [
   not_scriptloc="$not_scriptloc ldap"
-else
+], [
   scriptloc="$scriptloc ldap"
-  if test $want_ldap = plugin; then
+  AS_IF([test $want_ldap = plugin], [
     have_ldap_plugin=yes
     scriptloc="$scriptloc (plugin)"
-  fi
-fi
+  ])
+])
 AM_CONDITIONAL(LDAP_PLUGIN, test "$have_ldap_plugin" = "yes")
 
 dnl **
