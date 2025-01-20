@@ -173,7 +173,7 @@ static bool tag_mime_option_validate
 	data = tag_mime_get_data(cmd, mime_arg);
 	if ( sieve_argument_is(tag, mime_anychild_tag) )
 		data->anychild = TRUE;
-	else 	{
+	else {
 		if ( data->mimeopt != EXT_MIME_OPTION_NONE ) {
 			sieve_argument_validate_error(valdtr, *arg,
 				"the :type, :subtype, :contenttype, and :param "
@@ -184,11 +184,11 @@ static bool tag_mime_option_validate
 		}
 		if ( sieve_argument_is(tag, mime_type_tag) )
 			data->mimeopt = EXT_MIME_OPTION_TYPE;
-		else 	if ( sieve_argument_is(tag, mime_subtype_tag) )
+		else if ( sieve_argument_is(tag, mime_subtype_tag) )
 			data->mimeopt = EXT_MIME_OPTION_SUBTYPE;
-		else 	if ( sieve_argument_is(tag, mime_contenttype_tag) )
+		else if ( sieve_argument_is(tag, mime_contenttype_tag) )
 			data->mimeopt = EXT_MIME_OPTION_CONTENTTYPE;
-		else 	if ( sieve_argument_is(tag, mime_param_tag) ) {
+		else if ( sieve_argument_is(tag, mime_param_tag) ) {
 			/* Check syntax:
 			 *   ":param" <param-list: string-list>
 			 */
@@ -754,4 +754,3 @@ static int svmo_mime_header_override
 	sieve_runtime_trace_ascend(renv);
 	return SIEVE_EXEC_OK;
 }
-
