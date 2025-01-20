@@ -296,54 +296,6 @@ static struct sieve_stringlist *content_header_stringlist_create
 
 /* Implementation */
 
-static inline int _decode_hex_digit(const unsigned char digit)
-{
-	switch ( digit ) {
-	case '0': case '1': case '2': case '3': case '4':
-	case '5': case '6': case '7': case '8': case '9':
-		return digit - '0';
-
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-		return digit - 'a' + 0x0a;
-
-	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-		return digit - 'A' + 0x0A;
-	}
-	return -1;
-}
-
-static string_t *
-content_type_param_decode(const char *value)
-{
-	const unsigned char *p, *plast;
-
-	string_t *str = t_str_new(64);
-	plast = p = (const unsigned char *)value;
-	while ( *p != '\0' ) {
-		unsigned char ch;
-		int digit;
-
-		if ( *p == '%' ) {
-			if ( p - plast > 0 )
-				str_append_data(str, plast, (p - plast));
-			p++;
-			if ( *p == '\0' || (digit=_decode_hex_digit(*p)) < 0 )
-				return NULL;
-			ch = (unsigned char)digit;
-			p++;
-			if ( *p == '\0' || (digit=_decode_hex_digit(*p)) < 0 )
-				return NULL;
-			ch = (ch << 4) + (unsigned char)digit;
-			str_append_data(str, &ch, 1);
-			plast = p + 1;
-		}
-		p++;
-	}
-	if ( p - plast > 0 )
-		str_append_data(str, plast, (p - plast));
-	return str;
-}
-
 static string_t *
 content_type_param_next(struct content_header_stringlist *strlist)
 {
@@ -378,29 +330,6 @@ content_type_param_next(struct content_header_stringlist *strlist)
 
 					strlist->param_values = values + 2;
 					return t_str_new_const(value, strlen(value));
-				}
-			} else {
-				if ( trace ) {
-					sieve_runtime_trace(renv, 0,
-						"found encoded parameter `%s' in mime header",
-						*params);
-				}
-
-				if (str_begins_icase_with(name, *params)) {
-					string_t *result = NULL;
-
-					strlist->param_values = values + 2;
-
-					/* Decode value first */
-					// FIXME: transcode charset
-					value = strchr(value, '\'');
-					if (value != NULL)
-						value = strchr(value+1, '\'');
-					if (value != NULL)
-						result = content_type_param_decode(value + 1);
-					if (result == NULL)
-						strlist->param_values = NULL;
-					return result;
 				}
 			}
 		}
