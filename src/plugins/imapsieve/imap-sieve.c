@@ -923,8 +923,10 @@ imap_sieve_run_scripts(struct imap_sieve_run *isrun,
 		return 1;
 	}
 
-	if (last_script == NULL && ret == SIEVE_EXEC_OK)
+	if (last_script == NULL) {
+		i_assert(ret == SIEVE_EXEC_OK);
 		return 0;
+	}
 	return imap_sieve_handle_exec_status(isrun, last_script, ret,
 					     scriptenv->exec_status, fatal_r);
 }
