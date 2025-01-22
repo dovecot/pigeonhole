@@ -114,6 +114,9 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 	sieve_tool_get_envelope_data(&msgdata, mail, NULL, NULL, NULL);
 
 	if (mail_get_virtual_size(mail, &size) < 0) {
+		senv->exec_status = NULL;
+		senv->script_context = NULL;
+
 		if (mail->expunged)
 			return 1;
 
@@ -154,6 +157,10 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 		ret = sieve_test(sbin, &msgdata, senv, ehandler,
 				 sfctx->teststream, exflags);
 	}
+
+	senv->exec_status = NULL;
+	senv->script_context = NULL;
+
 
 	/* Handle message in source folder */
 	if (ret > 0) {
