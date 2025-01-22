@@ -106,6 +106,7 @@ void testsuite_mailstore_init(void)
 	mail_user->autocreated = TRUE;
 
 	ns_set = p_new(mail_user->pool, struct mail_namespace_settings, 1);
+	ns_set->name = "";
 	ns_set->separator = ".";
 
 	ns = mail_namespaces_init_empty(mail_user);
