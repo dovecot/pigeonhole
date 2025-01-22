@@ -926,6 +926,7 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 			"Failed to initialize script execution: %s", error);
 		if (trace_log != NULL)
 			sieve_trace_log_free(&trace_log);
+		srctx->msgdata = NULL;
 		return -1;
 	}
 
@@ -959,6 +960,9 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 	/* Execute script(s) */
 
 	ret = lda_sieve_execute_scripts(srctx);
+
+	srctx->msgdata = NULL;
+	srctx->scriptenv = NULL;
 
 	/* Record status */
 
