@@ -209,6 +209,7 @@ int sieve_script_create_in(struct sieve_instance *svinst, const char *cause,
 	int ret;
 
 	*script_r = NULL;
+	sieve_error_args_init(&error_code_r, &error_r);
 
 	if (sieve_storage_create(svinst, svinst->event, cause, storage_name, 0,
 				 &storage, error_code_r, error_r) < 0)
