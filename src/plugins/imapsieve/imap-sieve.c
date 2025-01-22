@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "str.h"
 #include "home-expand.h"
+#include "settings.h"
 #include "smtp-address.h"
 #include "smtp-submit.h"
 #include "mail-storage.h"
@@ -454,8 +455,8 @@ imap_sieve_multiscript_get_scripts_for(
 	/* Restrict script storages to source mailbox if we have one. */
 	event = event_create(dest_mbox_event);
 	if (strcasecmp(cause, "copy") == 0 && src_mailbox != NULL) {
-		event_add_str(event, "imapsieve_from",
-			      mailbox_get_vname(src_mailbox));
+		settings_event_add_list_filter_name(event, "imapsieve_from",
+						    mailbox_get_vname(src_mailbox));
 	}
 	ret = imap_sieve_multiscript_get_scripts(svinst, event,
 						 cause, type, scripts,

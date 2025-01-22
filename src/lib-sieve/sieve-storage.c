@@ -495,6 +495,9 @@ sieve_storage_init_real(struct sieve_instance *svinst, struct event *event,
 	}
 
 	event_add_str(event, "sieve_script", storage_name);
+	settings_event_add_list_filter_name(event, "sieve_script",
+					    storage_name);
+
 	if (set->script_driver[0] == '\0') {
 		ret = sieve_storage_autodetect(svinst, event, cause, type,
 					       set, flags, storage_r,
