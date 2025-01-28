@@ -66,3 +66,6 @@ src/testsuite/testsuite
 
 src/managesieve/managesieve
 src/managesieve-login/managesieve-login
+
+compile_commands.json
+/.cache
