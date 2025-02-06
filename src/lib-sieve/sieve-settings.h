@@ -13,7 +13,7 @@ struct sieve_settings {
 
 	bool enabled;
 
-	size_t max_script_size;
+	uoff_t max_script_size;
 	unsigned int max_actions;
 	unsigned int max_redirects;
 	unsigned int max_cpu_time;
