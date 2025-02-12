@@ -604,7 +604,7 @@ v0.4.9 04-10-2015 Stephan Bosch <stephan@rename-it.nl>
 
 	* Properly implemented checking of ABI version for Sieve interpreter plugins,
 	  much like Dovecot itself does for plugins. This will prevent plugin ABI
-	  mismatches. 
+	  mismatches.
 	+ Implemented a vnd.dovecot.environment extension. This builds upon the
 	  standard environment extension and adds a few more environment items, such
 	  as username and default mailbox. It also creates a variables namespace so
@@ -646,7 +646,7 @@ v0.4.8 15-05-2015 Stephan Bosch <stephan@rename-it.nl>
 	  service without the need to read back the output from the external program.
 	- Fixed bug in script storage path normalization occurring with relative
 	  symbolic links below root.
-	- Fixed and updated various parts of the documentation 
+	- Fixed and updated various parts of the documentation
 	- ManageSieve: Used "managesieve" rather than "sieve" as login service name,
 	  which means that all managesieve-specific settings where ignored.
 	- Managesieve: Storage quota was not always enforced properly for scripts
@@ -696,7 +696,7 @@ v0.4.5 30-10-2014 Stephan Bosch <stephan@rename-it.nl>
 	  bug reports will also include Pigeonhole version information.
 	- Fixed handling of implicit keep. Last version erroneously reported that
 	  implicit keep succeeded after an earlier failure, while it in fact had
-	  failed. Particularly occurred for mailbox quota errors. 
+	  failed. Particularly occurred for mailbox quota errors.
 	- Fixed segfault occurring on SunOS systems when there is no active script.
 
 v0.4.4 28-10-2014 Stephan Bosch <stephan@rename-it.nl>
@@ -747,7 +747,7 @@ v0.4.3 12-05-2014 Stephan Bosch <stephan@rename-it.nl>
 	- Sieve spamtest/virustest extensions: Tests were erroneously performed
 	  against the original message. When used together with extprograms filter to
 	  add the spam headers, the changes were not being used by the spamtest and
-	  virustest extensions. 
+	  virustest extensions.
 	- Deprecated Sieve notify extension: Fixed segfault problems in message string
 	  substitution.
 	- ManageSieve: Fixed active link verification to handle redundant path slashes
@@ -764,7 +764,7 @@ v0.4.3 12-05-2014 Stephan Bosch <stephan@rename-it.nl>
 	  - Made sure that programs are never forked with root privileges.
 
 v0.4.2 26-09-2013 Stephan Bosch <stephan@rename-it.nl>
-	
+
 	* Incompatible change in Sieve doveadm plugin: the root attribute for
 	  Sieve scripts is changed. Make sure that you update both sides of a dsync
 	  setup simultaneously when Sieve is involved, otherwise synchronization will
@@ -787,7 +787,7 @@ v0.4.2 26-09-2013 Stephan Bosch <stephan@rename-it.nl>
 v0.4.1 03-06-2013 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Added support for handling temporary failures. These are passed back to
-	  LDA/LTMP to produce an appropriate response towards the MTA. 
+	  LDA/LTMP to produce an appropriate response towards the MTA.
 	- Sieve storage: Removed PATH_MAX limitation for active symlink. This caused
 	  problems for GNU/Hurd.
 	- Fixed line endings in X-Sieve headers added by redirect command.
@@ -797,7 +797,7 @@ v0.4.1 03-06-2013 Stephan Bosch <stephan@rename-it.nl>
 	- Sieve extprograms plugin: Fixed interaction between pipe command and remote
 	  script service. The output from the script service was never read, causing a
 	  broken pipe error at the script service. Apparently, this was broken since
-	  the I/O handling for extprograms was last revised. 
+	  the I/O handling for extprograms was last revised.
 	- Fixed assertion failure due to datastack problem in message header
 	  composition.
 
@@ -808,7 +808,7 @@ v0.4.0 09-05-2013 Stephan Bosch <stephan@rename-it.nl>
 	+ Added the Sieve extprograms plugin to the main Pigeonhole package. It is
 	  still a plugin, but it is now included so that a separate compile is no
 	  longer necessary and distributors are likely to include it. The extprograms
-	  plugin provides Sieve language extensions that allows executing 
+	  plugin provides Sieve language extensions that allows executing
 	  (administrator-controlled) external programs for message delivery,
 	  message filtering and string manipulation. Refer to
 	  doc/plugins/sieve_extprograms.txt for more information.
