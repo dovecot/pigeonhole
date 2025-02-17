@@ -295,6 +295,8 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 		if (ret == 0) {
 			mail_storage_set_error(storage, MAIL_ERROR_NOTFOUND,
 					       "Sieve not enabled for user");
+		} else {
+			mail_storage_set_internal_error(storage);
 		}
 		return -1;
 	}
@@ -536,8 +538,11 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 	int ret;
 
 	ret = mail_sieve_user_init(storage->user, &svstorage);
-	if (ret <= 0)
+	if (ret <= 0) {
+		if (ret < 0)
+			mail_storage_set_internal_error(storage);
 		return ret;
+	}
 
 	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT) == 0)
 		return sieve_attribute_get_default(storage, svstorage, value_r);
@@ -619,8 +624,11 @@ sieve_attribute_iter_script_init(struct sieve_mailbox_attribute_iter *siter)
 	e_debug(suser->event, "Iterating Sieve mailbox attributes");
 
 	ret = mail_sieve_user_init(user, &svstorage);
-	if (ret <= 0)
+	if (ret <= 0) {
+		if (ret < 0)
+			mail_storage_set_internal_error(siter->iter.box->storage);
 		return ret;
+	}
 
 	if (sieve_storage_list_init(svstorage, &siter->sieve_list) < 0) {
 		mail_storage_set_critical(
