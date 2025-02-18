@@ -76,6 +76,7 @@ mail_sieve_user_init(struct mail_user *user, struct sieve_storage **svstorage_r)
 
 	/* Delayed initialization of sieve storage until it's actually needed */
 	i_zero(&svenv);
+	svenv.event_parent = user->event;
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
 	svenv.base_dir = user->set->base_dir;
