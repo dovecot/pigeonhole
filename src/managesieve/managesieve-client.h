@@ -92,7 +92,7 @@ extern unsigned int managesieve_client_count;
 /* Create new client with specified input/output handles. socket specifies
    if the handle is a socket. */
 int client_create(int fd_in, int fd_out, const char *session_id,
-		  struct event *event, struct mail_user *user,
+		  struct mail_user *user,
 		  const struct managesieve_settings *set,
 		  struct client **client_r, const char **client_error_r,
 		  const char **error_r);

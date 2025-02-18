@@ -181,8 +181,7 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	if (set->verbose_proctitle)
 		verbose_proctitle = TRUE;
 
-	if (client_create(fd_in, fd_out, input->session_id,
-			  event, mail_user, set,
+	if (client_create(fd_in, fd_out, input->session_id, mail_user, set,
 			  &client, client_error_r, error_r) < 0) {
 		settings_free(set);
 		mail_user_unref(&mail_user);

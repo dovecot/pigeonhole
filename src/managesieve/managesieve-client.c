@@ -86,7 +86,7 @@ client_get_storage(struct sieve_instance *svinst, struct mail_user *user,
 }
 
 int client_create(int fd_in, int fd_out, const char *session_id,
-		  struct event *event, struct mail_user *user,
+		  struct mail_user *user,
 		  const struct managesieve_settings *set,
 		  struct client **client_r, const char **client_error_r,
 		  const char **error_r)
@@ -108,7 +108,7 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
 	svenv.base_dir = user->set->base_dir;
-	svenv.event_parent = event;
+	svenv.event_parent = user->event;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
 	if (sieve_init(&svenv, NULL, user, user->set->mail_debug,
@@ -130,8 +130,7 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 	pool = pool_alloconly_create("managesieve client", 1024);
 	client = p_new(pool, struct client, 1);
 	client->pool = pool;
-	client->event = event;
-	event_ref(client->event);
+	client->event = event_create(user->event);
 	client->set = set;
 	client->session_id = p_strdup(pool, session_id);
 	client->fd_in = fd_in;
