@@ -536,7 +536,7 @@ static int sieve_file_storage_init(struct sieve_storage *storage)
 			 &sieve_file_storage_setting_parser_info, 0,
 			 &fstorage_set, &error) < 0) {
 		e_error(storage->event, "%s", error);
-		sieve_storage_set_critical(storage, "%s",error);
+		sieve_storage_set_internal_error(storage);
 		return -1;
 	}
 

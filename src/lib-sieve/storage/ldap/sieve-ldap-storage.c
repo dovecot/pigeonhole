@@ -59,7 +59,8 @@ sieve_ldap_storage_init(struct sieve_storage *storage)
 			   &ldap_set, &error);
 	event_unref(&event);
 	if (ret < 0) {
-		sieve_storage_set_critical(storage, "%s", error);
+		e_error(storage->event, "%s", error);
+		sieve_storage_set_internal_error(storage);
 		return -1;
 	}
 	if (*ldap_set->uris == '\0') {
@@ -75,7 +76,8 @@ sieve_ldap_storage_init(struct sieve_storage *storage)
 			 &set, &error) < 0 ||
 	    settings_get(storage->event, &ssl_setting_parser_info, 0,
 			 &ssl_set, &error) < 0) {
-		sieve_storage_set_critical(storage, "%s", error);
+		e_error(storage->event, "%s", error);
+		sieve_storage_set_internal_error(storage);
 		settings_free(set);
 		settings_free(ldap_set);
 		return -1;
