@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "buffer.h"
 #include "settings-parser.h"
+#include "master-service-settings.h"
 #include "service-settings.h"
 #include "mail-storage-settings.h"
 
@@ -73,7 +74,7 @@ static struct setting_define managesieve_setting_defines[] = {
 };
 
 static struct managesieve_settings managesieve_default_settings = {
-	.verbose_proctitle = FALSE,
+	.verbose_proctitle = VERBOSE_PROCTITLE_DEFAULT,
 	.rawlog_dir = "",
 
 	/* RFC-2683 recommends at least 8000 bytes. Some clients however don't
