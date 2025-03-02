@@ -139,6 +139,8 @@ int main(int argc, char **argv)
 	master_service_parse_option(
 		master_service, 'o',
 		"postmaster_address=postmaster@example.com");
+	master_service_parse_option(master_service, 'o', "mail_uid=");
+	master_service_parse_option(master_service, 'o', "mail_gid=");
 
 	/* Initialize mail user */
 	if (t_get_working_dir(&cwd, &error) < 0)
