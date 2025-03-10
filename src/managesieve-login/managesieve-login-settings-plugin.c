@@ -2,229 +2,31 @@
  */
 
 #include "lib.h"
-#include "str.h"
-#include "buffer.h"
-#include "env-util.h"
-#include "execv-const.h"
-#include "master-service.h"
-#include "settings-parser.h"
 #include "config-parser-private.h"
+#include "sieve.h"
 #include "managesieve-login-settings-plugin.h"
 
-#include <stddef.h>
-#include <unistd.h>
-#include <time.h>
-#include <sys/wait.h>
-#include <sysexits.h>
-#include <signal.h>
+static int
+(*next_hook_config_parser_end)(struct config_parser_context *ctx,
+			       struct config_parsed *new_config,
+			       struct event *event, const char **error_r) = NULL;
 
-typedef enum {
-	CAP_SIEVE,
-	CAP_NOTIFY,
-} capability_type_t;
-
-bool capability_dumped = FALSE;
-static char *capability_sieve = NULL;
-static char *capability_notify = NULL;
-
-static void
-(*next_hook_config_parser_begin)(struct config_parser_context *ctx) = NULL;
-
-static void
-managesieve_login_config_parser_begin(struct config_parser_context *ctx);
+static int
+managesieve_login_config_parser_end(struct config_parser_context *ctx,
+				    struct config_parsed *new_config,
+				    struct event *event, const char **error_r);
 
 const char *managesieve_login_settings_version = DOVECOT_ABI_VERSION;
 
 void managesieve_login_settings_init(struct module *module ATTR_UNUSED)
 {
-	next_hook_config_parser_begin = hook_config_parser_begin;
-	hook_config_parser_begin = managesieve_login_config_parser_begin;
+	next_hook_config_parser_end = hook_config_parser_end;
+	hook_config_parser_end = managesieve_login_config_parser_end;
 }
 
 void managesieve_login_settings_deinit(void)
 {
-	hook_config_parser_begin = next_hook_config_parser_begin;
-
-	if (capability_sieve != NULL)
-		i_free(capability_sieve);
-	if (capability_notify != NULL)
-		i_free(capability_notify);
-}
-
-static void capability_store(capability_type_t cap_type, const char *value)
-{
-	switch (cap_type) {
-	case CAP_SIEVE:
-		capability_sieve = i_strdup(value);
-		break;
-	case CAP_NOTIFY:
-		capability_notify = i_strdup(value);
-		break;
-	}
-}
-
-static void capability_parse(const char *cap_string)
-{
-	capability_type_t cap_type = CAP_SIEVE;
-	const char *p = cap_string;
-	string_t *part = t_str_new(256);
-
-	if (cap_string == NULL || *cap_string == '\0') {
-		i_warning("managesieve-login: capability string is empty.");
-		return;
-	}
-
-	while (*p != '\0') {
-		if (*p == '\\') {
-			p++;
-			if (*p != '\0') {
-				str_append_c(part, *p);
-				p++;
-			} else break;
-		} else if (*p == ':') {
-			if (strcasecmp(str_c(part), "SIEVE") == 0)
-				cap_type = CAP_SIEVE;
-			else if (strcasecmp(str_c(part), "NOTIFY") == 0)
-				cap_type = CAP_NOTIFY;
-			else {
-				i_warning("managesieve-login: unknown capability '%s' listed in "
-					  "capability string (ignored).", str_c(part));
-			}
-			str_truncate(part, 0);
-		} else if (*p == ',') {
-			capability_store(cap_type, str_c(part));
-			str_truncate(part, 0);
-		} else {
-			/* Append character, but omit leading spaces */
-			if (str_len(part) > 0 || *p != ' ')
-				str_append_c(part, *p);
-		}
-		p++;
-	}
-
-	if (str_len(part) > 0)
-		capability_store(cap_type, str_c(part));
-}
-
-static bool capability_dump(bool dump_defaults)
-{
-	char buf[4096];
-	int fd[2], status = 0;
-	ssize_t ret;
-	unsigned int pos;
-	pid_t pid;
-
-	if (getenv("DUMP_CAPABILITY") != NULL)
-		return TRUE;
-
-	/* We want to dump capability only when doing the main config parsing
-	   (config and doveconf processes) and managesieve process (started
-	   from command line). We especially don't want to dump capability
-	   every time when running doveadm. */
-	const char *protocol = getenv("DOVECONF_PROTOCOL");
-	if (protocol != NULL && strcmp(protocol, "sieve") != 0)
-		return TRUE;
-	if (pipe(fd) < 0) {
-		i_error("managesieve-login: dump-capability pipe() failed: %m");
-		return FALSE;
-	}
-	fd_close_on_exec(fd[0], TRUE);
-	fd_close_on_exec(fd[1], TRUE);
-
-	pid = fork();
-	if (pid == (pid_t)-1) {
-		i_close_fd(&fd[0]);
-		i_close_fd(&fd[1]);
-		i_error("managesieve-login: dump-capability fork() failed: %m");
-		return FALSE;
-	}
-	if (pid == 0) {
-		const char *argv[5];
-
-		/* Child */
-		i_close_fd(&fd[0]);
-
-		if (dup2(fd[1], STDOUT_FILENO) < 0) {
-			i_fatal("managesieve-login: "
-				"dump-capability dup2() failed: %m");
-		}
-
-		env_put("DUMP_CAPABILITY", "1");
-
-		argv[0] = PKG_LIBEXECDIR"/managesieve";
-		argv[1] = "-k";
-		if (!dump_defaults) {
-			argv[2] = "-c";
-			argv[3] = master_service_get_config_path(master_service);
-			argv[4] = NULL;
-		} else {
-			argv[2] = "-O";
-			argv[3] = NULL;
-		}
-		execv_const(argv[0], argv);
-
-		i_fatal("managesieve-login: "
-			"dump-capability execv(%s) failed: %m", argv[0]);
-	}
-	i_close_fd(&fd[1]);
-
-	time_t start_time = time(NULL);
-	alarm(60);
-	pid_t wait_ret = wait(&status);
-	alarm(0);
-
-	if (wait_ret >= 0)
-		; /* success */
-	else if (errno != ECHILD) {
-		i_error("managesieve-login: dump-capability failed: "
-			"wait() failed: %m");
-		return FALSE;
-	} else {
-		i_error("managesieve-login: dump-capability failed: "
-			"process %d got stuck (waited %"PRIdTIME_T" seconds) - "
-			"killing sig SIGABRT",
-			(int)pid, (time(NULL) - start_time));
-		if (kill(pid, SIGABRT) < 0)
-			i_error("kill(%d) failed: %m", (int)pid);
-		return FALSE;
-	}
-
-	if (status != 0) {
-		i_close_fd(&fd[0]);
-		if (WIFSIGNALED(status)) {
-			i_error("managesieve-login: dump-capability process "
-				"killed with signal %d", WTERMSIG(status));
-		} else {
-			i_error("managesieve-login: "
-				"dump-capability process returned %d",
-				(WIFEXITED(status) ?
-				 WEXITSTATUS(status) : status));
-		}
-		return FALSE;
-	}
-
-	pos = 0;
-	while ((ret = read(fd[0], buf + pos, sizeof(buf) - pos)) > 0)
-		pos += ret;
-
-	if (ret < 0) {
-		i_error("managesieve-login: "
-			"read(dump-capability process) failed: %m");
-		i_close_fd(&fd[0]);
-		return FALSE;
-	}
-	i_close_fd(&fd[0]);
-
-	if (pos == 0 || buf[pos-1] != '\n') {
-		i_error("managesieve-login: "
-			"dump-capability: Couldn't read capability "
-			"(got %u bytes)", pos);
-		return FALSE;
-	}
-	buf[pos-1] = '\0';
-
-	capability_parse(buf);
-	return TRUE;
+	hook_config_parser_end = next_hook_config_parser_end;
 }
 
 static void
@@ -236,22 +38,55 @@ managesieve_login_config_set(struct config_parser_context *ctx,
 	config_parser_set_change_counter(ctx, CONFIG_PARSER_CHANGE_EXPLICIT);
 }
 
-static void
-managesieve_login_config_parser_begin(struct config_parser_context *ctx)
+static int
+dump_capability(struct config_parser_context *ctx,
+		struct config_parsed *new_config,
+		struct event *event, const char **error_r)
 {
-	if (!capability_dumped) {
-		(void)capability_dump(ctx->dump_defaults);
-		capability_dumped = TRUE;
+	struct sieve_instance *svinst;
+
+	/* If all capabilities are explicitly set, we don't need to
+	   generate them. */
+	if (config_parsed_get_setting_change_counter(new_config,
+		"managesieve_login", "managesieve_sieve_capability") ==
+			CONFIG_PARSER_CHANGE_EXPLICIT &&
+	    config_parsed_get_setting_change_counter(new_config,
+		"managesieve_login", "managesieve_notify_capability") ==
+			CONFIG_PARSER_CHANGE_EXPLICIT)
+		return 0;
+
+	/* Initialize Sieve engine */
+	struct sieve_environment svenv = {
+		.home_dir = "/tmp",
+		.event_parent = event,
+	};
+	if (sieve_init(&svenv, NULL, NULL, FALSE, &svinst) < 0) {
+		*error_r = "Failed to initialize Sieve";
+		return -1;
 	}
 
-	if (capability_sieve != NULL) {
-		managesieve_login_config_set(
-			ctx, "managesieve_sieve_capability",
-			capability_sieve);
-	}
+	/* Dump capabilities */
+	managesieve_login_config_set(ctx, "managesieve_sieve_capability",
+				     sieve_get_capabilities(svinst, NULL));
+	const char *capability_notify = sieve_get_capabilities(svinst, "notify");
 	if (capability_notify != NULL) {
 		managesieve_login_config_set(
 			ctx, "managesieve_notify_capability",
 			capability_notify);
 	}
+
+	sieve_deinit(&svinst);
+	return 0;
+}
+
+static int
+managesieve_login_config_parser_end(struct config_parser_context *ctx,
+				    struct config_parsed *new_config,
+				    struct event *event, const char **error_r)
+{
+	if (dump_capability(ctx, new_config, event, error_r) < 0)
+		return -1;
+	if (next_hook_config_parser_end != NULL)
+		return next_hook_config_parser_end(ctx, new_config, event, error_r);
+	return 0;
 }

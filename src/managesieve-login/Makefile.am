@@ -7,6 +7,7 @@ AM_CPPFLAGS = \
 	$(LIBDOVECOT_SERVICE_INCLUDE) \
 	$(LIBDOVECOT_LOGIN_INCLUDE) \
 	-I$(top_srcdir) \
+	-I$(top_srcdir)/src/lib-sieve \
 	-I$(top_srcdir)/src/lib-managesieve
 
 libmanagesieve_login_settings_la_LDFLAGS = -module -avoid-version
@@ -20,6 +21,8 @@ libmanagesieve_login_settings_la_SOURCES = \
 
 libmanagesieve_login_settings_la_CFLAGS = \
 	$(AM_CFLAGS) $(LIBDOVECOT_CONFIG_INCLUDE) -DPKG_LIBEXECDIR=\""$(dovecot_pkglibexecdir)"\"
+libmanagesieve_login_settings_la_LIBADD = \
+	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la
 
 libs = \
 	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la
