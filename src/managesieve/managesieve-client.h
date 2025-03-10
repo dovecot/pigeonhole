@@ -99,8 +99,6 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 void client_create_finish(struct client *client);
 void client_destroy(struct client *client, const char *reason);
 
-void client_dump_capability(struct client *client);
-
 /* Disconnect client connection */
 void client_disconnect(struct client *client, const char *reason);
 void client_disconnect_with_error(struct client *client, const char *msg);

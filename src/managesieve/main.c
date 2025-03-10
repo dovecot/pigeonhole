@@ -25,7 +25,6 @@
 #include "managesieve-quote.h"
 #include "managesieve-common.h"
 #include "managesieve-commands.h"
-#include "managesieve-capabilities.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -333,13 +332,10 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if (IS_STANDALONE() || getenv("DUMP_CAPABILITY") != NULL) {
+	if (IS_STANDALONE()) {
 		service_flags |= MASTER_SERVICE_FLAG_STANDALONE |
 				 MASTER_SERVICE_FLAG_STD_CLIENT;
 	}
-	if (getenv("DUMP_CAPABILITY") != NULL)
-		service_flags |= MASTER_SERVICE_FLAG_DONT_SEND_STATS;
-
 	master_service = master_service_init("managesieve", service_flags,
 					     &argc, &argv, "t:u:");
 	while ((c = master_getopt(master_service)) > 0) {
@@ -366,23 +362,6 @@ int main(int argc, char *argv[])
 	/* Plugins may want to add commands, so this needs to be called early.
 	 */
 	commands_init();
-
-	/* Dump capabilities if requested */
-	if (getenv("DUMP_CAPABILITY") != NULL) {
-		struct master_service_settings_input set_input = {
-			.hide_obsolete_warnings = TRUE,
-		};
-		struct master_service_settings_output set_output;
-		if (master_service_settings_read(master_service, &set_input,
-						 &set_output, &error) < 0)
-			i_fatal("%s", error);
-
-		i_set_debug_file("/dev/null");
-		managesieve_capabilities_dump();
-		commands_deinit();
-		master_service_deinit(&master_service);
-		exit(0);
-	}
 
 	if (master_service_settings_read_simple(master_service, &error) < 0)
 		i_fatal("%s", error);
