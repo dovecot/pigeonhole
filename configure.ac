@@ -140,6 +140,24 @@ AS_IF([test $want_ldap != no], [
    ])
 ])
 
+AS_IF([test $have_ldap = yes], [
+  orig_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="$CPPFLAGS $LIBDOVECOT_INCLUDE"
+
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+    #include "config.h"
+    #ifndef HAVE_LDAP
+    #  error Dovecot core not compiled with LDAP
+    #endif
+    ]], [[]])],[],[
+      AS_IF([test $want_ldap != auto], [
+	AC_MSG_ERROR([cannot build with LDAP support: Dovecot core not built with LDAP])
+      ])
+      have_ldap=no
+  ])
+  CPPFLAGS=$orig_CPPFLAGS
+])
+
 AS_IF([test $have_ldap = no], [
   not_scriptloc="$not_scriptloc ldap"
 ], [
