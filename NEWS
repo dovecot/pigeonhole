@@ -1,3 +1,9 @@
+v2.4.1 2025-03-28  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	- global: Fix settings handling bugs. Especially
+	  %variables weren't working in various settings.
+	- ldap: Pigeonhole could not be built without LDAP.
+
 v2.4.0 2025-01-24  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* Change configuration syntax to match new Dovecot configuration syntax.
