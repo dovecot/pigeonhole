@@ -128,12 +128,12 @@ AS_IF([test $want_ldap != no], [
             AC_SUBST(LDAP_LIBS)
             have_ldap=yes
         ], [
-          AS_IF([$want_ldap != auto], [
+          AS_IF([test $want_ldap != auto], [
             AC_MSG_ERROR([cannot build with LDAP support: ldap.h not found])
           ])
         ])
     ], [
-      AS_IF([$want_ldap != auto], [
+      AS_IF([test $want_ldap != auto], [
         AC_MSG_ERROR([cannot build with LDAP support: libldap not found])
       ])
     ])
