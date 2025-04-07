@@ -29,12 +29,16 @@ test "Flags Side Effect" {
 		test_fail "message not stored in INBOX.Junk";
 	}
 
-	if not hasflag :count "eq" "1" {
+	if not hasflag :count "eq" "2" {
 		test_fail "invalid number of flags for message in INBOX.Junk";
 	}
 
 	if not hasflag :is "NONSENSE" {
 		test_fail "invalid flag set for message in INBOX.Junk";
+	}
+
+	if not hasflag :is "$HasNoAttachment" {
+		test_fail "$HasNoAttachment keyword not stored for message in INBOX.Junk";
 	}
 
 	test_result_reset;
@@ -43,12 +47,16 @@ test "Flags Side Effect" {
 		test_fail "message not stored in INBOX";
 	}
 
-	if not hasflag :count "eq" "1" {
+	if not hasflag :count "eq" "2" {
 		test_fail "invalid number of flags for message in INBOX";
 	}
 
 	if not hasflag :is "\\seen" {
 		test_fail "invalid flag set for message in INBOX";
+	}
+
+	if not hasflag :is "$HasNoAttachment" {
+		test_fail "$HasNoAttachment keyword not stored for message in INBOX";
 	}
 
 	test_result_reset;
@@ -57,7 +65,7 @@ test "Flags Side Effect" {
 		test_fail "message not stored in INBOX.Nonsense";
 	}
 
-	if not hasflag :count "eq" "1" {
+	if not hasflag :count "eq" "2" {
 		test_fail "invalid number of flags for message in Inbox.Nonsense";
 	}
 
@@ -65,4 +73,7 @@ test "Flags Side Effect" {
 		test_fail "invalid flag set for message in Inbox.Nonsene";
 	}
 
+	if not hasflag :is "$HasNoAttachment" {
+		test_fail "$HasNoAttachment keyword not stored for message in INBOX.Nonsense";
+	}
 }

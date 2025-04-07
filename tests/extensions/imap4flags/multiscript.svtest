@@ -48,7 +48,11 @@ test "Internal Flags" {
 		test_fail "$label1 keyword not stored for message";
  	}
 
-	if not hasflag :comparator "i;ascii-numeric" :count "eq" "2" {
+	if not hasflag :is "$HasNoAttachment" {
+		test_fail "$HasNoAttachment keyword not stored for message";
+	}
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "3" {
 		test_fail "invalid number of flags set for message";
 	}
 }
