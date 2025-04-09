@@ -363,3 +363,36 @@ test "Match combined" {
 		test_fail "incorrect match values: ${1}${2}";
 	}
 }
+
+test "Initial *??" {
+  if string :matches "foo1234@example.com" ["*??@foobar.example.com"] {
+    test_fail "Unexpectedly matched";
+  }
+  if not string :matches "foo1234@foobar.example.com" ["*??@foobar.example.com"] {
+    test_fail "Failed to match";
+  }
+  if not string "${1}" "foo12" {
+    test_fail "Match value 1 is wrong: `${1}`";
+  }
+  if not string "${2}" "3" {
+    test_fail "Match value 1 is wrong: `${2}`";
+  }
+  if not string "${3}" "4" {
+    test_fail "Match value 1 is wrong: `${3}`";
+  }
+}
+
+test "Intiial *?" {
+  if string :matches "d@example.jp" ["*?@example.com"] {
+    test_fail "Unexpectedly matched";
+  }
+  if not string :matches "d@example.com" ["*?@example.com"] {
+    test_fail "Failed to match";
+  }
+  if not string "${1}" "" {
+    test_fail "Match value 1 is wrong: `${1}`";
+  }
+  if not string "${2}" "d" {
+    test_fail "Match value 1 is wrong: `${2}`";
+  }
+}
