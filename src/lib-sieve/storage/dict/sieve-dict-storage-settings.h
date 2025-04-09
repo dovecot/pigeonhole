@@ -1,0 +1,6 @@
+#ifndef SIEVE_DICT_STORAGE_SETTINGS_H
+#define SIEVE_DICT_STORAGE_SETTINGS_H
+
+extern const struct setting_parser_info sieve_dict_storage_setting_parser_info;
+
+#endif

@@ -7,7 +7,9 @@ AM_CPPFLAGS = \
 
 libsieve_storage_dict_la_SOURCES = \
 	sieve-dict-script.c \
-	sieve-dict-storage.c
+	sieve-dict-storage.c \
+	sieve-dict-storage-settings.c
 
 noinst_HEADERS = \
-	sieve-dict-storage.h
+	sieve-dict-storage.h \
+	sieve-dict-storage-settings.h
