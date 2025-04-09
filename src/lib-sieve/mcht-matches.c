@@ -224,9 +224,6 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 				qend = vp;
 				qp = vp - key_offset;
 
-				if (mvalues != NULL)
-					str_append_data(mvalue, pvp, qp-pvp);
-
 				/* Compare needle to end of value string */
 				if (!cmp->def->char_match(cmp, &vp, vend,
 							   &needle, nend)) {
@@ -236,6 +233,9 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 
 				/* Add match values */
 				if (mvalues != NULL) {
+					i_assert(qp >= pvp);
+					str_append_data(mvalue, pvp, qp-pvp);
+
 					/* Append '*' match value */
 					sieve_match_values_add(mvalues, mvalue);
 
