@@ -878,7 +878,7 @@ int main(int argc, char *argv[])
 	const enum master_service_flags service_flags =
 		MASTER_SERVICE_FLAG_STANDALONE |
 		MASTER_SERVICE_FLAG_DONT_SEND_STATS |
-		MASTER_SERVICE_FLAG_NO_CONFIG_SETTINGS;
+		MASTER_SERVICE_FLAG_CONFIG_BUILTIN;
 	const char *cwd, *error;
 	int ret;
 

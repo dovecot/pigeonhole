@@ -141,6 +141,10 @@ int main(int argc, char **argv)
 		"postmaster_address=postmaster@example.com");
 	master_service_parse_option(master_service, 'o', "mail_uid=");
 	master_service_parse_option(master_service, 'o', "mail_gid=");
+	/* Preserve all the libtool environments so this works without libsieve
+	   being yet installed. */
+	master_service_parse_option(master_service, 'k', "");
+	env_put("CONFIG_MODULES", PIGEONHOLE_CONFIG_MODULES);
 
 	/* Initialize mail user */
 	if (t_get_working_dir(&cwd, &error) < 0)
