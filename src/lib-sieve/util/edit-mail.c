@@ -2087,8 +2087,14 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 		copy_v_offset = edmail->hdr_size.physical_size;
 	}
 
-	return merge_from_parent(edstream, parent_v_offset, (uoff_t)-1,
-				 copy_v_offset);
+	ret = merge_from_parent(edstream, parent_v_offset, (uoff_t)-1,
+				copy_v_offset);
+	if (ret != 0)
+		return ret;
+
+	stream->istream.eof = stream->parent->eof;
+	edstream->eof = stream->parent->eof;
+	return -1;
 }
 
 static void
