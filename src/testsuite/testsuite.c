@@ -144,7 +144,13 @@ int main(int argc, char **argv)
 	/* Preserve all the libtool environments so this works without libsieve
 	   being yet installed. */
 	master_service_parse_option(master_service, 'k', "");
-	env_put("CONFIG_MODULES", PIGEONHOLE_CONFIG_MODULES);
+	const char *str = getenv("TESTSUITE_CONFIG_MODULES");
+	if (str == NULL)
+		env_put("CONFIG_MODULES", PIGEONHOLE_CONFIG_MODULES);
+	else {
+		env_put("CONFIG_MODULES", t_strconcat(PIGEONHOLE_CONFIG_MODULES,
+						      ":", str, NULL));
+	}
 
 	/* Initialize mail user */
 	if (t_get_working_dir(&cwd, &error) < 0)
