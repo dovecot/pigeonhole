@@ -182,7 +182,7 @@ test "Editheader" {
 
 test_config_set "sieve_spamtest_status_header"
 	"X-Spam-Status: [^,]*, score=(-?[[:digit:]]+\\.[[:digit:]]).*";
-test_config_set "sieve_spamtest_max_value" "10";
+test_config_set "sieve_spamtest_score_max_value" "10";
 test_config_set "sieve_spamtest_status_type" "score";
 test_config_reload :extension "spamtest";
 
