@@ -150,6 +150,7 @@ sieve_result_create(struct sieve_instance *svinst, pool_t pool,
 
 void sieve_result_ref(struct sieve_result *result)
 {
+	i_assert(result->refcount > 0);
 	result->refcount++;
 }
 
@@ -164,8 +165,11 @@ void sieve_result_unref(struct sieve_result **_result)
 	struct sieve_result *result = *_result;
 	struct sieve_result_action *ract;
 
-	i_assert(result->refcount > 0);
+	if (result == NULL)
+		return;
+	*_result = NULL;
 
+	i_assert(result->refcount > 0);
 	if (--result->refcount != 0)
 		return;
 
@@ -181,7 +185,6 @@ void sieve_result_unref(struct sieve_result **_result)
 	event_unref(&result->event);
 
 	pool_unref(&result->pool);
-	*_result = NULL;
 }
 
 pool_t sieve_result_pool(struct sieve_result *result)

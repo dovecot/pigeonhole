@@ -323,6 +323,7 @@ void sieve_interpreter_free(struct sieve_interpreter **_interp)
 
 	sieve_binary_debug_reader_deinit(&interp->dreader);
 	sieve_binary_unref(&renv->sbin);
+	sieve_result_unref(&interp->runenv.result);
 	sieve_error_handler_unref(&renv->ehandler);
 	event_unref(&renv->event);
 
@@ -751,7 +752,7 @@ void sieve_interpreter_reset(struct sieve_interpreter *interp)
 	interp->runenv.pc = interp->reset_vector;
 	interp->interrupted = FALSE;
 	interp->test_result = FALSE;
-	interp->runenv.result = NULL;
+	sieve_result_unref(&interp->runenv.result);
 }
 
 void sieve_interpreter_interrupt(struct sieve_interpreter *interp)
@@ -929,7 +930,6 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 	struct sieve_resource_usage rusage;
 	int ret = SIEVE_EXEC_OK;
 
-	sieve_result_ref(renv->result);
 	interp->interrupted = FALSE;
 
 	if (interrupted != NULL)
@@ -1009,7 +1009,6 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 		interp->running = FALSE;
 	}
 
-	sieve_result_unref(&interp->runenv.result);
 	return ret;
 }
 
@@ -1029,6 +1028,7 @@ int sieve_interpreter_start(struct sieve_interpreter *interp,
 	interp->running = TRUE;
 	interp->runenv.result = result;
 	interp->runenv.msgctx = sieve_result_get_message_context(result);
+	sieve_result_ref(result);
 
 	sieve_resource_usage_init(&interp->rusage);
 
