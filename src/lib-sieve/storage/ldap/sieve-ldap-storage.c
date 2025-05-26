@@ -3,7 +3,6 @@
 
 #include "lib.h"
 #include "settings.h"
-#include "ldap-utils.h"
 #include "iostream-ssl.h"
 
 #include "sieve-common.h"
@@ -13,6 +12,7 @@
 
 #if defined(SIEVE_BUILTIN_LDAP) || defined(PLUGIN_BUILD)
 
+#include "ldap-utils.h"
 #include "sieve-error.h"
 
 #ifndef PLUGIN_BUILD
