@@ -42,8 +42,7 @@ void testsuite_result_init(void)
 void testsuite_result_deinit(void)
 {
 	sieve_result_execution_destroy(&_testsuite_rexec);
-	if (_testsuite_result != NULL)
-		sieve_result_unref(&_testsuite_result);
+	sieve_result_unref(&_testsuite_result);
 	sieve_execute_deinit(&testsuite_execute_env);
 	pool_unref(&testsuite_execute_pool);
 }

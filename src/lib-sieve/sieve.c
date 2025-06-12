@@ -669,8 +669,7 @@ int sieve_test(struct sieve_binary *sbin,
 	}
 
 	/* Cleanup */
-	if (result != NULL)
-		sieve_result_unref(&result);
+	sieve_result_unref(&result);
 	sieve_execute_deinit(&eenv);
 	pool_unref(&pool);
 
@@ -734,8 +733,7 @@ int sieve_execute(struct sieve_binary *sbin,
 	sieve_result_execution_destroy(&rexec);
 
 	/* Cleanup */
-	if (result != NULL)
-		sieve_result_unref(&result);
+	sieve_result_unref(&result);
 	sieve_execute_finish(&eenv, ret);
 	sieve_execute_deinit(&eenv);
 	pool_unref(&pool);
