@@ -760,13 +760,12 @@ static int edit_mail_headers_parse(struct edit_mail *edmail)
 			struct _header_field_index *field_idx_new;
 			struct _header_field *field;
 
+			i_assert(hdr != NULL);
 			if (hdr->eoh) {
 				/* Record whether header ends in CRLF or LF */
 				edmail->eoh_crlf = hdr->crlf_newline;
-			}
-
-			if (hdr == NULL || hdr->eoh)
 				break;
+			}
 
 			/* Skip bad headers */
 			if (hdr->name_len == 0)
