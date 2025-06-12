@@ -347,6 +347,7 @@ static bool managesieve_client_input_next_cmd(struct client *client)
 		}
 	}
 	if (ret > 0) {
+		i_assert(args != NULL);
 		i_assert(msieve_client->cmd != NULL);
 		ret = msieve_client->cmd->func(msieve_client, args);
 	}
