@@ -534,7 +534,6 @@ sieve_lexer_scan_raw_token(struct sieve_lexical_scanner *scanner)
 			}
 
 			i_unreached();
-			return FALSE;
 		}
 
 		lexer->token_type = STT_SLASH;
@@ -877,8 +876,6 @@ sieve_lexer_scan_raw_token(struct sieve_lexical_scanner *scanner)
 				}
 
  				i_unreached();
-				lexer->token_type = STT_ERROR;
-				return FALSE;
 			}
 
 			if (str_len(str) > SIEVE_MAX_IDENTIFIER_LEN) {
