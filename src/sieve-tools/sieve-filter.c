@@ -236,7 +236,6 @@ static int filter_message(struct sieve_filter_context *sfctx, struct mail *mail)
 			/* Unknown */
 			default:
 				i_unreached();
-				break;
 			}
 		}
 	}

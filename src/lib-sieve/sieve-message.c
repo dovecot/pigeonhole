@@ -739,7 +739,6 @@ int sieve_message_opr_optional_read(const struct sieve_runtime_env *renv,
 		}
 	}
 	i_unreached();
-	return -1;
 }
 
 /*
@@ -1850,7 +1849,6 @@ sieve_mime_header_list_next_item(struct sieve_header_list *_hdrlist,
 	}
 
 	i_unreached();
-	return -1;
 }
 
 static int

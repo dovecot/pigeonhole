@@ -672,7 +672,6 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 	}
 
 	i_unreached();
-	return -1;
 }
 
 void managesieve_proxy_reset(struct client *client)

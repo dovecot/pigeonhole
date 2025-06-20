@@ -511,7 +511,6 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 		break;
 	default:
 		i_unreached();
-		break;
 	}
 
 	/* Calculate value */

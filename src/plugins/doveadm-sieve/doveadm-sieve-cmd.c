@@ -21,7 +21,6 @@ void doveadm_sieve_cmd_failed_error(struct doveadm_sieve_cmd_context *ctx,
 	switch (error_code) {
 	case SIEVE_ERROR_NONE:
 		i_unreached();
-		return;
 	case SIEVE_ERROR_TEMP_FAILURE:
 		exit_code = EX_TEMPFAIL;
 		break;

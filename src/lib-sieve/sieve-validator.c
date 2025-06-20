@@ -244,7 +244,6 @@ static bool _cmd_unknown_validate(struct sieve_validator *valdtr ATTR_UNUSED,
 				  struct sieve_command *cmd ATTR_UNUSED)
 {
 	i_unreached();
-	return FALSE;
 }
 
 static const struct sieve_command_def unknown_command = {
@@ -364,7 +363,6 @@ _unknown_tag_validate(struct sieve_validator *valdtr ATTR_UNUSED,
 		      struct sieve_command *tst ATTR_UNUSED)
 {
 	i_unreached();
-	return FALSE;
 }
 
 static const struct sieve_argument_def _unknown_tag = {

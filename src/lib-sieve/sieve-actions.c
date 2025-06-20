@@ -197,7 +197,6 @@ int sieve_action_opr_optional_read(const struct sieve_runtime_env *renv,
 	}
 
 	i_unreached();
-	return -1;
 }
 
 /*

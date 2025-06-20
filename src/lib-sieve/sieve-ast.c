@@ -826,7 +826,6 @@ int sieve_ast_stringlist_map(
 	}
 
 	i_unreached();
-	return -1;
 }
 
 struct sieve_ast_argument *
