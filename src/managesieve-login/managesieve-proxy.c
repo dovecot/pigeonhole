@@ -640,7 +640,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 						       &reason))
 			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_REDIRECT;
 		else {
-			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH;
+			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_REPLIED;
 			client_send_no(client, AUTH_FAILED_MSG);
 		}
 
@@ -683,6 +683,7 @@ managesieve_proxy_send_failure_reply(struct client *client,
 		break;
 	case LOGIN_PROXY_FAILURE_TYPE_INTERNAL_CONFIG:
 	case LOGIN_PROXY_FAILURE_TYPE_REMOTE_CONFIG:
+	case LOGIN_PROXY_FAILURE_TYPE_AUTH_NOT_REPLIED:
 		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
 				       NULL, LOGIN_PROXY_FAILURE_MSG);
 		break;
@@ -690,7 +691,7 @@ managesieve_proxy_send_failure_reply(struct client *client,
 		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
 				       "TRYLATER", reason);
 		break;
-	case LOGIN_PROXY_FAILURE_TYPE_AUTH:
+	case LOGIN_PROXY_FAILURE_TYPE_AUTH_REPLIED:
 		/* reply was already sent */
 		break;
 	}
