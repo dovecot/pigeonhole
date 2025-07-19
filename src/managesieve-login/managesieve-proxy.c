@@ -226,11 +226,6 @@ static int
 proxy_write_auth_response(struct managesieve_client *client,
 			  const char *challenge, string_t *str)
 {
-	const unsigned char *data;
-	size_t data_len;
-	const char *error;
-	int ret;
-
 	if (base64_decode(challenge, strlen(challenge), str) < 0) {
 		login_proxy_failed(client->common.login_proxy,
 			login_proxy_get_event(client->common.login_proxy),
@@ -238,25 +233,12 @@ proxy_write_auth_response(struct managesieve_client *client,
 			"Server sent invalid base64 data in AUTHENTICATE response");
 		return -1;
 	}
-	ret = dsasl_client_input(client->common.proxy_sasl_client,
-				 str_data(str), str_len(str), &error);
-	if (ret == 0) {
-		ret = dsasl_client_output(client->common.proxy_sasl_client,
-					  &data, &data_len, &error);
-	}
-	if (ret < 0) {
-		const char *reason = t_strdup_printf(
-			"Server sent invalid authentication data: %s", error);
-		login_proxy_failed(client->common.login_proxy,
-			login_proxy_get_event(client->common.login_proxy),
-			LOGIN_PROXY_FAILURE_TYPE_PROTOCOL, reason);
+	if (login_proxy_sasl_step(&client->common, str) < 0)
 		return -1;
-	}
-	i_assert(ret == 0);
-
-	str_truncate(str, 0);
-	proxy_write_auth_data(data, data_len, str);
-	str_append(str, "\r\n");
+	/* str is guaranteed to contain only base64 characters, which don't
+	   need escaping. Add the beginning and end quotes. */
+	str_insert(str, 0, "\"");
+	str_append_c(str, '"');
 	return 0;
 }
 
