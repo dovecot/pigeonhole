@@ -97,7 +97,7 @@ int ext_extlists_name_normalize(const char **name, const char **error_r)
 		*name = t_strconcat(scheme, ":", uri, NULL);
 		return 1;
 	} else if (strcmp(scheme, "tag") == 0) {
-		if (uri_check(uri, URI_PARSE_SCHEME_EXTERNAL, error_r) < 0) {
+		if (uri_check(uri, URI_PARSE_SCHEME_EXTERNAL, &error) < 0) {
 			*error_r = t_strconcat("Invalid TAG URI: ",
 					       error, NULL);
 			return -1;
