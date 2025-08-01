@@ -146,14 +146,13 @@ tst_vextlist_operation_execute(const struct sieve_runtime_env *renv,
 			all_valid = FALSE;
 
 			if (warned)
-				break;
+				continue;
 			warned = TRUE;
 
 			sieve_runtime_warning(
 				renv, NULL, ":list tag: "
 				"invalid external list name: %s",
 				str_sanitize_utf8(str_c(list_name_item), 1024));
-			break;
 		}
 		if (vret == 0) {
 			all_valid = FALSE;
