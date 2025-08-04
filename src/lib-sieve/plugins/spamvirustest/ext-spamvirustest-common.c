@@ -16,9 +16,10 @@
 #include "ext-spamvirustest-settings.h"
 #include "ext-spamvirustest-common.h"
 
+#include "dregex.h"
+
 #include <sys/types.h>
 #include <ctype.h>
-#include <regex.h>
 
 /*
  * Extension data
@@ -26,7 +27,7 @@
 
 struct ext_spamvirustest_header_spec {
 	const char *header_name;
-	regex_t regexp;
+	struct dregex_code *regexp;
 	bool regexp_match;
 };
 
@@ -38,48 +39,6 @@ struct ext_spamvirustest_context {
 	struct ext_spamvirustest_header_spec status_header;
 	struct ext_spamvirustest_header_spec score_max_header;
 };
-
-/*
- * Regexp utility
- */
-
-static bool
-_regexp_compile(regex_t *regexp, const char *data, const char **error_r)
-{
-	size_t errsize;
-	int ret;
-
-	*error_r = "";
-
-	ret = regcomp(regexp, data, REG_EXTENDED);
-	if (ret == 0)
-		return TRUE;
-
-	errsize = regerror(ret, regexp, NULL, 0);
-
-	if (errsize > 0) {
-		char *errbuf = t_malloc0(errsize);
-
-		(void)regerror(ret, regexp, errbuf, errsize);
-
-		/* We don't want the error to start with a capital letter */
-		errbuf[0] = i_tolower(errbuf[0]);
-
-		*error_r = errbuf;
-	}
-	return FALSE;
-}
-
-static const char *
-_regexp_match_get_value(const char *string, int index, regmatch_t pmatch[],
-			int nmatch)
-{
-	if (index > -1 && index < nmatch && pmatch[index].rm_so != -1) {
-		return t_strndup(string + pmatch[index].rm_so,
-				 pmatch[index].rm_eo - pmatch[index].rm_so);
-	}
-	return NULL;
-}
 
 /*
  * Configuration parser
@@ -131,19 +90,23 @@ ext_spamvirustest_header_spec_parse(
 	while (*p == ' ' || *p == '\t') p++;
 
 	spec_r->regexp_match = TRUE;
-	if (!_regexp_compile(&spec_r->regexp, p, &regexp_error)) {
+	struct dregex_code *code = dregex_code_create();
+
+	if (dregex_code_compile(code, p, DREGEX_ICASE|DREGEX_ASCII_ONLY, &regexp_error) < 0) {
 		*error_r = t_strdup_printf(
 			"failed to compile regular expression '%s': %s",
 			p, regexp_error);
+		dregex_code_free(&code);
 		return FALSE;
 	}
+	spec_r->regexp = code;
 	return TRUE;
 }
 
 static void
 ext_spamvirustest_header_spec_free(struct ext_spamvirustest_header_spec *spec)
 {
-	regfree(&spec->regexp);
+	dregex_code_free(&spec->regexp);
 }
 
 static bool
@@ -304,7 +267,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 	struct sieve_message_context *msgctx = renv->msgctx;
 	struct ext_spamvirustest_message_context *mctx;
 	struct mail *mail;
-	regmatch_t match_values[2];
+	ARRAY_TYPE(const_string) match_values;
 	const char *header_value, *error;
 	const char *status = NULL, *max = NULL;
 	float status_value, max_value;
@@ -374,21 +337,30 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 			}
 
 			if (max_header->regexp_match) {
+				t_array_init(&match_values, 2);
+				int ret;
 				/* Execute regex */
-				if (regexec(&max_header->regexp, header_value,
-					    2, match_values, 0) != 0 ) {
-					sieve_runtime_trace(
-						renv, SIEVE_TRLVL_TESTS,
-						"score_max_header regexp for header '%s' did not match "
-						"on value '%s'",
-						max_header->header_name,
-						header_value);
+				if ((ret = dregex_code_match_groups(max_header->regexp, header_value,
+								   &match_values, &error)) < 1) {
+					if (ret < 0) {
+						sieve_runtime_trace(
+							renv, SIEVE_TRLVL_TESTS,
+							"score_max_header regexp for header '%s' failed"
+							"on value '%s': %s",
+							max_header->header_name,
+							header_value,
+							error);
+					} else {
+						sieve_runtime_trace(
+							renv, SIEVE_TRLVL_TESTS,
+							"score_max_header regexp for header '%s' did not match "
+							"on value '%s'",
+							max_header->header_name,
+							header_value);
+					}
 					goto failed;
 				}
-
-				max = _regexp_match_get_value(header_value, 1,
-							      match_values, 2);
-				if (max == NULL) {
+				if (array_count(&match_values) < 2) {
 					sieve_runtime_trace(
 						renv, SIEVE_TRLVL_TESTS,
 						"regexp did not return match value "
@@ -396,6 +368,7 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 						header_value);
 					goto failed;
 				}
+				max = array_idx_elem(&match_values, 1);
 			} else {
 				max = header_value;
 			}
@@ -442,24 +415,33 @@ int ext_spamvirustest_get_value(const struct sieve_runtime_env *renv,
 
 	/* Execute regex */
 	if (status_header->regexp_match) {
-		if (regexec(&status_header->regexp, header_value, 2,
-			    match_values, 0) != 0 ) {
-			sieve_runtime_trace(
-				renv, SIEVE_TRLVL_TESTS,
-				"status_header regexp for header '%s' did not match on value '%s'",
-				status_header->header_name, header_value);
+		int ret;
+		t_array_init(&match_values, 2);
+		if ((ret = dregex_code_match_groups(status_header->regexp, header_value,
+						   &match_values, &error)) < 1) {
+			if (ret < 0) {
+				 sieve_runtime_trace(
+					renv, SIEVE_TRLVL_TESTS,
+					"status_header regexp for header '%s' did failed on value '%s': %s",
+					status_header->header_name, header_value, error);
+
+			} else {
+				sieve_runtime_trace(
+					renv, SIEVE_TRLVL_TESTS,
+					"status_header regexp for header '%s' did not match on value '%s'",
+					status_header->header_name, header_value);
+			}
 			goto failed;
 		}
 
-		status = _regexp_match_get_value(header_value, 1,
-						 match_values, 2);
-		if (status == NULL) {
+		if (array_count(&match_values) < 2) {
 			sieve_runtime_trace(
 				renv, SIEVE_TRLVL_TESTS,
 				"regexp did not return match value for string '%s'",
 				header_value);
 			goto failed;
 		}
+		status = array_idx_elem(&match_values, 1);
 	} else {
 		status = header_value;
 	}

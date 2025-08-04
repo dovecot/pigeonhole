@@ -16,7 +16,10 @@
  * changed. This requires dumping the compiled regex to the binary.
  * Most likely, this will only be possible when we implement regular
  * expressions ourselves.
- *
+ */
+
+/* NOTE: Extension does not support unicode equality operator `[=e=]` or
+ * collation sequence `[.e.]` due to dovecot lib-regex limitations.
  */
 
 #include "lib.h"
@@ -39,7 +42,6 @@
 #include "ext-regex-common.h"
 
 #include <sys/types.h>
-#include <regex.h>
 
 /*
  * Extension
