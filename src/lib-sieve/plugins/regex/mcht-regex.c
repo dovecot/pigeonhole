@@ -131,7 +131,7 @@ mcht_regex_validate_context(struct sieve_validator *valdtr,
 			sieve_argument_validate_error(
 				valdtr, mtctx->argument,
 				"regex match type only supports "
-				"i;octet and i;ascii-casemap comparators");
+				"i;octet, i;ascii-casemap and i;unicode-casemap comparators");
 			return FALSE;
 		}
 	}
@@ -267,6 +267,8 @@ mcht_regex_match_keys(struct sieve_match_context *mctx,
 						cflags |= DREGEX_ASCII_ONLY;
 					else if (sieve_comparator_is(cmp, i_ascii_casemap_comparator))
 						cflags |= (DREGEX_ICASE | DREGEX_ASCII_ONLY);
+					else if (sieve_comparator_is(cmp, i_unicode_casemap_comparator))
+						cflags |= DREGEX_ICASE;
 					else
 						rkey->status = -1; /* Not supported */
 
