@@ -1232,7 +1232,7 @@ int sieve_script_sequence_next(struct sieve_script_sequence *sseq,
 			i_assert(storage->error_code != SIEVE_ERROR_NONE);
 			i_assert(storage->error != NULL);
 
-			if (*error_code_r == SIEVE_ERROR_NOT_FOUND)
+			if (storage->error_code == SIEVE_ERROR_NOT_FOUND)
 				ret = 0;
 			else {
 				*error_code_r = storage->error_code;
