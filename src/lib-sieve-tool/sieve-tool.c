@@ -587,7 +587,7 @@ sieve_tool_script_parse_location(struct sieve_tool *tool, const char *location,
 		settings_instance_find(svinst->event);
 	const char *prefix = t_strdup_printf("sieve_script/%s", storage_name);
 
-	settings_override(set_instance, "sieve_script", storage_name,
+	settings_override(set_instance, "sieve_script+", storage_name,
 			  SETTINGS_OVERRIDE_TYPE_2ND_CLI_PARAM);
 	settings_override(set_instance,
 			  t_strdup_printf("%s/sieve_script_storage", prefix),
