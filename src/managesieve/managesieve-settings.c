@@ -53,6 +53,8 @@ const struct setting_keyvalue managesieve_settings_service_settings_defaults[] =
 	{ "unix_listener/srv.managesieve\\s%{pid}/type", "admin" },
 	{ "unix_listener/srv.managesieve\\s%{pid}/mode", "0600" },
 
+	{ "service_extra_groups", "$SET:default_internal_group" },
+
 	{ NULL, NULL }
 };
 
