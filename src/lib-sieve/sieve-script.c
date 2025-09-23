@@ -166,8 +166,8 @@ sieve_script_create_common(struct sieve_instance *svinst,
 		sieve_storage_unref(&storage);
 		if (ret > 0 && open &&
 		    sieve_script_open(script, error_code_r) < 0) {
-			*error_r = sieve_storage_get_last_error(
-				storage, error_code_r);
+			*error_r = sieve_script_get_last_error(
+				script, error_code_r);
 			sieve_script_unref(&script);
 			if (*error_code_r == SIEVE_ERROR_NOT_FOUND)
 				continue;
