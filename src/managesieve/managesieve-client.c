@@ -120,8 +120,10 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 	/* Get Sieve storage */
 
 	if (client_get_storage(svinst, user, &storage,
-			       client_error_r, error_r) < 0)
+			       client_error_r, error_r) < 0) {
+		sieve_deinit(&svinst);
 		return -1;
+	}
 
 	/* always use nonblocking I/O */
 	net_set_nonblock(fd_in, TRUE);
