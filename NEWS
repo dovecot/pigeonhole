@@ -1,3 +1,13 @@
+v2.4.2 2025-10-24  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	* lib-sieve: Use new regular expression library in core.
+	* managesieve: Add default service_extra_groups=$SET:default_internal_group.
+	+ lib-sieve: Add support for "extlists" extension.
+	+ lib-sieve: regex - Allow unicode comparator.
+	- lib-sieve-tool: sieve-tool - All sieve_script settings were overriden.
+	- lib-sieve: storage: dict: sieve_script_dict filter was missing from settings.
+	- sieve-ldap-storage: Fix compile without LDAP.
+
 v2.4.1 2025-03-28  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	- global: Fix settings handling bugs. Especially
