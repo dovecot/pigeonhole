@@ -59,6 +59,23 @@ struct sieve_binary_block_header {
 };
 
 /*
+ * Utility
+ */
+
+static bool sieve_binary_can_update(struct sieve_binary *sbin)
+{
+	const char *dirpath, *p;
+
+	p = strrchr(sbin->path, '/');
+	if (p == NULL)
+		dirpath = ".";
+	else
+		dirpath = t_strdup_until(sbin->path, p);
+
+	return (access(dirpath, W_OK | X_OK) == 0);
+}
+
+/*
  * Header manipulation
  */
 
@@ -118,11 +135,15 @@ sieve_binary_file_read_header(struct sieve_binary *sbin, int fd,
 	} else if (header.version_major != SIEVE_BINARY_VERSION_MAJOR) {
 		/* Binary is of different major version. Caller will have to
 		   recompile */
-		e_error(sbin->event, "read: "
-			"binary stored with different major version %d.%d "
-			"(!= %d.%d; automatically fixed when re-compiled)",
-			(int)header.version_major, (int)header.version_minor,
-			SIEVE_BINARY_VERSION_MAJOR, SIEVE_BINARY_VERSION_MINOR);
+		bool important = (sbin->script == NULL ||
+				  !sieve_binary_can_update(sbin));
+		enum log_type log_type = (important ?
+					  LOG_TYPE_ERROR : LOG_TYPE_DEBUG);
+		e_log(sbin->event, log_type, "read: "
+		      "binary stored with different major version %d.%d "
+		      "(!= %d.%d; automatically fixed when re-compiled)",
+		      (int)header.version_major, (int)header.version_minor,
+		      SIEVE_BINARY_VERSION_MAJOR, SIEVE_BINARY_VERSION_MINOR);
 		*error_code_r = SIEVE_ERROR_NOT_VALID;
 		return -1;
 	} else if (header.hdr_size < SIEVE_BINARY_BASE_HEADER_SIZE) {
