@@ -6,7 +6,7 @@ dnl This file is free software; the authors give
 dnl unlimited permission to copy and/or distribute it, with or without
 dnl modifications, as long as this notice is preserved.
 
-# serial 41
+# serial 45
 
 dnl
 dnl Check for support for D_FORTIFY_SOURCE=2
@@ -18,7 +18,7 @@ AC_DEFUN([AC_CC_D_FORTIFY_SOURCE],[
       case "$host" in
         *)
           gl_COMPILER_OPTION_IF([-O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2], [
-            CFLAGS="$CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2"
+            AM_CFLAGS="$AM_CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2"
             ],
             [],
             [AC_LANG_PROGRAM()]
@@ -43,20 +43,19 @@ AC_DEFUN([DC_DOVECOT_CFLAGS],[
     CFLAGS="-std=$mystd"
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM()
     ], [
-      CFLAGS="$CFLAGS $old_cflags"
+      AM_CFLAGS="$AM_CFLAGS $CFLAGS"
       std=$mystd
       break
-    ], [
-      CFLAGS="$old_cflags"
     ])
   done
   AC_MSG_RESULT($std)
+  CFLAGS="$old_cflags"
 
   AS_IF([test "x$ac_cv_c_compiler_gnu" = "xyes"], [
     dnl -Wcast-qual -Wcast-align -Wconversion -Wunreachable-code # too many warnings
     dnl -Wstrict-prototypes -Wredundant-decls # may give warnings in some systems
     dnl -Wmissing-format-attribute -Wmissing-noreturn -Wwrite-strings # a couple of warnings
-    CFLAGS="$CFLAGS -Wall -W -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wchar-subscripts -Wformat=2 -Wbad-function-cast"
+    AM_CFLAGS="$AM_CFLAGS -Wall -W -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wchar-subscripts -Wformat=2 -Wbad-function-cast"
 
     AS_IF([test "$have_clang" = "yes"], [
       AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -65,11 +64,11 @@ AC_DEFUN([DC_DOVECOT_CFLAGS],[
       #endif
       ]], [[]])],[],[
         dnl clang 3.3+ unfortunately this gives warnings with hash.h
-        CFLAGS="$CFLAGS -Wno-duplicate-decl-specifier"
+        AM_CFLAGS="$AM_CFLAGS -Wno-duplicate-decl-specifier"
       ])
     ], [
       dnl This is simply to avoid warning when building strftime() wrappers..
-      CFLAGS="$CFLAGS -fno-builtin-strftime"
+      AM_CFLAGS="$AM_CFLAGS -fno-builtin-strftime"
     ])
 
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -78,8 +77,17 @@ AC_DEFUN([DC_DOVECOT_CFLAGS],[
       #endif
       ]], [[]])],[
         dnl gcc4
-        CFLAGS="$CFLAGS -Wstrict-aliasing=2"
+        AM_CFLAGS="$AM_CFLAGS -Wstrict-aliasing=2"
       ],[])
+
+    old_cflags=$CFLAGS
+    CFLAGS="$CFLAGS -Werror"
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      const unsigned char foo[4] __attribute__((nonstring)) = "1234";
+      ]], [[]])],[
+        AC_DEFINE(HAVE_ATTR_NONSTRING,, [define if you have nonstring attribute])
+      ])
+    CFLAGS="$old_cflags"
   ])
 ])
 
@@ -210,12 +218,12 @@ AC_DEFUN([AC_CC_RETPOLINE],[
       case "$host" in
         *)
           gl_COMPILER_OPTION_IF([-mfunction-return=$with_retpoline],
-            [CFLAGS="$CFLAGS -mfunction-return=$with_retpoline"],
+            [AM_CFLAGS="$AM_CFLAGS -mfunction-return=$with_retpoline"],
             [],
             [AC_LANG_PROGRAM()]
           )
           gl_COMPILER_OPTION_IF([-mindirect-branch=$with_retpoline], [
-            CFLAGS="$CFLAGS -mindirect-branch=$with_retpoline"
+            AM_CFLAGS="$AM_CFLAGS -mindirect-branch=$with_retpoline"
             ],
             [],
             [AC_LANG_PROGRAM()]
@@ -234,11 +242,11 @@ AC_DEFUN([AC_CC_F_STACK_PROTECTOR],[
       case "$host" in
         *)
           gl_COMPILER_OPTION_IF([-fstack-protector-strong], [
-            CFLAGS="$CFLAGS -fstack-protector-strong"
+            AM_CFLAGS="$AM_CFLAGS -fstack-protector-strong"
             ],
             [
                gl_COMPILER_OPTION_IF([-fstack-protector], [
-                 CFLAGS="$CFLAGS -fstack-protector"
+                 AM_CFLAGS="$AM_CFLAGS -fstack-protector"
                  ], [], [AC_LANG_PROGRAM()])
             ],
             [AC_LANG_PROGRAM()]
@@ -310,7 +318,8 @@ AC_DEFUN([DC_DOVECOT_FUZZER],[
                 with_fuzzer=$withval,
                 with_fuzzer=no)
 	AS_IF([test x$with_fuzzer = xclang], [
-		CFLAGS="$CFLAGS -fsanitize=fuzzer-no-link"
+		AM_CFLAGS="$AM_CFLAGS -fsanitize=fuzzer-no-link"
+		AM_CFLAGS="$AM_CFLAGS -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
 		# use $LIB_FUZZING_ENGINE for linking if it exists
 		FUZZER_LDFLAGS=${LIB_FUZZING_ENGINE--fsanitize=fuzzer}
 		# May need to use CXXLINK for linking, which wants sources to
@@ -359,6 +368,7 @@ AC_DEFUN([DC_DOVECOT],[
 	cd $dovecotdir
 	abs_dovecotdir=`pwd`
 	cd $old
+	AC_SUBST(abs_dovecotdir)
 	DISTCHECK_CONFIGURE_FLAGS="--with-dovecot=$abs_dovecotdir --without-dovecot-install-dirs"
 
 	dnl Make sure dovecot-config doesn't accidentically override flags
@@ -395,10 +405,10 @@ AC_DEFUN([DC_DOVECOT],[
 
 	AX_SUBST_L([DISTCHECK_CONFIGURE_FLAGS], [dovecotdir], [dovecot_moduledir], [dovecot_installed_moduledir], [dovecot_pkgincludedir], [dovecot_pkglibexecdir], [dovecot_pkglibdir], [dovecot_docdir], [dovecot_statedir])
 	AX_SUBST_L([DOVECOT_INSTALLED], [DOVECOT_CFLAGS], [DOVECOT_LIBS], [DOVECOT_SSL_LIBS], [DOVECOT_SQL_LIBS], [DOVECOT_LDAP_LIBS], [DOVECOT_COMPRESS_LIBS], [DOVECOT_BINARY_CFLAGS], [DOVECOT_BINARY_LDFLAGS])
-	AX_SUBST_L([LIBDOVECOT], [LIBDOVECOT_LOGIN], [LIBDOVECOT_SQL], [LIBDOVECOT_LDAP], [LIBDOVECOT_OPENSSL], [LIBDOVECOT_COMPRESS], [LIBDOVECOT_LDA], [LIBDOVECOT_STORAGE], [LIBDOVECOT_DSYNC], [LIBDOVECOT_LIBLANG])
-	AX_SUBST_L([LIBDOVECOT_DEPS], [LIBDOVECOT_LOGIN_DEPS], [LIBDOVECOT_SQL_DEPS], [LIBDOVECOT_LDAP_DEPS], [LIBDOVECOT_OPENSSL_DEPS], [LIBDOVECOT_COMPRESS_DEPS], [LIBDOVECOT_LDA_DEPS], [LIBDOVECOT_STORAGE_DEPS], [LIBDOVECOT_DSYNC_DEPS], [LIBDOVECOT_LIBLANG_DEPS])
+	AX_SUBST_L([LIBDOVECOT], [LIBDOVECOT_LOGIN], [LIBDOVECOT_SQL], [LIBDOVECOT_LDAP], [LIBDOVECOT_OPENSSL], [LIBDOVECOT_COMPRESS], [LIBDOVECOT_LDA], [LIBDOVECOT_STORAGE], [LIBDOVECOT_DSYNC], [LIBDOVECOT_LIBLANG], [LIBDOVECOT_GSSAPI])
+	AX_SUBST_L([LIBDOVECOT_DEPS], [LIBDOVECOT_LOGIN_DEPS], [LIBDOVECOT_SQL_DEPS], [LIBDOVECOT_LDAP_DEPS], [LIBDOVECOT_OPENSSL_DEPS], [LIBDOVECOT_COMPRESS_DEPS], [LIBDOVECOT_LDA_DEPS], [LIBDOVECOT_STORAGE_DEPS], [LIBDOVECOT_DSYNC_DEPS], [LIBDOVECOT_LIBLANG_DEPS], [LIBDOVECOT_GSSAPI_DEPS])
 	AX_SUBST_L([LIBDOVECOT_INCLUDE], [LIBDOVECOT_LDA_INCLUDE], [LIBDOVECOT_AUTH_INCLUDE], [LIBDOVECOT_DOVEADM_INCLUDE], [LIBDOVECOT_SERVICE_INCLUDE], [LIBDOVECOT_STORAGE_INCLUDE], [LIBDOVECOT_LOGIN_INCLUDE], [LIBDOVECOT_SQL_INCLUDE], [LIBDOVECOT_LDAP_INCLUDE])
-	AX_SUBST_L([LIBDOVECOT_IMAP_LOGIN_INCLUDE], [LIBDOVECOT_CONFIG_INCLUDE], [LIBDOVECOT_IMAP_INCLUDE], [LIBDOVECOT_POP3_INCLUDE], [LIBDOVECOT_SUBMISSION_INCLUDE], [LIBDOVECOT_LMTP_INCLUDE], [LIBDOVECOT_DSYNC_INCLUDE], [LIBDOVECOT_IMAPC_INCLUDE], [LIBDOVECOT_LANG_INCLUDE])
+	AX_SUBST_L([LIBDOVECOT_IMAP_LOGIN_INCLUDE], [LIBDOVECOT_CONFIG_INCLUDE], [LIBDOVECOT_IMAP_INCLUDE], [LIBDOVECOT_POP3_INCLUDE], [LIBDOVECOT_SUBMISSION_INCLUDE], [LIBDOVECOT_LMTP_INCLUDE], [LIBDOVECOT_DSYNC_INCLUDE], [LIBDOVECOT_IMAPC_INCLUDE], [LIBDOVECOT_FTS_INCLUDE])
 	AX_SUBST_L([LIBDOVECOT_NOTIFY_INCLUDE], [LIBDOVECOT_PUSH_NOTIFICATION_INCLUDE], [LIBDOVECOT_ACL_INCLUDE], [LIBDOVECOT_LIBLANG_INCLUDE], [LIBDOVECOT_LUA_INCLUDE])
 	AX_SUBST_L([DOVECOT_LUA_LIBS], [DOVECOT_LUA_CFLAGS], [LIBDOVECOT_LUA], [LIBDOVECOT_LUA_DEPS])
 
@@ -520,6 +530,9 @@ AC_DEFUN([CC_CLANG],[
   AC_MSG_CHECKING([whether $CC is clang 3.3+])
   AS_IF([$CC -dM -E -x c /dev/null | $GREP __clang__ > /dev/null 2>&1], [
       AS_VAR_SET([have_clang], [yes])
+      # buffer_t usage triggers this warning
+      gl_WARN_ADD([-Wno-default-const-init-field-unsafe])
+      AM_CFLAGS="$AM_CFLAGS $WARN_CFLAGS"
   ], [
       AS_VAR_SET([have_clang], [no])
   ])
@@ -568,7 +581,7 @@ AC_DEFUN([DOVECOT_WANT_UBSAN], [
              AC_DEFINE([HAVE_FSANITIZE_NULLABILITY], [1], [Define if your compiler has -fsanitize=nullability])
      ])
      AS_IF([test "$san_flags" != "" ], [
-       EXTRA_CFLAGS="$EXTRA_CFLAGS $san_flags -U_FORTIFY_SOURCE -g -ggdb3 -O0 -fno-omit-frame-pointer"
+       AM_CFLAGS="$AM_CFLAGS $san_flags -U_FORTIFY_SOURCE -g -ggdb3 -O0 -fno-omit-frame-pointer"
        AC_DEFINE([HAVE_UNDEFINED_SANITIZER], [1], [Define if your compiler supports undefined sanitizers])
      ], [
        AC_MSG_ERROR([No undefined sanitizer support in your compiler])
