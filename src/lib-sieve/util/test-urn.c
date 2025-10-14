@@ -42,15 +42,15 @@ test_urn_equal(struct urn *urnt, struct urn *urnp)
 {
 	test_assert(urnp->assigned_name != NULL);
 	i_assert(urnt->assigned_name != NULL);
-	test_assert(strcmp(urnp->assigned_name, urnt->assigned_name) == 0);
+	test_assert(null_strcmp(urnp->assigned_name, urnt->assigned_name) == 0);
 
 	test_assert(urnp->nid != NULL);
 	i_assert(urnt->nid != NULL);
-	test_assert(strcmp(urnp->nid, urnt->nid) == 0);
+	test_assert(null_strcmp(urnp->nid, urnt->nid) == 0);
 
 	test_assert(urnp->nss != NULL);
 	i_assert(urnt->nss != NULL);
-	test_assert(strcmp(urnp->nss, urnt->nss) == 0);
+	test_assert(null_strcmp(urnp->nss, urnt->nss) == 0);
 
 	if (urnp->enc_r_component == NULL || urnt->enc_r_component == NULL) {
 		test_assert(urnp->enc_r_component == urnt->enc_r_component);
