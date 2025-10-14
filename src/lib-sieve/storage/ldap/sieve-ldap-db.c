@@ -647,13 +647,13 @@ static int db_ldap_set_options(struct ldap_connection *conn)
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	unsigned int ldap_version;
 	const char *error;
-	int value;
 
 	if (db_ldap_set_opt(conn, LDAP_OPT_DEREF, &set->parsed.deref,
 			    "ldap_deref", set->deref) < 0)
 		return -1;
 #ifdef LDAP_OPT_DEBUG_LEVEL
 	if (set->debug_level != 0) {
+		int value = set->debug_level;
 		if (db_ldap_set_opt(conn, LDAP_OPT_DEBUG_LEVEL, &value,
 				    "ldap_debug_level", dec2str(set->debug_level)) < 0)
 			return -1;
