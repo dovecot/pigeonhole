@@ -32,10 +32,22 @@ libpigeonhole_settings_la_DEPENDENCIES = \
 noinst_HEADERS = \
 	pigeonhole-settings.h
 
+if DOVECOT_INSTALLED
+SETTINGS_HISTORY_PY = $(dovecot_pkglibexecdir)/settings-history.py
+else
+SETTINGS_HISTORY_PY = $(abs_dovecotdir)/src/lib-settings/settings-history.py
+endif
+
+pigeonhole-settings.c: settings-history-pigeonhole.h
+BUILT_SOURCES = settings-history-pigeonhole.h
+settings-history-pigeonhole.h: $(srcdir)/settings-history-pigeonhole.txt $(SETTINGS_HISTORY_PY)
+	$(AM_V_GEN)$(PYTHON) $(SETTINGS_HISTORY_PY) --pro 1 --plugin pigeonhole $< $@
+
 pigeonhole-settings-dynamic.c: $(SETTING_FILES) $(SETTING_LINKED_FILES) $(top_srcdir)/src/plugins/settings/settings-get.pl
 	$(AM_V_GEN)$(top_srcdir)/src/plugins/settings/settings-get.pl \
 		$(SETTING_FILES) -- $(SETTING_LINKED_FILES) > pigeonhole-settings-dynamic.c || \
 		rm -f pigeonhole-settings-dynamic.c
 
 EXTRA_DIST = \
+	settings-history-pigeonhole.txt \
 	settings-get.pl
