@@ -53,7 +53,9 @@ const struct setting_keyvalue managesieve_settings_service_settings_defaults[] =
 	{ "unix_listener/srv.managesieve\\s%{pid}/type", "admin" },
 	{ "unix_listener/srv.managesieve\\s%{pid}/mode", "0600" },
 
-	{ "service_extra_groups", "$SET:default_internal_group" },
+	/* This needs to be here explicitly until the backwards compatibility
+	   is removed from settings-history-pigeonhole.txt */
+	{ "service_extra_groups", "" },
 
 	{ NULL, NULL }
 };
