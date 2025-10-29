@@ -99,7 +99,7 @@ static void test_deinit_mail_user()
 		i_error("unlink_directory(%s) failed: %s", mail_home, error);
 }
 
-static void test_init(void)
+static void test_edit_mail_init(void)
 {
 	test_pool = pool_alloconly_create(MEMPOOL_GROWING"test pool", 128);
 
@@ -107,7 +107,7 @@ static void test_init(void)
 	test_raw_mail_user = mail_raw_user_create(test_mail_user);
 }
 
-static void test_deinit(void)
+static void test_edit_mail_deinit(void)
 {
 	mail_user_unref(&test_raw_mail_user);
 	test_deinit_mail_user();
@@ -186,7 +186,7 @@ static void test_edit_mail_concatenated(void)
 	const char *value;
 
 	test_begin("edit-mail - concatenated");
-	test_init();
+	test_edit_mail_init();
 
 	/* Compose the message */
 
@@ -434,7 +434,7 @@ static void test_edit_mail_concatenated(void)
 	edit_mail_unwrap(&edmail);
 	mail_raw_close(&rawmail);
 	i_stream_unref(&input_msg);
-	test_deinit();
+	test_edit_mail_deinit();
 	test_end();
 }
 
@@ -696,7 +696,7 @@ static void test_edit_mail_big_header(void)
 	const char *value;
 
 	test_begin("edit-mail - big header");
-	test_init();
+	test_edit_mail_init();
 
 	/* compose the message */
 
@@ -737,7 +737,7 @@ static void test_edit_mail_big_header(void)
 	edit_mail_unwrap(&edmail);
 	mail_raw_close(&rawmail);
 	i_stream_unref(&input_msg);
-	test_deinit();
+	test_edit_mail_deinit();
 	test_end();
 }
 
@@ -757,7 +757,7 @@ static void test_edit_mail_small_buffer(void)
 	unsigned int i;
 
 	test_begin("edit-mail - small buffer");
-	test_init();
+	test_edit_mail_init();
 
 	/* compose the message */
 
@@ -806,7 +806,7 @@ static void test_edit_mail_small_buffer(void)
 	edit_mail_unwrap(&edmail);
 	mail_raw_close(&rawmail);
 	i_stream_unref(&input_msg);
-	test_deinit();
+	test_edit_mail_deinit();
 	test_end();
 }
 
@@ -820,7 +820,7 @@ static void test_edit_mail_empty(void)
 	const char *value;
 
 	test_begin("edit-mail - empty message");
-	test_init();
+	test_edit_mail_init();
 
 	/* Compose the message */
 
@@ -862,7 +862,7 @@ static void test_edit_mail_empty(void)
 	edit_mail_unwrap(&edmail);
 	mail_raw_close(&rawmail);
 	i_stream_unref(&input_msg);
-	test_deinit();
+	test_edit_mail_deinit();
 	test_end();
 }
 
