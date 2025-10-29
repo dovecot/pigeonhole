@@ -8,6 +8,7 @@
 #include "ostream.h"
 #include "hostpid.h"
 #include "path-util.h"
+#include "mkdir-parents.h"
 #include "settings.h"
 
 #include "sieve.h"
@@ -52,7 +53,7 @@ static void print_help(void)
 	printf(
 "Usage: testsuite [-D] [-E] [-F] [-d <dump-filename>]\n"
 "                 [-t <trace-filename>] [-T <trace-option>]\n"
-"                 [-P <plugin>] [-x <extensions>]\n"
+"                 [-P <plugin>] [-x <extensions>] [-W <work-directory>]\n"
 "                 <scriptfile>\n"
 	);
 }
@@ -83,7 +84,7 @@ testsuite_run(struct sieve_binary *sbin, struct sieve_error_handler *ehandler)
 int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
-	const char *abspath, *scriptfile, *dumpfile, *tracefile;
+	const char *abspath, *scriptfile, *dumpfile, *tracefile, *wdir;
 	struct sieve_trace_config trace_config;
 	struct sieve_binary *sbin;
 	const char *sieve_dir, *cwd, *error;
@@ -91,10 +92,10 @@ int main(int argc, char **argv)
 	int ret, c;
 
 	sieve_tool = sieve_tool_init("testsuite", &argc, &argv,
-				     "d:t:T:EF", TRUE);
+				     "d:t:T:EFW:", TRUE);
 
 	/* Parse arguments */
-	dumpfile = tracefile = NULL;
+	dumpfile = tracefile = wdir = NULL;
 	i_zero(&trace_config);
 	trace_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
@@ -115,6 +116,10 @@ int main(int argc, char **argv)
 			break;
 		case 'F':
 			expect_failure = TRUE;
+			break;
+		case 'W':
+			/* work directory */
+			wdir = optarg;
 			break;
 		default:
 			print_help();
@@ -152,10 +157,16 @@ int main(int argc, char **argv)
 						      ":", str, NULL));
 	}
 
-	/* Initialize mail user */
-	if (t_get_working_dir(&cwd, &error) < 0)
-		i_fatal("Failed to get working directory: %s", error);
-	sieve_tool_set_homedir(sieve_tool, cwd);
+	/* Initialize working directory */
+	if (wdir != NULL) {
+		if (mkdir_parents(wdir, 0700) < 0 && errno != EEXIST)
+			i_fatal("Failed to create working directory: %m");
+		sieve_tool_set_homedir(sieve_tool, wdir);
+	} else {
+		if (t_get_working_dir(&cwd, &error) < 0)
+			i_fatal("Failed to get working directory: %s", error);
+		sieve_tool_set_homedir(sieve_tool, cwd);
+	}
 
 	/* Manually setup the absolute sieve storage path for the executed
 	   test script. */
@@ -170,7 +181,7 @@ int main(int argc, char **argv)
 
 	/* Finish testsuite initialization */
 	svinst = sieve_tool_init_finish(sieve_tool, FALSE, FALSE);
-	testsuite_init(svinst, sieve_dir, log_stdout);
+	testsuite_init(svinst, sieve_dir, wdir, log_stdout);
 
 	printf("Test case: %s:\n\n", scriptfile);
 

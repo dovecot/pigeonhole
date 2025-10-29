@@ -308,10 +308,12 @@ bool testsuite_testcase_result(bool expect_failure)
 
 static char *testsuite_tmp_dir;
 
-static void testsuite_tmp_dir_init(void)
+static void testsuite_tmp_dir_init(const char *tmp_path)
 {
-	testsuite_tmp_dir = i_strdup_printf("/tmp/dsieve-testsuite.%s.%s",
-					    dec2str(time(NULL)),
+	if (tmp_path == NULL)
+		tmp_path = "/tmp";
+	testsuite_tmp_dir = i_strdup_printf("%s/dsieve-testsuite.%s.%s",
+					    tmp_path, dec2str(time(NULL)),
 					    dec2str(getpid()));
 
 	if (mkdir(testsuite_tmp_dir, 0700) < 0) {
@@ -342,7 +344,7 @@ const char *testsuite_tmp_dir_get(void)
  */
 
 void testsuite_init(struct sieve_instance *svinst, const char *test_path,
-		    bool log_stdout)
+		    const char *wdir_path, bool log_stdout)
 {
 	int ret;
 
@@ -350,7 +352,7 @@ void testsuite_init(struct sieve_instance *svinst, const char *test_path,
 
 	testsuite_test_context_init();
 	testsuite_log_init(log_stdout);
-	testsuite_tmp_dir_init();
+	testsuite_tmp_dir_init(wdir_path);
 
 	testsuite_script_init();
 	testsuite_binary_init();

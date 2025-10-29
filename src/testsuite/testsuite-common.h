@@ -187,7 +187,7 @@ const char *testsuite_tmp_dir_get(void);
  */
 
 void testsuite_init(struct sieve_instance *svinst, const char *test_path,
-		    bool log_stdout);
+		    const char *wdir_path, bool log_stdout);
 void testsuite_deinit(void);
 
 #endif
