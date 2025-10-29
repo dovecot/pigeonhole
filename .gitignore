@@ -38,6 +38,7 @@ Makefile.in
 /cc-wrapper.sh
 /pigeonhole-config.h
 /pigeonhole-version.h
+/.test
 
 /m4/libtool.m4
 /m4/ltoptions.m4

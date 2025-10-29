@@ -2,6 +2,7 @@
 
 #include "lib.h"
 #include "test-common.h"
+#include "test-dir.h"
 #include "path-util.h"
 #include "buffer.h"
 #include "str.h"
@@ -27,7 +28,6 @@ static struct mail_storage_service_ctx *mail_storage_service = NULL;
 static struct mail_user *test_mail_user = NULL;
 static struct mail_storage_service_user *test_service_user = NULL;
 static const char *mail_home;
-static char *test_dir;
 
 static struct mail_user *test_raw_mail_user = NULL;
 
@@ -51,7 +51,7 @@ static int test_init_mail_user(void)
 	const char *error;
 
 	mail_home = p_strdup_printf(test_pool, "%s/test_user.%ld.%ld",
-				    test_dir, (long)time(NULL), (long)getpid());
+				    test_dir_get(), (long)time(NULL), (long)getpid());
 
 	struct mail_storage_service_input input = {
 		.userdb_fields = (const char*const[]){
@@ -879,7 +879,7 @@ int main(int argc, char *argv[])
 		MASTER_SERVICE_FLAG_STANDALONE |
 		MASTER_SERVICE_FLAG_DONT_SEND_STATS |
 		MASTER_SERVICE_FLAG_CONFIG_BUILTIN;
-	const char *cwd, *error;
+	const char *error;
 	int ret;
 
 	master_service = master_service_init("test-edit-header", service_flags,
@@ -888,13 +888,10 @@ int main(int argc, char *argv[])
 		i_fatal("%s", error);
 	master_service_init_finish(master_service);
 
-	if (t_get_working_dir(&cwd, &error) < 0)
-		i_fatal("getcwd() failed: %s", error);
-	test_dir = i_strdup(cwd);
-
+	test_init();
+	test_dir_init("edit-mail");
 	ret = test_run(test_functions);
 
-	i_free(test_dir);
 	master_service_deinit(&master_service);
 
 	return ret;
