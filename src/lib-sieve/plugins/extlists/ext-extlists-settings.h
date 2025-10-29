@@ -12,7 +12,7 @@ struct ext_extlists_list_settings {
 
 	const char *name;
 	/* Maximum size of lookup value */
-	size_t max_lookup_size;
+	uoff_t max_lookup_size;
 
 	struct {
 		const char *name;
