@@ -1,11 +1,53 @@
 #!/bin/sh
 
-## serial 2
+## serial 3
 
 set -eu
 
+function get_test_name() {
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --test-name)
+	echo "$2"
+	return
+	;;
+      *)
+	shift
+	;;
+    esac
+  done
+  echo "Missing --test-name parameter" >&2
+  exit 1
+}
+
+function cat_log_file() {
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --log-file)
+	cat $2
+	break
+	;;
+      *)
+	shift
+	;;
+    esac
+  done
+}
+
 top_srcdir="@abs_top_srcdir@"
 VALGRIND="@VALGRIND@"
+
+if [ "@DOVECONF_PATH@" != "" ]; then
+  export DOVECONF_PATH="@DOVECONF_PATH@"
+fi
+
+if [ $# -gt 0 ] && echo "$1" | grep "NOCHILDREN_TESTS=" >/dev/null; then
+  shift
+  test_name=$(get_test_name "$@")
+  if echo "$1" | grep "NOCHILDREN_TESTS=.*\b$test_name\b" >/dev/null; then
+    NOCHILDREN=yes
+  fi
+fi
 
 if test $# -eq 0 || test "$1" = ""; then
   echo "Missing target binary" >&2
@@ -51,4 +93,5 @@ if test $ret != 0; then
   echo "Failed to run: $@" >&2
 fi
 
+cat_log_file "$@"
 exit $ret
