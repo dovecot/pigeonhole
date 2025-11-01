@@ -6,6 +6,7 @@
 #include "string.h"
 #include "ostream.h"
 #include "hash.h"
+#include "safe-mkstemp.h"
 #include "mail-storage.h"
 #include "env-util.h"
 #include "unlink-directory.h"
@@ -312,14 +313,16 @@ static void testsuite_tmp_dir_init(const char *tmp_path)
 {
 	if (tmp_path == NULL)
 		tmp_path = "/tmp";
-	testsuite_tmp_dir = i_strdup_printf("%s/dsieve-testsuite.%s.%s",
-					    tmp_path, dec2str(time(NULL)),
-					    dec2str(getpid()));
 
-	if (mkdir(testsuite_tmp_dir, 0700) < 0) {
-		i_fatal("failed to create temporary directory '%s': %m.",
-			testsuite_tmp_dir);
-	}
+	string_t *dir = t_str_new(256);
+	str_append(dir, tmp_path);
+	str_append_c(dir, '/');
+	str_append(dir, "sieve-testsuite");
+	str_append_c(dir, '-');
+
+	if (safe_mkstemp_dir_pid(dir, 0700) < 0)
+		i_fatal("safe_mkstemp_dir(%s) failed: %m", str_c(dir));
+	testsuite_tmp_dir = i_strdup(str_c(dir));
 }
 
 static void testsuite_tmp_dir_deinit(void)
