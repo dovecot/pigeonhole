@@ -6,7 +6,7 @@ dnl This file is free software; the authors give
 dnl unlimited permission to copy and/or distribute it, with or without
 dnl modifications, as long as this notice is preserved.
 
-# serial 45
+# serial 46
 
 dnl
 dnl Check for support for D_FORTIFY_SOURCE=2
@@ -332,6 +332,16 @@ AC_DEFUN([DC_DOVECOT_FUZZER],[
 	AC_SUBST([FUZZER_LDFLAGS])
 	AM_CONDITIONAL([USE_FUZZER], [test "x$with_fuzzer" != "xno"])
 
+	AC_ARG_ENABLE(local-fuzzer,
+	AS_HELP_STRING([--enable-local-fuzzer=yes],
+		[Enable fuzzer aspects suitable only for local use (not for e.g. OSS-Fuzz) (default: no)]),
+		enable_local_fuzzer=$enableval,
+		enable_local_fuzzer=no)
+	AC_MSG_CHECKING([Whether to enable fuzzer aspects suitable only for local use (not for e.g. OSS-Fuzz)])
+	AC_MSG_RESULT([$enable_local_fuzzer])
+	AS_IF([test "$enable_local_fuzzer" = "yes"], [
+		AC_DEFINE(HAVE_LOCAL_FUZZER,, [Enable fuzzer aspects suitable only for local use (not for e.g. OSS-Fuzz)])
+	])
 ])
 
 AC_DEFUN([DC_DOVECOT],[
@@ -415,6 +425,10 @@ AC_DEFUN([DC_DOVECOT],[
 	AS_IF([test x$DOVECOT_HAVE_MAIL_UTF8 = xyes], [
 		AC_DEFINE([DOVECOT_HAVE_MAIL_UTF8],,"Define if Dovecot has mail UTF-8 support")
 	])
+        AS_IF([test "$DOVECOT_INSTALLED" != "yes"],
+          AC_SUBST([DOVECONF_PATH], [$dovecotdir/src/config/doveconf]),
+          AC_SUBST([DOVECONF_PATH], []))
+
 	AM_CONDITIONAL(DOVECOT_INSTALLED, test "$DOVECOT_INSTALLED" = "yes")
 
 	DC_PLUGIN_DEPS
