@@ -713,7 +713,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 			break;
 		case SIEVE_ERROR_TEMP_FAILURE:
 			e_error(sieve_get_event(svinst),
-				"Failed to access active Sieve script in parsonal storage '%s': %s "
+				"Failed to access active Sieve script in personal storage '%s': %s "
 				"(temporary failure)",
 				sieve_storage_name(main_storage),
 				sieve_storage_get_last_error(main_storage, NULL));
