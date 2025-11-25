@@ -121,6 +121,7 @@ struct sieve_storage {
 	enum sieve_storage_flags flags;
 
 	bool allows_synchronization:1;
+	bool is_personal:1;
 	bool is_default:1;
 };
 

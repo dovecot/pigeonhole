@@ -773,6 +773,7 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 					&storage, error_code_r, NULL);
 	if (ret == 0) {
 		(void)sieve_storage_sync_init(storage, user);
+		storage->is_personal = TRUE;
 	} else if (*error_code_r != SIEVE_ERROR_TEMP_FAILURE &&
 		   (flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
 		   (flags & SIEVE_STORAGE_FLAG_READWRITE) == 0) {
@@ -1017,7 +1018,7 @@ sieve_storage_get_default_script(struct sieve_storage *storage,
 
 	if (*error_code_r != SIEVE_ERROR_NOT_FOUND ||
 	    (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 ||
-	    !sieve_storage_is_personal(storage))
+	    !storage->is_personal)
 		return -1;
 
 	/* Not found; if this name maps to the default script,

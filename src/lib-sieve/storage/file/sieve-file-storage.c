@@ -459,11 +459,9 @@ sieve_file_storage_init_from_settings(
 
 	/* Stat storage directory */
 
-	bool is_personal = sieve_storage_is_personal(storage);
-
 	if (storage_path != NULL && *storage_path != '\0') {
 		if (sieve_file_storage_stat(fstorage, storage_path) < 0) {
-			if (!is_personal ||
+			if (!storage->is_personal ||
 			    storage->error_code != SIEVE_ERROR_NOT_FOUND)
 				return -1;
 			if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0) {
@@ -511,7 +509,7 @@ sieve_file_storage_init_from_settings(
 	}
 
 	if ((active_path == NULL || *active_path == '\0') &&
-	    (is_personal ||
+	    (storage->is_personal ||
 	     (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0)) {
 		e_debug(storage->event,
 			"Active script path is unconfigured; "
