@@ -30,6 +30,7 @@ sieve_file_storage_active_read_link(struct sieve_file_storage *fstorage,
 		return 0;
 	}
 
+	i_assert(fstorage->active_path != NULL);
 	ret = t_readlink(fstorage->active_path, link_r, &error);
 	if (ret < 0) {
 		*link_r = NULL;
