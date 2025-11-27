@@ -1,3 +1,23 @@
+v2.4.3 2026-03-27  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	* CVE-2026-27858: managesieve-login can allocate large amount of memory
+	  during authentication.
+	* CVE-2025-59032: ManageSieve panic occurs with sieve-connect as a client.
+	* lib-sieve: Don't accept 0 as meaning unlimited anymore for
+	  sieve_quota_script_count and sieve_quota_storage_size.
+	* managesieve-login: If mail_max_userip_connections is reached, return
+	  LIMIT/CONNECTIONS resp-code.
+	* managesieve-login: proxy - Return unexpected backend failures as
+	  TRYLATER/NORETRY resp-code.
+	* managesieve: Remove default service_extra_groups=$SET:default_internal_group.
+	+ managesieve-login: proxy - Add support for XCLIENT DESTIP and DESTPORT.
+	- imapsieve: Fix panic occurring upon implicit flag changes.
+	- lib-sieve: include-extension - Fix crash occurring when previous global
+	  command has no arguments.
+	- lib-sieve: Fix erroneous attempt to read active script for non-personal
+	  storage.
+	- lib-sieve: ldap: Fix linking non-shared LIBDOVECOT.
+
 v2.4.2 2025-10-24  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* lib-sieve: Use new regular expression library in core.
