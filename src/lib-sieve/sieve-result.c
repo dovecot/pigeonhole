@@ -1718,7 +1718,7 @@ sieve_result_implicit_keep_finalize(struct sieve_result_execution *rexec)
 	e_debug(rexec->event, "Finalize implicit keep (status=%s)",
 		sieve_execution_exitcode_to_str(rexec->status));
 
-	i_assert(aexec_keep->state == SIEVE_ACTION_EXECUTION_STATE_EXECUTED);
+	i_assert(aexec_keep->state >= SIEVE_ACTION_EXECUTION_STATE_EXECUTED);
 
 	/* Finalize keep action */
 	rexec->keep_status = sieve_result_action_commit_or_rollback(
