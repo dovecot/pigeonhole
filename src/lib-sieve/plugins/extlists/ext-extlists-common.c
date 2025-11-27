@@ -143,6 +143,24 @@ ext_extlists_config_lists(struct sieve_instance *svinst,
 	return 0;
 }
 
+static void ext_extlists_context_free(struct ext_extlists_context *extctx)
+{
+	struct ext_extlists_list *list;
+
+	if (extctx == NULL)
+		return;
+
+	array_foreach_modifiable(&extctx->lists, list) {
+		dict_deinit(&list->dict);
+		settings_free(list->set);
+		pool_unref(&list->cache_pool);
+	}
+
+	settings_free(extctx->set);
+	array_free(&extctx->lists);
+	i_free(extctx);
+}
+
 int ext_extlists_load(const struct sieve_extension *ext, void **context_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
@@ -162,35 +180,23 @@ int ext_extlists_load(const struct sieve_extension *ext, void **context_r)
 	extctx = i_new(struct ext_extlists_context, 1);
 	extctx->set = set;
 	i_array_init(&extctx->lists, lists_count);
-	*context_r = extctx;
 
 	if (ext_extlists_config_lists(svinst, extctx) < 0) {
-		ext_extlists_unload(ext);
+		ext_extlists_context_free(extctx);
 		return -1;
 	}
 	ext_extlists_list_add_default(extctx);
 	sieve_extension_capabilities_register(ext, &extlists_capabilities);
 
+	*context_r = extctx;
 	return 0;
 }
 
 void ext_extlists_unload(const struct sieve_extension *ext)
 {
 	struct ext_extlists_context *extctx = ext->context;
-	struct ext_extlists_list *list;
 
-	if (extctx == NULL)
-		return;
-
-	array_foreach_modifiable(&extctx->lists, list) {
-		dict_deinit(&list->dict);
-		settings_free(list->set);
-		pool_unref(&list->cache_pool);
-	}
-
-	settings_free(extctx->set);
-	array_free(&extctx->lists);
-	i_free(extctx);
+	ext_extlists_context_free(extctx);
 }
 
 static const char *
