@@ -292,6 +292,7 @@ static int _sieve_extension_load(struct sieve_extension *ext)
 
 	ret = ext->def->load(ext, &ext->context);
 	i_assert(ret <= 0);
+	i_assert(ret == 0 || ext->context == NULL);
 
 	if (ret < 0) {
 		e_error(ext->svinst->event,
