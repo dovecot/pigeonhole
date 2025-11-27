@@ -24,6 +24,7 @@ extern struct sieve_tool *sieve_tool;
 struct sieve_tool *
 sieve_tool_init(const char *name, int *argc, char **argv[],
 		const char *getopt_str, bool no_config);
+struct sieve_tool *sieve_tool_init_fuzzer(const char *name);
 
 int sieve_tool_getopt(struct sieve_tool *tool);
 

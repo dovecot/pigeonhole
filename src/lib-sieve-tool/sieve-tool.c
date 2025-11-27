@@ -61,6 +61,7 @@ struct sieve_tool {
 	struct mail_user *mail_raw_user;
 	struct mail_raw *mail_raw;
 
+	bool fuzzer:1;
 	bool debug:1;
 };
 
@@ -146,10 +147,40 @@ sieve_tool_init(const char *name, int *argc, char **argv[],
 	return tool;
 }
 
+
+struct sieve_tool *sieve_tool_init_fuzzer(const char *name)
+{
+	struct sieve_tool *tool;
+	enum master_service_flags service_flags =
+		MASTER_SERVICE_FLAG_STANDALONE |
+		MASTER_SERVICE_FLAG_DONT_SEND_STATS |
+		MASTER_SERVICE_FLAG_NO_INIT_DATASTACK_FRAME |
+		MASTER_SERVICE_FLAG_CONFIG_BUILTIN;
+	pool_t pool;
+
+	pool = pool_alloconly_create("sieve tool", 8192);
+	char *arg = p_strdup(pool, name);
+	char **argv = p_new(pool, char *, 2);
+	argv[0] = arg;
+	int argc = 1;
+	master_service = master_service_init(name, service_flags,
+					     &argc, &argv, "");
+
+	tool = p_new(pool, struct sieve_tool, 1);
+	tool->pool = pool;
+	tool->name = arg;
+	tool->fuzzer = TRUE;
+	tool->no_config = TRUE;
+
+	p_array_init(&tool->sieve_plugins, pool, 16);
+	return tool;
+}
+
 int sieve_tool_getopt(struct sieve_tool *tool)
 {
 	int c;
 
+	i_assert(!tool->fuzzer);
 	while ((c = master_getopt(master_service)) > 0) {
 		switch (c) {
 		case 'x':
@@ -224,14 +255,17 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 
 	master_service_init_finish(master_service);
 
-	if (username == NULL) {
+	if (tool->fuzzer) {
+		username = tool->username = "fuzzer";
+		tool->homedir = "/tmp";
+	} else if (username == NULL) {
 		sieve_tool_get_user_data(&username, &homedir);
 
 		username = tool->username = p_strdup(tool->pool, username);
 
 		tool->homedir = p_strdup(tool->pool, homedir);
 
-		if (preserve_root) {
+		if (!tool->fuzzer && preserve_root) {
 			storage_service_flags |=
 				MAIL_STORAGE_SERVICE_FLAG_NO_RESTRICT_ACCESS;
 		}
@@ -240,7 +274,7 @@ sieve_tool_init_finish(struct sieve_tool *tool, bool init_mailstore,
 			MAIL_STORAGE_SERVICE_FLAG_USERDB_LOOKUP;
 	}
 
-	if (!init_mailstore)
+	if (tool->fuzzer || !init_mailstore)
 		storage_service_flags |=
 			MAIL_STORAGE_SERVICE_FLAG_NO_NAMESPACES;
 
@@ -404,6 +438,8 @@ sieve_tool_open_data_as_mail(struct sieve_tool *tool, string_t *mail_data)
 
 void sieve_tool_set_homedir(struct sieve_tool *tool, const char *homedir)
 {
+	i_assert(!tool->fuzzer);
+
 	if (tool->homedir != NULL && strcmp(homedir, tool->homedir) == 0)
 		return;
 
