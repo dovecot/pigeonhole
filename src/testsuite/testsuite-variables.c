@@ -155,7 +155,7 @@ int testsuite_varnamespace_read_variable(
 			*str_r = t_str_new_const(testsuite_test_path,
 						 strlen(testsuite_test_path));
 		} else {
-			*str_r = NULL;
+			*str_r = t_str_new_const("", 0);
 		}
 	}
 	return SIEVE_EXEC_OK;
