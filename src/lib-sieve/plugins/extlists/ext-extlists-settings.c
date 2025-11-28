@@ -13,8 +13,9 @@
 #include "ext-extlists-settings.h"
 
 static bool
-ext_extlists_list_settings_check(void *_set, pool_t pool,
-				 const char **error_r);
+ext_extlists_list_settings_check(void *_set, pool_t pool, const char **error_r);
+static bool
+ext_extlists_settings_check(void *_set, pool_t pool, const char **error_r);
 
 #undef DEF
 #define DEF(type, name) \
@@ -72,6 +73,8 @@ const struct setting_parser_info ext_extlists_setting_parser_info = {
 
 	.struct_size = sizeof(struct ext_extlists_settings),
 
+	.check_func = ext_extlists_settings_check,
+
 	.pool_offset1 = 1 + offsetof(struct ext_extlists_settings, pool),
 };
 
@@ -125,6 +128,31 @@ ext_extlists_list_settings_check(void *_set, pool_t pool, const char **error_r)
 			return FALSE;
 		}
 		set->parsed.name = p_strdup(pool, norm_name);
+	}
+
+	return TRUE;
+}
+
+static bool
+ext_extlists_settings_check(void *_set, pool_t pool ATTR_UNUSED,
+			    const char **error_r)
+{
+	struct ext_extlists_settings *set = _set;
+	const char *name;
+	const char *norm_name;
+	const char *error;
+
+	if (array_is_created(&set->lists)) {
+		array_foreach_elem(&set->lists, name) {
+			norm_name = name;
+			if (ext_extlists_name_normalize(&norm_name,
+							 &error) < 0) {
+				*error_r = t_strdup_printf(
+					"List name '%s' is invalid: %s",
+					name, error);
+				return FALSE;
+			}
+		}
 	}
 
 	return TRUE;
