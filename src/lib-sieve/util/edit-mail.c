@@ -2007,7 +2007,7 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 		 */
 		hdr_size = (prep_hdr_size +
 			    edmail->wrapped_hdr_size.physical_size);
-		if (hdr_size == 0) {
+		if (hdr_size <= (edmail->eoh_crlf ? 2 : 1)) {
 			/* Corner case that doesn't happen in practice (the
 			   original message is never empty). */
 			edstream->cur_header = edmail->header_fields_appended;
@@ -2059,16 +2059,17 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 			return ret;
 	}
 
+	/* Corner case that doesn't happen in practice (the original message is
+	   never empty). */
+	if (edmail->wrapped_hdr_size.physical_size <=
+	    (edmail->eoh_crlf ? 2 : 1)) {
+		parent_v_offset = stream->parent_start_offset;
+		copy_v_offset = edmail->hdr_size.physical_size;
 	/* Header does not come from original mail at all */
-	if (edmail->headers_parsed) {
+	} else if (edmail->headers_parsed) {
 		parent_v_offset = (stream->parent_start_offset +
 				   edmail->wrapped_hdr_size.physical_size -
 				   (edmail->eoh_crlf ? 2 : 1));
-		copy_v_offset = edmail->hdr_size.physical_size;
-	/* Corner case that doesn't happen in practice (the original message is
-	   never empty). */
-	} else if (edmail->wrapped_hdr_size.physical_size == 0) {
-		parent_v_offset = stream->parent_start_offset;
 		copy_v_offset = edmail->hdr_size.physical_size;
 	/* Header comes partially from original mail and headers are added
 	   between header and body. */

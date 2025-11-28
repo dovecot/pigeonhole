@@ -819,7 +819,7 @@ static void test_edit_mail_empty(void)
 	struct mail *mail;
 	const char *value;
 
-	test_begin("edit-mail - empty message");
+	test_begin("edit-mail - empty message (add)");
 	test_edit_mail_init();
 
 	/* Compose the message */
@@ -866,6 +866,66 @@ static void test_edit_mail_empty(void)
 	test_end();
 }
 
+static void test_edit_mail_empty2(void)
+{
+	struct istream *input_msg, *input_mail;
+	buffer_t *buffer;
+	struct mail_raw *rawmail;
+	struct edit_mail *edmail;
+	struct mail *mail;
+	const char *value;
+
+	test_begin("edit-mail - empty message (delete, add)");
+	test_edit_mail_init();
+
+	/* Compose the message */
+
+	input_msg = i_stream_create_from_data("", 0);
+
+	rawmail = mail_raw_open_stream(test_raw_mail_user, input_msg);
+
+	edmail = edit_mail_wrap(rawmail->mail);
+
+	/* Delete header */
+
+	edit_mail_header_delete(edmail, "X-B", 0);
+
+	/* Add header */
+
+	edit_mail_header_add(edmail, "X-B", "Frop", TRUE);
+	mail = edit_mail_get_mail(edmail);
+
+	/* Prepare tests */
+
+	if (mail_get_stream(mail, NULL, NULL, &input_mail) < 0) {
+		i_fatal("Failed to open mail stream: %s",
+			mailbox_get_last_error(mail->box, NULL));
+	}
+
+	buffer = buffer_create_dynamic(default_pool, 1024);
+
+	/* Evaluate modified header */
+
+	test_assert(mail_get_first_header_utf8(mail, "X-B", &value) > 0 &&
+		    strcmp(value, "Frop") == 0);
+
+	/* Added */
+
+	i_stream_seek(input_mail, 0);
+	buffer_set_used_size(buffer, 0);
+
+	test_stream_data(input_mail, buffer);
+
+	/* Clean up */
+
+	buffer_free(&buffer);
+	edit_mail_unwrap(&edmail);
+	mail_raw_close(&rawmail);
+	i_stream_unref(&input_msg);
+	test_edit_mail_deinit();
+	test_end();
+}
+
 int main(int argc, char *argv[])
 {
 	static void (*test_functions[])(void) = {
@@ -873,6 +933,7 @@ int main(int argc, char *argv[])
 		test_edit_mail_big_header,
 		test_edit_mail_small_buffer,
 		test_edit_mail_empty,
+		test_edit_mail_empty2,
 		NULL
 	};
 	const enum master_service_flags service_flags =
