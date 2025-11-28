@@ -1,0 +1,17 @@
+# Used to cause the test suite to segfault
+
+require "vnd.dovecot.testsuite";
+require "enotify";
+
+test "Execute" {
+	/* Test to catch runtime segfaults */
+	if valid_notify_method
+		"mailto:stephan@example.com" {
+
+		/* Test to catch runtime segfaults */
+		notify
+			:message "This is probably very important"
+			:importance o c
+			"mailto:stephan@eg?source_locationnt%2)message%20received";
+	}
+}

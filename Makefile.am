@@ -217,6 +217,7 @@ failure_test_cases = \
 	tests/failures/fuzz1.svtest \
 	tests/failures/fuzz2.svtest \
 	tests/failures/fuzz3.svtest \
+	tests/failures/fuzz4.svtest \
 	tests/failures/mailbox-bad-utf8.svtest
 
 $(failure_test_cases):

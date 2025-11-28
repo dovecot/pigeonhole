@@ -240,6 +240,13 @@ cmd_notify_validate_importance_tag(struct sieve_validator *valdtr,
 	/* Check syntax:
 	     :importance <"1" / "2" / "3">
 	 */
+	if (*arg == NULL) {
+		sieve_argument_validate_error(
+			valdtr, tag,
+			"the :importance tag for the notify command requires a string parameter, "
+			"but no parameters were found");
+		return FALSE;
+	}
 	if (sieve_ast_argument_type(*arg) != SAAT_STRING) {
 		/* Not a string */
 		sieve_argument_validate_error(
