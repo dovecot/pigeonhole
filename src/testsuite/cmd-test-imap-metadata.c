@@ -1,6 +1,9 @@
 /* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "str-sanitize.h"
+
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
@@ -9,6 +12,7 @@
 #include "sieve-code.h"
 #include "sieve-binary.h"
 #include "sieve-dump.h"
+#include "sieve-actions.h"
 
 #include "testsuite-common.h"
 #include "testsuite-mailstore.h"
@@ -109,6 +113,19 @@ cmd_test_imap_metadata_validate_mailbox_tag(struct sieve_validator *valdtr,
 	if (!sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, NULL,
 					  0, SAAT_STRING, FALSE))
 		return FALSE;
+
+	/* Check name validity when mailbox argument is not a variable */
+	if (sieve_argument_is_string_literal(*arg)) {
+		const char *mailbox = sieve_ast_argument_strc(*arg), *error;
+
+		if (!sieve_mailbox_check_name(mailbox, &error)) {
+			sieve_command_validate_error(
+				valdtr, cmd, "test_imap_metadata_set command: "
+				"invalid mailbox name '%s' specified: %s",
+				str_sanitize(mailbox, 256), error);
+			return FALSE;
+		}
+	}
 
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
@@ -231,6 +248,7 @@ cmd_test_imap_metadata_operation_execute(const struct sieve_runtime_env *renv,
 	const struct sieve_operation *oprtn = renv->oprtn;
 	int opt_code = 0;
 	string_t *mailbox = NULL, *annotation = NULL, *value = NULL;
+	const char *error;
 	int ret;
 
 	/*
@@ -252,6 +270,15 @@ cmd_test_imap_metadata_operation_execute(const struct sieve_runtime_env *renv,
 		case OPT_MAILBOX:
 			ret = sieve_opr_string_read(renv, address, "mailbox",
 						    &mailbox);
+			if (ret > 0 &&
+			    !sieve_mailbox_check_name(str_c(mailbox), &error)) {
+				sieve_runtime_error(
+					renv, NULL,
+					"test_imap_metadata_set command: "
+					"invalid mailbox name '%s' specified: %s",
+					str_c(mailbox), error);
+				ret = SIEVE_EXEC_FAILURE;
+			}
 			break;
 		default:
 			sieve_runtime_trace_error(
