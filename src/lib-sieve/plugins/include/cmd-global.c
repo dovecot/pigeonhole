@@ -130,7 +130,8 @@ cmd_global_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 	}
 
 	/* Join global commands with predecessors if possible */
-	if (sieve_commands_equal(prev, cmd)) {
+	if (sieve_commands_equal(prev, cmd) &&
+	    !sieve_validator_failed(valdtr)) {
 		/* Join this command's string list with the previous one */
 		prev->first_positional = sieve_ast_stringlist_join(
 			prev->first_positional, cmd->first_positional);
