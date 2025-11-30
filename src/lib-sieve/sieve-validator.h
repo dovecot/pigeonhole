@@ -47,6 +47,7 @@ const char *sieve_validator_script_cause(struct sieve_validator *valdtr);
 struct sieve_instance *sieve_validator_svinst(struct sieve_validator *valdtr);
 enum sieve_compile_flags
 sieve_validator_compile_flags(struct sieve_validator *valdtr);
+bool sieve_validator_failed(struct sieve_validator *valdtr) ATTR_PURE;
 
 /*
  * Command/Test registry

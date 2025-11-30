@@ -105,6 +105,8 @@ struct sieve_validator {
 	struct sieve_default_argument *current_defarg;
 	enum sieve_argument_type current_defarg_type;
 	bool current_defarg_constant;
+
+	bool failed:1;
 };
 
 /*
@@ -232,6 +234,11 @@ enum sieve_compile_flags
 sieve_validator_compile_flags(struct sieve_validator *valdtr)
 {
 	return valdtr->flags;
+}
+
+bool sieve_validator_failed(struct sieve_validator *valdtr)
+{
+	return valdtr->failed;
 }
 
 /*
@@ -1417,11 +1424,14 @@ sieve_validate_command(struct sieve_validator *valdtr,
 			/* If pre-validation fails, don't bother to validate
 			   further as context might be missing and doing so is
 			   not very useful for further error reporting anyway */
+			valdtr->failed = TRUE;
 			return FALSE;
 		}
 
 		result = result && sieve_validate_arguments_context(valdtr, cmd);
 	}
+	if (!result)
+		valdtr->failed = TRUE;
 
 	/*
 	 * Descend further into the AST
@@ -1483,7 +1493,9 @@ sieve_validate_test_list(struct sieve_validator *valdtr,
 			sieve_validate_command(valdtr, test, &const_value) &&
 			result;
 
-		if (result) {
+		if (!result)
+			valdtr->failed = TRUE;
+		else {
 			if (tst_def != NULL &&
 			    tst_def->validate_const != NULL) {
 				if (!tst_def->validate_const(
@@ -1507,7 +1519,7 @@ static bool
 sieve_validate_block(struct sieve_validator *valdtr,
 		     struct sieve_ast_node *block)
 {
-	bool result = TRUE, fatal = FALSE;
+	bool result = TRUE, fatal = FALSE, already_failed = valdtr->failed;
 	struct sieve_ast_node *cmd_node, *next;
 
 	T_BEGIN {
@@ -1560,6 +1572,9 @@ sieve_validate_block(struct sieve_validator *valdtr,
 				sieve_validate_command_context(valdtr, cmd_node);
 			result = command_success && result;
 
+			if (!result || fatal)
+				valdtr->failed = TRUE;
+
 			result = !fatal &&
 				sieve_validate_command(valdtr, cmd_node,
 						       &const_value) && result;
@@ -1568,6 +1583,8 @@ sieve_validate_block(struct sieve_validator *valdtr,
 		}
 	} T_END;
 
+	/* Assert that this function returns FALSE if failure is caused here. */
+	i_assert(!valdtr->failed || already_failed || !result || fatal);
 	return result && !fatal;
 }
 
