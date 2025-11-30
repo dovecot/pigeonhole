@@ -201,7 +201,7 @@ ext_spamvirustest_settings_check(void *_set, bool virustest,
 				"'%s': %s", set->score_max_value, error);
 			return FALSE;
 		}
-	} else {
+	} else if (array_is_created(&set->text_value)) {
 		const char *const *tvalues;
 		unsigned int tvalues_count, i;
 		unsigned int tv_index_max = (virustest ? 5 : 10);
