@@ -659,9 +659,12 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		   string.
 		 */
 		enum login_proxy_failure_type failure_type;
-		if (null_strcasecmp(resp_code_main, "TRYLATER") == 0)
-			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL;
-		else if (null_strcasecmp(resp_code_main, "REFERRAL") == 0 &&
+		if (null_strcasecmp(resp_code_main, "TRYLATER") == 0) {
+			if (null_strcasecmp(resp_code_sub, "NORETRY") == 0)
+				failure_type = LOGIN_PROXY_FAILURE_TYPE_REMOTE;
+			else
+				failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL;
+		} else if (null_strcasecmp(resp_code_main, "REFERRAL") == 0 &&
 			 auth_resp_code_parse_referral(client, resp_code_detail,
 						       &reason))
 			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_REDIRECT;
@@ -711,7 +714,8 @@ managesieve_proxy_send_failure_reply(struct client *client,
 	case LOGIN_PROXY_FAILURE_TYPE_REMOTE_CONFIG:
 	case LOGIN_PROXY_FAILURE_TYPE_AUTH_NOT_REPLIED:
 		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
-				       NULL, LOGIN_PROXY_FAILURE_MSG);
+				       "TRYLATER/NORETRY",
+				       LOGIN_PROXY_FAILURE_MSG);
 		break;
 	case LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL:
 		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
