@@ -588,6 +588,7 @@ static struct client_vfuncs managesieve_client_vfuncs = {
 
 static struct login_binary managesieve_login_binary = {
 	.protocol = "sieve",
+	.service_name = "managesieve",
 	.process_name = "managesieve-login",
 	.default_port = MANAGESIEVE_DEFAULT_PORT,
 
