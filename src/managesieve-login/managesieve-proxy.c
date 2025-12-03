@@ -459,8 +459,14 @@ managesieve_proxy_parse_auth_reply(const char *line,
 	parser = managesieve_parser_create(input, (size_t)-1);
 	(void)i_stream_read(input);
 	ret = managesieve_parser_finish_line(parser, 0, 0, &args);
-	if (ret == 1 && managesieve_arg_get_string(&args[0], &reason))
-		*reason_r = t_strdup(reason);
+	if (ret == 1 && managesieve_arg_get_string(&args[0], &reason)) {
+		if (resp_code_full == NULL)
+			*reason_r = t_strdup(reason);
+		else {
+			*reason_r = t_strdup_printf("(%s) %s", resp_code_full,
+						    reason);
+		}
+	}
 	managesieve_parser_destroy(&parser);
 	i_stream_destroy(&input);
 }
@@ -717,10 +723,19 @@ managesieve_proxy_send_failure_reply(struct client *client,
 				       "TRYLATER/NORETRY",
 				       LOGIN_PROXY_FAILURE_MSG);
 		break;
-	case LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL:
+	case LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL: {
+		/* reason already contains (resp-code), which should be
+		   (TRYLATER), but forward also any future /SUB resp-codes. */
+		const char *resp_code = "TRYLATER";
+		const char *p = strstr(reason, ") ");
+		if (p != NULL) {
+			resp_code = t_strdup_until(reason + 1, p);
+			reason = p + 2;
+		}
 		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
-				       "TRYLATER", reason);
+				       resp_code, reason);
 		break;
+	}
 	case LOGIN_PROXY_FAILURE_TYPE_AUTH_REPLIED:
 		/* reply was already sent */
 		break;
