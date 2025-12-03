@@ -398,15 +398,19 @@ proxy_input_capability(struct managesieve_client *client, const char *line,
 static void
 managesieve_proxy_parse_auth_reply(const char *line,
 				   const char **reason_r,
-				   const char **resp_code_r)
+				   const char **resp_code_main_r,
+				   const char **resp_code_sub_r,
+				   const char **resp_code_detail_r)
 {
 	struct managesieve_parser *parser;
 	const struct managesieve_arg *args;
 	struct istream *input;
-	const char *reason;
+	const char *reason, *resp_code_full = NULL;
 	int ret;
 
-	*resp_code_r = NULL;
+	*resp_code_main_r = NULL;
+	*resp_code_sub_r = NULL;
+	*resp_code_detail_r = NULL;
 
 	if (!str_begins_icase_with(line, "NO ")) {
 		*reason_r = line;
@@ -425,7 +429,28 @@ managesieve_proxy_parse_auth_reply(const char *line,
 		rend = strstr(line, ") ");
 		if (rend == NULL)
 			return;
-		*resp_code_r = t_strdup_until(line + 1, rend);
+		resp_code_full = t_strdup_until(line + 1, rend);
+		const char *p = strpbrk(resp_code_full, "/ ");
+		if (p == NULL) {
+			/* (MAIN) */
+			*resp_code_main_r = resp_code_full;
+		} else if (*p == ' ') {
+			/* (MAIN DETAIL) */
+			*resp_code_main_r = t_strdup_until(resp_code_full, p++);
+			*resp_code_detail_r = p;
+		} else {
+			i_assert(*p == '/');
+			*resp_code_main_r = t_strdup_until(resp_code_full, p++);
+			const char *p2 = strchr(p, ' ');
+			if (p2 == NULL) {
+				/* (MAIN/SUB) */
+				*resp_code_sub_r = p;
+			} else {
+				/* (MAIN/SUB DETAIL) */
+				*resp_code_sub_r = t_strdup_until(p, p2++);
+				*resp_code_detail_r = p2;
+			}
+		}
 		line = rend + 2;
 	}
 
@@ -441,21 +466,18 @@ managesieve_proxy_parse_auth_reply(const char *line,
 }
 
 static bool
-auth_resp_code_parse_referral(struct client *client, const char *resp_code,
+auth_resp_code_parse_referral(struct client *client, const char *resp_code_detail,
 			      const char **userhostport_r)
 {
 	struct managesieve_url *url;
 	const char *error;
 
-	if (resp_code == NULL ||
-	    !str_begins_icase(resp_code, "REFERRAL ", &resp_code))
-		return FALSE;
-
-	if (managesieve_url_parse(resp_code, MANAGESIEVE_URL_ALLOW_USERINFO_PART,
+	if (managesieve_url_parse(resp_code_detail,
+				  MANAGESIEVE_URL_ALLOW_USERINFO_PART,
 				  pool_datastack_create(), &url, &error) < 0) {
 		e_debug(login_proxy_get_event(client->login_proxy),
 			"Couldn't parse REFERRAL '%s': %s",
-			str_sanitize(resp_code, 160), error);
+			str_sanitize(resp_code_detail, 160), error);
 		return FALSE;
 	}
 
@@ -626,17 +648,21 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		}
 
 		/* Authentication failed */
-		const char *resp_code;
-		managesieve_proxy_parse_auth_reply(line, &reason, &resp_code);
+		const char *resp_code_main, *resp_code_sub, *resp_code_detail;
+		managesieve_proxy_parse_auth_reply(line, &reason,
+						   &resp_code_main,
+						   &resp_code_sub,
+						   &resp_code_detail);
 
 		/* Login failed. Send our own failure reply so client can't
 		   figure out if user exists or not just by looking at the reply
 		   string.
 		 */
 		enum login_proxy_failure_type failure_type;
-		if (null_strcasecmp(resp_code, "TRYLATER") == 0)
+		if (null_strcasecmp(resp_code_main, "TRYLATER") == 0)
 			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL;
-		else if (auth_resp_code_parse_referral(client, resp_code,
+		else if (null_strcasecmp(resp_code_main, "REFERRAL") == 0 &&
+			 auth_resp_code_parse_referral(client, resp_code_detail,
 						       &reason))
 			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_REDIRECT;
 		else {
