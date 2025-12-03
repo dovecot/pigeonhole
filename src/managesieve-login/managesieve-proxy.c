@@ -737,6 +737,7 @@ managesieve_proxy_send_failure_reply(struct client *client,
 		break;
 	}
 	case LOGIN_PROXY_FAILURE_TYPE_AUTH_REPLIED:
+	case LOGIN_PROXY_FAILURE_TYPE_AUTH_LIMIT_REACHED_REPLIED:
 		/* reply was already sent */
 		break;
 	}
