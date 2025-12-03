@@ -670,7 +670,9 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 				failure_type = LOGIN_PROXY_FAILURE_TYPE_REMOTE;
 			else
 				failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_TEMPFAIL;
-		} else if (null_strcasecmp(resp_code_main, "REFERRAL") == 0 &&
+		} else if (null_strcasecmp(resp_code_main, "LIMIT") == 0)
+			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_LIMIT_REACHED_REPLIED;
+		else if (null_strcasecmp(resp_code_main, "REFERRAL") == 0 &&
 			 auth_resp_code_parse_referral(client, resp_code_detail,
 						       &reason))
 			failure_type = LOGIN_PROXY_FAILURE_TYPE_AUTH_REDIRECT;

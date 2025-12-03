@@ -86,6 +86,9 @@ void managesieve_client_auth_result(struct client *client,
 	case CLIENT_AUTH_RESULT_TEMPFAIL:
 		client_send_noresp(client, "TRYLATER", text);
 		break;
+	case CLIENT_AUTH_RESULT_LIMIT_REACHED:
+		client_send_noresp(client, "LIMIT/CONNECTIONS", text);
+		break;
 	case CLIENT_AUTH_RESULT_SSL_REQUIRED:
 		client_send_noresp(client, "ENCRYPT-NEEDED", text);
 		break;
