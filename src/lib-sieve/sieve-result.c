@@ -1530,6 +1530,7 @@ sieve_result_implicit_keep_execute(struct sieve_result_execution *rexec)
 		return;
 	}
 
+	event_unref(&act_keep->event);
 	if (!success)
 		*act_keep = result->failure_action;
 	else
