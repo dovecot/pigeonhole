@@ -112,8 +112,10 @@ int ext_enotify_methods_init(struct ext_enotify_context *extctx,
 	p_array_init(&extctx->notify_methods, default_pool, 4);
 
 	if (ext_enotify_method_register(extctx, ntfy_ext,
-					&mailto_notify, &nmth) < 0)
+					&mailto_notify, &nmth) < 0) {
+		ext_enotify_methods_deinit(extctx);
 		return -1;
+	}
 	return 0;
 }
 
