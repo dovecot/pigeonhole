@@ -214,8 +214,8 @@ mail_raw_open_data(struct mail_user *ruser, string_t *mail_data)
 	struct mail_raw *mailr;
 	struct istream *input;
 
-	input = i_stream_create_from_data(str_data(mail_data),
-					  str_len(mail_data));
+	input = i_stream_create_copy_from_data(str_data(mail_data),
+					       str_len(mail_data));
 
 	mailr = mail_raw_open_stream(ruser, input);
 
