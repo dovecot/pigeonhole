@@ -157,6 +157,7 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	struct sieve_interpreter *interp;
 	pool_t pool;
 	struct sieve_execute_env exec_env;
+	unsigned int orig_test_failures = test_failures;
 	const char *error;
 	int ret;
 
@@ -210,6 +211,11 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 
 	sieve_execute_finish(&exec_env, ret);
 	sieve_execute_deinit(&exec_env);
+
+	if (test_failures != orig_test_failures) {
+		test_failures = orig_test_failures;
+		return FALSE;
+	}
 
 	return (ret > 0 ||
 		sieve_binary_extension_get_index(ictx->compiled_script,

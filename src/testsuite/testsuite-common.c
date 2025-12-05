@@ -47,6 +47,7 @@
 
 struct sieve_instance *testsuite_sieve_instance = NULL;
 char *testsuite_test_path = NULL;
+unsigned int test_failures;
 
 unsigned int test_failures;
 
@@ -218,10 +219,17 @@ int testsuite_test_fail_cstr(const struct sieve_runtime_env *renv,
 		}
 	}
 
+	test_failures++;
+
+	if (end == 0)
+		return SIEVE_EXEC_FAILURE;
+	if (renv->interp != testsuite_interp) {
+		sieve_interpreter_interrupt(renv->interp);
+		return SIEVE_EXEC_OK;
+	}
+
 	str_truncate(test_name, 0);
 	test_block_end = 0;
-
-	test_failures++;
 
 	return sieve_interpreter_program_jump_to(renv->interp, end, TRUE);
 }
