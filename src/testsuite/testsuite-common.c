@@ -220,7 +220,7 @@ int testsuite_test_fail_cstr(const struct sieve_runtime_env *renv,
 
 	test_failures++;
 
-	return sieve_interpreter_program_jump_to(renv->interp, end, FALSE);
+	return sieve_interpreter_program_jump_to(renv->interp, end, TRUE);
 }
 
 void testsuite_testcase_fail(const char *reason)
