@@ -68,10 +68,10 @@ ext_editheader_header_add(struct sieve_instance *svinst,
 		return -1;
 	}
 
-	i_assert(ext_editheader_header_find(extctx, set->name) == NULL);
+	i_assert(ext_editheader_header_find(extctx, hname) == NULL);
 
 	header = array_append_space(&extctx->headers);
-	header->name = p_strdup(extctx->pool, set->name);
+	header->name = p_strdup(extctx->pool, hname);
 	header->forbid_add = set->forbid_add;
 	header->forbid_delete = set->forbid_delete;
 
