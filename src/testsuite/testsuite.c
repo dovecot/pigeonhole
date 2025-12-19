@@ -58,29 +58,6 @@ static void print_help(void)
 	);
 }
 
-static int
-testsuite_run(struct sieve_binary *sbin, struct sieve_error_handler *ehandler)
-{
-	struct sieve_interpreter *interp;
-	struct sieve_result *result;
-	int ret = 0;
-
-	/* Create the interpreter */
-	interp = sieve_interpreter_create(sbin, NULL, &testsuite_execute_env,
-					  ehandler);
-	if (interp == NULL)
-		return SIEVE_EXEC_BIN_CORRUPT;
-
-	/* Run the interpreter */
-	result = testsuite_result_get();
-	ret = sieve_interpreter_run(interp, result);
-
-	/* Free the interpreter */
-	sieve_interpreter_free(&interp);
-
-	return ret;
-}
-
 int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;

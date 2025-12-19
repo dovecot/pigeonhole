@@ -183,11 +183,13 @@ bool testsuite_testcase_result(bool expect_failure);
 const char *testsuite_tmp_dir_get(void);
 
 /*
- * Testsuite init/deinit
+ * Testsuite init/run/deinit
  */
 
 void testsuite_init(struct sieve_instance *svinst, const char *test_path,
 		    const char *wdir_path, bool log_stdout);
+int testsuite_run(struct sieve_binary *sbin,
+		  struct sieve_error_handler *ehandler);
 void testsuite_deinit(void);
 
 #endif

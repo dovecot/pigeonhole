@@ -343,7 +343,7 @@ const char *testsuite_tmp_dir_get(void)
 }
 
 /*
- * Main testsuite init/deinit
+ * Main testsuite init/run/deinit
  */
 
 void testsuite_init(struct sieve_instance *svinst, const char *test_path,
@@ -366,6 +366,29 @@ void testsuite_init(struct sieve_instance *svinst, const char *test_path,
 	i_assert(ret == 0);
 
 	testsuite_test_path = i_strdup(test_path);
+}
+
+int testsuite_run(struct sieve_binary *sbin,
+		  struct sieve_error_handler *ehandler)
+{
+	struct sieve_interpreter *interp;
+	struct sieve_result *result;
+	int ret = 0;
+
+	/* Create the interpreter */
+	interp = sieve_interpreter_create(sbin, NULL, &testsuite_execute_env,
+					  ehandler);
+	if (interp == NULL)
+		return SIEVE_EXEC_BIN_CORRUPT;
+
+	/* Run the interpreter */
+	result = testsuite_result_get();
+	ret = sieve_interpreter_run(interp, result);
+
+	/* Free the interpreter */
+	sieve_interpreter_free(&interp);
+
+	return ret;
 }
 
 void testsuite_deinit(void)
