@@ -48,6 +48,8 @@
 struct sieve_instance *testsuite_sieve_instance = NULL;
 char *testsuite_test_path = NULL;
 
+static struct sieve_interpreter *testsuite_interp = NULL;
+
 /* Test context */
 
 static string_t *test_name;
@@ -371,22 +373,21 @@ void testsuite_init(struct sieve_instance *svinst, const char *test_path,
 int testsuite_run(struct sieve_binary *sbin,
 		  struct sieve_error_handler *ehandler)
 {
-	struct sieve_interpreter *interp;
 	struct sieve_result *result;
 	int ret = 0;
 
 	/* Create the interpreter */
-	interp = sieve_interpreter_create(sbin, NULL, &testsuite_execute_env,
-					  ehandler);
-	if (interp == NULL)
+	testsuite_interp = sieve_interpreter_create(
+		sbin, NULL, &testsuite_execute_env, ehandler);
+	if (testsuite_interp == NULL)
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Run the interpreter */
 	result = testsuite_result_get();
-	ret = sieve_interpreter_run(interp, result);
+	ret = sieve_interpreter_run(testsuite_interp, result);
 
 	/* Free the interpreter */
-	sieve_interpreter_free(&interp);
+	sieve_interpreter_free(&testsuite_interp);
 
 	return ret;
 }
