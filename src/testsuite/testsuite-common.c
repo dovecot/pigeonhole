@@ -48,6 +48,8 @@
 struct sieve_instance *testsuite_sieve_instance = NULL;
 char *testsuite_test_path = NULL;
 
+unsigned int test_failures;
+
 static struct sieve_interpreter *testsuite_interp = NULL;
 
 /* Test context */
@@ -55,7 +57,6 @@ static struct sieve_interpreter *testsuite_interp = NULL;
 static string_t *test_name;
 static sieve_size_t test_block_end;
 static unsigned int test_index;
-static unsigned int test_failures;
 
 /* Extension */
 

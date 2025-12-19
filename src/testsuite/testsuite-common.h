@@ -19,6 +19,7 @@ extern const struct sieve_script_env *testsuite_scriptenv;
 
 extern char *testsuite_test_path;
 
+extern unsigned int test_failures;
 
 /*
  * Validator context
