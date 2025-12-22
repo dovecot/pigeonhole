@@ -345,11 +345,12 @@ static bool managesieve_client_input_next_cmd(struct client *client)
 			if (args[0].type != MANAGESIEVE_ARG_EOL)
 				ret = -1;
 		}
-	}
-	if (ret > 0) {
-		i_assert(args != NULL);
+		if (ret > 0)
+			ret = msieve_client->cmd->func(msieve_client, args);
+	} else {
+		/* Continue unfinished command */
 		i_assert(msieve_client->cmd != NULL);
-		ret = msieve_client->cmd->func(msieve_client, args);
+		ret = msieve_client->cmd->func(msieve_client, NULL);
 	}
 
 	if (ret != 0)
