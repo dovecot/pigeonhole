@@ -795,44 +795,6 @@ test "Addheader - UTF 8" {
 }
 
 test_result_reset;
-
-test_set "message" "${message}";
-test "Addheader - devious characters" {
-	if size :over 76 {
-		test_fail "original message is longer than 76 bytes?!";
-	}
-
-	addheader "X-Some-Header" "Ring my ${hex:07}!";
-	fileinto :create "folder7";
-
-	if not test_result_execute {
-		test_fail "failed to execute result";
-	}
-
-	if not test_message :folder "folder7" 0 {
-		test_fail "message not stored";
-	}
-
-	if not exists "x-some-header" {
-		test_fail "header not added to stored message";
-	}
-
-	if header :is "x-some-header" "Ring my !" {
-		if header :matches "x-some-header" "*" {}
-		test_fail "Bel character not retained: `${0}`";
-	}
-
-	if not header :is "x-some-header" "Ring my ${hex:07}!" {
-		if header :matches "x-some-header" "*" {}
-		test_fail "Incorrect header value: `${0}`";
-	}
-
-	if not body :matches "Frop!*" {
-		test_fail "body not retained in stored mail";
-	}
-}
-
-test_result_reset;
 test_set "message" "";
 test "Addheader - empty" {
 	addheader :last "X-Some-Header" "Header content";

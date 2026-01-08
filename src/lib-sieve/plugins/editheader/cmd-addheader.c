@@ -168,10 +168,11 @@ cmd_addheader_validate(struct sieve_validator *valdtr,
 
 		if (!rfc2822_header_field_body_verify(str_c(
 			fvalue), str_len(fvalue), TRUE, TRUE)) {
-			sieve_argument_validate_warning(
+			sieve_argument_validate_error(
 				valdtr, arg,
 				"addheader command: specified value '%s' is invalid",
 				str_sanitize(str_c(fvalue), 80));
+			return SIEVE_EXEC_FAILURE;
 		}
 
 		if (ext_editheader_header_too_large(

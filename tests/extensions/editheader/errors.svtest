@@ -54,11 +54,11 @@ test "Invalid field value" {
 		test_fail "compile should have failed";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
 		test_fail "wrong number of errors reported";
 	}
 
-	if not test_error :index 1 :matches "*value*Woah*invalid*" {
+	if not test_error :index 2 :matches "*value*Woah*invalid*" {
 		test_fail "wrong error reported (1): ${0}";
 	}
 }
