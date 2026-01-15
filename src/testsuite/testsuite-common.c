@@ -336,9 +336,12 @@ static void testsuite_tmp_dir_init(const char *tmp_path)
 	testsuite_tmp_dir = i_strdup(str_c(dir));
 }
 
-static void testsuite_tmp_dir_deinit(void)
+void testsuite_tmp_dir_deinit(void)
 {
 	const char *error;
+
+	if (testsuite_tmp_dir == NULL)
+		return;
 
 	if (unlink_directory(testsuite_tmp_dir,
 			     UNLINK_DIRECTORY_FLAG_RMDIR, &error) < 0)

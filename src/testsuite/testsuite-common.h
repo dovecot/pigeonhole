@@ -181,6 +181,7 @@ bool testsuite_testcase_result(bool expect_failure);
  * Testsuite temporary directory
  */
 
+void testsuite_tmp_dir_deinit(void);
 const char *testsuite_tmp_dir_get(void);
 
 /*
