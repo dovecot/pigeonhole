@@ -386,7 +386,13 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 			rfc2822_header_append(hdr, "X-Sieve-Redirected-From",
 					      smtp_address_encode(user_email),
 					      FALSE, NULL);
+			rfc2822_header_append(hdr, "X-Forwarded-For",
+					      smtp_address_encode(user_email),
+					      FALSE, NULL);
 		}
+		rfc2822_header_append(hdr, "X-Forwarded-To",
+				      smtp_address_encode(ctx->to_address),
+				      FALSE, NULL);
 
 		/* Add new Message-ID if message doesn't have one */
 		if (new_msg_id != NULL)
