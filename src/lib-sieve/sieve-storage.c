@@ -2051,7 +2051,7 @@ int sieve_storage_sequence_create(struct sieve_instance *svinst,
 	sseq->cause = i_strdup(cause);
 	sseq->type = i_strdup(type);
 	sseq->storage_set = storage_set;
-	sseq->storage_names = p_strarray_dup(default_pool, storage_names);
+	sseq->storage_names = storage_names;
 	sseq->storage_count = storage_count;
 
 	sseq->event_parent = event_parent;
@@ -2108,6 +2108,5 @@ void sieve_storage_sequence_free(struct sieve_storage_sequence **_sseq)
 	i_free(sseq->cause);
 	i_free(sseq->type);
 	settings_free(sseq->storage_set);
-	i_free(sseq->storage_names);
 	i_free(sseq);
 }

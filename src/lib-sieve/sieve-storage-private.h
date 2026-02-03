@@ -213,7 +213,7 @@ struct sieve_storage_sequence {
 	char *type;
 
 	const struct sieve_storage_settings *storage_set;
-	const char **storage_names;
+	const char *const *storage_names;
 	unsigned int storage_count, storage_index;
 };
 
