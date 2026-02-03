@@ -68,9 +68,11 @@ proxy_write_xclient(struct managesieve_client *client, string_t *str)
 
 	string_t *fwd = proxy_compose_xclient_forward(client);
 
-	str_printfa(str, "XCLIENT ADDR=%s PORT=%u SESSION=%s TTL=%u "
-		    "CLIENT-TRANSPORT=%s",
+	str_printfa(str, "XCLIENT ADDR=%s PORT=%u DESTADDR=%s DESTPORT=%u "
+		    "SESSION=%s TTL=%u CLIENT-TRANSPORT=%s",
 		    net_ip2addr(&client->common.ip), client->common.remote_port,
+		    net_ip2addr(&client->common.local_ip),
+		    client->common.local_port,
 		    client_get_session_id(&client->common),
 		    client->common.proxy_ttl - 1,
 		    client->common.end_client_tls_secured ?

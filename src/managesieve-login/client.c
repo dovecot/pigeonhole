@@ -198,11 +198,17 @@ cmd_xclient(struct managesieve_client *msieve_client,
 		if (str_begins_icase(arg, "ADDR=", &value)) {
 			if (net_addr2ip(value, &client->ip) < 0)
 				args_ok = FALSE;
+		} else if (str_begins_icase(arg, "DESTADDR=", &value)) {
+			if (net_addr2ip(value, &client->local_ip) < 0)
+				args_ok = FALSE;
 		} else if (str_begins_icase(arg, "FORWARD=", &value)) {
 			if (!client_forward_decode_base64(client, value))
 				args_ok = FALSE;
 		} else if (str_begins_icase(arg, "PORT=", &value)) {
 			if (net_str2port(value, &client->remote_port) < 0)
+				args_ok = FALSE;
+		} else if (str_begins_icase(arg, "DESTPORT=", &value)) {
+			if (net_str2port(value, &client->local_port) < 0)
 				args_ok = FALSE;
 		} else if (str_begins_icase(arg, "SESSION=", &value)) {
 			if (strlen(value) <= LOGIN_MAX_SESSION_ID_LEN) {
