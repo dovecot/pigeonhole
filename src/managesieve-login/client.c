@@ -235,6 +235,15 @@ cmd_xclient(struct managesieve_client *msieve_client,
 	if (!args_ok || !MANAGESIEVE_ARG_IS_EOL(&args[0]))
 		return -1;
 
+	const char *error;
+	if (client_addresses_changed(client, &error) < 0) {
+		client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO,
+				       "TRYLATER/NORETRY",
+				       "Failed to reload configuration");
+		client_destroy(client, error);
+		return -1;
+	}
+
 	client_send_ok(client, "Updated");
 	return 1;
 }
