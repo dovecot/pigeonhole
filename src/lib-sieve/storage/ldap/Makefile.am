@@ -19,7 +19,6 @@ ldap_sources = \
 libsieve_storage_ldap_la_SOURCES = $(ldap_sources)
 libsieve_storage_ldap_la_LIBADD = \
 	$(LDAP_LIBS) \
-	$(LIBDOVECOT) \
 	$(LIBDOVECOT_LDAP) \
 	$(DOVECOT_LDAP_LIBS)
 
