@@ -251,7 +251,7 @@ managesieve_parser_read_string(struct managesieve_parser *parser,
 		if (data[i] == '"') {
 			if (!uni_utf8_data_is_valid(data+1, i-1)) {
 				parser->error =
-					"Invalid UTF-8 character in quoted-string.";
+					"Invalid UTF-8 character in quoted string.";
 				return FALSE;
 			}
 
@@ -281,7 +281,7 @@ managesieve_parser_read_string(struct managesieve_parser *parser,
 
 			if (!IS_QUOTED_SPECIAL(data[i])) {
 				parser->error =
-					"Escaped quoted-string character is not a QUOTED-SPECIAL.";
+					"Escaped quoted string character is not a QUOTED-SPECIAL.";
 				return FALSE;
 			}
 			continue;
@@ -704,7 +704,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 			if (!IS_QUOTED_SPECIAL(data[i])) {
 				/* Invalid string */
 				io_stream_set_error(&stream->iostream,
-					"Escaped quoted-string character is not a QUOTED-SPECIAL");
+					"Escaped quoted string character is not a QUOTED-SPECIAL");
 				stream->istream.stream_errno = EINVAL;
 				return -1;
 			}
