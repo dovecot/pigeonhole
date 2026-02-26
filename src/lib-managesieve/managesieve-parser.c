@@ -713,6 +713,11 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 			stream->w_buffer[dest++] = data[i];
 			i++;
 			break;
+		case '\0':
+			io_stream_set_error(&stream->iostream,
+				"NULs not allowed in quoted string");
+			stream->istream.stream_errno = EINVAL;
+			return -1;
 		case '\r':
 		case '\n':
 			io_stream_set_error(&stream->iostream,
