@@ -1543,6 +1543,7 @@ int sieve_storage_save_continue(struct sieve_storage_save_context *sctx)
 int sieve_storage_save_finish(struct sieve_storage_save_context *sctx)
 {
 	struct sieve_storage *storage = sctx->storage;
+	bool was_failed = sctx->failed;
 	int ret;
 
 	sieve_storage_clear_error(storage);
@@ -1552,7 +1553,7 @@ int sieve_storage_save_finish(struct sieve_storage_save_context *sctx)
 
 	i_assert(storage->v.save_finish != NULL);
 	ret = storage->v.save_finish(sctx);
-	if (ret < 0) {
+	if (ret < 0 && !was_failed) {
 		i_assert(storage->error_code != SIEVE_ERROR_NONE);
 		i_assert(storage->error != NULL);
 
