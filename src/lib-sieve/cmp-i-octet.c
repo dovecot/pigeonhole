@@ -80,7 +80,7 @@ cmp_i_octet_char_match(const struct sieve_comparator *cmp ATTR_UNUSED,
 	const char *val_begin = *val;
 	const char *key_begin = *key;
 
-	while (**val == **key && *val < val_end && *key < key_end) {
+	while (*val < val_end && *key < key_end && **val == **key) {
 		(*val)++;
 		(*key)++;
 	}
