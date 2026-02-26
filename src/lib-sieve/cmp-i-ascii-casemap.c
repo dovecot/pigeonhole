@@ -67,8 +67,8 @@ cmp_i_ascii_casemap_char_match(const struct sieve_comparator *cmp ATTR_UNUSED,
 	const char *val_begin = *val;
 	const char *key_begin = *key;
 
-	while (i_tolower(**val) == i_tolower(**key) &&
-	       *val < val_end && *key < key_end) {
+	while (*val < val_end && *key < key_end &&
+	       i_tolower(**val) == i_tolower(**key)) {
 		(*val)++;
 		(*key)++;
 	}
