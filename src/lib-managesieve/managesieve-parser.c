@@ -693,7 +693,9 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 				return -1;
 			}
 			break;
-		} else if (data[i] == '\\') {
+		}
+		switch (data[i]) {
+		case '\\':
 			if (i+1 == size) {
 				/* Not enough input for \x */
 				extra = 1;
@@ -710,14 +712,14 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 			}
 			stream->w_buffer[dest++] = data[i];
 			i++;
-		} else {
-			if (data[i] == '\r' || data[i] == '\n') {
-				io_stream_set_error(&stream->iostream,
-					"Quoted string contains an invalid character");
-				stream->istream.stream_errno = EINVAL;
-				return -1;
-			}
-
+			break;
+		case '\r':
+		case '\n':
+			io_stream_set_error(&stream->iostream,
+				"Quoted string contains an invalid character");
+			stream->istream.stream_errno = EINVAL;
+			return -1;
+		default:
 			stream->w_buffer[dest++] = data[i];
 			i++;
 		}
