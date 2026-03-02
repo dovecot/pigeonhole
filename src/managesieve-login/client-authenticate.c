@@ -199,6 +199,11 @@ managesieve_client_auth_read_response(struct managesieve_client *msieve_client,
 		if (i_stream_get_size(msieve_client->auth_response_input,
 				      FALSE, &resp_size) <= 0)
 			resp_size = 0;
+		else if (resp_size > LOGIN_MAX_AUTH_BUF_SIZE) {
+			client_destroy(client,
+				       "Authentication response too large");
+			return -1;
+		}
 
 		if (client->auth_response == NULL) {
 			client->auth_response =
