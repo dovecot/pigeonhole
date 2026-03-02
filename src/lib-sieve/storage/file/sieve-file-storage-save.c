@@ -111,7 +111,7 @@ sieve_file_storage_create_tmp(struct sieve_file_storage *fstorage,
 			mode_t old_mask =
 				umask(0777 & ~(fstorage->file_create_mode));
 			fd = open(str_c(path),
-				O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0777);
+				O_WRONLY | O_CREAT | O_TRUNC | O_EXCL | O_NOFOLLOW, 0777);
 			umask(old_mask);
 
 			if (fd != -1 || errno != EEXIST)

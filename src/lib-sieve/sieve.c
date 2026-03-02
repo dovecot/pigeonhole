@@ -1143,7 +1143,7 @@ int sieve_trace_log_create(struct sieve_instance *svinst, const char *path,
 	if (path == NULL)
 		output = o_stream_create_fd(1, 0);
 	else {
-		fd = open(path, O_CREAT | O_APPEND | O_WRONLY, 0600);
+		fd = open(path, O_CREAT | O_APPEND | O_WRONLY | O_NOFOLLOW, 0600);
 		if (fd == -1) {
 			e_error(svinst->event, "trace: "
 				"creat(%s) failed: %m", path);

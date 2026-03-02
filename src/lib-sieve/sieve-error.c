@@ -893,7 +893,7 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 
 	/* Open the logfile */
 
-	fd = open(ehandler->logfile, O_CREAT | O_APPEND | O_WRONLY, 0600);
+	fd = open(ehandler->logfile, O_CREAT | O_APPEND | O_WRONLY | O_NOFOLLOW, 0600);
 	if (fd == -1) {
 		if (errno == EACCES) {
 			e_error(svinst->event,
@@ -960,7 +960,7 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 
 			/* Open clean logfile (overwrites existing if rename() failed earlier) */
 			fd = open(ehandler->logfile,
-				O_CREAT | O_APPEND | O_WRONLY | O_TRUNC, 0600);
+				O_CREAT | O_APPEND | O_WRONLY | O_TRUNC | O_NOFOLLOW, 0600);
 			if (fd == -1) {
 				if (errno == EACCES) {
 					e_error(svinst->event,
