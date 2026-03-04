@@ -161,7 +161,7 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 			}
 
 			debug_printf("found wildcard '%c' at pos [%d]\n",
-				     next_wcard, (int) (wp-key));
+				     next_wcard, (int)(wp - key));
 
 			if (mvalues != NULL)
 				str_truncate(mvalue, 0);
@@ -234,7 +234,7 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 				/* Add match values */
 				if (mvalues != NULL) {
 					i_assert(qp >= pvp);
-					str_append_data(mvalue, pvp, qp-pvp);
+					str_append_data(mvalue, pvp, qp - pvp);
 
 					/* Append '*' match value */
 					sieve_match_values_add(mvalues, mvalue);
@@ -311,7 +311,7 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 					const char *qp = qend - key_offset;
 
 					/* Append '*' match value */
-					str_append_data(mvalue, pvp, qp-pvp);
+					str_append_data(mvalue, pvp, qp - pvp);
 
 					/* Append any initial '?' match values
 					   (those that caused the key offset).
@@ -342,7 +342,7 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 				next_wcard = _scan_key_section(subsection, &wp, kend);
 				debug_printf("found next wildcard '%c' at pos [%d] "
 					     "(fixed match)\n",
-					     next_wcard, (int) (wp-key));
+					     next_wcard, (int)(wp - key));
 
 				/* Determine what we are looking for */
 				needle = str_c(subsection);
@@ -429,7 +429,7 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 			/* Add the rest of the string as match value */
 			if (mvalues != NULL) {
 				str_truncate(mvalue, 0);
-				str_append_data(mvalue, vp, vend-vp);
+				str_append_data(mvalue, vp, vend - vp);
 				sieve_match_values_add(mvalues, mvalue);
 			}
 
