@@ -66,8 +66,13 @@ _scan_key_section(string_t *section, const char **wcardp, const char *key_end)
 	/* Find next wildcard and resolve escape sequences */
 	str_truncate(section, 0);
 	while (*wcardp < key_end && **wcardp != '*' && **wcardp != '?') {
-		if (**wcardp == '\\')
+		if (**wcardp == '\\') {
 			(*wcardp)++;
+			if (*wcardp == key_end) {
+				str_append_c(section,'\\');
+				break;
+			}
+		}
 		str_append_c(section, **wcardp);
 		(*wcardp)++;
 	}
