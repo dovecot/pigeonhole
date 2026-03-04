@@ -13,6 +13,7 @@ X-Bullshit: 33333???a
 Message-ID: <90a02fe01fc25e131d0e9c4c45975894@example.com>
 Comment:
 X-Subject: Log for successful build of Dovecot.
+X-X: X
 
 Het werkt!
 .
@@ -236,6 +237,12 @@ test "Fixed string" {
 	}
 
 	if address :matches "to" "sirius" {
+		test_fail "should not have matched";
+	}
+}
+
+test "Match 'X' to '*?X'" {
+	if header :matches "X-X" "*?X" {
 		test_fail "should not have matched";
 	}
 }

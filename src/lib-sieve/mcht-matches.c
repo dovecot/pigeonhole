@@ -210,7 +210,7 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 
 				/* Check if the value is still large enough */
 				slen = str_len(section);
-				if ((vp + slen) > vend) {
+				if ((vp + slen) >= vend) {
 					debug_printf("  wont match: "
 						     "value is too short\n");
 					break;
