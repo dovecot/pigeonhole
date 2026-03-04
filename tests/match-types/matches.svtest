@@ -15,6 +15,7 @@ Comment:
 X-Subject: Log for successful build of Dovecot.
 X-X: X
 X-Slash: Slashy slash\
+X-a: a
 
 Het werkt!
 .
@@ -256,6 +257,18 @@ test "End slash" {
 
 test "End '?*'" {
 	if address :matches "to" "g?*" {
+		test_fail "should not have matched";
+	}
+}
+
+test "Match 'a' to '*a?'" {
+	if header :matches "X-a" "*a?" {
+		test_fail "should not have matched";
+	}
+}
+
+test "Match 'a' to '*a??????????'" {
+	if header :matches "X-a" "*a??????????" {
 		test_fail "should not have matched";
 	}
 }
