@@ -366,8 +366,13 @@ int main(int argc, char *argv[])
 	if (master_service_settings_read_simple(master_service, &error) < 0)
 		i_fatal("%s", error);
 
-	if (t_abspath("auth-master", &login_set.auth_socket_path, &error) < 0)
-		i_fatal("t_abspath(%s) failed: %s", "auth-master", error);
+	const struct master_service_settings *master_set =
+		master_service_get_service_settings(master_service);
+	if (t_abspath(master_set->auth_master_socket_path,
+		      &login_set.auth_socket_path, &error) < 0) {
+		i_fatal("t_abspath(%s) failed: %s",
+			master_set->auth_master_socket_path, error);
+	}
 
 	if (argv[optind] != NULL &&
 	    t_abspath(argv[optind], &login_set.postlogin_socket_path,
