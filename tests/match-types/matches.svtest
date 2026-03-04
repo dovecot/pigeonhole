@@ -253,3 +253,9 @@ test "End slash" {
 		test_fail "should have matched";
 	}
 }
+
+test "End '?*'" {
+	if address :matches "to" "g?*" {
+		test_fail "should not have matched";
+	}
+}
