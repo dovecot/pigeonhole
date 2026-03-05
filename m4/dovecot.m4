@@ -6,7 +6,7 @@ dnl This file is free software; the authors give
 dnl unlimited permission to copy and/or distribute it, with or without
 dnl modifications, as long as this notice is preserved.
 
-# serial 47
+# serial 48
 
 dnl
 dnl Check for support for D_FORTIFY_SOURCE=2
@@ -26,6 +26,59 @@ AC_DEFUN([AC_CC_D_FORTIFY_SOURCE],[
         ;;
       esac
     ])
+])
+
+AC_DEFUN([DC_FCF_PROTECTION], [
+  AC_ARG_WITH([fcf-protection],
+    [AS_HELP_STRING([--with-fcf-protection=<choice>], [Set Control-flow protection level (default: none)])],
+    [fcf_protection=$withval],
+    [fcf_protection=none])
+  AS_IF([test "x$fcf_protection" != "xnone"], [
+    case "$host" in
+      *)
+        gl_COMPILER_OPTION_IF([-fcf-protection=$fcf_protection],
+          [AM_CFLAGS="$AM_CFLAGS -fcf-protection=$fcf_protection"],
+          [AC_MSG_ERROR([-fcf-protection=$fcf_protection not supported by compiler])],
+          [AC_LANG_PROGRAM()])
+      ;;
+    esac
+  ])
+])
+
+AC_DEFUN([DC_HARDEN_SLS], [
+  AC_ARG_WITH([harden-sls],
+    [AS_HELP_STRING([--with-harden-sls=<choice>], [Straight-Line Speculation (SLS) mitigations (default: none)])],
+    [harden_sls=$withval],
+    [harden_sls=none])
+  AS_IF([test "x$harden_sls" != "xnone"], [
+    case "$host" in
+      *)
+        gl_COMPILER_OPTION_IF([-mharden-sls=$harden_sls],
+          [AM_CFLAGS="$AM_CFLAGS -mharden-sls=$harden_sls"],
+          [AC_MSG_ERROR([-mharden-sls=$harden_sls not supported by compiler])],
+          [AC_LANG_PROGRAM()])
+      ;;
+    esac
+  ])
+])
+
+AC_DEFUN([DC_LTO], [
+  AC_ARG_ENABLE([lto],
+    [AS_HELP_STRING([--enable-lto], [Enable Link Time Optimization (LTO)])],
+    [enable_lto=yes],
+    [enable_lto=no])
+  AS_IF([test "x$enable_lto" = xyes], [
+    case "$host" in
+      *)
+        gl_COMPILER_OPTION_IF([-flto=auto -ffat-lto-objects], [
+          AM_CFLAGS="$AM_CFLAGS -flto=auto -ffat-lto-objects"
+          AM_LDFLAGS="-flto"
+        ],
+        [AC_MSG_ERROR([LTO support requested but not present])],
+        [AC_LANG_PROGRAM()])
+      ;;
+    esac
+  ])
 ])
 
 dnl * gcc specific options
@@ -282,7 +335,7 @@ AC_DEFUN([DC_DOVECOT_TEST_WRAPPER],[
   AC_REQUIRE_AUX_FILE([run-test.sh.in])
   AC_ARG_VAR([VALGRIND], [Path to valgrind])
   AC_PATH_PROG(VALGRIND, valgrind, reject)
-  AS_IF([test "$VALGRIND" != reject], [
+  AS_IF([test "$VALGRIND" != reject -a x$want_asan != xyes -a test x$want_msan != xyes], [
     RUN_TEST='$(LIBTOOL) execute $(SHELL) $(top_builddir)/build-aux/run-test.sh'
   ], [
     RUN_TEST=''
@@ -309,7 +362,12 @@ AC_DEFUN([DC_DOVECOT_HARDENING],[
 	AC_CC_D_FORTIFY_SOURCE
 	AC_CC_RETPOLINE
 	AC_LD_RELRO
+        DC_LTO
+        DC_HARDEN_SLS
+        DC_FCF_PROTECTION
 	DOVECOT_WANT_UBSAN
+        DOVECOT_WANT_ASAN
+        DOVECOT_WANT_MSAN
 ])
 
 AC_DEFUN([DC_DOVECOT_FUZZER],[
@@ -318,13 +376,13 @@ AC_DEFUN([DC_DOVECOT_FUZZER],[
                 with_fuzzer=$withval,
                 with_fuzzer=no)
 	AS_IF([test x$with_fuzzer = xclang], [
-		AM_CFLAGS="$AM_CFLAGS -fsanitize=fuzzer-no-link -fsanitize=address"
+		AM_CFLAGS="$AM_CFLAGS -fsanitize=fuzzer-no-link"
 		AM_CFLAGS="$AM_CFLAGS -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
 		# use $LIB_FUZZING_ENGINE for linking if it exists
-		FUZZER_LDFLAGS=${LIB_FUZZING_ENGINE--fsanitize=fuzzer -fsanitize=address}
+		FUZZER_LDFLAGS=${LIB_FUZZING_ENGINE--fsanitize=fuzzer}
 		# May need to use CXXLINK for linking, which wants sources to
 		# be compiled with -fPIE
-		FUZZER_CPPFLAGS='$(AM_CPPFLAGS) -fPIE -DPIE -fsanitize=address'
+		FUZZER_CPPFLAGS='$(AM_CPPFLAGS) -fPIE -DPIE'
 	], [test x$with_fuzzer != xno], [
 		AC_MSG_ERROR([Unknown fuzzer $with_fuzzer])
 	])
@@ -345,7 +403,7 @@ AC_DEFUN([DC_DOVECOT_FUZZER],[
 ])
 
 AC_DEFUN([DC_DOVECOT],[
-	AC_ARG_WITH(dovecot,
+        AC_ARG_WITH(dovecot,
 	  [  --with-dovecot=DIR      Dovecot base directory],
 			[ dovecotdir="$withval" ], [
 			  dc_prefix=$prefix
@@ -564,7 +622,7 @@ AC_DEFUN([CC_STRICT_BOOL], [
 
 AC_DEFUN([DOVECOT_WANT_UBSAN], [
   AC_ARG_ENABLE(ubsan,
-    AS_HELP_STRING([--enable-ubsan], [Enable undefined behaviour sanitizes (default=no)]),
+    AS_HELP_STRING([--enable-ubsan], [Enable undefined behaviour sanitizers (default=no)]),
                    [want_ubsan=yes], [want_ubsan=no])
   AC_MSG_CHECKING([whether we want undefined behaviour sanitizer])
   AC_MSG_RESULT([$want_ubsan])
@@ -595,10 +653,54 @@ AC_DEFUN([DOVECOT_WANT_UBSAN], [
              AC_DEFINE([HAVE_FSANITIZE_NULLABILITY], [1], [Define if your compiler has -fsanitize=nullability])
      ])
      AS_IF([test "$san_flags" != "" ], [
-       AM_CFLAGS="$AM_CFLAGS $san_flags -U_FORTIFY_SOURCE -g -ggdb3 -O0 -fno-omit-frame-pointer"
+       AM_CFLAGS="$AM_CFLAGS $san_flags -fno-omit-frame-pointer"
        AC_DEFINE([HAVE_UNDEFINED_SANITIZER], [1], [Define if your compiler supports undefined sanitizers])
      ], [
        AC_MSG_ERROR([No undefined sanitizer support in your compiler])
+     ])
+     san_flags=""
+  ])
+])
+
+AC_DEFUN([DOVECOT_WANT_ASAN], [
+  AC_ARG_ENABLE(asan,
+    AS_HELP_STRING([--enable-asan], [Enable address sanitizer (default=no)]),
+                   [want_asan=yes], [want_asan=no])
+  AC_MSG_CHECKING([whether we want address sanitizer])
+  AC_MSG_RESULT([$want_asan])
+  AS_IF([test x$want_asan = xyes], [
+     san_flags=""
+     gl_COMPILER_OPTION_IF([-fsanitize=address], [
+             san_flags="$san_flags -fsanitize=address"
+             AC_DEFINE([HAVE_FSANITIZE_ADDRESS], [1], [Define if your compiler has -fsanitize=address])
+     ])
+     AS_IF([test "$san_flags" != "" ], [
+       AM_CFLAGS="$AM_CFLAGS $san_flags -fno-omit-frame-pointer"
+       AC_DEFINE([HAVE_ADDRESS_SANITIZER], [1], [Define if your compiler supports address sanitizer])
+     ], [
+       AC_MSG_ERROR([No address sanitizer support in your compiler])
+     ])
+     san_flags=""
+  ])
+])
+
+AC_DEFUN([DOVECOT_WANT_MSAN], [
+  AC_ARG_ENABLE(msan,
+    AS_HELP_STRING([--enable-msan], [Enable memory sanitizer (default=no)]),
+                   [want_msan=yes], [want_msan=no])
+  AC_MSG_CHECKING([whether we want memory sanitizer])
+  AC_MSG_RESULT([$want_msan])
+  AS_IF([test x$want_msan = xyes], [
+     san_flags=""
+     gl_COMPILER_OPTION_IF([-fsanitize=memory], [
+             san_flags="$san_flags -fsanitize=memory"
+             AC_DEFINE([HAVE_FSANITIZE_MEMORY], [1], [Define if your compiler has -fsanitize=memory])
+     ])
+     AS_IF([test "$san_flags" != "" ], [
+       AM_CFLAGS="$AM_CFLAGS $san_flags -fno-omit-frame-pointer"
+       AC_DEFINE([HAVE_MEMORY_SANITIZER], [1], [Define if your compiler supports memory sanitizer])
+     ], [
+       AC_MSG_ERROR([No memory sanitizer support in your compiler])
      ])
      san_flags=""
   ])
