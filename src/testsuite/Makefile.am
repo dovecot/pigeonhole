@@ -1,7 +1,7 @@
 noinst_PROGRAMS = testsuite
 if USE_FUZZER
 noinst_PROGRAMS += \
-	fuzzsuite
+	fuzz-suite
 endif
 
 ABS_TOP_BUILDDIR := $(shell cd $(top_builddir) && pwd)
@@ -64,24 +64,24 @@ testsuite_SOURCES = \
 	testsuite.c
 
 if USE_FUZZER
-nodist_EXTRA_fuzzsuite_SOURCES = force-cxx-linking.cxx
-fuzzsuite_CPPFLAGS = $(FUZZER_CPPFLAGS)
-fuzzsuite_LDFLAGS = $(FUZZER_LDFLAGS)
+nodist_EXTRA_fuzz_suite_SOURCES = force-cxx-linking.cxx
+fuzz_suite_CPPFLAGS = $(FUZZER_CPPFLAGS)
+fuzz_suite_LDFLAGS = $(FUZZER_LDFLAGS)
 
-fuzzsuite_LDADD = \
+fuzz_suite_LDADD = \
 	$(libs) \
 	$(LIBDOVECOT_STORAGE) \
 	$(LIBDOVECOT_LDA) \
 	$(LIBDOVECOT) \
 	$(LIBDOVECOT_TEST_LIBS)
-fuzzsuite_DEPENDENCIES = \
+fuzz_suite_DEPENDENCIES = \
 	$(libs) \
 	$(LIBDOVECOT_STORAGE_DEPS) \
 	$(LIBDOVECOT_LDA_DEPS) \
 	$(LIBDOVECOT_DEPS) \
 	$(LIBDOVECOT_TEST_LIBS)
 
-fuzzsuite_SOURCES = \
+fuzz_suite_SOURCES = \
 	testsuite-common.c \
 	testsuite-settings.c \
 	testsuite-objects.c \
