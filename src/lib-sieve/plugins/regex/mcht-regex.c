@@ -308,7 +308,7 @@ mcht_regex_match_keys(struct sieve_match_context *mctx,
 						sieve_runtime_trace(renv, 0,
 							"with regex '%s' [id=%u] => %d",
 							str_sanitize(str_c(key_item), 80),
-							array_count(&ctx->reg_expressions)-1, match);
+							i, match);
 					}
 				}
 			} T_END;
