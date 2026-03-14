@@ -297,7 +297,7 @@ mcht_regex_match_keys(struct sieve_match_context *mctx,
 						}
 					}
 				} else {
-					rkey = array_idx_modifiable(&ctx->reg_expressions, 1);
+					rkey = array_idx_modifiable(&ctx->reg_expressions, i);
 				}
 
 				if (rkey->status > 0) {
