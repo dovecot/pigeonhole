@@ -133,6 +133,7 @@ FUZZ_BEGIN_DATA(const unsigned char *data, size_t size)
 		"postmaster_address=postmaster@example.com");
 	master_service_parse_option(master_service, 'o', "mail_uid=");
 	master_service_parse_option(master_service, 'o', "mail_gid=");
+	master_service_parse_option(master_service, 'o', "default_internal_group=");
 
 	/* Register settings manually */
 	for (i = 0; i < set_infos_count; i++)
