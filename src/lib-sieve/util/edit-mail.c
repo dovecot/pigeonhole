@@ -1168,7 +1168,7 @@ int edit_mail_headers_iterate_init(struct edit_mail *edmail,
 	} else {
 		current = (header_idx != NULL ?
 			   header_idx->last : edmail->header_fields_tail);
-		if (current->header == NULL)
+		if (current != NULL && current->header == NULL)
 			current = current->prev;
 	}
 
