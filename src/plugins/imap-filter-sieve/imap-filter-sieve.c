@@ -773,6 +773,7 @@ imap_sieve_filter_run_scripts(struct imap_filter_sieve_context *sctx,
 		struct sieve_binary *sbin = scripts[i].binary;
 		int mstatus;
 
+		i_assert(script != NULL);
 		if (sbin == NULL) {
 			e_debug(sieve_get_event(svinst),
 				"Skipping script from '%s'",
