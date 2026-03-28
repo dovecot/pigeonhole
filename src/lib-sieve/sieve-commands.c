@@ -173,6 +173,7 @@ void sieve_arg_catenated_string_add_element(
 	struct sieve_arg_catenated_string *catstr,
 	struct sieve_ast_argument *element)
 {
+	i_assert(catstr->str_parts != NULL);
 	sieve_ast_arg_list_add(catstr->str_parts, element);
 }
 
