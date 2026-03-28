@@ -550,7 +550,7 @@ imap_sieve_mailbox_transaction_run(
 	struct mail *mail, *src_mail = NULL;
 	int ret, eret;
 
-	if (ismt == NULL || !array_is_created(&ismt->events)) {
+	if (array_is_empty(&ismt->events)) {
 		/* Nothing to do */
 		return 0;
 	}
