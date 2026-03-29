@@ -1087,7 +1087,8 @@ db_ldap_get_var_expand_table(struct ldap_connection *conn, const char *name)
 	tab[2].value = strchr(svinst->username, '@');
 	if (tab[2].value != NULL)
 		tab[2].value = ldap_escape(tab[2].value+1);
-	tab[3].value = ldap_escape(svinst->home_dir);
+	tab[3].value = (svinst->home_dir == NULL ?
+			NULL : ldap_escape(svinst->home_dir));
 	tab[4].value = ldap_escape(name);
 	return tab;
 }
