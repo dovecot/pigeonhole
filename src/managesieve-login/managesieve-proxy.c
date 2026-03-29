@@ -138,7 +138,8 @@ proxy_write_auth(struct managesieve_client *client, string_t *str)
 	str_append(str, "AUTHENTICATE ");
 	managesieve_quote_append_string(str, mech_name, FALSE);
 	if (dsasl_client_output(client->common.proxy_sasl_client,
-				&output, &len, &error) < 0) {
+				&output, &len,
+				&error) != DSASL_CLIENT_RESULT_OK) {
 		const char *reason = t_strdup_printf(
 			"SASL mechanism %s init failed: %s",
 			mech_name, error);
