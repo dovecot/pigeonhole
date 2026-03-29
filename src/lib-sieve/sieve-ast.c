@@ -261,7 +261,7 @@ bool sieve_ast_extension_is_required
 		if (list->head == before) { \
 			node->prev = NULL; \
 			list->head = node; \
-		} else { \
+		} else if (before->prev != NULL) { \
 			before->prev->next = node; \
 		} \
 		node->prev = before->prev; \
