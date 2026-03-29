@@ -555,6 +555,7 @@ sieve_message_header_list_next_item(struct sieve_header_list *_hdrlist,
 			return -1;
 		}
 
+		i_assert(hdrlist->headers != NULL);
 		if (ret == 0 || hdrlist->headers[0] == NULL) {
 			/* Try next item when no headers found */
 			hdrlist->headers = NULL;
