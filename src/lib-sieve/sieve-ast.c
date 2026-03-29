@@ -280,6 +280,7 @@ bool sieve_ast_extension_is_required
 		\
 		if (items->len == 0) \
 			return TRUE; \
+		i_assert(items->head != NULL); \
 		\
 		if (list->head == NULL) { \
 			list->head = items->head; \
