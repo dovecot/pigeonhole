@@ -643,6 +643,8 @@ sieve_ast_stringlist_add_stringlist(struct sieve_ast_argument *list,
 	i_assert(list->type == SAAT_STRING_LIST);
 	i_assert(items->type == SAAT_STRING_LIST);
 
+	if (items->_value.strlist == NULL)
+		return TRUE;
 	if (list->_value.strlist == NULL) {
 		list->_value.strlist =
 			sieve_ast_arg_list_create(list->ast->pool);
