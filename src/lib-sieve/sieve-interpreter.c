@@ -897,6 +897,7 @@ static int sieve_interpreter_operation_execute(struct sieve_interpreter *interp)
 		interp->command_line = 0;
 
 		/* Execute the operation */
+		i_assert(op != NULL);
 		if (op->execute != NULL) { /* Noop ? */
 			T_BEGIN {
 				result = op->execute(&(interp->runenv),
