@@ -223,6 +223,7 @@ sieve_code_dumper_print_operation(struct sieve_code_dumper *cdumper)
 	if (sieve_operation_read(denv->sblock, address, oprtn)) {
 		const struct sieve_operation_def *opdef = oprtn->def;
 
+		i_assert(opdef != NULL);
 		if (opdef->dump != NULL)
 			return opdef->dump(denv, address);
 		else if (opdef->mnemonic != NULL)
