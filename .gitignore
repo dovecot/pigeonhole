@@ -29,7 +29,7 @@ Makefile.in
 /build-aux/missing
 /build-aux/run-test.sh
 /aclocal.m4
-/version
+/version.txt
 /stamp.h
 /stamp-h1
 /stamp-h2

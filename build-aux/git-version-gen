@@ -1,11 +1,11 @@
 #!/bin/sh
 
-# serial 2
+# serial 3
 
 if test "${VERSION}" != ""; then
   VN="${VERSION}"
-elif test -s version; then
-  VN=`cat version`
+elif test -s version.txt; then
+  VN=`cat version.txt`
 elif test -e .git; then
  VN="0.0.0-`git rev-list --count HEAD`+`git describe --always`"
  git update-index -q --refresh >/dev/null 2>&1

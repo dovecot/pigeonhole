@@ -12,7 +12,7 @@ SUBDIRS = \
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = \
-	version \
+	version.txt \
 	tests \
 	examples \
 	COPYING.LGPL \
@@ -247,5 +247,5 @@ test-plugins: all-am $(extprograms_test_cases)
 
 check: check-am test
 
-version:
+version.txt:
 	$(AM_V_GEN)env VERSION=$(PACKAGE_VERSION) $(top_srcdir)/build-aux/git-version-gen > $@

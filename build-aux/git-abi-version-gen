@@ -2,7 +2,7 @@
 
 set -eu
 
-# serial 2
+# serial 3
 
 # Converts version to ABI version (discards extra information)
 
@@ -27,8 +27,8 @@ mangle_version()
 
 if test "${VERSION:-}" != ""; then
   :
-elif test -f version; then
-  VERSION="`cat version`"
+elif test -f version.txt; then
+  VERSION="`cat version.txt`"
 elif test -e .git; then
   VERSION="0.0.0"
 else
