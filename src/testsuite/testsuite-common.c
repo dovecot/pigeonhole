@@ -338,11 +338,10 @@ static void testsuite_tmp_dir_init(const char *tmp_path)
 
 void testsuite_tmp_dir_deinit(void)
 {
-	const char *error;
-
 	if (testsuite_tmp_dir == NULL)
 		return;
 
+	const char *error = NULL;
 	if (unlink_directory(testsuite_tmp_dir,
 			     UNLINK_DIRECTORY_FLAG_RMDIR, &error) < 0)
 		i_warning("failed to remove temporary directory '%s': %s.",
