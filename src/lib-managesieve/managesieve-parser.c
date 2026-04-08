@@ -691,7 +691,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 	extra = 0;
 
 	data = i_stream_get_data(stream->parent, &size);
-	for (i = 0; i < size && dest < stream->buffer_size;) {
+	for (i = 0; i < size && extra == 0 && dest < stream->buffer_size;) {
 		if (data[i] == '"') {
 			i++;
 			qsstream->str_end = TRUE;
