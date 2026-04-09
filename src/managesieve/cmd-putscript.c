@@ -449,7 +449,15 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 				return TRUE;
 			}
 
-			ret = i_stream_read(ctx->input);
+			/* Pre-read the input to check for user-caused issues
+			   that are best not handled by the storage driver,
+			   because that usually causes useless errors being
+			   logged. */
+			do {
+				ret = i_stream_read(ctx->input);
+			} while (!ctx->script_size_valid && ret > 0);
+			/* Continue saving with the pre-buffered data when
+			   successful so far. */
 			if ((ret != -1 || client->input->eof) &&
 			    ctx->input->stream_errno != EINVAL &&
 			    sieve_storage_save_continue(ctx->save_ctx) < 0) {
