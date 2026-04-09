@@ -656,7 +656,7 @@ quoted_string_istream_read_parent(struct quoted_string_istream *qsstream,
 			if (ret == -1 && stream->istream.stream_errno == 0) {
 				io_stream_set_error(&stream->iostream,
 					"Quoted string ends without closing quotes");
-				stream->istream.stream_errno = EPIPE;
+				stream->istream.stream_errno = EINVAL;
 			}
 			return ret;
 		}
