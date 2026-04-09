@@ -450,8 +450,8 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 			}
 
 			ret = i_stream_read(ctx->input);
-			if ((ret != -1 || ctx->input->stream_errno != EINVAL ||
-			     client->input->eof) &&
+			if ((ret != -1 || client->input->eof) &&
+			    ctx->input->stream_errno != EINVAL &&
 			    sieve_storage_save_continue(ctx->save_ctx) < 0) {
 				/* We still have to finish reading the script
 			   	   from client.
@@ -475,8 +475,7 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 		bool all_written = FALSE;
 
 		if (!ctx->script_size_valid) {
-			if (!client->input->eof &&
-			    ctx->input->stream_errno == EINVAL) {
+			if (ctx->input->stream_errno == EINVAL) {
 				client_send_command_error(
 					cmd, t_strdup_printf(
 						"Invalid input: %s",
