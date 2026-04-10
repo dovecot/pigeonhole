@@ -145,8 +145,7 @@ struct cmd_deleteheader_context_data {
  */
 
 static struct cmd_deleteheader_context_data *
-cmd_deleteheader_get_context
-(struct sieve_command *cmd)
+cmd_deleteheader_get_context(struct sieve_command *cmd)
 {
 	struct cmd_deleteheader_context_data *ctx_data =
 		(struct cmd_deleteheader_context_data *)cmd->data;
@@ -234,15 +233,14 @@ cmd_deleteheader_validate(struct sieve_validator *valdtr,
 	struct sieve_match_type mcht_default =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 
-	if (ctx_data != NULL) {
-		if (ctx_data->arg_last != NULL && ctx_data->arg_index == NULL) {
-			sieve_argument_validate_error(
-				valdtr, ctx_data->arg_last,
-				"the :last tag for the %s %s cannot be specified "
-				"without the :index tag",
-				sieve_command_identifier(cmd),
-				sieve_command_type_name(cmd));
-		}
+	if (ctx_data != NULL &&
+	    ctx_data->arg_last != NULL && ctx_data->arg_index == NULL) {
+		sieve_argument_validate_error(
+			valdtr, ctx_data->arg_last,
+			"the :last tag for the %s %s cannot be specified "
+			"without the :index tag",
+			sieve_command_identifier(cmd),
+			sieve_command_type_name(cmd));
 	}
 
 	/* Field name argument */
