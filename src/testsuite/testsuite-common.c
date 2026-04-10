@@ -47,7 +47,6 @@
 
 struct sieve_instance *testsuite_sieve_instance = NULL;
 char *testsuite_test_path = NULL;
-unsigned int test_failures;
 
 unsigned int test_failures;
 
