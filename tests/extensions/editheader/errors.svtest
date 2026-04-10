@@ -63,6 +63,21 @@ test "Invalid field value" {
 	}
 }
 
+test "deleteheader :last without :index" {
+       if test_script_compile "errors/last-without-index.sieve" {
+               test_fail "compile should have failed";
+       }
+
+       if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+               test_fail "wrong number of errors reported";
+       }
+
+       if not test_error :index 1
+               :matches "*:last tag*cannot be specified without the :index tag*" {
+               test_fail "wrong error reported (1)";
+       }
+}
+
 test "Command syntax (FIXME: count only)" {
 	if test_script_compile "errors/command-syntax.sieve" {
 		test_fail "compile should have failed";

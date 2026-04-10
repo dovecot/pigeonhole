@@ -241,6 +241,7 @@ cmd_deleteheader_validate(struct sieve_validator *valdtr,
 			"without the :index tag",
 			sieve_command_identifier(cmd),
 			sieve_command_type_name(cmd));
+		return FALSE;
 	}
 
 	/* Field name argument */
