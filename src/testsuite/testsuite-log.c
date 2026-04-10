@@ -106,6 +106,8 @@ _testsuite_main_log(struct sieve_error_handler *ehandler,
 	if (params->log_type != LOG_TYPE_ERROR)
 		return _testsuite_log(ehandler, params, flags, message);
 
+	if (testsuite_silent)
+		return;
 	if (params->location == NULL || *params->location == '\0')
 		fprintf(stderr, "error: %s\n", message);
 	else

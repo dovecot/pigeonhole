@@ -105,12 +105,20 @@ fuzz_die(const siginfo_t *si ATTR_UNUSED, void *context ATTR_UNUSED)
 
 FUZZ_BEGIN_DATA(const unsigned char *data, size_t size)
 {
+	static bool first_run = TRUE;
 	struct sieve_instance *svinst;
 	struct sieve_binary *sbin;
 	const char *sieve_dir = ".", *error;
 	unsigned int i;
 	bool log_stdout = FALSE;
 	int ret;
+
+	if (first_run) {
+#ifndef FUZZSUITE_DEBUG
+		testsuite_silent = (getenv("DEBUG") == NULL);
+#endif
+		first_run = FALSE;
+	}
 
 	sieve_tool = sieve_tool_init_fuzzer("fuzzsuite");
 
@@ -147,7 +155,8 @@ FUZZ_BEGIN_DATA(const unsigned char *data, size_t size)
 	testsuite_init(svinst, sieve_dir, sieve_tool_get_homedir(sieve_tool),
 		       log_stdout);
 
-	printf("Fuzz case:\n\n");
+	if (!testsuite_silent)
+		printf("Fuzz case:\n\n");
 
 	struct settings_instance *set_instance =
 		settings_instance_find(svinst->event);

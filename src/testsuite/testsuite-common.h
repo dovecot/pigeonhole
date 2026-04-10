@@ -19,6 +19,8 @@ extern const struct sieve_script_env *testsuite_scriptenv;
 
 extern char *testsuite_test_path;
 
+extern bool testsuite_silent;
+
 extern unsigned int test_failures;
 
 /*

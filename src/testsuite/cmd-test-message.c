@@ -546,6 +546,9 @@ cmd_test_message_print_operation_execute(const struct sieve_runtime_env *renv,
 	const unsigned char *data;
 	size_t size;
 
+	if (testsuite_silent)
+		return SIEVE_EXEC_OK;
+
 	if (mail_get_stream(mail, NULL, NULL, &input) < 0) {
 		sieve_runtime_error(renv, NULL,	"test_message_print: "
 				    "failed to read current message");

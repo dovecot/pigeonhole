@@ -477,7 +477,10 @@ cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 		}
 
 		if (sieve_settings_reload(eenv->svinst) < 0) {
-			printf("ERROR: Failed to reload sieve engine settings\n");
+			if (!testsuite_silent) {
+				printf("ERROR: "
+				       "Failed to reload sieve engine settings\n");
+			}
 			return SIEVE_EXEC_FAILURE;
 		}
 	} else {
@@ -491,13 +494,17 @@ cmd_test_config_reload_operation_execute(const struct sieve_runtime_env *renv,
 		ext = sieve_extension_get_by_name(eenv->svinst,
 						  str_c(extension));
 		if (ext == NULL) {
-			printf("ERROR: Unknown extension '%s'\n",
-			       str_c(extension));
+			if (!testsuite_silent) {
+				printf("ERROR: Unknown extension '%s'\n",
+				       str_c(extension));
+			}
 			return SIEVE_EXEC_FAILURE;
 		}
 		if (sieve_extension_reload(ext) < 0) {
-			printf("ERROR: Failed to load extension '%s'\n",
-			       str_c(extension));
+			if (!testsuite_silent) {
+				printf("ERROR: Failed to load extension '%s'\n",
+				       str_c(extension));
+			}
 			return SIEVE_EXEC_FAILURE;
 		}
 	}
