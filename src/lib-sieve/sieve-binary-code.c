@@ -123,7 +123,7 @@ sieve_size_t sieve_binary_emit_integer(struct sieve_binary_block *sblock,
 				       sieve_number_t integer)
 {
 	sieve_size_t address = _sieve_binary_block_get_size(sblock);
-	uint8_t buffer[sizeof(sieve_number_t) + 1];
+	uint8_t buffer[sizeof(sieve_number_t) * 8 / 7 + 1];
 	int bufpos = sizeof(buffer) - 1;
 
 	/* Encode last byte [0xxxxxxx]; msb == 0 marks the last byte */

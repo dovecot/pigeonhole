@@ -72,3 +72,12 @@ test "Exact size" {
 	}
 }
 
+/*
+ * TEST: Extreme size
+ */
+
+test "Extreme size" {
+	if size :over 18446744073709551615 {
+		test_fail "size :over matched extreme size";
+	}
+}
