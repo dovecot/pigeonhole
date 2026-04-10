@@ -227,7 +227,7 @@ cmd_addheader_operation_dump(const struct sieve_dumptime_env *denv,
 {
 	int opt_code = 0;
 
-	sieve_code_dumpf(denv, "addheader");
+	sieve_code_dumpf(denv, "ADDHEADER");
 	sieve_code_descend(denv);
 
 	/* Dump optional operands */
