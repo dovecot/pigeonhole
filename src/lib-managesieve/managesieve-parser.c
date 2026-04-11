@@ -441,6 +441,15 @@ static bool managesieve_parser_read_arg(struct managesieve_parser *parser)
 
 		switch (data[0]) {
 		case '\r':
+			if (data_size == 1) {
+				/* Wait for LF */
+				return FALSE;
+			}
+			if (data[1] != '\n') {
+				parser->error = "CR sent without LF";
+				return FALSE;
+			}
+			/* Fall through */
 		case '\n':
 			/* Unexpected end of line */
 			parser->eol = TRUE;
