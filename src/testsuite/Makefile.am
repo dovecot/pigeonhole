@@ -66,7 +66,8 @@ testsuite_SOURCES = \
 if USE_FUZZER
 nodist_EXTRA_fuzz_suite_SOURCES = force-cxx-linking.cxx
 fuzz_suite_CPPFLAGS = $(FUZZER_CPPFLAGS) $(AM_CFLAGS)
-fuzz_suite_LDFLAGS = $(FUZZER_LDFLAGS) $(AM_LDFLAGS)
+fuzz_suite_LDFLAGS = $(FUZZER_LDFLAGS) $(AM_LDFLAGS) \
+     -static-libtool-libs
 
 fuzz_suite_LDADD = \
 	$(libs) \
