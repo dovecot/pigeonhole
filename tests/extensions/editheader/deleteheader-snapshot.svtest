@@ -1,0 +1,76 @@
+require "vnd.dovecot.testsuite";
+require "editheader";
+require "fileinto";
+require "mailbox";
+
+/*
+ * Regression test: heap use-after-free in edit_mail_snapshot when
+ * deleteheader is called after a fileinto snapshot on an edit_mail
+ * whose headers have not yet been parsed.
+ */
+
+test_set "message" text:
+From: sender@example.com
+To: recipient@example.com
+Cc: original@example.com
+Subject: Test
+
+Body.
+.
+;
+
+test "deleteheader all: snapshot stale first pointer after parse" {
+	/* Add a Cc header while headers are not yet parsed.  The snapshot
+	 * created by the next fileinto has H_clone_cc->first pointing at
+	 * this appended field. */
+	addheader :last "Cc" "appended@example.com";
+
+	/* fileinto sets edit_snapshot=TRUE.  The next call to
+	 * sieve_message_edit creates a snapshot (edmail_snap) and the
+	 * fileinto action retains the pre-snapshot version for delivery. */
+	fileinto :create "folder1";
+
+	/* sieve_message_edit creates edmail_snap here.  edit_mail_headers_parse
+	 * inserts the parsed "Cc: original@example.com" before the appended
+	 * field in the list.  Without the fix the rebuild skips resetting
+	 * ->first; the delete loop then only removes the appended field,
+	 * frees H_clone_cc (index==0), and leaves the parsed field_idx with
+	 * a dangling ->header pointer. */
+	deleteheader "Cc";
+
+	/* A second fileinto + edit operation takes another snapshot of the
+	 * same edmail_snap.  edit_mail_snapshot walks header_fields_head and
+	 * reads field_idx->header->header on the orphaned entry.
+	 * Without the fix: use-after-free crash.
+	 * With the fix: clean run, both Cc occurrences are correctly gone. */
+	fileinto :create "folder2";
+	deleteheader "Subject";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	/* folder1 was snapshotted before deleteheader "Cc": both Cc headers
+	 * must be present. */
+	if not test_message :folder "folder1" 0 {
+		test_fail "message not stored in folder1";
+	}
+
+	if not header :is "Cc" "original@example.com" {
+		test_fail "original Cc missing in folder1 snapshot";
+	}
+
+	if not header :is "Cc" "appended@example.com" {
+		test_fail "appended Cc missing in folder1 snapshot";
+	}
+
+	/* folder2 was snapshotted after deleteheader "Cc": both Cc headers
+	 * must be absent. */
+	if not test_message :folder "folder2" 0 {
+		test_fail "message not stored in folder2";
+	}
+
+	if exists "Cc" {
+		test_fail "Cc header not fully deleted in folder2 snapshot";
+	}
+}

@@ -171,6 +171,7 @@ test_cases = \
 	tests/extensions/ihave/restrictions.svtest \
 	tests/extensions/editheader/addheader.svtest \
 	tests/extensions/editheader/deleteheader.svtest \
+	tests/extensions/editheader/deleteheader-snapshot.svtest \
 	tests/extensions/editheader/alternating.svtest \
 	tests/extensions/editheader/utf8.svtest \
 	tests/extensions/editheader/protected.svtest \

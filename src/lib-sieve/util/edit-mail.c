@@ -889,7 +889,17 @@ static int edit_mail_headers_parse(struct edit_mail *edmail)
 		}
 	}
 
-	/* Rebuild header index */
+	/* Rebuild header index. Reset first pointers before rebuilding so that
+	   the actual first occurrence in the final list is used. Without this,
+	   a snapshot's pre-set first pointer may refer to an appended field
+	   that sits later in the list than a parsed field with the same header,
+	   causing deleteheader to miss the parsed fields while still freeing
+	   the header_index — leaving stale field_idx->header pointers. */
+	struct _header_index *hidx = edmail->headers_head;
+	while (hidx != NULL) {
+		hidx->first = NULL;
+		hidx = hidx->next;
+	}
 	current = edmail->header_fields_head;
 	while (current != NULL) {
 		if (current->header->first == NULL)
