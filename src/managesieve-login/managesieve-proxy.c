@@ -11,6 +11,7 @@
 #include "strescape.h"
 #include "buffer.h"
 #include "base64.h"
+#include "client-auth-settings.h"
 #include "dsasl-client.h"
 
 #include "client.h"
@@ -105,10 +106,11 @@ proxy_write_auth_data(const unsigned char *data, unsigned int data_len,
 static int
 proxy_write_auth(struct managesieve_client *client, string_t *str)
 {
-	struct dsasl_client_settings sasl_set;
+	struct client_auth_settings sasl_set;
 	const unsigned char *sasl_output;
 	size_t sasl_output_len;
 	const char *mech_name, *error;
+	int ret;
 
 	i_assert(client->common.proxy_ttl > 1);
 
@@ -122,25 +124,40 @@ proxy_write_auth(struct managesieve_client *client, string_t *str)
 		return -1;
 	}
 
-	if (client->common.proxy_mech == NULL)
-		client->common.proxy_mech = &dsasl_client_mech_plain;
-
-	i_assert(client->common.proxy_sasl_client == NULL);
+	i_assert(client->common.proxy_sasl_session == NULL);
 	i_zero(&sasl_set);
+	sasl_set.mechanism = client->common.proxy_mech_name;
 	sasl_set.authid = (client->common.proxy_master_user != NULL ?
 			   client->common.proxy_master_user :
 			   client->common.proxy_user);
 	sasl_set.authzid = client->common.proxy_user;
 	sasl_set.password = client->common.proxy_password;
-	client->common.proxy_sasl_client =
-		dsasl_client_new(client->common.proxy_mech, &sasl_set);
-	mech_name = dsasl_client_mech_get_name(client->common.proxy_mech);
+
+	struct dsasl_client_parameters sasl_params = {
+		.protocol = "sieve",
+		.host = login_proxy_get_host(client->common.login_proxy),
+		.port = login_proxy_get_port(client->common.login_proxy),
+	};
+	ret = dsasl_client_session_create(sasl_client, client->common.event,
+					  &sasl_params, &sasl_set,
+					  &client->common.proxy_sasl_session,
+					  &error);
+	if (ret <= 0) {
+		const char *reason = t_strdup_printf(
+			"SASL client session init failed: %s", error);
+		login_proxy_failed(client->common.login_proxy,
+			login_proxy_get_event(client->common.login_proxy),
+			LOGIN_PROXY_FAILURE_TYPE_INTERNAL, reason);
+		return -1;
+	}
+	mech_name = dsasl_client_session_get_mech_name(
+		client->common.proxy_sasl_session);
 
 	str_append(str, "AUTHENTICATE ");
 	managesieve_quote_append_string(str, mech_name, FALSE);
-	if (dsasl_client_output(client->common.proxy_sasl_client,
-				&sasl_output, &sasl_output_len,
-				&error) != DSASL_CLIENT_RESULT_OK) {
+	if (dsasl_client_session_output(client->common.proxy_sasl_session,
+					&sasl_output, &sasl_output_len,
+					&error) != DSASL_CLIENT_RESULT_OK) {
 		const char *reason = t_strdup_printf(
 			"SASL mechanism %s init failed: %s",
 			mech_name, error);
@@ -168,7 +185,7 @@ proxy_input_auth_challenge(struct managesieve_client *client, const char *line,
 	bool fatal = FALSE;
 	int ret;
 
-	i_assert(client->common.proxy_sasl_client != NULL);
+	i_assert(client->common.proxy_sasl_session != NULL);
 	*challenge_r = NULL;
 
 	/* Build an input stream for the managesieve parser.
