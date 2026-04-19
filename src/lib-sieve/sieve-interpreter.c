@@ -85,6 +85,13 @@ struct sieve_interpreter {
 	struct sieve_runtime_trace trace;
 	struct sieve_resource_usage rusage;
 
+	/* CPU time limit for the current sieve_interpreter_continue() call;
+	   NULL when no limit is configured or not currently executing. Exposed
+	   via sieve_runtime_cpu_limit_exceeded() so long-running runtime code
+	   can enforce the limit without waiting for the next bytecode
+	   boundary. */
+	struct cpu_limit *climit;
+
 	/* Current operation */
 	struct sieve_operation oprtn;
 
@@ -361,6 +368,15 @@ struct sieve_instance *
 sieve_interpreter_svinst(struct sieve_interpreter *interp)
 {
 	return interp->runenv.exec_env->svinst;
+}
+
+bool sieve_runtime_cpu_limit_exceeded(const struct sieve_runtime_env *renv)
+{
+	struct sieve_interpreter *interp = renv->interp;
+
+	if (interp->climit == NULL)
+		return FALSE;
+	return cpu_limit_exceeded(interp->climit);
 }
 
 /* Do not use this function for normal sieve extensions. This is intended for
@@ -940,6 +956,7 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 		climit = cpu_limit_init(svinst->set->max_cpu_time,
 					CPU_LIMIT_TYPE_USER);
 	}
+	interp->climit = climit;
 
 	while (ret == SIEVE_EXEC_OK && !interp->interrupted &&
 	       *address < sieve_binary_block_get_size(renv->sblock)) {
@@ -959,6 +976,8 @@ int sieve_interpreter_continue(struct sieve_interpreter *interp,
 
 		ret = sieve_interpreter_operation_execute(interp);
 	}
+
+	interp->climit = NULL;
 
 	if (climit != NULL) {
 		sieve_resource_usage_init(&rusage);

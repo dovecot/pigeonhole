@@ -9,6 +9,7 @@
 
 #include "sieve-match-types.h"
 #include "sieve-comparators.h"
+#include "sieve-interpreter.h"
 #include "sieve-match.h"
 
 #include <string.h>
@@ -46,18 +47,39 @@ const struct sieve_match_type_def matches_match_type = {
 #endif
 
 /* FIXME: Naive implementation, substitute this with dovecot src/lib/str-find.c
+ *
+ * The inner loop polls the interpreter CPU time limit periodically so that a
+ * single O(N*M) search on a large value cannot run for many times the
+ * configured sieve_max_cpu_time. Returns 1 on match, 0 on exhaustion, or -1
+ * when the CPU time limit was exceeded (mctx->exec_status is set).
  */
-static inline bool
-_string_find(const struct sieve_comparator *cmp,
+#define SIEVE_MATCHES_CPU_CHECK_INTERVAL 4096
+
+static int
+_string_find(struct sieve_match_context *mctx,
+	     const struct sieve_comparator *cmp,
 	     const char **valp, const char *vend,
-	     const char **keyp, const char *kend)
+	     const char **keyp, const char *kend,
+	     unsigned int *counter)
 {
 	while ((*valp < vend) && (*keyp < kend)) {
 		if (!cmp->def->char_match(cmp, valp, vend, keyp, kend))
 			(*valp)++;
+
+		if (++(*counter) >= SIEVE_MATCHES_CPU_CHECK_INTERVAL) {
+			*counter = 0;
+			if (sieve_runtime_cpu_limit_exceeded(mctx->runenv)) {
+				sieve_runtime_error(
+					mctx->runenv, NULL,
+					"execution exceeded CPU time limit");
+				mctx->exec_status =
+					SIEVE_EXEC_RESOURCE_LIMIT;
+				return -1;
+			}
+		}
 	}
 
-	return (*keyp == kend);
+	return (*keyp == kend ? 1 : 0);
 }
 
 static char
@@ -101,6 +123,7 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 	char wcard = '\0';      /* Current wildcard */
 	char next_wcard = '\0'; /* Next  widlcard */
 	unsigned int key_offset = 0;
+	unsigned int counter = 0;
 
 	if (cmp->def == NULL || cmp->def->char_match == NULL)
 		return 0;
@@ -141,6 +164,19 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 	/* Loop until either key or value ends */
 	while (kp < kend && vp < vend) {
 		const char *needle, *nend;
+
+		if (++counter >= SIEVE_MATCHES_CPU_CHECK_INTERVAL) {
+			counter = 0;
+			if (sieve_runtime_cpu_limit_exceeded(mctx->runenv)) {
+				sieve_runtime_error(
+					mctx->runenv, NULL,
+					"execution exceeded CPU time limit");
+				mctx->exec_status =
+					SIEVE_EXEC_RESOURCE_LIMIT;
+				sieve_match_values_abort(&mvalues);
+				return -1;
+			}
+		}
 
 		if (!backtrack) {
 			/* Search the next '*' wildcard in the key string */
@@ -303,8 +339,17 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 				/* Match may happen at any offset
 				   (>= key offset): find substring */
 				vp += key_offset;
-				if ((vp >= vend) ||
-				    !_string_find(cmp, &vp, vend, &needle, nend)) {
+				if (vp >= vend) {
+					debug_printf("  failed to find needle at an offset\n");
+					break;
+				}
+				int fres = _string_find(mctx, cmp, &vp, vend,
+							&needle, nend, &counter);
+				if (fres < 0) {
+					sieve_match_values_abort(&mvalues);
+					return -1;
+				}
+				if (fres == 0) {
 					debug_printf("  failed to find needle at an offset\n");
 					break;
 				}

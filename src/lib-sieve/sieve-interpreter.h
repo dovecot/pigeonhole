@@ -165,6 +165,18 @@ int sieve_interpreter_run(struct sieve_interpreter *interp,
 			  struct sieve_result *result);
 
 /*
+ * CPU limit
+ */
+
+/* Returns TRUE if the current interpreter execution has exceeded its CPU
+   time limit (sieve_max_cpu_time). Callable from within long-running runtime
+   code (e.g. matcher inner loops) so that limit enforcement is not deferred
+   until the next bytecode boundary. Returns FALSE if no limit is active or
+   no execution is currently in progress. Cheap: does not call getrusage()
+   on each invocation. */
+bool sieve_runtime_cpu_limit_exceeded(const struct sieve_runtime_env *renv);
+
+/*
  * Error handling
  */
 
