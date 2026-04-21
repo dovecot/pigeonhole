@@ -1,3 +1,11 @@
+v2.4.4 2026-04-25  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	* CVE-2026-40016: eve :contains and :matches operators could have been
+	  using excessive amount of CPU. Limit the CPU to sieve_max_cpu_time.
+	- Fix potential crashes parsing corrupted Sieve binaries.
+	- lib-sieve: matches - Fix trailing literal match when it fills value exactly.
+	  v2.4.3 regression.
+
 v2.4.3 2026-03-27  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* CVE-2026-27858: managesieve-login can allocate large amount of memory
