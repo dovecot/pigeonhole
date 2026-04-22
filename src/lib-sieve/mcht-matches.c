@@ -213,9 +213,12 @@ mcht_matches_match_key(struct sieve_match_context *mctx,
 				debug_printf("next_wcard = NUL; "
 					     "must find needle at end\n");
 
-				/* Check if the value is still large enough */
+				/* Check if the value is still large enough to
+				   contain both the '?'-matched prefix
+				   (key_offset chars) and the trailing section.
+				 */
 				slen = str_len(section);
-				if ((vp + slen) >= vend) {
+				if ((vp + slen + key_offset) > vend) {
 					debug_printf("  wont match: "
 						     "value is too short\n");
 					break;

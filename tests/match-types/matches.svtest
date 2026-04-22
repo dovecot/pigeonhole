@@ -14,6 +14,7 @@ Message-ID: <90a02fe01fc25e131d0e9c4c45975894@example.com>
 Comment:
 X-Subject: Log for successful build of Dovecot.
 X-X: X
+List-Id: Dovecot Mailing List <dovecot.dovecot.org>
 X-Slash: Slashy slash\
 X-a: a
 
@@ -246,6 +247,13 @@ test "Fixed string" {
 test "Match 'X' to '*?X'" {
 	if header :matches "X-X" "*?X" {
 		test_fail "should not have matched";
+	}
+}
+
+test "Trailing literal matches exactly at end of value" {
+	if not header :matches "List-Id"
+		"*<dovecot*.dovecot.org>" {
+		test_fail "should have matched";
 	}
 }
 
