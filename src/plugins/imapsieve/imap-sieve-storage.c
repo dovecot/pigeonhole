@@ -93,7 +93,11 @@ struct imap_sieve_mailbox_transaction {
 struct imap_sieve_mail {
 	union mail_module_context module_ctx;
 
-	struct imap_sieve_mailbox_event *event;
+	/* Index into ismt->events for the event associated with this mail.
+	   UINT_MAX means "no event yet". A raw pointer would be unsafe
+	   because array_append_space() can realloc the underlying buffer
+	   and invalidate previously stored pointers. */
+	unsigned int event_idx;
 	string_t *flags;
 };
 
@@ -201,20 +205,22 @@ imap_sieve_create_mailbox_event(struct mailbox_transaction_context *t,
 	struct imap_sieve_mail *ismail = IMAP_SIEVE_MAIL_CONTEXT(mail);
 	struct imap_sieve_mailbox_event *event;
 
-	if (ismail->event != NULL &&
-	    ismail->event->save_seq == t->save_count &&
-	    ismail->event->dest_mail_uid == _mail->uid)
-		event = ismail->event;
-	else {
-		if (!array_is_created(&ismt->events))
-			i_array_init(&ismt->events, 64);
-		event = array_append_space(&ismt->events);
-		event->save_seq = t->save_count;
-		event->dest_mail_uid = _mail->uid;
-
-		ismail->event = event;
+	if (ismail->event_idx != UINT_MAX) {
+		i_assert(array_is_created(&ismt->events));
+		i_assert(ismail->event_idx < array_count(&ismt->events));
+		event = array_idx_modifiable(&ismt->events, ismail->event_idx);
+		if (event->save_seq == t->save_count &&
+		    event->dest_mail_uid == _mail->uid)
+			return event;
 	}
 
+	if (!array_is_created(&ismt->events))
+		i_array_init(&ismt->events, 64);
+	event = array_append_space(&ismt->events);
+	event->save_seq = t->save_count;
+	event->dest_mail_uid = _mail->uid;
+
+	ismail->event_idx = array_count(&ismt->events) - 1;
 	return event;
 }
 
@@ -380,6 +386,7 @@ static void imap_sieve_mail_allocated(struct mail *_mail)
 
 	ismail = p_new(mail->pool, struct imap_sieve_mail, 1);
 	ismail->module_ctx.super = *v;
+	ismail->event_idx = UINT_MAX;
 	mail->vlast = &ismail->module_ctx.super;
 
 	v->close = imap_sieve_mail_close;
