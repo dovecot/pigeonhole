@@ -61,6 +61,12 @@ struct ext_include_interpreter_context {
 	struct sieve_script *script;
 	const struct ext_include_script_info *script_info;
 
+	/* Persistent sieve_execute_env for the currently active child
+	   sub-interpreter. The child interpreter stores a pointer to this
+	   in its runenv, so it must outlive the child. Reused across
+	   successive children, since at most one child is active at a time. */
+	struct sieve_execute_env child_eenv;
+
 	const struct ext_include_script_info *include;
 	bool returned;
 };
@@ -767,12 +773,13 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 
 		/* We are the top-level interpreter instance */
 		if (result == SIEVE_EXEC_OK) {
-			struct sieve_execute_env eenv_new = *eenv;
+			ctx->child_eenv = *eenv;
 
-			if (included->location != EXT_INCLUDE_LOCATION_GLOBAL)
-				eenv_new.flags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
-			else {
-				eenv_new.flags &=
+			if (included->location != EXT_INCLUDE_LOCATION_GLOBAL) {
+				ctx->child_eenv.flags |=
+					SIEVE_EXECUTE_FLAG_NOGLOBAL;
+			} else {
+				ctx->child_eenv.flags &=
 					ENUM_NEGATE(SIEVE_EXECUTE_FLAG_NOGLOBAL);
 			}
 
@@ -781,7 +788,7 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 			 */
 			subinterp = sieve_interpreter_create_for_block(
 				included->block, included->script, renv->interp,
-				&eenv_new, ehandler);
+				&ctx->child_eenv, ehandler);
 			if (subinterp != NULL) {
 				curctx = ext_include_interpreter_context_init_child(
 					this_ext, subinterp, ctx, included->script,
@@ -840,19 +847,20 @@ int ext_include_execute_include(const struct sieve_runtime_env *renv,
 						/* Sub-include requested */
 
 						if (result == SIEVE_EXEC_OK) {
-							struct sieve_execute_env eenv_new = *eenv;
+							curctx->child_eenv = *eenv;
 
-							if (curctx->include->location != EXT_INCLUDE_LOCATION_GLOBAL)
-								eenv_new.flags |= SIEVE_EXECUTE_FLAG_NOGLOBAL;
-							else {
-								eenv_new.flags &=
+							if (curctx->include->location != EXT_INCLUDE_LOCATION_GLOBAL) {
+								curctx->child_eenv.flags |=
+									SIEVE_EXECUTE_FLAG_NOGLOBAL;
+							} else {
+								curctx->child_eenv.flags &=
 									ENUM_NEGATE(SIEVE_EXECUTE_FLAG_NOGLOBAL);
 							}
 
 							/* Create sub-interpreter */
 							subinterp = sieve_interpreter_create_for_block(
 								curctx->include->block, curctx->include->script,
-								curctx->interp, &eenv_new, ehandler);
+								curctx->interp, &curctx->child_eenv, ehandler);
 							if (subinterp != NULL) {
 								curctx = ext_include_interpreter_context_init_child(
 									this_ext, subinterp, curctx,
