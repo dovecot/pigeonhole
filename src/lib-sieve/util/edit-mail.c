@@ -552,8 +552,9 @@ edit_mail_header_field_create(struct edit_mail *edmail, const char *field_name,
 					      &field->body_offset);
 
 		/* Copy to new field */
-		field->data = i_strndup(str_data(data), str_len(data));
 		field->size = str_len(data);
+		field->data = i_malloc(field->size + 1);
+		memcpy(field->data, str_data(data), field->size);
 		field->virtual_size = (edmail->crlf ?
 				       field->size : field->size + lines);
 		field->lines = lines;
@@ -829,8 +830,9 @@ static int edit_mail_headers_parse(struct edit_mail *edmail)
 
 			field->size = str_len(hdr_data);
 			field->virtual_size = field->size + vsize_diff;
-			field->data = i_strndup(str_data(hdr_data),
-						field->size);
+			field->data = i_malloc(field->size + 1);
+			memcpy(field->data, str_data(hdr_data),
+			       field->size);
 			field->offset = offset;
 			field->lines = lines;
 

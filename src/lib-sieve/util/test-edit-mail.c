@@ -866,6 +866,84 @@ static void test_edit_mail_empty(void)
 	test_end();
 }
 
+static void test_edit_mail_nul_in_header(void)
+{
+	/* Message with a NUL byte embedded in the X-Has-NUL header value.
+	 * sizeof() - 1 gives the true byte count, skipping the C string's
+	 * trailing NUL terminator, while preserving the embedded \x00. */
+	static const unsigned char message[] =
+		"From: sender@example.com\n"
+		"X-Has-NUL: value\x00" "afterNUL\n"
+		"Subject: Test\n"
+		"\n"
+		"Body\n";
+	/* Expected output after deleting the Subject header. */
+	static const unsigned char expected[] =
+		"From: sender@example.com\n"
+		"X-Has-NUL: value\x00" "afterNUL\n"
+		"\n"
+		"Body\n";
+	struct istream *input_msg, *input_mail;
+	buffer_t *buffer;
+	struct mail_raw *rawmail;
+	struct edit_mail *edmail;
+	struct mail *mail;
+
+	test_begin("edit-mail - NUL byte in header value");
+	test_edit_mail_init();
+
+	/* sizeof - 1 excludes the trailing C-string NUL terminator */
+	input_msg = i_stream_create_from_data(message, sizeof(message) - 1);
+
+	rawmail = mail_raw_open_stream(test_raw_mail_user, input_msg);
+	edmail = edit_mail_wrap(rawmail->mail);
+
+	/* Deleting any header triggers edit_mail_headers_parse(), which with
+	 * the old i_strndup() allocated only strlen("X-Has-NUL: value")+1=17
+	 * bytes for X-Has-NUL's field->data even though field->size=26.
+	 * Streaming then called memcpy(dst, field->data, 26), reading 9 bytes
+	 * past the end of the allocation and producing garbage in place of
+	 * "afterNUL\n". */
+	edit_mail_header_delete(edmail, "Subject", 0);
+
+	mail = edit_mail_get_mail(edmail);
+
+	if (mail_get_stream(mail, NULL, NULL, &input_mail) < 0) {
+		i_fatal("Failed to open mail stream: %s",
+			mailbox_get_last_internal_error(mail->box, NULL));
+	}
+
+	buffer = buffer_create_dynamic(default_pool, 128);
+
+	/* normal */
+
+	i_stream_seek(input_mail, 0);
+	test_stream_data(input_mail, buffer);
+
+	test_out("nul in header",
+		 buffer->used == sizeof(expected) - 1 &&
+		 memcmp(buffer->data, expected, sizeof(expected) - 1) == 0);
+
+	/* slow (byte-by-byte) */
+
+	i_stream_seek(input_mail, 0);
+	buffer_set_used_size(buffer, 0);
+	test_stream_data_slow(input_mail, buffer);
+
+	test_out("nul in header, slow",
+		 buffer->used == sizeof(expected) - 1 &&
+		 memcmp(buffer->data, expected, sizeof(expected) - 1) == 0);
+
+	/* clean up */
+
+	buffer_free(&buffer);
+	edit_mail_unwrap(&edmail);
+	mail_raw_close(&rawmail);
+	i_stream_unref(&input_msg);
+	test_edit_mail_deinit();
+	test_end();
+}
+
 static void test_edit_mail_empty2(void)
 {
 	struct istream *input_msg, *input_mail;
@@ -934,6 +1012,7 @@ int main(int argc, char *argv[])
 		test_edit_mail_small_buffer,
 		test_edit_mail_empty,
 		test_edit_mail_empty2,
+		test_edit_mail_nul_in_header,
 		NULL
 	};
 	const enum master_service_flags service_flags =

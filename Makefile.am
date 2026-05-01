@@ -176,6 +176,7 @@ test_cases = \
 	tests/extensions/editheader/utf8.svtest \
 	tests/extensions/editheader/protected.svtest \
 	tests/extensions/editheader/errors.svtest \
+	tests/extensions/editheader/nul-value.svtest \
 	tests/extensions/editheader/execute.svtest \
 	tests/extensions/extlists/errors.svtest \
 	tests/extensions/extlists/basic.svtest \
