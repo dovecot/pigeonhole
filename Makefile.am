@@ -47,14 +47,15 @@ DISTCLEANFILES = \
     $(top_builddir)/pigeonhole-version.h \
 	$(top_builddir)/run-test.sh
 
-check-local:
-	rm -rf $(top_builddir)/.test
 clean-local:
 	rm -rf $(top_builddir)/.test
 
 # Testsuite tests (FIXME: ugly)
 
-TESTSUITE_BIN = $(top_builddir)/src/testsuite/testsuite -W$(top_builddir)/.test $(TESTSUITE_OPTIONS)
+# Per-test work directory keeps parallel "make -j check" runs isolated.
+TEST_WORKDIR = $(top_builddir)/.test/$(subst /,_,$@)
+
+TESTSUITE_BIN = $(top_builddir)/src/testsuite/testsuite $(TESTSUITE_OPTIONS)
 
 TEST_BIN = $(RUN_TEST) $(TESTSUITE_BIN)
 
@@ -211,7 +212,8 @@ prepare_test_cases:
 	done
 
 $(test_cases): prepare_test_cases
-	@$(TEST_BIN) $(top_srcdir)/$@
+	@rm -rf $(TEST_WORKDIR)
+	@$(TEST_BIN) -W $(TEST_WORKDIR) $(top_srcdir)/$@
 
 failure_test_cases = \
 	tests/failures/fuzz1.svtest \
@@ -221,7 +223,8 @@ failure_test_cases = \
 	tests/failures/mailbox-bad-utf8.svtest
 
 $(failure_test_cases):
-	@$(TEST_BIN) -F $(top_srcdir)/$@
+	@rm -rf $(TEST_WORKDIR)
+	@$(TEST_BIN) -W $(TEST_WORKDIR) -F $(top_srcdir)/$@
 
 TEST_EXTPROGRAMS_BIN = NOCHILDREN=yes $(TEST_BIN) \
 	-P src/plugins/sieve-extprograms/.libs/sieve_extprograms
@@ -239,7 +242,8 @@ extprograms_test_cases = \
 	tests/plugins/extprograms/execute/execute.svtest
 
 $(extprograms_test_cases):
-	@$(TEST_EXTPROGRAMS_BIN) 	$(top_srcdir)/$@
+	@rm -rf $(TEST_WORKDIR)
+	@$(TEST_EXTPROGRAMS_BIN) -W $(TEST_WORKDIR) $(top_srcdir)/$@
 
 .PHONY: test test-plugins $(test_cases) $(failure_test_cases) $(extprograms_test_cases) prepare_test_case
 test: all-am $(test_cases) $(failure_test_cases)
