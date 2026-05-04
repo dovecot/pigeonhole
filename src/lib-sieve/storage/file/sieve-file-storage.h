@@ -41,6 +41,13 @@ struct sieve_file_storage {
 
 	time_t prev_mtime;
 
+	/* fd referencing the canonical (realpath'd) storage directory. Used to
+	   anchor TOCTOU-safe path resolution for script files: lookups that
+	   escape this directory via symlinks (or `..`) are refused. -1 if the
+	   storage is a single-file storage or this protection is unavailable.
+	 */
+	int dir_fd;
+
 	bool is_file:1;
 };
 
@@ -59,6 +66,31 @@ int sieve_file_storage_init_from_path(struct sieve_instance *svinst,
 				      const char **error_r);
 
 int sieve_file_storage_pre_modify(struct sieve_storage *storage);
+
+/* Open a script file that lives under the storage directory, refusing any
+   path resolution that escapes that directory through symlinks or `..`.
+
+   The path is resolved component-by-component using openat() relative to
+   fstorage->dir_fd, with O_NOFOLLOW per component. Symlinks are followed
+   only if their (recursively resolved) target also stays beneath dir_fd;
+   absolute symlink targets and `..` past the storage root are refused.
+
+   Anchoring the resolution at dir_fd makes the check TOCTOU-safe: even if
+   the user mutates path components on disk between calls, dir_fd still
+   refers to the original directory inode.
+
+   `flags` is OR-ed into the openat() call for the final component (e.g.
+   O_RDONLY). O_NOFOLLOW and O_CLOEXEC are added automatically.
+
+   Returns 0 on success and stores the new fd in *fd_r. Returns -1 on
+   failure with errno set; *error_r is set to a descriptive message.
+   errno=ELOOP indicates either too many symlinks or an attempted escape.
+   errno=ENOTSUP indicates fstorage->dir_fd is not available; the caller
+   may fall back to opening fstorage->path directly.
+ */
+int sieve_file_storage_open_safe(struct sieve_file_storage *fstorage,
+				 const char *path, int flags, int *fd_r,
+				 const char **error_r);
 
 /* Active script */
 

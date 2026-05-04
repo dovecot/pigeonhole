@@ -440,15 +440,44 @@ sieve_file_script_get_stream(struct sieve_script *script,
 {
 	struct sieve_file_script *fscript =
 		container_of(script, struct sieve_file_script, script);
+	struct sieve_file_storage *fstorage =
+		container_of(script->storage, struct sieve_file_storage,
+			     storage);
 	struct stat st;
 	struct istream *result;
+	const char *error;
 	int fd;
 
-	fd = open(fscript->path, O_RDONLY);
-	if (fd < 0) {
-		sieve_file_script_handle_error(fscript, "open", fscript->path,
-					       fscript->script.name);
-		return -1;
+	/* For directory-based storage, open the script via the storage
+	   directory fd so that path resolution refuses to follow symlinks
+	   whose (recursive) target leaves the storage directory.
+	   Single-file storages have no dir_fd, so fall back to plain open(). */
+	if (fstorage->dir_fd >= 0 && fscript->filename != NULL &&
+	    *fscript->filename != '\0') {
+		if (sieve_file_storage_open_safe(fstorage, fscript->filename,
+						 O_RDONLY, &fd, &error) < 0) {
+			if (errno == ELOOP) {
+				sieve_script_set_critical(
+					script,
+					"Failed to open sieve script: %s",
+					error);
+				script->storage->error_code =
+					SIEVE_ERROR_NO_PERMISSION;
+				return -1;
+			}
+			sieve_file_script_handle_error(fscript, "open",
+						       fscript->path,
+						       fscript->script.name);
+			return -1;
+		}
+	} else {
+		fd = open(fscript->path, O_RDONLY);
+		if (fd < 0) {
+			sieve_file_script_handle_error(fscript, "open",
+						       fscript->path,
+						       fscript->script.name);
+			return -1;
+		}
 	}
 
 	if (fstat(fd, &st) != 0) {

@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <utime.h>
 #include <sys/time.h>
 
@@ -39,6 +40,33 @@ sieve_file_storage_path_extend(struct sieve_file_storage *fstorage,
 		return t_strconcat(path, filename, NULL);
 
 	return t_strconcat(path, "/", filename , NULL);
+}
+
+int sieve_file_storage_open_safe(struct sieve_file_storage *fstorage,
+				 const char *path, int flags, int *fd_r,
+				 const char **error_r)
+{
+	const char *walk_error;
+	int fd;
+
+	*fd_r = -1;
+
+	if (fstorage->dir_fd < 0) {
+		*error_r = "storage directory fd not available";
+		errno = ENOTSUP;
+		return -1;
+	}
+
+	fd = t_openat_safe(fstorage->dir_fd, path, flags, &walk_error);
+	if (fd < 0) {
+		*error_r = t_strdup_printf(
+			"Failed to open '%s/%s': %s",
+			fstorage->path, path, walk_error);
+		return -1;
+	}
+
+	*fd_r = fd;
+	return 0;
 }
 
 /*
@@ -214,8 +242,17 @@ static struct sieve_storage *sieve_file_storage_alloc(void)
 	fstorage = p_new(pool, struct sieve_file_storage, 1);
 	fstorage->storage = sieve_file_storage;
 	fstorage->storage.pool = pool;
+	fstorage->dir_fd = -1;
 
 	return &fstorage->storage;
+}
+
+static void sieve_file_storage_destroy(struct sieve_storage *storage)
+{
+	struct sieve_file_storage *fstorage =
+		container_of(storage, struct sieve_file_storage, storage);
+
+	i_close_fd(&fstorage->dir_fd);
 }
 
 static int
@@ -434,6 +471,42 @@ sieve_file_storage_init_common(struct sieve_file_storage *fstorage,
 
 			fstorage->link_path =
 				p_strdup(storage->pool, link_path);
+		}
+
+		/* For personal (user-writable) storage, open a fd to the
+		   canonical storage directory. This fd anchors TOCTOU-safe
+		   path resolution for script lookups: the inode it refers to
+		   cannot change underneath us, so even if the user mutates
+		   intermediate path components on disk afterwards, we still
+		   resolve relative to the original directory. The walker that
+		   uses this fd refuses script paths that escape the storage
+		   directory through symlinks or `..`, which would otherwise
+		   let an unprivileged user redirect e.g. include "name" to a
+		   file outside their own sieve storage.
+
+		   Non-personal (e.g. admin-configured global) storage is
+		   trusted; dir_fd stays unset there so legitimate
+		   admin-managed symlinks crossing the storage boundary keep
+		   working.
+
+		   Only open the fd when storage_path actually resolves to a
+		   directory: autodetect can leave is_file=FALSE while
+		   storage_path still points at a regular file (see the
+		   storage_path == active_path fallback in
+		   sieve_file_storage_do_autodetect()). In that case there is
+		   no directory to anchor to and lookups by name will fail
+		   with ENOENT later anyway. */
+		if (storage->is_personal &&
+		    S_ISDIR(fstorage->st.st_mode)) {
+			fstorage->dir_fd = open(storage_path,
+						O_RDONLY | O_DIRECTORY |
+						O_CLOEXEC);
+			if (fstorage->dir_fd < 0) {
+				sieve_storage_set_critical(storage,
+					"Failed to open storage directory: "
+					"open(%s) failed: %m", storage_path);
+				return -1;
+			}
 		}
 	}
 
@@ -903,6 +976,7 @@ const struct sieve_storage sieve_file_storage = {
 	.v = {
 		.alloc = sieve_file_storage_alloc,
 		.init = sieve_file_storage_init,
+		.destroy = sieve_file_storage_destroy,
 
 		.autodetect = sieve_file_storage_autodetect,
 
