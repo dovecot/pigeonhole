@@ -284,6 +284,57 @@ sieve_file_script_stat(const char *path, struct stat *st, struct stat *lnk_st)
 	return 0;
 }
 
+/* TOCTOU-safe variant of sieve_file_script_stat() for directory storages.
+   Resolves the script entry beneath fstorage->dir_fd, refusing symlinks
+   whose target escapes the storage directory. *st gets the (resolved)
+   target's stat; *lnk_st gets the directory entry's own stat (i.e.
+   AT_SYMLINK_NOFOLLOW), matching the semantics of the unsafe variant. */
+static int
+sieve_file_script_stat_safe(struct sieve_file_storage *fstorage,
+			    const char *filename, struct stat *st,
+			    struct stat *lnk_st, const char **error_r)
+{
+	int fd, saved_errno;
+
+	i_assert(fstorage->dir_fd >= 0);
+
+	if (fstatat(fstorage->dir_fd, filename, lnk_st,
+		    AT_SYMLINK_NOFOLLOW) < 0) {
+		*error_r = t_strdup_printf(
+			"fstatat(%s/%s) failed: %m",
+			fstorage->path, filename);
+		return -1;
+	}
+
+	if (!S_ISLNK(lnk_st->st_mode)) {
+		*st = *lnk_st;
+		return 0;
+	}
+
+	/* Symlink: open it via the safe walker (which refuses any target
+	   that leaves fstorage->dir_fd) and read st from the resulting fd.
+	   The fd is only used to fetch the resolved stat and is closed
+	   immediately. Open with O_NONBLOCK so that a target which resolves
+	   to a FIFO or other special file inside the storage directory only
+	   yields its stat instead of blocking the delivery process. */
+	if (sieve_file_storage_open_safe(fstorage, filename,
+					 O_RDONLY | O_NONBLOCK,
+					 &fd, error_r) < 0)
+		return -1;
+
+	if (fstat(fd, st) < 0) {
+		saved_errno = errno;
+		*error_r = t_strdup_printf(
+			"fstat() failed for '%s/%s': %m",
+			fstorage->path, filename);
+		i_close_fd(&fd);
+		errno = saved_errno;
+		return -1;
+	}
+	i_close_fd(&fd);
+	return 0;
+}
+
 static const char *
 path_split_filename(const char *path, const char **dir_path_r)
 {
@@ -352,7 +403,25 @@ static int sieve_file_script_open(struct sieve_script *script)
 				dir_path = path;
 
 				path = sieve_file_storage_path_extend(fstorage, filename);
-				ret = sieve_file_script_stat(path, &st, &lnk_st);
+				if (fstorage->dir_fd >= 0) {
+					const char *serror;
+
+					ret = sieve_file_script_stat_safe(
+						fstorage, filename, &st,
+						&lnk_st, &serror);
+					if (ret < 0 && errno == ELOOP) {
+						sieve_script_set_critical(
+							script,
+							"Failed to open sieve script: %s",
+							serror);
+						script->storage->error_code =
+							SIEVE_ERROR_NO_PERMISSION;
+						success = FALSE;
+					}
+				} else {
+					ret = sieve_file_script_stat(
+						path, &st, &lnk_st);
+				}
 			}
 
 		} else {
@@ -450,8 +519,11 @@ sieve_file_script_get_stream(struct sieve_script *script,
 
 	/* For directory-based storage, open the script via the storage
 	   directory fd so that path resolution refuses to follow symlinks
-	   whose (recursive) target leaves the storage directory.
-	   Single-file storages have no dir_fd, so fall back to plain open(). */
+	   whose (recursive) target leaves the storage directory. The fd-based
+	   walk also makes this TOCTOU-safe: even if intermediate path
+	   components are mutated between the stat in sieve_file_script_open()
+	   and this call, the resolution stays within the original directory.
+	   Single-file storages have no dir_fd, so fall back to a plain open(). */
 	if (fstorage->dir_fd >= 0 && fscript->filename != NULL &&
 	    *fscript->filename != '\0') {
 		if (sieve_file_storage_open_safe(fstorage, fscript->filename,
