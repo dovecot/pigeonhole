@@ -98,6 +98,12 @@ struct sieve_binary {
 	struct sieve_binary_header header;
 	struct sieve_resource_usage rusage;
 
+	/* Cumulative CPU usage loaded from per-user sieve-rusage file */
+	struct {
+		time_t update_time;
+		uint32_t cpu_time_msecs;
+	} persisted_rusage;
+
 	/* When the binary is loaded into memory or when it is being constructed
 	   by the generator, extensions can be associated to the binary. The
 	   extensions array is a sequential list of all linked extensions. The

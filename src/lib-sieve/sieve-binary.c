@@ -217,8 +217,8 @@ void sieve_binary_apply_persisted_rusage(struct sieve_binary *sbin)
 	if (sieve_rusage_storage_load(storage, &rusage, &flags) <= 0)
 		return;
 
-	header->resource_usage.cpu_time_msecs = rusage.cpu_time_msecs;
-	header->resource_usage.update_time = ioloop_time;
+	sbin->persisted_rusage.cpu_time_msecs = rusage.cpu_time_msecs;
+	sbin->persisted_rusage.update_time = ioloop_time;
 	header->flags |= (flags & SIEVE_BINARY_FLAG_RESOURCE_LIMIT);
 	sieve_resource_usage_init(&sbin->rusage);
 	sbin->rusage_updated = FALSE;
@@ -227,15 +227,14 @@ void sieve_binary_apply_persisted_rusage(struct sieve_binary *sbin)
 void sieve_binary_get_resource_usage(struct sieve_binary *sbin,
 				     struct sieve_resource_usage *rusage_r)
 {
-	struct sieve_binary_header *header = &sbin->header;
-	time_t update_time = header->resource_usage.update_time;
+	time_t update_time = sbin->persisted_rusage.update_time;
 	unsigned int timeout = sbin->svinst->set->resource_usage_timeout;
 
 	if (update_time != 0 && (ioloop_time - update_time) > (time_t)timeout)
-		i_zero(&header->resource_usage);
+		i_zero(&sbin->persisted_rusage);
 
 	sieve_resource_usage_init(rusage_r);
-	rusage_r->cpu_time_msecs = header->resource_usage.cpu_time_msecs;
+	rusage_r->cpu_time_msecs = sbin->persisted_rusage.cpu_time_msecs;
 	sieve_resource_usage_add(rusage_r, &sbin->rusage);
 }
 
@@ -277,9 +276,7 @@ bool sieve_binary_record_resource_usage(
 void sieve_binary_set_resource_usage(struct sieve_binary *sbin,
 				     const struct sieve_resource_usage *rusage)
 {
-	struct sieve_binary_header *header = &sbin->header;
-
-	i_zero(&header->resource_usage);
+	i_zero(&sbin->persisted_rusage);
 	sbin->rusage = *rusage;
 	sbin->rusage_updated = TRUE;
 

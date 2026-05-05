@@ -167,47 +167,15 @@ sieve_binary_file_read_header(struct sieve_binary *sbin, int fd,
 	return 0;
 }
 
-static int
-sieve_binary_file_write_header(struct sieve_binary *sbin, int fd,
-			       struct sieve_binary_header *header,
-			       enum sieve_error *error_code_r)
-{
-	ssize_t wret;
-
-	wret = pwrite(fd, header, sizeof(*header), 0);
-	if (wret < 0) {
-		e_error(sbin->event, "update: "
-			"failed to write to binary: %m");
-		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
-		return -1;
-	} else if (wret != sizeof(*header)) {
-		e_error(sbin->event, "update: "
-			"header written partially %zd/%zu",
-			wret, sizeof(*header));
-		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
-		return -1;
-	}
-	return 0;
-}
-
-static void sieve_binary_file_update_header(struct sieve_binary *sbin)
+/* The on-disk binary header carries an unused resource_usage struct for
+   backward compatibility. Tracking lives in the per-user sieve-rusage file. */
+static void sieve_binary_file_zero_header_rusage(struct sieve_binary *sbin)
 {
 	struct sieve_binary_header *header = &sbin->header;
-	struct sieve_resource_usage rusage;
-
-	sieve_binary_get_resource_usage(sbin, &rusage);
 
 	i_zero(&header->resource_usage);
-	if (HAS_ALL_BITS(header->flags, SIEVE_BINARY_FLAG_RESOURCE_LIMIT) ||
-	    sieve_resource_usage_is_high(sbin->svinst, &rusage)) {
-		header->resource_usage.update_time = ioloop_time;
-		header->resource_usage.cpu_time_msecs = rusage.cpu_time_msecs;
-	}
-
 	sieve_resource_usage_init(&sbin->rusage);
 	sbin->rusage_updated = FALSE;
-
-	(void)sieve_binary_check_resource_usage(sbin);
 }
 
 /*
@@ -367,7 +335,7 @@ sieve_binary_save_to_stream(struct sieve_binary *sbin, struct ostream *stream)
 	header->hdr_size = sizeof(*header);
 
 	header->flags &= ENUM_NEGATE(SIEVE_BINARY_FLAG_RESOURCE_LIMIT);
-	sieve_binary_file_update_header(sbin);
+	sieve_binary_file_zero_header_rusage(sbin);
 
 	if (!_save_aligned(sbin, stream, header, sizeof(*header), NULL)) {
 		e_error(sbin->event, "save: failed to save header");
@@ -884,6 +852,11 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_code_r)
 		return FALSE;
 	offset = sbin->header.hdr_size;
 
+	/* Resource usage tracking is no longer kept in the binary file;
+	   discard any data from older versions. */
+	i_zero(&sbin->header.resource_usage);
+	sbin->header.flags &= ENUM_NEGATE(SIEVE_BINARY_FLAG_RESOURCE_LIMIT);
+
 	/* Load block index */
 
 	for (i = 0; i < sbin->header.blocks && result; i++) {
@@ -999,46 +972,26 @@ int sieve_binary_check_executable(struct sieve_binary *sbin,
  * Resource usage
  */
 
-static int
-sieve_binary_file_do_update_resource_usage(
-	struct sieve_binary *sbin, int fd, enum sieve_error *error_code_r)
+int sieve_binary_file_update_resource_usage(struct sieve_binary *sbin,
+					    enum sieve_error *error_code_r)
 {
-	struct sieve_binary_header *header = &sbin->header;
-	struct file_lock *lock;
-	const char *error;
-	int ret;
-
-	struct file_lock_settings lock_set = {
-		.lock_method = FILE_LOCK_METHOD_FCNTL,
-	};
-	ret = file_wait_lock(fd, sbin->path, F_WRLCK, &lock_set,
-			     SIEVE_BINARY_FILE_LOCK_TIMEOUT, &lock, &error);
-	if (ret <= 0) {
-		e_error(sbin->event, "%s", error);
-		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
-		return -1;
-	}
-
-	ret = sieve_binary_file_read_header(sbin, fd, header, error_code_r);
-	if (ret == 0) {
-		sieve_binary_file_update_header(sbin);
-		ret = sieve_binary_file_write_header(sbin, fd, header,
-						     error_code_r);
-	}
-
-	file_lock_free(&lock);
-
-	return ret;
-}
-
-static int
-sieve_binary_storage_update_resource_usage(struct sieve_binary *sbin,
-					   struct sieve_storage *storage,
-					   enum sieve_error *error_code_r)
-{
+	struct sieve_storage *storage;
 	struct sieve_resource_usage delta;
 	struct sieve_resource_usage total;
 	uint32_t flags;
+
+	sieve_error_args_init(&error_code_r, NULL);
+
+	sieve_binary_file_close(&sbin->file);
+
+	if (sbin->script == NULL || sbin->script->storage == NULL ||
+	    sbin->script->storage->rusage_path == NULL) {
+		/* No per-user file: tracking discarded. */
+		sieve_resource_usage_init(&sbin->rusage);
+		sbin->rusage_updated = FALSE;
+		return 0;
+	}
+	storage = sbin->script->storage;
 
 	delta = sbin->rusage;
 	sieve_binary_get_resource_usage(sbin, &total);
@@ -1060,48 +1013,4 @@ sieve_binary_storage_update_resource_usage(struct sieve_binary *sbin,
 	sieve_resource_usage_init(&sbin->rusage);
 	sbin->rusage_updated = FALSE;
 	return 0;
-}
-
-int sieve_binary_file_update_resource_usage(struct sieve_binary *sbin,
-					    enum sieve_error *error_code_r)
-{
-	struct sieve_storage *storage = NULL;
-	int fd, ret = 0;
-
-	sieve_error_args_init(&error_code_r, NULL);
-
-	sieve_binary_file_close(&sbin->file);
-
-	if (sbin->script != NULL && sbin->script->storage != NULL &&
-	    sbin->script->storage->rusage_path != NULL)
-		storage = sbin->script->storage;
-
-	if (storage != NULL) {
-		return sieve_binary_storage_update_resource_usage(
-			sbin, storage, error_code_r);
-	}
-
-	if (sbin->path == NULL)
-		return 0;
-	if (sbin->header.version_major != SIEVE_BINARY_VERSION_MAJOR) {
-		return sieve_binary_save(sbin, sbin->path, TRUE, 0600,
-					 error_code_r);
-	}
-
-	fd = sieve_binary_fd_open(sbin, sbin->path, O_RDWR, error_code_r);
-	if (fd < 0) {
-		i_assert(*error_code_r != SIEVE_ERROR_NONE);
-		return -1;
-	}
-
-	ret = sieve_binary_file_do_update_resource_usage(sbin, fd,
-							 error_code_r);
-	i_assert(ret == 0 || *error_code_r != SIEVE_ERROR_NONE);
-
-	if (close(fd) < 0) {
-		e_error(sbin->event, "update: "
-			"failed to close: close() failed: %m");
-	}
-
-	return ret;
 }
