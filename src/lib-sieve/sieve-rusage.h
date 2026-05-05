@@ -16,17 +16,13 @@ void sieve_rusage_storage_init(struct sieve_storage *storage,
 
 /* Load persisted resource usage from the per-user file. Returns 1 on success,
    0 if the storage has no rusage file (no INBOX namespace path), -1 on error.
-   Applies the resource_usage_timeout decay. flags_r receives sieve binary
-   header flags (RESOURCE_LIMIT) that were persisted. */
+   Applies the resource_usage_timeout decay. */
 int sieve_rusage_storage_load(struct sieve_storage *storage,
-			      struct sieve_resource_usage *rusage_r,
-			      uint32_t *flags_r);
+			      struct sieve_resource_usage *rusage_r);
 
-/* Atomically add delta_rusage to and OR flags_to_set into the persisted
-   per-user rusage file. Read-modify-write under fcntl WRLCK. Returns 1 on
-   success, 0 if no rusage file is configured, -1 on error. */
+/* Atomically add delta_rusage to the persisted per-user rusage file.
+   Returns 1 on success, 0 if no rusage file is configured, -1 on error. */
 int sieve_rusage_storage_add(struct sieve_storage *storage,
-			     const struct sieve_resource_usage *delta_rusage,
-			     uint32_t flags_to_set);
+			     const struct sieve_resource_usage *delta_rusage);
 
 #endif

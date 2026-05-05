@@ -335,7 +335,7 @@ sieve_binary_save_to_stream(struct sieve_binary *sbin, struct ostream *stream)
 	header->blocks = blk_count;
 	header->hdr_size = sizeof(*header);
 
-	header->flags &= ENUM_NEGATE(SIEVE_BINARY_FLAG_RESOURCE_LIMIT);
+	header->flags = 0;
 	sieve_binary_file_zero_header_rusage(sbin);
 
 	if (!_save_aligned(sbin, stream, header, sizeof(*header), NULL)) {
@@ -857,7 +857,7 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_code_r)
 	   discard any data from older versions. */
 	sbin->header.unused_update_time = 0;
 	sbin->header.unused_cpu_time_msecs = 0;
-	sbin->header.flags &= ENUM_NEGATE(SIEVE_BINARY_FLAG_RESOURCE_LIMIT);
+	sbin->header.flags = 0;
 
 	/* Load block index */
 
@@ -954,15 +954,16 @@ int sieve_binary_check_executable(struct sieve_binary *sbin,
 				  enum sieve_error *error_code_r,
 				  const char **client_error_r)
 {
+	struct sieve_resource_usage rusage;
+
 	*client_error_r = NULL;
 	sieve_error_args_init(&error_code_r, NULL);
 
-	if (HAS_ALL_BITS(sbin->header.flags,
-			 SIEVE_BINARY_FLAG_RESOURCE_LIMIT)) {
+	sieve_binary_get_resource_usage(sbin, &rusage);
+	if (sieve_resource_usage_is_excessive(sbin->svinst, &rusage)) {
 		e_debug(sbin->event,
 			"Binary execution is blocked: "
-			"Cumulative resource usage limit exceeded "
-			"(resource limit flag is set)");
+			"Cumulative resource usage limit exceeded");
 		*error_code_r = SIEVE_ERROR_RESOURCE_LIMIT;
 		*client_error_r = "cumulative resource usage limit exceeded";
 		return 0;
@@ -979,8 +980,6 @@ int sieve_binary_file_update_resource_usage(struct sieve_binary *sbin,
 {
 	struct sieve_storage *storage;
 	struct sieve_resource_usage delta;
-	struct sieve_resource_usage total;
-	uint32_t flags;
 
 	sieve_error_args_init(&error_code_r, NULL);
 
@@ -996,18 +995,19 @@ int sieve_binary_file_update_resource_usage(struct sieve_binary *sbin,
 	storage = sbin->script->storage;
 
 	delta = sbin->rusage;
-	sieve_binary_get_resource_usage(sbin, &total);
-	flags = sbin->header.flags & SIEVE_BINARY_FLAG_RESOURCE_LIMIT;
 
-	if (!HAS_ALL_BITS(flags, SIEVE_BINARY_FLAG_RESOURCE_LIMIT) &&
-	    !sieve_resource_usage_is_high(sbin->svinst, &total)) {
-		/* Nothing meaningful to persist */
+	/* Persist only when this run consumed a meaningful amount of CPU.
+	   Critically, refused-without-running attempts (delta == 0) must not
+	   touch the file - otherwise the file's update_time would be refreshed
+	   on every blocked attempt, preventing the resource_usage_timeout from
+	   ever decaying the persisted CPU time and re-enabling the user. */
+	if (!sieve_resource_usage_is_high(sbin->svinst, &delta)) {
 		sieve_resource_usage_init(&sbin->rusage);
 		sbin->rusage_updated = FALSE;
 		return 0;
 	}
 
-	if (sieve_rusage_storage_add(storage, &delta, flags) < 0) {
+	if (sieve_rusage_storage_add(storage, &delta) < 0) {
 		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}

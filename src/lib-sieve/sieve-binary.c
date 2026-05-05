@@ -209,17 +209,14 @@ void sieve_binary_apply_persisted_rusage(struct sieve_binary *sbin)
 {
 	struct sieve_storage *storage = sieve_binary_get_user_storage(sbin);
 	struct sieve_resource_usage rusage;
-	struct sieve_binary_header *header = &sbin->header;
-	uint32_t flags = 0;
 
 	if (storage == NULL)
 		return;
-	if (sieve_rusage_storage_load(storage, &rusage, &flags) <= 0)
+	if (sieve_rusage_storage_load(storage, &rusage) <= 0)
 		return;
 
 	sbin->persisted_rusage.cpu_time_msecs = rusage.cpu_time_msecs;
 	sbin->persisted_rusage.update_time = ioloop_time;
-	header->flags |= (flags & SIEVE_BINARY_FLAG_RESOURCE_LIMIT);
 	sieve_resource_usage_init(&sbin->rusage);
 	sbin->rusage_updated = FALSE;
 }
@@ -240,16 +237,10 @@ void sieve_binary_get_resource_usage(struct sieve_binary *sbin,
 
 bool sieve_binary_check_resource_usage(struct sieve_binary *sbin)
 {
-	struct sieve_binary_header *header = &sbin->header;
 	struct sieve_resource_usage rusage;
 
 	sieve_binary_get_resource_usage(sbin, &rusage);
-
-	if (sieve_resource_usage_is_excessive(sbin->svinst, &rusage)) {
-		header->flags |= SIEVE_BINARY_FLAG_RESOURCE_LIMIT;
-		return FALSE;
-	}
-	return TRUE;
+	return !sieve_resource_usage_is_excessive(sbin->svinst, &rusage);
 }
 
 bool sieve_binary_record_resource_usage(

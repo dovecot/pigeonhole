@@ -13,10 +13,6 @@
  * Binary file
  */
 
-enum SIEVE_BINARY_FLAGS {
-	SIEVE_BINARY_FLAG_RESOURCE_LIMIT = BIT(0),
-};
-
 struct sieve_binary_header {
 	uint32_t magic;
 	uint16_t version_major;

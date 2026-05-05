@@ -26,12 +26,11 @@
 #define SIEVE_RUSAGE_LOCK_TIMEOUT 10
 #define SIEVE_RUSAGE_LOCK_STALE_TIMEOUT 60
 
-/* Maximum size of the on-disk file. Single-line ASCII format with four
+/* Maximum size of the on-disk file. Single-line ASCII format with three
    space-separated tokens; anything larger is treated as corrupt. */
 #define SIEVE_RUSAGE_MAX_FILE_SIZE 128
 
 struct sieve_rusage_record {
-	uint32_t flags;
 	uint32_t cpu_time_msecs;
 	time_t update_time;
 };
@@ -72,13 +71,11 @@ sieve_rusage_parse(const char *line, struct sieve_rusage_record *rec)
 		    strcmp(tokens[0], SIEVE_RUSAGE_VERSION_TAG) != 0)
 			break;
 		if (tokens[1] == NULL || tokens[2] == NULL ||
-		    tokens[3] == NULL || tokens[4] != NULL)
+		    tokens[3] != NULL)
 			break;
-		if (str_to_uint32(tokens[1], &rec->flags) < 0)
+		if (str_to_uint32(tokens[1], &cpu_secs) < 0)
 			break;
-		if (str_to_uint32(tokens[2], &cpu_secs) < 0)
-			break;
-		if (str_to_time(tokens[3], &rec->update_time) < 0)
+		if (str_to_time(tokens[2], &rec->update_time) < 0)
 			break;
 		if (cpu_secs > UINT32_MAX / 1000)
 			rec->cpu_time_msecs = UINT32_MAX;
@@ -148,14 +145,12 @@ sieve_rusage_dotlock_settings(struct dotlock_settings *set_r)
 }
 
 int sieve_rusage_storage_load(struct sieve_storage *storage,
-			      struct sieve_resource_usage *rusage_r,
-			      uint32_t *flags_r)
+			      struct sieve_resource_usage *rusage_r)
 {
 	struct sieve_rusage_record rec;
 	unsigned int timeout;
 
 	sieve_resource_usage_init(rusage_r);
-	*flags_r = 0;
 
 	if (storage->rusage_path == NULL)
 		return 0;
@@ -171,13 +166,11 @@ int sieve_rusage_storage_load(struct sieve_storage *storage,
 	}
 
 	rusage_r->cpu_time_msecs = rec.cpu_time_msecs;
-	*flags_r = rec.flags;
 	return 1;
 }
 
 int sieve_rusage_storage_add(struct sieve_storage *storage,
-			     const struct sieve_resource_usage *delta_rusage,
-			     uint32_t flags_to_set)
+			     const struct sieve_resource_usage *delta_rusage)
 {
 	struct sieve_rusage_record rec;
 	struct dotlock_settings dlset;
@@ -226,7 +219,6 @@ int sieve_rusage_storage_add(struct sieve_storage *storage,
 	    (ioloop_time - rec.update_time) > (time_t)timeout) {
 		/* decayed: discard previous values */
 		rec.cpu_time_msecs = 0;
-		rec.flags = 0;
 	}
 
 	old_cpu = rec.cpu_time_msecs;
@@ -234,7 +226,6 @@ int sieve_rusage_storage_add(struct sieve_storage *storage,
 		rec.cpu_time_msecs = UINT32_MAX;
 	else
 		rec.cpu_time_msecs = old_cpu + delta_rusage->cpu_time_msecs;
-	rec.flags |= flags_to_set;
 	rec.update_time = ioloop_time;
 
 	/* Round CPU time up to whole seconds for persistence. */
@@ -244,8 +235,8 @@ int sieve_rusage_storage_add(struct sieve_storage *storage,
 		cpu_secs = (rec.cpu_time_msecs + 999) / 1000;
 
 	out = t_str_new(64);
-	str_printfa(out, "%s %u %u %lld\n", SIEVE_RUSAGE_VERSION_TAG,
-		    rec.flags, cpu_secs, (long long)rec.update_time);
+	str_printfa(out, "%s %u %lld\n", SIEVE_RUSAGE_VERSION_TAG,
+		    cpu_secs, (long long)rec.update_time);
 
 	wret = write(fd, str_data(out), str_len(out));
 	if (wret != (ssize_t)str_len(out)) {
