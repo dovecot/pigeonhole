@@ -8,6 +8,7 @@
 #include "hash.h"
 #include "array.h"
 #include "ostream.h"
+#include "ioloop.h"
 #include "eacces-error.h"
 #include "safe-mkstemp.h"
 
@@ -15,6 +16,9 @@
 #include "sieve-extensions.h"
 #include "sieve-code.h"
 #include "sieve-script.h"
+#include "sieve-script-private.h"
+#include "sieve-storage-private.h"
+#include "sieve-rusage.h"
 
 #include "sieve-binary-private.h"
 
@@ -188,6 +192,37 @@ void sieve_binary_close(struct sieve_binary **_sbin)
 /*
  * Resource usage
  */
+
+static struct sieve_storage *
+sieve_binary_get_user_storage(struct sieve_binary *sbin)
+{
+	if (sbin->script == NULL)
+		return NULL;
+	if (sbin->script->storage == NULL)
+		return NULL;
+	if (sbin->script->storage->rusage_path == NULL)
+		return NULL;
+	return sbin->script->storage;
+}
+
+void sieve_binary_apply_persisted_rusage(struct sieve_binary *sbin)
+{
+	struct sieve_storage *storage = sieve_binary_get_user_storage(sbin);
+	struct sieve_resource_usage rusage;
+	struct sieve_binary_header *header = &sbin->header;
+	uint32_t flags = 0;
+
+	if (storage == NULL)
+		return;
+	if (sieve_rusage_storage_load(storage, &rusage, &flags) <= 0)
+		return;
+
+	header->resource_usage.cpu_time_msecs = rusage.cpu_time_msecs;
+	header->resource_usage.update_time = ioloop_time;
+	header->flags |= (flags & SIEVE_BINARY_FLAG_RESOURCE_LIMIT);
+	sieve_resource_usage_init(&sbin->rusage);
+	sbin->rusage_updated = FALSE;
+}
 
 void sieve_binary_get_resource_usage(struct sieve_binary *sbin,
 				     struct sieve_resource_usage *rusage_r)

@@ -118,6 +118,17 @@ struct sieve_storage {
 
 	struct mail_namespace *sync_inbox_ns;
 
+	/* Per-user resource usage tracking. Set when storage is personal and
+	   the user's INBOX namespace has a filesystem path. NULL otherwise.
+	   inbox_list is kept so the namespace root directory can be created
+	   on demand before the rusage file is updated; LDA may close the
+	   sieve binary (and therefore persist rusage) before any mail has
+	   been delivered, in which case the namespace root may not exist
+	   yet. */
+	struct mail_user *user;
+	struct mailbox_list *inbox_list;
+	const char *rusage_path;
+
 	enum sieve_storage_flags flags;
 
 	bool allows_synchronization:1;

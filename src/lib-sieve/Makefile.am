@@ -113,6 +113,7 @@ libdovecot_sieve_la_SOURCES = \
 	sieve-ast.c \
 	sieve-binary.c \
 	sieve-binary-file.c \
+	sieve-rusage.c \
 	sieve-binary-code.c \
 	sieve-binary-debug.c \
 	sieve-parser.c \
@@ -162,6 +163,7 @@ headers = \
 	sieve-ast.h \
 	sieve-binary.h \
 	sieve-binary-private.h \
+	sieve-rusage.h \
 	sieve-parser.h \
 	sieve-address.h \
 	sieve-validator.h \

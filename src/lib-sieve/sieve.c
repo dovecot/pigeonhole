@@ -29,6 +29,7 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-binary-dumper.h"
+#include "sieve-rusage.h"
 
 #include "sieve.h"
 #include "sieve-common.h"
@@ -448,6 +449,8 @@ sieve_open_script_real(struct sieve_script *script,
 
 	/* Try to open the matching binary */
 	if (sieve_script_binary_load(script, &sbin, error_code_r) == 0) {
+		/* Per-user rusage file (if any) overrides binary header */
+		sieve_binary_apply_persisted_rusage(sbin);
 		sieve_binary_get_resource_usage(sbin, &rusage);
 
 		/* Ok, it exists; now let's see if it is up to date */
@@ -478,6 +481,8 @@ sieve_open_script_real(struct sieve_script *script,
 			sieve_script_label(script));
 
 		sieve_binary_set_resource_usage(sbin, &rusage);
+		/* Per-user rusage file (if any) overrides any carry-forward */
+		sieve_binary_apply_persisted_rusage(sbin);
 	}
 
 	/* Check whether binary can be executed. */

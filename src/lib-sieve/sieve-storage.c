@@ -17,6 +17,7 @@
 
 #include "sieve-script-private.h"
 #include "sieve-storage-private.h"
+#include "sieve-rusage.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -779,6 +780,7 @@ int sieve_storage_create_personal(struct sieve_instance *svinst,
 	if (ret == 0) {
 		i_assert(storage->is_personal);
 		(void)sieve_storage_sync_init(storage, user);
+		sieve_rusage_storage_init(storage, user);
 	} else if (*error_code_r != SIEVE_ERROR_TEMP_FAILURE &&
 		   (flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
 		   (flags & SIEVE_STORAGE_FLAG_READWRITE) == 0) {

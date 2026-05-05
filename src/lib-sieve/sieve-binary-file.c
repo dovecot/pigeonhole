@@ -17,6 +17,9 @@
 #include "sieve-extensions.h"
 #include "sieve-code.h"
 #include "sieve-script.h"
+#include "sieve-script-private.h"
+#include "sieve-storage-private.h"
+#include "sieve-rusage.h"
 
 #include "sieve-binary-private.h"
 
@@ -1028,14 +1031,55 @@ sieve_binary_file_do_update_resource_usage(
 	return ret;
 }
 
+static int
+sieve_binary_storage_update_resource_usage(struct sieve_binary *sbin,
+					   struct sieve_storage *storage,
+					   enum sieve_error *error_code_r)
+{
+	struct sieve_resource_usage delta;
+	struct sieve_resource_usage total;
+	uint32_t flags;
+
+	delta = sbin->rusage;
+	sieve_binary_get_resource_usage(sbin, &total);
+	flags = sbin->header.flags & SIEVE_BINARY_FLAG_RESOURCE_LIMIT;
+
+	if (!HAS_ALL_BITS(flags, SIEVE_BINARY_FLAG_RESOURCE_LIMIT) &&
+	    !sieve_resource_usage_is_high(sbin->svinst, &total)) {
+		/* Nothing meaningful to persist */
+		sieve_resource_usage_init(&sbin->rusage);
+		sbin->rusage_updated = FALSE;
+		return 0;
+	}
+
+	if (sieve_rusage_storage_add(storage, &delta, flags) < 0) {
+		*error_code_r = SIEVE_ERROR_TEMP_FAILURE;
+		return -1;
+	}
+
+	sieve_resource_usage_init(&sbin->rusage);
+	sbin->rusage_updated = FALSE;
+	return 0;
+}
+
 int sieve_binary_file_update_resource_usage(struct sieve_binary *sbin,
 					    enum sieve_error *error_code_r)
 {
+	struct sieve_storage *storage = NULL;
 	int fd, ret = 0;
 
 	sieve_error_args_init(&error_code_r, NULL);
 
 	sieve_binary_file_close(&sbin->file);
+
+	if (sbin->script != NULL && sbin->script->storage != NULL &&
+	    sbin->script->storage->rusage_path != NULL)
+		storage = sbin->script->storage;
+
+	if (storage != NULL) {
+		return sieve_binary_storage_update_resource_usage(
+			sbin, storage, error_code_r);
+	}
 
 	if (sbin->path == NULL)
 		return 0;

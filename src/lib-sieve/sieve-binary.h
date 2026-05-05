@@ -37,6 +37,11 @@ bool sieve_binary_record_resource_usage(
 	ATTR_NULL(1);
 void sieve_binary_set_resource_usage(struct sieve_binary *sbin,
 				     const struct sieve_resource_usage *rusage);
+
+/* Apply persisted per-user rusage and limit flag from sieve-rusage file
+   into the binary header. No-op when the storage has no per-user file. */
+void sieve_binary_apply_persisted_rusage(struct sieve_binary *sbin);
+
 /*
  * Accessors
  */
