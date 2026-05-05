@@ -759,6 +759,14 @@ static int sieve_file_storage_script_delete(struct sieve_script *script)
 				fscript->path);
 		}
 	}
+
+	/* Best-effort: drop the compiled binary as well so it does not
+	   linger as a stale orphan. */
+	if (fscript->bin_path != NULL &&
+	    unlink(fscript->bin_path) < 0 && errno != ENOENT) {
+		e_error(script->event,
+			"unlink(%s) failed: %m", fscript->bin_path);
+	}
 	return ret;
 }
 
@@ -889,6 +897,16 @@ sieve_file_storage_script_rename(struct sieve_script *script,
 						"Failed to clean up after rename: "
 						"unlink(%s) failed: %m",
 						fscript->path);
+				}
+
+				/* Drop the old compiled binary; the renamed
+				   script will recompile under its new name. */
+				if (fscript->bin_path != NULL &&
+				    unlink(fscript->bin_path) < 0 &&
+				    errno != ENOENT) {
+					e_error(script->event,
+						"unlink(%s) failed: %m",
+						fscript->bin_path);
 				}
 
 				if (script->name != NULL && *script->name != '\0')
