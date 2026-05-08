@@ -224,7 +224,11 @@ libsieve_headers=
 libsieve_c_files=
 non_libsieve_headers=
 non_libsieve_c_files=
-all_files=`find $srcdir/src -name '*.[[ch]]' | grep -v '/src/plugins/settings/' | grep -v '/src/managesieve' | grep -v '/test-' | xargs grep '\\(struct setting_parser_info [[a-z]]\\)\\|\\(struct service_settings [[a-z]]\\)\\|\\(<settings checks>\\)' | sed 's/:.*//' | sort | uniq`
+ldap_filter="cat"
+AS_IF([test "$have_ldap" = "no"], [
+  ldap_filter="grep -v /src/lib-sieve/storage/ldap/"
+])
+all_files=`find $srcdir/src -name '*.[[ch]]' | grep -v '/src/plugins/settings/' | grep -v '/src/managesieve' | grep -v '/test-' | $ldap_filter | xargs grep '\\(struct setting_parser_info [[a-z]]\\)\\|\\(struct service_settings [[a-z]]\\)\\|\\(<settings checks>\\)' | sed 's/:.*//' | sort | uniq`
 for file in $all_files; do
   dir=`echo "$file" | sed 's:/[[^/]]*$::'`
   if echo "$libsieve_setting_dirs" | grep "$dir" >/dev/null; then

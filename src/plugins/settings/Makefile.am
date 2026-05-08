@@ -9,9 +9,6 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-managesieve \
 	-I$(top_srcdir)/src/plugins/sieve-extprograms \
 	-DSETTINGS_PLUGIN
-if LDAP_PLUGIN
-AM_CPPFLAGS += -DPLUGIN_BUILD -DLDAP_PLUGIN
-endif
 
 libpigeonhole_settings_la_LDFLAGS = -module -avoid-version
 
@@ -21,19 +18,28 @@ settings_LTLIBRARIES = \
 libpigeonhole_settings_la_SOURCES = \
 	pigeonhole-settings-dynamic.c \
 	pigeonhole-settings.c
+
+# When LDAP is configured as a plugin, link the tiny settings-only
+# convenience so the always-loaded settings plugin exports the
+# sieve_ldap*_setting_parser_info symbols that the LDAP storage plugin
+# (loaded later via dlopen) and doveconf both need. The convenience
+# has no link-time dependency on libldap or libdovecot-ldap.
+# In built-in mode the symbols already live in libdovecot-sieve.so;
+# linking them here too would create a duplicate strong def.
+# In no-LDAP mode there are no LDAP setting symbols at all.
 if LDAP_PLUGIN
-ldap_storage_la = \
-	$(top_builddir)/src/lib-sieve/storage/ldap/libsieve_storage_ldap.la
+ldap_settings_la = \
+	$(top_builddir)/src/lib-sieve/storage/ldap/libsieve_storage_ldap_settings.la
 endif
+
 libpigeonhole_settings_la_LIBADD = \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la \
 	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la \
-	$(ldap_storage_la) \
-	$(LDAP_LIBS)
+	$(ldap_settings_la)
 libpigeonhole_settings_la_DEPENDENCIES = \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la \
 	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la \
-	$(ldap_storage_la)
+	$(ldap_settings_la)
 
 noinst_HEADERS = \
 	pigeonhole-settings.h
