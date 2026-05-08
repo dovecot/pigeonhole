@@ -52,8 +52,11 @@ storages = \
 	$(strgdir)/data/libsieve_storage_data.la \
 	$(strgdir)/file/libsieve_storage_file.la \
 	$(strgdir)/dict/libsieve_storage_dict.la \
-	$(strgdir)/ldap/libsieve_storage_ldap.la \
 	$(unfinished_storages)
+
+if LDAP_STORAGE
+storages += $(strgdir)/ldap/libsieve_storage_ldap.la
+endif
 
 extdir = $(top_builddir)/src/lib-sieve/plugins
 plugins = \
