@@ -2,6 +2,6 @@ SUBDIRS = \
 	data \
 	file \
 	dict
-if LDAP_STORAGE
+if BUILD_LDAP_DIR
 SUBDIRS += ldap
 endif

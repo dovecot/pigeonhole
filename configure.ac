@@ -180,6 +180,7 @@ AS_IF([test $have_ldap = no], [
 ])
 AM_CONDITIONAL(LDAP_PLUGIN, test "$have_ldap_plugin" = "yes")
 AM_CONDITIONAL(LDAP_STORAGE, test "$have_ldap" = "yes" -a "$want_ldap" = "yes")
+AM_CONDITIONAL(BUILD_LDAP_DIR, test "$have_ldap" = "yes")
 
 dnl **
 dnl ** Settings

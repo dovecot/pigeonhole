@@ -21,13 +21,19 @@ settings_LTLIBRARIES = \
 libpigeonhole_settings_la_SOURCES = \
 	pigeonhole-settings-dynamic.c \
 	pigeonhole-settings.c
+if LDAP_PLUGIN
+ldap_storage_la = \
+	$(top_builddir)/src/lib-sieve/storage/ldap/libsieve_storage_ldap.la
+endif
 libpigeonhole_settings_la_LIBADD = \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la \
 	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la \
+	$(ldap_storage_la) \
 	$(LDAP_LIBS)
 libpigeonhole_settings_la_DEPENDENCIES = \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la \
-	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la
+	$(top_builddir)/src/lib-managesieve/libdovecot-managesieve.la \
+	$(ldap_storage_la)
 
 noinst_HEADERS = \
 	pigeonhole-settings.h
