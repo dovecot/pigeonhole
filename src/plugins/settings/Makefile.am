@@ -50,4 +50,5 @@ pigeonhole-settings-dynamic.c: $(SETTING_FILES) $(SETTING_LINKED_FILES) $(top_sr
 
 EXTRA_DIST = \
 	settings-history-pigeonhole.txt \
+	settings-history-pigeonhole.h \
 	settings-get.pl
