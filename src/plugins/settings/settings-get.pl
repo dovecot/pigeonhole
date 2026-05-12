@@ -33,7 +33,7 @@ print '#include "managesieve-url.h"'."\n";
 print '#include "sieve-extprograms-limits.h"'."\n";
 print '#include "pigeonhole-settings.h"'."\n";
 print '#include <unistd.h>'."\n";
-print "#ifdef LDAP_PLUGIN\n";
+print "#ifdef STORAGE_LDAP\n";
 print '#include <ldap.h>'."\n";
 print "#endif\n";
 print '#define CONFIG_BINARY'."\n";
