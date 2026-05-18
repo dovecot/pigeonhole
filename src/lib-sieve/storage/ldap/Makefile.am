@@ -12,7 +12,8 @@ AM_CPPFLAGS = \
 ldap_runtime_sources = \
 	sieve-ldap-db.c \
 	sieve-ldap-script.c \
-	sieve-ldap-storage.c
+	sieve-ldap-storage.c \
+	sieve-ldap-storage-settings.c
 
 noinst_HEADERS = \
 	sieve-ldap-db.h \
@@ -24,8 +25,7 @@ if LDAP_STORAGE
 # get linked directly into libdovecot-sieve via lib-sieve/Makefile.am.
 noinst_LTLIBRARIES += libsieve_storage_ldap.la
 libsieve_storage_ldap_la_SOURCES = \
-	$(ldap_runtime_sources) \
-	sieve-ldap-storage-settings.c
+	$(ldap_runtime_sources)
 libsieve_storage_ldap_la_LIBADD = \
 	$(LDAP_LIBS) \
 	$(LIBDOVECOT_LDAP) \
