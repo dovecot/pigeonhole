@@ -91,10 +91,15 @@ foreach my $file (@ARGV) {
       } elsif (/^const struct setting_parser_info (.*) = \{/) {
         # info structure for settings
         my $cur_name = $1;
-        $infos{$cur_name} = join("\n", @ifdefs)."\n\t&$cur_name,\n"."#endif\n" x scalar(@ifdefs);
+        my $ifdef_prefix = scalar @ifdefs > 0 ?
+          join("\n", @ifdefs)."\n" : "";
+        my $ifdef_suffix = "#endif\n" x scalar(@ifdefs);
+        $infos{$cur_name} = $ifdef_prefix."\t&$cur_name,\n".$ifdef_suffix;
         # Add forward declaration for the info struct. This may be needed by
         # the ext_check() functions.
-        $externs .= "extern const struct setting_parser_info $cur_name;\n";
+        $externs .= $ifdef_prefix.
+          "extern const struct setting_parser_info $cur_name;\n".
+          $ifdef_suffix;
         s/(\w+(?:\[\])?)(\s*=\s*\{)/$1 __attribute__((weak))$2/ if !/^\s*static\b/;
         $state = "copy-to-end-of-block";
       } elsif (/\/\* <settings checks> \*\//) {
