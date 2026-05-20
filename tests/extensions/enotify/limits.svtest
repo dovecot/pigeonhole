@@ -1,0 +1,136 @@
+require "vnd.dovecot.testsuite";
+
+require "relational";
+require "comparator-i;ascii-numeric";
+require "enotify";
+
+/*
+ * Notify limit
+ *
+ * Default sieve_notify_max_notifications is 10; the script issues 10 notify actions
+ * and is expected to execute successfully.
+ */
+test "Notify limit" {
+	if not test_script_compile "execute/notify-limit.sieve" {
+		test_fail "compile failed";
+	}
+}
+
+/*
+ * Notify configured limit
+ *
+ * sieve_notify_max_notifications = 5 allows 5 notify actions and rejects 6 notify
+ * actions at runtime.
+ */
+test "Notify configured limit" {
+	test_config_set "sieve_notify_max_notifications" "5";
+	test_config_reload :extension "enotify";
+
+	if not test_script_compile "execute/notify-limit-5.sieve" {
+		test_fail "compile failed";
+	}
+
+	if not test_script_run {
+		test_fail "execution should have succeeded";
+	}
+
+	if not test_script_compile "execute/notify-limit-6.sieve" {
+		test_fail "compile failed";
+	}
+
+	if test_script_run {
+		test_fail "execution should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
+		test_fail "wrong number of runtime errors reported";
+	}
+
+	if not test_error :index 1 :contains
+		"number of notify actions exceeds policy limit" {
+		test_fail "unexpected error reported";
+	}
+}
+
+/*
+ * Notify limit through default sieve_max_actions
+ *
+ * sieve_notify_max_notifications = 40 would allow 40 notify actions but the
+ * sieve_max_actions limit (default 32) applies before. The script issues
+ * 33 notify actions; execution must fail with the total-actions error,
+ * not with the per-notify-class error.
+ */
+test "Notify max action limit" {
+	test_config_set "sieve_notify_max_notifications" "40";
+	test_config_reload :extension "enotify";
+
+	if not test_script_compile "execute/notify-limit-33.sieve" {
+		test_fail "compile failed";
+	}
+
+	if test_script_run {
+		test_fail "execution should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
+		test_fail "wrong number of runtime errors reported";
+	}
+
+	if not test_error :index 1 :contains
+		"total number of actions exceeds policy limit" {
+		test_fail "unexpected error reported";
+	}
+}
+
+/*
+ * Notify prohibited: sieve_notify_max_notifications = 0 blocks the notify action.
+ */
+test "Notify prohibited" {
+	test_config_set "sieve_notify_max_notifications" "0";
+	test_config_reload :extension "enotify";
+
+	if test_script_compile "errors/notify-prohibited.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	# A failed notify-command validation reports more than one error in this
+	# extension so only assert that the prohibition error is the first
+        # one reported.
+	if not test_error :index 1 :contains
+		"local policy prohibits the use of a notify action" {
+		test_fail "unexpected error reported";
+	}
+}
+
+/*
+ * Notify prohibited: sieve_notify_max_notifications = 0 blocks the notify action
+ * at runtime when an already compiled script is executed after reload.
+ */
+test "Notify prohibited after reload" {
+	test_config_set "sieve_notify_max_notifications" "5";
+	test_config_reload :extension "enotify";
+
+	if not test_script_compile "execute/notify-limit-5.sieve" {
+		test_fail "compile failed";
+	}
+
+	if not test_script_run {
+		test_fail "execution should have succeeded before reload";
+	}
+
+	test_config_set "sieve_notify_max_notifications" "0";
+	test_config_reload :extension "enotify";
+
+	if test_script_run {
+		test_fail "execution should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
+		test_fail "wrong number of runtime errors reported";
+	}
+
+	if not test_error :index 1 :contains
+		"local policy prohibits the use of a notify action" {
+		test_fail "unexpected error reported";
+	}
+}

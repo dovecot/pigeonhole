@@ -28,6 +28,7 @@ libsieve_ext_enotify_la_LIBADD = \
 libsieve_ext_enotify_la_SOURCES = \
 	ext-enotify.c \
 	ext-enotify-common.c \
+	ext-enotify-settings.c \
 	$(commands) \
 	$(tests) \
 	$(var_modifiers)
@@ -37,7 +38,8 @@ public_headers = \
 
 headers = \
 	ext-enotify-limits.h \
-	ext-enotify-common.h
+	ext-enotify-common.h \
+	ext-enotify-settings.h
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 pkginc_lib_HEADERS = $(public_headers)

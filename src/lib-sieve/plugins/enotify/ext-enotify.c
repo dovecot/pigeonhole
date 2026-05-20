@@ -13,6 +13,8 @@
 
 #include "sieve-common.h"
 
+#include "settings.h"
+
 #include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-actions.h"
@@ -58,16 +60,27 @@ const struct sieve_extension_def enotify_extension = {
 
 static int ext_enotify_load(const struct sieve_extension *ext, void **context_r)
 {
+	struct sieve_instance *svinst = ext->svinst;
 	const struct sieve_extension *var_ext;
+	const struct ext_enotify_settings *set;
 	struct ext_enotify_context *extctx;
+	const char *error;
 
 	if (sieve_ext_variables_get_extension(ext->svinst, &var_ext) < 0)
 		return -1;
 
+	if (settings_get(svinst->event, &ext_enotify_setting_parser_info, 0,
+			 &set, &error) < 0) {
+		e_error(svinst->event, "%s", error);
+		return -1;
+	}
+
 	extctx = i_new(struct ext_enotify_context, 1);
 	extctx->var_ext = var_ext;
+	extctx->set = set;
 
 	if (ext_enotify_methods_init(extctx, ext) < 0) {
+		settings_free(extctx->set);
 		i_free(extctx);
 		return -1;
 	}
@@ -86,6 +99,7 @@ static void ext_enotify_unload(const struct sieve_extension *ext)
 		return;
 
 	ext_enotify_methods_deinit(extctx);
+	settings_free(extctx->set);
 	i_free(extctx);
 }
 

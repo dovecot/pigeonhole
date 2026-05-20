@@ -152,6 +152,7 @@ test_cases = \
 	tests/extensions/enotify/errors.svtest \
 	tests/extensions/enotify/execute.svtest \
 	tests/extensions/enotify/mailto.svtest \
+	tests/extensions/enotify/limits.svtest \
 	tests/extensions/environment/basic.svtest \
 	tests/extensions/environment/rfc.svtest \
 	tests/extensions/mailbox/errors.svtest \

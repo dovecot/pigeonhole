@@ -10,6 +10,8 @@
 
 #include "sieve-ext-enotify.h"
 
+#include "ext-enotify-settings.h"
+
 /*
  * Extension
  */
@@ -20,6 +22,8 @@ extern const struct sieve_extension_capabilities notify_capabilities;
 struct ext_enotify_context {
 	const struct sieve_extension *var_ext;
 	ARRAY(struct sieve_enotify_method) notify_methods;
+
+	const struct ext_enotify_settings *set;
 };
 
 

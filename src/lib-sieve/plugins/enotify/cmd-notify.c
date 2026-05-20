@@ -18,6 +18,9 @@
 
 #include "ext-enotify-common.h"
 
+#define NOTIFY_ACTION_PROHIBITED \
+	"local policy prohibits the use of a notify action"
+
 /*
  * Forward declarations
  */
@@ -321,6 +324,7 @@ cmd_notify_pre_validate(struct sieve_validator *validator ATTR_UNUSED,
 static bool
 cmd_notify_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 {
+	const struct ext_enotify_context *extctx = cmd->ext->context;
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct cmd_notify_context_data *ctx_data =
 		(struct cmd_notify_context_data *)cmd->data;
@@ -332,9 +336,20 @@ cmd_notify_validate(struct sieve_validator *valdtr, struct sieve_command *cmd)
 	if (!sieve_validator_argument_activate(valdtr, cmd, arg, FALSE))
 		return FALSE;
 
-	return ext_enotify_compile_check_arguments(
-		valdtr, cmd, arg, ctx_data->message, ctx_data->from,
-		ctx_data->options);
+	bool args_ok;
+	T_BEGIN {
+		args_ok = ext_enotify_compile_check_arguments(
+			valdtr, cmd, arg, ctx_data->message, ctx_data->from,
+			ctx_data->options);
+	} T_END;
+	if (!args_ok)
+		return FALSE;
+
+	if (extctx->set->max_notifications == 0) {
+		sieve_command_validate_error(valdtr, cmd, NOTIFY_ACTION_PROHIBITED);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 /*
@@ -413,6 +428,7 @@ cmd_notify_operation_execute(const struct sieve_runtime_env *renv,
 			     sieve_size_t *address)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
+	const struct ext_enotify_context *extctx = this_ext->context;
 	struct sieve_side_effects_list *slist = NULL;
 	struct sieve_enotify_action *act;
 	void *method_context;
@@ -498,6 +514,11 @@ cmd_notify_operation_execute(const struct sieve_runtime_env *renv,
 						      from, options, &method,
 						      &method_context)) > 0)
 	{
+		if (extctx->set->max_notifications == 0) {
+			sieve_runtime_error(renv, NULL, NOTIFY_ACTION_PROHIBITED);
+			return SIEVE_EXEC_FAILURE;
+		}
+
 		/* Add notify action to the result */
 		pool = sieve_result_pool(renv->result);
 		act = p_new(pool, struct sieve_enotify_action, 1);
@@ -511,7 +532,8 @@ cmd_notify_operation_execute(const struct sieve_runtime_env *renv,
 
 		if (sieve_result_add_action(renv, this_ext, "notify",
 					    &act_notify, slist,
-					    act, 0, FALSE) < 0)
+					    act, extctx->set->max_notifications,
+					    FALSE) < 0)
 			return SIEVE_EXEC_FAILURE;
 
 		return SIEVE_EXEC_OK;
