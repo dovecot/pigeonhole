@@ -45,7 +45,7 @@ const struct sieve_match_type_def contains_match_type = {
           the configured sieve_max_cpu_time (which is otherwise only checked
 	  between bytecode operations).
  */
-#define SIEVE_CONTAINS_CPU_CHECK_INTERVAL 4096
+#define SIEVE_CONTAINS_CPU_CHECK_INTERVAL 64
 
 static int
 mcht_contains_match_key(struct sieve_match_context *mctx,

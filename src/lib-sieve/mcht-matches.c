@@ -52,7 +52,7 @@ const struct sieve_match_type_def matches_match_type = {
  * configured sieve_max_cpu_time. Returns 1 on match, 0 on exhaustion, or -1
  * when the CPU time limit was exceeded (mctx->exec_status is set).
  */
-#define SIEVE_MATCHES_CPU_CHECK_INTERVAL 4096
+#define SIEVE_MATCHES_CPU_CHECK_INTERVAL 64
 
 static int
 _string_find(struct sieve_match_context *mctx,
