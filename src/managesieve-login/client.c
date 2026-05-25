@@ -50,6 +50,7 @@ bool client_skip_line(struct managesieve_client *msieve_client)
 		}
 	}
 
+	i_stream_skip(client->input, data_size);
 	return FALSE;
 }
 
