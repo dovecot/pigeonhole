@@ -748,7 +748,7 @@ int sieve_script_binary_save_default(struct sieve_script *script ATTR_UNUSED,
 	if (storage->bin_path != NULL &&
 	    str_begins_with(path, storage->bin_path) &&
 	    sieve_storage_setup_bin_path(
-		script->storage, mkdir_get_executable_mode(save_mode)) < 0)
+		script->storage, 0700) < 0)
 		return -1;
 
 	e_debug(script->event, "Saving binary to '%s'", path);
