@@ -7,6 +7,7 @@ struct ntfy_mailto_settings {
 	pool_t pool;
 
 	const char *envelope_from;
+	unsigned int max_recipients;
 
 	struct {
 		struct sieve_address_source envelope_from;

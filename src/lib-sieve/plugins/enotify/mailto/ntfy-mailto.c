@@ -46,7 +46,6 @@
  * Configuration
  */
 
-#define NTFY_MAILTO_MAX_RECIPIENTS  8
 #define NTFY_MAILTO_MAX_HEADERS     16
 
 /*
@@ -155,6 +154,14 @@ struct ntfy_mailto_context {
 	const struct ntfy_mailto_settings *set;
 };
 
+static inline const struct ntfy_mailto_settings *
+ntfy_mailto_get_settings(const struct sieve_enotify_env *nenv)
+{
+	const struct ntfy_mailto_context *mtctx = nenv->method->context;
+
+	return mtctx->set;
+}
+
 static int
 ntfy_mailto_load(const struct sieve_enotify_method *nmth, void **context_r)
 {
@@ -238,13 +245,14 @@ static bool
 ntfy_mailto_compile_check_uri(const struct sieve_enotify_env *nenv,
 			      const char *uri ATTR_UNUSED, const char *uri_body)
 {
+	const struct ntfy_mailto_settings *set = ntfy_mailto_get_settings(nenv);
 	struct ntfy_mailto_uri_env nmuenv;
 	bool result;
 
 	ntfy_mailto_uri_env_init(&nmuenv, nenv);
 	result = uri_mailto_validate(
 		uri_body, _reserved_headers, _unique_headers,
-		NTFY_MAILTO_MAX_RECIPIENTS, NTFY_MAILTO_MAX_HEADERS,
+		set->max_recipients, NTFY_MAILTO_MAX_HEADERS,
 		&nmuenv.uri_log);
 	ntfy_mailto_uri_env_deinit(&nmuenv);
 
@@ -284,13 +292,14 @@ struct ntfy_mailto_runtime_env {
 
 static const char *
 ntfy_mailto_runtime_get_notify_capability(
-	const struct sieve_enotify_env *nenv ATTR_UNUSED,
+	const struct sieve_enotify_env *nenv,
 	const char *uri ATTR_UNUSED, const char *uri_body,
 	const char *capability)
 {
+	const struct ntfy_mailto_settings *set = ntfy_mailto_get_settings(nenv);
+
 	if (!uri_mailto_validate(uri_body, _reserved_headers, _unique_headers,
-				 NTFY_MAILTO_MAX_RECIPIENTS,
-				 NTFY_MAILTO_MAX_HEADERS, NULL))
+				 set->max_recipients, NTFY_MAILTO_MAX_HEADERS, NULL))
 		return NULL;
 
 	if (strcasecmp(capability, "online") == 0)
@@ -300,12 +309,13 @@ ntfy_mailto_runtime_get_notify_capability(
 }
 
 static bool
-ntfy_mailto_runtime_check_uri(const struct sieve_enotify_env *nenv ATTR_UNUSED,
+ntfy_mailto_runtime_check_uri(const struct sieve_enotify_env *nenv,
 			      const char *uri ATTR_UNUSED, const char *uri_body)
 {
+	const struct ntfy_mailto_settings *set = ntfy_mailto_get_settings(nenv);
+
 	return uri_mailto_validate(uri_body, _reserved_headers, _unique_headers,
-				   NTFY_MAILTO_MAX_RECIPIENTS,
-				   NTFY_MAILTO_MAX_HEADERS, NULL);
+				   set->max_recipients, NTFY_MAILTO_MAX_HEADERS, NULL);
 }
 
 static bool
@@ -316,6 +326,7 @@ ntfy_mailto_runtime_check_operands(const struct sieve_enotify_env *nenv,
 				   string_t *from, pool_t context_pool,
 				   void **method_context)
 {
+	const struct ntfy_mailto_settings *set = ntfy_mailto_get_settings(nenv);
 	struct ntfy_mailto_action_context *mtactx;
 	struct uri_mailto *parsed_uri;
 	const struct smtp_address *address;
@@ -348,8 +359,7 @@ ntfy_mailto_runtime_check_operands(const struct sieve_enotify_env *nenv,
 	ntfy_mailto_uri_env_init(&nmuenv, nenv);
 	parsed_uri = uri_mailto_parse(uri_body, context_pool,
 				      _reserved_headers, _unique_headers,
-				      NTFY_MAILTO_MAX_RECIPIENTS,
-				      NTFY_MAILTO_MAX_HEADERS,
+				      set->max_recipients, NTFY_MAILTO_MAX_HEADERS,
 				      &nmuenv.uri_log);
 	ntfy_mailto_uri_env_deinit(&nmuenv);
 

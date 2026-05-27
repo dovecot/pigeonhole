@@ -18,12 +18,14 @@ ntfy_mailto_settings_check(void *_set, pool_t pool, const char **error_r);
 
 static const struct setting_define ntfy_mailto_setting_defines[] = {
 	DEF(STR, envelope_from),
+	DEF(UINT_HIDDEN, max_recipients),
 
 	SETTING_DEFINE_LIST_END,
 };
 
 static const struct ntfy_mailto_settings ntfy_mailto_default_settings = {
 	.envelope_from = "",
+	.max_recipients = 8,
 };
 
 const struct setting_parser_info ntfy_mailto_setting_parser_info = {
