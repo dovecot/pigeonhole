@@ -247,6 +247,7 @@ bool sieve_binary_record_resource_usage(
 	struct sieve_binary *sbin, const struct sieve_resource_usage *rusage)
 {
 	struct sieve_resource_usage rusage_total;
+	struct sieve_script *script;
 
 	if (sbin == NULL)
 		return TRUE;
@@ -261,7 +262,21 @@ bool sieve_binary_record_resource_usage(
 	e_debug(sbin->event, "Updated cumulative resource usage: %s",
 		sieve_resource_usage_get_summary(&rusage_total));
 
-	return sieve_binary_check_resource_usage(sbin);
+	if (!sieve_resource_usage_is_excessive(sbin->svinst, &rusage_total))
+		return TRUE;
+
+	/* Cumulative resource usage is only tracked for personal scripts;
+	   all callers gate this on the user's own script. */
+	script = sbin->script;
+	i_assert(script != NULL);
+	i_assert(sieve_storage_is_personal(script->storage));
+
+	e_warning(sbin->event,
+		  "Personal sieve processing disabled for script '%s': "
+		  "cumulative resource usage limit exceeded (%s)",
+		  sieve_script_label(script),
+		  sieve_resource_usage_get_summary(&rusage_total));
+	return FALSE;
 }
 
 void sieve_binary_set_resource_usage(struct sieve_binary *sbin,
