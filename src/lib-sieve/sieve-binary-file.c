@@ -955,15 +955,23 @@ int sieve_binary_check_executable(struct sieve_binary *sbin,
 				  const char **client_error_r)
 {
 	struct sieve_resource_usage rusage;
+	struct sieve_script *script = sbin->script;
 
 	*client_error_r = NULL;
 	sieve_error_args_init(&error_code_r, NULL);
 
 	sieve_binary_get_resource_usage(sbin, &rusage);
 	if (sieve_resource_usage_is_excessive(sbin->svinst, &rusage)) {
-		e_debug(sbin->event,
-			"Binary execution is blocked: "
-			"Cumulative resource usage limit exceeded");
+		/* Cumulative resource usage is only tracked for personal
+		   scripts. */
+		i_assert(script != NULL);
+		i_assert(sieve_storage_is_personal(script->storage));
+
+		e_info(sbin->event,
+		       "Personal sieve processing disabled for script '%s': "
+		       "cumulative resource usage limit exceeded (%s)",
+		       sieve_script_label(script),
+		       sieve_resource_usage_get_summary(&rusage));
 		*error_code_r = SIEVE_ERROR_RESOURCE_LIMIT;
 		*client_error_r = "cumulative resource usage limit exceeded";
 		return 0;
