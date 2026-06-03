@@ -26,10 +26,11 @@ struct sieve_binary_header {
 	uint32_t hdr_size;
 	uint32_t flags;
 
-	struct {
-		uint64_t update_time;
-		uint32_t cpu_time_msecs;
-	} resource_usage;
+	/* Resource usage tracking moved to per-user sieve-rusage file. These
+	   fields are kept zeroed and present only for on-disk format
+	   compatibility with older .svbin files. */
+	uint64_t unused_update_time;
+	uint32_t unused_cpu_time_msecs;
 };
 
 struct sieve_binary_file {

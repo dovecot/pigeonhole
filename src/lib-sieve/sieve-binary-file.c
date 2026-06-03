@@ -167,13 +167,14 @@ sieve_binary_file_read_header(struct sieve_binary *sbin, int fd,
 	return 0;
 }
 
-/* The on-disk binary header carries an unused resource_usage struct for
+/* The on-disk binary header carries unused resource_usage fields for
    backward compatibility. Tracking lives in the per-user sieve-rusage file. */
 static void sieve_binary_file_zero_header_rusage(struct sieve_binary *sbin)
 {
 	struct sieve_binary_header *header = &sbin->header;
 
-	i_zero(&header->resource_usage);
+	header->unused_update_time = 0;
+	header->unused_cpu_time_msecs = 0;
 	sieve_resource_usage_init(&sbin->rusage);
 	sbin->rusage_updated = FALSE;
 }
@@ -854,7 +855,8 @@ _sieve_binary_open(struct sieve_binary *sbin, enum sieve_error *error_code_r)
 
 	/* Resource usage tracking is no longer kept in the binary file;
 	   discard any data from older versions. */
-	i_zero(&sbin->header.resource_usage);
+	sbin->header.unused_update_time = 0;
+	sbin->header.unused_cpu_time_msecs = 0;
 	sbin->header.flags &= ENUM_NEGATE(SIEVE_BINARY_FLAG_RESOURCE_LIMIT);
 
 	/* Load block index */
