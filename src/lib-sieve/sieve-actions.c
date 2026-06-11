@@ -370,6 +370,31 @@ void sieve_act_store_get_storage_error(const struct sieve_action_exec_env *aenv,
 						&trans->error_code));
 }
 
+int sieve_act_store_create_error_status(
+	const struct sieve_action_exec_env *aenv, enum mail_error error_code)
+{
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+
+	switch (error_code) {
+	case MAIL_ERROR_NONE:
+		return SIEVE_EXEC_OK;
+	case MAIL_ERROR_TEMP:
+		return SIEVE_EXEC_TEMP_FAILURE;
+	case MAIL_ERROR_PERM:
+		/* The mailbox cannot be created because of insufficient
+		   permissions. This is a permanent condition. For a user's
+		   personal script, fall through to implicit keep rather than
+		   deferring the message. For a global (administrator-defined)
+		   script, defer instead, so that the administrator notices the
+		   script is behaving in a way they did not intend. */
+		if ((eenv->flags & SIEVE_EXECUTE_FLAG_NOGLOBAL) != 0)
+			return SIEVE_EXEC_FAILURE;
+		return SIEVE_EXEC_TEMP_FAILURE;
+	default:
+		return SIEVE_EXEC_FAILURE;
+	}
+}
+
 int sieve_act_store_create_mailbox(const struct sieve_action_exec_env *aenv,
 				   struct act_store_transaction *trans)
 {
@@ -382,13 +407,13 @@ int sieve_act_store_create_mailbox(const struct sieve_action_exec_env *aenv,
 	/* Create mailbox */
 	if (mailbox_create(box, NULL, FALSE) < 0) {
 		sieve_act_store_get_storage_error(aenv, trans);
-		if (trans->error_code == MAIL_ERROR_EXISTS) {
-			trans->error = NULL;
-			trans->error_code = MAIL_ERROR_NONE;
-		} else {
-			return (trans->error_code == MAIL_ERROR_TEMP ?
-				SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
+		if (trans->error_code != MAIL_ERROR_EXISTS) {
+			return sieve_act_store_create_error_status(
+				aenv, trans->error_code);
 		}
+		/* Lost a race with another session; the mailbox exists now. */
+		trans->error = NULL;
+		trans->error_code = MAIL_ERROR_NONE;
 	}
 
 	/* Subscribe to it if necessary */
@@ -400,10 +425,9 @@ int sieve_act_store_create_mailbox(const struct sieve_action_exec_env *aenv,
 
 	/* Try opening again */
 	if (mailbox_open(box) < 0) {
-		/* Failed definitively */
 		sieve_act_store_get_storage_error(aenv, trans);
-		return (trans->error_code == MAIL_ERROR_TEMP ?
-			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
+		return sieve_act_store_create_error_status(
+			aenv, trans->error_code);
 	}
 	return SIEVE_EXEC_OK;
 }
@@ -432,10 +456,6 @@ act_store_mailbox_alloc(const struct sieve_action_exec_env *aenv,
 		return FALSE;
 	}
 
-	if (eenv->scriptenv->mailbox_autocreate)
-		flags |= MAILBOX_FLAG_AUTO_CREATE;
-	if (eenv->scriptenv->mailbox_autosubscribe)
-		flags |= MAILBOX_FLAG_AUTO_SUBSCRIBE;
 	*box_r = box = mailbox_alloc_for_user(eenv->scriptenv->user, mailbox,
 					      flags);
 	*storage = mailbox_get_storage(box);
@@ -636,6 +656,16 @@ act_store_execute(const struct sieve_action_exec_env *aenv, void *tr_context,
 			e_debug(aenv->event, "Failed to open mailbox %s: %s",
 				trans->mailbox_identifier, trans->error);
 		}
+	}
+
+	/* Create the mailbox if it does not exist yet and autocreation is
+	   enabled (e.g. lda_mailbox_autocreate=yes). The :create side effect
+	   creates it earlier; this handles a plain fileinto. */
+	if (trans->error_code == MAIL_ERROR_NOTFOUND &&
+	    eenv->scriptenv->mailbox_autocreate) {
+		int cstatus = sieve_act_store_create_mailbox(aenv, trans);
+		if (cstatus != SIEVE_EXEC_OK)
+			return cstatus;
 	}
 
 	/* Exit early if transaction already failed */

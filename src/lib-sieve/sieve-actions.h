@@ -246,8 +246,17 @@ void sieve_act_store_add_flags(const struct sieve_action_exec_env *aenv,
 void sieve_act_store_get_storage_error(const struct sieve_action_exec_env *aenv,
 				       struct act_store_transaction *trans);
 
+/* Map a failure to create the target mailbox to an execution status. A
+   permanent failure (e.g. the user lacks permission to create the mailbox)
+   makes a user's personal script fall through to implicit keep, but is
+   deferred for a global (administrator-defined) script, so that the
+   unintended behaviour is surfaced to the administrator. */
+int sieve_act_store_create_error_status(
+	const struct sieve_action_exec_env *aenv, enum mail_error error_code);
+
 /* Create the target mailbox of the store transaction (and subscribe to it
-   when configured). */
+   when configured). Returns SIEVE_EXEC_OK on success, or the status from
+   sieve_act_store_create_error_status() on failure. */
 int sieve_act_store_create_mailbox(const struct sieve_action_exec_env *aenv,
 				   struct act_store_transaction *trans);
 
