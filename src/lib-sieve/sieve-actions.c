@@ -370,6 +370,44 @@ void sieve_act_store_get_storage_error(const struct sieve_action_exec_env *aenv,
 						&trans->error_code));
 }
 
+int sieve_act_store_create_mailbox(const struct sieve_action_exec_env *aenv,
+				   struct act_store_transaction *trans)
+{
+	const struct sieve_execute_env *eenv = aenv->exec_env;
+	struct mailbox *box = trans->box;
+
+	trans->error = NULL;
+	trans->error_code = MAIL_ERROR_NONE;
+
+	/* Create mailbox */
+	if (mailbox_create(box, NULL, FALSE) < 0) {
+		sieve_act_store_get_storage_error(aenv, trans);
+		if (trans->error_code == MAIL_ERROR_EXISTS) {
+			trans->error = NULL;
+			trans->error_code = MAIL_ERROR_NONE;
+		} else {
+			return (trans->error_code == MAIL_ERROR_TEMP ?
+				SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
+		}
+	}
+
+	/* Subscribe to it if necessary */
+	if (eenv->scriptenv->mailbox_autosubscribe) {
+		(void)mailbox_list_set_subscribed(
+			mailbox_get_namespace(box)->list,
+			mailbox_get_name(box), TRUE);
+	}
+
+	/* Try opening again */
+	if (mailbox_open(box) < 0) {
+		/* Failed definitively */
+		sieve_act_store_get_storage_error(aenv, trans);
+		return (trans->error_code == MAIL_ERROR_TEMP ?
+			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE);
+	}
+	return SIEVE_EXEC_OK;
+}
+
 static bool
 act_store_mailbox_alloc(const struct sieve_action_exec_env *aenv,
 		        const char *mailbox, struct mailbox **box_r,

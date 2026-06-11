@@ -246,6 +246,11 @@ void sieve_act_store_add_flags(const struct sieve_action_exec_env *aenv,
 void sieve_act_store_get_storage_error(const struct sieve_action_exec_env *aenv,
 				       struct act_store_transaction *trans);
 
+/* Create the target mailbox of the store transaction (and subscribe to it
+   when configured). */
+int sieve_act_store_create_mailbox(const struct sieve_action_exec_env *aenv,
+				   struct act_store_transaction *trans);
+
 /*
  * Redirect action
  */
