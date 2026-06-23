@@ -57,7 +57,7 @@ const struct sieve_settings sieve_default_settings = {
 	.max_script_size = (1 << 20),
 	.max_actions = 32,
 	.max_redirects = 4,
-	.max_cpu_time = 0,
+	.max_cpu_time = 30,
 
 	.resource_usage_timeout = (60 * 60),
 	.redirect_envelope_from = "",
@@ -86,7 +86,7 @@ static const struct setting_keyvalue sieve_default_settings_keyvalue[] = {
 	  "body variables enotify environment mailbox date index ihave "
 	  "duplicate mime foreverypart extracttext"
 	},
-	{ "sieve_env_location_ms/sieve_max_cpu_time", "30s" },
+	{ "sieve_env_location_ms/sieve_max_cpu_time", "" },
 	{ NULL, NULL }
 };
 
