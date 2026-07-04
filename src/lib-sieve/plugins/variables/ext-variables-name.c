@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "str.h"
+#include "strnum.h"
 #include "array.h"
 
 #include "sieve-common.h"
@@ -43,6 +44,7 @@ int ext_variable_name_parse(ARRAY_TYPE(sieve_variable_name) *vname,
 
 	while (p < strend) {
 		struct sieve_variable_name *cur_element;
+		uintmax_t num;
 		string_t *cur_ident;
 
 		/* Acquire current position in the array */
@@ -71,15 +73,12 @@ int ext_variable_name_parse(ARRAY_TYPE(sieve_variable_name) *vname,
 			}
 
 		/* Num-variable */
-		} else if (i_isdigit(*p)) {
-			cur_element->num_variable = *p - '0';
-			p++;
-
-			while (p < strend && i_isdigit(*p)) {
-				cur_element->num_variable =
-					cur_element->num_variable*10 + (*p - '0');
-				p++;
-			}
+		} else if (str_parse_data_uintmax(
+			(const unsigned char *)p, strend - p, &num,
+			(const unsigned char **)&p) == 0) {
+			if (num > INT_MAX)
+				return -1;
+			cur_element->num_variable = (int)num;
 
 			/* If a num-variable is first, no more elements can
 			   follow because no namespace is specified.
