@@ -841,7 +841,7 @@ struct ldap_field_find_context {
 };
 
 #define IS_LDAP_ESCAPED_CHAR(c) \
-	((c) == '*' || (c) == '(' || (c) == ')' || (c) == '\\')
+	((c) == '*' || (c) == '(' || (c) == ')' || (c) == '\\' || (c) == '\0')
 
 const char *ldap_escape(const char *str)
 {
@@ -861,8 +861,9 @@ const char *ldap_escape(const char *str)
 
 	for (; *p != '\0'; p++) {
 		if (IS_LDAP_ESCAPED_CHAR(*p))
-			str_append_c(ret, '\\');
-		str_append_c(ret, *p);
+			str_printfa(ret, "\\%02x", (unsigned char)*p);
+		else
+			str_append_c(ret, *p);
 	}
 	return str_c(ret);
 }
