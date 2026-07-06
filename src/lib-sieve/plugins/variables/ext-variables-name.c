@@ -39,6 +39,7 @@ int ext_variable_name_parse(ARRAY_TYPE(sieve_variable_name) *vname,
 			    const char **str, const char *strend)
 {
 	const char *p = *str;
+	const unsigned char *endp;
 
 	array_clear(vname);
 
@@ -75,7 +76,8 @@ int ext_variable_name_parse(ARRAY_TYPE(sieve_variable_name) *vname,
 		/* Num-variable */
 		} else if (str_parse_data_uintmax(
 			(const unsigned char *)p, strend - p, &num,
-			(const unsigned char **)&p) == 0) {
+			&endp) == 0) {
+			p = (const char *)endp;
 			if (num > INT_MAX)
 				return -1;
 			cur_element->num_variable = (int)num;
