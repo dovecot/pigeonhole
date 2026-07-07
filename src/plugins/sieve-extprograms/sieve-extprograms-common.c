@@ -336,6 +336,13 @@ int sieve_extprogram_command_read_operands(
 	 * Check operands
 	 */
 
+	if (!sieve_extprogram_name_is_valid(*pname_r)) {
+		sieve_runtime_error(renv, NULL,
+			"specified program name '%s' is invalid",
+			str_sanitize(str_c(*pname_r), 128));
+		return SIEVE_EXEC_FAILURE;
+	}
+
 	arg = NULL;
 	while (*args_list_r != NULL &&
 	       (ret = sieve_stringlist_next_item(*args_list_r, &arg)) > 0) {
