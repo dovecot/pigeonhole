@@ -98,7 +98,7 @@ mod_encodeurl_modify(const struct sieve_variables_modifier *modf,
 				break;
 
 			str_printfa(*result, "%%%02X", *p);
-			for (i = 1; i < n && p < pend; i++) {
+			for (i = 1; i < n && p + 1 < pend; i++) {
 				p++;
 				poff++;
 				str_printfa(*result, "%%%02X", *p);
