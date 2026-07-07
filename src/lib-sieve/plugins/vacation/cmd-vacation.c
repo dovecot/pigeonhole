@@ -692,6 +692,7 @@ ext_vacation_operation_execute(const struct sieve_runtime_env *renv,
 				renv, NULL,
 				"specified :from address '%s' is invalid for vacation action: %s",
 				str_sanitize(str_c(from), 128), error);
+			return SIEVE_EXEC_FAILURE;
    		}
 	}
 
