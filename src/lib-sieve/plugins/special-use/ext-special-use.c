@@ -1,4 +1,4 @@
-/* Copyright (c) 2019 Pigeonhole authors, see the included COPYING file */
+/* Copyright (c) Pigeonhole authors, see top-level COPYING file */
 
 /* Extension special-use
  * ---------------------

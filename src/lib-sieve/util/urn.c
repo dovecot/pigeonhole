@@ -1,4 +1,4 @@
-/* Copyright (c) 2025 Pigeonhole authors, see the included COPYING file */
+/* Copyright (c) Pigeonhole authors, see top-level COPYING file */
 
 #include "lib.h"
 #include "str.h"

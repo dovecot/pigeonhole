@@ -1,5 +1,4 @@
-/* Copyright (c) 2016-2018 Pigeonhole authors, see the included COPYING file
- */
+/* Copyright (c) Pigeonhole authors, see top-level COPYING file */
 
 #include "sieve.h"
 #include "sieve-error.h"

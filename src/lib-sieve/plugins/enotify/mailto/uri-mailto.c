@@ -1,5 +1,4 @@
-/* Copyright (c) 2002-2018 Pigeonhole authors, see the included COPYING file
- */
+/* Copyright (c) Pigeonhole authors, see top-level COPYING file */
 
 /* FIXME: URI syntax conforms to something somewhere in between RFC 2368 and
           draft-duerst-mailto-bis-05.txt. Should fully migrate to new
