@@ -49,7 +49,7 @@ Makefile.in
 src/**/test-*
 !src/**/test-*.c
 !src/**/test-*.h
-**/test.out.*
+test.out.*
 
 src/**/fuzz-*
 !src/**/fuzz-*.c
