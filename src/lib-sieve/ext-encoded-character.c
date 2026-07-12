@@ -71,38 +71,35 @@ static bool
 _parse_hexint(const char **in, const char *inend, int max_digits,
 	      unsigned int *result)
 {
+	const char *p = *in;
 	int digit = 0;
-	*result = 0;
 
-	while (*in < inend && (max_digits == 0 || digit < max_digits)) {
-		if ((**in) >= '0' && (**in) <= '9') {
-			*result = ((*result) << 4) + (**in) -
-				((unsigned int) '0');
-		} else if ((**in) >= 'a' && (**in) <= 'f') {
-			*result = ((*result) << 4) + (**in) -
-				((unsigned int) 'a') + 0x0a;
-		} else if ((**in) >= 'A' && (**in) <= 'F') {
-			*result = ((*result) << 4) + (**in) -
-				((unsigned int) 'A') + 0x0a;
-		} else {
-			return (digit > 0);
-		}
-
-		(*in)++;
+	/* Determine the width of the hex run ourselves (bounded by inend and
+	   max_digits) rather than relying on str_parse_uint_hex()'s endp_r,
+	   which is documented undefined on error and, for a hex run long
+	   enough to overflow even its internal 64-bit accumulator, is never
+	   written at all. */
+	while (p < inend && (max_digits == 0 || digit < max_digits) &&
+	       i_isxdigit(*p)) {
+		p++;
 		digit++;
 	}
 
-	if (digit == max_digits) {
-		/* Hex digit _MUST_ end here */
-		if ((**in >= '0' && **in <= '9') ||
-		    (**in >= 'a' && **in <= 'f') ||
-		    (**in >= 'A' && **in <= 'F'))
-			return FALSE;
+	if (digit == 0)
+		return FALSE;
 
-		return TRUE;
+	if (digit == max_digits && p < inend && i_isxdigit(*p)) {
+		/* Hex digit _MUST_ end here */
+		return FALSE;
 	}
 
-	return (digit > 0);
+	/* An overflowing hex value can never be a valid Unicode code point;
+	   force it out of range rather than silently wrapping. */
+	if (str_parse_uint_hex(*in, result, NULL) < 0)
+		*result = UINT_MAX;
+
+	*in = p;
+	return TRUE;
 }
 
 static bool _decode_hex(const char **in, const char *inend, string_t *result)
@@ -161,7 +158,7 @@ bool arg_encoded_string_validate(struct sieve_validator *valdtr,
 	string_t *str = sieve_ast_argument_str(*arg);
 	string_t *tmpstr, *newstr = NULL;
 	const char *p, *mark, *strstart, *substart = NULL;
-	const char *strval = (const char *) str_data(str);
+	const char *strval = str_c(str);
 	const char *strend = strval + str_len(str);
 	unsigned int error_hex = 0;
 
