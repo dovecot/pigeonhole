@@ -188,9 +188,10 @@ mcht_regex_match_key(struct sieve_match_context *mctx, const char *val,
 		(struct mcht_regex_context *)mctx->data;
 	const char *error;
 	int ret;
-	ARRAY_TYPE(const_string) pmatch;
+	ARRAY_TYPE(const_string) pmatch = ARRAY_INIT;
+
 	if (ctx->capture_groups)
-		t_array_init(&pmatch, 8);
+		i_array_init(&pmatch, 8);
 
 	/* Execute regex */
 
@@ -201,28 +202,29 @@ mcht_regex_match_key(struct sieve_match_context *mctx, const char *val,
 
 	/* Handle match values if necessary */
 
-	if (ret > 0) {
-		if (ctx->capture_groups && array_count(&pmatch) > 0) {
-			struct sieve_match_values *mvalues;
-			string_t *subst = t_str_new(32);
-			const char *mvalue;
+	if (ret > 0 && ctx->capture_groups && array_count(&pmatch) > 0) {
+		struct sieve_match_values *mvalues;
+		string_t *subst = t_str_new(32);
+		const char *mvalue;
 
-			/* Start new list of match values */
-			mvalues = sieve_match_values_start(mctx->runenv);
+		/* Start new list of match values */
+		mvalues = sieve_match_values_start(mctx->runenv);
 
-			i_assert(mvalues != NULL);
+		i_assert(mvalues != NULL);
 
-			array_foreach_elem(&pmatch, mvalue) {
-				str_append(subst, mvalue);
-				sieve_match_values_add(mvalues, subst);
-				str_truncate(subst, 0);
-			}
-
-			/* Substitute the new match values */
-			sieve_match_values_commit(mctx->runenv, &mvalues);
+		array_foreach_elem(&pmatch, mvalue) {
+			str_append(subst, mvalue);
+			sieve_match_values_add(mvalues, subst);
+			str_truncate(subst, 0);
 		}
-		return 1;
+
+		/* Substitute the new match values */
+		sieve_match_values_commit(mctx->runenv, &mvalues);
 	}
+
+	array_free(&pmatch);
+	if (ret > 0)
+		return 1;
 	return 0;
 }
 

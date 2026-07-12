@@ -8,6 +8,7 @@ From: Andy Howell <AndyHowell@example.com>
 Sender: antlr-interest-bounces@ant.example.com
 To: Stephan Bosch <stephan@example.org>
 Subject: [Dovecot] Sieve regex match problem
+X-A: abcdefghijklmnopqrstuvwxyz
 
 Hi,
 
@@ -59,6 +60,91 @@ test "Basic match values 2" {
 
 		if string :is "${5}" "-bounces" {
 			test_fail "fifth match contains fourth value: ${5}";
+		}
+	} else {
+		test_fail "failed to match";
+	}
+}
+
+test "Many match values" {
+	if header :regex ["X-A"] ["(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)"] {
+		if not string :is "${1}" "a" {
+			test_fail "match value is not correct: ${1} (1)";
+		}
+		if not string :is "${2}" "b" {
+			test_fail "match value is not correct: ${1} (2)";
+		}
+		if not string :is "${3}" "c" {
+			test_fail "match value is not correct: ${1} (3)";
+		}
+		if not string :is "${4}" "d" {
+			test_fail "match value is not correct: ${1} (4)";
+		}
+		if not string :is "${5}" "e" {
+			test_fail "match value is not correct: ${1} (5)";
+		}
+		if not string :is "${6}" "f" {
+			test_fail "match value is not correct: ${1} (6)";
+		}
+		if not string :is "${7}" "g" {
+			test_fail "match value is not correct: ${1} (7)";
+		}
+		if not string :is "${8}" "h" {
+			test_fail "match value is not correct: ${1} (8)";
+		}
+		if not string :is "${9}" "i" {
+			test_fail "match value is not correct: ${1} (9)";
+		}
+		if not string :is "${10}" "j" {
+			test_fail "match value is not correct: ${1} (10)";
+		}
+		if not string :is "${11}" "k" {
+			test_fail "match value is not correct: ${1} (11)";
+		}
+		if not string :is "${12}" "l" {
+			test_fail "match value is not correct: ${1} (12)";
+		}
+		if not string :is "${13}" "m" {
+			test_fail "match value is not correct: ${1} (13)";
+		}
+		if not string :is "${14}" "n" {
+			test_fail "match value is not correct: ${1} (14)";
+		}
+		if not string :is "${15}" "o" {
+			test_fail "match value is not correct: ${1} (15)";
+		}
+		if not string :is "${16}" "p" {
+			test_fail "match value is not correct: ${1} (16)";
+		}
+		if not string :is "${17}" "q" {
+			test_fail "match value is not correct: ${1} (17)";
+		}
+		if not string :is "${18}" "r" {
+			test_fail "match value is not correct: ${1} (18)";
+		}
+		if not string :is "${19}" "s" {
+			test_fail "match value is not correct: ${1} (19)";
+		}
+		if not string :is "${20}" "t" {
+			test_fail "match value is not correct: ${1} (20)";
+		}
+		if not string :is "${21}" "u" {
+			test_fail "match value is not correct: ${1} (21)";
+		}
+		if not string :is "${22}" "v" {
+			test_fail "match value is not correct: ${1} (22)";
+		}
+		if not string :is "${23}" "w" {
+			test_fail "match value is not correct: ${1} (23)";
+		}
+		if not string :is "${24}" "x" {
+			test_fail "match value is not correct: ${1} (24)";
+		}
+		if not string :is "${25}" "y" {
+			test_fail "match value is not correct: ${1} (25)";
+		}
+		if not string :is "${26}" "z" {
+			test_fail "match value is not correct: ${1} (26)";
 		}
 	} else {
 		test_fail "failed to match";
