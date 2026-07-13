@@ -89,8 +89,13 @@ int sieve_init(const struct sieve_environment *env,
 		event_set_ptr(event, SETTINGS_EVENT_FILTER_NAME,
 			      (void*)lfilter);
 	}
-	if (settings_get(event, &sieve_setting_parser_info, 0,
-			 &set, &error) < 0) {
+
+	enum settings_get_flags set_flags = 0;
+	if ((env->flags & SIEVE_FLAG_DUMP_CAPABILITIES) != 0)
+		set_flags = SETTINGS_GET_FLAG_FAKE_EXPAND;
+
+	if (settings_get(event, &sieve_setting_parser_info,
+			 set_flags, &set, &error) < 0) {
 		e_error(event, "%s", error);
 		event_unref(&event);
 		return -1;

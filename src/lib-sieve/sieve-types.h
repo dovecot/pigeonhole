@@ -33,6 +33,8 @@ enum sieve_flag {
 	SIEVE_FLAG_HOME_RELATIVE = (1 << 0),
 	/* Sieve is running in command line tool */
 	SIEVE_FLAG_COMMAND_LINE = (1 << 1),
+	/* Sieve is dumping capabilities only */
+	SIEVE_FLAG_DUMP_CAPABILITIES = (1 << 2),
 };
 
 /* Sieve evaluation can be performed at various different points as messages
