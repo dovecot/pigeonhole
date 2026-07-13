@@ -61,6 +61,7 @@ dump_capability(struct config_parser_context *ctx,
 	struct sieve_environment svenv = {
 		.home_dir = "/tmp",
 		.event_parent = event,
+		.flags = SIEVE_FLAG_DUMP_CAPABILITIES,
 	};
 	if (sieve_init(&svenv, NULL, NULL, FALSE, &svinst) < 0) {
 		*error_r = "Failed to initialize Sieve";
