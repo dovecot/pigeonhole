@@ -6,6 +6,7 @@
 #include "istream-seekable.h"
 #include "ostream.h"
 #include "imap-commands.h"
+#include "imap-resp-code.h"
 
 #include "imap-filter.h"
 #include "imap-filter-sieve.h"
@@ -210,13 +211,14 @@ static int cmd_filter_sieve_script_read_stream(struct imap_filter_context *ctx)
 		i_assert(input->eof);
 		return -1;
 	}
-	/* Finished reading the value */
-	i_stream_seek(input, 0);
 
-	if (ctx->failed) {
+	if (ctx->failed || ctx->script_too_big) {
 		i_stream_unref(&ctx->script_input);
 		return 1;
 	}
+
+	/* Finished reading the value */
+	i_stream_seek(input, 0);
 
 	cmd_filter_sieve_compile_input(ctx, ctx->script_input);
 	i_stream_unref(&ctx->script_input);
@@ -230,6 +232,7 @@ cmd_filter_sieve_script_parse_value_arg(struct imap_filter_context *ctx)
 	const char *value, *error;
 	enum imap_parser_error parse_error;
 	struct istream *input, *inputs[2];
+	size_t max_script_size;
 	string_t *path;
 	int ret;
 
@@ -273,12 +276,36 @@ cmd_filter_sieve_script_parse_value_arg(struct imap_filter_context *ctx)
 		i_stream_unref(&input);
 		return 1;
 	case IMAP_ARG_LITERAL_SIZE:
-		o_stream_nsend(ctx->cmd->client->output, "+ OK\r\n", 6);
-		o_stream_uncork(ctx->cmd->client->output);
-		o_stream_cork(ctx->cmd->client->output);
-		/* Fall through */
 	case IMAP_ARG_LITERAL_SIZE_NONSYNC:
 		ctx->script_len = imap_arg_as_literal_size(&args[0]);
+
+		max_script_size =
+			imap_filter_sieve_max_script_size(ctx->sieve);
+		if (max_script_size > 0 && ctx->script_len > max_script_size) {
+			client_send_tagline(ctx->cmd, t_strdup_printf(
+				"NO ["IMAP_RESP_CODE_TOOBIG"] "
+				"Sieve script is too large (max %zu bytes).",
+				max_script_size));
+			if (args[0].type == IMAP_ARG_LITERAL_SIZE) {
+				/* Synchronizing literal; the client waits for
+				   a command continuation request and will not
+				   send the script data. */
+				return -1;
+			}
+			/* Non-synchronizing literal; the script data is
+			   already on its way and must be read and discarded
+			   without buffering it. */
+			ctx->script_too_big = TRUE;
+			ctx->script_input = i_stream_create_limit(
+				ctx->cmd->client->input, ctx->script_len);
+			return cmd_filter_sieve_script_read_stream(ctx);
+		}
+
+		if (args[0].type == IMAP_ARG_LITERAL_SIZE) {
+			o_stream_nsend(ctx->cmd->client->output, "+ OK\r\n", 6);
+			o_stream_uncork(ctx->cmd->client->output);
+			o_stream_cork(ctx->cmd->client->output);
+		}
 
 		inputs[0] = i_stream_create_limit(ctx->cmd->client->input,
 						  ctx->script_len);
@@ -321,6 +348,12 @@ cmd_filter_sieve_script_parse_value(struct client_command_context *cmd)
 
 	if (ret < 0) {
 		/* Already sent the error to client */ ;
+		imap_filter_deinit(ctx);
+		return TRUE;
+	} else if (ctx->script_too_big) {
+		/* Already sent the error to client; the search arguments
+		   still follow the literal on the command line. */
+		client->input_skip_line = TRUE;
 		imap_filter_deinit(ctx);
 		return TRUE;
 	} else if (ctx->compile_failure) {

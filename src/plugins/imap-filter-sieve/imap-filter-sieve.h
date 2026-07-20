@@ -64,6 +64,7 @@ int imap_filter_sieve_compile(struct imap_filter_sieve_context *sctx,
  * Open
  */
 
+size_t imap_filter_sieve_max_script_size(struct imap_filter_sieve_context *sctx);
 void imap_filter_sieve_open_input(struct imap_filter_sieve_context *sctx,
 				  struct istream *input);
 int imap_filter_sieve_open_personal(struct imap_filter_sieve_context *sctx,

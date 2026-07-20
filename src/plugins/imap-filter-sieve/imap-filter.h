@@ -26,6 +26,7 @@ struct imap_filter_context {
 
 	bool failed:1;
 	bool compile_failure:1;
+	bool script_too_big:1;
 	bool have_seqsets:1;
 	bool have_modseqs:1;
 };

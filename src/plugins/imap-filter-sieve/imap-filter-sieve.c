@@ -413,6 +413,16 @@ int imap_filter_sieve_compile(struct imap_filter_sieve_context *sctx,
 	return ret;
 }
 
+size_t imap_filter_sieve_max_script_size(struct imap_filter_sieve_context *sctx)
+{
+	struct sieve_instance *svinst;
+
+	svinst = imap_filter_sieve_get_svinst(sctx);
+	if (svinst == NULL)
+		return 0;
+	return sieve_max_script_size(svinst);
+}
+
 void imap_filter_sieve_open_input(struct imap_filter_sieve_context *sctx,
 				  struct istream *input)
 {
