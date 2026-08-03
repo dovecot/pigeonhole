@@ -16,6 +16,7 @@ lib95_imap_filter_sieve_plugin_la_SOURCES = \
 	cmd-filter-sieve.c \
 	imap-filter.c \
 	imap-filter-sieve.c \
+	imap-filter-sieve-settings.c \
 	imap-filter-sieve-plugin.c
 lib95_imap_filter_sieve_plugin_la_LIBADD = \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la
@@ -23,4 +24,5 @@ lib95_imap_filter_sieve_plugin_la_LIBADD = \
 noinst_HEADERS = \
 	imap-filter.h \
 	imap-filter-sieve.h \
+	imap-filter-sieve-settings.h \
 	imap-filter-sieve-plugin.h

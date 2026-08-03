@@ -5,6 +5,7 @@
 #include "ioloop.h"
 #include "time-util.h"
 #include "module-context.h"
+#include "settings.h"
 #include "message-address.h"
 #include "mail-user.h"
 #include "mail-duplicate.h"
@@ -16,6 +17,7 @@
 #include "sieve-script.h"
 
 #include "imap-filter-sieve.h"
+#include "imap-filter-sieve-settings.h"
 
 #define DUPLICATE_DB_NAME "lda-dupes"
 
@@ -240,6 +242,8 @@ void imap_filter_sieve_context_free(struct imap_filter_sieve_context **_sctx)
 
 	if (sctx->trace_log != NULL)
 		sieve_trace_log_free(&sctx->trace_log);
+
+	settings_free(sctx->set);
 
 	str_free(&sctx->errors);
 }
@@ -924,11 +928,17 @@ int imap_sieve_filter_run_init(struct imap_filter_sieve_context *sctx)
 {
 	struct sieve_instance *svinst = imap_filter_sieve_get_svinst(sctx);
 	struct sieve_script_env *scriptenv = &sctx->scriptenv;
+	struct client *client = sctx->filter_context->cmd->client;
 	struct mail_user *user = sctx->user;
 	const char *error;
 
 	if (svinst == NULL)
 		return -1;
+	if (settings_get(client->event, &imap_filter_sieve_setting_parser_info,
+			 0, &sctx->set, &error) < 0) {
+		e_error(client->event, "%s", error);
+		return -1;
+	}
 	if (sieve_script_env_init(scriptenv, user, &error) < 0) {
 		e_error(sieve_get_event(svinst),
 			"Failed to initialize script execution: %s",
@@ -1025,6 +1035,7 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 	struct sieve_exec_status estatus;
 	struct sieve_trace_config trace_config;
 	struct sieve_trace_log *trace_log;
+	unsigned int max_redirects = sctx->set->max_redirects;
 	int ret;
 
 	*errors_r = NULL;
@@ -1036,6 +1047,22 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 
 	/* Prepare error handler */
 	user_ehandler = imap_filter_sieve_create_error_handler(sctx);
+
+	/* Enforce the cumulative redirect limit for this whole FILTER command
+	   (imap_filter_sieve_max_redirects). This throttles bulk "redirect
+	   bomb" forwarding when a script is run against a large set of
+	   messages. 0 disables redirecting via FILTER entirely; the maximum
+	   value means no limit. */
+	if (sctx->redirect_count >= max_redirects) {
+		sieve_error(user_ehandler, NULL,
+			    "maximum number of redirects (%u) for this FILTER "
+			    "command has been reached", max_redirects);
+		*errors_r = sctx->errors;
+		*fatal_r = TRUE;
+		sieve_error_handler_unref(&user_ehandler);
+		sctx->mail = NULL;
+		return -1;
+	}
 
 	/* Initialize trace logging */
 	imap_filter_sieve_init_trace_log(sctx, &trace_config, &trace_log);
@@ -1076,6 +1103,10 @@ int imap_sieve_filter_run_mail(struct imap_filter_sieve_context *sctx,
 		   error instead. */
 		sieve_internal_error(user_ehandler, NULL, NULL);
 	}
+
+	/* Count this message towards the cumulative FILTER redirect limit */
+	if (estatus.message_forwarded)
+		sctx->redirect_count++;
 
 	*have_warnings_r = (sieve_get_warnings(user_ehandler) > 0);
 	*have_changes_r = estatus.significant_action_executed;

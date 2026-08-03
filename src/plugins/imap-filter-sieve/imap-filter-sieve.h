@@ -6,6 +6,7 @@
 
 struct imap_filter_sieve_script;
 struct imap_filter_sieve_context;
+struct imap_filter_sieve_settings;
 
 enum imap_filter_sieve_type {
 	IMAP_FILTER_SIEVE_TYPE_DELIVERY,
@@ -22,9 +23,15 @@ struct imap_filter_sieve_context {
 
 	struct mail_user *user;
 
+	const struct imap_filter_sieve_settings *set;
+
 	struct sieve_script *user_script;
 	struct imap_filter_sieve_script *scripts;
 	unsigned int scripts_count;
+
+	/* Cumulative number of messages redirected across this whole FILTER
+	   command, used to enforce imap_filter_sieve_max_redirects. */
+	unsigned int redirect_count;
 
 	struct mail *mail;
 
