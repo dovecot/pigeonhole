@@ -1,3 +1,31 @@
+v2.4.5 2026-08-10  Aki Tuomi <aki.tuomi@open-xchange.com>
+
+	* lib-sieve: sieve_max_cpu_time now defaults to 30s globally, so the
+	  limit also applies to MDA delivery. Previously the global default was
+	  unlimited and only imap_sieve used 30s. The old defaults are kept for
+	  older dovecot_config_version values.
+	* lib-sieve: enotify - The number of notify actions performed during a
+	  single script execution is now limited to 10 by default. See the new
+	  sieve_notify_max_notifications setting.
+	* lib-sieve: enotify - A single "mailto:" notify action is now limited
+	  to 8 recipients and 16 additional headers by default. See the new
+	  sieve_notify_mailto_max_recipients and sieve_notify_mailto_max_headers
+	  settings.
+	* imap-filter-sieve: FILTER SIEVE SCRIPT literals larger than
+	  sieve_max_script_size are now rejected before the script is read.
+	- lib-sieve: Fix stack overflow occurring when a script requires the
+	  same extension repeatedly.
+	- lib-sieve: encoded-character - Fix integer overflow parsing
+	  ${unicode:...} values with 9 or more hex digits.
+	- lib-sieve: variables - Fix integer overflow parsing numeric variable
+	  index.
+	- lib-sieve: regex - Fix panic occurring when more than 8 group values
+	  are matched.
+	- lib-sieve: ldap - Fix LDAP settings missing from the LDAP storage
+	  plugin.
+	- managesieve-login: Fix capability reporting when Sieve settings use
+	  %variables.
+
 v2.4.4 2026-04-25  Aki Tuomi <aki.tuomi@open-xchange.com>
 
 	* CVE-2026-40016: eve :contains and :matches operators could have been
