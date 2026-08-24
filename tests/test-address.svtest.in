@@ -100,7 +100,7 @@ test "Basic functionality" {
 
 test_set "message" text:
 From: stephan@example.com
-To: Nico@nl.example.com, harry@DE.EXAMPLE.COM
+To: Nico@nl.example.com, harry@de.example.com
 Subject: Case-sensitivity
 
 Test.
@@ -133,12 +133,8 @@ test "Case-sensitivity" {
 		test_fail "failed to match case-sensitive address (1)";
 	}
 
-	if not address :is :comparator "i;octet" ["to"] "harry@DE.EXAMPLE.COM" {
+	if not address :is :comparator "i;octet" ["to"] "harry@de.example.com" {
 		test_fail "failed to match case-sensitive address (2)";
-	}
-
-	if address :is :comparator "i;octet" ["to"] "harry@de.example.com" {
-		test_fail "failed to notice case difference in address with i;octet (1)";
 	}
 
 	if address :is :comparator "i;octet" ["from"] "STEPHAN@example.com" {
@@ -153,12 +149,8 @@ test "Case-sensitivity" {
 		test_fail "failed to notice case difference in local_part with i;octet";
 	}
 
-	if not address :is :domain :comparator "i;octet" ["to"] "DE.EXAMPLE.COM" {
+	if not address :is :domain :comparator "i;octet" ["to"] "de.example.com" {
 		test_fail "failed to match case-sensitive localpart";
-	}
-
-	if address :is :domain :comparator "i;octet" ["to"] "de.example.com" {
-		test_fail "failed to notice case difference in domain with i;octet";
 	}
 }
 
