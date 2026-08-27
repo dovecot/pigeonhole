@@ -149,7 +149,7 @@ proxy_write_auth(struct managesieve_client *client, string_t *str)
 			LOGIN_PROXY_FAILURE_TYPE_INTERNAL, reason);
 		return -1;
 	}
-	if (sasl_output_len > 0) {
+	if (sasl_output != NULL) {
 		str_append_c(str, ' ');
 		proxy_write_auth_data(sasl_output, sasl_output_len, str);
 	}
