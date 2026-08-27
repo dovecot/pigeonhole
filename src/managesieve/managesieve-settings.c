@@ -20,7 +20,7 @@ managesieve_settings_verify(void *_set, pool_t pool, const char **error_r);
 struct service_settings managesieve_settings_service_settings = {
 	.name = "managesieve",
 	.protocol = "sieve",
-	.type = "",
+	.type = "client",
 	.executable = "managesieve",
 	.user = "",
 	.group = "",
