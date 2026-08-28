@@ -106,8 +106,8 @@ static int
 proxy_write_auth(struct managesieve_client *client, string_t *str)
 {
 	struct dsasl_client_settings sasl_set;
-	const unsigned char *output;
-	size_t len;
+	const unsigned char *sasl_output;
+	size_t sasl_output_len;
 	const char *mech_name, *error;
 
 	i_assert(client->common.proxy_ttl > 1);
@@ -139,7 +139,7 @@ proxy_write_auth(struct managesieve_client *client, string_t *str)
 	str_append(str, "AUTHENTICATE ");
 	managesieve_quote_append_string(str, mech_name, FALSE);
 	if (dsasl_client_output(client->common.proxy_sasl_client,
-				&output, &len,
+				&sasl_output, &sasl_output_len,
 				&error) != DSASL_CLIENT_RESULT_OK) {
 		const char *reason = t_strdup_printf(
 			"SASL mechanism %s init failed: %s",
@@ -149,9 +149,9 @@ proxy_write_auth(struct managesieve_client *client, string_t *str)
 			LOGIN_PROXY_FAILURE_TYPE_INTERNAL, reason);
 		return -1;
 	}
-	if (len > 0) {
+	if (sasl_output_len > 0) {
 		str_append_c(str, ' ');
-		proxy_write_auth_data(output, len, str);
+		proxy_write_auth_data(sasl_output, sasl_output_len, str);
 	}
 	str_append(str, "\r\n");
 	return 0;
