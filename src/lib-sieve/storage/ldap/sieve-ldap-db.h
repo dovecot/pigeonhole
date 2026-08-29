@@ -117,7 +117,6 @@ void db_ldap_request(struct ldap_connection *conn,
 
 void db_ldap_enable_input(struct ldap_connection *conn, bool enable);
 
-const char *ldap_escape(const char *str);
 const char *ldap_get_error(struct ldap_connection *conn);
 
 int sieve_ldap_db_connect(struct ldap_connection *conn);

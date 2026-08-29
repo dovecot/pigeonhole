@@ -839,33 +839,6 @@ struct ldap_field_find_context {
 	pool_t pool;
 };
 
-#define IS_LDAP_ESCAPED_CHAR(c) \
-	((c) == '*' || (c) == '(' || (c) == ')' || (c) == '\\')
-
-const char *ldap_escape(const char *str)
-{
-	const char *p;
-	string_t *ret;
-
-	for (p = str; *p != '\0'; p++) {
-		if (IS_LDAP_ESCAPED_CHAR(*p))
-			break;
-	}
-
-	if (*p == '\0')
-		return str;
-
-	ret = t_str_new((size_t) (p - str) + 64);
-	str_append_data(ret, str, (size_t) (p - str));
-
-	for (; *p != '\0'; p++) {
-		if (IS_LDAP_ESCAPED_CHAR(*p))
-			str_append_c(ret, '\\');
-		str_append_c(ret, *p);
-	}
-	return str_c(ret);
-}
-
 struct ldap_connection *sieve_ldap_db_init(struct sieve_ldap_storage *lstorage)
 {
 	struct ldap_connection *conn;
@@ -1055,43 +1028,6 @@ sieve_ldap_db_get_script(struct ldap_connection *conn, LDAPMessage *entry,
 	return 0;
 }
 
-const struct var_expand_table
-auth_request_var_expand_static_tab[] = {
-	{ .key = "user", .value = NULL },
-	{ .key = "username", .value = NULL },
-	{ .key = "domain", .value = NULL },
-	{ .key = "home", .value = NULL },
-	{ .key = "name", .value = NULL },
-	VAR_EXPAND_TABLE_END
-};
-
-static const struct var_expand_table *
-db_ldap_get_var_expand_table(struct ldap_connection *conn, const char *name)
-{
-	struct sieve_ldap_storage *lstorage = conn->lstorage;
-	struct sieve_instance *svinst = lstorage->storage.svinst;
-	const unsigned int auth_count =
-		N_ELEMENTS(auth_request_var_expand_static_tab);
-	struct var_expand_table *tab;
-
-	/* Keep the extra fields at the beginning. the last static_tab field
-	   contains the ending NULL-fields. */
-	tab = t_malloc_no0((auth_count) * sizeof(*tab));
-
-	memcpy(tab, auth_request_var_expand_static_tab,
-	       auth_count * sizeof(*tab));
-
-	tab[0].value = ldap_escape(svinst->username);
-	tab[1].value = ldap_escape(t_strcut(svinst->username, '@'));
-	tab[2].value = strchr(svinst->username, '@');
-	if (tab[2].value != NULL)
-		tab[2].value = ldap_escape(tab[2].value+1);
-	tab[3].value = (svinst->home_dir == NULL ?
-			NULL : ldap_escape(svinst->home_dir));
-	tab[4].value = ldap_escape(name);
-	return tab;
-}
-
 struct sieve_ldap_script_lookup_request {
 	struct ldap_request request;
 
@@ -1133,7 +1069,8 @@ sieve_ldap_lookup_script_callback(struct ldap_connection *conn,
 	}
 }
 
-int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
+int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
+				const char *name ATTR_UNUSED,
 				const char **dn_r, const char **modattr_r)
 {
 	struct sieve_ldap_storage *lstorage = conn->lstorage;
@@ -1142,40 +1079,18 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
 	const struct sieve_ldap_storage_settings *set = lstorage->set;
 	struct sieve_ldap_script_lookup_request *request;
 	char **attr_names;
-	const char *error;
-	string_t *str;
 
 	pool_t pool = pool_alloconly_create(
 		"sieve_ldap_script_lookup_request", 512);
 	request = p_new(pool, struct sieve_ldap_script_lookup_request, 1);
 	request->request.pool = pool;
-
-	const struct var_expand_params params = {
-		.table = db_ldap_get_var_expand_table(conn, name),
-	};
-
-	str = t_str_new(512);
-	if (var_expand(str, ldap_set->base, &params, &error) < 0) {
-		e_error(storage->event, "db: "
-			"Failed to expand base=%s: %s",
-			ldap_set->base, error);
-		return -1;
-	}
-	request->request.base = p_strdup(pool, str_c(str));
+	request->request.base = p_strdup(pool, ldap_set->base);
 
 	attr_names = p_new(pool, char *, 3);
 	attr_names[0] = p_strdup(pool, set->modified_attribute);
 
-	str_truncate(str, 0);
-	if (var_expand(str, set->filter, &params, &error) < 0) {
-		e_error(storage->event, "db: "
-			"Failed to expand sieve_ldap_filter=%s: %s",
-			set->filter, error);
-		return -1;
-	}
-
 	request->request.scope = ldap_set->parsed.scope;
-	request->request.filter = p_strdup(pool, str_c(str));
+	request->request.filter = p_strdup(pool, set->filter);
 	request->request.attributes = attr_names;
 
 	e_debug(storage->event, "base=%s scope=%s filter=%s fields=%s",
