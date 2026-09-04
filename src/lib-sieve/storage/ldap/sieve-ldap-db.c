@@ -21,6 +21,7 @@
 #include "env-util.h"
 #include "var-expand.h"
 #include "istream.h"
+#include "settings.h"
 #include "ldap-utils.h"
 
 #include <stddef.h>
@@ -1069,6 +1070,33 @@ sieve_ldap_lookup_script_callback(struct ldap_connection *conn,
 	}
 }
 
+static int
+sieve_ldap_db_get_pre_settings(struct ldap_connection *conn,
+			       const struct sieve_ldap_pre_settings **set_r)
+{
+	struct sieve_storage *storage = &conn->lstorage->storage;
+	const char *error;
+
+	/* All the variables in these settings end up either in an LDAP filter
+	   or in a DN, so escape them. The escaping can be avoided with the
+	   "safe" variable filter. */
+	const struct settings_get_params get_params = {
+		.escape_func = ldap_escape,
+	};
+
+	struct event *event = event_create(storage->event);
+	event_set_ptr(event, SETTINGS_EVENT_FILTER_NAME, "ldap");
+	int ret = settings_get_params(event,
+				      &sieve_ldap_pre_setting_parser_info,
+				      &get_params, set_r, &error);
+	event_unref(&event);
+	if (ret < 0) {
+		e_error(storage->event, "%s", error);
+		return -1;
+	}
+	return 0;
+}
+
 int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 				const char *name ATTR_UNUSED,
 				const char **dn_r, const char **modattr_r)
@@ -1077,21 +1105,26 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	struct sieve_storage *storage = &lstorage->storage;
 	const struct sieve_ldap_settings *ldap_set = lstorage->ldap_set;
 	const struct sieve_ldap_storage_settings *set = lstorage->set;
+	const struct sieve_ldap_pre_settings *pre_set;
 	struct sieve_ldap_script_lookup_request *request;
 	char **attr_names;
+
+	if (sieve_ldap_db_get_pre_settings(conn, &pre_set) < 0)
+		return -1;
 
 	pool_t pool = pool_alloconly_create(
 		"sieve_ldap_script_lookup_request", 512);
 	request = p_new(pool, struct sieve_ldap_script_lookup_request, 1);
 	request->request.pool = pool;
-	request->request.base = p_strdup(pool, ldap_set->base);
+	request->request.base = p_strdup(pool, pre_set->base);
 
 	attr_names = p_new(pool, char *, 3);
 	attr_names[0] = p_strdup(pool, set->modified_attribute);
 
 	request->request.scope = ldap_set->parsed.scope;
-	request->request.filter = p_strdup(pool, set->filter);
+	request->request.filter = p_strdup(pool, pre_set->filter);
 	request->request.attributes = attr_names;
+	settings_free(pre_set);
 
 	e_debug(storage->event, "base=%s scope=%s filter=%s fields=%s",
 		request->request.base, ldap_set->scope,

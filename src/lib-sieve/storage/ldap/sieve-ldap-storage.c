@@ -11,7 +11,6 @@
 
 #if defined(SIEVE_BUILTIN_LDAP) || defined(PLUGIN_BUILD)
 
-#include "ldap-utils.h"
 #include "sieve-error.h"
 
 #ifndef PLUGIN_BUILD

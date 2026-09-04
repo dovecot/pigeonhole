@@ -15,7 +15,6 @@ struct sieve_ldap_settings {
 
 	const char *deref;
 	const char *scope;
-	const char *base;
 	unsigned int version;
 
 	unsigned int debug_level;
@@ -26,15 +25,24 @@ struct sieve_ldap_settings {
 	} parsed;
 };
 
+/* Settings whose %variables are expanded for each script lookup. They all end
+   up either in an LDAP filter or in a DN, so they must be LDAP-escaped. */
+struct sieve_ldap_pre_settings {
+	pool_t pool;
+
+	const char *base;
+	const char *filter;
+};
+
 struct sieve_ldap_storage_settings {
 	pool_t pool;
 
 	const char *script_attribute;
 	const char *modified_attribute;
-	const char *filter;
 };
 
 extern const struct setting_parser_info sieve_ldap_setting_parser_info;
+extern const struct setting_parser_info sieve_ldap_pre_setting_parser_info;
 extern const struct setting_parser_info sieve_ldap_storage_setting_parser_info;
 
 #endif
