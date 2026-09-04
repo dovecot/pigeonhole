@@ -1071,12 +1071,19 @@ sieve_ldap_lookup_script_callback(struct ldap_connection *conn,
 }
 
 static int
-sieve_ldap_db_get_pre_settings(struct ldap_connection *conn,
+sieve_ldap_db_get_pre_settings(struct ldap_connection *conn, const char *name,
 			       const struct sieve_ldap_pre_settings **set_r)
 {
 	struct sieve_storage *storage = &conn->lstorage->storage;
 	const char *error;
 
+	const struct var_expand_table tab[] = {
+		{ .key = "name", .value = name },
+		VAR_EXPAND_TABLE_END
+	};
+	const struct var_expand_params params = {
+		.table = tab,
+	};
 	/* All the variables in these settings end up either in an LDAP filter
 	   or in a DN, so escape them. The escaping can be avoided with the
 	   "safe" variable filter. */
@@ -1086,6 +1093,8 @@ sieve_ldap_db_get_pre_settings(struct ldap_connection *conn,
 
 	struct event *event = event_create(storage->event);
 	event_set_ptr(event, SETTINGS_EVENT_FILTER_NAME, "ldap");
+	event_set_ptr(event, SETTINGS_EVENT_VAR_EXPAND_PARAMS,
+		      (void *)&params);
 	int ret = settings_get_params(event,
 				      &sieve_ldap_pre_setting_parser_info,
 				      &get_params, set_r, &error);
@@ -1097,8 +1106,7 @@ sieve_ldap_db_get_pre_settings(struct ldap_connection *conn,
 	return 0;
 }
 
-int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
-				const char *name ATTR_UNUSED,
+int sieve_ldap_db_lookup_script(struct ldap_connection *conn, const char *name,
 				const char **dn_r, const char **modattr_r)
 {
 	struct sieve_ldap_storage *lstorage = conn->lstorage;
@@ -1109,7 +1117,7 @@ int sieve_ldap_db_lookup_script(struct ldap_connection *conn,
 	struct sieve_ldap_script_lookup_request *request;
 	char **attr_names;
 
-	if (sieve_ldap_db_get_pre_settings(conn, &pre_set) < 0)
+	if (sieve_ldap_db_get_pre_settings(conn, name, &pre_set) < 0)
 		return -1;
 
 	pool_t pool = pool_alloconly_create(
