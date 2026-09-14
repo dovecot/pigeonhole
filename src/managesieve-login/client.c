@@ -12,6 +12,7 @@
 #include "settings.h"
 #include "master-service.h"
 #include "auth-client.h"
+#include "auth-master.h"
 
 #include "managesieve-parser.h"
 #include "managesieve-protocol.h"
@@ -211,7 +212,9 @@ cmd_xclient(struct managesieve_client *msieve_client,
 			if (net_str2port(value, &client->local_port) < 0)
 				args_ok = FALSE;
 		} else if (str_begins_icase(arg, "SESSION=", &value)) {
-			if (strlen(value) <= LOGIN_MAX_SESSION_ID_LEN) {
+			if (!auth_session_id_is_valid(value))
+				args_ok = FALSE;
+			else {
 				client->session_id =
 					p_strdup(client->pool, value);
 			}
