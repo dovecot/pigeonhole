@@ -7,6 +7,7 @@
 #include "hostpid.h"
 #include "net.h"
 #include "istream.h"
+#include "istream-concat.h"
 #include "ostream.h"
 #include "iostream.h"
 #include "iostream-rawlog.h"
@@ -82,6 +83,22 @@ client_get_storage(struct sieve_instance *svinst, struct mail_user *user,
 
 	*storage_r = storage;
 	return 0;
+}
+
+void client_add_istream_prefix(struct client *client,
+			       const buffer_t *input)
+{
+	struct istream *inputs[] = {
+		i_stream_create_copy_from_data(input->data, input->used),
+		client->input,
+		NULL
+	};
+	client->input = i_stream_create_concat(inputs);
+	i_stream_copy_fd(client->input, inputs[1]);
+	i_stream_unref(&inputs[0]);
+	i_stream_unref(&inputs[1]);
+
+	i_stream_set_input_pending(client->input, TRUE);
 }
 
 int client_create(int fd_in, int fd_out, const char *session_id,

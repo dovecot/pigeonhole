@@ -3,8 +3,6 @@
 #include "lib.h"
 #include "buffer.h"
 #include "ioloop.h"
-#include "istream.h"
-#include "istream-concat.h"
 #include "ostream.h"
 #include "path-util.h"
 #include "str.h"
@@ -85,22 +83,6 @@ static void managesieve_die(void)
 	   so disconnect also the clients that are in the middle of a
 	   command. */
 	clients_destroy_all();
-}
-
-static void client_add_istream_prefix(struct client *client,
-				      const buffer_t *input)
-{
-	struct istream *inputs[] = {
-		i_stream_create_copy_from_data(input->data, input->used),
-		client->input,
-		NULL
-	};
-	client->input = i_stream_create_concat(inputs);
-	i_stream_copy_fd(client->input, inputs[1]);
-	i_stream_unref(&inputs[0]);
-	i_stream_unref(&inputs[1]);
-
-	i_stream_set_input_pending(client->input, TRUE);
 }
 
 static void client_logged_in(struct client *client)
