@@ -99,8 +99,6 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 		  struct client **client_r, const char **client_error_r,
 		  const char **error_r);
 void client_create_finish(struct client *client);
-/* Prepend data that was already read from the client to client->input. */
-void client_add_istream_prefix(struct client *client, const buffer_t *input);
 void client_destroy(struct client *client, const char *reason);
 
 /* Disconnect client connection */

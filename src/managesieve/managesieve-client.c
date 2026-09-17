@@ -85,8 +85,8 @@ client_get_storage(struct sieve_instance *svinst, struct mail_user *user,
 	return 0;
 }
 
-void client_add_istream_prefix(struct client *client,
-			       const buffer_t *input)
+static void
+client_add_istream_prefix(struct client *client, const buffer_t *input)
 {
 	struct istream *inputs[] = {
 		i_stream_create_copy_from_data(input->data, input->used),
