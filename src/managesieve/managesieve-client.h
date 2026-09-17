@@ -90,10 +90,12 @@ extern struct client *managesieve_clients;
 extern unsigned int managesieve_client_count;
 
 /* Create new client with specified input/output handles. socket specifies
-   if the handle is a socket. */
+   if the handle is a socket. input_buf contains the input that the login
+   process had already read from the client, or NULL if there is none. */
 int client_create(int fd_in, int fd_out, const char *session_id,
 		  struct mail_user *user,
 		  const struct managesieve_settings *set,
+		  const buffer_t *input_buf,
 		  struct client **client_r, const char **client_error_r,
 		  const char **error_r);
 void client_create_finish(struct client *client);

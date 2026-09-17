@@ -104,6 +104,7 @@ void client_add_istream_prefix(struct client *client,
 int client_create(int fd_in, int fd_out, const char *session_id,
 		  struct mail_user *user,
 		  const struct managesieve_settings *set,
+		  const buffer_t *input_buf,
 		  struct client **client_r, const char **client_error_r,
 		  const char **error_r)
 {
@@ -162,6 +163,13 @@ int client_create(int fd_in, int fd_out, const char *session_id,
 	o_stream_set_name(client->output, "<managesieve client>");
 
 	o_stream_set_flush_callback(client->output, client_output, client);
+
+	/* Prepend the input that the login process had already read. This must
+	   happen before hook_client_created(), so that plugins wrapping
+	   client->input also see the commands that the client pipelined with
+	   the authentication. */
+	if (input_buf != NULL && input_buf->used > 0)
+		client_add_istream_prefix(client, input_buf);
 
 	client->last_input = ioloop_time;
 	client->to_idle = timeout_add(CLIENT_IDLE_TIMEOUT_MSECS,

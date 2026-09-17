@@ -140,14 +140,12 @@ client_create_from_input(const struct mail_storage_service_input *input,
 		verbose_proctitle = TRUE;
 
 	if (client_create(fd_in, fd_out, input->session_id, mail_user, set,
-			  &client, client_error_r, error_r) < 0) {
+			  input_buf, &client, client_error_r, error_r) < 0) {
 		settings_free(set);
 		mail_user_unref(&mail_user);
 		event_unref(&event);
 		return -1;
 	}
-	if (input_buf != NULL && input_buf->used > 0)
-		client_add_istream_prefix(client, input_buf);
 	client_create_finish(client);
 	T_BEGIN {
 		client_logged_in(client);
