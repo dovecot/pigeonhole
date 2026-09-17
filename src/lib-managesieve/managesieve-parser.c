@@ -200,12 +200,13 @@ managesieve_parser_save_arg(struct managesieve_parser *parser,
 	parser->cur_type = ARG_PARSE_NONE;
 }
 
-static bool is_valid_atom_char(struct managesieve_parser *parser, char chr)
+static bool
+is_valid_atom_char(struct managesieve_parser *parser, unsigned char chr)
 {
-	if (IS_ATOM_SPECIAL((unsigned char)chr)) {
+	if (IS_ATOM_SPECIAL(chr)) {
 		parser->error = "Invalid characters in atom";
 		return FALSE;
-	} else if ((((unsigned char)chr) & 0x80) != 0) {
+	} else if ((chr & 0x80) != 0) {
 		parser->error = "8bit data in atom";
 		return FALSE;
 	}
