@@ -31,8 +31,6 @@
 #define IS_STANDALONE() \
         (getenv(MASTER_IS_PARENT_ENV) == NULL)
 
-#define MANAGESIEVE_DIE_IDLE_SECS 10
-
 static bool verbose_proctitle = FALSE;
 static struct mail_storage_service_ctx *storage_service;
 static struct login_server *login_server = NULL;
@@ -80,33 +78,13 @@ void managesieve_refresh_proctitle(void)
 	process_title_set(str_c(title));
 }
 
-static void client_kill_idle(struct client *client)
-{
-	mail_storage_service_io_activate_user(client->user->service_user);
-	client_send_bye(client, MASTER_SERVICE_SHUTTING_DOWN_MSG".");
-	client_destroy(client, MASTER_SERVICE_SHUTTING_DOWN_MSG);
-}
-
 static void managesieve_die(void)
 {
-	struct client *client, *next;
-	time_t last_io, now = time(NULL);
-	time_t stop_timestamp = now - MANAGESIEVE_DIE_IDLE_SECS;
-	unsigned int stop_msecs;
-
-	for (client = managesieve_clients; client != NULL; client = next) {
-		next = client->next;
-
-		last_io = I_MAX(client->last_input, client->last_output);
-		if (last_io <= stop_timestamp)
-			client_kill_idle(client);
-		else {
-			timeout_remove(&client->to_idle);
-			stop_msecs = (last_io - stop_timestamp) * 1000;
-			client->to_idle = timeout_add(stop_msecs,
-						      client_kill_idle, client);
-		}
-	}
+	/* shutdown_clients_timeout has expired, or the master process wants
+	   the clients disconnected right away. Either way the waiting is over,
+	   so disconnect also the clients that are in the middle of a
+	   command. */
+	clients_destroy_all();
 }
 
 static void client_add_istream_prefix(struct client *client,
