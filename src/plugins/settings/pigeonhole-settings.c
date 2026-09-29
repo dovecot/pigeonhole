@@ -21,6 +21,9 @@ void pigeonhole_settings_init(void)
 		N_ELEMENTS(settings_history_pigeonhole_defaults));
 	settings_history_register_values(settings_history_pigeonhole_values,
 		N_ELEMENTS(settings_history_pigeonhole_values));
+	settings_history_register_deprecates(
+		settings_history_pigeonhole_deprecates,
+		N_ELEMENTS(settings_history_pigeonhole_deprecates));
 }
 
 const char *pigeonhole_settings_version = DOVECOT_ABI_VERSION;
