@@ -131,6 +131,7 @@ int sieve_match_end(struct sieve_match_context **mctx, int *exec_status)
 	const struct sieve_match_type *mcht = (*mctx)->match_type;
 	const struct sieve_runtime_env *renv = (*mctx)->runenv;
 	int match = (*mctx)->match_status;
+	bool trace = (*mctx)->trace;
 
 	if (mcht->def != NULL && mcht->def->match_deinit != NULL)
 		mcht->def->match_deinit(*mctx);
@@ -140,11 +141,14 @@ int sieve_match_end(struct sieve_match_context **mctx, int *exec_status)
 
 	pool_unref(&(*mctx)->pool);
 
-	sieve_runtime_trace(
-		renv, SIEVE_TRLVL_MATCHING, "finishing match with result: %s",
-		(match > 0 ? "matched" :
-		 (match < 0 ? "error" : "not matched")));
-	sieve_runtime_trace_ascend(renv);
+	/* Mirror sieve_match_begin(), which only descends when tracing */
+	if (trace) {
+		sieve_runtime_trace(
+			renv, 0, "finishing match with result: %s",
+			(match > 0 ? "matched" :
+			 (match < 0 ? "error" : "not matched")));
+		sieve_runtime_trace_ascend(renv);
+	}
 
 	return match;
 }
