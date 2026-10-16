@@ -93,7 +93,6 @@ int sieve_plugins_load(struct sieve_instance *svinst, const char *path,
 	i_zero(&mod_set);
 	mod_set.abi_version = PIGEONHOLE_ABI_VERSION;
 	mod_set.binary_name = master_service_get_name(master_service);
-	mod_set.setting_name = "sieve_plugins";
 	mod_set.require_init_funcs = TRUE;
 	mod_set.debug = svinst->debug;
 
