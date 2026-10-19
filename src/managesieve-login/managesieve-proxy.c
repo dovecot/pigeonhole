@@ -46,6 +46,8 @@ proxy_compose_xclient_forward(struct managesieve_client *client)
 	str = t_str_new(128);
 	for (arg = client->common.auth_passdb_args; *arg != NULL; arg++) {
 		if (str_begins_icase_with(*arg, "forward_")) {
+			if (!client_forward_field_check(&client->common, (*arg)+8))
+				continue;
 			if (str_len(str) > 0)
 				str_append_c(str, '\t');
 			str_append_tabescaped(str, (*arg)+8);
