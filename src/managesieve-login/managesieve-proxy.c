@@ -265,11 +265,12 @@ proxy_write_auth_response(struct managesieve_client *client,
 
 /* Get the final SASL data from the (SASL "<base64>") response code of the
    AUTHENTICATE OK response (RFC 5804 section 2.1). Returns 0 and sets data_r
-   to the base64 data, or to NULL if there is no SASL response code. Returns
-   -1 and sets error_r if the response can't be parsed. */
+   to the base64 data and rest_r to the rest of the line after the response
+   code, or data_r to NULL if there is no SASL response code. Returns -1 and
+   sets error_r if the response can't be parsed. */
 static int
 proxy_parse_ok_sasl(const char *line, const char **data_r,
-		    const char **error_r)
+		    const char **rest_r, const char **error_r)
 {
 	struct istream *input;
 	struct managesieve_parser *parser;
@@ -279,6 +280,7 @@ proxy_parse_ok_sasl(const char *line, const char **data_r,
 	int ret;
 
 	*data_r = NULL;
+	*rest_r = NULL;
 	*error_r = NULL;
 	if (!str_begins_icase_with(line, "OK ("))
 		return 0;
@@ -304,6 +306,9 @@ proxy_parse_ok_sasl(const char *line, const char **data_r,
 			ret = -1;
 		} else {
 			*data_r = t_strdup(data);
+			/* The parser has consumed the line up to the end of
+			   the response code. */
+			*rest_r = t_strdup(line + input->v_offset);
 			ret = 0;
 		}
 	} else {
@@ -317,11 +322,11 @@ proxy_parse_ok_sasl(const char *line, const char **data_r,
 
 static int
 proxy_input_auth_ok_sasl(struct managesieve_client *client, const char *line,
-			 const char **data_r)
+			 const char **data_r, const char **rest_r)
 {
 	const char *error;
 
-	if (proxy_parse_ok_sasl(line, data_r, &error) == 0)
+	if (proxy_parse_ok_sasl(line, data_r, rest_r, &error) == 0)
 		return 0;
 	login_proxy_failed(client->common.login_proxy,
 		login_proxy_get_event(client->common.login_proxy),
@@ -744,10 +749,10 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		if (str_begins_icase(line, "OK", &suffix) &&
 		    (*suffix == '\0' || *suffix == ' ')) {
 			string_t *str = t_str_new(128);
-			const char *sasl_data;
+			const char *sasl_data, *sasl_rest;
 
 			if (proxy_input_auth_ok_sasl(msieve_client, line,
-						     &sasl_data) < 0)
+						     &sasl_data, &sasl_rest) < 0)
 				return -1;
 			if (sasl_data != NULL &&
 			    proxy_input_auth_final(msieve_client, sasl_data) < 0)
@@ -761,8 +766,12 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 			          response to be sent.
 			 */
 
-			/* Send this line to client. */
-			str_append(str, line);
+			/* Send this line to client. The final SASL data belongs
+			   to the exchange with the backend. */
+			if (sasl_data != NULL)
+				str_printfa(str, "OK%s", sasl_rest);
+			else
+				str_append(str, line);
 			str_append(str, "\r\n");
 			o_stream_nsend(client->output, str_data(str),
 				       str_len(str));
