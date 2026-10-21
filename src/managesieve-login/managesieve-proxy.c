@@ -263,6 +263,91 @@ proxy_write_auth_response(struct managesieve_client *client,
 	return 0;
 }
 
+/* Get the final SASL data from the (SASL "<base64>") response code of the
+   AUTHENTICATE OK response (RFC 5804 section 2.1). Returns 0 and sets data_r
+   to the base64 data, or to NULL if there is no SASL response code. Returns
+   -1 and sets error_r if the response can't be parsed. */
+static int
+proxy_parse_ok_sasl(const char *line, const char **data_r,
+		    const char **error_r)
+{
+	struct istream *input;
+	struct managesieve_parser *parser;
+	const struct managesieve_arg *args, *code;
+	const char *name, *data;
+	bool fatal;
+	int ret;
+
+	*data_r = NULL;
+	*error_r = NULL;
+	if (!str_begins_icase_with(line, "OK ("))
+		return 0;
+
+	input = i_stream_create_from_data(line, strlen(line));
+	parser = managesieve_parser_create(input, MAX_MANAGESIEVE_LINE);
+	(void)i_stream_read(input);
+
+	/* Only the response and the response code are needed */
+	ret = managesieve_parser_finish_line(parser, 2,
+					     MANAGESIEVE_PARSE_FLAG_LIST,
+					     &args);
+	if (ret < 0) {
+		*error_r = t_strdup(managesieve_parser_get_error(parser,
+								 &fatal));
+		ret = -1;
+	} else if (managesieve_arg_get_list(&args[1], &code) &&
+		   managesieve_arg_get_atom(&code[0], &name) &&
+		   strcasecmp(name, "SASL") == 0) {
+		if (!managesieve_arg_get_string(&code[1], &data) ||
+		    !MANAGESIEVE_ARG_IS_EOL(&code[2])) {
+			*error_r = "Invalid SASL response code";
+			ret = -1;
+		} else {
+			*data_r = t_strdup(data);
+			ret = 0;
+		}
+	} else {
+		ret = 0;
+	}
+
+	managesieve_parser_destroy(&parser);
+	i_stream_destroy(&input);
+	return ret;
+}
+
+static int
+proxy_input_auth_ok_sasl(struct managesieve_client *client, const char *line,
+			 const char **data_r)
+{
+	const char *error;
+
+	if (proxy_parse_ok_sasl(line, data_r, &error) == 0)
+		return 0;
+	login_proxy_failed(client->common.login_proxy,
+		login_proxy_get_event(client->common.login_proxy),
+		LOGIN_PROXY_FAILURE_TYPE_PROTOCOL,
+		t_strdup_printf("Server sent invalid AUTHENTICATE response: %s: %s",
+				error, str_sanitize(line, 160)));
+	return -1;
+}
+
+/* Give the final SASL data of the OK response to the SASL session. */
+static int
+proxy_input_auth_final(struct managesieve_client *client, const char *data)
+{
+	string_t *str = t_str_new(128);
+
+	if (base64_decode(data, strlen(data), str) < 0) {
+		login_proxy_failed(client->common.login_proxy,
+			login_proxy_get_event(client->common.login_proxy),
+			LOGIN_PROXY_FAILURE_TYPE_PROTOCOL,
+			"Server sent invalid base64 data in AUTHENTICATE response");
+		return -1;
+	}
+	/* The mechanism has nothing more to send after the final data. */
+	return login_proxy_sasl_step(&client->common, str);
+}
+
 static managesieve_response_t
 proxy_read_response(const struct managesieve_arg *args)
 {
@@ -659,6 +744,16 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		if (str_begins_icase(line, "OK", &suffix) &&
 		    (*suffix == '\0' || *suffix == ' ')) {
 			string_t *str = t_str_new(128);
+			const char *sasl_data;
+
+			if (proxy_input_auth_ok_sasl(msieve_client, line,
+						     &sasl_data) < 0)
+				return -1;
+			if (sasl_data != NULL &&
+			    proxy_input_auth_final(msieve_client, sasl_data) < 0)
+				return -1;
+			if (login_proxy_sasl_verify_success(client) < 0)
+				return -1;
 
 			/* Login successful */
 
