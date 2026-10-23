@@ -390,6 +390,20 @@ ext_include_binary_open(const struct sieve_extension *ext,
 				return FALSE;
 			}
 
+			if (inc_block != NULL) {
+				/* Was compiled in before, now missing;
+				   avoid reading metadata for NULL script,
+				   so recompile */
+				if (svinst->debug) {
+					e_debug(svinst->event, "include: "
+						"optional script '%s' included in binary %s "
+						"no longer exists, so recompile",
+						str_c(script_name),
+						sieve_binary_path(sbin));
+				}
+				return FALSE;
+			}
+
 		} else if (inc_block == NULL) {
 			/* Script exists, but it is missing from the binary,
 			   recompile no matter what. */
