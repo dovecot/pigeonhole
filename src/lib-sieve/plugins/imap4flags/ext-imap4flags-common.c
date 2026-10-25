@@ -392,19 +392,6 @@ const char *ext_imap4flags_iter_get_flag(struct ext_imap4flags_iter *iter)
 	return str_c(flag);
 }
 
-static void ext_imap4flags_iter_delete_last(struct ext_imap4flags_iter *iter)
-{
-	iter->offset++;
-	if (iter->offset > str_len(iter->flags_list))
-		iter->offset = str_len(iter->flags_list);
-	if (iter->offset == str_len(iter->flags_list) && iter->last > 0)
-		iter->last--;
-
-	str_delete(iter->flags_list, iter->last, iter->offset - iter->last);
-
-	iter->offset = iter->last;
-}
-
 /* Flag operations */
 
 static string_t *
@@ -412,19 +399,6 @@ ext_imap4flags_get_flag_variable(const struct sieve_runtime_env *renv,
 				 const struct sieve_extension *flg_ext,
 				 struct sieve_variable_storage *storage,
 				 unsigned int var_index) ATTR_NULL(2);
-
-static void flags_list_flag_delete(string_t *flags_list, const char *flag)
-{
-	const char *flg;
-	struct ext_imap4flags_iter flit;
-
-	ext_imap4flags_iter_init(&flit, flags_list);
-
-	while ((flg = ext_imap4flags_iter_get_flag(&flit)) != NULL) {
-		if (strcasecmp(flg, flag) == 0)
-			ext_imap4flags_iter_delete_last(&flit);
-	}
-}
 
 static void flags_list_add_flags(string_t *flags_list, string_t *flags)
 {
@@ -461,13 +435,41 @@ static void flags_list_add_flags(string_t *flags_list, string_t *flags)
 
 static void flags_list_remove_flags(string_t *flags_list, string_t *flags)
 {
+	HASH_TABLE(const char *, void *) remove_set;
 	const char *flg;
 	struct ext_imap4flags_iter flit;
+	string_t *new_flags_list;
+	bool removed = FALSE;
 
+	/* Build a new flags list without the removed flags in a single pass.
+	   Otherwise removing a huge number of flags would take quadratic
+	   time. */
+	hash_table_create(&remove_set, pool_datastack_create(), 0,
+			  strcase_hash, strcasecmp);
+	/* Add the flags to be removed. Use update, since they may contain
+	   duplicates. */
 	ext_imap4flags_iter_init(&flit, flags);
-
 	while ((flg = ext_imap4flags_iter_get_flag(&flit)) != NULL)
-		flags_list_flag_delete(flags_list, flg);
+		hash_table_update(remove_set, flg, POINTER_CAST(1));
+
+	/* Copy the existing flags that aren't being removed */
+	new_flags_list = t_str_new(str_len(flags_list));
+	ext_imap4flags_iter_init(&flit, flags_list);
+	while ((flg = ext_imap4flags_iter_get_flag(&flit)) != NULL) {
+		if (hash_table_lookup(remove_set, flg) != NULL) {
+			removed = TRUE;
+			continue;
+		}
+		if (str_len(new_flags_list) != 0)
+			str_append_c(new_flags_list, ' ');
+		str_append(new_flags_list, flg);
+	}
+	hash_table_destroy(&remove_set);
+
+	if (removed) {
+		str_truncate(flags_list, 0);
+		str_append_str(flags_list, new_flags_list);
+	}
 }
 
 static void flags_list_set_flags(string_t *flags_list, string_t *flags)
