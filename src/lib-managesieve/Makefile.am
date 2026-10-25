@@ -21,6 +21,7 @@ pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 pkginc_lib_HEADERS = $(headers)
 
 test_programs = \
+	test-managesieve-parser \
 	test-managesieve-url
 
 test_nocheck_programs =
@@ -35,6 +36,10 @@ test_deps = \
 	$(dovecot_pkglib_LTLIBRARIES) \
 	$(LIBDOVECOT_STORAGE_DEPS) \
 	$(LIBDOVECOT_DEPS)
+
+test_managesieve_parser_SOURCES = test-managesieve-parser.c
+test_managesieve_parser_LDADD = $(test_libs)
+test_managesieve_parser_DEPENDENCIES = $(test_deps)
 
 test_managesieve_url_SOURCES = test-managesieve-url.c
 test_managesieve_url_LDADD = $(test_libs)

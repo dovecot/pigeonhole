@@ -592,12 +592,15 @@ int managesieve_parser_finish_line(struct managesieve_parser *parser,
 	int ret;
 
 	ret = managesieve_parser_read_args(parser, count, flags, args_r);
-	if (ret == -2) {
-		/* We should have noticed end of everything except atom */
-		if (parser->cur_type == ARG_PARSE_ATOM) {
-			data = i_stream_get_data(parser->input, &data_size);
-			managesieve_parser_save_arg(parser, data, data_size);
-		}
+	if (ret != -2) {
+		/* Error, or the line was already finished */
+		return ret;
+	}
+
+	/* We should have noticed end of everything except atom */
+	if (parser->cur_type == ARG_PARSE_ATOM) {
+		data = i_stream_get_data(parser->input, &data_size);
+		managesieve_parser_save_arg(parser, data, data_size);
 	}
 	return finish_line(parser, count, args_r);
 }
