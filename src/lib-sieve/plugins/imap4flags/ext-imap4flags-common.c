@@ -527,7 +527,9 @@ int sieve_ext_imap4flags_set_flags(const struct sieve_runtime_env *renv,
 					    "set flags '%s'",
 					    str_c(flags_item));
 
-			flags_list_add_flags(cur_flags, flags_item);
+			T_BEGIN {
+				flags_list_add_flags(cur_flags, flags_item);
+			} T_END;
 		}
 
 		if (ret < 0)
@@ -556,7 +558,9 @@ int sieve_ext_imap4flags_add_flags(const struct sieve_runtime_env *renv,
 					    "add flags '%s'",
 					    str_c(flags_item));
 
-			flags_list_add_flags(cur_flags, flags_item);
+			T_BEGIN {
+				flags_list_add_flags(cur_flags, flags_item);
+			} T_END;
 		}
 
 		if (ret < 0)
@@ -586,7 +590,9 @@ int sieve_ext_imap4flags_remove_flags(const struct sieve_runtime_env *renv,
 					    "remove flags '%s'",
 					    str_c(flags_item));
 
-			flags_list_remove_flags(cur_flags, flags_item);
+			T_BEGIN {
+				flags_list_remove_flags(cur_flags, flags_item);
+			} T_END;
 		}
 
 		if (ret < 0) return
