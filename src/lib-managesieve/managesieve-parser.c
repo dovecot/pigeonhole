@@ -200,6 +200,38 @@ managesieve_parser_save_arg(struct managesieve_parser *parser,
 	parser->cur_type = ARG_PARSE_NONE;
 }
 
+static bool managesieve_parser_open_list(struct managesieve_parser *parser)
+{
+	if (parser->list_arg != NULL) {
+		parser->error = "Nested lists not allowed";
+		return FALSE;
+	}
+
+	parser->list_arg = managesieve_arg_create(parser);
+	parser->list_arg->type = MANAGESIEVE_ARG_LIST;
+	p_array_init(&parser->list_arg->_data.list, parser->pool,
+		     LIST_INIT_COUNT);
+	parser->cur_list = &parser->list_arg->_data.list;
+	return TRUE;
+}
+
+static bool managesieve_parser_close_list(struct managesieve_parser *parser)
+{
+	struct managesieve_arg *arg;
+
+	if (parser->list_arg == NULL) {
+		parser->error = "Unexpected ')'";
+		return FALSE;
+	}
+
+	arg = managesieve_arg_create(parser);
+	arg->type = MANAGESIEVE_ARG_EOL;
+
+	parser->list_arg = NULL;
+	parser->cur_list = &parser->root_list;
+	return TRUE;
+}
+
 static bool
 is_valid_atom_char(struct managesieve_parser *parser, unsigned char chr)
 {
@@ -464,6 +496,22 @@ static bool managesieve_parser_read_arg(struct managesieve_parser *parser)
 			parser->literal_size = 0;
 			parser->literal_nonsync = FALSE;
 			break;
+		case '(':
+		case ')':
+			if ((parser->flags & MANAGESIEVE_PARSE_FLAG_LIST) == 0) {
+				/* Fails as an invalid atom character */
+				return is_valid_atom_char(parser, data[0]);
+			}
+			if (data[0] == '(') {
+				if (!managesieve_parser_open_list(parser))
+					return FALSE;
+				break;
+			}
+			if (!managesieve_parser_close_list(parser))
+				return FALSE;
+			/* The list argument is finished */
+			parser->cur_pos++;
+			return TRUE;
 		default:
 			if (!is_valid_atom_char(parser, data[0]))
 				return FALSE;
@@ -533,6 +581,12 @@ finish_line(struct managesieve_parser *parser, unsigned int count,
 	parser->line_size += parser->cur_pos;
 	i_stream_skip(parser->input, parser->cur_pos);
 	parser->cur_pos = 0;
+
+	if (parser->list_arg != NULL) {
+		parser->error = "Missing ')'";
+		*args_r = NULL;
+		return -1;
+	}
 
 	/* Fill the missing parameters with NILs */
 	while (count > array_count(&parser->root_list)) {

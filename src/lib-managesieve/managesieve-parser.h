@@ -12,7 +12,11 @@ enum managesieve_parser_flags {
 	MANAGESIEVE_PARSE_FLAG_NO_UNESCAPE	= 0x02,
 	/* Return literals as MANAGESIEVE_ARG_LITERAL instead of
 	   MANAGESIEVE_ARG_STRING */
-	MANAGESIEVE_PARSE_FLAG_LITERAL_TYPE	= 0x04
+	MANAGESIEVE_PARSE_FLAG_LITERAL_TYPE	= 0x04,
+	/* Parse parenthesized lists as MANAGESIEVE_ARG_LIST. These are used
+	   only in the response codes of server responses, so they can't be
+	   nested. Without this flag '(' and ')' are invalid characters. */
+	MANAGESIEVE_PARSE_FLAG_LIST		= 0x08,
 };
 
 struct managesieve_parser;
