@@ -59,6 +59,18 @@ TESTSUITE_BIN = $(top_builddir)/src/testsuite/testsuite $(TESTSUITE_OPTIONS)
 
 TEST_BIN = $(RUN_TEST) $(TESTSUITE_BIN)
 
+# Cache the default configuration, so each test doesn't need to execute
+# doveconf (which is slow especially with valgrind). The cache is recreated
+# for each test run, so it's never out of date.
+TEST_CONFIG_CACHE = $(abs_top_builddir)/.test/config-cache
+check test test-plugins: export DOVECOT_CONFIG_CACHE = $(TEST_CONFIG_CACHE)
+
+prepare_config_cache:
+	$(AM_V_at)if test "$${DOVECOT_CONFIG_CACHE:-}" = "$(TEST_CONFIG_CACHE)"; then \
+		rm -rf $(TEST_CONFIG_CACHE) && \
+		$(MKDIR_P) $(TEST_CONFIG_CACHE); \
+	fi
+
 if BUILD_UNFINISHED
 test_unfinished =
 else
@@ -214,7 +226,7 @@ prepare_test_cases:
 		fi; \
 	done
 
-$(test_cases): prepare_test_cases
+$(test_cases): prepare_test_cases prepare_config_cache
 	@rm -rf $(TEST_WORKDIR)
 	@$(TEST_BIN) -W $(TEST_WORKDIR) $(top_srcdir)/$@
 
@@ -225,7 +237,7 @@ failure_test_cases = \
 	tests/failures/fuzz4.svtest \
 	tests/failures/mailbox-bad-utf8.svtest
 
-$(failure_test_cases):
+$(failure_test_cases): prepare_config_cache
 	@rm -rf $(TEST_WORKDIR)
 	@$(TEST_BIN) -W $(TEST_WORKDIR) -F $(top_srcdir)/$@
 
@@ -244,11 +256,11 @@ extprograms_test_cases = \
 	tests/plugins/extprograms/execute/errors.svtest \
 	tests/plugins/extprograms/execute/execute.svtest
 
-$(extprograms_test_cases):
+$(extprograms_test_cases): prepare_config_cache
 	@rm -rf $(TEST_WORKDIR)
 	@$(TEST_EXTPROGRAMS_BIN) -W $(TEST_WORKDIR) $(top_srcdir)/$@
 
-.PHONY: test test-plugins $(test_cases) $(failure_test_cases) $(extprograms_test_cases) prepare_test_case
+.PHONY: test test-plugins $(test_cases) $(failure_test_cases) $(extprograms_test_cases) prepare_test_case prepare_config_cache
 test: all-am $(test_cases) $(failure_test_cases)
 test-plugins: all-am $(extprograms_test_cases)
 
