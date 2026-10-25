@@ -76,7 +76,6 @@ void ext_imap4flags_attach_flags_tag(struct sieve_validator *valdtr,
 struct ext_imap4flags_iter {
 	string_t *flags_list;
 	unsigned int offset;
-	unsigned int last;
 };
 
 void ext_imap4flags_iter_init(struct ext_imap4flags_iter *iter,

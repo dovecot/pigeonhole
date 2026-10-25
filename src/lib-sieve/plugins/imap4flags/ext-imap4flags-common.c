@@ -362,7 +362,6 @@ ext_imap4flags_iter_get_flag_str(struct ext_imap4flags_iter *iter)
 				string_t *flag = t_str_new(fp-fstart+1);
 				str_append_data(flag, fstart, fp-fstart);
 
-				iter->last = fstart - fbegin;
 				iter->offset = fp - fbegin;
 
 				return flag;
@@ -377,7 +376,6 @@ ext_imap4flags_iter_get_flag_str(struct ext_imap4flags_iter *iter)
 		fp++;
 	}
 
-	iter->last = fstart - fbegin;
 	iter->offset = fp - fbegin;
 	return NULL;
 }
