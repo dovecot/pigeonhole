@@ -635,7 +635,7 @@ ext_imap4flags_stringlist_create(const struct sieve_runtime_env *renv,
 
 static struct sieve_stringlist *
 ext_imap4flags_stringlist_create_single(const struct sieve_runtime_env *renv,
-					string_t *flags_string, bool normalize)
+					string_t *flags_string)
 {
 	struct ext_imap4flags_stringlist *strlist;
 
@@ -644,14 +644,7 @@ ext_imap4flags_stringlist_create_single(const struct sieve_runtime_env *renv,
 	strlist->strlist.runenv = renv;
 	strlist->strlist.next_item = ext_imap4flags_stringlist_next_item;
 	strlist->strlist.reset = ext_imap4flags_stringlist_reset;
-	strlist->normalize = normalize;
-
-	if (normalize) {
-		strlist->flags_string = t_str_new(256);
-		flags_list_set_flags(strlist->flags_string, flags_string);
-	} else {
-		strlist->flags_string = flags_string;
-	}
+	strlist->flags_string = flags_string;
 
 	ext_imap4flags_iter_init(&strlist->flit, strlist->flags_string);
 	return &strlist->strlist;
@@ -714,7 +707,7 @@ sieve_ext_imap4flags_get_flags(const struct sieve_runtime_env *renv,
 	if (flags_list == NULL) {
 		i_assert(sieve_extension_is(flg_ext, imap4flags_extension));
 		return ext_imap4flags_stringlist_create_single(
-			renv, _get_flags_string(flg_ext, renv->result), FALSE);
+			renv, _get_flags_string(flg_ext, renv->result));
 	}
 	return ext_imap4flags_stringlist_create(renv, flags_list, TRUE);
 }
