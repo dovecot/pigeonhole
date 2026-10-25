@@ -89,3 +89,47 @@ test "RFC hasflag example - :count variable" {
 		test_fail "failed count \"ge\" comparison";
 	}
 }
+
+/*
+ * Long flag lists
+ */
+
+test "Long variable flag list" {
+	set "flags" "flag001 flag002 flag003 flag004 flag005 flag006 flag007 flag008 flag009 flag010 flag011 flag012 flag013 flag014 flag015 flag016 flag017 flag018 flag019 flag020 flag021 flag022 flag023 flag024 flag025 flag026 flag027 flag028 flag029 flag030 flag031 flag032 flag033 flag034 flag035 flag036 flag037 flag038 flag039 flag040 flag041 flag042 flag043 flag044 flag045 flag046 flag047 flag048 flag049 flag050 flag051 flag052 flag053 flag054 flag055 flag056 flag057 flag058 flag059 flag060 flag061 flag062 flag063 flag064 flag065 flag066 flag067 flag068 flag069 flag070 flag071 flag072 flag073 flag074 flag075 flag076 flag077 flag078 flag079 flag080 flag081 flag082 flag083 flag084 flag085 flag086 flag087 flag088 flag089 flag090 flag091 flag092 flag093 flag094 flag095 flag096 flag097 flag098 flag099 flag100 \\seen";
+
+	if not hasflag "flags" "\\seen" {
+		test_fail "hasflag failed with long variable flag list";
+	}
+
+	if not hasflag "flags" "FLAG100" {
+		test_fail "hasflag failed to find last flag in long variable flag list";
+	}
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "flags" "101" {
+		test_fail "hasflag counted wrong number of flags in long variable flag list";
+	}
+}
+
+test "Long key flag list" {
+	setflag "flags" "\\seen";
+
+	if not hasflag :is "flags" "flag001 flag002 flag003 flag004 flag005 flag006 flag007 flag008 flag009 flag010 flag011 flag012 flag013 flag014 flag015 flag016 flag017 flag018 flag019 flag020 flag021 flag022 flag023 flag024 flag025 flag026 flag027 flag028 flag029 flag030 flag031 flag032 flag033 flag034 flag035 flag036 flag037 flag038 flag039 flag040 flag041 flag042 flag043 flag044 flag045 flag046 flag047 flag048 flag049 flag050 flag051 flag052 flag053 flag054 flag055 flag056 flag057 flag058 flag059 flag060 flag061 flag062 flag063 flag064 flag065 flag066 flag067 flag068 flag069 flag070 flag071 flag072 flag073 flag074 flag075 flag076 flag077 flag078 flag079 flag080 flag081 flag082 flag083 flag084 flag085 flag086 flag087 flag088 flag089 flag090 flag091 flag092 flag093 flag094 flag095 flag096 flag097 flag098 flag099 flag100 \\seen" {
+		test_fail "hasflag :is failed with long key flag list";
+	}
+
+	if not hasflag :contains "flags" "flag001 flag002 flag003 flag004 flag005 flag006 flag007 flag008 flag009 flag010 flag011 flag012 flag013 flag014 flag015 flag016 flag017 flag018 flag019 flag020 flag021 flag022 flag023 flag024 flag025 flag026 flag027 flag028 flag029 flag030 flag031 flag032 flag033 flag034 flag035 flag036 flag037 flag038 flag039 flag040 flag041 flag042 flag043 flag044 flag045 flag046 flag047 flag048 flag049 flag050 flag051 flag052 flag053 flag054 flag055 flag056 flag057 flag058 flag059 flag060 flag061 flag062 flag063 flag064 flag065 flag066 flag067 flag068 flag069 flag070 flag071 flag072 flag073 flag074 flag075 flag076 flag077 flag078 flag079 flag080 flag081 flag082 flag083 flag084 flag085 flag086 flag087 flag088 flag089 flag090 flag091 flag092 flag093 flag094 flag095 flag096 flag097 flag098 flag099 flag100 seen" {
+		test_fail "hasflag :contains failed with long key flag list";
+	}
+}
+
+test "Long internal flag list" {
+	setflag "flag001 flag002 flag003 flag004 flag005 flag006 flag007 flag008 flag009 flag010 flag011 flag012 flag013 flag014 flag015 flag016 flag017 flag018 flag019 flag020 flag021 flag022 flag023 flag024 flag025 flag026 flag027 flag028 flag029 flag030 flag031 flag032 flag033 flag034 flag035 flag036 flag037 flag038 flag039 flag040 flag041 flag042 flag043 flag044 flag045 flag046 flag047 flag048 flag049 flag050 flag051 flag052 flag053 flag054 flag055 flag056 flag057 flag058 flag059 flag060 flag061 flag062 flag063 flag064 flag065 flag066 flag067 flag068 flag069 flag070 flag071 flag072 flag073 flag074 flag075 flag076 flag077 flag078 flag079 flag080 flag081 flag082 flag083 flag084 flag085 flag086 flag087 flag088 flag089 flag090 flag091 flag092 flag093 flag094 flag095 flag096 flag097 flag098 flag099 flag100";
+
+	if not hasflag "flag001" {
+		test_fail "hasflag failed with long internal flag list";
+	}
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "100" {
+		test_fail "hasflag counted wrong number of flags in long internal flag list";
+	}
+}
