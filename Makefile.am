@@ -252,7 +252,10 @@ $(extprograms_test_cases):
 test: all-am $(test_cases) $(failure_test_cases)
 test-plugins: all-am $(extprograms_test_cases)
 
-check: check-am test
+# Run the tests after check-recursive, which also runs check-am in this
+# directory, has finished.
+check:
+	@$(MAKE) $(AM_MAKEFLAGS) test
 
 version.txt:
 	$(AM_V_GEN)env VERSION=$(PACKAGE_VERSION) $(top_srcdir)/build-aux/git-version-gen > $@
