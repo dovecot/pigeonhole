@@ -1,6 +1,7 @@
 /* Copyright (c) Pigeonhole authors, see top-level COPYING file */
 
 #include "lib.h"
+#include "hash.h"
 #include "str.h"
 #include "str-sanitize.h"
 #include "mail-storage.h"
@@ -412,19 +413,6 @@ ext_imap4flags_get_flag_variable(const struct sieve_runtime_env *renv,
 				 struct sieve_variable_storage *storage,
 				 unsigned int var_index) ATTR_NULL(2);
 
-static bool flags_list_flag_exists(string_t *flags_list, const char *flag)
-{
-	const char *flg;
-	struct ext_imap4flags_iter flit;
-
-	ext_imap4flags_iter_init(&flit, flags_list);
-	while ((flg = ext_imap4flags_iter_get_flag(&flit)) != NULL) {
-		if (strcasecmp(flg, flag) == 0)
-			return TRUE;
-	}
-	return FALSE;
-}
-
 static void flags_list_flag_delete(string_t *flags_list, const char *flag)
 {
 	const char *flg;
@@ -440,19 +428,35 @@ static void flags_list_flag_delete(string_t *flags_list, const char *flag)
 
 static void flags_list_add_flags(string_t *flags_list, string_t *flags)
 {
+	HASH_TABLE(const char *, void *) flags_set;
 	const char *flg;
 	struct ext_imap4flags_iter flit;
 
-	ext_imap4flags_iter_init(&flit, flags);
+	/* Use a hash table for detecting duplicates. Otherwise adding a huge
+	   number of flags would take quadratic time. */
+	hash_table_create(&flags_set, pool_datastack_create(), 0,
+			  strcase_hash, strcasecmp);
+	/* Add the existing flags. Use update, since the list may already
+	   contain duplicates when it was set directly as a variable. */
+	ext_imap4flags_iter_init(&flit, flags_list);
+	while ((flg = ext_imap4flags_iter_get_flag(&flit)) != NULL)
+		hash_table_update(flags_set, flg, POINTER_CAST(1));
 
+	/* Append the new flags that don't exist yet */
+	ext_imap4flags_iter_init(&flit, flags);
 	while ((flg = ext_imap4flags_iter_get_flag(&flit)) != NULL) {
-		if (sieve_ext_imap4flags_flag_is_valid(flg) &&
-		    !flags_list_flag_exists(flags_list, flg)) {
-			if (str_len(flags_list) != 0)
-				str_append_c(flags_list, ' ');
-			str_append(flags_list, flg);
-		}
+		if (!sieve_ext_imap4flags_flag_is_valid(flg) ||
+		    hash_table_lookup(flags_set, flg) != NULL)
+			continue;
+
+		if (str_len(flags_list) != 0)
+			str_append_c(flags_list, ' ');
+		str_append(flags_list, flg);
+		/* Remember the added flag also, so duplicates within the new
+		   flags won't be added more than once. */
+		hash_table_insert(flags_set, flg, POINTER_CAST(1));
 	}
+	hash_table_destroy(&flags_set);
 }
 
 static void flags_list_remove_flags(string_t *flags_list, string_t *flags)
