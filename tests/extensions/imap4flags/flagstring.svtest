@@ -80,3 +80,42 @@ test "Duplicates: addflag" {
 
 
 
+
+test "Duplicates: case-insensitive" {
+	setflag "flags" "$frop \\Seen";
+	addflag "flags" "$FROP \\seen $Frop $friep \\SEEN $FRIEP";
+
+	if not string "${flags}" "$frop \\Seen $friep" {
+		test_fail "duplicate flag items not removed: ${flags}";
+	}
+}
+
+test "Removal: flag string" {
+	setflag "flags" "$frop \\seen $friep \\flagged";
+	removeflag "flags" "$FRIEP \\Seen";
+
+	if not string "${flags}" "$frop \\flagged" {
+		test_fail "flags not removed correctly (1): ${flags}";
+	}
+
+	set "flags" "  $frop   $friep $frop  \\seen  ";
+	removeflag "flags" "$frop";
+
+	if not string "${flags}" "$friep \\seen" {
+		test_fail "flags not removed correctly (2): ${flags}";
+	}
+
+	removeflag "flags" "\\seen $friep";
+
+	if not string "${flags}" "" {
+		test_fail "flags not removed correctly (3): ${flags}";
+	}
+
+	/* The flags list is left untouched when nothing is removed */
+	set "flags" "  $frop   $friep  ";
+	removeflag "flags" "$nonexistent";
+
+	if not string "${flags}" "  $frop   $friep  " {
+		test_fail "flags list changed when nothing was removed: ${flags}";
+	}
+}
