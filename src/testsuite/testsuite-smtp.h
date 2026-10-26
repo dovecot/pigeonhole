@@ -9,8 +9,9 @@ void testsuite_smtp_reset(void);
  * Simulated SMTP out
  */
 
-void *testsuite_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
-			   const struct smtp_address *mail_from);
+int testsuite_smtp_start(const struct sieve_script_env *senv,
+			 const struct smtp_address *mail_from,
+			 void **handle_r, const char **error_r);
 void testsuite_smtp_add_rcpt(const struct sieve_script_env *senv ATTR_UNUSED,
 			     void *handle, const struct smtp_address *rcpt_to);
 struct ostream *

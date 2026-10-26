@@ -146,9 +146,10 @@ imap_sieve_get_storage(struct imap_sieve *isieve, const char *cause,
  * Mail transmission
  */
 
-static void *
+static int
 imap_sieve_smtp_start(const struct sieve_script_env *senv,
-		      const struct smtp_address *mail_from)
+		      const struct smtp_address *mail_from,
+		      void **handle_r, const char **error_r ATTR_UNUSED)
 {
 	struct imap_sieve_context *isctx = senv->script_context;
 	struct imap_sieve *isieve = isctx->isieve;
@@ -156,8 +157,8 @@ imap_sieve_smtp_start(const struct sieve_script_env *senv,
 	struct smtp_submit_input submit_input;
 
 	i_zero(&submit_input);
-
-	return smtp_submit_init_simple(&submit_input, smtp_set, mail_from);
+	*handle_r = smtp_submit_init_simple(&submit_input, smtp_set, mail_from);
+	return 1;
 }
 
 static void

@@ -317,17 +317,6 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 	struct sieve_smtp_context *sctx;
 	int ret;
 
-	/* Just to be sure */
-	if (!sieve_smtp_available(senv)) {
-		sieve_result_global_warning(aenv, "no means to send mail");
-		return SIEVE_EXEC_FAILURE;
-	}
-
-	if (mail_get_stream(mail, NULL, NULL, &input) < 0) {
-		return sieve_result_mail_error(aenv, mail,
-					       "failed to read input message");
-	}
-
 	/* Determine which sender to use
 
 	   From RFC 5228, Section 4.2:
@@ -361,7 +350,28 @@ act_redirect_send(const struct sieve_action_exec_env *aenv, struct mail *mail,
 	}
 
 	/* Open SMTP transport */
-	sctx = sieve_smtp_start_single(senv, ctx->to_address, sender, &output);
+	ret = sieve_smtp_start_single(senv, ctx->to_address, sender,
+				      &output, &sctx, &error);
+	if (ret == 0) {
+		sieve_result_global_warning(
+			aenv, "redirect action has no means to send mail");
+		return SIEVE_EXEC_OK;
+	}
+	if (ret < 0) {
+		sieve_result_critical(
+			aenv, "failed to redirect message",
+			"failed to redirect message to <%s>: %s",
+			smtp_address_encode(ctx->to_address),
+			str_sanitize(error, 512));
+		return SIEVE_EXEC_TEMP_FAILURE;
+	}
+
+	/* Open stream for the redirected mail */
+	if (mail_get_stream(mail, NULL, NULL, &input) < 0) {
+		sieve_smtp_abort(sctx);
+		return sieve_result_mail_error(aenv, mail,
+					       "failed to read input message");
+	}
 
 	/* Remove unwanted headers */
 	input = i_stream_create_header_filter(

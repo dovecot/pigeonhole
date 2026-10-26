@@ -1083,16 +1083,8 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 	struct ostream *output;
 	string_t *msg;
 	struct message_address reply_to;
-	const char *header, *outmsgid, *subject, *error;
+	const char *ref_hdr, *outmsgid, *subject, *error;
 	int ret;
-
-	/* Check smpt functions just to be sure */
-
-	if (!sieve_smtp_available(senv)) {
-		sieve_result_global_warning(
-			aenv, "vacation action has no means to send mail");
-		return SIEVE_EXEC_OK;
-	}
 
 	/* Make sure we have a subject for our reply */
 
@@ -1116,13 +1108,35 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 	if (ret <= 0)
 		return ret;
 
-	/* Open smtp session */
+	/* Get References header */
 
-	sctx = sieve_smtp_start_single(senv, smtp_to, smtp_from, &output);
+	ret = mail_get_first_header(msgdata->mail, "references", &ref_hdr);
+	if (ret < 0) {
+		return sieve_result_mail_error(
+			aenv, msgdata->mail,
+			"failed to read header field 'references'");
+	}
 
-	outmsgid = sieve_message_get_new_id(eenv->svinst);
+	/* Open SMTP transport */
+
+	ret = sieve_smtp_start_single(senv, smtp_to, smtp_from,
+				      &output, &sctx, &error);
+	if (ret == 0) {
+		sieve_result_global_warning(
+			aenv, "vacation action has no means to send mail");
+		return SIEVE_EXEC_OK;
+	}
+	if (ret < 0) {
+		sieve_result_critical(
+			aenv, "failed to send vacation response",
+			"failed to send vacation response to <%s>: %s",
+			smtp_address_encode(smtp_to), str_sanitize(error, 512));
+		return SIEVE_EXEC_TEMP_FAILURE;
+	}
 
 	/* Produce a proper reply */
+
+	outmsgid = sieve_message_get_new_id(eenv->svinst);
 
 	msg = t_str_new(512);
 	rfc2822_header_write(msg, "X-Sieve", SIEVE_IMPLEMENTATION);
@@ -1150,26 +1164,18 @@ act_vacation_send(const struct sieve_action_exec_env *aenv,
 
 	/* Compose proper in-reply-to and references headers */
 
-	ret = mail_get_first_header(msgdata->mail, "references", &header);
-	if (ret < 0) {
-		sieve_smtp_abort(sctx);
-		return sieve_result_mail_error(
-			aenv, msgdata->mail,
-			"failed to read header field 'references'");
-	}
-
 	if (msgdata->id != NULL) {
 		rfc2822_header_write(msg, "In-Reply-To", msgdata->id);
 
-		if (ret > 0 && header != NULL) {
+		if (ref_hdr != NULL) {
 			rfc2822_header_write(
 				msg, "References",
-				t_strconcat(header, " ", msgdata->id, NULL));
+				t_strconcat(ref_hdr, " ", msgdata->id, NULL));
 		} else {
 			rfc2822_header_write(msg, "References", msgdata->id);
 		}
-	} else if (ret > 0 && header != NULL) {
-		rfc2822_header_write(msg, "References", header);
+	} else if (ref_hdr != NULL) {
+		rfc2822_header_write(msg, "References", ref_hdr);
 	}
 
 	rfc2822_header_write(msg, "Auto-Submitted", "auto-replied (vacation)");

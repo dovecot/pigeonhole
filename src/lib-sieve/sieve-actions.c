@@ -1011,18 +1011,27 @@ sieve_action_do_reject_mail(const struct sieve_action_exec_env *aenv,
 	string_t *hdr;
 	int ret;
 
+	/* Open SMTP transport */
 	sender = sieve_message_get_sender(aenv->msgctx);
 	orig_recipient = msgdata->envelope.rcpt_params->orcpt.addr;
 
-	sctx = sieve_smtp_start_single(senv, sender, NULL, &output);
-
-	/* Just to be sure */
-	if (sctx == NULL) {
+	ret = sieve_smtp_start_single(senv, sender, NULL,
+				      &output, &sctx, &error);
+	if (ret == 0) {
 		sieve_result_global_warning(
 			aenv, "reject action has no means to send mail");
 		return SIEVE_EXEC_OK;
 	}
+	if (ret < 0) {
+		sieve_result_critical(
+			aenv, "failed to send rejection message",
+			"failed to send rejection message to <%s>: %s",
+			smtp_address_encode(sender),
+			str_sanitize(error, 512));
+		return SIEVE_EXEC_TEMP_FAILURE;
+	}
 
+	/* Compose message */
 	new_msgid = sieve_message_get_new_id(svinst);
 	boundary = t_strdup_printf("%s/%s", my_pid, svinst->hostname);
 

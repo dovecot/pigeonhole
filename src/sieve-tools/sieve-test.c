@@ -53,9 +53,10 @@ static void print_help(void)
  * Dummy SMTP session
  */
 
-static void *
+static int
 sieve_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
-		 const struct smtp_address *mail_from)
+		 const struct smtp_address *mail_from,
+		 void **handle_r, const char **error_r ATTR_UNUSED)
 {
 	struct ostream *output;
 
@@ -63,7 +64,8 @@ sieve_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
 
 	output = o_stream_create_fd(STDOUT_FILENO, SIZE_MAX);
 	o_stream_set_no_error_handling(output, TRUE);
-	return output;
+	*handle_r = output;
+	return 0;
 }
 
 static void

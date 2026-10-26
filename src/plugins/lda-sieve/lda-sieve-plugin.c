@@ -43,9 +43,10 @@ static deliver_mail_func_t *next_deliver_mail;
  * Mail transmission
  */
 
-static void *
+static int
 lda_sieve_smtp_start(const struct sieve_script_env *senv,
-		     const struct smtp_address *mail_from)
+		     const struct smtp_address *mail_from,
+		     void **handle_r, const char **error_r ATTR_UNUSED)
 {
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *)senv->script_context;
@@ -53,8 +54,8 @@ lda_sieve_smtp_start(const struct sieve_script_env *senv,
 
 	i_zero(&submit_input);
 
-	return smtp_submit_init_simple(&submit_input, dctx->smtp_set,
-				       mail_from);
+	*handle_r = smtp_submit_init_simple(&submit_input, dctx->smtp_set, mail_from);
+	return 1;
 }
 
 static void

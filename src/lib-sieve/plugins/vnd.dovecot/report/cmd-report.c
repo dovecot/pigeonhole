@@ -463,13 +463,6 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 	const char *outmsgid, *boundary, *error, *subject, *from;
 	int ret;
 
-	/* Just to be sure */
-	if (!sieve_smtp_available(senv)) {
-		sieve_result_global_warning(
-			aenv, "report action has no means to send mail");
-		return SIEVE_EXEC_OK;
-	}
-
 	/* Make sure we have a subject for our report */
 	ret = mail_get_headers_utf8(msgdata->mail, "subject", &headers);
 	if (ret < 0) {
@@ -485,6 +478,24 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 		subject = "Report: (message without subject)";
 	}
 
+	/* Open SMTP transport */
+	ret = sieve_smtp_start_single(senv, act->to_address, NULL,
+				      &output, &sctx, &error);
+	if (ret == 0) {
+		sieve_result_global_warning(
+			aenv, "report action has no means to send mail");
+		return SIEVE_EXEC_OK;
+	}
+	if (ret < 0) {
+		sieve_result_critical(
+			aenv, "failed to send report",
+			"failed to send '%s' report to <%s>: %s",
+			str_sanitize(act->feedback_type, 32),
+			smtp_address_encode(act->to_address),
+			str_sanitize(error, 512));
+		return SIEVE_EXEC_TEMP_FAILURE;
+	}
+
 	/* Determine from address */
 	if (report_from.type == SIEVE_ADDRESS_SOURCE_POSTMASTER) {
 		report_from.type = SIEVE_ADDRESS_SOURCE_DEFAULT;
@@ -498,8 +509,6 @@ act_report_send(const struct sieve_action_exec_env *aenv,
 		from = sieve_get_postmaster_address(senv);
 
 	/* Start message */
-	sctx = sieve_smtp_start_single(senv, act->to_address, NULL, &output);
-
 	outmsgid = sieve_message_get_new_id(svinst);
 	boundary = t_strdup_printf("%s/%s", my_pid, svinst->hostname);
 

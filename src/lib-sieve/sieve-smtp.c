@@ -18,24 +18,32 @@ bool sieve_smtp_available(const struct sieve_script_env *senv)
 		senv->smtp_send != NULL && senv->smtp_finish != NULL);
 }
 
-struct sieve_smtp_context *
-sieve_smtp_start(const struct sieve_script_env *senv,
-		 const struct smtp_address *mail_from)
+int sieve_smtp_start(const struct sieve_script_env *senv,
+		     const struct smtp_address *mail_from,
+		     struct sieve_smtp_context **sctx_r,
+		     const char **error_r)
 {
 	struct sieve_smtp_context *sctx;
 	void *handle;
 
-	if (!sieve_smtp_available(senv))
-		return NULL;
+	*sctx_r = NULL;
+	*error_r = NULL;
 
-	handle = senv->smtp_start(senv, mail_from);
-	i_assert( handle != NULL );
+	if (!sieve_smtp_available(senv)) {
+		*error_r = "no means to send mail";
+		return 0;
+	}
+
+	if (senv->smtp_start(senv, mail_from, &handle, error_r) < 0)
+		return -1;
+	i_assert(handle != NULL);
 
 	sctx = i_new(struct sieve_smtp_context, 1);
 	sctx->senv = senv;
 	sctx->handle = handle;
 
-	return sctx;
+	*sctx_r = sctx;
+	return 1;
 }
 
 void sieve_smtp_add_rcpt(struct sieve_smtp_context *sctx,
@@ -53,19 +61,23 @@ struct ostream *sieve_smtp_send(struct sieve_smtp_context *sctx)
 	return sctx->senv->smtp_send(sctx->senv, sctx->handle);
 }
 
-struct sieve_smtp_context *
-sieve_smtp_start_single(const struct sieve_script_env *senv,
-			const struct smtp_address *rcpt_to,
-			const struct smtp_address *mail_from,
-			struct ostream **output_r)
+int sieve_smtp_start_single(const struct sieve_script_env *senv,
+			    const struct smtp_address *rcpt_to,
+			    const struct smtp_address *mail_from,
+			    struct ostream **output_r,
+			    struct sieve_smtp_context **sctx_r,
+			    const char **error_r)
 {
-	struct sieve_smtp_context *sctx;
+	int ret;
 
-	sctx = sieve_smtp_start(senv, mail_from);
-	sieve_smtp_add_rcpt(sctx, rcpt_to);
-	*output_r = sieve_smtp_send(sctx);
+	ret = sieve_smtp_start(senv, mail_from, sctx_r, error_r);
+	if (ret <= 0)
+		return ret;
 
-	return sctx;
+	sieve_smtp_add_rcpt(*sctx_r, rcpt_to);
+	*output_r = sieve_smtp_send(*sctx_r);
+
+	return 1;
 }
 
 void sieve_smtp_abort(struct sieve_smtp_context *sctx)

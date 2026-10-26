@@ -77,8 +77,9 @@ struct testsuite_smtp {
 	struct ostream *output;
 };
 
-void *testsuite_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
-			   const struct smtp_address *mail_from)
+int testsuite_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
+			 const struct smtp_address *mail_from,
+			 void **handle_r, const char **error_r ATTR_UNUSED)
 {
 	struct testsuite_smtp *smtp;
 	unsigned int smtp_count = array_count(&testsuite_smtp_messages);
@@ -98,7 +99,8 @@ void *testsuite_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
 
 	smtp->output = o_stream_create_fd_autoclose(&fd, SIZE_MAX);
 
-	return smtp;
+	*handle_r = smtp;
+	return 1;
 }
 
 void testsuite_smtp_add_rcpt(const struct sieve_script_env *senv ATTR_UNUSED,

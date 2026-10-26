@@ -548,14 +548,6 @@ ntfy_mailto_send(const struct sieve_enotify_exec_env *nenv,
 		return 0;
 	}
 
-	/* Just to be sure */
-	if (!sieve_smtp_available(senv)) {
-		sieve_enotify_global_warning(
-			nenv,
-			"notify mailto method has no means to send mail");
-		return 0;
-	}
-
 	/* Determine which sender to use
 
 	   From RFC 5436, Section 2.3:
@@ -592,34 +584,6 @@ ntfy_mailto_send(const struct sieve_enotify_exec_env *nenv,
 		}
 	}
 
-	/* Determine message from address */
-	if (from == NULL) {
-		if (from_smtp == NULL)
-			from = sieve_get_postmaster_address(senv);
-		else {
-			from = t_strdup_printf("<%s>",
-				smtp_address_encode(from_smtp));
-		}
-	}
-
-	/* Determine subject */
-	if (nact->message != NULL) {
-		subject = str_sanitize_utf8(
-			nact->message, SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS);
-	} else if (subject == NULL) {
-		const char *const *hsubject;
-
-		/* Fetch subject from original message */
-		if (mail_get_headers_utf8(msgdata->mail, "subject",
-					  &hsubject) > 0) {
-			subject = str_sanitize_utf8(
-				t_strdup_printf("Notification: %s", hsubject[0]),
-				SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS);
-		} else {
-			subject = "Notification: (no subject)";
-		}
-	}
-
 	/* Compose To and Cc headers */
 	to = NULL;
 	cc = NULL;
@@ -650,6 +614,49 @@ ntfy_mailto_send(const struct sieve_enotify_exec_env *nenv,
 					recipients[i].address));
 		} else if (i == 3) {
 			str_printfa(all, ", ... (%u total)", count);
+		}
+	}
+
+	/* Open SMTP transport */
+	ret = sieve_smtp_start(senv, from_smtp, &sctx, &error);
+	if (ret == 0) {
+		sieve_enotify_global_warning(
+			nenv, "notify mailto method has no means to send mail");
+		return 0;
+	}
+	if (ret < 0) {
+		sieve_enotify_critical(
+			nenv, "failed to send mail notification",
+			"failed to send mail notification to <%s>: %s",
+			str_c(all), str_sanitize(error, 512));
+		return -1;
+	}
+
+	/* Determine message from address */
+	if (from == NULL) {
+		if (from_smtp == NULL)
+			from = sieve_get_postmaster_address(senv);
+		else {
+			from = t_strdup_printf("<%s>",
+				smtp_address_encode(from_smtp));
+		}
+	}
+
+	/* Determine subject */
+	if (nact->message != NULL) {
+		subject = str_sanitize_utf8(
+			nact->message, SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS);
+	} else if (subject == NULL) {
+		const char *const *hsubject;
+
+		/* Fetch subject from original message */
+		if (mail_get_headers_utf8(msgdata->mail, "subject",
+					  &hsubject) > 0) {
+			subject = str_sanitize_utf8(
+				t_strdup_printf("Notification: %s", hsubject[0]),
+				SIEVE_MAX_SUBJECT_HEADER_CODEPOINTS);
+		} else {
+			subject = "Notification: (no subject)";
 		}
 	}
 
@@ -725,8 +732,6 @@ ntfy_mailto_send(const struct sieve_enotify_exec_env *nenv,
 
 		str_append(msg, "\r\nNotification of new message.\r\n");
 	}
-
-	sctx = sieve_smtp_start(senv, from_smtp);
 
 	/* Send message to all recipients */
 	for (i = 0; i < count; i++)

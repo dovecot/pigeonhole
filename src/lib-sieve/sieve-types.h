@@ -233,8 +233,9 @@ struct sieve_script_env {
 	/* Callbacks */
 
 	/* Interface for sending mail */
-	void *(*smtp_start)(const struct sieve_script_env *senv,
-			    const struct smtp_address *mail_from);
+	int (*smtp_start)(const struct sieve_script_env *senv,
+			  const struct smtp_address *mail_from,
+			  void **handle_r, const char **error_r);
 	/* Add a new recipient */
 	void (*smtp_add_rcpt)(const struct sieve_script_env *senv, void *handle,
 			      const struct smtp_address *rcpt_to);
