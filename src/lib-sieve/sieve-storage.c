@@ -18,6 +18,8 @@
 #include "sieve-script-private.h"
 #include "sieve-storage-private.h"
 #include "sieve-rusage.h"
+#include "storage/file/sieve-file-storage-settings.h"
+#include "storage/dict/sieve-dict-storage-settings.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -52,6 +54,13 @@ void sieve_storages_init(struct sieve_instance *svinst)
 	svinst->storage_reg = p_new(svinst->pool,
 				    struct sieve_storage_class_registry, 1);
 	p_array_init(&svinst->storage_reg->storage_classes, svinst->pool, 8);
+
+	/* Register the infos that define the storage filters, so the
+	   settings can be overridden also without a configuration (e.g.
+	   sieve_script/name/sieve_script_dict/dict) */
+	settings_info_register(&sieve_storage_setting_parser_info);
+	settings_info_register(&sieve_file_storage_setting_parser_info);
+	settings_info_register(&sieve_dict_storage_setting_parser_info);
 
 	sieve_storage_class_register(svinst, &sieve_file_storage);
 	sieve_storage_class_register(svinst, &sieve_dict_storage);
