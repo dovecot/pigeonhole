@@ -4,15 +4,12 @@ noinst_PROGRAMS += \
 	fuzz-suite
 endif
 
-ABS_TOP_BUILDDIR := $(shell cd $(top_builddir) && pwd)
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
 	-I$(top_srcdir)/src/lib-sieve/storage/data \
 	-I$(top_srcdir)/src/lib-sieve/util \
 	-I$(top_srcdir)/src/lib-sieve/plugins/variables \
 	-I$(top_srcdir)/src/lib-sieve-tool \
-	-DPIGEONHOLE_CONFIG_MODULES=\""$(ABS_TOP_BUILDDIR)/src/plugins/settings/.libs/libpigeonhole_settings.so"\" \
 	$(LIBDOVECOT_INCLUDE) \
 	$(LIBDOVECOT_SERVICE_INCLUDE)
 

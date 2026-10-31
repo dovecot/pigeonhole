@@ -130,7 +130,7 @@ sieve_tool_init(const char *name, int *argc, char **argv[],
 	pool_t pool;
 
 	if (no_config)
-		service_flags |= MASTER_SERVICE_FLAG_CONFIG_DEFAULTS;
+		service_flags |= MASTER_SERVICE_FLAG_CONFIG_BUILTIN;
 
 	getopt_str = t_strconcat(getopt_str, "DP:x:", NULL);
 	master_service = master_service_init(name, service_flags,

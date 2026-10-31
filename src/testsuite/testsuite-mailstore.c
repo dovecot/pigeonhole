@@ -9,6 +9,8 @@
 #include "path-util.h"
 #include "unlink-directory.h"
 #include "env-util.h"
+#include "settings.h"
+#include "dict.h"
 #include "mail-storage-service.h"
 #include "mail-namespace.h"
 #include "mail-storage.h"
@@ -78,6 +80,13 @@ void testsuite_mailstore_init(void)
 	}
 
 	mail_user_dovecot = sieve_tool_get_mail_user(sieve_tool);
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+	/* Without a configuration the infos must be registered for the
+	   mail_attribute/dict/file/ overrides below. */
+	settings_info_register(&dict_setting_parser_info);
+	settings_info_register(&dict_file_setting_parser_info);
+#endif
 
 	if (t_get_working_dir(&cwd, &error) < 0)
 		i_fatal("Failed to get working directory: %s", error);

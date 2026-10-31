@@ -3,7 +3,6 @@
 #include "lib.h"
 #include "lib-signals.h"
 #include "ioloop.h"
-#include "env-util.h"
 #include "ostream.h"
 #include "hostpid.h"
 #include "path-util.h"
@@ -122,16 +121,6 @@ int main(int argc, char **argv)
 		"postmaster_address=postmaster@example.com");
 	master_service_parse_option(master_service, 'o', "mail_uid=");
 	master_service_parse_option(master_service, 'o', "mail_gid=");
-	/* Preserve all the libtool environments so this works without libsieve
-	   being yet installed. */
-	master_service_parse_option(master_service, 'k', "");
-	const char *str = getenv("TESTSUITE_CONFIG_MODULES");
-	if (str == NULL)
-		env_put("CONFIG_MODULES", PIGEONHOLE_CONFIG_MODULES);
-	else {
-		env_put("CONFIG_MODULES", t_strconcat(PIGEONHOLE_CONFIG_MODULES,
-						      ":", str, NULL));
-	}
 
 	/* Initialize working directory */
 	if (wdir != NULL) {
