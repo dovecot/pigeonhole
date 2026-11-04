@@ -25,6 +25,28 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+struct lda_sieve_run_context {
+	struct sieve_instance *svinst;
+
+	struct mail_deliver_context *mdctx;
+	const char *home_dir;
+
+	struct sieve_script **scripts;
+	unsigned int script_count;
+
+	struct sieve_script *user_script;
+	struct sieve_script *main_script;
+	struct sieve_script *discard_script;
+
+	const struct sieve_message_data *msgdata;
+	const struct sieve_script_env *scriptenv;
+
+	struct sieve_error_handler *user_ehandler;
+	struct sieve_error_handler *master_ehandler;
+	struct sieve_error_handler *action_ehandler;
+	const char *userlog;
+};
+
 /*
  * Configuration
  */
@@ -46,16 +68,20 @@ static deliver_mail_func_t *next_deliver_mail;
 static int
 lda_sieve_smtp_start(const struct sieve_script_env *senv,
 		     const struct smtp_address *mail_from,
-		     void **handle_r, const char **error_r ATTR_UNUSED)
+		     void **handle_r, const char **error_r)
 {
-	struct mail_deliver_context *dctx =
-		(struct mail_deliver_context *)senv->script_context;
-	struct smtp_submit_input submit_input;
+	struct lda_sieve_run_context *srctx = senv->script_context;
+	struct smtp_submit *smtp_submit;
 
-	i_zero(&submit_input);
+	struct smtp_submit_input submit_input = {
+		.event_parent = sieve_get_event(srctx->svinst),
+	};
+	if (smtp_submit_init_simple(&submit_input, mail_from,
+				    &smtp_submit, error_r) < 0)
+		return -1;
 
-	*handle_r = smtp_submit_init_simple(&submit_input, dctx->smtp_set, mail_from);
-	return 1;
+	*handle_r = smtp_submit;
+	return 0;
 }
 
 static void
@@ -102,10 +128,10 @@ lda_sieve_reject_mail(const struct sieve_script_env *senv,
 		      const struct smtp_address *recipient,
 		      const char *reason)
 {
-	struct mail_deliver_context *dctx =
-		(struct mail_deliver_context *)senv->script_context;
+	struct lda_sieve_run_context *srctx = senv->script_context;
+	struct mail_deliver_context *mdctx = srctx->mdctx;
 
-	return mail_send_rejection(dctx, recipient, reason);
+	return mail_send_rejection(mdctx, recipient, reason);
 }
 
 /*
@@ -115,10 +141,10 @@ lda_sieve_reject_mail(const struct sieve_script_env *senv,
 static void *
 lda_sieve_duplicate_transaction_begin(const struct sieve_script_env *senv)
 {
-	struct mail_deliver_context *dctx =
-		(struct mail_deliver_context *)senv->script_context;
+	struct lda_sieve_run_context *srctx = senv->script_context;
+	struct mail_deliver_context *mdctx = srctx->mdctx;
 
-	return mail_duplicate_transaction_begin(dctx->dup_db);
+	return mail_duplicate_transaction_begin(mdctx->dup_db);
 }
 
 static void lda_sieve_duplicate_transaction_commit(void **_dup_trans)
@@ -177,7 +203,8 @@ lda_sieve_result_amend_log_message(const struct sieve_script_env *senv,
 				   enum log_type log_type ATTR_UNUSED,
 				   const char *message)
 {
-	struct mail_deliver_context *mdctx = senv->script_context;
+	struct lda_sieve_run_context *srctx = senv->script_context;
+	struct mail_deliver_context *mdctx = srctx->mdctx;
 	string_t *str;
 	const char *error;
 
@@ -198,28 +225,6 @@ lda_sieve_result_amend_log_message(const struct sieve_script_env *senv,
 /*
  * Plugin implementation
  */
-
-struct lda_sieve_run_context {
-	struct sieve_instance *svinst;
-
-	struct mail_deliver_context *mdctx;
-	const char *home_dir;
-
-	struct sieve_script **scripts;
-	unsigned int script_count;
-
-	struct sieve_script *user_script;
-	struct sieve_script *main_script;
-	struct sieve_script *discard_script;
-
-	const struct sieve_message_data *msgdata;
-	const struct sieve_script_env *scriptenv;
-
-	struct sieve_error_handler *user_ehandler;
-	struct sieve_error_handler *master_ehandler;
-	struct sieve_error_handler *action_ehandler;
-	const char *userlog;
-};
 
 static int
 lda_sieve_get_personal_storage(struct sieve_instance *svinst,
@@ -948,7 +953,7 @@ lda_sieve_execute(struct lda_sieve_run_context *srctx,
 	scriptenv.duplicate_check = lda_sieve_duplicate_check;
 	scriptenv.reject_mail = lda_sieve_reject_mail;
 	scriptenv.result_amend_log_message = lda_sieve_result_amend_log_message;
-	scriptenv.script_context = mdctx;
+	scriptenv.script_context = srctx;
 	scriptenv.trace_log = trace_log;
 	scriptenv.trace_config = trace_config;
 

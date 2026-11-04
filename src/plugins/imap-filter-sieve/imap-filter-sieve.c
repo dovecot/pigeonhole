@@ -542,18 +542,24 @@ int imap_filter_sieve_open_global(struct imap_filter_sieve_context *sctx,
 static int
 imap_filter_sieve_smtp_start(const struct sieve_script_env *senv,
 			     const struct smtp_address *mail_from,
-			     void **handle_r, const char **error_r ATTR_UNUSED)
+			     void **handle_r, const char **error_r)
 {
 	struct imap_filter_sieve_context *sctx = senv->script_context;
 	struct mail_user *user = sctx->user;
 	struct imap_filter_sieve_user *ifsuser =
 		IMAP_FILTER_SIEVE_USER_CONTEXT_REQUIRE(user);
-	const struct smtp_submit_settings *smtp_set = ifsuser->client->smtp_set;
-	struct smtp_submit_input submit_input;
+	struct smtp_submit *smtp_submit;
 
-	i_zero(&submit_input);
-	*handle_r = smtp_submit_init_simple(&submit_input, smtp_set, mail_from);
-	return 1;
+	i_assert(ifsuser->svinst != NULL);
+	struct smtp_submit_input submit_input = {
+		.event_parent = sieve_get_event(ifsuser->svinst),
+	};
+	if (smtp_submit_init_simple(&submit_input, mail_from,
+				    &smtp_submit, error_r) < 0)
+		return -1;
+
+	*handle_r = smtp_submit;
+	return 0;
 }
 
 static void

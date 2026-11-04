@@ -149,16 +149,21 @@ imap_sieve_get_storage(struct imap_sieve *isieve, const char *cause,
 static int
 imap_sieve_smtp_start(const struct sieve_script_env *senv,
 		      const struct smtp_address *mail_from,
-		      void **handle_r, const char **error_r ATTR_UNUSED)
+		      void **handle_r, const char **error_r)
 {
 	struct imap_sieve_context *isctx = senv->script_context;
 	struct imap_sieve *isieve = isctx->isieve;
-	const struct smtp_submit_settings *smtp_set = isieve->client->smtp_set;
-	struct smtp_submit_input submit_input;
+	struct smtp_submit *smtp_submit;
 
-	i_zero(&submit_input);
-	*handle_r = smtp_submit_init_simple(&submit_input, smtp_set, mail_from);
-	return 1;
+	struct smtp_submit_input submit_input = {
+		.event_parent = sieve_get_event(isieve->svinst),
+	};
+	if (smtp_submit_init_simple(&submit_input, mail_from,
+				    &smtp_submit, error_r) < 0)
+		return -1;
+
+	*handle_r = smtp_submit;
+	return 0;
 }
 
 static void
