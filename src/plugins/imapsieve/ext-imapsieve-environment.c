@@ -133,6 +133,8 @@ envit_vnd_mailbox_from_get_value(
 	struct imap_sieve_context *isctx =
 		(struct imap_sieve_context *)senv->script_context;
 
+	if (isctx->event.src_mailbox == NULL)
+		return NULL;
 	return mailbox_get_vname(isctx->event.src_mailbox);
 }
 
