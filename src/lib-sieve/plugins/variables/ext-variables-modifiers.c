@@ -508,7 +508,7 @@ int sieve_variables_modifiers_code_read(
 
 	t_array_init(modifiers, mdfs);
 
-	lprec = (unsigned int)-1;
+	lprec = UINT_MAX;
 	for (i = 0; i < mdfs; i++) {
 		struct sieve_variables_modifier modf;
 
