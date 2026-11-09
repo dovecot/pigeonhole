@@ -61,7 +61,7 @@ sieve_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
 
 	i_info("sending message from <%s>:", smtp_address_encode(mail_from));
 
-	output = o_stream_create_fd(STDOUT_FILENO, (size_t)-1);
+	output = o_stream_create_fd(STDOUT_FILENO, SIZE_MAX);
 	o_stream_set_no_error_handling(output, TRUE);
 	return output;
 }

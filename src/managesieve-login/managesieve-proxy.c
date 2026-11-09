@@ -567,7 +567,7 @@ managesieve_proxy_parse_auth_reply(const char *line,
 
 	/* Parse the string */
 	input = i_stream_create_from_data(line, strlen(line));
-	parser = managesieve_parser_create(input, (size_t)-1);
+	parser = managesieve_parser_create(input, SIZE_MAX);
 	(void)i_stream_read(input);
 	ret = managesieve_parser_finish_line(parser, 0, 0, &args);
 	if (ret == 1 && managesieve_arg_get_string(&args[0], &reason)) {

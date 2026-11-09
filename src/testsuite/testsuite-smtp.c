@@ -96,7 +96,7 @@ void *testsuite_smtp_start(const struct sieve_script_env *senv ATTR_UNUSED,
 			"open(%s) failed: %m", smtp->msg_file);
 	}
 
-	smtp->output = o_stream_create_fd_autoclose(&fd, (size_t)-1);
+	smtp->output = o_stream_create_fd_autoclose(&fd, SIZE_MAX);
 
 	return smtp;
 }

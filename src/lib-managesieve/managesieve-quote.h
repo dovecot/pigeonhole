@@ -13,6 +13,6 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 
 #define managesieve_quote_append_string(str, value, compress_lwsp) \
 	managesieve_quote_append(str, (const unsigned char *)(value), \
-				 (size_t)-1, compress_lwsp)
+				 SIZE_MAX, compress_lwsp)
 
 #endif

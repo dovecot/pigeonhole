@@ -23,7 +23,7 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 		return;
 	}
 
-	if (value_len == (size_t)-1)
+	if (value_len == SIZE_MAX)
 		value_len = strlen((const char *) value);
 
 	for (i = 0; i < value_len; i++) {
