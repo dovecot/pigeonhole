@@ -119,7 +119,7 @@ mail_raw_create_stream(struct mail_user *ruser, int fd, time_t *mtime_r,
 		input2 = input;
 		i_stream_ref(input2);
 	} else {
-		input2 = i_stream_create_limit(input, (uoff_t)-1);
+		input2 = i_stream_create_limit(input, UOFF_T_MAX);
 	}
 	i_stream_unref(&input);
 

@@ -379,9 +379,9 @@ managesieve_parser_read_literal(struct managesieve_parser *parser,
 			return FALSE;
 		}
 
-		if (parser->literal_size >= ((uoff_t)-1 / 10)) {
-			if (parser->literal_size > ((uoff_t)-1 / 10) ||
-			    (uoff_t)(data[i] - '0') > ((uoff_t)-1 % 10)) {
+		if (parser->literal_size >= (UOFF_T_MAX / 10)) {
+			if (parser->literal_size > (UOFF_T_MAX / 10) ||
+			    (uoff_t)(data[i] - '0') > (UOFF_T_MAX % 10)) {
 				parser->error = "Literal size too large";
 				return FALSE;
 			}

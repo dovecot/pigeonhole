@@ -1849,7 +1849,7 @@ merge_from_parent(struct edit_mail_istream *edstream, uoff_t parent_v_offset,
 	} while (pos <= cur_pos && ret > 0);
 
 	/* Don't read beyond parent end offset */
-	if (parent_end_v_offset != (uoff_t)-1) {
+	if (parent_end_v_offset != UOFF_T_MAX) {
 		parent_bytes_left = (size_t)(parent_end_v_offset -
 					     parent_v_offset);
 		if (pos >= parent_bytes_left) {
@@ -2099,7 +2099,7 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 		copy_v_offset = edmail->hdr_size.physical_size;
 	}
 
-	ret = merge_from_parent(edstream, parent_v_offset, (uoff_t)-1,
+	ret = merge_from_parent(edstream, parent_v_offset, UOFF_T_MAX,
 				copy_v_offset);
 	if (ret != 0)
 		return ret;
