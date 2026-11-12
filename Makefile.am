@@ -248,7 +248,7 @@ $(extprograms_test_cases):
 	@rm -rf $(TEST_WORKDIR)
 	@$(TEST_EXTPROGRAMS_BIN) -W $(TEST_WORKDIR) $(top_srcdir)/$@
 
-.PHONY: test test-plugins $(test_cases) $(failure_test_cases) $(extprograms_test_cases) prepare_test_case
+.PHONY: test test-plugins $(test_cases) $(failure_test_cases) $(extprograms_test_cases) prepare_test_cases
 test: all-am $(test_cases) $(failure_test_cases)
 test-plugins: all-am $(extprograms_test_cases)
 
