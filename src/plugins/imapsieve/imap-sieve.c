@@ -67,7 +67,7 @@ struct imap_sieve *imap_sieve_init(struct client *client)
 	(void)mail_user_get_home(user, &svenv.home_dir);
 	svenv.hostname = user->set->hostname;
 	svenv.base_dir = user->set->base_dir;
-	svenv.event_parent = client->event;
+	svenv.event_parent = user->event;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 	svenv.location = SIEVE_ENV_LOCATION_MS;
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_POST;
