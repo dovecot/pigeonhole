@@ -279,8 +279,7 @@ Known issues
 Sieve
 -----
 
-Most open issues are outlined in the TODO file. The more generic ones are (re-)
-listed here:
+The more generic ones are (re-)listed here:
 
 * Compile errors are sometimes a bit obscure and long. This needs work.
   Suggestions for improvement are welcome.
