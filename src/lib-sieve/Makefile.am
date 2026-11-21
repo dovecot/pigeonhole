@@ -194,3 +194,27 @@ headers = \
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 pkginc_lib_HEADERS = $(headers)
+
+test_programs = \
+	test-sieve-match
+
+noinst_PROGRAMS = $(test_programs)
+
+test_libs = \
+	libdovecot-sieve.la \
+	$(LIBDOVECOT_STORAGE) \
+	$(LIBDOVECOT)
+test_deps = \
+	libdovecot-sieve.la \
+	$(LIBDOVECOT_STORAGE_DEPS) \
+	$(LIBDOVECOT_DEPS)
+
+test_sieve_match_SOURCES = test-sieve-match.c
+test_sieve_match_LDADD = $(test_libs)
+test_sieve_match_DEPENDENCIES = $(test_deps)
+
+check-local: check-test
+check-test: all-am
+	for bin in $(test_programs); do \
+	  if ! $(RUN_TEST) ./$$bin; then exit 1; fi; \
+	done
